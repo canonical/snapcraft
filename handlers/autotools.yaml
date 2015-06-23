@@ -1,0 +1,7 @@
+name: autotools-project
+packages: [autoconf, automake, autopoint]
+options:
+	source:
+		required: true
+	configflags:
+		required: false
