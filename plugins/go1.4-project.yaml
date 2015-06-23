@@ -1,0 +1,7 @@
+name: go1.4-project
+packages: [golang-go]
+options:
+	source:
+		required: true
+	configflags:
+		required: false
