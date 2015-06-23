@@ -1,0 +1,4 @@
+name: readline
+source: git://git.sv.gnu.org/readline.git
+requires:
+  - autotools
