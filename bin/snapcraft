@@ -11,25 +11,16 @@ import snapcraft
 import snapcraft.common
 import snapcraft.plugin
 
-cmds = sys.argv[1:]
-if cmds == ["all"]:
-	cmds = ["pull", "build", "test", "stage", "deploy"]
-elif not cmds:
-	print("Need an argument", file=sys.stderr)
-	sys.exit(1)
-
-data = yaml.load(open("craft.yaml", 'r'))
-
-packagesToInstall = data.get('systemPackages', [])
+packagesToInstall = []
 allParts = []
 afterRequests = {}
 
-def loadPlugin(partName, pluginName, properties):
+def loadPlugin(partName, pluginName, properties, loadCode=True):
 	global allParts, packagesToInstall
 
 	pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
 
-	part = snapcraft.plugin.Plugin(pluginDir, pluginName, partName, properties)
+	part = snapcraft.plugin.Plugin(pluginDir, pluginName, partName, properties, loadCode=loadCode)
 	if not part.isValid():
 		print("Could not load part %s" % pluginName, file=sys.stderr)
 		sys.exit(1)
@@ -37,6 +28,36 @@ def loadPlugin(partName, pluginName, properties):
 	packagesToInstall += part.config.get('systemPackages', [])
 	allParts.append(part)
 	return part
+
+cmds = sys.argv[1:]
+if cmds == ["all"]:
+	cmds = ["pull", "build", "test", "stage", "deploy"]
+elif not cmds:
+	print("Need an argument", file=sys.stderr)
+	sys.exit(1)
+
+if cmds[0] == "init":
+	if os.path.exists("craft.yaml"):
+		print("craft.yaml already exists!", file=sys.stderr)
+		sys.exit(1)
+	yaml = 'parts:\n'
+	for partName in cmds[1:]:
+		loadPlugin(partName, partName, {}, loadCode=False)
+	for part in allParts:
+		yaml += '    ' + part.names()[0] + ':\n'
+		for opt in part.config.get('options', []):
+			if part.config['options'][opt].get('required', False):
+				yaml += '        ' + opt + ':\n'
+	yaml = yaml.strip()
+	with open('craft.yaml', mode='w+') as f:
+		f.write(yaml)
+	print("Wrote the following as craft.yaml.")
+	print()
+	print(yaml)
+	sys.exit(0)				
+
+data = yaml.load(open("craft.yaml", 'r'))
+packagesToInstall = data.get('systemPackages', [])
 
 for partName in data["parts"]:
 	properties = data["parts"][partName]

@@ -10,7 +10,7 @@ import yaml
 
 class Plugin:
 
-	def __init__(self, pluginDir, name, partName, properties):
+	def __init__(self, pluginDir, name, partName, properties, loadCode=True):
 		self.valid = False
 		self.code = None
 		self.config = None
@@ -28,7 +28,7 @@ class Plugin:
 		self.config = yaml.load(open(configPath, 'r')) or {}
 
 		codePath = os.path.join(pluginDir, name + ".py")
-		if os.path.exists(codePath):
+		if loadCode and os.path.exists(codePath):
 			class Options(): pass
 			options = Options()
 
@@ -49,13 +49,18 @@ class Plugin:
 					self.code = prop(partName, options)
 					break
 
+		self.partNames.append(partName)
+		self.valid = True
+
+	def makedirs(self):
 		try: os.makedirs(self.sourcedir)
 		except: pass
 		try: os.makedirs(self.builddir)
 		except: pass
-
-		self.partNames.append(partName)
-		self.valid = True
+		try: os.makedirs(self.stagedir)
+		except: pass
+		try: os.makedirs(self.snapdir)
+		except: pass
 
 	def isValid(self):
 		return self.valid
@@ -66,36 +71,33 @@ class Plugin:
 	def notifyStage(self, stage):
 		print('\033[01m' + stage + " " + self.partNames[0] + '\033[0m')
 
-	def init(self):
-		if self.code and hasattr(self.code, 'init'):
-			return getattr(self.code, 'init')()
-
 	def pull(self):
+		self.makedirs()
 		if self.code and hasattr(self.code, 'pull'):
 			self.notifyStage("Pulling")
 			return getattr(self.code, 'pull')()
 
 	def build(self):
+		self.makedirs()
 		subprocess.call(['cp', '-Trf', self.sourcedir, self.builddir])
 		if self.code and hasattr(self.code, 'build'):
 			self.notifyStage("Building")
 			return getattr(self.code, 'build')()
 
 	def test(self):
+		self.makedirs()
 		if self.code and hasattr(self.code, 'test'):
 			self.notifyStage("Testing")
 			return getattr(self.code, 'test')()
 
 	def stage(self):
-		try: os.makedirs(self.stagedir)
-		except: pass
+		self.makedirs()
 		if self.code and hasattr(self.code, 'stage'):
 			self.notifyStage("Staging")
 			return getattr(self.code, 'stage')()
 
 	def deploy(self):
-		try: os.makedirs(self.snapdir)
-		except: pass
+		self.makedirs()
 		if self.code and hasattr(self.code, 'deploy'):
 			self.notifyStage("Deploying")
 			return getattr(self.code, 'deploy')()
