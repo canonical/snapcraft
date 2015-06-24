@@ -135,8 +135,8 @@ if includedPackages:
 	allParts = [part] + allParts
 
 env = []
-env.append("PATH=\"%s/bin:$PATH\"" % snapcraft.common.stagedir)
-env.append("LD_LIBRARY_PATH=\"%s/lib:$LD_LIBRARY_PATH\"" % snapcraft.common.stagedir)
+env.append("PATH=\"%s/bin:%s/usr/bin:$PATH\"" % (snapcraft.common.stagedir, snapcraft.common.stagedir))
+env.append("LD_LIBRARY_PATH=\"%s/lib:%s/usr/lib:$LD_LIBRARY_PATH\"" % (snapcraft.common.stagedir, snapcraft.common.stagedir))
 env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % snapcraft.common.stagedir)
 env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % snapcraft.common.stagedir)
 
@@ -150,9 +150,33 @@ if cmds[0] == "shell":
 	snapcraft.common.run(userCommand)
 
 elif cmds[0] == "assemble":
-		snapcraft.common.run(
-				"cp -arv %s %s" % (data["snap"]["meta"], snapdir))
-		snapcraft.common.run("snappy build", cwd=snapdir)
+	snapcraft.common.run(
+			"cp -arv %s %s" % (data["snap"]["meta"], snapcraft.common.snapdir))
+
+	# wrap all included commands
+	for part in allParts:
+		env += part.env()
+	snapcraft.common.env = env
+	script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assembleEnv().replace(snapcraft.common.stagedir, "$SNAP_APP_PATH")
+
+	def wrapBins(bindir):
+		absbindir = os.path.join(snapcraft.common.snapdir, bindir)
+		if not os.path.exists(absbindir):
+			return
+		for exe in os.listdir(absbindir):
+			if exe.endswith('.real'):
+				continue
+			exePath = os.path.join(absbindir, exe)
+			try: os.remove(exePath + '.real')
+			except: pass
+			os.rename(exePath, exePath + '.real')
+			with open(exePath, 'w+') as f:
+				f.write(script % ('"$SNAP_APP_PATH/' + bindir + '/' + exe + '.real"'))
+			os.chmod(exePath, 0o755)
+	wrapBins('bin')
+	wrapBins('usr/bin')
+
+	snapcraft.common.run("snappy build " + snapcraft.common.snapdir)
 
 
 elif cmds[0] == "run":

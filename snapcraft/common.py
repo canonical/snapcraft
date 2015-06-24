@@ -16,7 +16,7 @@ def run(cmd, **kwargs):
 	if isinstance(cmd, list):
 		cmd = ' '.join(cmd)
 	with tempfile.NamedTemporaryFile(mode='w+') as f:
-		f.write(assembleEnv(env))
+		f.write(assembleEnv())
 		f.write('\n')
 		f.write('exec ' + cmd)
 		f.flush()
