@@ -125,7 +125,8 @@ if cmds[0] == "shell":
 	snapcraft.common.run(userCommand)
 else:
 	for part in allParts:
+		env += part.env()
 		snapcraft.common.env = env
 		for cmd in cmds:
 			getattr(part, cmd)()
-		env += part.env()
+
