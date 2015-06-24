@@ -6,7 +6,7 @@ int main()
     pipeline *p;
     int status;
 
-    printf("running ls | grep c\n");
+    printf("running ls | grep s | grep t\n");
 
     p = pipeline_new ();
     pipeline_command_args (p, "ls", NULL);
