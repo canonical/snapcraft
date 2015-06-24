@@ -8,37 +8,25 @@ import yaml
 
 sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..")))
 import snapcraft
-
-
-def loadPlugin(name):
-	plugins = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
-	path = os.path.join(plugins, name + ".py")
-	loader = importlib.machinery.SourceFileLoader("snapcraft.plugins." + name, path)
-	module = loader.load_module()
-	for propName in dir(module):
-		prop = getattr(module, propName)
-		if issubclass(prop, snapcraft.BaseHandler):
-			return prop
+import snapcraft.plugin
 
 cmds = sys.argv[1:]
 if cmds == ["all"]:
 	cmds = ["init", "pull", "build", "test", "stage", "deploy"]
 
 data = yaml.load(open("craft.yaml", 'r'))
+pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
 
-for part in data["parts"]:
-	class Options(): pass
-	options = Options()
+for partName in data["parts"]:
+	properties = data["parts"][partName]
 
-	properties = data["parts"][part]
-
-	pluginName = properties.get("plugin", part)
-	pluginClass = loadPlugin(pluginName)
+	pluginName = properties.get("plugin", partName)
 	if "plugin" in properties: del properties["plugin"]
 
-	for prop in properties:
-		setattr(options, prop, properties[prop])
+	plugin = snapcraft.plugin.Plugin(pluginDir, pluginName, properties)
+	if not plugin.isValid():
+		print("Could not load plugin %s" % pluginName, file=sys.stderr)
+		sys.exit(1)
 
-	plugin = pluginClass(part, options)
 	for cmd in cmds:
 		getattr(plugin, cmd)()
