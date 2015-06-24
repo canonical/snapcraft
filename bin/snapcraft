@@ -4,6 +4,7 @@
 import os
 import subprocess
 import sys
+import tempfile
 import yaml
 
 sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..")))
@@ -12,11 +13,14 @@ import snapcraft.plugin
 
 cmds = sys.argv[1:]
 if cmds == ["all"]:
-	cmds = ["init", "pull", "build", "test", "stage", "deploy"]
+	cmds = ["pull", "build", "test", "stage", "deploy"]
+elif not cmds:
+	print("Need an argument", file=sys.stderr)
+	sys.exit(1)
 
 data = yaml.load(open("craft.yaml", 'r'))
 
-packagesToInstall = data.get('packages', [])
+packagesToInstall = data.get('systemPackages', [])
 allParts = []
 
 def loadPlugin(partName, pluginName, properties):
@@ -29,7 +33,7 @@ def loadPlugin(partName, pluginName, properties):
 		print("Could not load part %s" % pluginName, file=sys.stderr)
 		sys.exit(1)
 
-	packagesToInstall += part.config.get('packages', [])
+	packagesToInstall += part.config.get('systemPackages', [])
 	allParts.append(part)
 	return part
 
@@ -71,5 +75,19 @@ if packagesToInstall:
 	subprocess.call(['sudo', 'apt-get', 'install'] + packagesToInstall, stdout=subprocess.DEVNULL)
 
 for part in allParts:
-	for cmd in cmds:
-		getattr(part, cmd)()
+	if cmds[0] == "shell":
+		userCommand = ' '.join(cmds[1:])
+		if not userCommand:
+			userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft\w\$\[\e[0m\] ' /bin/bash --norc"
+		env = []
+		for cmd in cmds:
+			env += part.env()
+		with tempfile.NamedTemporaryFile(mode='w+') as f:
+			f.write('\n'.join(env))
+			f.write('\n')
+			f.write('exec ' + userCommand)
+			f.flush()
+			subprocess.call(['/bin/sh', f.name])
+	else:
+		for cmd in cmds:
+			getattr(part, cmd)()

@@ -1,4 +1,4 @@
-packages: [autoconf, automake, autopoint]
+systemPackages: [autoconf, automake, autopoint]
 options:
     source:
         required: true

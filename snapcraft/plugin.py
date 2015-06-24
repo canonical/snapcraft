@@ -3,6 +3,7 @@
 import importlib.machinery
 import os
 import snapcraft
+import subprocess
 import sys
 import yaml
 
@@ -57,15 +58,19 @@ class Plugin:
 
 	def init(self):
 		if self.code and hasattr(self.code, 'init'):
-			self.notifyStage("Initializing")
 			return getattr(self.code, 'init')()
 
 	def pull(self):
+		try: os.makedirs(os.path.join(os.getcwd(), "parts", self.name, "src"))
+		except: pass
 		if self.code and hasattr(self.code, 'pull'):
 			self.notifyStage("Pulling")
 			return getattr(self.code, 'pull')()
 
 	def build(self):
+		try: os.makedirs(os.path.join(os.getcwd(), "parts", self.name, "build"))
+		except: pass
+		subprocess.call(['cp', '-Trf', self.sourcedir, self.builddir)
 		if self.code and hasattr(self.code, 'build'):
 			self.notifyStage("Building")
 			return getattr(self.code, 'build')()
@@ -76,11 +81,20 @@ class Plugin:
 			return getattr(self.code, 'test')()
 
 	def stage(self):
+		try: os.makedirs(os.path.join(os.getcwd(), "staging"))
+		except: pass
 		if self.code and hasattr(self.code, 'stage'):
 			self.notifyStage("Staging")
 			return getattr(self.code, 'stage')()
 
 	def deploy(self):
+		try: os.makedirs(os.path.join(os.getcwd(), "snap"))
+		except: pass
 		if self.code and hasattr(self.code, 'deploy'):
 			self.notifyStage("Deploying")
 			return getattr(self.code, 'deploy')()
+
+	def env(self):
+		if self.code and hasattr(self.code, 'env'):
+			return getattr(self.code, 'env')()
+		return []

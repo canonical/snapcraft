@@ -16,8 +16,6 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
             os.makedirs(self.godir)
         except FileExistsError:
             pass
-    def init(self):
-        super().init()
     def pull(self):
         super().pull()
         self.pullBranch(self.options.source)

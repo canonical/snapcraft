@@ -11,27 +11,24 @@ class BaseHandler:
 		self.options = options
 		self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
 		self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
-		self.stagedir = os.path.join(os.getcwd(), "parts", "stage")
+		self.stagedir = os.path.join(os.getcwd(), "staging")
 		self.snapdir = os.path.join(os.getcwd(), "snap")
 
     # The API
 	def init(self):
-		try: os.makedirs(self.sourcedir)
-		except: pass
-		try: os.makedirs(self.builddir)
-		except: pass
-		try: os.makedirs(self.stagedir)
-		except: pass
+		return ''
 	def pull(self):
 		pass
 	def build(self):
-		self.run("cp -Trf " + self.sourcedir + " " + self.builddir)
+		pass
 	def stage(self):
 		pass
 	def deploy(self):
 		pass
 	def test(self):
 		pass
+	def env(self):
+		return []
 
     # Helpers
 	def run(self, cmd, cwd=None):
@@ -60,5 +57,5 @@ class BaseHandler:
 		except: pass
 
 		for d in dirs:
-			self.run("cp -vr " + d + " " + self.snapdir, cwd=self.stagedir)
+			self.run("cp -rf " + d + " " + self.snapdir, cwd=self.stagedir)
 

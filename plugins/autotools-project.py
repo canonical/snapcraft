@@ -9,8 +9,6 @@ class AutotoolsHandler(snapcraft.BaseHandler):
 		super().__init__(name, options)
 		if self.options.configflags is None:
 			self.options.configflags = ''
-	def init(self):
-		super().init()
 	def pull(self):
 		super().pull()
 		self.pullBranch(self.options.source)
