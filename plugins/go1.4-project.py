@@ -30,7 +30,7 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
         self.doDeploy([os.path.join(self.godir, "bin")])
     def test(self):
         super().test()
-        self.run("GOPATH=%s go test %s", (self.godir, self.fullname))
+        self.run("GOPATH=%s go test %s" % (self.godir, self.fullname))
 
 
 if __name__ == "__main__":
