@@ -1,0 +1,81 @@
+# -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
+
+import apt
+import os
+import snapcraft.common
+import subprocess
+import sys
+
+class SnapcraftHandler(snapcraft.BaseHandler):
+
+	def __init__(self, name, options):
+		super().__init__(name, options)
+		self.debdir = os.path.join(os.getcwd(), "parts", self.name, "debs")
+		self.downloadablePackages = []
+		self.includedPackages = []
+	def pull(self):
+		#FIXME print('MIKE:', self.includedPackages)
+		self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
+		return self.downloadDebs(self.downloadablePackages)
+	def stage(self):
+		if not self.downloadablePackages:
+			self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
+		return self.unpackDebs(self.downloadablePackages, self.stagedir)
+	def deploy(self):
+		if not self.downloadablePackages:
+			self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
+		return self.unpackDebs(self.downloadablePackages, self.snapdir)
+
+	def getAllDepPackages(self, packages):
+		cache = apt.Cache()
+		alldeps = set()
+		manifestdeps = set()
+		skipped = set()
+
+		with open(os.path.abspath(os.path.join(__file__, '..', 'manifest.txt'))) as f:
+			for line in f:
+				pkg = line.strip()
+				if pkg in cache:
+				    manifestdeps.add(pkg)
+
+		def addDeps(pkgs):
+			for p in pkgs:
+				if p in alldeps:
+					continue
+				if p in manifestdeps and p not in packages:
+					skipped.add(p)
+					continue
+				try:
+					deps = set()
+					candidatePkg = cache[p].candidate
+					deps = candidatePkg.dependencies + candidatePkg.recommends
+					alldeps.add(p)
+					addDeps([x[0].name for x in deps])
+				except:
+					pass
+
+		addDeps(packages)
+
+		exit = False
+		for p in packages:
+			if p not in alldeps:
+				exit = True
+				snapcraft.common.log("Package %s not recognized" % p, file=sys.stderr)
+		if exit:
+			sys.exit(1)
+
+		return sorted(alldeps)
+
+	def downloadDebs(self, pkgs):
+		try: os.makedirs(self.debdir)
+		except: pass
+		if pkgs:
+			return self.run(['dget'] + pkgs, cwd=self.debdir, stdout=subprocess.DEVNULL)
+		else:
+			return True
+
+	def unpackDebs(self, pkgs, targetDir):
+		for p in pkgs:
+			if not self.run(['dpkg-deb', '--extract', p + '_*.deb', targetDir], cwd=self.debdir):
+				return False
+		return True

@@ -2,21 +2,29 @@
 
 # Data/methods shared between plugins and snapcraft
 
+import os
 import subprocess
 import tempfile
 
 env = []
-def run(cmd, cwd=None):
+
+def assembleEnv():
+	return '\n'.join(['export ' + e for e in env])
+
+def run(cmd, **kwargs):
 	# FIXME: This is gross to keep writing this, even when env is the same
+	if isinstance(cmd, list):
+		cmd = ' '.join(cmd)
 	with tempfile.NamedTemporaryFile(mode='w+') as f:
-		f.write('export ')
-		f.write('\nexport '.join(env))
+		f.write(assembleEnv(env))
 		f.write('\n')
 		f.write('exec ' + cmd)
 		f.flush()
-		return subprocess.call(['/bin/sh', f.name], cwd=cwd) == 0
+		return subprocess.call(['/bin/sh', f.name], **kwargs) == 0
 
-def log(msg):
-	print('\033[01m' + msg + '\033[0m')
+def log(msg, file=None):
+	print('\033[01m' + msg + '\033[0m', file=None)
 
 commandOrder = ["pull", "build", "test", "stage", "deploy"]
+stagedir = os.path.join(os.getcwd(), "staging")
+snapdir = os.path.join(os.getcwd(), "snap")

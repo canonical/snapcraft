@@ -30,12 +30,12 @@ class BaseHandler:
 		return []
 
     # Helpers
-	def run(self, cmd, cwd=None):
+	def run(self, cmd, cwd=None, **kwargs):
 		if cwd is None:
 			cwd = self.builddir
 		if False:
 			print(cmd)
-		return snapcraft.common.run(cmd, cwd=cwd)
+		return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
 	def pullBranch(self, url):
 		if url.startswith("bzr:") or url.startswith("lp:"):

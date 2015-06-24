@@ -10,7 +10,7 @@ import yaml
 
 class Plugin:
 
-	def __init__(self, pluginDir, name, partName, properties, loadCode=True):
+	def __init__(self, pluginDir, name, partName, properties, loadCode=True, loadConfig=True):
 		self.valid = False
 		self.code = None
 		self.config = None
@@ -22,25 +22,27 @@ class Plugin:
 		self.snapdir = os.path.join(os.getcwd(), "snap")
 		self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
-		configPath = os.path.join(pluginDir, name + ".yaml")
-		if not os.path.exists(configPath):
-			snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
-			return
-		self.config = yaml.load(open(configPath, 'r')) or {}
+		if loadConfig:
+			configPath = os.path.join(pluginDir, name + ".yaml")
+			if not os.path.exists(configPath):
+				snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
+				return
+			self.config = yaml.load(open(configPath, 'r')) or {}
 
 		codePath = os.path.join(pluginDir, name + ".py")
 		if loadCode and os.path.exists(codePath):
 			class Options(): pass
 			options = Options()
 
-			for opt in self.config.get('options', []):
-				if opt in properties:
-					setattr(options, opt, properties[opt])
-				else:
-					if self.config['options'][opt].get('required', False):
-						snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
-						return
-					setattr(options, opt, None)
+			if self.config:
+				for opt in self.config.get('options', []):
+					if opt in properties:
+						setattr(options, opt, properties[opt])
+					else:
+						if self.config['options'][opt].get('required', False):
+							snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+							return
+						setattr(options, opt, None)
 
 			loader = importlib.machinery.SourceFileLoader("snapcraft.plugins." + name, codePath)
 			module = loader.load_module()

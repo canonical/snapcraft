@@ -14,21 +14,23 @@ import snapcraft
 import snapcraft.common
 import snapcraft.plugin
 
-packagesToInstall = []
+systemPackages = []
+includedPackages = []
 allParts = []
 afterRequests = {}
 
-def loadPlugin(partName, pluginName, properties, loadCode=True):
-	global allParts, packagesToInstall
+pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
 
-	pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
+def loadPlugin(partName, pluginName, properties, loadCode=True):
+	global allParts, systemPackages, includedPackages
 
 	part = snapcraft.plugin.Plugin(pluginDir, pluginName, partName, properties, loadCode=loadCode)
 	if not part.isValid():
 		snapcraft.common.log("Could not load part %s" % pluginName, file=sys.stderr)
 		sys.exit(1)
 
-	packagesToInstall += part.config.get('systemPackages', [])
+	systemPackages += part.config.get('systemPackages', [])
+	includedPackages += part.config.get('includedPackages', [])
 	allParts.append(part)
 	return part
 
@@ -47,8 +49,8 @@ if cmds[0] == "all":
 	cmds = snapcraft.common.commandOrder
 else:
 	if cmds[0] in snapcraft.common.commandOrder:
-			forceCommand = cmds[0]
-			cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
+		forceCommand = cmds[0]
+		cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
 
 if cmds[0] == "init":
 	if os.path.exists("craft.yaml"):
@@ -71,7 +73,8 @@ if cmds[0] == "init":
 	sys.exit(0)				
 
 data = yaml.load(open("craft.yaml", 'r'))
-packagesToInstall = data.get('systemPackages', [])
+systemPackages = data.get('systemPackages', [])
+includedPackages = data.get('includedPackages', [])
 
 for partName in data["parts"]:
 	properties = data["parts"][partName]
@@ -117,23 +120,25 @@ while partsToSort:
 				break
 
 # Install local packages that we need
-if packagesToInstall:
+if systemPackages:
 	newPackages = []
-	for checkpkg in packagesToInstall:
+	for checkpkg in systemPackages:
 		if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
 			newPackages.append(checkpkg)
 	if newPackages:
 		print("Installing required packages on the host system: " + ", ".join(newPackages))
 		subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
-stagedir = os.path.join(os.getcwd(), "staging")
-snapdir = os.path.join(os.getcwd(), "snap")
+if includedPackages:
+	part = snapcraft.plugin.Plugin(pluginDir, 'snapcraft', 'includedPackages', {}, loadConfig=False)
+	part.includedPackages = includedPackages
+	allParts = [part] + allParts
 
 env = []
-env.append("PATH=\"%s/bin:$PATH\"" % stagedir)
-env.append("LD_LIBRARY_PATH=\"%s/lib:$LD_LIBRARY_PATH\"" % stagedir)
-env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % stagedir)
-env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % stagedir)
+env.append("PATH=\"%s/bin:$PATH\"" % snapcraft.common.stagedir)
+env.append("LD_LIBRARY_PATH=\"%s/lib:$LD_LIBRARY_PATH\"" % snapcraft.common.stagedir)
+env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % snapcraft.common.stagedir)
+env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % snapcraft.common.stagedir)
 
 if cmds[0] == "shell":
 	for part in allParts:
@@ -197,6 +202,7 @@ else:
 		snapcraft.common.env = env
 		for cmd in cmds:
 			force = forceAll or cmd == forceCommand
+			#FIXME if hasattr(part, 'includedPackages'): print(part.includedPackages)
 			if not getattr(part, cmd)(force=force):
 				snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
 				sys.exit(1)
