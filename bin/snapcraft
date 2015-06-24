@@ -74,20 +74,21 @@ while partsToSort:
 if packagesToInstall:
 	subprocess.call(['sudo', 'apt-get', 'install'] + packagesToInstall, stdout=subprocess.DEVNULL)
 
+env = []
 for part in allParts:
-	if cmds[0] == "shell":
-		userCommand = ' '.join(cmds[1:])
-		if not userCommand:
-			userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft\w\$\[\e[0m\] ' /bin/bash --norc"
-		env = []
-		for cmd in cmds:
-			env += part.env()
-		with tempfile.NamedTemporaryFile(mode='w+') as f:
-			f.write('\n'.join(env))
-			f.write('\n')
-			f.write('exec ' + userCommand)
-			f.flush()
-			subprocess.call(['/bin/sh', f.name])
-	else:
+	env += part.env()
+
+if cmds[0] == "shell":
+	userCommand = ' '.join(cmds[1:])
+	if not userCommand:
+		userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft\w\$\[\e[0m\] ' /bin/bash --norc"
+	with tempfile.NamedTemporaryFile(mode='w+') as f:
+		f.write('\n'.join(env))
+		f.write('\n')
+		f.write('exec ' + userCommand)
+		f.flush()
+		subprocess.call(['/bin/sh', f.name])
+else:
+	for part in allParts:
 		for cmd in cmds:
 			getattr(part, cmd)()
