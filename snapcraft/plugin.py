@@ -8,11 +8,17 @@ import yaml
 
 
 class Plugin:
-	code = None
-	config = None
 
-	def __init__(self, pluginDir, name, properties):
+	def __init__(self, pluginDir, name, partName, properties):
+		self.valid = False
+		self.code = None
+		self.config = None
+		self.partNames = []
+
 		configPath = os.path.join(pluginDir, name + ".yaml")
+		if not os.path.exists(configPath):
+			print("Missing config for part %s" % (name), file=sys.stderr)
+			return
 		self.config = yaml.load(open(configPath, 'r'))
 
 		codePath = os.path.join(pluginDir, name + ".py")
@@ -25,7 +31,6 @@ class Plugin:
 					setattr(options, opt, properties[opt])
 				else:
 					if self.config['options'][opt].get('required', False):
-						self.config = None
 						print("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
 						return
 					setattr(options, opt, None)
@@ -38,9 +43,14 @@ class Plugin:
 					self.code = prop(name, options)
 					break
 
+		self.partNames.append(partName)
+		self.valid = True
 
 	def isValid(self):
-		return self.code or self.config
+		return self.valid
+
+	def names(self):
+		return self.partNames
 
 	def init(self):
 		if self.code and hasattr(self.code, 'init'):

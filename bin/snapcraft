@@ -15,9 +15,23 @@ if cmds == ["all"]:
 	cmds = ["init", "pull", "build", "test", "stage", "deploy"]
 
 data = yaml.load(open("craft.yaml", 'r'))
-pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
 
 packagesToInstall = []
+allParts = []
+
+def loadPlugin(partName, pluginName, properties):
+	global allParts, packagesToInstall
+
+	pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
+
+	part = snapcraft.plugin.Plugin(pluginDir, pluginName, partName, properties)
+	if not part.isValid():
+		print("Could not load part %s" % pluginName, file=sys.stderr)
+		sys.exit(1)
+
+	packagesToInstall += part.config.get('packages', [])
+	allParts.append(part)
+	return part
 
 for partName in data["parts"]:
 	properties = data["parts"][partName]
@@ -25,18 +39,37 @@ for partName in data["parts"]:
 	pluginName = properties.get("plugin", partName)
 	if "plugin" in properties: del properties["plugin"]
 
-	plugin = snapcraft.plugin.Plugin(pluginDir, pluginName, properties)
-	if not plugin.isValid():
-		print("Could not load plugin %s" % pluginName, file=sys.stderr)
-		sys.exit(1)
+	loadPlugin(partName, pluginName, properties)
 
-	if plugin.config:
-		packagesToInstall += plugin.config.get('packages', [])
+# Grab all required dependencies, if not already specified
+newParts = allParts.copy()
+while newParts:
+	part = newParts.pop(0)
+	requires = part.config.get('requires', [])
+	for requiredPart in requires:
+		alreadyPresent = False
+		for p in allParts:
+			if requiredPart in p.names():
+				alreadyPresent = True
+				break
+		if not alreadyPresent:
+			newParts.append(loadPlugin(requiredPart, requiredPart, {}))
+
+# Now sort them
+partsToSort = allParts.copy()
+while partsToSort:
+	part = partsToSort.pop(0)
+	requires = part.config.get('requires', [])
+	for requiredPart in requires:
+		for i in range(len(allParts)):
+			if requiredPart in allParts[i].names():
+				allParts.insert(0, allParts.pop(i))
+				break
 
 # FIXME: don't do this step if we don't need to (to avoid sudo prompt)
 if packagesToInstall:
 	subprocess.call(['sudo', 'apt-get', 'install'] + packagesToInstall, stdout=subprocess.DEVNULL)
 
-for partName in data["parts"]:
+for part in allParts:
 	for cmd in cmds:
-		getattr(plugin, cmd)()
+		getattr(part, cmd)()
