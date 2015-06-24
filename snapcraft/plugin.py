@@ -40,7 +40,7 @@ class Plugin:
 			for propName in dir(module):
 				prop = getattr(module, propName)
 				if issubclass(prop, snapcraft.BaseHandler):
-					self.code = prop(name, options)
+					self.code = prop(partName, options)
 					break
 
 		self.partNames.append(partName)
