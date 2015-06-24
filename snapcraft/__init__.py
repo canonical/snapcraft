@@ -60,5 +60,5 @@ class BaseHandler:
 		except: pass
 
 		for d in dirs:
-			self.run("cp -vr " + d + " " + self.stagedir)
+			self.run("cp -vr " + d + " " + self.snapdir, cwd=self.stagedir)
 

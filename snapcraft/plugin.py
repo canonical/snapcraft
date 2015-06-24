@@ -52,26 +52,35 @@ class Plugin:
 	def names(self):
 		return self.partNames
 
+	def notifyStage(self, stage):
+		print('\033[01m' + stage + " " + self.partNames[0] + '\033[0m')
+
 	def init(self):
 		if self.code and hasattr(self.code, 'init'):
+			self.notifyStage("Initializing")
 			return getattr(self.code, 'init')()
 
 	def pull(self):
 		if self.code and hasattr(self.code, 'pull'):
+			self.notifyStage("Pulling")
 			return getattr(self.code, 'pull')()
 
 	def build(self):
 		if self.code and hasattr(self.code, 'build'):
+			self.notifyStage("Building")
 			return getattr(self.code, 'build')()
 
 	def test(self):
 		if self.code and hasattr(self.code, 'test'):
+			self.notifyStage("Testing")
 			return getattr(self.code, 'test')()
 
 	def stage(self):
 		if self.code and hasattr(self.code, 'stage'):
+			self.notifyStage("Staging")
 			return getattr(self.code, 'stage')()
 
 	def deploy(self):
 		if self.code and hasattr(self.code, 'deploy'):
+			self.notifyStage("Deploying")
 			return getattr(self.code, 'deploy')()
