@@ -25,7 +25,7 @@ class BaseHandler:
 	def pull(self):
 		pass
 	def build(self):
-		self.run("cp -Tr " + self.sourcedir + " " + self.builddir)
+		self.run("cp -Trf " + self.sourcedir + " " + self.builddir)
 	def stage(self):
 		pass
 	def deploy(self):
@@ -37,7 +37,7 @@ class BaseHandler:
 	def run(self, cmd, cwd=None):
 		if cwd is None:
 			cwd = self.builddir
-		if True:
+		if False:
 			print(cmd)
 		subprocess.call(cmd, shell=True, cwd=cwd)
 
