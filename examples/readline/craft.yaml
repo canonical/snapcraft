@@ -1,0 +1,5 @@
+parts:
+    readline:
+        plugin: autotools-project
+        source: git://git.sv.gnu.org/readline.git
+        configflags: ''

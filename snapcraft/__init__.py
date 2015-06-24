@@ -37,13 +37,21 @@ class BaseHandler:
 	def run(self, cmd, cwd=None):
 		if cwd is None:
 			cwd = self.builddir
+		if True:
+			print(cmd)
 		subprocess.call(cmd, shell=True, cwd=cwd)
 
 	def pullBranch(self, url):
 		if url.startswith("bzr:") or url.startswith("lp:"):
-			self.run("bzr branch " + url + " " + self.sourcedir)
+			if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
+				self.run("bzr pull", self.sourcedir)
+			else:
+				self.run("bzr branch " + url + " .", self.sourcedir)
 		elif url.startswith("git:"):
-			self.run("git clone " + url + " " + self.sourcedir)
+			if os.path.exists(os.path.join(self.sourcedir, ".git")):
+				self.run("git pull", self.sourcedir)
+			else:
+				self.run("git clone " + url + " .", self.sourcedir)
 		else:
 			raise Exception("Did not recognize branch url: " + url)
 
