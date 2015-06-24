@@ -10,7 +10,7 @@ import yaml
 
 class Plugin:
 
-	def __init__(self, pluginDir, name, partName, properties, loadCode=True, loadConfig=True):
+	def __init__(self, pluginDir, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
 		self.valid = False
 		self.code = None
 		self.config = None
@@ -43,6 +43,8 @@ class Plugin:
 							snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
 							return
 						setattr(options, opt, None)
+			if optionsOverride:
+				options = optionsOverride
 
 			loader = importlib.machinery.SourceFileLoader("snapcraft.plugins." + name, codePath)
 			module = loader.load_module()

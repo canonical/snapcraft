@@ -12,15 +12,17 @@ class SnapcraftHandler(snapcraft.BaseHandler):
 		super().__init__(name, options)
 		self.debdir = os.path.join(os.getcwd(), "parts", self.name, "debs")
 		self.downloadablePackages = []
-		self.includedPackages = []
+		self.includedPackages = options.includedPackages
+
 	def pull(self):
-		#FIXME print('MIKE:', self.includedPackages)
 		self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
 		return self.downloadDebs(self.downloadablePackages)
+
 	def stage(self):
 		if not self.downloadablePackages:
 			self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
 		return self.unpackDebs(self.downloadablePackages, self.stagedir)
+
 	def deploy(self):
 		if not self.downloadablePackages:
 			self.downloadablePackages = self.getAllDepPackages(self.includedPackages)

@@ -8,4 +8,4 @@ parts:
         plugin: autotools-project
         source: lp:~mterry/libpipeline/printf
 snap:
-  meta: ./meta/
+  meta: meta

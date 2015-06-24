@@ -1,0 +1,4 @@
+includedPackages:
+    - wget
+snap:
+  meta: meta

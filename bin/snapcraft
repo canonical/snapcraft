@@ -76,7 +76,7 @@ data = yaml.load(open("craft.yaml", 'r'))
 systemPackages = data.get('systemPackages', [])
 includedPackages = data.get('includedPackages', [])
 
-for partName in data["parts"]:
+for partName in data.get("parts", []):
 	properties = data["parts"][partName]
 
 	pluginName = properties.get("plugin", partName)
@@ -130,7 +130,10 @@ if systemPackages:
 		subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
 if includedPackages:
-	part = snapcraft.plugin.Plugin(pluginDir, 'snapcraft', 'includedPackages', {}, loadConfig=False)
+	class Options: pass
+	options = Options()
+	setattr(options, 'includedPackages', includedPackages)
+	part = snapcraft.plugin.Plugin(pluginDir, 'snapcraft', 'includedPackages', {}, optionsOverride=options, loadConfig=False)
 	part.includedPackages = includedPackages
 	allParts = [part] + allParts
 
@@ -226,7 +229,6 @@ else:
 		snapcraft.common.env = env
 		for cmd in cmds:
 			force = forceAll or cmd == forceCommand
-			#FIXME if hasattr(part, 'includedPackages'): print(part.includedPackages)
 			if not getattr(part, cmd)(force=force):
 				snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
 				sys.exit(1)
