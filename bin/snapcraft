@@ -16,7 +16,7 @@ if cmds == ["all"]:
 
 data = yaml.load(open("craft.yaml", 'r'))
 
-packagesToInstall = []
+packagesToInstall = data.get('packages', [])
 allParts = []
 
 def loadPlugin(partName, pluginName, properties):
