@@ -2,3 +2,6 @@
 
 all:
 	gcc -o test ./test.c $(CFLAGS) $(LDFLAGS) -lpipeline
+
+clean:
+	rm -f test

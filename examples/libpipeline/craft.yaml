@@ -1,4 +1,8 @@
 parts:
+    pipelinetest:
+        plugin: make-project
+        source: lp:~mterry/+junk/pipelinetest
+        after: libpipeline
     libpipeline:
         plugin: autotools-project
         source: lp:~mterry/libpipeline/printf

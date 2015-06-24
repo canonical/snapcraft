@@ -1,9 +1,12 @@
 #include <pipeline.h>
+#include <stdio.h>
 
 int main()
 {
     pipeline *p;
     int status;
+
+    printf("running ls | grep c\n");
 
     p = pipeline_new ();
     pipeline_command_args (p, "ls", NULL);

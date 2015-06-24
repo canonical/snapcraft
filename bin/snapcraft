@@ -22,6 +22,7 @@ data = yaml.load(open("craft.yaml", 'r'))
 
 packagesToInstall = data.get('systemPackages', [])
 allParts = []
+afterRequests = {}
 
 def loadPlugin(partName, pluginName, properties):
 	global allParts, packagesToInstall
@@ -42,6 +43,10 @@ for partName in data["parts"]:
 
 	pluginName = properties.get("plugin", partName)
 	if "plugin" in properties: del properties["plugin"]
+
+	if "after" in properties:
+		afterRequests[partName] = properties["after"]
+		del properties["after"]
 
 	loadPlugin(partName, pluginName, properties)
 
@@ -67,6 +72,12 @@ while partsToSort:
 	for requiredPart in requires:
 		for i in range(len(allParts)):
 			if requiredPart in allParts[i].names():
+				allParts.insert(0, allParts.pop(i))
+				break
+	afterName = afterRequests.get(part.names()[0])
+	if afterName:
+		for i in range(len(allParts)):
+			if afterName in allParts[i].names():
 				allParts.insert(0, allParts.pop(i))
 				break
 

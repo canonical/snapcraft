@@ -49,6 +49,11 @@ class Plugin:
 					self.code = prop(partName, options)
 					break
 
+		try: os.makedirs(self.sourcedir)
+		except: pass
+		try: os.makedirs(self.builddir)
+		except: pass
+
 		self.partNames.append(partName)
 		self.valid = True
 
@@ -66,15 +71,11 @@ class Plugin:
 			return getattr(self.code, 'init')()
 
 	def pull(self):
-		try: os.makedirs(self.sourcedir)
-		except: pass
 		if self.code and hasattr(self.code, 'pull'):
 			self.notifyStage("Pulling")
 			return getattr(self.code, 'pull')()
 
 	def build(self):
-		try: os.makedirs(self.builddir)
-		except: pass
 		subprocess.call(['cp', '-Trf', self.sourcedir, self.builddir])
 		if self.code and hasattr(self.code, 'build'):
 			self.notifyStage("Building")

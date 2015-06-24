@@ -37,7 +37,7 @@ class BaseHandler:
 			cwd = self.builddir
 		if False:
 			print(cmd)
-		snapcraft.common.run(cmd, cwd)
+		snapcraft.common.run(cmd, cwd=cwd)
 
 	def pullBranch(self, url):
 		if url.startswith("bzr:") or url.startswith("lp:"):
@@ -60,5 +60,7 @@ class BaseHandler:
 
 		for d in dirs:
 			if os.path.exists(d):
-				self.run("cp -rf " + d + " " + self.snapdir, cwd=self.stagedir)
+				try: os.makedirs(os.path.join(self.snapdir, d))
+				except: pass
+				self.run("cp -rf " + d + " " + self.snapdir + "/", cwd=self.stagedir)
 

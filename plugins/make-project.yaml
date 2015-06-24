@@ -1,0 +1,4 @@
+systemPackages: [make]
+options:
+    source:
+        required: true
