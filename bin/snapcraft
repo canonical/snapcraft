@@ -108,8 +108,8 @@ while partsToSort:
 			if requiredPart in allParts[i].names():
 				allParts.insert(0, allParts.pop(i))
 				break
-	afterName = afterRequests.get(part.names()[0])
-	if afterName:
+	afterNames = afterRequests.get(part.names()[0], [])
+	for afterName in afterNames:
 		for i in range(len(allParts)):
 			if afterName in allParts[i].names():
 				allParts.insert(0, allParts.pop(i))
