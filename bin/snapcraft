@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
 
-import importlib.machinery
 import os
+import subprocess
 import sys
 import yaml
 
@@ -17,6 +17,8 @@ if cmds == ["all"]:
 data = yaml.load(open("craft.yaml", 'r'))
 pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
 
+packagesToInstall = []
+
 for partName in data["parts"]:
 	properties = data["parts"][partName]
 
@@ -28,5 +30,13 @@ for partName in data["parts"]:
 		print("Could not load plugin %s" % pluginName, file=sys.stderr)
 		sys.exit(1)
 
+	if plugin.config:
+		packagesToInstall += plugin.config.get('packages', [])
+
+# FIXME: don't do this step if we don't need to (to avoid sudo prompt)
+if packagesToInstall:
+	subprocess.call(['sudo', 'apt-get', 'install'] + packagesToInstall, stdout=subprocess.DEVNULL)
+
+for partName in data["parts"]:
 	for cmd in cmds:
 		getattr(plugin, cmd)()
