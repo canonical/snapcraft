@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
 
 import os
+import snapcraft.common
 import subprocess
 import sys
 
@@ -36,7 +37,7 @@ class BaseHandler:
 			cwd = self.builddir
 		if False:
 			print(cmd)
-		subprocess.call(cmd, shell=True, cwd=cwd)
+		snapcraft.common.run(cmd, cwd)
 
 	def pullBranch(self, url):
 		if url.startswith("bzr:") or url.startswith("lp:"):

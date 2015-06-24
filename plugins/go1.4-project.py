@@ -17,22 +17,17 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
         except FileExistsError:
             pass
     def pull(self):
-        super().pull()
         self.pullBranch(self.options.source)
         self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go get -t %s" % (
 			self.gorootbin, self.goroot, self.godir, self.fullname))
     def build(self):
-        super().build()
         self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go build %s" % (
 			self.gorootbin, self.goroot, self.godir, self.fullname))
     def stage(self):
-        super().stage()
         self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go install %s" % (self.gorootbin, self.goroot, self.godir, self.fullname))
     def deploy(self):
-        super().deploy()
         self.doDeploy([os.path.join(self.godir, "bin")])
     def test(self):
-        super().test()
         self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go test %s" % (self.gorootbin, self.goroot, self.godir, self.fullname))
 
 

@@ -10,22 +10,17 @@ class AutotoolsHandler(snapcraft.BaseHandler):
 		if self.options.configflags is None:
 			self.options.configflags = ''
 	def pull(self):
-		super().pull()
 		self.pullBranch(self.options.source)
 	def build(self):
-		super().build()
 		if not os.path.exists(os.path.join(self.builddir, "configure")):
 			self.run("env NOCONFIGURE=1 ./autogen.sh")
 		self.run("./configure --prefix= " + self.options.configflags)
 		self.run("make all")
 	def stage(self):
-		super().stage()
 		self.run("make install DESTDIR=" + self.stagedir)
 	def deploy(self):
-		super().deploy()
 		self.doDeploy(["bin", "share", "lib"]) # not "include"
 	def test(self):
-		super().test()
 		self.run("make check")
 
 

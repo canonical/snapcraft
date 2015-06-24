@@ -4,11 +4,11 @@
 import os
 import subprocess
 import sys
-import tempfile
 import yaml
 
 sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..")))
 import snapcraft
+import snapcraft.common
 import snapcraft.plugin
 
 cmds = sys.argv[1:]
@@ -74,21 +74,26 @@ while partsToSort:
 if packagesToInstall:
 	subprocess.call(['sudo', 'apt-get', 'install'] + packagesToInstall, stdout=subprocess.DEVNULL)
 
+stagedir = os.path.join(os.getcwd(), "staging")
+snapdir = os.path.join(os.getcwd(), "snap")
+
 env = []
-for part in allParts:
-	env += part.env()
+env.append("PATH=\"%s/bin:$PATH\"" % stagedir)
+env.append("LD_LIBRARY_PATH=\"%s/lib:$LD_LIBRARY_PATH\"" % stagedir)
+#env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % stagedir)
+#env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % stagedir)
 
 if cmds[0] == "shell":
+	for part in allParts:
+		env += part.env()
+	snapcraft.common.env = env
 	userCommand = ' '.join(cmds[1:])
 	if not userCommand:
-		userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft\w\$\[\e[0m\] ' /bin/bash --norc"
-	with tempfile.NamedTemporaryFile(mode='w+') as f:
-		f.write('\n'.join(env))
-		f.write('\n')
-		f.write('exec ' + userCommand)
-		f.flush()
-		subprocess.call(['/bin/sh', f.name])
+		userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
+	snapcraft.common.run(userCommand)
 else:
 	for part in allParts:
+		snapcraft.common.env = env
 		for cmd in cmds:
 			getattr(part, cmd)()
+		env += part.env()

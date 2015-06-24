@@ -22,21 +22,11 @@ class Go14Handler(snapcraft.BaseHandler):
             os.makedirs(self.godir)
         except FileExistsError:
             pass
-    def init(self):
-        super().init()
     def pull(self):
 		# FIXME: use the internal downloader (once its there) to get stuff
         self.run("wget -c %s " % URLS[self.arch], cwd=self.godir)
         if not os.path.exists(os.path.join(self.godir, "go/bin/go")):
             self.run("tar xf %s" % self.tar_file, cwd=self.godir)
-    def build(self):
-        super().build()
-    def stage(self):
-        pass
-    def deploy(self):
-        pass
-    def test(self):
-        pass
 
 
 if __name__ == "__main__":
