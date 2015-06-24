@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
 
+import glob
 import os
 import subprocess
 import sys
@@ -45,11 +46,9 @@ if "--force" in cmds:
 if cmds[0] == "all":
 	cmds = snapcraft.common.commandOrder
 else:
-	if cmds[0] not in snapcraft.common.commandOrder:
-		snapcraft.common.log("Unrecognized command " + cmds[0], file=sys.stderr)
-		sys.exit(1)
-	forceCommand = cmds[0]
-	cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
+	if cmds[0] in snapcraft.common.commandOrder:
+			forceCommand = cmds[0]
+			cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
 
 if cmds[0] == "init":
 	if os.path.exists("craft.yaml"):
@@ -144,6 +143,13 @@ if cmds[0] == "shell":
 	if not userCommand:
 		userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
 	snapcraft.common.run(userCommand)
+
+elif cmds[0] == "assemble":
+		snapcraft.common.run(
+				"cp -arv %s %s" % (data["snap"]["meta"], snapdir))
+		snapcraft.common.run("snappy build", cwd=snapdir)
+
+
 elif cmds[0] == "run":
 		qemudir = os.path.join(os.getcwd(), "image")
 		qemu_img = os.path.join(qemudir, "15.04.img")
@@ -172,12 +178,14 @@ elif cmds[0] == "run":
 				time.sleep(1)
 		snap_dir = os.path.join(os.getcwd(), "snap")
 		# copy the snap
+		snaps = glob.glob(snap_dir+"/*.snap")
 		subprocess.call(
 				["scp"]+ssh_opts+[
-						"-P", "8022", "-r", snap_dir, "ubuntu@localhost:~/"])
+						"-P", "8022", "-r"]+snaps+["ubuntu@localhost:~/"])
 		# install the snap
-		# FIXME
-		pass
+		ret_code =subprocess.call(
+				["ssh"]+ssh_opts+
+				["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
 		# "login"
 		subprocess.call(
 				["ssh"]+ssh_opts+["-p", "8022", "ubuntu@localhost"],

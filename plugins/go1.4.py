@@ -33,7 +33,7 @@ class Go14Handler(snapcraft.BaseHandler):
     def pull(self):
 		# FIXME: use the internal downloader (once its there) to get stuff
         if not self.run("wget -c %s " % URLS[self.arch], cwd=self.godir):
-			return False
+            return False
         if not os.path.exists(os.path.join(self.godir, "go/bin/go")):
             return self.run("tar xf %s" % self.tar_file, cwd=self.godir)
-		return True
+        return True

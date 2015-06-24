@@ -1,0 +1,5 @@
+name: godd
+version: 1.0
+vendor: Michael Vogt <mvo@ubuntu.com>
+binaries:
+  - name: ./bin/godd
