@@ -22,7 +22,7 @@ def loadPlugin(partName, pluginName, properties, loadCode=True):
 
 	part = snapcraft.plugin.Plugin(pluginDir, pluginName, partName, properties, loadCode=loadCode)
 	if not part.isValid():
-		print("Could not load part %s" % pluginName, file=sys.stderr)
+		snapcraft.common.log("Could not load part %s" % pluginName, file=sys.stderr)
 		sys.exit(1)
 
 	packagesToInstall += part.config.get('systemPackages', [])
@@ -30,15 +30,28 @@ def loadPlugin(partName, pluginName, properties, loadCode=True):
 	return part
 
 cmds = sys.argv[1:]
-if cmds == ["all"]:
-	cmds = ["pull", "build", "test", "stage", "deploy"]
-elif not cmds:
-	print("Need an argument", file=sys.stderr)
+if not cmds:
+	snapcraft.common.log("Need an argument", file=sys.stderr)
 	sys.exit(1)
+
+forceAll = False
+forceCommand = None
+if "--force" in cmds:
+	cmds.remove("--force")
+	forceAll = True
+
+if cmds[0] == "all":
+	cmds = snapcraft.common.commandOrder
+else:
+	if cmds[0] not in snapcraft.common.commandOrder:
+		snapcraft.common.log("Unrecognized command " + cmds[0], file=sys.stderr)
+		sys.exit(1)
+	forceCommand = cmds[0]
+	cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
 
 if cmds[0] == "init":
 	if os.path.exists("craft.yaml"):
-		print("craft.yaml already exists!", file=sys.stderr)
+		snapcraft.common.log("craft.yaml already exists!", file=sys.stderr)
 		sys.exit(1)
 	yaml = 'parts:\n'
 	for partName in cmds[1:]:
@@ -51,7 +64,7 @@ if cmds[0] == "init":
 	yaml = yaml.strip()
 	with open('craft.yaml', mode='w+') as f:
 		f.write(yaml)
-	print("Wrote the following as craft.yaml.")
+	snapcraft.common.log("Wrote the following as craft.yaml.")
 	print()
 	print(yaml)
 	sys.exit(0)				
@@ -128,5 +141,8 @@ else:
 		env += part.env()
 		snapcraft.common.env = env
 		for cmd in cmds:
-			getattr(part, cmd)()
+			force = forceAll or cmd == forceCommand
+			if not getattr(part, cmd)(force=force):
+				snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
+				sys.exit(1)
 

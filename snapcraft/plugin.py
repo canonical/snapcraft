@@ -20,10 +20,11 @@ class Plugin:
 		self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
 		self.stagedir = os.path.join(os.getcwd(), "staging")
 		self.snapdir = os.path.join(os.getcwd(), "snap")
+		self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
 		configPath = os.path.join(pluginDir, name + ".yaml")
 		if not os.path.exists(configPath):
-			print("Missing config for part %s" % (name), file=sys.stderr)
+			snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
 			return
 		self.config = yaml.load(open(configPath, 'r')) or {}
 
@@ -37,7 +38,7 @@ class Plugin:
 					setattr(options, opt, properties[opt])
 				else:
 					if self.config['options'][opt].get('required', False):
-						print("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+						snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
 						return
 					setattr(options, opt, None)
 
@@ -68,39 +69,77 @@ class Plugin:
 	def names(self):
 		return self.partNames
 
-	def notifyStage(self, stage):
-		print('\033[01m' + stage + " " + self.partNames[0] + '\033[0m')
+	def notifyStage(self, stage, hint=''):
+		snapcraft.common.log(stage + " " + self.partNames[0] + hint)
 
-	def pull(self):
+	def isDirty(self, stage):
+		try:
+			with open(self.statefile, 'r') as f:
+				lastStep = f.read()
+				return snapcraft.common.commandOrder.index(stage) > snapcraft.common.commandOrder.index(lastStep)
+		except Exception:
+			return True
+
+	def shouldStageRun(self, stage, force):
+		if not force and not self.isDirty(stage):
+			self.notifyStage('Skipping ' + stage, ' (already ran)')
+			return False
+		return True
+
+	def markDone(self, stage):
+		with open(self.statefile, 'w+') as f:
+			f.write(stage)
+
+	def pull(self, force=False):
+		if not self.shouldStageRun('pull', force): return True
 		self.makedirs()
 		if self.code and hasattr(self.code, 'pull'):
 			self.notifyStage("Pulling")
-			return getattr(self.code, 'pull')()
+			if not getattr(self.code, 'pull')():
+				return False
+			self.markDone('pull')
+		return True
 
-	def build(self):
+	def build(self, force=False):
+		if not self.shouldStageRun('build', force): return True
 		self.makedirs()
 		subprocess.call(['cp', '-Trf', self.sourcedir, self.builddir])
 		if self.code and hasattr(self.code, 'build'):
 			self.notifyStage("Building")
-			return getattr(self.code, 'build')()
+			if not getattr(self.code, 'build')():
+				return False
+			self.markDone('build')
+		return True
 
-	def test(self):
+	def test(self, force=False):
+		if not self.shouldStageRun('test', force): return True
 		self.makedirs()
 		if self.code and hasattr(self.code, 'test'):
 			self.notifyStage("Testing")
-			return getattr(self.code, 'test')()
+			if not getattr(self.code, 'test')():
+				return False
+			self.markDone('test')
+		return True
 
-	def stage(self):
+	def stage(self, force=False):
+		if not self.shouldStageRun('stage', force): return True
 		self.makedirs()
 		if self.code and hasattr(self.code, 'stage'):
 			self.notifyStage("Staging")
-			return getattr(self.code, 'stage')()
+			if not getattr(self.code, 'stage')():
+				return False
+			self.markDone('stage')
+		return True
 
-	def deploy(self):
+	def deploy(self, force=False):
+		if not self.shouldStageRun('deploy', force): return True
 		self.makedirs()
 		if self.code and hasattr(self.code, 'deploy'):
 			self.notifyStage("Deploying")
-			return getattr(self.code, 'deploy')()
+			if not getattr(self.code, 'deploy')():
+				return False
+			self.markDone('deploy')
+		return True
 
 	def env(self):
 		if self.code and hasattr(self.code, 'env'):

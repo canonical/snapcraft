@@ -18,23 +18,15 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
             "GOPATH=%s" % self.godir,
         ]
     def pull(self):
-        self.pullBranch(self.options.source)
-        self.run("go get -t %s" % (self.fullname))
+        return self.pullBranch(self.options.source) and self.run("go get -t %s" % (self.fullname))
     def build(self):
-        self.run("go build %s" % (self.fullname))
+        return self.run("go build %s" % (self.fullname))
     def stage(self):
-        self.run("go install %s" % (self.fullname))
-        self.run("cp -vrf %s %s" % (
+        if not self.run("go install %s" % (self.fullname)):
+			return False
+        return self.run("cp -vrf %s %s" % (
             os.path.join(self.godir, "bin"), self.stagedir))
     def deploy(self):
-        self.doDeploy([os.path.join(self.godir, "bin")])
+        return self.doDeploy([os.path.join(self.godir, "bin")])
     def test(self):
-        self.run("go test %s" % (self.fullname))
-
-
-if __name__ == "__main__":
-    class Options:
-        source = "git://github.com/mvo5/godd"
-        configflags = ""
-    handler = Go14ProjectHandler("godd", Options())
-    getattr(handler, sys.argv[1])()
+        return self.run("go test %s" % (self.fullname))

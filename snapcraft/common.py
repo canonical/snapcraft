@@ -14,5 +14,9 @@ def run(cmd, cwd=None):
 		f.write('\n')
 		f.write('exec ' + cmd)
 		f.flush()
-		subprocess.call(['/bin/sh', f.name], cwd=cwd)
+		return subprocess.call(['/bin/sh', f.name], cwd=cwd) == 0
 
+def log(msg):
+	print('\033[01m' + msg + '\033[0m')
+
+commandOrder = ["pull", "build", "test", "stage", "deploy"]

@@ -16,18 +16,16 @@ class BaseHandler:
 		self.snapdir = os.path.join(os.getcwd(), "snap")
 
     # The API
-	def init(self):
-		return ''
 	def pull(self):
-		pass
+		return True
 	def build(self):
-		pass
+		return True
 	def stage(self):
-		pass
+		return True
 	def deploy(self):
-		pass
+		return True
 	def test(self):
-		pass
+		return True
 	def env(self):
 		return []
 
@@ -37,20 +35,20 @@ class BaseHandler:
 			cwd = self.builddir
 		if False:
 			print(cmd)
-		snapcraft.common.run(cmd, cwd=cwd)
+		return snapcraft.common.run(cmd, cwd=cwd)
 
 	def pullBranch(self, url):
 		if url.startswith("bzr:") or url.startswith("lp:"):
 			if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-				self.run("bzr pull " + url, self.sourcedir)
+				return self.run("bzr pull " + url, self.sourcedir)
 			else:
 				os.rmdir(self.sourcedir)
-				self.run("bzr branch " + url + " " + self.sourcedir)
+				return self.run("bzr branch " + url + " " + self.sourcedir)
 		elif url.startswith("git:"):
 			if os.path.exists(os.path.join(self.sourcedir, ".git")):
-				self.run("git pull", self.sourcedir)
+				return self.run("git pull", self.sourcedir)
 			else:
-				self.run("git clone " + url + " .", self.sourcedir)
+				return self.run("git clone " + url + " .", self.sourcedir)
 		else:
 			raise Exception("Did not recognize branch url: " + url)
 
@@ -62,5 +60,7 @@ class BaseHandler:
 			if os.path.exists(d):
 				try: os.makedirs(os.path.join(self.snapdir, d))
 				except: pass
-				self.run("cp -rf " + d + " " + self.snapdir + "/", cwd=self.stagedir)
+				if not self.run("cp -rf " + d + " " + self.snapdir + "/", cwd=self.stagedir):
+					return False
+		return True
 
