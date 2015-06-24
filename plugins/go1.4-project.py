@@ -21,7 +21,7 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
     def pull(self):
         super().pull()
         self.pullBranch(self.options.source)
-        self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go get -v %s" % (
+        self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go get -t %s" % (
 			self.gorootbin, self.goroot, self.godir, self.fullname))
     def build(self):
         super().build()
