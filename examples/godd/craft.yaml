@@ -2,8 +2,3 @@ parts:
   godd:
     plugin: go1.4-project
     source: git://github.com/mvo5/godd
-  go1.4:
-    # FIXME: needs to be infered
-    name: go1.4
-    # FIXME: without that its broken
-    source: none

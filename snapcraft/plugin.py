@@ -19,7 +19,7 @@ class Plugin:
 		if not os.path.exists(configPath):
 			print("Missing config for part %s" % (name), file=sys.stderr)
 			return
-		self.config = yaml.load(open(configPath, 'r'))
+		self.config = yaml.load(open(configPath, 'r')) or {}
 
 		codePath = os.path.join(pluginDir, name + ".py")
 		if os.path.exists(codePath):
