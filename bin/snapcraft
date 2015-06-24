@@ -4,6 +4,8 @@
 import os
 import subprocess
 import sys
+import tempfile
+import time
 import yaml
 
 sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..")))
@@ -142,6 +144,45 @@ if cmds[0] == "shell":
 	if not userCommand:
 		userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
 	snapcraft.common.run(userCommand)
+elif cmds[0] == "run":
+		qemudir = os.path.join(os.getcwd(), "image")
+		qemu_img = os.path.join(qemudir, "15.04.img")
+		if not os.path.exists(qemu_img):
+				try: os.makedirs(qemudir)
+				except FileExistsError: pass
+				snapcraft.common.run(
+						"sudo ubuntu-device-flash core --developer-mode --enable-ssh 15.04 -o %s" % qemu_img,
+						cwd=qemudir)
+		qemu = subprocess.Popen(
+				["kvm", "-m", "768", "-nographic",
+				 "-snapshot", "-redir", "tcp:8022::22", qemu_img],
+				stdin=subprocess.PIPE)
+		n = tempfile.NamedTemporaryFile()
+		ssh_opts = [
+				"-oStrictHostKeyChecking=no",
+				"-oUserKnownHostsFile=%s" % n.name
+		]
+		while True:
+				ret_code =subprocess.call(
+						["ssh"]+ssh_opts+
+						["ubuntu@localhost", "-p", "8022", "true"])
+				if ret_code == 0:
+						break
+				print("Waiting for device")
+				time.sleep(1)
+		snap_dir = os.path.join(os.getcwd(), "snap")
+		# copy the snap
+		subprocess.call(
+				["scp"]+ssh_opts+[
+						"-P", "8022", "-r", snap_dir, "ubuntu@localhost:~/"])
+		# install the snap
+		# FIXME
+		pass
+		# "login"
+		subprocess.call(
+				["ssh"]+ssh_opts+["-p", "8022", "ubuntu@localhost"],
+				preexec_fn=os.setsid)
+		qemu.kill()
 else:
 	for part in allParts:
 		env += part.env()
