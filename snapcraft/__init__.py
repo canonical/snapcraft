@@ -42,9 +42,10 @@ class BaseHandler:
 	def pullBranch(self, url):
 		if url.startswith("bzr:") or url.startswith("lp:"):
 			if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-				self.run("bzr pull", self.sourcedir)
+				self.run("bzr pull " + url, self.sourcedir)
 			else:
-				self.run("bzr branch " + url + " .", self.sourcedir)
+				os.rmdir(self.sourcedir)
+				self.run("bzr branch " + url + " " + self.sourcedir)
 		elif url.startswith("git:"):
 			if os.path.exists(os.path.join(self.sourcedir, ".git")):
 				self.run("git pull", self.sourcedir)
@@ -58,5 +59,6 @@ class BaseHandler:
 		except: pass
 
 		for d in dirs:
-			self.run("cp -rf " + d + " " + self.snapdir, cwd=self.stagedir)
+			if os.path.exists(d):
+				self.run("cp -rf " + d + " " + self.snapdir, cwd=self.stagedir)
 

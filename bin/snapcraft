@@ -80,8 +80,8 @@ snapdir = os.path.join(os.getcwd(), "snap")
 env = []
 env.append("PATH=\"%s/bin:$PATH\"" % stagedir)
 env.append("LD_LIBRARY_PATH=\"%s/lib:$LD_LIBRARY_PATH\"" % stagedir)
-#env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % stagedir)
-#env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % stagedir)
+env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % stagedir)
+env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % stagedir)
 
 if cmds[0] == "shell":
 	for part in allParts:

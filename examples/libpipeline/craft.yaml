@@ -1,0 +1,4 @@
+parts:
+    libpipeline:
+        plugin: autotools-project
+        source: lp:~mterry/libpipeline/printf
