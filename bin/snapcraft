@@ -109,6 +109,7 @@ if packagesToInstall:
 		if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL) != 0:
 			newPackages += checkpkg
 	if newPackages:
+		print("Installing required packages on the host system: " + ", ".join(newPackages))
 		subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
 stagedir = os.path.join(os.getcwd(), "staging")
