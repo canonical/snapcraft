@@ -57,10 +57,10 @@ class BaseHandler:
 		except: pass
 
 		for d in dirs:
-			if os.path.exists(d):
+			if os.path.exists(os.path.join(self.stagedir,d)):
 				try: os.makedirs(os.path.join(self.snapdir, d))
 				except: pass
-				if not self.run("cp -rf " + d + " " + self.snapdir + "/", cwd=self.stagedir):
+				if not self.run("cp -vrf " + d + " " + self.snapdir + "/", cwd=self.stagedir):
 					return False
 		return True
 
