@@ -20,7 +20,7 @@ class Plugin:
 			class Options(): pass
 			options = Options()
 
-			for opt in self.config['options']:
+			for opt in self.config.get('options', []):
 				if opt in properties:
 					setattr(options, opt, properties[opt])
 				else:
