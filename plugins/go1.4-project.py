@@ -8,27 +8,26 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
     def __init__(self, name, options):
         super().__init__(name, options)
         self.fullname = self.options.source.split("://")[1]
-        self.goroot = os.path.join(os.path.join(
-                os.getcwd(), "parts", "go1.4", "go"))
-        self.gorootbin = os.path.join(self.goroot, "bin")
         self.godir = os.path.join(os.path.join(os.getcwd(), "parts", self.name))
         try:
             os.makedirs(self.godir)
         except FileExistsError:
             pass
+    def env(self):
+        return [
+            "GOPATH=%s" % self.godir,
+        ]
     def pull(self):
         self.pullBranch(self.options.source)
-        self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go get -t %s" % (
-			self.gorootbin, self.goroot, self.godir, self.fullname))
+        self.run("go get -t %s" % (self.fullname))
     def build(self):
-        self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go build %s" % (
-			self.gorootbin, self.goroot, self.godir, self.fullname))
+        self.run("go build %s" % (self.fullname))
     def stage(self):
-        self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go install %s" % (self.gorootbin, self.goroot, self.godir, self.fullname))
+        self.run("go install %s" % (self.fullname))
     def deploy(self):
         self.doDeploy([os.path.join(self.godir, "bin")])
     def test(self):
-        self.run("PATH=%s:$PATH GOROOT=%s GOPATH=%s go test %s" % (self.gorootbin, self.goroot, self.godir, self.fullname))
+        self.run("go test %s" % (self.fullname))
 
 
 if __name__ == "__main__":
