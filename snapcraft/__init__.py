@@ -33,7 +33,7 @@ class BaseHandler:
 	def run(self, cmd, cwd=None, **kwargs):
 		if cwd is None:
 			cwd = self.builddir
-		if False:
+		if True:
 			print(cmd)
 		return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 

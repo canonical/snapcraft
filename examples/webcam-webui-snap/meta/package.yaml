@@ -1,0 +1,7 @@
+name: webcam-webui
+version: 1.0.0
+vendor: Loïc Minier <loic.minier@ubuntu.com>
+services:
+ - name: webcam-webui
+   start: bin/webcam-webui
+   security-template: unconfined

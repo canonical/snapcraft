@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+export PATH="${SNAPP_APP_PATH}/bin:${SNAPP_APP_PATH}/usr/bin${PATH:+:$PATH}"
+export LD_LIBRARY_PATH="${SNAPP_APP_PATH}/lib/x86_64-linux-gnu:${SNAPP_APP_PATH}/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+
+cd "$SNAPP_APP_DATA_PATH"
+
+golang-static-http &
+
+while :; do
+    fswebcam shot.jpeg
+    sleep 10
+done
+

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -x
+
+cd $SNAP_APP_DATA_PATH
+cp $SNAP_APP_PATH/web.template .
+export HOME=$SNAP_APP_DATA_PATH
+
+exec $SNAP_APP_PATH/bin/gopasted
