@@ -18,7 +18,7 @@ class Plugin:
 
 		self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
 		self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
-		self.stagedir = os.path.join(os.getcwd(), "staging")
+		self.stagedir = os.path.join(os.getcwd(), "stage")
 		self.snapdir = os.path.join(os.getcwd(), "snap")
 		self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
@@ -135,14 +135,14 @@ class Plugin:
 			self.markDone('stage')
 		return True
 
-	def deploy(self, force=False):
-		if not self.shouldStageRun('deploy', force): return True
+	def snap(self, force=False):
+		if not self.shouldStageRun('snap', force): return True
 		self.makedirs()
-		if self.code and hasattr(self.code, 'deploy'):
+		if self.code and hasattr(self.code, 'snap'):
 			self.notifyStage("Deploying")
-			if not getattr(self.code, 'deploy')():
+			if not getattr(self.code, 'snap')():
 				return False
-			self.markDone('deploy')
+			self.markDone('snap')
 		return True
 
 	def env(self):

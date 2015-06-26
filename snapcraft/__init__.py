@@ -12,7 +12,7 @@ class BaseHandler:
 		self.options = options
 		self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
 		self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
-		self.stagedir = os.path.join(os.getcwd(), "staging")
+		self.stagedir = os.path.join(os.getcwd(), "stage")
 		self.snapdir = os.path.join(os.getcwd(), "snap")
 
     # The API
@@ -22,7 +22,7 @@ class BaseHandler:
 		return True
 	def stage(self):
 		return True
-	def deploy(self):
+	def snap(self):
 		return True
 	def test(self):
 		return True

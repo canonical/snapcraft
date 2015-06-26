@@ -25,6 +25,6 @@ def run(cmd, **kwargs):
 def log(msg, file=None):
 	print('\033[01m' + msg + '\033[0m', file=None)
 
-commandOrder = ["pull", "build", "test", "stage", "deploy"]
-stagedir = os.path.join(os.getcwd(), "staging")
+commandOrder = ["pull", "build", "test", "stage", "snap"]
+stagedir = os.path.join(os.getcwd(), "stage")
 snapdir = os.path.join(os.getcwd(), "snap")

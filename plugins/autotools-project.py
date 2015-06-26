@@ -20,7 +20,7 @@ class AutotoolsHandler(snapcraft.BaseHandler):
 		return self.run("make all")
 	def stage(self):
 		return self.run("make install DESTDIR=" + self.stagedir)
-	def deploy(self):
+	def snap(self):
 		return self.doDeploy(["bin", "share", "lib"]) # not "include"
 	def test(self):
 		return self.run("make check")

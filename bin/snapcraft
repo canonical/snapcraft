@@ -53,8 +53,8 @@ else:
 		cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
 
 if cmds[0] == "init":
-	if os.path.exists("craft.yaml"):
-		snapcraft.common.log("craft.yaml already exists!", file=sys.stderr)
+	if os.path.exists("snapcraft.yaml"):
+		snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
 		sys.exit(1)
 	yaml = 'parts:\n'
 	for partName in cmds[1:]:
@@ -65,14 +65,14 @@ if cmds[0] == "init":
 			if part.config['options'][opt].get('required', False):
 				yaml += '        ' + opt + ':\n'
 	yaml = yaml.strip()
-	with open('craft.yaml', mode='w+') as f:
+	with open('snapcraft.yaml', mode='w+') as f:
 		f.write(yaml)
-	snapcraft.common.log("Wrote the following as craft.yaml.")
+	snapcraft.common.log("Wrote the following as snapcraft.yaml.")
 	print()
 	print(yaml)
 	sys.exit(0)				
 
-data = yaml.load(open("craft.yaml", 'r'))
+data = yaml.load(open("snapcraft.yaml", 'r'))
 systemPackages = data.get('systemPackages', [])
 includedPackages = data.get('includedPackages', [])
 

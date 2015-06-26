@@ -34,7 +34,7 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
         return self.run("cp -vrf %s %s" % (
             os.path.join(self.godir, "bin"), self.stagedir))
 
-    def deploy(self):
+    def snap(self):
         return self.doDeploy(["bin"])
 
     def test(self):
