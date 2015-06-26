@@ -23,7 +23,7 @@ class SnapcraftHandler(snapcraft.BaseHandler):
 			self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
 		return self.unpackDebs(self.downloadablePackages, self.stagedir)
 
-	def deploy(self):
+	def snap(self):
 		if not self.downloadablePackages:
 			self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
 		return self.unpackDebs(self.downloadablePackages, self.snapdir)
