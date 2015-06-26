@@ -139,7 +139,7 @@ class Plugin:
 		if not self.shouldStageRun('snap', force): return True
 		self.makedirs()
 		if self.code and hasattr(self.code, 'snap'):
-			self.notifyStage("Deploying")
+			self.notifyStage("Snapping")
 			if not getattr(self.code, 'snap')():
 				return False
 			self.markDone('snap')

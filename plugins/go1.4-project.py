@@ -31,7 +31,7 @@ class Go14ProjectHandler(snapcraft.BaseHandler):
     def stage(self):
         if not self.run("go install %s" % (self.fullname), self.godir):
             return False
-        return self.run("cp -vrf %s %s" % (
+        return self.run("cp -rf %s %s" % (
             os.path.join(self.godir, "bin"), self.stagedir))
 
     def snap(self):
