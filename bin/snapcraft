@@ -13,8 +13,10 @@ subparsers = root_parser.add_subparsers(dest='cmd')
 
 # Parent parsers
 
-cmd_parser = argparse.ArgumentParser(add_help=False)
-cmd_parser.add_argument('--force', action='store_true', help='redo all steps for all parts')
+force_parser = argparse.ArgumentParser(add_help=False)
+force_parser.add_argument('--force', action='store_true', help='redo all steps for all parts')
+
+cmd_parser = argparse.ArgumentParser(add_help=False, parents=[force_parser])
 cmd_parser.add_argument('part', nargs='*')
 
 # Command parsers
@@ -23,17 +25,27 @@ parser = subparsers.add_parser('init', help='start a project')
 parser.add_argument('part', nargs='*')
 parser.set_defaults(func=snapcraft.cmds.init)
 
+parser = subparsers.add_parser('shell', help='enter staging environment')
+parser.add_argument('userCommand', nargs=argparse.REMAINDER, metavar='cmd', help='optional command to run inside staging environment')
+parser.set_defaults(func=snapcraft.cmds.shell)
+
+parser = subparsers.add_parser('run', help='run snap in kvm', add_help=False)
+parser.set_defaults(func=snapcraft.cmds.run)
+
 parser = subparsers.add_parser('pull', help='get sources', parents=[cmd_parser])
-parser.set_defaults(func=snapcraft.cmds.allOthers)
+parser.set_defaults(func=snapcraft.cmds.cmd)
 
 parser = subparsers.add_parser('build', help='build parts', parents=[cmd_parser])
-parser.set_defaults(func=snapcraft.cmds.allOthers)
+parser.set_defaults(func=snapcraft.cmds.cmd)
 
 parser = subparsers.add_parser('stage', help='put parts into staging area', parents=[cmd_parser])
-parser.set_defaults(func=snapcraft.cmds.allOthers)
+parser.set_defaults(func=snapcraft.cmds.cmd)
 
 parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser], aliases=['all'])
-parser.set_defaults(func=snapcraft.cmds.allOthers)
+parser.set_defaults(func=snapcraft.cmds.cmd)
+
+parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser])
+parser.set_defaults(func=snapcraft.cmds.assemble)
 
 args = root_parser.parse_args()
 
