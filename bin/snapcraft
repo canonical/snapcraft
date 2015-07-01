@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
 
+import argparse
 import glob
 import os
 import subprocess
@@ -34,16 +35,14 @@ def loadPlugin(partName, pluginName, properties, loadCode=True):
 	allParts.append(part)
 	return part
 
-cmds = sys.argv[1:]
-if not cmds:
-	snapcraft.common.log("Need an argument", file=sys.stderr)
-	sys.exit(1)
+parser = argparse.ArgumentParser()
+parser.add_argument('cmds', metavar='CMD', help='command', nargs='+')
+parser.add_argument('--force', help='redo all steps', action='store_true')
+args = parser.parse_args()
 
-forceAll = False
+cmds = args.cmds
+forceAll = args.force
 forceCommand = None
-if "--force" in cmds:
-	cmds.remove("--force")
-	forceAll = True
 
 if cmds[0] == "all":
 	cmds = snapcraft.common.commandOrder
