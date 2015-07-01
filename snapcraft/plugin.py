@@ -3,10 +3,10 @@
 import importlib.machinery
 import os
 import snapcraft
+import snapcraft.common
 import subprocess
 import sys
 import yaml
-
 
 class Plugin:
 
@@ -149,3 +149,11 @@ class Plugin:
 		if self.code and hasattr(self.code, 'env'):
 			return getattr(self.code, 'env')()
 		return []
+
+def loadPlugin(partName, pluginName, properties={}, loadCode=True):
+	pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
+	part = Plugin(pluginDir, pluginName, partName, properties, loadCode=loadCode)
+	if not part.isValid():
+		snapcraft.common.log("Could not load part %s" % pluginName, file=sys.stderr)
+		sys.exit(1)
+	return part
