@@ -18,7 +18,6 @@ import importlib
 import os
 import snapcraft
 import snapcraft.common
-import subprocess
 import sys
 import yaml
 
@@ -134,7 +133,6 @@ class Plugin:
         if not self.shouldStageRun('build', force):
             return True
         self.makedirs()
-        subprocess.call(['cp', '-Trf', self.sourcedir, self.builddir])
         if self.code and hasattr(self.code, 'build'):
             self.notifyStage("Building")
             if not getattr(self.code, 'build')():

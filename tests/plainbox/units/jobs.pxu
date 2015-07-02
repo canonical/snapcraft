@@ -1,7 +1,19 @@
 id: snapcraft/normal/no-yaml
 plugin: shell
-estimated_duration: 0.01
+estimated_duration: 0.1
 command:
     OUTPUT=$(snapcraft pull)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
+
+id: snapcraft/normal/local-source
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -e
+    cp -rT $PLAINBOX_PROVIDER_DATA/local-source .
+    snapcraft build
+    test -e stamp-all
+    test "$(readlink parts/make-project/build)" = "$(pwd)"
+    snapcraft stage
+    test -e stamp-install

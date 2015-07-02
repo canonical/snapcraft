@@ -25,6 +25,7 @@ class BasePlugin:
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
+        self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
 
@@ -41,9 +42,6 @@ class BasePlugin:
     def snap(self):
         return True
 
-    def test(self):
-        return True
-
     def env(self):
         return []
 
@@ -58,20 +56,41 @@ class BasePlugin:
                 print(cmd)
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
+    def pullBzr(self, url):
+        if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
+            return self.run("bzr pull " + url, self.sourcedir)
+        else:
+            os.rmdir(self.sourcedir)
+            return self.run("bzr branch " + url + " " + self.sourcedir)
+
+    def pullGit(self, url):
+        if os.path.exists(os.path.join(self.sourcedir, ".git")):
+            return self.run("git pull", self.sourcedir)
+        else:
+            return self.run("git clone " + url + " .", self.sourcedir)
+
     def pullBranch(self, url):
         if url.startswith("bzr:") or url.startswith("lp:"):
-            if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-                return self.run("bzr pull " + url, self.sourcedir)
-            else:
-                os.rmdir(self.sourcedir)
-                return self.run("bzr branch " + url + " " + self.sourcedir)
+            if not self.pullBzr(url):
+                return False
+            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
+                return False
         elif url.startswith("git:"):
-            if os.path.exists(os.path.join(self.sourcedir, ".git")):
-                return self.run("git pull", self.sourcedir)
-            else:
-                return self.run("git clone " + url + " .", self.sourcedir)
-        else:
+            if not self.pullGit(url):
+                return False
+            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
+                return False
+        elif ':' in url:
             raise Exception("Did not recognize branch url: " + url)
+        else:
+            # local branch
+            path = os.path.abspath(url)
+            if os.path.isdir(self.builddir):
+                os.rmdir(self.builddir)
+            else:
+                os.remove(self.builddir)
+            os.symlink(path, self.builddir)
+        return True
 
     def doDeploy(self, dirs):
         self.makedirs(self.snapdir)
