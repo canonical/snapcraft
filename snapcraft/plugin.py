@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
 
-import importlib.machinery
+import importlib
 import os
 import snapcraft
 import snapcraft.common
@@ -10,7 +10,7 @@ import yaml
 
 class Plugin:
 
-	def __init__(self, pluginDir, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
+	def __init__(self, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
 		self.valid = False
 		self.code = None
 		self.config = None
@@ -22,6 +22,9 @@ class Plugin:
 		self.snapdir = os.path.join(os.getcwd(), "snap")
 		self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
+		module = importlib.import_module("snapcraft.plugins." + name)
+		pluginDir = os.path.dirname(module.__file__)
+
 		if loadConfig:
 			configPath = os.path.join(pluginDir, name + ".yaml")
 			if not os.path.exists(configPath):
@@ -29,8 +32,7 @@ class Plugin:
 				return
 			self.config = yaml.load(open(configPath, 'r')) or {}
 
-		codePath = os.path.join(pluginDir, name + ".py")
-		if loadCode and os.path.exists(codePath):
+		if loadCode:
 			class Options(): pass
 			options = Options()
 
@@ -46,8 +48,6 @@ class Plugin:
 			if optionsOverride:
 				options = optionsOverride
 
-			loader = importlib.machinery.SourceFileLoader("snapcraft.plugins." + name, codePath)
-			module = loader.load_module()
 			for propName in dir(module):
 				prop = getattr(module, propName)
 				if issubclass(prop, snapcraft.BaseHandler):
@@ -151,8 +151,7 @@ class Plugin:
 		return []
 
 def loadPlugin(partName, pluginName, properties={}, loadCode=True):
-	pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
-	part = Plugin(pluginDir, pluginName, partName, properties, loadCode=loadCode)
+	part = Plugin(pluginName, partName, properties, loadCode=loadCode)
 	if not part.isValid():
 		snapcraft.common.log("Could not load part %s" % pluginName, file=sys.stderr)
 		sys.exit(1)
