@@ -8,6 +8,10 @@ This is NOT blessed yaml, but rather changes to the blessed yaml that are propos
 
 We don't need the name field, it is redundant with the filename.
 
+### Specify name of python module
+
+Add an optional 'module' field with the name of the python import to use for this plugin (if not specified, is the same as the yaml name).  But often plugins will use characters (like . or -) that can't be used in a python module name.  So we need a way to point at a module name.
+
 ### Allow config of required parts
 
 "requires" should be a yaml subsection instead of a list of strings, so that configuration could be done.
