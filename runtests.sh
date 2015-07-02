@@ -39,7 +39,7 @@ pyflakes3 $SRC_PATHS
     ./manage.py develop -d $temp_dir
     # Set PROVIDERPATH (see plainbox(1)) so that we can see the provider
     # without installing it.
-    PROVIDERPATH=$PROVIDERPATH:$temp_dir
+    export PROVIDERPATH=$PROVIDERPATH:$temp_dir
     # Run the 'normal' test plan
     plainbox run \
         -T 2015.com.canonical.snapcraft::normal \
