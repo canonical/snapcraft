@@ -38,9 +38,9 @@ class Plugin:
         self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
         module = importlib.import_module("snapcraft.plugins." + name)
-        pluginDir = os.path.dirname(module.__file__)
 
         if loadConfig:
+            pluginDir = os.path.dirname(module.__file__)
             configPath = os.path.join(pluginDir, name + ".yaml")
             if not os.path.exists(configPath):
                 snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)

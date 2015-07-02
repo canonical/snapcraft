@@ -17,9 +17,14 @@
 
 set -ex
 
-SRC_PATHS="bin snapcraft"
+export PATH=$(pwd)/bin:$PATH
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
+SRC_PATHS="bin snapcraft tests"
 
 # Ignore 501 (line-too-long)
 pep8 $SRC_PATHS --ignore=E501
 
 pyflakes3 $SRC_PATHS
+
+(cd tests && python3 -m unittest)
