@@ -22,6 +22,7 @@ import subprocess
 import sys
 import yaml
 
+
 class Plugin:
 
     def __init__(self, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
@@ -47,7 +48,8 @@ class Plugin:
             self.config = yaml.load(open(configPath, 'r')) or {}
 
         if loadCode:
-            class Options(): pass
+            class Options():
+                pass
             options = Options()
 
             if self.config:
@@ -72,14 +74,22 @@ class Plugin:
         self.valid = True
 
     def makedirs(self):
-        try: os.makedirs(self.sourcedir)
-        except: pass
-        try: os.makedirs(self.builddir)
-        except: pass
-        try: os.makedirs(self.stagedir)
-        except: pass
-        try: os.makedirs(self.snapdir)
-        except: pass
+        try:
+            os.makedirs(self.sourcedir)
+        except FileExistsError:
+            pass
+        try:
+            os.makedirs(self.builddir)
+        except FileExistsError:
+            pass
+        try:
+            os.makedirs(self.stagedir)
+        except FileExistsError:
+            pass
+        try:
+            os.makedirs(self.snapdir)
+        except FileExistsError:
+            pass
 
     def isValid(self):
         return self.valid
@@ -109,7 +119,8 @@ class Plugin:
             f.write(stage)
 
     def pull(self, force=False):
-        if not self.shouldStageRun('pull', force): return True
+        if not self.shouldStageRun('pull', force):
+            return True
         self.makedirs()
         if self.code and hasattr(self.code, 'pull'):
             self.notifyStage("Pulling")
@@ -119,7 +130,8 @@ class Plugin:
         return True
 
     def build(self, force=False):
-        if not self.shouldStageRun('build', force): return True
+        if not self.shouldStageRun('build', force):
+            return True
         self.makedirs()
         subprocess.call(['cp', '-Trf', self.sourcedir, self.builddir])
         if self.code and hasattr(self.code, 'build'):
@@ -130,7 +142,8 @@ class Plugin:
         return True
 
     def test(self, force=False):
-        if not self.shouldStageRun('test', force): return True
+        if not self.shouldStageRun('test', force):
+            return True
         self.makedirs()
         if self.code and hasattr(self.code, 'test'):
             self.notifyStage("Testing")
@@ -140,7 +153,8 @@ class Plugin:
         return True
 
     def stage(self, force=False):
-        if not self.shouldStageRun('stage', force): return True
+        if not self.shouldStageRun('stage', force):
+            return True
         self.makedirs()
         if self.code and hasattr(self.code, 'stage'):
             self.notifyStage("Staging")
@@ -150,7 +164,8 @@ class Plugin:
         return True
 
     def snap(self, force=False):
-        if not self.shouldStageRun('snap', force): return True
+        if not self.shouldStageRun('snap', force):
+            return True
         self.makedirs()
         if self.code and hasattr(self.code, 'snap'):
             self.notifyStage("Snapping")
@@ -163,6 +178,7 @@ class Plugin:
         if self.code and hasattr(self.code, 'env'):
             return getattr(self.code, 'env')()
         return []
+
 
 def loadPlugin(partName, pluginName, properties={}, loadCode=True):
     part = Plugin(pluginName, partName, properties, loadCode=loadCode)

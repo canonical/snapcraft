@@ -18,6 +18,7 @@ import snapcraft.common
 import snapcraft.plugin
 import yaml
 
+
 class Config:
 
     def __init__(self):
@@ -32,7 +33,8 @@ class Config:
             properties = self.data["parts"][partName]
 
             pluginName = properties.get("plugin", partName)
-            if "plugin" in properties: del properties["plugin"]
+            if "plugin" in properties:
+                del properties["plugin"]
 
             if "after" in properties:
                 afterRequests[partName] = properties["after"]

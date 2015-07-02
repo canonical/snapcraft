@@ -18,6 +18,7 @@ import os
 import snapcraft
 import sys
 
+
 class Go14ProjectPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
@@ -50,6 +51,3 @@ class Go14ProjectPlugin(snapcraft.BasePlugin):
 
     def snap(self):
         return self.doDeploy(["bin"])
-
-    def test(self):
-        return self.run("go test %s" % (self.fullname), self.godir)

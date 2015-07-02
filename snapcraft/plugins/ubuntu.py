@@ -20,6 +20,7 @@ import snapcraft.common
 import subprocess
 import sys
 
+
 class UbuntuPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
@@ -91,8 +92,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         return sorted(alldeps)
 
     def downloadDebs(self, pkgs):
-        try: os.makedirs(self.debdir)
-        except: pass
+        self.makedirs(self.debdir)
         if pkgs:
             return self.run(['dget'] + pkgs, cwd=self.debdir, stdout=subprocess.DEVNULL)
         else:

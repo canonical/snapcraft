@@ -19,6 +19,7 @@ import snapcraft.common
 import subprocess
 import sys
 
+
 class BasePlugin:
 
     def __init__(self, name, options):
@@ -32,14 +33,19 @@ class BasePlugin:
     # The API
     def pull(self):
         return True
+
     def build(self):
         return True
+
     def stage(self):
         return True
+
     def snap(self):
         return True
+
     def test(self):
         return True
+
     def env(self):
         return []
 
@@ -70,14 +76,17 @@ class BasePlugin:
             raise Exception("Did not recognize branch url: " + url)
 
     def doDeploy(self, dirs):
-        try: os.makedirs(self.snapdir)
-        except: pass
+        self.makedirs(self.snapdir)
 
         for d in dirs:
-            if os.path.exists(os.path.join(self.stagedir,d)):
-                try: os.makedirs(os.path.join(self.snapdir, d))
-                except: pass
+            if os.path.exists(os.path.join(self.stagedir, d)):
+                self.makedirs(os.path.join(self.snapdir, d))
                 if not self.run("cp -rf " + d + " " + self.snapdir + "/", cwd=self.stagedir):
                     return False
         return True
 
+    def makedirs(self, d):
+        try:
+            os.makedirs(d)
+        except FileExistsError:
+            pass

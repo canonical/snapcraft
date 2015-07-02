@@ -22,8 +22,10 @@ import tempfile
 
 env = []
 
+
 def assembleEnv():
     return '\n'.join(['export ' + e for e in env])
+
 
 def run(cmd, **kwargs):
     # FIXME: This is gross to keep writing this, even when env is the same
@@ -35,6 +37,7 @@ def run(cmd, **kwargs):
         f.write('exec ' + cmd)
         f.flush()
         return subprocess.call(['/bin/sh', f.name], **kwargs) == 0
+
 
 def log(msg, file=None):
     print('\033[01m' + msg + '\033[0m', file=None)

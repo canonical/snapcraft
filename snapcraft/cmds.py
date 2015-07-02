@@ -24,6 +24,7 @@ import sys
 import tempfile
 import time
 
+
 def init(args):
     if os.path.exists("snapcraft.yaml"):
         snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
@@ -43,6 +44,7 @@ def init(args):
     print(yaml)
     sys.exit(0)
 
+
 def shell(args):
     config = snapcraft.yaml.Config()
     snapcraft.common.env = config.env()
@@ -51,6 +53,7 @@ def shell(args):
         userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
     snapcraft.common.run(userCommand)
 
+
 def assemble(args):
     args.cmd = 'snap'
     cmd(args)
@@ -58,7 +61,7 @@ def assemble(args):
     config = snapcraft.yaml.Config()
 
     snapcraft.common.run(
-            "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
+        "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
 
     # wrap all included commands
     snapcraft.common.env = config.env()
@@ -72,8 +75,10 @@ def assemble(args):
             if exe.endswith('.real'):
                 continue
             exePath = os.path.join(absbindir, exe)
-            try: os.remove(exePath + '.real')
-            except: pass
+            try:
+                os.remove(exePath + '.real')
+            except:
+                pass
             os.rename(exePath, exePath + '.real')
             with open(exePath, 'w+') as f:
                 f.write(script % ('"$SNAP_APP_PATH/' + bindir + '/' + exe + '.real"'))
@@ -83,47 +88,51 @@ def assemble(args):
 
     snapcraft.common.run("snappy build " + snapcraft.common.snapdir)
 
+
 def run(args):
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
-            try: os.makedirs(qemudir)
-            except FileExistsError: pass
+            try:
+                os.makedirs(qemudir)
+            except FileExistsError:
+                pass
             snapcraft.common.run(
-                    "sudo ubuntu-device-flash core --developer-mode --enable-ssh 15.04 -o %s" % qemu_img,
-                    cwd=qemudir)
+                "sudo ubuntu-device-flash core --developer-mode --enable-ssh 15.04 -o %s" % qemu_img,
+                cwd=qemudir)
     qemu = subprocess.Popen(
-            ["kvm", "-m", "768", "-nographic",
-             "-snapshot", "-redir", "tcp:8022::22", qemu_img],
-            stdin=subprocess.PIPE)
+        ["kvm", "-m", "768", "-nographic",
+         "-snapshot", "-redir", "tcp:8022::22", qemu_img],
+        stdin=subprocess.PIPE)
     n = tempfile.NamedTemporaryFile()
     ssh_opts = [
-            "-oStrictHostKeyChecking=no",
-            "-oUserKnownHostsFile=%s" % n.name
+        "-oStrictHostKeyChecking=no",
+        "-oUserKnownHostsFile=%s" % n.name
     ]
     while True:
-            ret_code =subprocess.call(
-                    ["ssh"]+ssh_opts+
-                    ["ubuntu@localhost", "-p", "8022", "true"])
-            if ret_code == 0:
-                    break
-            print("Waiting for device")
-            time.sleep(1)
+        ret_code = subprocess.call(
+            ["ssh"] + ssh_opts +
+            ["ubuntu@localhost", "-p", "8022", "true"])
+        if ret_code == 0:
+            break
+        print("Waiting for device")
+        time.sleep(1)
     snap_dir = os.path.join(os.getcwd(), "snap")
     # copy the snap
-    snaps = glob.glob(snap_dir+"/*.snap")
+    snaps = glob.glob(snap_dir + "/*.snap")
     subprocess.call(
-            ["scp"]+ssh_opts+[
-                    "-P", "8022", "-r"]+snaps+["ubuntu@localhost:~/"])
+        ["scp"] + ssh_opts + [
+            "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
     # install the snap
-    ret_code =subprocess.call(
-            ["ssh"]+ssh_opts+
-            ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
+    ret_code = subprocess.call(
+        ["ssh"] + ssh_opts +
+        ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
     # "login"
     subprocess.call(
-            ["ssh"]+ssh_opts+["-p", "8022", "ubuntu@localhost"],
-            preexec_fn=os.setsid)
+        ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
+        preexec_fn=os.setsid)
     qemu.kill()
+
 
 def cmd(args):
     forceAll = args.force
@@ -136,7 +145,7 @@ def cmd(args):
 
     if cmds[0] in snapcraft.common.commandOrder:
         forceCommand = cmds[0]
-        cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0])+1]
+        cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0]) + 1]
 
     config = snapcraft.yaml.Config()
 
