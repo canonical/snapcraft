@@ -16,6 +16,7 @@
 
 import snapcraft.common
 import snapcraft.plugin
+import sys
 import yaml
 
 
@@ -26,7 +27,11 @@ class Config:
         self.allParts = []
         afterRequests = {}
 
-        self.data = yaml.load(open("snapcraft.yaml", 'r'))
+        try:
+            self.data = yaml.load(open("snapcraft.yaml", 'r'))
+        except FileNotFoundError:
+            snapcraft.common.log("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
+            sys.exit(1)
         self.systemPackages = self.data.get('systemPackages', [])
 
         for partName in self.data.get("parts", []):
