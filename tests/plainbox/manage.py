@@ -16,5 +16,5 @@ from plainbox.provider_manager import setup, N_
 setup(
     name='2015.com.canonical.snapcraft:tests',
     version="1.0",
-    description=N_("The 2015.com.canonical.snapcraft:tests provider"),
+    description=N_("Plainbox test provider for Snapcraft")
 )
