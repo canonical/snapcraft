@@ -70,18 +70,31 @@ class BasePlugin:
             return self.run("git clone " + url + " .", self.sourcedir)
 
     def pullBranch(self, url):
+        branchType = None
         if url.startswith("bzr:") or url.startswith("lp:"):
+            branchType = 'bzr'
+        elif url.startswith("git:"):
+            branchType = 'git'
+        elif ':' in url:
+            raise Exception("Did not recognize branch url: " + url)
+        # Local branch
+        elif os.path.isdir(os.path.join(url, '.bzr')):
+            branchType = 'bzr'
+            url = os.path.abspath(url)
+        elif os.path.isdir(os.path.join(url, '.git')):
+            branchType = 'git'
+            url = os.path.abspath(url)
+
+        if branchType == 'bzr':
             if not self.pullBzr(url):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
-        elif url.startswith("git:"):
+        elif branchType == "git":
             if not self.pullGit(url):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
-        elif ':' in url:
-            raise Exception("Did not recognize branch url: " + url)
         else:
             # local branch
             path = os.path.abspath(url)
@@ -90,6 +103,7 @@ class BasePlugin:
             else:
                 os.remove(self.builddir)
             os.symlink(path, self.builddir)
+
         return True
 
     def doDeploy(self, dirs):

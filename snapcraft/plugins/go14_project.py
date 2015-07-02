@@ -26,10 +26,7 @@ class Go14ProjectPlugin(snapcraft.BasePlugin):
         else:
             self.fullname = self.options.source.split("://")[1]
         self.godir = os.path.join(os.path.join(os.getcwd(), "parts", self.name))
-        try:
-            os.makedirs(self.godir)
-        except FileExistsError:
-            pass
+        self.makedirs(self.godir)
 
     def env(self):
         return [

@@ -20,7 +20,7 @@ set -ex
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-SRC_PATHS="bin snapcraft tests"
+SRC_PATHS="bin snapcraft tests/unit"
 
 # Ignore 501 (line-too-long)
 pep8 $SRC_PATHS --ignore=E501
