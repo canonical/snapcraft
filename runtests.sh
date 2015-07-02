@@ -27,4 +27,6 @@ pep8 $SRC_PATHS --ignore=E501
 
 pyflakes3 $SRC_PATHS
 
-(cd tests && python3 -m unittest)
+(cd tests/unit && python3 -m unittest)
+
+(cd tests/scripts && ! plainbox run -T 2015.com.canonical.snapcraft::normal | grep 'job failed')
