@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 
 import argparse
 import os
@@ -52,8 +52,8 @@ parser.set_defaults(func=snapcraft.cmds.assemble)
 args = root_parser.parse_args()
 
 if not hasattr(args, 'func'):
-	root_parser.print_help()
-	sys.exit(1)
+    root_parser.print_help()
+    sys.exit(1)
 
 args.func(args)
 sys.exit(0)

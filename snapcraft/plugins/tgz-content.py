@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 
 import os
 import snapcraft

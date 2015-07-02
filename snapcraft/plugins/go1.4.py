@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:t; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 
 import os
 import snapcraft
@@ -15,12 +15,12 @@ class Go14Handler(snapcraft.BaseHandler):
         # FIXME: horrible
         self.arch = "amd64"
         self.godir = os.path.join(
-			os.path.join(os.getcwd(), "parts", self.name))
+            os.path.join(os.getcwd(), "parts", self.name))
         self.goroot = os.path.join(os.path.join(
                 os.getcwd(), "parts", "go1.4", "go"))
         self.gorootbin = os.path.join(self.goroot, "bin")
         self.tar_file = os.path.join(
-			self.godir, os.path.basename(URLS[self.arch]))
+            self.godir, os.path.basename(URLS[self.arch]))
         try:
             os.makedirs(self.godir)
         except FileExistsError:
@@ -31,7 +31,7 @@ class Go14Handler(snapcraft.BaseHandler):
             "GOROOT=%s" % self.goroot,
         ]
     def pull(self):
-		# FIXME: use the internal downloader (once its there) to get stuff
+        # FIXME: use the internal downloader (once its there) to get stuff
         if not self.run("wget -c %s " % URLS[self.arch], cwd=self.godir):
             return False
         if not os.path.exists(os.path.join(self.godir, "go/bin/go")):
