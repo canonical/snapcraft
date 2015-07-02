@@ -1,3 +1,4 @@
+module: make_project
 systemPackages: [make]
 options:
     source:

@@ -1,3 +1,4 @@
+module: autotools_project
 systemPackages: [autoconf, automake, autopoint]
 options:
     source:

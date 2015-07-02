@@ -1,5 +1,5 @@
 # FIXME: this will become part of the language
-name: tgz-content
+module: tgz_content
 options:
   source:
     required: true

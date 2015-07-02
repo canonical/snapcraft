@@ -37,38 +37,39 @@ class Plugin:
         self.snapdir = os.path.join(os.getcwd(), "snap")
         self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
-        module = importlib.import_module("snapcraft.plugins." + name)
-
         if loadConfig:
-            pluginDir = os.path.dirname(module.__file__)
+            # FIXME: use env var for this
+            pluginDir = os.path.abspath(os.path.join(__file__, '..', '..', 'plugins'))
             configPath = os.path.join(pluginDir, name + ".yaml")
             if not os.path.exists(configPath):
                 snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
                 return
             self.config = yaml.load(open(configPath, 'r')) or {}
 
-        if loadCode:
-            class Options():
-                pass
-            options = Options()
+            if loadCode:
+                class Options():
+                    pass
+                options = Options()
 
-            if self.config:
-                for opt in self.config.get('options', []):
-                    if opt in properties:
-                        setattr(options, opt, properties[opt])
-                    else:
-                        if self.config['options'][opt].get('required', False):
-                            snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
-                            return
-                        setattr(options, opt, None)
-            if optionsOverride:
-                options = optionsOverride
+                if self.config:
+                    for opt in self.config.get('options', []):
+                        if opt in properties:
+                            setattr(options, opt, properties[opt])
+                        else:
+                            if self.config['options'][opt].get('required', False):
+                                snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+                                return
+                            setattr(options, opt, None)
+                if optionsOverride:
+                    options = optionsOverride
 
-            for propName in dir(module):
-                prop = getattr(module, propName)
-                if issubclass(prop, snapcraft.BasePlugin):
-                    self.code = prop(partName, options)
-                    break
+                moduleName = self.config.get('module', name)
+                module = importlib.import_module("snapcraft.plugins." + moduleName)
+                for propName in dir(module):
+                    prop = getattr(module, propName)
+                    if issubclass(prop, snapcraft.BasePlugin):
+                        self.code = prop(partName, options)
+                        break
 
         self.partNames.append(partName)
         self.valid = True
