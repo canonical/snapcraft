@@ -16,8 +16,6 @@
 
 import os
 import snapcraft.common
-import subprocess
-import sys
 
 
 class BasePlugin:

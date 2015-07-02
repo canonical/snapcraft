@@ -16,7 +16,6 @@
 
 import os
 import snapcraft
-import sys
 
 
 class AutotoolsPlugin(snapcraft.BasePlugin):

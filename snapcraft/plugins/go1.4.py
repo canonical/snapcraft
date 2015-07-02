@@ -16,7 +16,6 @@
 
 import os
 import snapcraft
-import sys
 
 # FIXME: add support for i386
 URLS = {

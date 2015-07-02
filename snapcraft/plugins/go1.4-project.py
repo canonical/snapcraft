@@ -16,7 +16,6 @@
 
 import os
 import snapcraft
-import sys
 
 
 class Go14ProjectPlugin(snapcraft.BasePlugin):

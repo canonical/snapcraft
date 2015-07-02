@@ -27,7 +27,7 @@ class Config:
         afterRequests = {}
 
         self.data = yaml.load(open("snapcraft.yaml", 'r'))
-        systemPackages = self.data.get('systemPackages', [])
+        self.systemPackages = self.data.get('systemPackages', [])
 
         for partName in self.data.get("parts", []):
             properties = self.data["parts"][partName]
