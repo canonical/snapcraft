@@ -2,5 +2,5 @@ parts:
     golang-static-http:
         plugin: go1.4-project
         source: git://github.com/mikix/golang-static-http
-includedPackages:
-    - fswebcam
+    ubuntu:
+        package: fswebcam

@@ -22,7 +22,7 @@ cmd_parser.add_argument('part', nargs='*')
 # Command parsers
 
 parser = subparsers.add_parser('init', help='start a project')
-parser.add_argument('part', nargs='*')
+parser.add_argument('part', nargs='*', help='part to add to new project')
 parser.set_defaults(func=snapcraft.cmds.init)
 
 parser = subparsers.add_parser('shell', help='enter staging environment')
@@ -46,6 +46,8 @@ parser.set_defaults(func=snapcraft.cmds.cmd)
 
 parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser])
 parser.set_defaults(func=snapcraft.cmds.assemble)
+
+# Now run parser
 
 args = root_parser.parse_args()
 

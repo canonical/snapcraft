@@ -1,4 +1,5 @@
-includedPackages:
-    - wget
+parts:
+  wget:
+    plugin: ubuntu
 snap:
   meta: meta

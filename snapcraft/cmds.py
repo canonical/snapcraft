@@ -136,15 +136,6 @@ def cmd(args):
 			print("Installing required packages on the host system: " + ", ".join(newPackages))
 			subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
-	if config.includedPackages:
-		class Options: pass
-		options = Options()
-		setattr(options, 'includedPackages', config.includedPackages)
-		pluginDir = os.path.abspath(os.path.join(__file__, "..", "..", "plugins"))
-		part = snapcraft.plugin.Plugin(pluginDir, 'snapcraft', 'includedPackages', {}, optionsOverride=options, loadConfig=False)
-		part.includedPackages = config.includedPackages
-		config.allParts = [part] + config.allParts
-
 	snapcraft.common.env = config.env()
 	for part in config.allParts:
 		for cmd in cmds:

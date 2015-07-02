@@ -34,7 +34,10 @@ class BaseHandler:
 		if cwd is None:
 			cwd = self.builddir
 		if True:
-			print(cmd)
+			if isinstance(cmd, list):
+				print(' '.join(cmd))
+			else:
+				print(cmd)
 		return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
 	def pullBranch(self, url):

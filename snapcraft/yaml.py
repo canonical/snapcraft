@@ -8,13 +8,11 @@ class Config:
 
 	def __init__(self):
 		self.systemPackages = []
-		self.includedPackages = []
 		self.allParts = []
 		afterRequests = {}
 
 		self.data = yaml.load(open("snapcraft.yaml", 'r'))
 		systemPackages = self.data.get('systemPackages', [])
-		includedPackages = self.data.get('includedPackages', [])
 
 		for partName in self.data.get("parts", []):
 			properties = self.data["parts"][partName]
@@ -63,7 +61,6 @@ class Config:
 		part = snapcraft.plugin.loadPlugin(partName, pluginName, properties, loadCode=loadCode)
 
 		self.systemPackages += part.config.get('systemPackages', [])
-		self.includedPackages += part.config.get('includedPackages', [])
 		self.allParts.append(part)
 		return part
 

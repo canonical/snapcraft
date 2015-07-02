@@ -6,13 +6,21 @@ import snapcraft.common
 import subprocess
 import sys
 
-class SnapcraftHandler(snapcraft.BaseHandler):
+class UbuntuHandler(snapcraft.BaseHandler):
 
 	def __init__(self, name, options):
 		super().__init__(name, options)
 		self.debdir = os.path.join(os.getcwd(), "parts", self.name, "debs")
 		self.downloadablePackages = []
-		self.includedPackages = options.includedPackages
+		self.includedPackages = []
+		if options.package:
+			self.includedPackages.append(options.package)
+		else:
+			# User didn't specify a package, use the part name
+			if name == 'ubuntu':
+				snapcraft.common.log("Part %s needs either a package option or a name" % name)
+				sys.exit(1)
+			self.includedPackages.append(name)
 
 	def pull(self):
 		self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
