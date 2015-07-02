@@ -16,7 +16,7 @@
 
 import snapcraft
 
-class MakeHandler(snapcraft.BaseHandler):
+class MakePlugin(snapcraft.BasePlugin):
     def pull(self):
         return self.pullBranch(self.options.source)
     def build(self):

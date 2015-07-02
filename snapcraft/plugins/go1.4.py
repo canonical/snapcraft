@@ -23,7 +23,7 @@ URLS = {
         'amd64': "https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz",
 }
 
-class Go14Handler(snapcraft.BaseHandler):
+class Go14Plugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
         # FIXME: horrible

@@ -18,7 +18,7 @@ import os
 import snapcraft
 import sys
 
-class AutotoolsHandler(snapcraft.BaseHandler):
+class AutotoolsPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
         if self.options.configflags is None:

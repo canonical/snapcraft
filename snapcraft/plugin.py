@@ -64,7 +64,7 @@ class Plugin:
 
             for propName in dir(module):
                 prop = getattr(module, propName)
-                if issubclass(prop, snapcraft.BaseHandler):
+                if issubclass(prop, snapcraft.BasePlugin):
                     self.code = prop(partName, options)
                     break
 

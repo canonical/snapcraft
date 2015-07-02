@@ -19,7 +19,7 @@ import snapcraft.common
 import subprocess
 import sys
 
-class BaseHandler:
+class BasePlugin:
 
     def __init__(self, name, options):
         self.name = name

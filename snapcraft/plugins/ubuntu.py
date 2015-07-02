@@ -20,7 +20,7 @@ import snapcraft.common
 import subprocess
 import sys
 
-class UbuntuHandler(snapcraft.BaseHandler):
+class UbuntuPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)

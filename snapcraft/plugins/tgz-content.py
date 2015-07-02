@@ -18,7 +18,7 @@ import os
 import snapcraft
 
 
-class TgzContentHandler(snapcraft.BaseHandler):
+class TgzContentPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
         self.partdir = os.path.join(os.getcwd(), "parts", self.name)
