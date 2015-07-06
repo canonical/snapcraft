@@ -1,24 +1,11 @@
 #!/usr/bin/make -f
 # -*- Mode:Makefile; indent-tabs-mode:t; tab-width:4 -*-
 
-PYTHON3S:=$(shell py3versions -vr)
-
 %:
-	dh $@ --with python3
-
-override_dh_auto_build:
-	set -e ; for pyvers in $(PYTHON3S); do \
-		python$$pyvers setup.py build; \
-	done
+	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_auto_test:
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
 	python3 setup.py test
 endif
-
-override_dh_auto_install:
-	set -e ; for pyvers in $(PYTHON3S); do \
-		python$$pyvers setup.py install --install-layout=deb \
-			--root $(CURDIR)/debian/snapcraft; \
-	done
 
