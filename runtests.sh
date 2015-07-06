@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # -*- Mode:sh; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -58,3 +58,5 @@ print("Overall: {0}".format("fail" if failed else "pass"))
 raise SystemExit(failed)
 __PYTHON__
 )
+
+echo -e "\e[1;32mEverything passed\e[0m"
