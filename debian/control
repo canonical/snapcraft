@@ -14,7 +14,7 @@ Homepage: https://launchpad.net/snapcraft
 Standards-Version: 3.9.6
 
 Package: snapcraft
-Architecture: any
+Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
          python3-yaml,
