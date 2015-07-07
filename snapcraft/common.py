@@ -45,3 +45,5 @@ def log(msg, file=None):
 commandOrder = ["pull", "build", "stage", "snap"]
 stagedir = os.path.join(os.getcwd(), "stage")
 snapdir = os.path.join(os.getcwd(), "snap")
+
+plugindir = '/usr/share/snapcraft/plugins'

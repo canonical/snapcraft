@@ -1,0 +1,7 @@
+# Ignore standard files (like .bzr)
+tar-ignore
+
+# Ignore examples folder because it likely contains a bunch of stuff we don't
+# care about (like downloaded go1.4 binaries and such).  It's not important
+# for it to be distributed with the source.
+tar-ignore = "examples"

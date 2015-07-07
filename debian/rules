@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+# -*- Mode:Makefile; indent-tabs-mode:t; tab-width:4 -*-
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_test:
+ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+	python3 setup.py test
+endif
+

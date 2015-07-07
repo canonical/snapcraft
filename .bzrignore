@@ -1,3 +1,6 @@
 **/parts/
 **/snap/
 **/stage/
+build
+dist
+*.egg-info

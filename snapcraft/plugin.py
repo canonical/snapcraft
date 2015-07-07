@@ -37,9 +37,7 @@ class Plugin:
         self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
         if loadConfig:
-            # FIXME: use env var for this
-            pluginDir = os.path.abspath(os.path.join(__file__, '..', '..', 'plugins'))
-            configPath = os.path.join(pluginDir, name + ".yaml")
+            configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
             if not os.path.exists(configPath):
                 snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
                 return
