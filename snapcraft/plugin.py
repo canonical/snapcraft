@@ -151,8 +151,6 @@ class Plugin:
         if not self.code:
             return True
 
-        # FIXME: First check to make sure there are no conflicts
-
         self.notifyStage("Staging")
         snapcraft.common.run(['cp', '-arT', self.installdir, self.stagedir])
         self.markDone('stage')

@@ -134,6 +134,28 @@ def run(args):
     qemu.kill()
 
 
+def checkForCollisions(parts):
+    partsFiles = {}
+    for part in parts:
+        # Gather our own files up
+        partFiles = set()
+        for root, dirs, files in os.walk(part.installdir):
+            partFiles |= set([os.path.join(root, f) for f in files])
+        partFiles = set([os.path.relpath(x, part.installdir) for x in partFiles])
+
+        # Scan previous parts for collisions
+        for otherPartName in partsFiles:
+            common = partFiles & partsFiles[otherPartName]
+            if common:
+                snapcraft.common.log("Error: parts %s and %s have the following files in common:\n  %s" % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                return False
+
+        # And add our files to the list
+        partsFiles[part.names()[0]] = partFiles
+
+    return True
+
+
 def cmd(args):
     forceAll = args.force
     forceCommand = None
@@ -162,6 +184,11 @@ def cmd(args):
     snapcraft.common.env = config.env(snapcraft.common.stagedir)
     for part in config.allParts:
         for cmd in cmds:
+            # FIXME: should only run once
+            if cmd == 'stage':
+                if not checkForCollisions(config.allParts):
+                    sys.exit(1)
+
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
                 snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
