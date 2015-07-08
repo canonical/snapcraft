@@ -5,4 +5,4 @@ parts:
   p2:
     plugin: make-project
     source: .
-    after: p1
+    after: [p1]

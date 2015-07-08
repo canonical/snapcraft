@@ -45,6 +45,8 @@ class Config:
                 afterRequests[partName] = properties["after"]
                 del properties["after"]
 
+            # TODO: support 'filter' or 'blacklist' field to filter what gets put in snap/
+
             self.loadPlugin(partName, pluginName, properties)
 
         # Grab all required dependencies, if not already specified
@@ -61,22 +63,39 @@ class Config:
                 if not alreadyPresent:
                     newParts.append(self.loadPlugin(requiredPart, requiredPart, {}))
 
-        # Now sort them
-        partsToSort = self.allParts.copy()
-        while partsToSort:
-            part = partsToSort.pop(0)
-            requires = part.config.get('requires', [])
-            for requiredPart in requires:
+        # Gather lists of dependencies
+        for part in self.allParts:
+            depNames = part.config.get('requires', []) + afterRequests.get(part.names()[0], [])
+            for dep in depNames:
+                foundIt = False
                 for i in range(len(self.allParts)):
-                    if requiredPart in self.allParts[i].names():
-                        self.allParts.insert(0, self.allParts.pop(i))
+                    if dep in self.allParts[i].names():
+                        part.deps.append(self.allParts[i])
+                        foundIt = True
                         break
-            afterNames = afterRequests.get(part.names()[0], [])
-            for afterName in afterNames:
-                for i in range(len(self.allParts)):
-                    if afterName in self.allParts[i].names():
-                        self.allParts.insert(0, self.allParts.pop(i))
+                if not foundIt:
+                    snapcraft.common.log("Could not find part name %s" % dep)
+                    sys.exit(1)
+
+        # Now sort them (this is super inefficient, but easy-ish to follow)
+        sortedParts = []
+        while self.allParts:
+            topPart = None
+            for part in self.allParts:
+                mentioned = False
+                for other in self.allParts:
+                    if part in other.deps:
+                        mentioned = True
                         break
+                if not mentioned:
+                    topPart = part
+                    break
+            if not topPart:
+                snapcraft.common.log("Circular dependency chain!")
+                sys.exit(1)
+            sortedParts = [topPart] + sortedParts
+            self.allParts.remove(topPart)
+        self.allParts = sortedParts
 
     def loadPlugin(self, partName, pluginName, properties, loadCode=True):
         part = snapcraft.plugin.loadPlugin(partName, pluginName, properties, loadCode=loadCode)
@@ -85,13 +104,48 @@ class Config:
         self.allParts.append(part)
         return part
 
-    def env(self, root):
+    def runtimeEnv(self, root):
         env = []
         env.append("PATH=\"%s/bin:%s/usr/bin:$PATH\"" % (root, root))
         env.append("LD_LIBRARY_PATH=\"%s/lib:%s/usr/lib:$LD_LIBRARY_PATH\"" % (root, root))
-        env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % root)
-        env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % root)
+        return env
 
+    def buildEnv(self, root):
+        env = []
+        env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % root)
+        env.append("LDFLAGS=\"-L%s/lib -L%s/usr/lib $LDFLAGS\"" % (root, root))
+        return env
+
+    def buildEnvForPart(self, part):
+        # Grab build env of all part's dependencies
+
+        env = []
+
+        for dep in part.deps:
+            root = dep.installdir
+            env += self.runtimeEnv(root)
+            env += self.buildEnv(root)
+            env += dep.env(root)
+            env += self.buildEnvForPart(dep)
+
+        return env
+
+    def stageEnv(self):
+        root = snapcraft.common.stagedir
+        env = []
+
+        env += self.runtimeEnv(root)
+        env += self.buildEnv(root)
+        for part in self.allParts:
+            env += part.env(root)
+
+        return env
+
+    def snapEnv(self):
+        root = snapcraft.common.snapdir
+        env = []
+
+        env += self.runtimeEnv(root)
         for part in self.allParts:
             env += part.env(root)
 
