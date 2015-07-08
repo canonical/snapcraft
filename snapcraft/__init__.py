@@ -103,16 +103,6 @@ class BasePlugin:
 
         return True
 
-    def doDeploy(self, dirs):
-        self.makedirs(self.snapdir)
-
-        for d in dirs:
-            if os.path.exists(os.path.join(self.stagedir, d)):
-                self.makedirs(os.path.join(self.snapdir, d))
-                if not self.run(['cp', '-rf', d, self.snapdir], cwd=self.stagedir):
-                    return False
-        return True
-
     def makedirs(self, d):
         try:
             os.makedirs(d)
