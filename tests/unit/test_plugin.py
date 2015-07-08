@@ -24,12 +24,10 @@ from snapcraft.plugin import Plugin
 
 class TestPlugin(unittest.TestCase):
 
-    @mock.patch('importlib.import_module')
-    def test_is_dirty(self, import_mock):
-        p = Plugin("mock", "mock-part", {}, loadConfig=False, loadCode=False)
+    def test_isDirty(self):
+        p = Plugin("mock", "mock-part", {}, loadConfig=False)
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
-        p.partNames = ["mock-part"]
         p.code = mock.Mock()
         # pull once
         p.pull()
@@ -38,3 +36,51 @@ class TestPlugin(unittest.TestCase):
         p.code.pull.reset_mock()
         p.pull()
         self.assertFalse(p.code.pull.called)
+
+    def test_collectSnapFiles(self):
+        p = Plugin("mock", "mock-part", {}, loadConfig=False)
+
+        tmpdirObject = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdirObject.cleanup)
+        tmpdir = tmpdirObject.name
+
+        p.installdir = tmpdir + '/install'
+        os.makedirs(tmpdir + '/install/1/1a/1b')
+        os.makedirs(tmpdir + '/install/2/2a')
+        os.makedirs(tmpdir + '/install/3')
+        open(tmpdir + '/install/a', mode='w').close()
+        open(tmpdir + '/install/b', mode='w').close()
+        open(tmpdir + '/install/1/a', mode='w').close()
+        open(tmpdir + '/install/3/a', mode='w').close()
+
+        p.stagedir = tmpdir + '/stage'
+        os.makedirs(tmpdir + '/stage/1/1a/1b')
+        os.makedirs(tmpdir + '/stage/2/2a')
+        os.makedirs(tmpdir + '/stage/2/2b')
+        os.makedirs(tmpdir + '/stage/3')
+        open(tmpdir + '/stage/a', mode='w').close()
+        open(tmpdir + '/stage/b', mode='w').close()
+        open(tmpdir + '/stage/c', mode='w').close()
+        open(tmpdir + '/stage/1/a', mode='w').close()
+        open(tmpdir + '/stage/2/2b/a', mode='w').close()
+        open(tmpdir + '/stage/3/a', mode='w').close()
+
+        self.assertEqual(p.collectSnapFiles([], []), (set(), set()))
+
+        self.assertEqual(p.collectSnapFiles(['*'], []), (
+            set(['1', '1/1a', '1/1a/1b', '2', '2/2a', '3']),
+            set(['a', 'b', '1/a', '3/a'])))
+
+        self.assertEqual(p.collectSnapFiles(['*'], ['1']), (
+            set(['2', '2/2a', '3']),
+            set(['a', 'b', '3/a'])))
+
+        self.assertEqual(p.collectSnapFiles(['a'], ['*']), (set(), set()))
+
+        self.assertEqual(p.collectSnapFiles(['*'], ['*/*']), (
+            set(['1', '2', '3']),
+            set(['a', 'b'])))
+
+        self.assertEqual(p.collectSnapFiles(['1', '2'], ['*/a']), (
+            set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
+            set()))

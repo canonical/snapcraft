@@ -28,25 +28,22 @@ class Go14Plugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         # FIXME: horrible
         self.arch = "amd64"
-        self.godir = os.path.join(
-            os.path.join(os.getcwd(), "parts", self.name))
-        self.goroot = os.path.join(os.path.join(
-            os.getcwd(), "parts", "go1.4", "go"))
-        self.gorootbin = os.path.join(self.goroot, "bin")
-        self.tar_file = os.path.join(
-            self.godir, os.path.basename(URLS[self.arch]))
-        self.makedirs(self.godir)
 
-    def env(self):
+    def env(self, root):
         return [
-            "PATH=%s:$PATH" % self.gorootbin,
-            "GOROOT=%s" % self.goroot,
+            "PATH=%s/usr/local/go/bin:$PATH" % root,
+            "GOROOT=%s/usr/local/go" % root,
         ]
 
     def pull(self):
-        # FIXME: use the internal downloader (once its there) to get stuff
-        if not self.run("wget -c %s " % URLS[self.arch], cwd=self.godir):
-            return False
-        if not os.path.exists(os.path.join(self.godir, "go/bin/go")):
-            return self.run("tar xf %s" % self.tar_file, cwd=self.godir)
-        return True
+        return self.run(['wget', '-c', URLS[self.arch]])
+
+    def build(self):
+        tar_file = os.path.join(
+            self.builddir, os.path.basename(URLS[self.arch]))
+        targetdir = os.path.join(self.installdir, 'usr', 'local')
+        self.makedirs(targetdir)
+        return self.run(['tar', 'xf', tar_file], cwd=targetdir)
+
+    def snapFiles(self):
+        return ([], [])

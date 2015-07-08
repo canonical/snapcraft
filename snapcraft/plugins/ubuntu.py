@@ -25,7 +25,6 @@ class UbuntuPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.debdir = os.path.join(os.getcwd(), "parts", self.name, "debs")
         self.downloadablePackages = []
         self.includedPackages = []
         if options.package:
@@ -41,15 +40,13 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
         return self.downloadDebs(self.downloadablePackages)
 
-    def stage(self):
+    def build(self):
         if not self.downloadablePackages:
             self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
-        return self.unpackDebs(self.downloadablePackages, self.stagedir)
+        return self.unpackDebs(self.downloadablePackages, self.installdir)
 
-    def snap(self):
-        if not self.downloadablePackages:
-            self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
-        return self.unpackDebs(self.downloadablePackages, self.snapdir)
+    def snapFiles(self):
+        return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
 
     def getAllDepPackages(self, packages):
         cache = apt.Cache()
@@ -91,15 +88,16 @@ class UbuntuPlugin(snapcraft.BasePlugin):
 
         return sorted(alldeps)
 
-    def downloadDebs(self, pkgs):
-        self.makedirs(self.debdir)
+    def downloadDebs(self, pkgs, debdir=None):
+        debdir = debdir or self.builddir
         if pkgs:
-            return self.run(['dget'] + pkgs, cwd=self.debdir, stdout=subprocess.DEVNULL)
+            return self.run(['dget'] + pkgs, cwd=debdir, stdout=subprocess.DEVNULL)
         else:
             return True
 
-    def unpackDebs(self, pkgs, targetDir):
+    def unpackDebs(self, pkgs, targetDir, debdir=None):
+        debdir = debdir or self.builddir
         for p in pkgs:
-            if not self.run(['dpkg-deb', '--extract', p + '_*.deb', targetDir], cwd=self.debdir):
+            if not self.run(['dpkg-deb', '--extract', p + '_*.deb', targetDir], cwd=debdir):
                 return False
         return True

@@ -85,14 +85,14 @@ class Config:
         self.allParts.append(part)
         return part
 
-    def env(self):
+    def env(self, root):
         env = []
-        env.append("PATH=\"%s/bin:%s/usr/bin:$PATH\"" % (snapcraft.common.stagedir, snapcraft.common.stagedir))
-        env.append("LD_LIBRARY_PATH=\"%s/lib:%s/usr/lib:$LD_LIBRARY_PATH\"" % (snapcraft.common.stagedir, snapcraft.common.stagedir))
-        env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % snapcraft.common.stagedir)
-        env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % snapcraft.common.stagedir)
+        env.append("PATH=\"%s/bin:%s/usr/bin:$PATH\"" % (root, root))
+        env.append("LD_LIBRARY_PATH=\"%s/lib:%s/usr/lib:$LD_LIBRARY_PATH\"" % (root, root))
+        env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % root)
+        env.append("LDFLAGS=\"-L%s/lib $LDFLAGS\"" % root)
 
         for part in self.allParts:
-            env += part.env()
+            env += part.env(root)
 
         return env

@@ -23,7 +23,7 @@ inTrunk = False
 topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
 if os.path.exists(os.path.join(topdir, 'setup.py')):
     inTrunk = True
-    sys.path.append(topdir)
+    sys.path = [topdir] + sys.path
 
 import snapcraft.cmds
 import snapcraft.common

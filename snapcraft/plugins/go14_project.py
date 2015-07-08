@@ -25,25 +25,17 @@ class Go14ProjectPlugin(snapcraft.BasePlugin):
             self.fullname = self.options.source.split(":~")[1]
         else:
             self.fullname = self.options.source.split("://")[1]
-        self.godir = os.path.join(os.path.join(os.getcwd(), "parts", self.name))
-        self.makedirs(self.godir)
-
-    def env(self):
-        return [
-            "GOPATH=%s" % self.godir,
-        ]
 
     def pull(self):
-        return self.run("go get -t %s" % (self.fullname), self.godir)
+        return self.run(['go', 'get', '-t', self.fullname])
 
     def build(self):
-        return self.run("go build %s" % (self.fullname), self.godir)
-
-    def stage(self):
-        if not self.run("go install %s" % (self.fullname), self.godir):
+        if not self.run(['go', 'build', self.fullname]):
             return False
-        return self.run("cp -rf %s %s" % (
-            os.path.join(self.godir, "bin"), self.stagedir))
+        if not self.run(['go', 'install', self.fullname]):
+            return False
+        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'), self.installdir])
 
-    def snap(self):
-        return self.doDeploy(["bin"])
+    def run(self, cmd, **kwargs):
+        cmd = ['env', 'GOPATH=' + self.builddir] + cmd
+        return super().run(cmd, **kwargs)

@@ -19,11 +19,10 @@ import snapcraft
 
 
 class TgzContentPlugin(snapcraft.BasePlugin):
-    def __init__(self, name, options):
-        super().__init__(name, options)
-        self.partdir = os.path.join(os.getcwd(), "parts", self.name)
 
     def pull(self):
-        self.run("wget -c %s " % self.options.source, cwd=self.partdir)
-        tar_file = os.path.basename(self.partdir)
-        return self.run("tar xf %s" % tar_file, cwd=self.partdir)
+        return self.run(["wget", "-c", self.options.source], cwd=self.builddir)
+
+    def build(self):
+        tar_file = os.path.join(self.builddir, os.path.basename(self.options.source))
+        return self.run(["tar", "xf", tar_file], cwd=self.installdir)

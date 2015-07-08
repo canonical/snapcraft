@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import importlib
 import os
 import snapcraft
@@ -32,6 +33,7 @@ class Plugin:
 
         self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
+        self.installdir = os.path.join(os.getcwd(), "parts", partName, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
         self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
@@ -78,6 +80,10 @@ class Plugin:
             pass
         try:
             os.makedirs(self.builddir)
+        except FileExistsError:
+            pass
+        try:
+            os.makedirs(self.installdir)
         except FileExistsError:
             pass
         try:
@@ -138,42 +144,82 @@ class Plugin:
             self.markDone('build')
         return True
 
-    def test(self, force=False):
-        if not self.shouldStageRun('test', force):
-            return True
-        self.makedirs()
-        if self.code and hasattr(self.code, 'test'):
-            self.notifyStage("Testing")
-            if not getattr(self.code, 'test')():
-                return False
-            self.markDone('test')
-        return True
-
     def stage(self, force=False):
         if not self.shouldStageRun('stage', force):
             return True
         self.makedirs()
-        if self.code and hasattr(self.code, 'stage'):
-            self.notifyStage("Staging")
-            if not getattr(self.code, 'stage')():
-                return False
-            self.markDone('stage')
+        if not self.code:
+            return True
+
+        # FIXME: First check to make sure there are no conflicts
+
+        self.notifyStage("Staging")
+        snapcraft.common.run(['cp', '-arT', self.installdir, self.stagedir])
+        self.markDone('stage')
         return True
 
     def snap(self, force=False):
         if not self.shouldStageRun('snap', force):
             return True
         self.makedirs()
-        if self.code and hasattr(self.code, 'snap'):
+
+        if self.code and hasattr(self.code, 'snapFiles'):
             self.notifyStage("Snapping")
-            if not getattr(self.code, 'snap')():
-                return False
+
+            includes, excludes = getattr(self.code, 'snapFiles')()
+            snapDirs, snapFiles = self.collectSnapFiles(includes, excludes)
+
+            if snapDirs:
+                snapcraft.common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
+            if snapFiles:
+                snapcraft.common.run(['cp', '-a', '--parent'] + list(snapFiles) + [self.snapdir], cwd=self.stagedir)
+
             self.markDone('snap')
         return True
 
-    def env(self):
+    def collectSnapFiles(self, includes, excludes):
+        sourceFiles = set()
+        for root, dirs, files in os.walk(self.installdir):
+            sourceFiles |= set([os.path.join(root, d) for d in dirs])
+            sourceFiles |= set([os.path.join(root, f) for f in files])
+        sourceFiles = set([os.path.relpath(x, self.installdir) for x in sourceFiles])
+
+        includeFiles = set()
+        for include in includes:
+            matches = glob.glob(os.path.join(self.stagedir, include))
+            includeFiles |= set(matches)
+        includeDirs = [x for x in includeFiles if os.path.isdir(x)]
+        includeFiles = set([os.path.relpath(x, self.stagedir) for x in includeFiles])
+
+        # Expand includeFiles, so that an exclude like '*/*.so' will still match
+        # files from an include like 'lib'
+        for includeDir in includeDirs:
+            for root, dirs, files in os.walk(includeDir):
+                includeFiles |= set([os.path.relpath(os.path.join(root, d), self.stagedir) for d in dirs])
+                includeFiles |= set([os.path.relpath(os.path.join(root, f), self.stagedir) for f in files])
+
+        # Grab exclude list
+        excludeFiles = set()
+        for exclude in excludes:
+            matches = glob.glob(os.path.join(self.stagedir, exclude))
+            excludeFiles |= set(matches)
+        excludeDirs = [os.path.relpath(x, self.stagedir) for x in excludeFiles if os.path.isdir(x)]
+        excludeFiles = set([os.path.relpath(x, self.stagedir) for x in excludeFiles])
+
+        # And chop files, including whole trees if any dirs are mentioned
+        snapFiles = (includeFiles & sourceFiles) - excludeFiles
+        for excludeDir in excludeDirs:
+            snapFiles = set([x for x in snapFiles if not x.startswith(excludeDir + '/')])
+
+        # Separate dirs from files
+        snapDirs = set([x for x in snapFiles if os.path.isdir(os.path.join(self.stagedir, x))])
+        snapFiles = snapFiles - snapDirs
+
+        return snapDirs, snapFiles
+
+    def env(self, root):
         if self.code and hasattr(self.code, 'env'):
-            return getattr(self.code, 'env')()
+            return getattr(self.code, 'env')(root)
         return []
 
 
