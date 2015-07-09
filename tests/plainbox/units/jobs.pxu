@@ -26,7 +26,6 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
     snapcraft snap
-    ls -R snap
     test -e snap/build-stamp
 
 id: snapcraft/normal/simple-make
