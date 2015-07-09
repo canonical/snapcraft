@@ -28,6 +28,15 @@ command:
     snapcraft snap
     test "$(./snap/bin/test)" = "Hello world"
 
+id: snapcraft/normal/simple-cmake
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-cmake .
+    snapcraft snap
+    test "$(./snap/bin/simple-cmake)" = "It's a CMake world"
+
 id: snapcraft/normal/conflicts
 plugin: shell
 estimated_duration: 0.3
