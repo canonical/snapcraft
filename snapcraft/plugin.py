@@ -40,7 +40,14 @@ class Plugin:
         self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
 
         if loadConfig:
-            configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
+            # First look in local path
+            isLocalPlugin = True
+            localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
+            configPath = os.path.join(localPluginDir, name + ".yaml")
+            if not os.path.exists(configPath):
+                # OK, now look at snapcraft's plugins
+                isLocalPlugin = False
+                configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
             if not os.path.exists(configPath):
                 snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
                 return
@@ -64,7 +71,18 @@ class Plugin:
                     options = optionsOverride
 
                 moduleName = self.config.get('module', name)
-                module = importlib.import_module("snapcraft.plugins." + moduleName)
+
+                # Load code from local plugin dir if it is there
+                if isLocalPlugin:
+                    sys.path = [localPluginDir] + sys.path
+                else:
+                    moduleName = 'snapcraft.plugins.' + moduleName
+
+                module = importlib.import_module(moduleName)
+
+                if isLocalPlugin:
+                    sys.path.pop(0)
+
                 for propName in dir(module):
                     prop = getattr(module, propName)
                     if issubclass(prop, snapcraft.BasePlugin):

@@ -35,7 +35,7 @@ class Config:
         self.systemPackages = self.data.get('systemPackages', [])
 
         for partName in self.data.get("parts", []):
-            properties = self.data["parts"][partName]
+            properties = self.data["parts"][partName] or {}
 
             pluginName = properties.get("plugin", partName)
             if "plugin" in properties:

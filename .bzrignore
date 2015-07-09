@@ -1,6 +1,9 @@
-**/parts/
-**/snap/
-**/stage/
+examples/*/parts/
+examples/*/snap/
+examples/*/stage/
+tests/unit/parts/
+tests/unit/snap/
+tests/unit/stage/
 build
 dist
 *.egg-info

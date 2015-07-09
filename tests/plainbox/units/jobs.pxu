@@ -19,6 +19,16 @@ command:
     snapcraft stage
     test -e stamp-install
 
+id: snapcraft/normal/local-plugin
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
+    snapcraft snap
+    ls -R snap
+    test -e snap/build-stamp
+
 id: snapcraft/normal/simple-make
 plugin: shell
 estimated_duration: 0.3
