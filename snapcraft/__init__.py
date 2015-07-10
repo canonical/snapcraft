@@ -37,6 +37,10 @@ class BasePlugin:
         return True
 
     def snapFiles(self):
+        """Returns two iteratables of globs:
+            - the first is the set of files/dirs to include
+            - the second is the set of files/dirs to exclude
+           For example: (['bin', 'lib'], ['lib/*.a'])"""
         return (['*'], [])
 
     def env(self, root):
