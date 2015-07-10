@@ -29,6 +29,7 @@ pyflakes3 $SRC_PATHS
 
 (cd tests/unit && python3 -m unittest)
 
+if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
 (
     # Go to the plainbox provider of snapcraft tests
     cd tests/plainbox
@@ -58,5 +59,6 @@ print("Overall: {0}".format("fail" if failed else "pass"))
 raise SystemExit(failed)
 __PYTHON__
 )
+fi
 
 echo -e "\e[1;32mEverything passed\e[0m"

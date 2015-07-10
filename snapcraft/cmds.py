@@ -47,7 +47,7 @@ def init(args):
 
 def shell(args):
     config = snapcraft.yaml.Config()
-    snapcraft.common.env = config.env()
+    snapcraft.common.env = config.env(snapcraft.common.stagedir)
     userCommand = args.userCommand
     if not userCommand:
         userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
@@ -64,7 +64,7 @@ def assemble(args):
         "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
 
     # wrap all included commands
-    snapcraft.common.env = config.env()
+    snapcraft.common.env = config.env(snapcraft.common.stagedir)
     script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assembleEnv().replace(snapcraft.common.stagedir, "$SNAP_APP_PATH")
 
     def wrapBins(bindir):
@@ -159,7 +159,7 @@ def cmd(args):
             print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
-    snapcraft.common.env = config.env()
+    snapcraft.common.env = config.env(snapcraft.common.stagedir)
     for part in config.allParts:
         for cmd in cmds:
             force = forceAll or cmd == forceCommand

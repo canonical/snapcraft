@@ -33,10 +33,7 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
                 return False
         if not self.run("./configure --prefix= " + self.options.configflags):
             return False
-        return self.run("make all")
+        return self.run("make all") and self.run("make install DESTDIR=" + self.installdir)
 
-    def stage(self):
-        return self.run("make install DESTDIR=" + self.stagedir)
-
-    def snap(self):
-        return self.doDeploy(["bin", "share", "lib"])  # not "include"
+    def snapFiles(self):
+        return (['*'], ['include'])

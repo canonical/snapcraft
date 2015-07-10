@@ -36,13 +36,14 @@ class BasePlugin:
     def build(self):
         return True
 
-    def stage(self):
-        return True
+    def snapFiles(self):
+        """Returns two iteratables of globs:
+            - the first is the set of files/dirs to include
+            - the second is the set of files/dirs to exclude
+           For example: (['bin', 'lib'], ['lib/*.a'])"""
+        return (['*'], [])
 
-    def snap(self):
-        return True
-
-    def env(self):
+    def env(self, root):
         return []
 
     # Helpers
@@ -58,16 +59,16 @@ class BasePlugin:
 
     def pullBzr(self, url):
         if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-            return self.run("bzr pull " + url, self.sourcedir)
+            return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
         else:
             os.rmdir(self.sourcedir)
-            return self.run("bzr branch " + url + " " + self.sourcedir)
+            return self.run(['bzr', 'branch', url, self.sourcedir])
 
     def pullGit(self, url):
         if os.path.exists(os.path.join(self.sourcedir, ".git")):
-            return self.run("git pull", self.sourcedir)
+            return self.run(['git', 'pull'], cwd=self.sourcedir)
         else:
-            return self.run("git clone " + url + " .", self.sourcedir)
+            return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
 
     def pullBranch(self, url):
         branchType = None
@@ -104,16 +105,6 @@ class BasePlugin:
                 os.remove(self.builddir)
             os.symlink(path, self.builddir)
 
-        return True
-
-    def doDeploy(self, dirs):
-        self.makedirs(self.snapdir)
-
-        for d in dirs:
-            if os.path.exists(os.path.join(self.stagedir, d)):
-                self.makedirs(os.path.join(self.snapdir, d))
-                if not self.run("cp -rf " + d + " " + self.snapdir + "/", cwd=self.stagedir):
-                    return False
         return True
 
     def makedirs(self, d):
