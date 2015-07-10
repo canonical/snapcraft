@@ -1,0 +1,12 @@
+parts:
+  p1:
+    plugin: make-project
+    source: p1
+  p2:
+    plugin: make-project
+    source: p2
+    after: [p1]
+  p3:
+    plugin: make-project
+    source: p3
+    after: [p2]

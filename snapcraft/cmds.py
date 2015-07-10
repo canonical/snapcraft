@@ -47,7 +47,7 @@ def init(args):
 
 def shell(args):
     config = snapcraft.yaml.Config()
-    snapcraft.common.env = config.env(snapcraft.common.stagedir)
+    snapcraft.common.env = config.stageEnv()
     userCommand = args.userCommand
     if not userCommand:
         userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
@@ -64,8 +64,8 @@ def assemble(args):
         "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
 
     # wrap all included commands
-    snapcraft.common.env = config.env(snapcraft.common.stagedir)
-    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assembleEnv().replace(snapcraft.common.stagedir, "$SNAP_APP_PATH")
+    snapcraft.common.env = config.snapEnv()
+    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assembleEnv().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
 
     def wrapBins(bindir):
         absbindir = os.path.join(snapcraft.common.snapdir, bindir)
@@ -134,6 +134,28 @@ def run(args):
     qemu.kill()
 
 
+def checkForCollisions(parts):
+    partsFiles = {}
+    for part in parts:
+        # Gather our own files up
+        partFiles = set()
+        for root, dirs, files in os.walk(part.installdir):
+            partFiles |= set([os.path.join(root, f) for f in files])
+        partFiles = set([os.path.relpath(x, part.installdir) for x in partFiles])
+
+        # Scan previous parts for collisions
+        for otherPartName in partsFiles:
+            common = partFiles & partsFiles[otherPartName]
+            if common:
+                snapcraft.common.log("Error: parts %s and %s have the following files in common:\n  %s" % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                return False
+
+        # And add our files to the list
+        partsFiles[part.names()[0]] = partFiles
+
+    return True
+
+
 def cmd(args):
     forceAll = args.force
     forceCommand = None
@@ -159,9 +181,19 @@ def cmd(args):
             print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
-    snapcraft.common.env = config.env(snapcraft.common.stagedir)
     for part in config.allParts:
         for cmd in cmds:
+            if cmd == 'stage':
+                # This ends up running multiple times, as each part gets to its
+                # staging cmd.  That's inefficient, but largely OK.
+                # FIXME: fix the above by iterating over cmds before iterating
+                # allParts.  But then we need to make sure we continue to handle
+                # cases like go, where you want go built before trying to pull
+                # a go project.
+                if not checkForCollisions(config.allParts):
+                    sys.exit(1)
+
+            snapcraft.common.env = config.buildEnvForPart(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
                 snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))

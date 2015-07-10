@@ -2,6 +2,7 @@ id: snapcraft/normal/no-yaml
 plugin: shell
 estimated_duration: 0.1
 command:
+    set -x
     OUTPUT=$(snapcraft pull)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
@@ -10,7 +11,7 @@ id: snapcraft/normal/local-source
 plugin: shell
 estimated_duration: 0.3
 command:
-    set -e
+    set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-source .
     snapcraft build
     test -e stamp-all
@@ -22,7 +23,51 @@ id: snapcraft/normal/simple-make
 plugin: shell
 estimated_duration: 0.3
 command:
-    set -e
+    set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
     snapcraft snap
     test "$(./snap/bin/test)" = "Hello world"
+
+id: snapcraft/normal/conflicts
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
+    OUTPUT=$(snapcraft stage)
+    test $? = 1 || exit 1
+    echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
+
+id: snapcraft/normal/dependencies
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
+    snapcraft snap
+    test -x stage/bin/p3
+    test -x snap/bin/p3
+    test "$(snapcraft shell p3)" = 'p1
+    p1
+    p2'
+
+id: snapcraft/normal/dependencies-circular
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
+    sed -i "s/p1:/p1:\n    after: [p3]/" snapcraft.yaml
+    OUTPUT=$(snapcraft pull)
+    test $? = 1 || exit 1
+    echo $OUTPUT | grep -i "circular dependency"
+
+id: snapcraft/normal/dependencies-fail
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
+    sed -i '/after/d' snapcraft.yaml
+    snapcraft snap
+    test $? = 1 || exit 1

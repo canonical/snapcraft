@@ -1,0 +1,8 @@
+parts:
+  p1:
+    plugin: make-project
+    source: .
+  p2:
+    plugin: make-project
+    source: .
+    after: [p1]

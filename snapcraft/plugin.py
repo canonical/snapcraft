@@ -30,6 +30,7 @@ class Plugin:
         self.code = None
         self.config = None
         self.partNames = []
+        self.deps = []
 
         self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
@@ -72,6 +73,12 @@ class Plugin:
 
         self.partNames.append(partName)
         self.valid = True
+
+    def __str__(self):
+        return self.partNames[0]
+
+    def __repr__(self):
+        return self.partNames[0]
 
     def makedirs(self):
         try:
@@ -150,8 +157,6 @@ class Plugin:
         self.makedirs()
         if not self.code:
             return True
-
-        # FIXME: First check to make sure there are no conflicts
 
         self.notifyStage("Staging")
         snapcraft.common.run(['cp', '-arT', self.installdir, self.stagedir])
