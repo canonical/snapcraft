@@ -49,6 +49,13 @@ class Config:
 
             self.loadPlugin(partName, pluginName, properties)
 
+        localPlugins = set()
+        for part in self.allParts:
+            if part.isLocalPlugin:
+                localPlugins.add(part.pluginName)
+        for localPlugin in localPlugins:
+            snapcraft.common.log("Using local plugin %s" % localPlugin)
+
         # Grab all required dependencies, if not already specified
         newParts = self.allParts.copy()
         while newParts:

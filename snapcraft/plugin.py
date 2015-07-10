@@ -31,6 +31,8 @@ class Plugin:
         self.config = None
         self.partNames = []
         self.deps = []
+        self.pluginName = name
+        self.isLocalPlugin = False
 
         self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
@@ -41,16 +43,16 @@ class Plugin:
 
         if loadConfig:
             # First look in local path
-            isLocalPlugin = True
             localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
             configPath = os.path.join(localPluginDir, name + ".yaml")
-            if not os.path.exists(configPath):
+            if os.path.exists(configPath):
+                self.isLocalPlugin = True
+            else:
                 # OK, now look at snapcraft's plugins
-                isLocalPlugin = False
                 configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
-            if not os.path.exists(configPath):
-                snapcraft.common.log("Missing config for part %s" % (name), file=sys.stderr)
-                return
+                if not os.path.exists(configPath):
+                    snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
+                    return
             self.config = yaml.load(open(configPath, 'r')) or {}
 
             if loadCode:
@@ -73,14 +75,14 @@ class Plugin:
                 moduleName = self.config.get('module', name)
 
                 # Load code from local plugin dir if it is there
-                if isLocalPlugin:
+                if self.isLocalPlugin:
                     sys.path = [localPluginDir] + sys.path
                 else:
                     moduleName = 'snapcraft.plugins.' + moduleName
 
                 module = importlib.import_module(moduleName)
 
-                if isLocalPlugin:
+                if self.isLocalPlugin:
                     sys.path.pop(0)
 
                 for propName in dir(module):
