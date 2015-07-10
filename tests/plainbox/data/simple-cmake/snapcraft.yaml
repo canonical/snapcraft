@@ -1,0 +1,3 @@
+parts:
+  cmake-project:
+    source: .

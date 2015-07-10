@@ -1,0 +1,7 @@
+module: cmake_project
+systemPackages: [cmake]
+options:
+    source:
+        required: true
+    configflags:
+        required: false
