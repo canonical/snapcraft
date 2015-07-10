@@ -2,7 +2,8 @@ Source: snapcraft
 Section: utils
 Priority: extra
 Maintainer: Snapcraft Team <snappy-devel@lists.ubuntu.com>
-Build-Depends: debhelper (>= 9),
+Build-Depends: cmake,
+               debhelper (>= 9),
                dh-python,
                pep8,
                plainbox,
