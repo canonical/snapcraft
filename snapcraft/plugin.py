@@ -53,7 +53,8 @@ class Plugin:
                 if not os.path.exists(configPath):
                     snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
                     return
-            self.config = yaml.load(open(configPath, 'r')) or {}
+            with open(configPath, 'r') as fp:
+                self.config = yaml.load(fp) or {}
 
             if loadCode:
                 class Options():

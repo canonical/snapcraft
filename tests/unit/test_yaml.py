@@ -18,10 +18,14 @@ import os
 import tempfile
 import unittest
 
+import snapcraft.common
 from snapcraft.yaml import Config
 
 
 class TestYaml(unittest.TestCase):
+
+    def setUp(self):
+        snapcraft.common.plugindir = os.path.join(os.path.dirname(__file__), "..", "..", "plugins")
 
     def makeSnapcraftYaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
@@ -41,7 +45,24 @@ class TestYaml(unittest.TestCase):
             "package": "fswebcam",
         })
 
-    def test_config_raises_on_missing_snapcraft_yaml(self):
+    @unittest.mock.patch("snapcraft.common.log")
+    def test_config_raises_on_missing_snapcraft_yaml(self, mock_log):
         # no snapcraft.yaml
         with self.assertRaises(SystemExit):
             Config()
+        mock_log.assert_called_with("""Could not find snapcraft.yaml.  Are you sure you're in the right directory?
+To start a new project, use 'snapcraft init'""")
+
+    @unittest.mock.patch("snapcraft.common.log")
+    def test_config_loop(self, mock_log):
+        self.makeSnapcraftYaml("""parts:
+  p1:
+    plugin: ubuntu
+    after: [p2]
+  p2:
+    plugin: ubuntu
+    after: [p1]
+""")
+        with self.assertRaises(SystemExit):
+            Config()
+        mock_log.assert_called_with("Circular dependency chain!")
