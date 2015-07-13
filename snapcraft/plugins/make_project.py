@@ -20,7 +20,7 @@ import snapcraft
 class MakePlugin(snapcraft.BasePlugin):
 
     def pull(self):
-        return self.pullBranch(self.options.source)
+        return self.pull_branch(self.options.source)
 
     def build(self):
         return self.run("make") and self.run("make install DESTDIR=" + self.installdir)

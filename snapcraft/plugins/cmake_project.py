@@ -24,7 +24,7 @@ class CMakePlugin(snapcraft.BasePlugin):
             self.options.configflags = ''
 
     def pull(self):
-        return self.pullBranch(self.options.source)
+        return self.pull_branch(self.options.source)
 
     def build(self):
         return self.run('cmake . -DCMAKE_INSTALL_PREFIX= %s' % self.options.configflags) and \

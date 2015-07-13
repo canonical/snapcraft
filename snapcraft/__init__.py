@@ -57,20 +57,20 @@ class BasePlugin:
                 print(cmd)
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
-    def pullBzr(self, url):
+    def pull_bzr(self, url):
         if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
             return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
         else:
             os.rmdir(self.sourcedir)
             return self.run(['bzr', 'branch', url, self.sourcedir])
 
-    def pullGit(self, url):
+    def pull_git(self, url):
         if os.path.exists(os.path.join(self.sourcedir, ".git")):
             return self.run(['git', 'pull'], cwd=self.sourcedir)
         else:
             return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
 
-    def pullBranch(self, url):
+    def pull_branch(self, url):
         branchType = None
         if url.startswith("bzr:") or url.startswith("lp:"):
             branchType = 'bzr'
@@ -87,12 +87,12 @@ class BasePlugin:
             url = os.path.abspath(url)
 
         if branchType == 'bzr':
-            if not self.pullBzr(url):
+            if not self.pull_bzr(url):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
         elif branchType == "git":
-            if not self.pullGit(url):
+            if not self.pull_git(url):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
