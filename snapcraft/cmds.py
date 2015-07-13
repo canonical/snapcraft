@@ -67,7 +67,7 @@ def assemble(args):
     snapcraft.common.env = config.snap_env()
     script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
 
-    def wrapBins(bindir):
+    def wrap_bins(bindir):
         absbindir = os.path.join(snapcraft.common.snapdir, bindir)
         if not os.path.exists(absbindir):
             return
@@ -83,8 +83,8 @@ def assemble(args):
             with open(exePath, 'w+') as f:
                 f.write(script % ('"$SNAP_APP_PATH/' + bindir + '/' + exe + '.real"'))
             os.chmod(exePath, 0o755)
-    wrapBins('bin')
-    wrapBins('usr/bin')
+    wrap_bins('bin')
+    wrap_bins('usr/bin')
 
     snapcraft.common.run("snappy build " + snapcraft.common.snapdir)
 
