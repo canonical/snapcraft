@@ -28,8 +28,8 @@ def assemble_env():
 
 
 def run(cmd, **kwargs):
-    # FIXME: This is gross to keep writing this, even when env is the same
     assert isinstance(cmd, list), "run command must be a list"
+    # FIXME: This is gross to keep writing this, even when env is the same
     with tempfile.NamedTemporaryFile(mode='w+') as f:
         f.write(assemble_env())
         f.write('\n')
