@@ -1,7 +1,6 @@
 module: autotools_project
 systemPackages: [autoconf, automake, autopoint]
+accepts-source-options: true
 options:
-    source:
-        required: true
     configflags:
         required: false

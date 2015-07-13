@@ -19,13 +19,10 @@ import snapcraft
 
 
 class AutotoolsPlugin(snapcraft.BasePlugin):
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, config, options):
+        super().__init__(name, config, options)
         if self.options.configflags is None:
             self.options.configflags = ''
-
-    def pull(self):
-        return self.pull_branch(self.options.source)
 
     def build(self):
         if not os.path.exists(os.path.join(self.builddir, "configure")):
@@ -34,6 +31,3 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
         if not self.run("./configure --prefix= " + self.options.configflags):
             return False
         return self.run("make all") and self.run("make install DESTDIR=" + self.installdir)
-
-    def snap_files(self):
-        return (['*'], ['include'])

@@ -60,8 +60,13 @@ class Plugin:
                     pass
                 options = Options()
 
-                if self.config:
-                    for opt in self.config.get('options', []):
+                if optionsOverride:
+                    options = optionsOverride
+                elif self.config:
+                    all_options = self.config.get('options', {})
+                    if self.config.get('accepts-source-options', False):
+                        all_options['source'] = {'required': True}
+                    for opt in all_options:
                         if opt in properties:
                             setattr(options, opt, properties[opt])
                         else:
@@ -69,8 +74,6 @@ class Plugin:
                                 snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
                                 return
                             setattr(options, opt, None)
-                if optionsOverride:
-                    options = optionsOverride
 
                 moduleName = self.config.get('module', name)
 
@@ -88,7 +91,7 @@ class Plugin:
                 for propName in dir(module):
                     prop = getattr(module, propName)
                     if issubclass(prop, snapcraft.BasePlugin):
-                        self.code = prop(partName, options)
+                        self.code = prop(partName, self.config, options)
                         break
 
         self.partNames.append(partName)

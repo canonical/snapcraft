@@ -20,8 +20,9 @@ import snapcraft.common
 
 class BasePlugin:
 
-    def __init__(self, name, options):
+    def __init__(self, name, config, options):
         self.name = name
+        self.config = config
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
@@ -31,6 +32,8 @@ class BasePlugin:
 
     # The API
     def pull(self):
+        if self.config.get('accepts-source-options', False):
+            return self._handle_source_options()
         return True
 
     def build(self):
@@ -57,20 +60,28 @@ class BasePlugin:
                 print(cmd)
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
-    def pull_bzr(self, url):
+    def makedirs(self, d):
+        try:
+            os.makedirs(d)
+        except FileExistsError:
+            pass
+
+    # Private helpers
+    def _pull_bzr(self, url):
         if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
             return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
         else:
             os.rmdir(self.sourcedir)
             return self.run(['bzr', 'branch', url, self.sourcedir])
 
-    def pull_git(self, url):
+    def _pull_git(self, url):
         if os.path.exists(os.path.join(self.sourcedir, ".git")):
             return self.run(['git', 'pull'], cwd=self.sourcedir)
         else:
             return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
 
-    def pull_branch(self, url):
+    def _handle_source_options(self):
+        url = self.options.source
         branchType = None
         if url.startswith("bzr:") or url.startswith("lp:"):
             branchType = 'bzr'
@@ -106,9 +117,3 @@ class BasePlugin:
             os.symlink(path, self.builddir)
 
         return True
-
-    def makedirs(self, d):
-        try:
-            os.makedirs(d)
-        except FileExistsError:
-            pass

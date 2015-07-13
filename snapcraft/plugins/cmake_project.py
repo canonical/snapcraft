@@ -18,13 +18,10 @@ import snapcraft
 
 
 class CMakePlugin(snapcraft.BasePlugin):
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, config, options):
+        super().__init__(name, config, options)
         if self.options.configflags is None:
             self.options.configflags = ''
-
-    def pull(self):
-        return self.pull_branch(self.options.source)
 
     def build(self):
         return self.run('cmake . -DCMAKE_INSTALL_PREFIX= %s' % self.options.configflags) and \
