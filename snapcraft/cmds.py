@@ -134,7 +134,7 @@ def run(args):
     qemu.kill()
 
 
-def checkForCollisions(parts):
+def check_for_collisions(parts):
     partsFiles = {}
     for part in parts:
         # Gather our own files up
@@ -190,7 +190,7 @@ def cmd(args):
                 # allParts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not checkForCollisions(config.allParts):
+                if not check_for_collisions(config.allParts):
                     sys.exit(1)
 
             snapcraft.common.env = config.buildEnvForPart(part)
