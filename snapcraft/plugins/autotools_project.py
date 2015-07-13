@@ -35,5 +35,5 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             return False
         return self.run("make all") and self.run("make install DESTDIR=" + self.installdir)
 
-    def snapFiles(self):
+    def snap_files(self):
         return (['*'], ['include'])

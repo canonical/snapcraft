@@ -36,7 +36,7 @@ class BasePlugin:
     def build(self):
         return True
 
-    def snapFiles(self):
+    def snap_files(self):
         """Returns two iteratables of globs:
             - the first is the set of files/dirs to include
             - the second is the set of files/dirs to exclude

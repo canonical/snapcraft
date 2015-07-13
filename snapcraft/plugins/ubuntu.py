@@ -45,7 +45,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
             self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
         return self.unpackDebs(self.downloadablePackages, self.installdir)
 
-    def snapFiles(self):
+    def snap_files(self):
         return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
 
     def getAllDepPackages(self, packages):
