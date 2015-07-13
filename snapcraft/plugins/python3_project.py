@@ -1,0 +1,33 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright (C) 2015 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import snapcraft
+
+
+class Py3MakePlugin(snapcraft.BasePlugin):
+    def __init__(self, name, options):
+        super().__init__(name, options)
+
+    def pull(self):
+        return self.pullBranch(self.options.source)
+
+    def build(self):
+        return self.run(
+            ["python3", "setup.py", "install", "--prefix=%s" % self.installdir])
+
+    def run(self, cmd, **kwargs):
+        cmd = ['env', 'PYTHONPATH=' + self.builddir] + cmd
+        return super().run(cmd, **kwargs)

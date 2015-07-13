@@ -1,0 +1,8 @@
+module: python3_project
+#requires:
+#  - python3
+options:
+  source:
+    required: true
+  configflags:
+    required: false
