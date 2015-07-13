@@ -65,7 +65,7 @@ def assemble(args):
 
     # wrap all included commands
     snapcraft.common.env = config.snapEnv()
-    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assembleEnv().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
+    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
 
     def wrapBins(bindir):
         absbindir = os.path.join(snapcraft.common.snapdir, bindir)
