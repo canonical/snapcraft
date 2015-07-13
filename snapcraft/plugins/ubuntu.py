@@ -37,18 +37,18 @@ class UbuntuPlugin(snapcraft.BasePlugin):
             self.includedPackages.append(name)
 
     def pull(self):
-        self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
-        return self.downloadDebs(self.downloadablePackages)
+        self.downloadablePackages = self.get_all_dep_packages(self.includedPackages)
+        return self.download_debs(self.downloadablePackages)
 
     def build(self):
         if not self.downloadablePackages:
-            self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
-        return self.unpackDebs(self.downloadablePackages, self.installdir)
+            self.downloadablePackages = self.get_all_dep_packages(self.includedPackages)
+        return self.unpack_debs(self.downloadablePackages, self.installdir)
 
-    def snapFiles(self):
+    def snap_files(self):
         return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
 
-    def getAllDepPackages(self, packages):
+    def get_all_dep_packages(self, packages):
         cache = apt.Cache()
         alldeps = set()
         manifestdeps = set()
@@ -60,7 +60,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                 if pkg in cache:
                     manifestdeps.add(pkg)
 
-        def addDeps(pkgs):
+        def add_deps(pkgs):
             for p in pkgs:
                 if p in alldeps:
                     continue
@@ -72,11 +72,11 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                     candidatePkg = cache[p].candidate
                     deps = candidatePkg.dependencies + candidatePkg.recommends
                     alldeps.add(p)
-                    addDeps([x[0].name for x in deps])
+                    add_deps([x[0].name for x in deps])
                 except:
                     pass
 
-        addDeps(packages)
+        add_deps(packages)
 
         exit = False
         for p in packages:
@@ -88,14 +88,14 @@ class UbuntuPlugin(snapcraft.BasePlugin):
 
         return sorted(alldeps)
 
-    def downloadDebs(self, pkgs, debdir=None):
+    def download_debs(self, pkgs, debdir=None):
         debdir = debdir or self.builddir
         if pkgs:
             return self.run(['dget'] + pkgs, cwd=debdir, stdout=subprocess.DEVNULL)
         else:
             return True
 
-    def unpackDebs(self, pkgs, targetDir, debdir=None):
+    def unpack_debs(self, pkgs, targetDir, debdir=None):
         debdir = debdir or self.builddir
         for p in pkgs:
             if not self.run(['dpkg-deb', '--extract', p + '_*.deb', targetDir], cwd=debdir):

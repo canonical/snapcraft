@@ -47,7 +47,7 @@ class Config:
 
             # TODO: support 'filter' or 'blacklist' field to filter what gets put in snap/
 
-            self.loadPlugin(partName, pluginName, properties)
+            self.load_plugin(partName, pluginName, properties)
 
         localPlugins = set()
         for part in self.allParts:
@@ -68,7 +68,7 @@ class Config:
                         alreadyPresent = True
                         break
                 if not alreadyPresent:
-                    newParts.append(self.loadPlugin(requiredPart, requiredPart, {}))
+                    newParts.append(self.load_plugin(requiredPart, requiredPart, {}))
 
         # Gather lists of dependencies
         for part in self.allParts:
@@ -104,55 +104,55 @@ class Config:
             self.allParts.remove(topPart)
         self.allParts = sortedParts
 
-    def loadPlugin(self, partName, pluginName, properties, loadCode=True):
-        part = snapcraft.plugin.loadPlugin(partName, pluginName, properties, loadCode=loadCode)
+    def load_plugin(self, partName, pluginName, properties, loadCode=True):
+        part = snapcraft.plugin.load_plugin(partName, pluginName, properties, loadCode=loadCode)
 
         self.systemPackages += part.config.get('systemPackages', [])
         self.allParts.append(part)
         return part
 
-    def runtimeEnv(self, root):
+    def runtime_env(self, root):
         env = []
         env.append("PATH=\"%s/bin:%s/usr/bin:$PATH\"" % (root, root))
         env.append("LD_LIBRARY_PATH=\"%s/lib:%s/usr/lib:$LD_LIBRARY_PATH\"" % (root, root))
         return env
 
-    def buildEnv(self, root):
+    def build_env(self, root):
         env = []
         env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % root)
         env.append("LDFLAGS=\"-L%s/lib -L%s/usr/lib $LDFLAGS\"" % (root, root))
         return env
 
-    def buildEnvForPart(self, part):
+    def build_env_for_part(self, part):
         # Grab build env of all part's dependencies
 
         env = []
 
         for dep in part.deps:
             root = dep.installdir
-            env += self.runtimeEnv(root)
-            env += self.buildEnv(root)
+            env += self.runtime_env(root)
+            env += self.build_env(root)
             env += dep.env(root)
-            env += self.buildEnvForPart(dep)
+            env += self.build_env_for_part(dep)
 
         return env
 
-    def stageEnv(self):
+    def stage_env(self):
         root = snapcraft.common.stagedir
         env = []
 
-        env += self.runtimeEnv(root)
-        env += self.buildEnv(root)
+        env += self.runtime_env(root)
+        env += self.build_env(root)
         for part in self.allParts:
             env += part.env(root)
 
         return env
 
-    def snapEnv(self):
+    def snap_env(self):
         root = snapcraft.common.snapdir
         env = []
 
-        env += self.runtimeEnv(root)
+        env += self.runtime_env(root)
         for part in self.allParts:
             env += part.env(root)
 
