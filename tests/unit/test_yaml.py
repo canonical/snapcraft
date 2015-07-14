@@ -29,16 +29,16 @@ from snapcraft.yaml import Config
 
 class TestYaml(unittest.TestCase):
 
-    def makeSnapcraftYaml(self, content):
+    def make_snapcraft_yaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
         os.chdir(tempdirObj.name)
         with open("snapcraft.yaml", "w") as fp:
             fp.write(content)
 
-    @unittest.mock.patch('snapcraft.yaml.Config.loadPlugin')
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
-        self.makeSnapcraftYaml("""parts:
+        self.make_snapcraft_yaml("""parts:
   ubuntu:
     package: fswebcam
 """)
@@ -57,7 +57,7 @@ To start a new project, use 'snapcraft init'""")
 
     @patch("snapcraft.common.log")
     def test_config_loop(self, mock_log):
-        self.makeSnapcraftYaml("""parts:
+        self.make_snapcraft_yaml("""parts:
   p1:
     plugin: ubuntu
     after: [p2]
@@ -71,7 +71,7 @@ To start a new project, use 'snapcraft init'""")
 
     @patch("snapcraft.common.run")
     def test_assemble_uses_config_data(self, mock_run):
-        self.makeSnapcraftYaml("snap:\n meta: meta-dir")
+        self.make_snapcraft_yaml("snap:\n meta: meta-dir")
 
         mock_args = Mock()
         snapcraft.cmds.assemble(mock_args)
