@@ -30,7 +30,8 @@ from snapcraft.yaml import Config
 class TestYaml(unittest.TestCase):
 
     def setUp(self):
-        snapcraft.common.plugindir = os.path.join(os.path.dirname(__file__), "..", "..", "plugins")
+        os.environ["SNAPCRAFT_PLUGIN_DIR"] = os.path.join(
+            os.path.dirname(__file__), "..", "..", "plugins")
 
     def makeSnapcraftYaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
