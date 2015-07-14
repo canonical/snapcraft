@@ -181,16 +181,16 @@ def cmd(args):
             print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
-    for part in config.allParts:
+    for part in config.all_parts:
         for cmd in cmds:
             if cmd == 'stage':
                 # This ends up running multiple times, as each part gets to its
                 # staging cmd.  That's inefficient, but largely OK.
                 # FIXME: fix the above by iterating over cmds before iterating
-                # allParts.  But then we need to make sure we continue to handle
+                # all_parts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not check_for_collisions(config.allParts):
+                if not check_for_collisions(config.all_parts):
                     sys.exit(1)
 
             snapcraft.common.env = config.build_env_for_part(part)
