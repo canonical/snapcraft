@@ -23,7 +23,7 @@ import yaml
 class Config:
 
     def __init__(self):
-        self.system_packages = []
+        self.systemPackages = []
         self.all_parts = []
         afterRequests = {}
 
@@ -32,7 +32,7 @@ class Config:
         except FileNotFoundError:
             snapcraft.common.log("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
-        self.system_packages = self.data.get('system_packages', [])
+        self.systemPackages = self.data.get('systemPackages', [])
 
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
@@ -107,7 +107,7 @@ class Config:
     def load_plugin(self, part_name, plugin_name, properties, load_code=True):
         part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties, load_code=load_code)
 
-        self.system_packages += part.config.get('system_packages', [])
+        self.systemPackages += part.config.get('systemPackages', [])
         self.all_parts.append(part)
         return part
 
