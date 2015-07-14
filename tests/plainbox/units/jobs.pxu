@@ -89,3 +89,12 @@ command:
     sed -i '/after/d' snapcraft.yaml
     snapcraft snap
     test $? = 1 || exit 1
+
+id: snapcraft/normal/simple-copy
+plugin: shell
+estimated_duration: 0.5
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-copy .
+    snapcraft snap
+    test "$(cat ./snap/dst)" = "I got copied"

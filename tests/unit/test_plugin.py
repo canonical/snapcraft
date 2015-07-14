@@ -98,6 +98,6 @@ class TestPlugin(unittest.TestCase):
 
         with patch("snapcraft.common.run") as mock_run:
             c.build()
-            wd = os.path.join(os.path.dirname(__file__), "parts/copy/build")
+            wd = os.path.join(os.path.dirname(__file__))
             mock_run.assert_called_with(
-                ["cp", "-a", "src", "dst"], cwd=wd)
+                ["cp", "-av", "src", os.path.join(c.installdir, "dst")], cwd=wd)
