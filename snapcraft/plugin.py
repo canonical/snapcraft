@@ -66,14 +66,18 @@ class Plugin:
                     all_options = self.config.get('options', {})
                     if self.config.get('accepts-source-options', False):
                         all_options.setdefault('source', {'required': True})
+                        all_options.setdefault('source-type', {})
+                        all_options.setdefault('source-branch', {})
+                        all_options.setdefault('source-tag', {})
                     for opt in all_options:
+                        attrname = opt.replace('-', '_')
                         if opt in properties:
-                            setattr(options, opt, properties[opt])
+                            setattr(options, attrname, properties[opt])
                         else:
-                            if self.config['options'][opt].get('required', False):
+                            if all_options[opt].get('required', False):
                                 snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
                                 return
-                            setattr(options, opt, None)
+                            setattr(options, attrname, None)
 
                 moduleName = self.config.get('module', name)
 
