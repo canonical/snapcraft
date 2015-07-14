@@ -1,5 +1,5 @@
 module: make_project
-system_packages: [make]
+systemPackages: [make]
 options:
     source:
         required: true
