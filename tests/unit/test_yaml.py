@@ -26,12 +26,11 @@ from unittest.mock import (
 import snapcraft.common
 from snapcraft.yaml import Config
 
+from snapcraft.bin_snapcraft import setup_dirs
+setup_dirs()
+
 
 class TestYaml(unittest.TestCase):
-
-    def setUp(self):
-        os.environ["SNAPCRAFT_PLUGIN_DIR"] = os.path.join(
-            os.path.dirname(__file__), "..", "..", "plugins")
 
     def makeSnapcraftYaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()

@@ -19,66 +19,78 @@ import argparse
 import os
 import sys
 
-inTrunk = False
-topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
-if os.path.exists(os.path.join(topdir, 'setup.py')):
-    inTrunk = True
-    sys.path = [topdir] + sys.path
 
-import snapcraft.cmds
-import snapcraft.common
+def setup_dirs():
+    """
+    Ensure that sys.path and snapcraft.common.plugindir are setup correctly
+    and support running out of a development snapshot
+    """
+    inTrunk = False
+    topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+    if os.path.exists(os.path.join(topdir, 'setup.py')):
+        inTrunk = True
+        sys.path = [topdir] + sys.path
 
-if inTrunk:
-    snapcraft.common.plugindir = os.path.join(topdir, 'plugins')
-else:
-    snapcraft.common.plugindir = os.path.join(topdir, 'share', 'snapcraft', 'plugins')
+    import snapcraft.common
 
-root_parser = argparse.ArgumentParser()
-subparsers = root_parser.add_subparsers(dest='cmd')
+    if inTrunk:
+        snapcraft.common.plugindir = os.path.join(topdir, 'plugins')
+    else:
+        snapcraft.common.plugindir = os.path.join(topdir, 'share', 'snapcraft', 'plugins')
 
-# Parent parsers
 
-force_parser = argparse.ArgumentParser(add_help=False)
-force_parser.add_argument('--force', action='store_true', help='redo all steps for all parts')
+if __name__ == "__main__":
+    # the import snapcraft.cmds has to happen after setup_dirs() to ensure
+    # sys.path is setup correctly
+    setup_dirs()
+    import snapcraft.cmds
 
-cmd_parser = argparse.ArgumentParser(add_help=False, parents=[force_parser])
-cmd_parser.add_argument('part', nargs='*')
+    root_parser = argparse.ArgumentParser()
+    subparsers = root_parser.add_subparsers(dest='cmd')
 
-# Command parsers
+    # Parent parsers
 
-parser = subparsers.add_parser('init', help='start a project')
-parser.add_argument('part', nargs='*', help='part to add to new project')
-parser.set_defaults(func=snapcraft.cmds.init)
+    force_parser = argparse.ArgumentParser(add_help=False)
+    force_parser.add_argument('--force', action='store_true', help='redo all steps for all parts')
 
-parser = subparsers.add_parser('shell', help='enter staging environment')
-parser.add_argument('userCommand', nargs=argparse.REMAINDER, metavar='cmd', help='optional command to run inside staging environment')
-parser.set_defaults(func=snapcraft.cmds.shell)
+    cmd_parser = argparse.ArgumentParser(add_help=False, parents=[force_parser])
+    cmd_parser.add_argument('part', nargs='*')
 
-parser = subparsers.add_parser('run', help='run snap in kvm', add_help=False)
-parser.set_defaults(func=snapcraft.cmds.run)
+    # Command parsers
 
-parser = subparsers.add_parser('pull', help='get sources', parents=[cmd_parser])
-parser.set_defaults(func=snapcraft.cmds.cmd)
+    parser = subparsers.add_parser('init', help='start a project')
+    parser.add_argument('part', nargs='*', help='part to add to new project')
+    parser.set_defaults(func=snapcraft.cmds.init)
 
-parser = subparsers.add_parser('build', help='build parts', parents=[cmd_parser])
-parser.set_defaults(func=snapcraft.cmds.cmd)
+    parser = subparsers.add_parser('shell', help='enter staging environment')
+    parser.add_argument('userCommand', nargs=argparse.REMAINDER, metavar='cmd', help='optional command to run inside staging environment')
+    parser.set_defaults(func=snapcraft.cmds.shell)
 
-parser = subparsers.add_parser('stage', help='put parts into staging area', parents=[cmd_parser])
-parser.set_defaults(func=snapcraft.cmds.cmd)
+    parser = subparsers.add_parser('run', help='run snap in kvm', add_help=False)
+    parser.set_defaults(func=snapcraft.cmds.run)
 
-parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser], aliases=['all'])
-parser.set_defaults(func=snapcraft.cmds.cmd)
+    parser = subparsers.add_parser('pull', help='get sources', parents=[cmd_parser])
+    parser.set_defaults(func=snapcraft.cmds.cmd)
 
-parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser])
-parser.set_defaults(func=snapcraft.cmds.assemble)
+    parser = subparsers.add_parser('build', help='build parts', parents=[cmd_parser])
+    parser.set_defaults(func=snapcraft.cmds.cmd)
 
-# Now run parser
+    parser = subparsers.add_parser('stage', help='put parts into staging area', parents=[cmd_parser])
+    parser.set_defaults(func=snapcraft.cmds.cmd)
 
-args = root_parser.parse_args()
+    parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser], aliases=['all'])
+    parser.set_defaults(func=snapcraft.cmds.cmd)
 
-if not hasattr(args, 'func'):
-    root_parser.print_help()
-    sys.exit(1)
+    parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser])
+    parser.set_defaults(func=snapcraft.cmds.assemble)
 
-args.func(args)
-sys.exit(0)
+    # Now run parser
+
+    args = root_parser.parse_args()
+
+    if not hasattr(args, 'func'):
+        root_parser.print_help()
+        sys.exit(1)
+
+    args.func(args)
+    sys.exit(0)
