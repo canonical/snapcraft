@@ -31,7 +31,7 @@ def init(args):
         sys.exit(1)
     yaml = 'parts:\n'
     for partName in args.part:
-        part = snapcraft.plugin.loadPlugin(partName, partName, loadCode=False)
+        part = snapcraft.plugin.load_plugin(partName, partName, loadCode=False)
         yaml += '    ' + part.names()[0] + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
@@ -47,7 +47,7 @@ def init(args):
 
 def shell(args):
     config = snapcraft.yaml.Config()
-    snapcraft.common.env = config.stageEnv()
+    snapcraft.common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
         userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
@@ -64,10 +64,10 @@ def assemble(args):
         "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
 
     # wrap all included commands
-    snapcraft.common.env = config.snapEnv()
-    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assembleEnv().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
+    snapcraft.common.env = config.snap_env()
+    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
 
-    def wrapBins(bindir):
+    def wrap_bins(bindir):
         absbindir = os.path.join(snapcraft.common.snapdir, bindir)
         if not os.path.exists(absbindir):
             return
@@ -83,8 +83,8 @@ def assemble(args):
             with open(exePath, 'w+') as f:
                 f.write(script % ('"$SNAP_APP_PATH/' + bindir + '/' + exe + '.real"'))
             os.chmod(exePath, 0o755)
-    wrapBins('bin')
-    wrapBins('usr/bin')
+    wrap_bins('bin')
+    wrap_bins('usr/bin')
 
     snapcraft.common.run("snappy build " + snapcraft.common.snapdir)
 
@@ -134,7 +134,7 @@ def run(args):
     qemu.kill()
 
 
-def checkForCollisions(parts):
+def check_for_collisions(parts):
     partsFiles = {}
     for part in parts:
         # Gather our own files up
@@ -190,10 +190,10 @@ def cmd(args):
                 # allParts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not checkForCollisions(config.allParts):
+                if not check_for_collisions(config.allParts):
                     sys.exit(1)
 
-            snapcraft.common.env = config.buildEnvForPart(part)
+            snapcraft.common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
                 snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))

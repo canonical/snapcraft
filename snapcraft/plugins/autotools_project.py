@@ -25,7 +25,7 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             self.options.configflags = ''
 
     def pull(self):
-        return self.pullBranch(self.options.source)
+        return self.pull_branch(self.options.source)
 
     def build(self):
         if not os.path.exists(os.path.join(self.builddir, "configure")):
@@ -35,5 +35,5 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             return False
         return self.run("make all") and self.run("make install DESTDIR=" + self.installdir)
 
-    def snapFiles(self):
+    def snap_files(self):
         return (['*'], ['include'])

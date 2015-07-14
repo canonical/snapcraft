@@ -45,5 +45,5 @@ class Go14Plugin(snapcraft.BasePlugin):
         self.makedirs(targetdir)
         return self.run(['tar', 'xf', tar_file], cwd=targetdir)
 
-    def snapFiles(self):
+    def snap_files(self):
         return ([], [])

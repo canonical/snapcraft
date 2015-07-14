@@ -23,7 +23,7 @@ import tempfile
 env = []
 
 
-def assembleEnv():
+def assemble_env():
     return '\n'.join(['export ' + e for e in env])
 
 
@@ -32,7 +32,7 @@ def run(cmd, **kwargs):
     if isinstance(cmd, list):
         cmd = ' '.join(cmd)
     with tempfile.NamedTemporaryFile(mode='w+') as f:
-        f.write(assembleEnv())
+        f.write(assemble_env())
         f.write('\n')
         f.write('exec ' + cmd)
         f.flush()
