@@ -17,9 +17,7 @@
 import snapcraft
 
 
-class Py3MakePlugin(snapcraft.BasePlugin):
-    def __init__(self, name, options):
-        super().__init__(name, options)
+class Python3ProjectPlugin(snapcraft.BasePlugin):
 
     def pull(self):
         return self.pullBranch(self.options.source)
