@@ -17,9 +17,13 @@
 import os
 import tempfile
 import unittest
-from unittest import mock
+from unittest.mock import (
+    Mock,
+    patch,
+)
 
 from snapcraft.plugin import Plugin
+from snapcraft.plugins.copy import CopyPlugin
 
 
 class TestPlugin(unittest.TestCase):
@@ -28,7 +32,7 @@ class TestPlugin(unittest.TestCase):
         p = Plugin("mock", "mock-part", {}, loadConfig=False)
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
-        p.code = mock.Mock()
+        p.code = Mock()
         # pull once
         p.pull()
         p.code.pull.assert_called()
@@ -84,3 +88,16 @@ class TestPlugin(unittest.TestCase):
         self.assertEqual(p.collectSnapFiles(['1', '2'], ['*/a']), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))
+
+    def test_copy_plugin(self):
+        mock_options = Mock()
+        mock_options.files = {
+            "src": "dst",
+        }
+        c = CopyPlugin("copy", mock_options)
+
+        with patch("snapcraft.common.run") as mock_run:
+            c.build()
+            wd = os.path.join(os.path.dirname(__file__), "parts/copy/build")
+            mock_run.assert_called_with(
+                ["cp", "-a", "src", "dst"], cwd=wd)

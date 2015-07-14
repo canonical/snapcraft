@@ -4,7 +4,7 @@ import os.path
 import sys
 
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib", "python3.4", "site-package"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib", "python3.4", "site-packages"))
 import spongeshaker.sha3
 
 

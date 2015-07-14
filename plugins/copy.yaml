@@ -1,0 +1,5 @@
+module: copy
+options:
+  files:
+    required: true
+    
