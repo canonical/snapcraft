@@ -65,7 +65,7 @@ class Plugin:
                 elif self.config:
                     all_options = self.config.get('options', {})
                     if self.config.get('accepts-source-options', False):
-                        all_options['source'] = {'required': True}
+                        all_options.setdefault('source', {'required': True})
                     for opt in all_options:
                         if opt in properties:
                             setattr(options, opt, properties[opt])
