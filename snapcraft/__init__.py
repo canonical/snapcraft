@@ -66,22 +66,8 @@ class BasePlugin:
         except FileExistsError:
             pass
 
-    # Private helpers
-    def _pull_bzr(self, url):
-        if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-            return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
-        else:
-            os.rmdir(self.sourcedir)
-            return self.run(['bzr', 'branch', url, self.sourcedir])
-
-    def _pull_git(self, url):
-        if os.path.exists(os.path.join(self.sourcedir, ".git")):
-            return self.run(['git', 'pull'], cwd=self.sourcedir)
-        else:
-            return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
-
-    def _handle_source_options(self):
-        url = self.options.source
+    def get_source(self, source):
+        url = source
         branchType = None
         if url.startswith("bzr:") or url.startswith("lp:"):
             branchType = 'bzr'
@@ -98,12 +84,12 @@ class BasePlugin:
             url = os.path.abspath(url)
 
         if branchType == 'bzr':
-            if not self.pull_bzr(url):
+            if not self._pull_bzr(url):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
         elif branchType == "git":
-            if not self.pull_git(url):
+            if not self._pull_git(url):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
@@ -117,3 +103,20 @@ class BasePlugin:
             os.symlink(path, self.builddir)
 
         return True
+
+    # Private helpers
+    def _pull_bzr(self, url):
+        if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
+            return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
+        else:
+            os.rmdir(self.sourcedir)
+            return self.run(['bzr', 'branch', url, self.sourcedir])
+
+    def _pull_git(self, url):
+        if os.path.exists(os.path.join(self.sourcedir, ".git")):
+            return self.run(['git', 'pull'], cwd=self.sourcedir)
+        else:
+            return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
+
+    def _handle_source_options(self):
+        self.get_source(self.options.source)
