@@ -28,15 +28,14 @@ def assemble_env():
 
 
 def run(cmd, **kwargs):
+    assert isinstance(cmd, list), "run command must be a list"
     # FIXME: This is gross to keep writing this, even when env is the same
-    if isinstance(cmd, list):
-        cmd = ' '.join(cmd)
     with tempfile.NamedTemporaryFile(mode='w+') as f:
         f.write(assemble_env())
         f.write('\n')
-        f.write('exec ' + cmd)
+        f.write('exec $*')
         f.flush()
-        return subprocess.call(['/bin/sh', f.name], **kwargs) == 0
+        return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
 
 
 def log(msg, file=None):

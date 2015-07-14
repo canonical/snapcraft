@@ -25,28 +25,28 @@ import yaml
 
 class Plugin:
 
-    def __init__(self, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
+    def __init__(self, name, part_name, properties, options_override=None, load_code=True, load_config=True):
         self.valid = False
         self.code = None
         self.config = None
-        self.partNames = []
+        self.part_names = []
         self.deps = []
-        self.pluginName = name
-        self.isLocalPlugin = False
+        self.plugin_name = name
+        self.is_local_plugin = False
 
-        self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
-        self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
-        self.installdir = os.path.join(os.getcwd(), "parts", partName, "install")
+        self.sourcedir = os.path.join(os.getcwd(), "parts", part_name, "src")
+        self.builddir = os.path.join(os.getcwd(), "parts", part_name, "build")
+        self.installdir = os.path.join(os.getcwd(), "parts", part_name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
-        self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
+        self.statefile = os.path.join(os.getcwd(), "parts", part_name, "state")
 
-        if loadConfig:
+        if load_config:
             # First look in local path
             localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
             configPath = os.path.join(localPluginDir, name + ".yaml")
             if os.path.exists(configPath):
-                self.isLocalPlugin = True
+                self.is_local_plugin = True
             else:
                 # OK, now look at snapcraft's plugins
                 configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
@@ -55,13 +55,13 @@ class Plugin:
                     return
             self.config = yaml.load(open(configPath, 'r')) or {}
 
-            if loadCode:
+            if load_code:
                 class Options():
                     pass
                 options = Options()
 
-                if optionsOverride:
-                    options = optionsOverride
+                if options_override:
+                    options = options_override
                 elif self.config:
                     all_options = self.config.get('options', {})
                     if self.config.get('accepts-source-options', False):
@@ -78,30 +78,30 @@ class Plugin:
                 moduleName = self.config.get('module', name)
 
                 # Load code from local plugin dir if it is there
-                if self.isLocalPlugin:
+                if self.is_local_plugin:
                     sys.path = [localPluginDir] + sys.path
                 else:
                     moduleName = 'snapcraft.plugins.' + moduleName
 
                 module = importlib.import_module(moduleName)
 
-                if self.isLocalPlugin:
+                if self.is_local_plugin:
                     sys.path.pop(0)
 
                 for propName in dir(module):
                     prop = getattr(module, propName)
                     if issubclass(prop, snapcraft.BasePlugin):
-                        self.code = prop(partName, self.config, options)
+                        self.code = prop(part_name, self.config, options)
                         break
 
-        self.partNames.append(partName)
+        self.part_names.append(part_name)
         self.valid = True
 
     def __str__(self):
-        return self.partNames[0]
+        return self.part_names[0]
 
     def __repr__(self):
-        return self.partNames[0]
+        return self.part_names[0]
 
     def makedirs(self):
         try:
@@ -129,10 +129,10 @@ class Plugin:
         return self.valid
 
     def names(self):
-        return self.partNames
+        return self.part_names
 
     def notify_stage(self, stage, hint=''):
-        snapcraft.common.log(stage + " " + self.partNames[0] + hint)
+        snapcraft.common.log(stage + " " + self.part_names[0] + hint)
 
     def is_dirty(self, stage):
         try:
@@ -251,9 +251,9 @@ class Plugin:
         return []
 
 
-def load_plugin(partName, pluginName, properties={}, loadCode=True):
-    part = Plugin(pluginName, partName, properties, loadCode=loadCode)
+def load_plugin(part_name, plugin_name, properties={}, load_code=True):
+    part = Plugin(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
-        snapcraft.common.log("Could not load part %s" % pluginName, file=sys.stderr)
+        snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
         sys.exit(1)
     return part

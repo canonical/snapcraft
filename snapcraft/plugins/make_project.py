@@ -20,4 +20,5 @@ import snapcraft
 class MakePlugin(snapcraft.BasePlugin):
 
     def build(self):
-        return self.run("make") and self.run("make install DESTDIR=" + self.installdir)
+        return self.run(['make']) and \
+            self.run(['make', 'install', 'DESTDIR=' + self.installdir])

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -ex
+set -e
 
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd):$PYTHONPATH
@@ -31,6 +31,18 @@ pyflakes3 $SRC_PATHS
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
 (
+    # well, well, what can we do
+    if ! which plainbox >/dev/null; then
+        cat <<EOF
+
+WARNING: no plainbox binary can be found
+Please see the README for details how to install the plainbox package
+for running the integration tests.
+
+EOF
+        exit 1
+    fi
+
     # Go to the plainbox provider of snapcraft tests
     cd tests/plainbox
     # Create a temporary directory so that we can run 'manage.py develop' and

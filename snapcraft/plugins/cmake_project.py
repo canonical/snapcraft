@@ -14,16 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+from snapcraft.plugins.make_project import MakePlugin
 
 
-class CMakePlugin(snapcraft.BasePlugin):
+class CMakePlugin(MakePlugin):
     def __init__(self, name, config, options):
         super().__init__(name, config, options)
         if self.options.configflags is None:
-            self.options.configflags = ''
+            self.options.configflags = []
 
     def build(self):
-        return self.run('cmake . -DCMAKE_INSTALL_PREFIX= %s' % self.options.configflags) and \
-            self.run("make") and \
-            self.run("make install DESTDIR=" + self.installdir)
+        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] + self.options.configflags) and \
+            super().build()

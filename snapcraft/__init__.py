@@ -54,10 +54,7 @@ class BasePlugin:
         if cwd is None:
             cwd = self.builddir
         if True:
-            if isinstance(cmd, list):
-                print(' '.join(cmd))
-            else:
-                print(cmd)
+            print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def makedirs(self, d):
@@ -119,4 +116,4 @@ class BasePlugin:
             return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
 
     def _handle_source_options(self):
-        self.get_source(self.options.source)
+        return self.get_source(self.options.source)
