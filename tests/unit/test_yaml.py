@@ -17,6 +17,11 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import (
+    call,
+    Mock,
+    patch,
+)
 
 import snapcraft.common
 from snapcraft.yaml import Config
@@ -45,7 +50,7 @@ class TestYaml(unittest.TestCase):
             "package": "fswebcam",
         })
 
-    @unittest.mock.patch("snapcraft.common.log")
+    @patch("snapcraft.common.log")
     def test_config_raises_on_missing_snapcraft_yaml(self, mock_log):
         # no snapcraft.yaml
         with self.assertRaises(SystemExit):
@@ -53,7 +58,7 @@ class TestYaml(unittest.TestCase):
         mock_log.assert_called_with("""Could not find snapcraft.yaml.  Are you sure you're in the right directory?
 To start a new project, use 'snapcraft init'""")
 
-    @unittest.mock.patch("snapcraft.common.log")
+    @patch("snapcraft.common.log")
     def test_config_loop(self, mock_log):
         self.makeSnapcraftYaml("""parts:
   p1:
@@ -66,3 +71,15 @@ To start a new project, use 'snapcraft init'""")
         with self.assertRaises(SystemExit):
             Config()
         mock_log.assert_called_with("Circular dependency chain!")
+
+    @patch("snapcraft.common.run")
+    def test_assemble_uses_config_data(self, mock_run):
+        self.makeSnapcraftYaml("snap:\n meta: meta-dir")
+
+        mock_args = Mock()
+        snapcraft.cmds.assemble(mock_args)
+
+        mock_run.assert_has_calls([
+            call("cp -arv meta-dir %s" % snapcraft.common.snapdir),
+            call("snappy build %s" % snapcraft.common.snapdir),
+        ])

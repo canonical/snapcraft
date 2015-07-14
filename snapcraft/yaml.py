@@ -29,14 +29,14 @@ class Config:
 
         try:
             with open("snapcraft.yaml", 'r') as fp:
-                data = yaml.load(fp)
+                self.data = yaml.load(fp)
         except FileNotFoundError:
             snapcraft.common.log("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
-        self.systemPackages = data.get('systemPackages', [])
+        self.systemPackages = self.data.get('systemPackages', [])
 
-        for partName in data.get("parts", []):
-            properties = data["parts"][partName] or {}
+        for partName in self.data.get("parts", []):
+            properties = self.data["parts"][partName] or {}
 
             pluginName = properties.get("plugin", partName)
             if "plugin" in properties:
