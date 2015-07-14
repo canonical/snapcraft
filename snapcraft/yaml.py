@@ -34,20 +34,20 @@ class Config:
             sys.exit(1)
         self.systemPackages = self.data.get('systemPackages', [])
 
-        for partName in self.data.get("parts", []):
-            properties = self.data["parts"][partName] or {}
+        for part_name in self.data.get("parts", []):
+            properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.get("plugin", partName)
+            plugin_name = properties.get("plugin", part_name)
             if "plugin" in properties:
                 del properties["plugin"]
 
             if "after" in properties:
-                afterRequests[partName] = properties["after"]
+                afterRequests[part_name] = properties["after"]
                 del properties["after"]
 
             # TODO: support 'filter' or 'blacklist' field to filter what gets put in snap/
 
-            self.load_plugin(partName, plugin_name, properties)
+            self.load_plugin(part_name, plugin_name, properties)
 
         localPlugins = set()
         for part in self.all_parts:
@@ -104,8 +104,8 @@ class Config:
             self.all_parts.remove(topPart)
         self.all_parts = sortedParts
 
-    def load_plugin(self, partName, plugin_name, properties, loadCode=True):
-        part = snapcraft.plugin.load_plugin(partName, plugin_name, properties, loadCode=loadCode)
+    def load_plugin(self, part_name, plugin_name, properties, load_code=True):
+        part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties, load_code=load_code)
 
         self.systemPackages += part.config.get('systemPackages', [])
         self.all_parts.append(part)

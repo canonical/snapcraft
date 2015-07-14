@@ -25,7 +25,7 @@ import yaml
 
 class Plugin:
 
-    def __init__(self, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
+    def __init__(self, name, part_name, properties, options_override=None, load_code=True, load_config=True):
         self.valid = False
         self.code = None
         self.config = None
@@ -34,14 +34,14 @@ class Plugin:
         self.plugin_name = name
         self.is_local_plugin = False
 
-        self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
-        self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
-        self.installdir = os.path.join(os.getcwd(), "parts", partName, "install")
+        self.sourcedir = os.path.join(os.getcwd(), "parts", part_name, "src")
+        self.builddir = os.path.join(os.getcwd(), "parts", part_name, "build")
+        self.installdir = os.path.join(os.getcwd(), "parts", part_name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
-        self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
+        self.statefile = os.path.join(os.getcwd(), "parts", part_name, "state")
 
-        if loadConfig:
+        if load_config:
             # First look in local path
             localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
             configPath = os.path.join(localPluginDir, name + ".yaml")
@@ -55,7 +55,7 @@ class Plugin:
                     return
             self.config = yaml.load(open(configPath, 'r')) or {}
 
-            if loadCode:
+            if load_code:
                 class Options():
                     pass
                 options = Options()
@@ -69,8 +69,8 @@ class Plugin:
                                 snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
                                 return
                             setattr(options, opt, None)
-                if optionsOverride:
-                    options = optionsOverride
+                if options_override:
+                    options = options_override
 
                 moduleName = self.config.get('module', name)
 
@@ -88,10 +88,10 @@ class Plugin:
                 for propName in dir(module):
                     prop = getattr(module, propName)
                     if issubclass(prop, snapcraft.BasePlugin):
-                        self.code = prop(partName, options)
+                        self.code = prop(part_name, options)
                         break
 
-        self.part_names.append(partName)
+        self.part_names.append(part_name)
         self.valid = True
 
     def __str__(self):
@@ -248,8 +248,8 @@ class Plugin:
         return []
 
 
-def load_plugin(partName, plugin_name, properties={}, loadCode=True):
-    part = Plugin(plugin_name, partName, properties, loadCode=loadCode)
+def load_plugin(part_name, plugin_name, properties={}, load_code=True):
+    part = Plugin(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
         snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
         sys.exit(1)

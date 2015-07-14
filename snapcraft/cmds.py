@@ -30,8 +30,8 @@ def init(args):
         snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
         sys.exit(1)
     yaml = 'parts:\n'
-    for partName in args.part:
-        part = snapcraft.plugin.load_plugin(partName, partName, loadCode=False)
+    for part_name in args.part:
+        part = snapcraft.plugin.load_plugin(part_name, part_name, load_code=False)
         yaml += '    ' + part.names()[0] + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
