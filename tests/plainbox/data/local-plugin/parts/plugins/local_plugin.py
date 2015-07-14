@@ -19,4 +19,4 @@ import snapcraft
 
 class LocalPlugin(snapcraft.BasePlugin):
     def build(self):
-        return self.run('touch build-stamp', self.installdir)
+        return self.run(['touch', 'build-stamp'], self.installdir)

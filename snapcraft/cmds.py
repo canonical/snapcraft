@@ -50,7 +50,7 @@ def shell(args):
     snapcraft.common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
-        userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
+        userCommand = ['/usr/bin/env', "PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] '", '/bin/bash', '--norc']
     snapcraft.common.run(userCommand)
 
 
@@ -61,7 +61,7 @@ def assemble(args):
     config = snapcraft.yaml.Config()
 
     snapcraft.common.run(
-        "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
+        ['cp', '-arv', config.data["snap"]["meta"], snapcraft.common.snapdir])
 
     # wrap all included commands
     snapcraft.common.env = config.snap_env()
@@ -86,7 +86,7 @@ def assemble(args):
     wrap_bins('bin')
     wrap_bins('usr/bin')
 
-    snapcraft.common.run("snappy build " + snapcraft.common.snapdir)
+    snapcraft.common.run(['snappy', 'build', snapcraft.common.snapdir])
 
 
 def run(args):
@@ -98,7 +98,7 @@ def run(args):
             except FileExistsError:
                 pass
             snapcraft.common.run(
-                "sudo ubuntu-device-flash core --developer-mode --enable-ssh 15.04 -o %s" % qemu_img,
+                ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
                 cwd=qemudir)
     qemu = subprocess.Popen(
         ["kvm", "-m", "768", "-nographic",
