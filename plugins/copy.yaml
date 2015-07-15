@@ -1,4 +1,6 @@
 options:
+  mkdirs:
+    required: false
   files:
     required: true
     

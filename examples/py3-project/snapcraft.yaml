@@ -4,7 +4,9 @@ parts:
     source: git://github.com/markokr/spongeshaker.git
   sha3:
     plugin: copy
+    mkdirs:
+     - bin
     files:
-     sha3sum.py: sha3sum
+     sha3sum.py: bin/sha3sum
 snap:
   meta: meta
