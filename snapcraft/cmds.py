@@ -30,8 +30,8 @@ def init(args):
         snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
         sys.exit(1)
     yaml = 'parts:\n'
-    for partName in args.part:
-        part = snapcraft.plugin.load_plugin(partName, partName, loadCode=False)
+    for part_name in args.part:
+        part = snapcraft.plugin.load_plugin(part_name, part_name, load_code=False)
         yaml += '    ' + part.names()[0] + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
@@ -50,7 +50,7 @@ def shell(args):
     snapcraft.common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
-        userCommand = "/usr/bin/env PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ' /bin/bash --norc"
+        userCommand = ['/usr/bin/env', "PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] '", '/bin/bash', '--norc']
     snapcraft.common.run(userCommand)
 
 
@@ -61,7 +61,7 @@ def assemble(args):
     config = snapcraft.yaml.Config()
 
     snapcraft.common.run(
-        "cp -arv %s %s" % (config.data["snap"]["meta"], snapcraft.common.snapdir))
+        ['cp', '-arv', config.data["snap"]["meta"], snapcraft.common.snapdir])
 
     # wrap all included commands
     snapcraft.common.env = config.snap_env()
@@ -86,7 +86,7 @@ def assemble(args):
     wrap_bins('bin')
     wrap_bins('usr/bin')
 
-    snapcraft.common.run("snappy build " + snapcraft.common.snapdir)
+    snapcraft.common.run(['snappy', 'build', snapcraft.common.snapdir])
 
 
 def run(args):
@@ -98,7 +98,7 @@ def run(args):
             except FileExistsError:
                 pass
             snapcraft.common.run(
-                "sudo ubuntu-device-flash core --developer-mode --enable-ssh 15.04 -o %s" % qemu_img,
+                ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
                 cwd=qemudir)
     qemu = subprocess.Popen(
         ["kvm", "-m", "768", "-nographic",
@@ -181,16 +181,16 @@ def cmd(args):
             print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
-    for part in config.allParts:
+    for part in config.all_parts:
         for cmd in cmds:
             if cmd == 'stage':
                 # This ends up running multiple times, as each part gets to its
                 # staging cmd.  That's inefficient, but largely OK.
                 # FIXME: fix the above by iterating over cmds before iterating
-                # allParts.  But then we need to make sure we continue to handle
+                # all_parts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not check_for_collisions(config.allParts):
+                if not check_for_collisions(config.all_parts):
                     sys.exit(1)
 
             snapcraft.common.env = config.build_env_for_part(part)

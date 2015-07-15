@@ -25,25 +25,25 @@ class UbuntuPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.downloadablePackages = []
-        self.includedPackages = []
+        self.downloadable_packages = []
+        self.included_packages = []
         if options.package:
-            self.includedPackages.append(options.package)
+            self.included_packages.append(options.package)
         else:
             # User didn't specify a package, use the part name
             if name == 'ubuntu':
                 snapcraft.common.log("Part %s needs either a package option or a name" % name)
                 sys.exit(1)
-            self.includedPackages.append(name)
+            self.included_packages.append(name)
 
     def pull(self):
-        self.downloadablePackages = self.get_all_dep_packages(self.includedPackages)
-        return self.download_debs(self.downloadablePackages)
+        self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
+        return self.download_debs(self.downloadable_packages)
 
     def build(self):
-        if not self.downloadablePackages:
-            self.downloadablePackages = self.get_all_dep_packages(self.includedPackages)
-        return self.unpack_debs(self.downloadablePackages, self.installdir)
+        if not self.downloadable_packages:
+            self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
+        return self.unpack_debs(self.downloadable_packages, self.installdir)
 
     def snap_files(self):
         return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])

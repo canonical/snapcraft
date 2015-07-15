@@ -51,10 +51,7 @@ class BasePlugin:
         if cwd is None:
             cwd = self.builddir
         if True:
-            if isinstance(cmd, list):
-                print(' '.join(cmd))
-            else:
-                print(cmd)
+            print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def pull_bzr(self, url):
