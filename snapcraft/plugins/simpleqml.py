@@ -17,9 +17,10 @@
 import apt
 import os
 import snapcraft.common
-import snapcraft.plugins.ubuntu
 import subprocess
 import sys
+
+from snapcraft.plugins.ubuntu import UbuntuPlugin
 
 
 class SimpleQtQuickPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
@@ -27,13 +28,6 @@ class SimpleQtQuickPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
     def __init__(self, name, options):
         options.package = None
         super().__init__(name, options)
-        if options.qml is not None:
-            self.qml = options.qml
-        else:
-            self.qml = name
-        if not os.path.isfile(self.qml):
-            snapcraft.common.log("qml file %r does not exist" % (self.qml,))
-            sys.exit(1)
 
         class QmlPackageOptions:
             package = ["qmlscene", "qtdeclarative5-qtmir-plugin", "mir-graphics-drivers-desktop", "qtubuntu-desktop"]
@@ -48,4 +42,5 @@ class SimpleQtQuickPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
 
     def build(self):
         return self.ubuntu.build()
+
 
