@@ -24,7 +24,7 @@ class Python3Plugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
         class Py3Options:
-            package = "python3"
+            package = "python3-dev"
         self.ubuntu = UbuntuPlugin(name, Py3Options())
 
     def env(self, root):
