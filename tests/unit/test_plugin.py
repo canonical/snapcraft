@@ -16,13 +16,13 @@
 
 import os
 import tempfile
-import unittest
 from unittest import mock
 
 from snapcraft.plugin import Plugin
+from tests.unit import TestCase
 
 
-class TestPlugin(unittest.TestCase):
+class TestPlugin(TestCase):
 
     def test_is_dirty(self):
         p = Plugin("mock", "mock-part", {}, load_config=False)

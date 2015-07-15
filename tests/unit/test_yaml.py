@@ -26,8 +26,10 @@ from unittest.mock import (
 import snapcraft.common
 from snapcraft.yaml import Config
 
+from tests.unit import TestCase
 
-class TestYaml(unittest.TestCase):
+
+class TestYaml(TestCase):
 
     def make_snapcraft_yaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
