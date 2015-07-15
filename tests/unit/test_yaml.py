@@ -77,6 +77,6 @@ To start a new project, use 'snapcraft init'""")
         snapcraft.cmds.assemble(mock_args)
 
         mock_run.assert_has_calls([
-            call("cp -arv meta-dir %s" % snapcraft.common.snapdir),
-            call("snappy build %s" % snapcraft.common.snapdir),
+            call(["cp", "-arv", "meta-dir", snapcraft.common.snapdir]),
+            call(["snappy", "build", snapcraft.common.snapdir]),
         ])
