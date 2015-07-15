@@ -26,3 +26,8 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         return self.run(
             ["python3", "setup.py", "install", "--install-layout=deb",
              "--prefix=%s/usr" % self.installdir])
+
+    def env(self, root):
+        return [
+            "PYTHONPATH=%s:$PYTHONPATH" % root,
+        ]
