@@ -24,8 +24,8 @@ from snapcraft.plugin import Plugin
 
 class TestPlugin(unittest.TestCase):
 
-    def test_isDirty(self):
-        p = Plugin("mock", "mock-part", {}, loadConfig=False)
+    def test_is_dirty(self):
+        p = Plugin("mock", "mock-part", {}, load_config=False)
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
         p.code = mock.Mock()
@@ -37,8 +37,8 @@ class TestPlugin(unittest.TestCase):
         p.pull()
         self.assertFalse(p.code.pull.called)
 
-    def test_collectSnapFiles(self):
-        p = Plugin("mock", "mock-part", {}, loadConfig=False)
+    def test_collect_snap_files(self):
+        p = Plugin("mock", "mock-part", {}, load_config=False)
 
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
@@ -65,22 +65,22 @@ class TestPlugin(unittest.TestCase):
         open(tmpdir + '/stage/2/2b/a', mode='w').close()
         open(tmpdir + '/stage/3/a', mode='w').close()
 
-        self.assertEqual(p.collectSnapFiles([], []), (set(), set()))
+        self.assertEqual(p.collect_snap_files([], []), (set(), set()))
 
-        self.assertEqual(p.collectSnapFiles(['*'], []), (
+        self.assertEqual(p.collect_snap_files(['*'], []), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a', '3']),
             set(['a', 'b', '1/a', '3/a'])))
 
-        self.assertEqual(p.collectSnapFiles(['*'], ['1']), (
+        self.assertEqual(p.collect_snap_files(['*'], ['1']), (
             set(['2', '2/2a', '3']),
             set(['a', 'b', '3/a'])))
 
-        self.assertEqual(p.collectSnapFiles(['a'], ['*']), (set(), set()))
+        self.assertEqual(p.collect_snap_files(['a'], ['*']), (set(), set()))
 
-        self.assertEqual(p.collectSnapFiles(['*'], ['*/*']), (
+        self.assertEqual(p.collect_snap_files(['*'], ['*/*']), (
             set(['1', '2', '3']),
             set(['a', 'b'])))
 
-        self.assertEqual(p.collectSnapFiles(['1', '2'], ['*/a']), (
+        self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))

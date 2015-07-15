@@ -25,33 +25,33 @@ class UbuntuPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.downloadablePackages = []
-        self.includedPackages = []
+        self.downloadable_packages = []
+        self.included_packages = []
         if options.package:
             if type(options.package) is list:
-                self.includedPackages.extend(options.package)
+                self.included_packages.extend(options.package)
             else:
-                self.includedPackages.append(options.package)
+                self.included_packages.append(options.package)
         else:
             # User didn't specify a package, use the part name
             if name == 'ubuntu':
                 snapcraft.common.log("Part %s needs either a package option or a name" % name)
                 sys.exit(1)
-            self.includedPackages.append(name)
+            self.included_packages.append(name)
 
     def pull(self):
-        self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
-        return self.downloadDebs(self.downloadablePackages)
+        self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
+        return self.download_debs(self.downloadable_packages)
 
     def build(self):
-        if not self.downloadablePackages:
-            self.downloadablePackages = self.getAllDepPackages(self.includedPackages)
-        return self.unpackDebs(self.downloadablePackages, self.installdir)
+        if not self.downloadable_packages:
+            self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
+        return self.unpack_debs(self.downloadable_packages, self.installdir)
 
-    def snapFiles(self):
+    def snap_files(self):
         return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
 
-    def getAllDepPackages(self, packages):
+    def get_all_dep_packages(self, packages):
         cache = apt.Cache()
         alldeps = set()
         manifestdeps = set()
@@ -63,7 +63,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                 if pkg in cache:
                     manifestdeps.add(pkg)
 
-        def addDeps(pkgs):
+        def add_deps(pkgs):
             for p in pkgs:
                 if p in alldeps:
                     continue
@@ -75,11 +75,11 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                     candidatePkg = cache[p].candidate
                     deps = candidatePkg.dependencies + candidatePkg.recommends
                     alldeps.add(p)
-                    addDeps([x[0].name for x in deps])
+                    add_deps([x[0].name for x in deps])
                 except:
                     pass
 
-        addDeps(packages)
+        add_deps(packages)
 
         exit = False
         for p in packages:
@@ -91,14 +91,14 @@ class UbuntuPlugin(snapcraft.BasePlugin):
 
         return sorted(alldeps)
 
-    def downloadDebs(self, pkgs, debdir=None):
+    def download_debs(self, pkgs, debdir=None):
         debdir = debdir or self.builddir
         if pkgs:
             return self.run(['dget'] + pkgs, cwd=debdir, stdout=subprocess.DEVNULL)
         else:
             return True
 
-    def unpackDebs(self, pkgs, targetDir, debdir=None):
+    def unpack_debs(self, pkgs, targetDir, debdir=None):
         debdir = debdir or self.builddir
         for p in pkgs:
             if not self.run(['dpkg-deb', '--extract', p + '_*.deb', targetDir], cwd=debdir):
