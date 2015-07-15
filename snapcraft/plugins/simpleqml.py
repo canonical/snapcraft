@@ -34,9 +34,18 @@ class SimpleQtQuickPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
         if not os.path.isfile(self.qml):
             snapcraft.common.log("qml file %r does not exist" % (self.qml,))
             sys.exit(1)
-        self.includedPackages = ["qmlscene", "qtdeclarative5-qtmir-plugin", "mir-graphics-drivers-desktop", "qtubuntu-desktop"]
+
+        class QmlPackageOptions:
+            package = ["qmlscene", "qtdeclarative5-qtmir-plugin", "mir-graphics-drivers-desktop", "qtubuntu-desktop"]
+
+        self.ubuntu = UbuntuPlugin(name, QmlPackageOptions())
+
+    def pull(self):
+        return self.ubuntu.pull()
 
     def snapFiles(self):
-        return (['usr/lib/x86_64-linux-gnu'],
-                [])
+        return self.ubuntu.snapFiles()
+
+    def build(self):
+        return self.ubuntu.build()
 
