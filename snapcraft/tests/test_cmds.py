@@ -16,13 +16,13 @@
 
 import os
 import tempfile
-import unittest
 from unittest import mock
 
 from snapcraft.cmds import check_for_collisions
+from snapcraft.tests import TestCase
 
 
-class TestCommands(unittest.TestCase):
+class TestCommands(TestCase):
 
     @mock.patch('snapcraft.common.log')
     def test_check_for_collisions(self, logmock):
