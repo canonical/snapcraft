@@ -49,9 +49,7 @@ class Plugin:
                 self.isLocalPlugin = True
             else:
                 # OK, now look at snapcraft's plugins
-                system_plugin_dir = os.environ.get(
-                    "SNAPCRAFT_PLUGIN_DIR", snapcraft.common.plugindir)
-                configPath = os.path.join(system_plugin_dir, name + ".yaml")
+                configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
                 if not os.path.exists(configPath):
                     snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
                     return
