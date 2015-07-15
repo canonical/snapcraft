@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import snapcraft
 from snapcraft.plugins.ubuntu import UbuntuPlugin
 
@@ -23,6 +22,7 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
+
         class Py3Options:
             package = "python3-dev"
         self.ubuntu = UbuntuPlugin(name, Py3Options())
