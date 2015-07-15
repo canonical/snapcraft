@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
-import os.path
 import sys
 
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib", "python3.4", "site-package"))
 import spongeshaker.sha3
 
 
