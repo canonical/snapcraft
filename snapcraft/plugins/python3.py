@@ -14,15 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import snapcraft
+from snapcraft.plugins.ubuntu import UbuntuPlugin
 
 
-class Python3ProjectPlugin(snapcraft.BasePlugin):
+class Python3Plugin(snapcraft.BasePlugin):
+
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        class Py3Options:
+            package = "python3"
+        self.ubuntu = UbuntuPlugin(name, Py3Options())
+
+    def env(self, root):
+        return [
+            "PATH=%s/usr/bin:$PATH" % root,
+            "PYTHONHOME=%s/usr/" % root,
+        ]
 
     def pull(self):
-        return self.pullBranch(self.options.source)
+        return self.ubuntu.pull()
 
     def build(self):
-        return self.run(
-            ["python3", "setup.py", "install", "--install-layout=deb",
-             "--prefix=%s/usr" % self.installdir])
+        return self.ubuntu.build()
+
+    def snapFiles(self):
+        return self.ubuntu.snapFiles()
