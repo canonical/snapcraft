@@ -100,4 +100,4 @@ class TestPlugin(unittest.TestCase):
             c.build()
             wd = os.path.join(os.path.dirname(__file__))
             mock_run.assert_called_with(
-                ["cp", "-av", "src", os.path.join(c.installdir, "dst")], cwd=wd)
+                ["cp", "--preserve=all", "src", os.path.join(c.installdir, "dst")], cwd=wd)
