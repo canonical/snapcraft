@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import yaml
 
 
 def init(args):
@@ -54,37 +55,53 @@ def shell(args):
     snapcraft.common.run(userCommand)
 
 
+def wrap_exe(relexepath):
+    exepath = os.path.join(snapcraft.common.snapdir, relexepath)
+    origpath = exepath + '.orig'
+
+    try:
+        os.remove(origpath)
+    except:
+        pass
+    os.rename(exepath, origpath)
+
+    script = "#!/bin/sh\n%s\nexec %s $*" % (snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH"), '"$SNAP_APP_PATH/' + relexepath + '.orig"')
+    with open(exepath, 'w+') as f:
+        f.write(script)
+
+    os.chmod(exepath, 0o755)
+
+
 def assemble(args):
     args.cmd = 'snap'
     cmd(args)
 
     config = snapcraft.yaml.Config()
 
-    snapcraft.common.run(
-        ['cp', '-arv', config.data["snap"]["meta"], snapcraft.common.snapdir])
+    if 'snappy-metadata' in config.data:
+        snapcraft.common.run(
+            ['cp', '-arvT', config.data['snappy-metadata'], snapcraft.common.snapdir + '/meta'])
+    if not os.path.exists('snap/meta/package.yaml'):
+        snapcraft.common.log("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
+        sys.exit(1)
+
+    snapcraft.common.env = config.snap_env()
+
+    with open("snap/meta/package.yaml", 'r') as f:
+        package = yaml.load(f)
 
     # wrap all included commands
-    snapcraft.common.env = config.snap_env()
-    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
+    for binary in package.get('binaries', []):
+        execpath = binary.get('exec', binary['name'])
+        wrap_exe(execpath)
 
-    def wrap_bins(bindir):
-        absbindir = os.path.join(snapcraft.common.snapdir, bindir)
-        if not os.path.exists(absbindir):
-            return
-        for exe in os.listdir(absbindir):
-            if exe.endswith('.real'):
-                continue
-            exePath = os.path.join(absbindir, exe)
-            try:
-                os.remove(exePath + '.real')
-            except:
-                pass
-            os.rename(exePath, exePath + '.real')
-            with open(exePath, 'w+') as f:
-                f.write(script % ('"$SNAP_APP_PATH/' + bindir + '/' + exe + '.real"'))
-            os.chmod(exePath, 0o755)
-    wrap_bins('bin')
-    wrap_bins('usr/bin')
+    for binary in package.get('services', []):
+        startpath = binary.get('start')
+        if startpath:
+            wrap_exe(startpath.split(' ')[0])
+        stoppath = binary.get('stop')
+        if stoppath:
+            wrap_exe(stoppath.split(' ')[0])
 
     snapcraft.common.run(['snappy', 'build', snapcraft.common.snapdir])
 
