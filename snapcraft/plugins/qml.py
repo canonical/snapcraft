@@ -23,7 +23,7 @@ import sys
 from snapcraft.plugins.ubuntu import UbuntuPlugin
 
 
-class SimpleQtQuickPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
+class QmlPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
 
     def __init__(self, name, options):
         options.package = None
