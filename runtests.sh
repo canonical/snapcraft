@@ -44,7 +44,7 @@ EOF
     fi
 
     # Go to the plainbox provider of snapcraft tests
-    cd _integration-tests/plainbox
+    cd integration-tests/
     # Create a temporary directory so that we can run 'manage.py develop' and
     # create the .provider file there
     temp_dir=$(mktemp -d)
