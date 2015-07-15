@@ -19,7 +19,7 @@ import tempfile
 from unittest import mock
 
 from snapcraft.cmds import check_for_collisions
-from tests.unit import TestCase
+from snapcraft.tests import TestCase
 
 
 class TestCommands(TestCase):

@@ -19,7 +19,7 @@ import tempfile
 from unittest import mock
 
 from snapcraft.plugin import Plugin
-from tests.unit import TestCase
+from snapcraft.tests import TestCase
 
 
 class TestPlugin(TestCase):

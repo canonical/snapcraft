@@ -26,7 +26,7 @@ from unittest.mock import (
 import snapcraft.common
 from snapcraft.yaml import Config
 
-from tests.unit import TestCase
+from snapcraft.tests import TestCase
 
 
 class TestYaml(TestCase):
