@@ -55,15 +55,18 @@ def main():
     parser = subparsers.add_parser('stage', help='put parts into staging area', parents=[cmd_parser])
     parser.set_defaults(func=snapcraft.cmds.cmd)
 
-    parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser], aliases=['all'])
+    parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser])
     parser.set_defaults(func=snapcraft.cmds.cmd)
 
-    parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser])
+    parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser], aliases=['all'])
     parser.set_defaults(func=snapcraft.cmds.assemble)
 
     # Now run parser
 
-    args = root_parser.parse_args()
+    if len(sys.argv) < 2:
+        args = root_parser.parse_args(['all'])
+    else:
+        args = root_parser.parse_args()
 
     if not hasattr(args, 'func'):
         root_parser.print_help()
