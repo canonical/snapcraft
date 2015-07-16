@@ -53,7 +53,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         return self.unpack_debs(self.downloadable_packages, self.installdir)
 
     def snap_files(self):
-        return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
+        return (['*'], ['./usr/include', './lib/*/*.a', './usr/lib/*/*.a', './usr/share/doc', './usr/share/man', './usr/share/lintian', './usr/share/doc-base'])
 
     def get_all_dep_packages(self, packages):
         cache = apt.Cache()

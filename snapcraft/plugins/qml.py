@@ -14,11 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
-import os
 import snapcraft.common
-import subprocess
-import sys
 
 from snapcraft.plugins.ubuntu import UbuntuPlugin
 
@@ -39,7 +35,9 @@ class QmlPlugin(snapcraft.BasePlugin):
         return self.ubuntu.pull()
 
     def snap_files(self):
-        return self.ubuntu.snap_files()
+        include, exclude = self.ubuntu.snap_files()
+        # print("Snap files '" + ", ".join(include) + "', '" + ", ".join(exclude) + "'")
+        return (include, exclude)
 
     def build(self):
         return self.ubuntu.build()
