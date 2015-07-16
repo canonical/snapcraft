@@ -23,7 +23,7 @@ import sys
 from snapcraft.plugins.ubuntu import UbuntuPlugin
 
 
-class QmlPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
+class QmlPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         options.package = None
@@ -31,14 +31,15 @@ class QmlPlugin(snapcraft.plugins.ubuntu.UbuntuPlugin):
 
         class QmlPackageOptions:
             package = ["qmlscene", "qtdeclarative5-qtmir-plugin", "mir-graphics-drivers-desktop", "qtubuntu-desktop"]
+            recommends = False
 
         self.ubuntu = UbuntuPlugin(name, QmlPackageOptions())
 
     def pull(self):
         return self.ubuntu.pull()
 
-    def snapFiles(self):
-        return self.ubuntu.snapFiles()
+    def snap_files(self):
+        return self.ubuntu.snap_files()
 
     def build(self):
         return self.ubuntu.build()

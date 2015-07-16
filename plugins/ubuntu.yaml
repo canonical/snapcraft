@@ -1,3 +1,5 @@
 options:
   package:
     required: false
+  recommends:
+    required: false
