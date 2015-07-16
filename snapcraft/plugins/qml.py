@@ -42,4 +42,27 @@ class QmlPlugin(snapcraft.BasePlugin):
     def build(self):
         return self.ubuntu.build()
 
+    def env(self, root):
+        arch = 'x86_64-linux-gnu' # TODO figure this out
+        envs = self.ubuntu.env(root)
+        envs.extend([
+            # Mir config
+            "MIR_SOCKET=/run/mir_socket",
+            "MIR_CLIENT_PLATFORM_PATH=%s/usr/lib/%s/mir/client-platform" % (root, arch),
+            # Qt Platform to Mir
+            "QT_QPA_PLATFORM=ubuntumirclient",
+            "QTCHOOSER_NO_GLOBAL_DIR=1",
+            # Qt Libs
+            "LD_LIBRARY_PATH=%s/usr/lib/%s/qt5/libs:$LD_LIBRARY_PATH" % (root, arch),
+            "LD_LIBRARY_PATH=%s/usr/lib/%s/pulseaudio:$LD_LIBRARY_PATH" % (root, arch),
+            # Qt Modules
+            "QT_PLUGIN_PATH=%s/usr/lib/%s/qt5/plugins" % (root, arch),
+            "QML2_IMPORT_PATH=%s/usr/lib/%s/qt5/qml" % (root, arch),
+            # Mesa Libs
+            "LD_LIBRARY_PATH=%s/usr/lib/%s/mesa:$LD_LIBRARY_PATH" % (root, arch),
+            "LD_LIBRARY_PATH=%s/usr/lib/%s/mesa-egl:$LD_LIBRARY_PATH" % (root, arch),
+            # XDG Config
+            "XDG_CONFIG_DIRS=%s/usr/xdg:/etc/xdg:$XDG_CONFIG_DIRS" % root
+        ])
+        return envs
 
