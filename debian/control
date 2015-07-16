@@ -19,6 +19,7 @@ Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
          python3-yaml,
+         ubuntu-snappy-cli,
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
