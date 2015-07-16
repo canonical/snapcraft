@@ -19,6 +19,9 @@ import snapcraft
 
 class Python3ProjectPlugin(snapcraft.BasePlugin):
 
+    # note that we don't need to setup env(), python figures it out
+    # see python3.py for more details
+
     def pull(self):
         return self.pullBranch(self.options.source)
 
@@ -26,8 +29,3 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         return self.run(
             ["python3", "setup.py", "install", "--install-layout=deb",
              "--prefix=%s/usr" % self.installdir])
-
-    def env(self, root):
-        return [
-            "PYTHONPATH=%s:$PYTHONPATH" % root,
-        ]
