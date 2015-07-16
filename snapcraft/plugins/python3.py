@@ -28,9 +28,11 @@ class Python3Plugin(snapcraft.BasePlugin):
         self.ubuntu = UbuntuPlugin(name, Py3Options())
 
     def env(self, root):
+        # note that we don't need to set PYTHONHOME here,
+        # python discovers this automatically from it installed
+        # location, see https://code.launchpad.net/~mvo/snapcraft/python3-project/+merge/264521/comments/664308
         return [
             "PATH=%s/usr/bin:$PATH" % root,
-            "PYTHONHOME=%s/usr/" % root,
         ]
 
     def pull(self):

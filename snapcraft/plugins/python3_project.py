@@ -19,6 +19,9 @@ import snapcraft
 
 class Python3ProjectPlugin(snapcraft.BasePlugin):
 
+    # note that we don't need to setup env(), python figures it out
+    # see python3.py for more details
+
     def pull(self):
         return self.pullBranch(self.options.source)
 
