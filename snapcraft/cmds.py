@@ -179,7 +179,7 @@ def cmd(args):
                 newPackages.append(checkpkg)
         if newPackages:
             print("Installing required packages on the host system: " + ", ".join(newPackages))
-            subprocess.call(['sudo', 'apt-get', 'install'] + newPackages, stdout=subprocess.DEVNULL)
+            subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
     for part in config.all_parts:
         for cmd in cmds:
