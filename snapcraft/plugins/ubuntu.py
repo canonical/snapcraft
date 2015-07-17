@@ -44,7 +44,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         if not self.downloadable_packages:
             self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
         return self.unpack_debs(self.downloadable_packages, self.installdir) \
-            and self.fix_symlinks()
+            and self.fix_symlinks(debdir=self.installdir)
 
     def snap_files(self):
         return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
