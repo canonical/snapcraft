@@ -160,7 +160,7 @@ class BasePlugin:
         except Exception:
             return False
         strip_cmd = []
-        if len(topfiles.split(b'\n')) == 1 and chr(topfiles[-1]) == '/':
+        if topfiles and len(topfiles.split(b'\n')) == 1 and chr(topfiles[-1]) == '/':
             strip_cmd = ['--strip-components=1']
 
         return self.run(['tar'] + strip_cmd + ['-xf', tarball], cwd=destdir)
