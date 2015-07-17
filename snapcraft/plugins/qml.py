@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import snapcraft.common
 
 from snapcraft.plugins.ubuntu import UbuntuPlugin
@@ -69,16 +70,30 @@ class QmlPlugin(snapcraft.BasePlugin):
 
     def snap_files(self):
         include, exclude = self.ubuntu.snap_files()
-        # print("Snap files '" + ", ".join(include) + "', '" + ", ".join(exclude) + "'")
+        include.append('./etc/xdg/qtchooser/snappy-qt5.conf')
         return (include, exclude)
 
+    def build_qt_config(self):
+        arch = 'x86_64-linux-gnu' # TODO figure this out
+        configdir = os.path.join(self.installdir, 'etc', 'xdg', 'qtchooser')
+        try:
+            os.makedirs(configdir)
+        except:
+            pass
+        config = open(os.path.join(configdir, 'snappy-qt5.conf'), 'w')
+        config.write("./usr/lib/%s/qt5/bin\n" % arch)
+        config.write("./usr/lib/%s\n" % arch)
+        config.close
+        return True
+
     def build(self):
-        return self.ubuntu.build()
+        return self.ubuntu.build() and self.build_qt_config()
 
     def env(self, root):
         arch = 'x86_64-linux-gnu' # TODO figure this out
         envs = self.ubuntu.env(root)
         envs.extend([
+            "LD_LIBRARY_PATH=%s/usr/lib/%s:$LD_LIBRARY_PATH" % (root, arch),
             # Mir config
             "MIR_SOCKET=/run/mir_socket",
             "MIR_CLIENT_PLATFORM_PATH=%s/usr/lib/%s/mir/client-platform" % (root, arch),
@@ -87,6 +102,7 @@ class QmlPlugin(snapcraft.BasePlugin):
             # Qt Platform to Mir
             "QT_QPA_PLATFORM=ubuntumirclient",
             "QTCHOOSER_NO_GLOBAL_DIR=1",
+            "QT_SELECT=snappy-qt5",
             # Qt Libs
             "LD_LIBRARY_PATH=%s/usr/lib/%s/qt5/libs:$LD_LIBRARY_PATH" % (root, arch),
             "LD_LIBRARY_PATH=%s/usr/lib/%s/pulseaudio:$LD_LIBRARY_PATH" % (root, arch),
@@ -97,7 +113,8 @@ class QmlPlugin(snapcraft.BasePlugin):
             "LD_LIBRARY_PATH=%s/usr/lib/%s/mesa:$LD_LIBRARY_PATH" % (root, arch),
             "LD_LIBRARY_PATH=%s/usr/lib/%s/mesa-egl:$LD_LIBRARY_PATH" % (root, arch),
             # XDG Config
-            "XDG_CONFIG_DIRS=%s/usr/xdg:/etc/xdg:$XDG_CONFIG_DIRS" % root
+            "XDG_CONFIG_DIRS=%s/etc/xdg:$XDG_CONFIG_DIRS" % root,
+            "XDG_CONFIG_DIRS=%s/usr/xdg:$XDG_CONFIG_DIRS" % root,
         ])
         return envs
 
