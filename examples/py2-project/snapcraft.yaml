@@ -1,0 +1,8 @@
+parts:
+  spongeshaker:
+    plugin: python2-project
+    source: git://github.com/markokr/spongeshaker.git
+  make-project:
+    source: .
+snap:
+  meta: meta
