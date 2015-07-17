@@ -26,7 +26,40 @@ class QmlPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
 
         class QmlPackageOptions:
-            package = ["qmlscene", "qtdeclarative5-qtmir-plugin", "mir-graphics-drivers-desktop", "qtubuntu-desktop"]
+            package = [
+                "qmlscene",
+                "qtdeclarative5-qtmir-plugin",
+                "mir-graphics-drivers-desktop",
+                "qtubuntu-desktop",
+                # if there's a metapackage for these, please swap it in here:
+                "qml-module-qt-labs-folderlistmodel",
+                "qml-module-qt-labs-settings",
+                "qml-module-qt-websockets",
+                "qml-module-qtfeedback",
+                "qml-module-qtgraphicaleffects",
+                "qml-module-qtlocation",
+                "qml-module-qtmultimedia",
+                "qml-module-qtorganizer",
+                "qml-module-qtpositioning",
+                "qml-module-qtqml-models2",
+                "qml-module-qtqml-statemachine",
+                "qml-module-qtquick-controls",
+                "qml-module-qtquick-dialogs",
+                "qml-module-qtquick-layouts",
+                "qml-module-qtquick-localstorage",
+                "qml-module-qtquick-particles2",
+                "qml-module-qtquick-privatewidgets",
+                "qml-module-qtquick-window2",
+                "qml-module-qtquick-xmllistmodel",
+                "qml-module-qtquick2",
+                "qml-module-qtsensors",
+                "qml-module-qtsysteminfo",
+                "qml-module-qttest",
+                "qml-module-qtwebkit",
+                "qml-module-ubuntu-connectivity",
+                "qml-module-ubuntu-onlineaccounts",
+                "qml-module-ubuntu-onlineaccounts-client",
+            ]
             recommends = False
 
         self.ubuntu = UbuntuPlugin(name, QmlPackageOptions())
