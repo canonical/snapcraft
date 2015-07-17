@@ -28,6 +28,20 @@ command:
     snapcraft snap
     test -e snap/build-stamp
 
+id: snapcraft/normal/simple-tar
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-tar .
+    snapcraft stage
+    test -e stage/flat
+    test -e stage/flatdir/flat2
+    test -e stage/onedeep
+    test -e stage/onedeepdir/onedeep2
+    test -e stage/oneflat
+    test "$(./stage/bin/test)" = "tarproject"
+
 id: snapcraft/normal/simple-make
 plugin: shell
 estimated_duration: 0.3
