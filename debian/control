@@ -19,6 +19,7 @@ Package: snapcraft
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         python3-apt,
          python3-yaml,
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
