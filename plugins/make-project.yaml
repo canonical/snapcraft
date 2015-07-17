@@ -1,5 +1,3 @@
 module: make_project
 systemPackages: [make]
-options:
-    source:
-        required: true
+accepts-source-options: true

@@ -19,8 +19,8 @@ from snapcraft.plugins.make_project import MakePlugin
 
 
 class AutotoolsPlugin(MakePlugin):
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, config, options):
+        super().__init__(name, config, options)
         if self.options.configflags is None:
             self.options.configflags = []
 
@@ -30,6 +30,3 @@ class AutotoolsPlugin(MakePlugin):
                 return False
         return self.run(['./configure', '--prefix='] + self.options.configflags) and \
             super().build()
-
-    def snap_files(self):
-        return (['*'], ['include'])

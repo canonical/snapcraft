@@ -24,8 +24,8 @@ URLS = {
 
 
 class Go14Plugin(snapcraft.BasePlugin):
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, config, options):
+        super().__init__(name, config, options)
         # FIXME: horrible
         self.arch = "amd64"
 

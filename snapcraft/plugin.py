@@ -61,17 +61,24 @@ class Plugin:
                     pass
                 options = Options()
 
-                if self.config:
-                    for opt in self.config.get('options', []):
-                        if opt in properties:
-                            setattr(options, opt, properties[opt])
-                        else:
-                            if self.config['options'][opt].get('required', False):
-                                snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
-                                return
-                            setattr(options, opt, None)
                 if options_override:
                     options = options_override
+                elif self.config:
+                    all_options = self.config.get('options', {})
+                    if self.config.get('accepts-source-options', False):
+                        all_options.setdefault('source', {'required': True})
+                        all_options.setdefault('source-type', {})
+                        all_options.setdefault('source-branch', {})
+                        all_options.setdefault('source-tag', {})
+                    for opt in all_options:
+                        attrname = opt.replace('-', '_')
+                        if opt in properties:
+                            setattr(options, attrname, properties[opt])
+                        else:
+                            if all_options[opt].get('required', False):
+                                snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+                                return
+                            setattr(options, attrname, None)
 
                 moduleName = self.config.get('module', name)
 
@@ -89,7 +96,7 @@ class Plugin:
                 for propName in dir(module):
                     prop = getattr(module, propName)
                     if issubclass(prop, snapcraft.BasePlugin):
-                        self.code = prop(part_name, options)
+                        self.code = prop(part_name, self.config, options)
                         break
 
         self.part_names.append(part_name)
