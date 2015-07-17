@@ -116,3 +116,4 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                     if os.path.exists(target):
                         os.remove(path)
                         os.symlink(os.path.relpath(target, root), path)
+        return True
