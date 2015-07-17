@@ -72,10 +72,10 @@ def wrap_exe(relexepath):
     os.chmod(exepath, 0o755)
 
 
-def assemble(args):
-    args.cmd = 'snap'
+def snap(args):
     cmd(args)
 
+    # Ensure the snappy metadata files are correct
     config = snapcraft.yaml.Config()
 
     if 'snappy-metadata' in config.data:
@@ -85,12 +85,12 @@ def assemble(args):
         snapcraft.common.log("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
         sys.exit(1)
 
-    snapcraft.common.env = config.snap_env()
-
+    # wrap all included commands
     with open("snap/meta/package.yaml", 'r') as f:
         package = yaml.load(f)
 
-    # wrap all included commands
+    snapcraft.common.env = config.snap_env()
+
     for binary in package.get('binaries', []):
         execpath = binary.get('exec', binary['name'])
         wrap_exe(execpath)
@@ -103,6 +103,10 @@ def assemble(args):
         if stoppath:
             wrap_exe(stoppath.split(' ')[0])
 
+
+def assemble(args):
+    args.cmd = 'snap'
+    snap(args)
     snapcraft.common.run(['snappy', 'build', snapcraft.common.snapdir])
 
 
@@ -177,10 +181,7 @@ def cmd(args):
     forceAll = args.force
     forceCommand = None
 
-    if args.cmd == "all":
-        cmds = ['snap']
-    else:
-        cmds = [args.cmd]
+    cmds = [args.cmd]
 
     if cmds[0] in snapcraft.common.commandOrder:
         forceCommand = cmds[0]
