@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -15,20 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
+import unittest
 
-# make running from bzr snapshot easy
-topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
-if os.path.exists(os.path.join(topdir, 'setup.py')):
-    sys.path = [topdir] + sys.path
-
-# now import
-import snapcraft.main
 import snapcraft.dirs
 
 
-if __name__ == "__main__":
-    snapcraft.dirs.setup_dirs()
-    snapcraft.main.main()
-    
+class TestCase(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        snapcraft.dirs.setup_dirs()
