@@ -40,4 +40,4 @@ class Python3Plugin(snapcraft.BasePlugin):
         return self.ubuntu.build()
 
     def snap_files(self):
-        return self.ubuntu.snapFiles()
+        return self.ubuntu.snap_files()
