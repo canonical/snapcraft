@@ -1,0 +1,5 @@
+module: mvn_project
+systemPackages: [maven]
+options:
+    source:
+        required: true
