@@ -16,16 +16,16 @@
 
 import os
 import tempfile
-import unittest
 from unittest import mock
 
-from snapcraft.cmds import checkForCollisions
+from snapcraft.cmds import check_for_collisions
+from snapcraft.tests import TestCase
 
 
-class TestCommands(unittest.TestCase):
+class TestCommands(TestCase):
 
     @mock.patch('snapcraft.common.log')
-    def test_checkForCollisions(self, logmock):
+    def test_check_for_collisions(self, logmock):
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
         tmpdir = tmpdirObject.name
@@ -52,8 +52,8 @@ class TestCommands(unittest.TestCase):
         open(part3.installdir + '/1', mode='w').close()
         open(part3.installdir + '/a/2', mode='w').close()
 
-        self.assertTrue(checkForCollisions([part1, part2]))
+        self.assertTrue(check_for_collisions([part1, part2]))
         self.assertFalse(logmock.called)
 
-        self.assertFalse(checkForCollisions([part1, part2, part3]))
+        self.assertFalse(check_for_collisions([part1, part2, part3]))
         logmock.assert_called_with("Error: parts part2 and part3 have the following files in common:\n  1\n  a/2")
