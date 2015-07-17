@@ -75,9 +75,6 @@ def assemble(args):
             if exe.endswith('.real'):
                 continue
             exePath = os.path.join(absbindir, exe)
-            # ignore symlinks (e.g. python3 -> python3.4)
-            if os.path.islink(exePath):
-                continue
             try:
                 os.remove(exePath + '.real')
             except:
