@@ -29,5 +29,8 @@ class CopyPlugin(snapcraft.BasePlugin):
                 res = False
                 continue
             dst = os.path.join(self.installdir, dst)
-            res |= self.run(["cp", "-v", "--preserve=all", src, dst], cwd=os.getcwd())
+            dst_dir = os.path.dirname(dst)
+            if not os.path.exists(dst_dir):
+                os.makedirs(dst_dir)
+            res |= self.run(["cp", "--preserve=all", src, dst], cwd=os.getcwd())
         return res

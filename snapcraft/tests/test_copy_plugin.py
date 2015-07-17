@@ -33,7 +33,9 @@ class TestCopyPlugin(TestCase):
         super().setUp()
         self.mock_options = Mock()
         self.mock_options.files = {}
-        self.mock_options.mkdirs = []
+        # setup the expected target dir in our tempdir
+        self.dst_prefix = os.path.join(self.tempdir, "parts/copy/install/")
+        os.makedirs(self.dst_prefix)
 
     def test_copy_plugin_missing_src_warns(self):
         self.mock_options.files = {
@@ -47,15 +49,22 @@ class TestCopyPlugin(TestCase):
 
     def test_copy_plugin_copies(self):
         with chdir(self.tempdir):
-            # ensure we have something to copy
-            open("src", "w").close()
-            # ensure we have the target path
-            dst_prefix = "parts/copy/install/"
-            os.makedirs(dst_prefix)
             self.mock_options.files = {
                 "src": "dst",
             }
+            open("src", "w").close()
 
             c = CopyPlugin("copy", self.mock_options)
-            c.build()
-            self.assertTrue(os.path.exists(os.path.join(dst_prefix, "dst")))
+            self.assertTrue(c.build())
+            self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dst")))
+
+    def test_copy_plugin_creates_prefixes(self):
+        with chdir(self.tempdir):
+            self.mock_options.files = {
+                "src": "dir/dst",
+            }
+            open("src", "w").close()
+
+            c = CopyPlugin("copy", self.mock_options)
+            self.assertTrue(c.build())
+            self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dir/dst")))
