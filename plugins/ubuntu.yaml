@@ -1,3 +1,4 @@
+systemPackages: [devscripts]
 options:
   package:
     required: false
