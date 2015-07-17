@@ -17,13 +17,9 @@
 import os
 import tempfile
 
-from unittest.mock import (
-    Mock,
-    patch,
-)
+from unittest.mock import Mock
 
 from snapcraft.plugin import Plugin
-from snapcraft.plugins.copy import CopyPlugin
 from snapcraft.tests import TestCase
 
 
@@ -89,19 +85,3 @@ class TestPlugin(TestCase):
         self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))
-
-    def test_copy_plugin(self):
-        mock_options = Mock()
-        mock_options.files = {
-            "src": "dst",
-        }
-        mock_options.mkdirs = []
-
-        c = CopyPlugin("copy", mock_options)
-
-        with patch("snapcraft.common.run") as mock_run:
-            wd = os.path.abspath(os.path.join(
-                os.path.join(os.path.dirname(__file__)), "..", ".."))
-            c.build()
-            mock_run.assert_called_with(
-                ["cp", "--preserve=all", "src", os.path.join(c.installdir, "dst")], cwd=wd)
