@@ -23,6 +23,10 @@ import sys
 import yaml
 
 
+class PluginError(Exception):
+    pass
+
+
 class Plugin:
 
     def __init__(self, name, part_name, properties, options_override=None, load_code=True, load_config=True):
@@ -204,6 +208,11 @@ class Plugin:
         return True
 
     def collect_snap_files(self, includes, excludes):
+        # validate
+        for d in includes+excludes:
+            if os.path.isabs(d):
+                raise PluginError("path '%s' must be relative" % d)
+        
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
             sourceFiles |= set([os.path.join(root, d) for d in dirs])
