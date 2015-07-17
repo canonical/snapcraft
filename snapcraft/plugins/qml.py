@@ -49,6 +49,8 @@ class QmlPlugin(snapcraft.BasePlugin):
             # Mir config
             "MIR_SOCKET=/run/mir_socket",
             "MIR_CLIENT_PLATFORM_PATH=%s/usr/lib/%s/mir/client-platform" % (root, arch),
+            # XKB config
+            "XKB_CONFIG_ROOT=%s/usr/usr/share/X11/xkb" % root,
             # Qt Platform to Mir
             "QT_QPA_PLATFORM=ubuntumirclient",
             "QTCHOOSER_NO_GLOBAL_DIR=1",
