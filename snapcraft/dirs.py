@@ -14,9 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import os.path
 
 
-class LocalPlugin(snapcraft.BasePlugin):
-    def build(self):
-        return self.run('touch build-stamp', self.installdir)
+def setup_dirs():
+    """
+    Ensure that snapcraft.common.plugindir are setup correctly
+    and support running out of a development snapshot
+    """
+    import snapcraft.common
+    topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+    if os.path.exists(os.path.join(topdir, "setup.py")):
+        snapcraft.common.plugindir = os.path.join(topdir, 'plugins')
+    else:
+        snapcraft.common.plugindir = os.path.join(topdir, 'share', 'snapcraft', 'plugins')

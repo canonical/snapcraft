@@ -23,7 +23,7 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
     # see python3.py for more details
 
     def pull(self):
-        return self.pullBranch(self.options.source)
+        return self.pull_branch(self.options.source)
 
     def build(self):
         return self.run(

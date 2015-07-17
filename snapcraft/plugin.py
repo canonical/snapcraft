@@ -25,37 +25,38 @@ import yaml
 
 class Plugin:
 
-    def __init__(self, name, partName, properties, optionsOverride=None, loadCode=True, loadConfig=True):
+    def __init__(self, name, part_name, properties, options_override=None, load_code=True, load_config=True):
         self.valid = False
         self.code = None
         self.config = None
-        self.partNames = []
+        self.part_names = []
         self.deps = []
-        self.pluginName = name
-        self.isLocalPlugin = False
+        self.plugin_name = name
+        self.is_local_plugin = False
 
-        self.sourcedir = os.path.join(os.getcwd(), "parts", partName, "src")
-        self.builddir = os.path.join(os.getcwd(), "parts", partName, "build")
-        self.installdir = os.path.join(os.getcwd(), "parts", partName, "install")
+        self.sourcedir = os.path.join(os.getcwd(), "parts", part_name, "src")
+        self.builddir = os.path.join(os.getcwd(), "parts", part_name, "build")
+        self.installdir = os.path.join(os.getcwd(), "parts", part_name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
-        self.statefile = os.path.join(os.getcwd(), "parts", partName, "state")
+        self.statefile = os.path.join(os.getcwd(), "parts", part_name, "state")
 
-        if loadConfig:
+        if load_config:
             # First look in local path
             localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
             configPath = os.path.join(localPluginDir, name + ".yaml")
             if os.path.exists(configPath):
-                self.isLocalPlugin = True
+                self.is_local_plugin = True
             else:
                 # OK, now look at snapcraft's plugins
                 configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
                 if not os.path.exists(configPath):
                     snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
                     return
-            self.config = yaml.load(open(configPath, 'r')) or {}
+            with open(configPath, 'r') as fp:
+                self.config = yaml.load(fp) or {}
 
-            if loadCode:
+            if load_code:
                 class Options():
                     pass
                 options = Options()
@@ -69,36 +70,36 @@ class Plugin:
                                 snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
                                 return
                             setattr(options, opt, None)
-                if optionsOverride:
-                    options = optionsOverride
+                if options_override:
+                    options = options_override
 
                 moduleName = self.config.get('module', name)
 
                 # Load code from local plugin dir if it is there
-                if self.isLocalPlugin:
+                if self.is_local_plugin:
                     sys.path = [localPluginDir] + sys.path
                 else:
                     moduleName = 'snapcraft.plugins.' + moduleName
 
                 module = importlib.import_module(moduleName)
 
-                if self.isLocalPlugin:
+                if self.is_local_plugin:
                     sys.path.pop(0)
 
                 for propName in dir(module):
                     prop = getattr(module, propName)
                     if issubclass(prop, snapcraft.BasePlugin):
-                        self.code = prop(partName, options)
+                        self.code = prop(part_name, options)
                         break
 
-        self.partNames.append(partName)
+        self.part_names.append(part_name)
         self.valid = True
 
     def __str__(self):
-        return self.partNames[0]
+        return self.part_names[0]
 
     def __repr__(self):
-        return self.partNames[0]
+        return self.part_names[0]
 
     def makedirs(self):
         try:
@@ -122,16 +123,16 @@ class Plugin:
         except FileExistsError:
             pass
 
-    def isValid(self):
+    def is_valid(self):
         return self.valid
 
     def names(self):
-        return self.partNames
+        return self.part_names
 
-    def notifyStage(self, stage, hint=''):
-        snapcraft.common.log(stage + " " + self.partNames[0] + hint)
+    def notify_stage(self, stage, hint=''):
+        snapcraft.common.log(stage + " " + self.part_names[0] + hint)
 
-    def isDirty(self, stage):
+    def is_dirty(self, stage):
         try:
             with open(self.statefile, 'r') as f:
                 lastStep = f.read()
@@ -139,70 +140,70 @@ class Plugin:
         except Exception:
             return True
 
-    def shouldStageRun(self, stage, force):
-        if not force and not self.isDirty(stage):
-            self.notifyStage('Skipping ' + stage, ' (already ran)')
+    def should_stage_run(self, stage, force):
+        if not force and not self.is_dirty(stage):
+            self.notify_stage('Skipping ' + stage, ' (already ran)')
             return False
         return True
 
-    def markDone(self, stage):
+    def mark_done(self, stage):
         with open(self.statefile, 'w+') as f:
             f.write(stage)
 
     def pull(self, force=False):
-        if not self.shouldStageRun('pull', force):
+        if not self.should_stage_run('pull', force):
             return True
         self.makedirs()
         if self.code and hasattr(self.code, 'pull'):
-            self.notifyStage("Pulling")
+            self.notify_stage("Pulling")
             if not getattr(self.code, 'pull')():
                 return False
-            self.markDone('pull')
+            self.mark_done('pull')
         return True
 
     def build(self, force=False):
-        if not self.shouldStageRun('build', force):
+        if not self.should_stage_run('build', force):
             return True
         self.makedirs()
         if self.code and hasattr(self.code, 'build'):
-            self.notifyStage("Building")
+            self.notify_stage("Building")
             if not getattr(self.code, 'build')():
                 return False
-            self.markDone('build')
+            self.mark_done('build')
         return True
 
     def stage(self, force=False):
-        if not self.shouldStageRun('stage', force):
+        if not self.should_stage_run('stage', force):
             return True
         self.makedirs()
         if not self.code:
             return True
 
-        self.notifyStage("Staging")
+        self.notify_stage("Staging")
         snapcraft.common.run(['cp', '-arT', self.installdir, self.stagedir])
-        self.markDone('stage')
+        self.mark_done('stage')
         return True
 
     def snap(self, force=False):
-        if not self.shouldStageRun('snap', force):
+        if not self.should_stage_run('snap', force):
             return True
         self.makedirs()
 
-        if self.code and hasattr(self.code, 'snapFiles'):
-            self.notifyStage("Snapping")
+        if self.code and hasattr(self.code, 'snap_files'):
+            self.notify_stage("Snapping")
 
-            includes, excludes = getattr(self.code, 'snapFiles')()
-            snapDirs, snapFiles = self.collectSnapFiles(includes, excludes)
+            includes, excludes = getattr(self.code, 'snap_files')()
+            snapDirs, snap_files = self.collect_snap_files(includes, excludes)
 
             if snapDirs:
                 snapcraft.common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
-            if snapFiles:
-                snapcraft.common.run(['cp', '-a', '--parent'] + list(snapFiles) + [self.snapdir], cwd=self.stagedir)
+            if snap_files:
+                snapcraft.common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
 
-            self.markDone('snap')
+            self.mark_done('snap')
         return True
 
-    def collectSnapFiles(self, includes, excludes):
+    def collect_snap_files(self, includes, excludes):
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
             sourceFiles |= set([os.path.join(root, d) for d in dirs])
@@ -232,15 +233,15 @@ class Plugin:
         excludeFiles = set([os.path.relpath(x, self.stagedir) for x in excludeFiles])
 
         # And chop files, including whole trees if any dirs are mentioned
-        snapFiles = (includeFiles & sourceFiles) - excludeFiles
+        snap_files = (includeFiles & sourceFiles) - excludeFiles
         for excludeDir in excludeDirs:
-            snapFiles = set([x for x in snapFiles if not x.startswith(excludeDir + '/')])
+            snap_files = set([x for x in snap_files if not x.startswith(excludeDir + '/')])
 
         # Separate dirs from files
-        snapDirs = set([x for x in snapFiles if os.path.isdir(os.path.join(self.stagedir, x))])
-        snapFiles = snapFiles - snapDirs
+        snapDirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x))])
+        snap_files = snap_files - snapDirs
 
-        return snapDirs, snapFiles
+        return snapDirs, snap_files
 
     def env(self, root):
         if self.code and hasattr(self.code, 'env'):
@@ -248,9 +249,9 @@ class Plugin:
         return []
 
 
-def loadPlugin(partName, pluginName, properties={}, loadCode=True):
-    part = Plugin(pluginName, partName, properties, loadCode=loadCode)
-    if not part.isValid():
-        snapcraft.common.log("Could not load part %s" % pluginName, file=sys.stderr)
+def load_plugin(part_name, plugin_name, properties={}, load_code=True):
+    part = Plugin(plugin_name, part_name, properties, load_code=load_code)
+    if not part.is_valid():
+        snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
         sys.exit(1)
     return part
