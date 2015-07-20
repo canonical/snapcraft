@@ -25,8 +25,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     # Test that as long as we have meta/ from *somewhere*, assemble doesn't
     # care where (and you don't need snappy-metadata to find it)
-    snapcraft snap
-    cp -r snappy snap/meta
+    touch copy-meta # instructs Makefile to copy snappy/ itself
     snapcraft assemble
 
 id: snapcraft/normal/assemble-meta
@@ -64,8 +63,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
-    snapcraft snap
-    test -e snap/build-stamp
+    snapcraft stage
+    test -e stage/build-stamp
 
 id: snapcraft/normal/simple-make
 plugin: shell
@@ -73,8 +72,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
-    snapcraft snap
-    test "$(./snap/bin/test)" = "Hello world"
+    snapcraft stage
+    test "$(./stage/bin/test)" = "Hello world"
 
 id: snapcraft/normal/simple-cmake
 plugin: shell
@@ -82,8 +81,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-cmake .
-    snapcraft snap
-    test "$(./snap/bin/simple-cmake)" = "It's a CMake world"
+    snapcraft stage
+    test "$(./stage/bin/simple-cmake)" = "It's a CMake world"
 
 id: snapcraft/normal/conflicts
 plugin: shell
@@ -101,9 +100,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
-    snapcraft snap
+    snapcraft stage
     test -x stage/bin/p3
-    test -x snap/bin/p3
     test "$(snapcraft shell p3)" = 'p1
     p1
     p2'
@@ -126,7 +124,7 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i '/after/d' snapcraft.yaml
-    snapcraft snap
+    snapcraft build
     test $? = 1 || exit 1
 
 id: snapcraft/normal/simple-copy

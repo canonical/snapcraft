@@ -28,7 +28,8 @@ class Config:
         afterRequests = {}
 
         try:
-            self.data = yaml.load(open("snapcraft.yaml", 'r'))
+            with open("snapcraft.yaml", 'r') as fp:
+                self.data = yaml.load(fp)
         except FileNotFoundError:
             snapcraft.common.log("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)

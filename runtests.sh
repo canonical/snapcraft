@@ -20,14 +20,14 @@ set -e
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-SRC_PATHS="bin snapcraft tests/unit"
+SRC_PATHS="bin snapcraft snapcraft/tests"
 
 # Ignore 501 (line-too-long)
 pep8 $SRC_PATHS --ignore=E501
 
 pyflakes3 $SRC_PATHS
 
-(cd tests/unit && python3 -m unittest)
+python3 -m unittest
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
 (
@@ -44,7 +44,7 @@ EOF
     fi
 
     # Go to the plainbox provider of snapcraft tests
-    cd tests/plainbox
+    cd integration-tests/
     # Create a temporary directory so that we can run 'manage.py develop' and
     # create the .provider file there
     temp_dir=$(mktemp -d)

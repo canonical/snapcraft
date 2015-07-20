@@ -14,18 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import unittest
+
+import snapcraft.dirs
 
 
-class Python3ProjectPlugin(snapcraft.BasePlugin):
-
-    # note that we don't need to setup env(), python figures it out
-    # see python3.py for more details
-
-    def pull(self):
-        return self.pull_branch(self.options.source)
-
-    def build(self):
-        return self.run(
-            ["python3", "setup.py", "install", "--install-layout=deb",
-             "--prefix=%s/usr" % self.installdir])
+class TestCase(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        snapcraft.dirs.setup_dirs()
