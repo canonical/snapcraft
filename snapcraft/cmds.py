@@ -50,7 +50,7 @@ def shell(args):
     snapcraft.common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
-        userCommand = ['/usr/bin/env', "PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] '", '/bin/bash', '--norc']
+        userCommand = ['/usr/bin/env', 'PS1=\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ', '/bin/bash', '--norc']
     snapcraft.common.run(userCommand)
 
 

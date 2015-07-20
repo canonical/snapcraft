@@ -198,7 +198,7 @@ class Plugin:
             if snapDirs:
                 snapcraft.common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
             if snap_files:
-                snapcraft.common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
+                snapcraft.common.run(['cp', '-aP', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
 
             self.mark_done('snap')
         return True
@@ -238,10 +238,10 @@ class Plugin:
             snap_files = set([x for x in snap_files if not x.startswith(excludeDir + '/')])
 
         # Separate dirs from files
-        snapDirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x))])
-        snap_files = snap_files - snapDirs
+        snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x)) and not os.path.islink(os.path.join(self.stagedir, x))])
+        snap_files = snap_files - snap_dirs
 
-        return snapDirs, snap_files
+        return snap_dirs, snap_files
 
     def env(self, root):
         if self.code and hasattr(self.code, 'env'):
