@@ -1,0 +1,4 @@
+module: python3_project
+requires:
+  - python3
+accepts-source-options: true
