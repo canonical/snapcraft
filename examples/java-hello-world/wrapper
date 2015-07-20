@@ -1,3 +1,2 @@
 #!/bin/sh
-env
 java oata.HelloWorld
