@@ -27,7 +27,7 @@ class CopyPlugin(snapcraft.BasePlugin):
             self.makedirs(os.path.join(self.installdir, d))
         for src, dst in self.options.files.items():
             res |= self.run(
-                ["cp", "--preserve=all",
+                ["cp", "--preserve=all", "-R",
                  src, os.path.join(self.installdir, dst)],
                 cwd=os.getcwd())
         return res
