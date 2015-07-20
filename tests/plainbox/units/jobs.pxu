@@ -100,9 +100,9 @@ command:
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     snapcraft pull # test initial branch
-    test "$(bzr log -r -1 parts/bzr/src | grep ^revno:)" = "revno: 2"
+    test "$(bzr revno -r -1 parts/bzr/src)" = "2"
     snapcraft pull # test pull doesn't fail
-    test "$(bzr log -r -1 parts/bzr/src | grep ^revno:)" = "revno: 2"
+    test "$(bzr revno -r -1 parts/bzr/src)" = "2"
 
 id: snapcraft/normal/bzr-tag
 plugin: shell
@@ -115,9 +115,9 @@ command:
     bzr commit -m "2" --unchanged
     bzr tag -r 1 initial
     snapcraft pull # test initial branch
-    test "$(bzr log -r -1 parts/bzr/src | grep ^revno:)" = "revno: 1"
+    test "$(bzr revno -r -1 parts/bzr/src)" = "1"
     snapcraft pull # test pull doesn't fail
-    test "$(bzr log -r -1 parts/bzr/src | grep ^revno:)" = "revno: 1"
+    test "$(bzr revno -r -1 parts/bzr/src)" = "1"
 
 id: snapcraft/normal/git-head
 plugin: shell
