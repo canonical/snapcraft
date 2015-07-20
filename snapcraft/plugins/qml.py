@@ -32,6 +32,7 @@ class QmlPlugin(snapcraft.BasePlugin):
                 "qtdeclarative5-qtmir-plugin",
                 "mir-graphics-drivers-desktop",
                 "qtubuntu-desktop",
+                "ttf-ubuntu-font-family",
                 # if there's a metapackage for these, please swap it in here:
                 "qml-module-qt-labs-folderlistmodel",
                 "qml-module-qt-labs-settings",
@@ -115,6 +116,11 @@ class QmlPlugin(snapcraft.BasePlugin):
             # XDG Config
             "XDG_CONFIG_DIRS=%s/etc/xdg:$XDG_CONFIG_DIRS" % root,
             "XDG_CONFIG_DIRS=%s/usr/xdg:$XDG_CONFIG_DIRS" % root,
+            "XDG_DATA_DIRS=%s/usr/share:$XDG_DATA_DIRS" % root,
+            "XDG_DATA_HOME=%s/usr/share" % root, # Not good, needed for fontconfig
+            # Font Config
+            "FONTCONFIG_PATH=%s/etc/fonts/config.d" % root,
+            "FONTCONFIG_FILE=%s/etc/fonts/fonts.conf" % root,
         ])
         return envs
 
