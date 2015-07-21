@@ -14,11 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
+import logging
 import os
-import snapcraft.common
 import subprocess
 import sys
+
+import apt
+
+import snapcraft.common
+
+
+logger = logging.getLogger(__name__)
 
 
 class UbuntuPlugin(snapcraft.BasePlugin):
@@ -32,7 +38,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         else:
             # User didn't specify a package, use the part name
             if name == 'ubuntu':
-                snapcraft.common.log("Part %s needs either a package option or a name" % name)
+                logger.error('Part %s needs either a package option or a name' % name)
                 sys.exit(1)
             self.included_packages.append(name)
 
@@ -82,7 +88,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         for p in packages:
             if p not in alldeps:
                 exit = True
-                snapcraft.common.log("Package %s not recognized" % p, file=sys.stderr)
+                logger.error('Package %s not recognized' % p, file=sys.stderr)
         if exit:
             sys.exit(1)
 

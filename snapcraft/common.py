@@ -38,9 +38,6 @@ def run(cmd, **kwargs):
         return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
 
 
-def log(msg, file=None):
-    print('\033[01m' + msg + '\033[0m', file=None)
-
 commandOrder = ["pull", "build", "stage", "snap"]
 stagedir = os.path.join(os.getcwd(), "stage")
 snapdir = os.path.join(os.getcwd(), "snap")

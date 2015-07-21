@@ -65,8 +65,10 @@ class TestYaml(TestCase):
             "To start a new project, use 'snapcraft init'\n",
             fake_logger.output)
 
-    @patch("snapcraft.common.log")
-    def test_config_loop(self, mock_log):
+    def test_config_loop(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         self.make_snapcraft_yaml("""parts:
   p1:
     plugin: ubuntu
@@ -75,9 +77,11 @@ class TestYaml(TestCase):
     plugin: ubuntu
     after: [p1]
 """)
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as raised:
             Config()
-        mock_log.assert_called_with("Circular dependency chain!")
+
+        self.assertEqual(raised.exception.code, 1)
+        self.assertEqual('Circular dependency chain!\n', fake_logger.output)
 
     @patch("snapcraft.common.run")
     def test_assemble_uses_config_data(self, mock_run):

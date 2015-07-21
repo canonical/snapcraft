@@ -55,7 +55,7 @@ class Plugin:
                 # OK, now look at snapcraft's plugins
                 configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
                 if not os.path.exists(configPath):
-                    snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
+                    logger.error('Unknown plugin %s' % name)
                     return
             with open(configPath, 'r') as fp:
                 self.config = yaml.load(fp) or {}
@@ -71,7 +71,7 @@ class Plugin:
                             setattr(options, opt, properties[opt])
                         else:
                             if self.config['options'][opt].get('required', False):
-                                snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+                                logger.error('Required field %s missing on part %s' % (opt, name))
                                 return
                             setattr(options, opt, None)
                 if options_override:
@@ -256,6 +256,6 @@ class Plugin:
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     part = Plugin(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
-        snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
+        logger.error('Could not load part %s' % plugin_name)
         sys.exit(1)
     return part
