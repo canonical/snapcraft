@@ -30,7 +30,7 @@ Add a "packages" field that installs Ubuntu packages into the host.
 
 ### packages
 
-This should be a list of packages to install into the host, rather than to include in the deb.  And renamed to systemPackages to avoid confusion.
+This should be a list of packages to install into the host, rather than to include in the deb.  And renamed to build-tools to avoid confusion.
 
 Installing a package into the deb should be a part, just like every other piece of code that goes in there.  Something like:
 
