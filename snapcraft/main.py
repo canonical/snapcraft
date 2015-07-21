@@ -25,6 +25,7 @@ import snapcraft.cmds
 def main():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
+    logging.basicConfig()
 
     root_parser = argparse.ArgumentParser()
     subparsers = root_parser.add_subparsers(dest='cmd')
