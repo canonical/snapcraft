@@ -43,8 +43,7 @@ def init(args):
     yaml = yaml.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
-    logger.info('Wrote the following as snapcraft.yaml:')
-    logger.info(yaml)
+    logger.info('Wrote the following as snapcraft.yaml:\n{}'.format(yaml))
     sys.exit(0)
 
 
