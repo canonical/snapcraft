@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import tempfile
 import unittest
@@ -23,9 +24,10 @@ from unittest.mock import (
     patch,
 )
 
+import fixtures
+
 import snapcraft.common
 from snapcraft.yaml import Config
-
 from snapcraft.tests import TestCase
 
 
@@ -49,13 +51,19 @@ class TestYaml(TestCase):
             "package": "fswebcam",
         })
 
-    @patch("snapcraft.common.log")
-    def test_config_raises_on_missing_snapcraft_yaml(self, mock_log):
+    def test_config_raises_on_missing_snapcraft_yaml(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         # no snapcraft.yaml
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as raised:
             Config()
-        mock_log.assert_called_with("""Could not find snapcraft.yaml.  Are you sure you're in the right directory?
-To start a new project, use 'snapcraft init'""")
+
+        self.assertEqual(raised.exception.code, 1)
+        self.assertEqual(
+            "Could not find snapcraft.yaml.  Are you sure you're in the right directory?\n"
+            "To start a new project, use 'snapcraft init'\n",
+            fake_logger.output)
 
     @patch("snapcraft.common.log")
     def test_config_loop(self, mock_log):
