@@ -181,7 +181,7 @@ def cmd(args):
             if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
                 newPackages.append(checkpkg)
         if newPackages:
-            print("Installing required packages on the host system: " + ", ".join(newPackages))
+            logger.info('Installing required packages on the host system: ' + ', '.join(newPackages))
             subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
     for part in config.all_parts:
@@ -199,5 +199,5 @@ def cmd(args):
             snapcraft.common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
-                snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
+                logger.error('Failed doing %s for %s!' % (cmd, part.names()[0]))
                 sys.exit(1)
