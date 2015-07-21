@@ -16,17 +16,14 @@
 
 import os
 import tempfile
-import unittest
-from unittest.mock import (
-    Mock,
-    patch,
-)
+
+from unittest.mock import Mock
 
 from snapcraft.plugin import Plugin
-from snapcraft.plugins.copy import CopyPlugin
+from snapcraft.tests import TestCase
 
 
-class TestPlugin(unittest.TestCase):
+class TestPlugin(TestCase):
 
     def test_is_dirty(self):
         p = Plugin("mock", "mock-part", {}, load_config=False)
@@ -88,16 +85,3 @@ class TestPlugin(unittest.TestCase):
         self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))
-
-    def test_copy_plugin(self):
-        mock_options = Mock()
-        mock_options.files = {
-            "src": "dst",
-        }
-        c = CopyPlugin("copy", mock_options)
-
-        with patch("snapcraft.common.run") as mock_run:
-            c.build()
-            wd = os.path.join(os.path.dirname(__file__))
-            mock_run.assert_called_with(
-                ["cp", "--preserve=all", "src", os.path.join(c.installdir, "dst")], cwd=wd)

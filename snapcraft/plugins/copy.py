@@ -23,11 +23,14 @@ class CopyPlugin(snapcraft.BasePlugin):
 
     def build(self):
         res = True
-        for d in self.options.mkdirs:
-            self.makedirs(os.path.join(self.installdir, d))
         for src, dst in self.options.files.items():
-            res |= self.run(
-                ["cp", "--preserve=all", "-R",
-                 src, os.path.join(self.installdir, dst)],
-                cwd=os.getcwd())
+            if not os.path.lexists(src):
+                snapcraft.common.log("WARNING: file %s missing" % src)
+                res = False
+                continue
+            dst = os.path.join(self.installdir, dst)
+            dst_dir = os.path.dirname(dst)
+            if not os.path.exists(dst_dir):
+                os.makedirs(dst_dir)
+            res |= self.run(["cp", "--preserve=all", "-R", src, dst], cwd=os.getcwd())
         return res

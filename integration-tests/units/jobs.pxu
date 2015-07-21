@@ -133,5 +133,5 @@ estimated_duration: 0.5
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-copy .
-    snapcraft snap
-    test "$(cat ./snap/dst)" = "I got copied"
+    snapcraft stage
+    test "$(cat ./stage/dst)" = "I got copied"
