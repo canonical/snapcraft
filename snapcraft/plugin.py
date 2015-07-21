@@ -16,11 +16,15 @@
 
 import glob
 import importlib
+import logging
 import os
 import snapcraft
 import snapcraft.common
 import sys
 import yaml
+
+
+logger = logging.getLogger(__name__)
 
 
 class Plugin:
@@ -130,7 +134,7 @@ class Plugin:
         return self.part_names
 
     def notify_stage(self, stage, hint=''):
-        snapcraft.common.log(stage + " " + self.part_names[0] + hint)
+        logger.info(stage + " " + self.part_names[0] + hint)
 
     def is_dirty(self, stage):
         try:

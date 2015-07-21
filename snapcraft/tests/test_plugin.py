@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import tempfile
 from unittest import mock
+
+import fixtures
 
 from snapcraft.plugin import Plugin
 from snapcraft.tests import TestCase
@@ -24,8 +27,11 @@ from snapcraft.tests import TestCase
 
 class TestPlugin(TestCase):
 
+    def get_test_plugin(self):
+        return Plugin('mock', 'mock-part', {}, load_config=False)
+
     def test_is_dirty(self):
-        p = Plugin("mock", "mock-part", {}, load_config=False)
+        p = self.get_test_plugin()
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
         p.code = mock.Mock()
@@ -38,7 +44,7 @@ class TestPlugin(TestCase):
         self.assertFalse(p.code.pull.called)
 
     def test_collect_snap_files(self):
-        p = Plugin("mock", "mock-part", {}, load_config=False)
+        p = self.get_test_plugin()
 
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
@@ -84,3 +90,12 @@ class TestPlugin(TestCase):
         self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))
+
+    def test_notify_stage_must_log_information(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        plugin = self.get_test_plugin()
+        plugin.notify_stage('test stage')
+
+        self.assertEqual('test stage mock-part\n', fake_logger.output)
