@@ -1,5 +1,5 @@
 module: cmake_project
-systemPackages: [cmake]
+build-tools: [cmake]
 options:
     source:
         required: true

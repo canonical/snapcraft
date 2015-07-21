@@ -1,4 +1,4 @@
-systemPackages: [devscripts]
+build-tools: [devscripts]
 options:
   package:
     required: false
