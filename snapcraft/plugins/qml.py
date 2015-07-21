@@ -75,7 +75,8 @@ class QmlPlugin(snapcraft.BasePlugin):
         return (include, exclude)
 
     def build_qt_config(self):
-        arch = 'x86_64-linux-gnu' # TODO figure this out
+        # TODO figure this out
+        arch = 'x86_64-linux-gnu'
         configdir = os.path.join(self.installdir, 'etc', 'xdg', 'qtchooser')
         try:
             os.makedirs(configdir)
@@ -91,7 +92,8 @@ class QmlPlugin(snapcraft.BasePlugin):
         return self.ubuntu.build() and self.build_qt_config()
 
     def env(self, root):
-        arch = 'x86_64-linux-gnu' # TODO figure this out
+        # TODO figure this out
+        arch = 'x86_64-linux-gnu'
         envs = self.ubuntu.env(root)
         envs.extend([
             "LD_LIBRARY_PATH=%s/usr/lib/%s:$LD_LIBRARY_PATH" % (root, arch),
@@ -117,10 +119,10 @@ class QmlPlugin(snapcraft.BasePlugin):
             "XDG_CONFIG_DIRS=%s/etc/xdg:$XDG_CONFIG_DIRS" % root,
             "XDG_CONFIG_DIRS=%s/usr/xdg:$XDG_CONFIG_DIRS" % root,
             "XDG_DATA_DIRS=%s/usr/share:$XDG_DATA_DIRS" % root,
-            "XDG_DATA_HOME=%s/usr/share" % root, # Not good, needed for fontconfig
+            # Not good, needed for fontconfig
+            "XDG_DATA_HOME=%s/usr/share" % root,
             # Font Config
             "FONTCONFIG_PATH=%s/etc/fonts/config.d" % root,
             "FONTCONFIG_FILE=%s/etc/fonts/fonts.conf" % root,
         ])
         return envs
-
