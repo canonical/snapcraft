@@ -23,7 +23,6 @@ import snapcraft.cmds
 
 
 def main():
-    logger = logging.getLogger()
     logging.basicConfig(format='%(message)s', level=logging.INFO)
 
     root_parser = argparse.ArgumentParser()
