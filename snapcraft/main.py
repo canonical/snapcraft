@@ -16,12 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import logging
 import sys
 
 import snapcraft.cmds
 
 
 def main():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     root_parser = argparse.ArgumentParser()
     subparsers = root_parser.add_subparsers(dest='cmd')
 
