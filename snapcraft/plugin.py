@@ -32,7 +32,6 @@ class Plugin:
         self.part_names = []
         self.deps = []
         self.plugin_name = name
-        self.is_local_plugin = False
 
         self.sourcedir = os.path.join(os.getcwd(), "parts", part_name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", part_name, "build")
@@ -42,17 +41,15 @@ class Plugin:
         self.statefile = os.path.join(os.getcwd(), "parts", part_name, "state")
 
         if load_config:
-            # First look in local path
-            localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
-            configPath = os.path.join(localPluginDir, name + ".yaml")
-            if os.path.exists(configPath):
-                self.is_local_plugin = True
+            is_local_plugin = name.startswith('x-')
+            if is_local_plugin:
+                plugindir = os.path.abspath(os.path.join('parts', 'plugins'))
             else:
-                # OK, now look at snapcraft's plugins
-                configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
-                if not os.path.exists(configPath):
-                    snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
-                    return
+                plugindir = snapcraft.common.plugindir
+            configPath = os.path.join(plugindir, name + ".yaml")
+            if not os.path.exists(configPath):
+                snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
+                return
             with open(configPath, 'r') as fp:
                 self.config = yaml.load(fp) or {}
 
@@ -76,14 +73,14 @@ class Plugin:
                 moduleName = self.config.get('module', name)
 
                 # Load code from local plugin dir if it is there
-                if self.is_local_plugin:
-                    sys.path = [localPluginDir] + sys.path
+                if is_local_plugin:
+                    sys.path = [plugindir] + sys.path
                 else:
                     moduleName = 'snapcraft.plugins.' + moduleName
 
                 module = importlib.import_module(moduleName)
 
-                if self.is_local_plugin:
+                if is_local_plugin:
                     sys.path.pop(0)
 
                 for propName in dir(module):
