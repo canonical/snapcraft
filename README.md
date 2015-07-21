@@ -10,6 +10,10 @@ Simply run the top level testing script:
 
     ./runtests.sh
 
+- If you want to get a test coverage report:
+
+    sudo apt-get install python3-coverage
+
 - If you don't want to run the plainbox integration tests, you can skip them by setting SNAPCRAFT_TESTS_SKIP_PLAINBOX=1 in your environment.
 
 - If you are on 15.04 or earlier, you will need to run:
