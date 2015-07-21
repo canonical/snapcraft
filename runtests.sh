@@ -27,7 +27,13 @@ pep8 $SRC_PATHS --ignore=E501
 
 pyflakes3 $SRC_PATHS
 
-python3 -m unittest
+if which python3-coverage >/dev/null 2>&1; then
+    python3-coverage erase
+    python3-coverage run --branch --source snapcraft -m unittest    
+    python3-coverage report
+else
+    python3 -m unittest    
+fi
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
 (
