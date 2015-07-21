@@ -150,7 +150,7 @@ def check_for_collisions(parts):
         for otherPartName in partsFiles:
             common = partFiles & partsFiles[otherPartName]
             if common:
-                snapcraft.common.log("Error: parts %s and %s have the following files in common:\n  %s" % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                logger.error("Error: parts %s and %s have the following files in common:\n  %s" % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
                 return False
 
         # And add our files to the list

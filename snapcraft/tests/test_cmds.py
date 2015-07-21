@@ -27,8 +27,10 @@ from snapcraft.tests import TestCase
 
 class TestCommands(TestCase):
 
-    @mock.patch('snapcraft.common.log')
-    def test_check_for_collisions(self, logmock):
+    def test_check_for_collisions(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
         tmpdir = tmpdirObject.name
@@ -56,10 +58,14 @@ class TestCommands(TestCase):
         open(part3.installdir + '/a/2', mode='w').close()
 
         self.assertTrue(cmds.check_for_collisions([part1, part2]))
-        self.assertFalse(logmock.called)
+        self.assertEqual('', fake_logger.output)
 
         self.assertFalse(cmds.check_for_collisions([part1, part2, part3]))
-        logmock.assert_called_with("Error: parts part2 and part3 have the following files in common:\n  1\n  a/2")
+        self.assertEqual(
+            'Error: parts part2 and part3 have the following files in common:\n'
+            '  1\n'
+            '  a/2\n',
+            fake_logger.output)
 
 
 class InitTestCase(TestCase):
