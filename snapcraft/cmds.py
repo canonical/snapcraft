@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import glob
+import logging
 import os
 import snapcraft.common
 import snapcraft.plugin
@@ -25,9 +26,12 @@ import tempfile
 import time
 
 
+logger = logging.getLogger(__name__)
+
+
 def init(args):
     if os.path.exists("snapcraft.yaml"):
-        snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
+        logger.error('snapcraft.yaml already exists!')
         sys.exit(1)
     yaml = 'parts:\n'
     for part_name in args.part:
@@ -39,9 +43,8 @@ def init(args):
     yaml = yaml.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
-    snapcraft.common.log("Wrote the following as snapcraft.yaml.")
-    print()
-    print(yaml)
+    logger.info('Wrote the following as snapcraft.yaml:')
+    logger.info(yaml)
     sys.exit(0)
 
 
