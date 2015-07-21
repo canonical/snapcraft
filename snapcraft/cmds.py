@@ -16,6 +16,7 @@
 
 import glob
 import os
+import shlex
 import snapcraft.common
 import snapcraft.plugin
 import snapcraft.yaml
@@ -57,19 +58,20 @@ def shell(args):
 
 def wrap_exe(relexepath):
     exepath = os.path.join(snapcraft.common.snapdir, relexepath)
-    origpath = exepath + '.orig'
+    wrappath = exepath + '.wrapper'
 
     try:
-        os.remove(origpath)
-    except:
+        os.remove(wrappath)
+    except Exception:
         pass
-    os.rename(exepath, origpath)
 
-    script = "#!/bin/sh\n%s\nexec %s $*" % (snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH"), '"$SNAP_APP_PATH/' + relexepath + '.orig"')
-    with open(exepath, 'w+') as f:
+    script = "#!/bin/sh\n%s\nexec %s $*" % (snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH"), '"$SNAP_APP_PATH/%s"' % relexepath)
+    with open(wrappath, 'w+') as f:
         f.write(script)
 
-    os.chmod(exepath, 0o755)
+    os.chmod(wrappath, 0o755)
+
+    return os.path.relpath(wrappath, snapcraft.common.snapdir)
 
 
 def snap(args):
@@ -91,17 +93,33 @@ def snap(args):
 
     snapcraft.common.env = config.snap_env()
 
+    def replace_cmd(execparts, cmd):
+        newparts = [cmd] + execparts[1:]
+        return ' '.join([shlex.quote(x) for x in newparts])
+
     for binary in package.get('binaries', []):
-        execpath = binary.get('exec', binary['name'])
-        wrap_exe(execpath)
+        execparts = shlex.split(binary.get('exec', binary['name']))
+        execwrap = wrap_exe(execparts[0])
+        if 'exec' in binary:
+            binary['exec'] = replace_cmd(execparts, execwrap)
+        else:
+            binary['name'] = os.path.basename(binary['name'])
+            binary['exec'] = replace_cmd(execparts, execwrap)
 
     for binary in package.get('services', []):
         startpath = binary.get('start')
         if startpath:
-            wrap_exe(startpath.split(' ')[0])
+            startparts = shlex.split(startpath)
+            startwrap = wrap_exe(startparts[0])
+            binary['start'] = replace_cmd(startparts, startwrap)
         stoppath = binary.get('stop')
         if stoppath:
-            wrap_exe(stoppath.split(' ')[0])
+            stopparts = shlex.split(stoppath)
+            stopwrap = wrap_exe(stopparts[0])
+            binary['stop'] = replace_cmd(stopparts, stopwrap)
+
+    with open("snap/meta/package.yaml", 'w') as f:
+        yaml.dump(package, f, default_flow_style=False)
 
 
 def assemble(args):
