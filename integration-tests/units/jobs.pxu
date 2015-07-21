@@ -36,12 +36,16 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "snappy-metadata: snappy" >> snapcraft.yaml
     snapcraft assemble
+    diff -u package.yaml.after snap/meta/package.yaml
     export SNAP_APP_PATH=`pwd`/snap
-    test "$(./snap/service-start)" = "service-start"
-    test "$(./snap/service-stop)" = "service-stop"
-    test "$(./snap/binary1)" = "binary1"
-    test "$(./snap/binary2)" = "binary2"
+    test "$(./snap/service-start.wrapper)" = "service-start"
+    test "$(./snap/service-stop.wrapper)" = "service-stop"
+    test "$(./snap/binary1.wrapper)" = "binary1"
+    test "$(./snap/subdir/binary2.wrapper)" = "binary2"
     if ./snap/bin/not-wrapped; then
+        exit 1
+    fi
+    if [ -e ./snap/bin/not-wrapped.wrapper ]; then
         exit 1
     fi
 

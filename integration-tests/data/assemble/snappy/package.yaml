@@ -4,8 +4,8 @@ vendor: mterry@ubuntu.com
 services:
   - name: assemble-service
     start: service-start
-    stop: "./service-stop with args"
+    stop: "./service-stop with ar\\ gs"
 binaries:
   - name: assemble-bin
     exec: binary1
-  - name: binary2
+  - name: subdir/binary2
