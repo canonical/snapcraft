@@ -28,11 +28,12 @@ pep8 $SRC_PATHS --ignore=E501
 pyflakes3 $SRC_PATHS
 
 if which python3-coverage >/dev/null 2>&1; then
-    python3-coverage erase
-    python3-coverage run --branch --source snapcraft -m unittest    
+    python3-coverage run --branch --source snapcraft -m unittest
+    echo "Unit test coverage"
     python3-coverage report
+    python3-coverage erase
 else
-    python3 -m unittest    
+    python3 -m unittest
 fi
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
@@ -47,6 +48,14 @@ for running the integration tests.
 
 EOF
         exit 1
+    fi
+
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage erase
+        export PROJECT_PATH=$(pwd)
+        export SNAPCRAFT=snapcraft-coverage
+    else
+        export SNAPCRAFT=snapcraft
     fi
 
     # Go to the plainbox provider of snapcraft tests
@@ -76,7 +85,15 @@ for test_id, result in sorted(results['result_map'].items()):
 print("Overall: {0}".format("fail" if failed else "pass"))
 raise SystemExit(failed)
 __PYTHON__
+
 )
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage combine
+        echo "Integration test coverage"
+        python3-coverage report
+        python3-coverage erase
+    fi
+
 fi
 
 echo -e "\e[1;32mEverything passed\e[0m"
