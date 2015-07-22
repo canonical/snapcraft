@@ -113,9 +113,9 @@ command:
     bzr init .
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
-    snapcraft pull # test initial branch
+    ${SNAPCRAFT} pull # test initial branch
     test "$(bzr revno -r -1 parts/bzr/src)" = "2"
-    snapcraft pull # test pull doesn't fail
+    ${SNAPCRAFT} pull # test pull doesn't fail
     test "$(bzr revno -r -1 parts/bzr/src)" = "2"
 
 id: snapcraft/normal/bzr-tag
@@ -128,9 +128,9 @@ command:
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     bzr tag -r 1 initial
-    snapcraft pull # test initial branch
+    ${SNAPCRAFT} pull # test initial branch
     test "$(bzr revno -r -1 parts/bzr/src)" = "1"
-    snapcraft pull # test pull doesn't fail
+    ${SNAPCRAFT} pull # test pull doesn't fail
     test "$(bzr revno -r -1 parts/bzr/src)" = "1"
 
 id: snapcraft/normal/git-head
@@ -142,9 +142,9 @@ command:
     git init .
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
-    snapcraft pull
+    ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
-    snapcraft pull
+    ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
 
 id: snapcraft/normal/git-tag
@@ -157,9 +157,9 @@ command:
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git tag initial HEAD@{1}
-    snapcraft pull
+    ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
-    snapcraft pull
+    ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
 
 id: snapcraft/normal/git-branch
@@ -175,7 +175,7 @@ command:
     git checkout second
     git commit -m "3" --allow-empty
     git checkout master
-    snapcraft pull
+    ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
-    snapcraft pull
+    ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
