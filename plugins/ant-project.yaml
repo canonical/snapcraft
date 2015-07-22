@@ -1,6 +1,7 @@
-module: python3_project
+module: ant_project
+systemPackages: [ant]
 requires:
-  - python3
+  - jdk
 options:
   source:
     required: true

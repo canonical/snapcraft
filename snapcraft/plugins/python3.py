@@ -20,8 +20,8 @@ from snapcraft.plugins.ubuntu import UbuntuPlugin
 
 class Python3Plugin(snapcraft.BasePlugin):
 
-    def __init__(self, name, config, options):
-        super().__init__(name, config, options)
+    def __init__(self, name, options):
+        super().__init__(name, options)
 
         class Py3Options:
             package = "python3-dev"

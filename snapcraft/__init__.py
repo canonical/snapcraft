@@ -20,9 +20,8 @@ import snapcraft.common
 
 class BasePlugin:
 
-    def __init__(self, name, config, options):
+    def __init__(self, name, options):
         self.name = name
-        self.config = config
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
@@ -32,8 +31,6 @@ class BasePlugin:
 
     # The API
     def pull(self):
-        if self.config.get('accepts-source-options', False):
-            return self._handle_source_options()
         return True
 
     def build(self):
@@ -57,46 +54,7 @@ class BasePlugin:
             print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
-    def makedirs(self, d):
-        try:
-            os.makedirs(d)
-        except FileExistsError:
-            pass
-
-    def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
-        if source_type is None:
-            if source.startswith("bzr:") or source.startswith("lp:"):
-                source_type = 'bzr'
-            elif source.startswith("git:"):
-                source_type = 'git'
-            elif ':' in source:
-                snapcraft.common.fatal("Unrecognized source '%s' for part '%s'.  Try specifying 'source-type'." % (source, self.name))
-
-        if source_type == 'bzr':
-            if source_branch:
-                snapcraft.common.fatal("You can't specify source-branch for a bzr source (part '%s')." % self.name)
-            if not self._pull_bzr(source, source_tag):
-                return False
-            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
-                return False
-        elif source_type == 'git':
-            if not self._pull_git(source, source_tag, source_branch):
-                return False
-            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
-                return False
-        else:
-            # local source dir
-            path = os.path.abspath(source)
-            if os.path.isdir(self.builddir):
-                os.rmdir(self.builddir)
-            else:
-                os.remove(self.builddir)
-            os.symlink(path, self.builddir)
-
-        return True
-
-    # Private helpers
-    def _pull_bzr(self, source, source_tag):
+    def pull_bzr(self, source, source_tag=None):
         tag_opts = []
         if source_tag:
             tag_opts = ['-r', 'tag:' + source_tag]
@@ -106,7 +64,7 @@ class BasePlugin:
             os.rmdir(self.sourcedir)
             return self.run(['bzr', 'branch'] + tag_opts + [source, self.sourcedir], cwd=os.getcwd())
 
-    def _pull_git(self, source, source_tag, source_branch):
+    def pull_git(self, source, source_tag=None, source_branch=None):
         if source_tag and source_branch:
             snapcraft.common.fatal("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
 
@@ -123,8 +81,49 @@ class BasePlugin:
                 branch_opts = ['--branch', source_tag or source_branch]
             return self.run(['git', 'clone'] + branch_opts + [source, self.sourcedir], cwd=os.getcwd())
 
-    def _handle_source_options(self):
+    def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
+        if source_type is None:
+            if source.startswith("bzr:") or source.startswith("lp:"):
+                source_type = 'bzr'
+            elif source.startswith("git:"):
+                source_type = 'git'
+            elif ':' in source:
+                snapcraft.common.fatal("Unrecognized source '%s' for part '%s'." % (source, self.name))
+
+        if source_type == 'bzr':
+            if source_branch:
+                snapcraft.common.fatal("You can't specify source-branch for a bzr source (part '%s')." % self.name)
+            if not self.pull_bzr(source, source_tag=source_tag):
+                return False
+            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
+                return False
+        elif source_type == 'git':
+            if not self.pull_git(source, source_tag=source_tag, source_branch=source_branch):
+                return False
+            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
+                return False
+        else:
+            # local source dir
+            path = os.path.abspath(source)
+            if os.path.isdir(self.builddir):
+                os.rmdir(self.builddir)
+            else:
+                os.remove(self.builddir)
+            os.symlink(path, self.builddir)
+
+        return True
+
+    def handle_source_options(self):
+        stype = getattr(self.options, 'source_type', None)
+        stag = getattr(self.options, 'source_tag', None)
+        sbranch = getattr(self.options, 'source_branch', None)
         return self.get_source(self.options.source,
-                               source_type=self.options.source_type,
-                               source_tag=self.options.source_tag,
-                               source_branch=self.options.source_branch)
+                               source_type=stype,
+                               source_tag=stag,
+                               source_branch=sbranch)
+
+    def makedirs(self, d):
+        try:
+            os.makedirs(d)
+        except FileExistsError:
+            pass
