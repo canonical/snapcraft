@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import fixtures
 
-import snapcraft.dirs
-from snapcraft.tests import fixture_setup
 
-
-class TestCase(fixtures.TestWithFixtures):
+class TempCWD(fixtures.TempDir):
 
     def setUp(self):
+        """Create a temporary directory an cd into it for the test duration."""
         super().setUp()
-        snapcraft.dirs.setup_dirs()
-        self.useFixture(fixture_setup.TempCWD())
+        current_dir = os.getcwd()
+        self.addCleanup(os.chdir, current_dir)
+        os.chdir(self.path)
