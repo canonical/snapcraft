@@ -50,7 +50,7 @@ def shell(args):
     snapcraft.common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
-        userCommand = ['/usr/bin/env', "PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] '", '/bin/bash', '--norc']
+        userCommand = ['/usr/bin/env', 'PS1=\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ', '/bin/bash', '--norc']
     snapcraft.common.run(userCommand)
 
 
@@ -172,9 +172,9 @@ def cmd(args):
     config = snapcraft.yaml.Config()
 
     # Install local packages that we need
-    if config.systemPackages:
+    if config.build_tools:
         newPackages = []
-        for checkpkg in config.systemPackages:
+        for checkpkg in config.build_tools:
             if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
                 newPackages.append(checkpkg)
         if newPackages:

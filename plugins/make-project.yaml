@@ -1,3 +1,8 @@
 module: make_project
-systemPackages: [make]
-accepts-source-options: true
+build-tools: [make]
+options:
+    source:
+        required: true
+    source-type:
+    source-tag:
+    source-branch:

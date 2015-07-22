@@ -14,14 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import os
+
+import fixtures
 
 
-class MakePlugin(snapcraft.BasePlugin):
+class TempCWD(fixtures.TempDir):
 
-    def pull(self):
-        return self.handle_source_options()
-
-    def build(self):
-        return self.run(['make']) and \
-            self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+    def setUp(self):
+        """Create a temporary directory an cd into it for the test duration."""
+        super().setUp()
+        current_dir = os.getcwd()
+        self.addCleanup(os.chdir, current_dir)
+        os.chdir(self.path)
