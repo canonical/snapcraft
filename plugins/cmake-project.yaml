@@ -3,5 +3,8 @@ build-tools: [cmake]
 options:
     source:
         required: true
+    source-type:
+    source-tag:
+    source-branch:
     configflags:
         required: false

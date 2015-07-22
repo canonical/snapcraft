@@ -130,3 +130,79 @@ command:
     sed -i '/after/d' snapcraft.yaml
     ${SNAPCRAFT} build
     test $? = 1 || exit 1
+
+id: snapcraft/normal/bzr-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
+    bzr init .
+    bzr commit -m "1" --unchanged
+    bzr commit -m "2" --unchanged
+    ${SNAPCRAFT} pull # test initial branch
+    test "$(bzr revno -r -1 parts/bzr/src)" = "2"
+    ${SNAPCRAFT} pull # test pull doesn't fail
+    test "$(bzr revno -r -1 parts/bzr/src)" = "2"
+
+id: snapcraft/normal/bzr-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
+    bzr init .
+    bzr commit -m "1" --unchanged
+    bzr commit -m "2" --unchanged
+    bzr tag -r 1 initial
+    ${SNAPCRAFT} pull # test initial branch
+    test "$(bzr revno -r -1 parts/bzr/src)" = "1"
+    ${SNAPCRAFT} pull # test pull doesn't fail
+    test "$(bzr revno -r -1 parts/bzr/src)" = "1"
+
+id: snapcraft/normal/git-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
+    git init .
+    git commit -m "1" --allow-empty
+    git commit -m "2" --allow-empty
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
+
+id: snapcraft/normal/git-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
+    git init .
+    git commit -m "1" --allow-empty
+    git commit -m "2" --allow-empty
+    git tag initial HEAD@{1}
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
+
+id: snapcraft/normal/git-branch
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
+    git init .
+    git commit -m "1" --allow-empty
+    git commit -m "2" --allow-empty
+    git branch second HEAD@{1}
+    git checkout second
+    git commit -m "3" --allow-empty
+    git checkout master
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "

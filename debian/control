@@ -2,9 +2,11 @@ Source: snapcraft
 Section: utils
 Priority: extra
 Maintainer: Snapcraft Team <snappy-devel@lists.ubuntu.com>
-Build-Depends: cmake,
+Build-Depends: bzr,
+               cmake,
                debhelper (>= 9),
                dh-python,
+               git,
                pep8,
                plainbox,
                pyflakes,
@@ -20,6 +22,8 @@ Package: snapcraft
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         bzr,
+         git,
          python3-apt,
          python3-yaml,
          ubuntu-snappy-cli,

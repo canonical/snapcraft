@@ -80,13 +80,15 @@ class PluginHandler:
         options = Options()
 
         for opt in self.config.get('options', []):
+            attrname = opt.replace('-', '_')
+            opt_parameters = self.config['options'][opt] or {}
             if opt in properties:
-                setattr(options, opt, properties[opt])
+                setattr(options, attrname, properties[opt])
             else:
-                if self.config['options'][opt].get('required', False):
+                if opt_parameters.get('required', False):
                     snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
                     raise PluginError()
-                setattr(options, opt, None)
+                setattr(options, attrname, None)
 
         return options
 
