@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -14,15 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
+import os
+import sys
 
+import coverage
+
+# make running from bzr snapshot easy
+topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+if os.path.exists(os.path.join(topdir, 'setup.py')):
+    sys.path = [topdir] + sys.path
+
+# now import
+import snapcraft.main
 import snapcraft.dirs
-from snapcraft.tests import fixture_setup
 
 
-class TestCase(fixtures.TestWithFixtures):
-
-    def setUp(self):
-        super().setUp()
+if __name__ == "__main__":
+    cov = coverage.coverage(
+        data_file=os.path.join(topdir, '.coverage'), data_suffix=True,
+        branch=True, source=['snapcraft'])
+    cov.start()
+    try:
         snapcraft.dirs.setup_dirs()
-        self.useFixture(fixture_setup.TempCWD())
+        snapcraft.main.main()
+    except:
+        cov.stop()
+        cov.save()
+        raise

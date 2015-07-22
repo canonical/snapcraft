@@ -14,15 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
-
-import snapcraft.dirs
-from snapcraft.tests import fixture_setup
+import snapcraft.common
 
 
-class TestCase(fixtures.TestWithFixtures):
-
-    def setUp(self):
-        super().setUp()
-        snapcraft.dirs.setup_dirs()
-        self.useFixture(fixture_setup.TempCWD())
+class MockPlugin(snapcraft.BasePlugin):
+    pass
