@@ -104,7 +104,6 @@ class PluginHandler:
             moduleName = 'snapcraft.plugins.' + moduleName
 
         module = importlib.import_module(moduleName)
-
         if is_local_plugin(name):
             sys.path.pop(0)
 
