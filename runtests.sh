@@ -85,7 +85,6 @@ for test_id, result in sorted(results['result_map'].items()):
 print("Overall: {0}".format("fail" if failed else "pass"))
 raise SystemExit(failed)
 __PYTHON__
-
 )
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage combine
