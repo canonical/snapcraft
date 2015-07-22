@@ -18,14 +18,14 @@ import os
 import tempfile
 from unittest import mock
 
-from snapcraft.plugin import Plugin
+from snapcraft.plugin import PluginHandler
 from snapcraft.tests import TestCase
 
 
 class TestPlugin(TestCase):
 
     def test_is_dirty(self):
-        p = Plugin("mock", "mock-part", {}, load_config=False)
+        p = PluginHandler("mock", "mock-part", {}, load_config=False, load_code=False)
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
         p.code = mock.Mock()
@@ -38,7 +38,7 @@ class TestPlugin(TestCase):
         self.assertFalse(p.code.pull.called)
 
     def test_collect_snap_files(self):
-        p = Plugin("mock", "mock-part", {}, load_config=False)
+        p = PluginHandler("mock", "mock-part", {}, load_config=False, load_code=False)
 
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
