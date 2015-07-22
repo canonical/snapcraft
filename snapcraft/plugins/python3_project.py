@@ -22,6 +22,9 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
     # note that we don't need to setup env(), python figures it out
     # see python3.py for more details
 
+    def pull(self):
+        return self.handle_source_options()
+
     def build(self):
         return self.run(
             ["python3", "setup.py", "install", "--install-layout=deb",

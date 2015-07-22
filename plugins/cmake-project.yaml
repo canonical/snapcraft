@@ -1,6 +1,7 @@
 module: cmake_project
-systemPackages: [cmake]
-accepts-source-options: true
+build-tools: [cmake]
 options:
+    source:
+        required: true
     configflags:
         required: false

@@ -24,7 +24,6 @@ def setup_dirs():
     """
     import snapcraft.common
     topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+    # only change the default if we are running from a checkout
     if os.path.exists(os.path.join(topdir, "setup.py")):
         snapcraft.common.plugindir = os.path.join(topdir, 'plugins')
-    else:
-        snapcraft.common.plugindir = os.path.join(topdir, 'share', 'snapcraft', 'plugins')

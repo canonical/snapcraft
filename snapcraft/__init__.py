@@ -20,9 +20,8 @@ import snapcraft.common
 
 class BasePlugin:
 
-    def __init__(self, name, config, options):
+    def __init__(self, name, options):
         self.name = name
-        self.config = config
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
@@ -32,8 +31,6 @@ class BasePlugin:
 
     # The API
     def pull(self):
-        if self.config.get('accepts-source-options', False):
-            return self._handle_source_options()
         return True
 
     def build(self):
@@ -57,42 +54,48 @@ class BasePlugin:
             print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
-    def makedirs(self, d):
-        try:
-            os.makedirs(d)
-        except FileExistsError:
-            pass
+    def pull_bzr(self, url):
+        if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
+            return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
+        else:
+            os.rmdir(self.sourcedir)
+            return self.run(['bzr', 'branch', url, self.sourcedir])
+
+    def pull_git(self, url):
+        if os.path.exists(os.path.join(self.sourcedir, ".git")):
+            return self.run(['git', 'pull'], cwd=self.sourcedir)
+        else:
+            return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
 
     def get_source(self, source):
-        url = source
         branchType = None
-        if url.startswith("bzr:") or url.startswith("lp:"):
+        if source.startswith("bzr:") or source.startswith("lp:"):
             branchType = 'bzr'
-        elif url.startswith("git:"):
+        elif source.startswith("git:"):
             branchType = 'git'
-        elif ':' in url:
-            raise Exception("Did not recognize branch url: " + url)
+        elif ':' in source:
+            raise Exception("Did not recognize branch url: " + source)
         # Local branch
-        elif os.path.isdir(os.path.join(url, '.bzr')):
+        elif os.path.isdir(os.path.join(source, '.bzr')):
             branchType = 'bzr'
-            url = os.path.abspath(url)
-        elif os.path.isdir(os.path.join(url, '.git')):
+            source = os.path.abspath(source)
+        elif os.path.isdir(os.path.join(source, '.git')):
             branchType = 'git'
-            url = os.path.abspath(url)
+            source = os.path.abspath(source)
 
         if branchType == 'bzr':
-            if not self._pull_bzr(url):
+            if not self.pull_bzr(source):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
         elif branchType == "git":
-            if not self._pull_git(url):
+            if not self.pull_git(source):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
         else:
             # local branch
-            path = os.path.abspath(url)
+            path = os.path.abspath(source)
             if os.path.isdir(self.builddir):
                 os.rmdir(self.builddir)
             else:
@@ -101,19 +104,11 @@ class BasePlugin:
 
         return True
 
-    # Private helpers
-    def _pull_bzr(self, url):
-        if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-            return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
-        else:
-            os.rmdir(self.sourcedir)
-            return self.run(['bzr', 'branch', url, self.sourcedir])
-
-    def _pull_git(self, url):
-        if os.path.exists(os.path.join(self.sourcedir, ".git")):
-            return self.run(['git', 'pull'], cwd=self.sourcedir)
-        else:
-            return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
-
-    def _handle_source_options(self):
+    def handle_source_options(self):
         return self.get_source(self.options.source)
+
+    def makedirs(self, d):
+        try:
+            os.makedirs(d)
+        except FileExistsError:
+            pass

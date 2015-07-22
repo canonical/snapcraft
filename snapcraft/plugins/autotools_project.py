@@ -19,8 +19,8 @@ from snapcraft.plugins.make_project import MakePlugin
 
 
 class AutotoolsPlugin(MakePlugin):
-    def __init__(self, name, config, options):
-        super().__init__(name, config, options)
+    def __init__(self, name, options):
+        super().__init__(name, options)
         if self.options.configflags is None:
             self.options.configflags = []
 
