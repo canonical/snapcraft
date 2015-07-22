@@ -4,5 +4,4 @@ parts:
         source: git://github.com/mikix/golang-static-http
     ubuntu:
         package: fswebcam
-snap:
-  meta: meta
+snappy-metadata: meta

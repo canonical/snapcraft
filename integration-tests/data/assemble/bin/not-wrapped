@@ -1,0 +1,2 @@
+#!/bin/sh
+assemble-echo not-wrapped

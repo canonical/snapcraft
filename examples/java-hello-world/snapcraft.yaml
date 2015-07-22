@@ -5,5 +5,4 @@ parts:
     wrapper:
         plugin: make-project
         source: .
-snap:
-    meta: meta
+snappy-metadata: meta

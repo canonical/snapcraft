@@ -7,6 +7,48 @@ command:
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 
+id: snapcraft/normal/assemble-no-meta
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    OUTPUT=$(${SNAPCRAFT} assemble)
+    test $? = 1 || exit 1
+    echo $OUTPUT | grep "Missing snappy metadata file"
+
+id: snapcraft/normal/assemble-meta-externally
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    # Test that as long as we have meta/ from *somewhere*, assemble doesn't
+    # care where (and you don't need snappy-metadata to find it)
+    touch copy-meta # instructs Makefile to copy snappy/ itself
+    ${SNAPCRAFT} assemble
+
+id: snapcraft/normal/assemble-meta
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    echo "snappy-metadata: snappy" >> snapcraft.yaml
+    ${SNAPCRAFT} assemble
+    diff -u package.yaml.after snap/meta/package.yaml
+    export SNAP_APP_PATH=`pwd`/snap
+    test "$(./snap/service-start.wrapper)" = "service-start"
+    test "$(./snap/service-stop.wrapper)" = "service-stop"
+    test "$(./snap/binary1.wrapper)" = "binary1"
+    test "$(./snap/subdir/binary2.wrapper)" = "binary2"
+    if ./snap/bin/not-wrapped; then
+        exit 1
+    fi
+    if [ -e ./snap/bin/not-wrapped.wrapper ]; then
+        exit 1
+    fi
+
 id: snapcraft/normal/local-source
 plugin: shell
 estimated_duration: 0.3
@@ -25,8 +67,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
-    ${SNAPCRAFT} snap
-    test -e snap/build-stamp
+    ${SNAPCRAFT} stage
+    test -e stage/build-stamp
 
 id: snapcraft/normal/simple-make
 plugin: shell
@@ -34,8 +76,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
-    ${SNAPCRAFT} snap
-    test "$(./snap/bin/test)" = "Hello world"
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/test)" = "Hello world"
 
 id: snapcraft/normal/simple-cmake
 plugin: shell
@@ -43,8 +85,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-cmake .
-    ${SNAPCRAFT} snap
-    test "$(./snap/bin/simple-cmake)" = "It's a CMake world"
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/simple-cmake)" = "It's a CMake world"
 
 id: snapcraft/normal/conflicts
 plugin: shell
@@ -62,9 +104,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
-    ${SNAPCRAFT} snap
+    ${SNAPCRAFT} stage
     test -x stage/bin/p3
-    test -x snap/bin/p3
     test "$(${SNAPCRAFT} shell p3)" = 'p1
     p1
     p2'
@@ -87,5 +128,5 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i '/after/d' snapcraft.yaml
-    ${SNAPCRAFT} snap
+    ${SNAPCRAFT} build
     test $? = 1 || exit 1
