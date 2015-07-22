@@ -29,9 +29,7 @@ pyflakes3 $SRC_PATHS
 
 if which python3-coverage >/dev/null 2>&1; then
     python3-coverage run --branch --source snapcraft -m unittest
-    echo "Unit test coverage"
-    python3-coverage report
-    python3-coverage erase
+    mv .coverage .coverage.unit
 else
     python3 -m unittest
 fi
@@ -86,13 +84,13 @@ print("Overall: {0}".format("fail" if failed else "pass"))
 raise SystemExit(failed)
 __PYTHON__
 )
-    if which python3-coverage >/dev/null 2>&1; then
-        python3-coverage combine
-        echo "Integration test coverage"
-        python3-coverage report
-        python3-coverage erase
-    fi
 
+fi
+
+if which python3-coverage >/dev/null 2>&1; then
+    python3-coverage combine
+    python3-coverage report
+    python3-coverage erase
 fi
 
 echo -e "\e[1;32mEverything passed\e[0m"
