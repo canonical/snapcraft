@@ -35,7 +35,7 @@ class AntProjectPlugin(snapcraft.BasePlugin):
             sys.exit(1)
         jardir = os.path.join(self.installdir, 'jar')
         return self.run(['mkdir', '-p', jardir]) and \
-               self.run(['cp', '-a'] + files + [jardir])
+            self.run(['cp', '-a'] + files + [jardir])
 
     def env(self, root):
         jars = glob.glob(os.path.join(self.installdir, 'jar', '*.jar'))

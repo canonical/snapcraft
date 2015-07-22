@@ -35,8 +35,8 @@ class JdkPlugin(snapcraft.BasePlugin):
 
     def env(self, root):
         return self.ubuntu.env(root) + \
-               ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,
-                'PATH=%s/usr/lib/jvm/default-java/bin:%s/usr/lib/jvm/default-java/jre/bin:$PATH' % (root, root)]
+            ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,
+             'PATH=%s/usr/lib/jvm/default-java/bin:%s/usr/lib/jvm/default-java/jre/bin:$PATH' % (root, root)]
 
     def snap_files(self):
         # Cut out jdk bits (jre bits are in default-java/jre)
