@@ -19,7 +19,7 @@ import sys
 import tempfile
 from unittest import mock
 
-from snapcraft.plugin import PluginHandler
+from snapcraft.plugin import PluginHandler, PluginError
 from snapcraft.tests import TestCase
 
 import snapcraft.tests.mock_plugin
@@ -110,3 +110,11 @@ class TestPlugin(TestCase):
         with mock.patch("importlib.import_module", side_effect=mock_import_modules):
             PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
+
+    def test_collect_snap_files_with_abs_path_raises(self):
+        # ensure that absolute path raise an error
+        # (os.path.join will throw an error otherwise)
+        with mock.patch("importlib.import_module", return_value=snapcraft.tests.mock_plugin):
+            p = PluginHandler("mock", "mock-part", {}, load_config=False)
+        with self.assertRaises(PluginError):
+            p.collect_snap_files(['*'], ['/1'])

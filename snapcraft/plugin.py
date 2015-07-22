@@ -222,6 +222,11 @@ class PluginHandler:
         return True
 
     def collect_snap_files(self, includes, excludes):
+        # validate
+        for d in includes + excludes:
+            if os.path.isabs(d):
+                raise PluginError("path '%s' must be relative" % d)
+
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
             sourceFiles |= set([os.path.join(root, d) for d in dirs])

@@ -172,9 +172,9 @@ def cmd(args):
     config = snapcraft.yaml.Config()
 
     # Install local packages that we need
-    if config.systemPackages:
+    if config.build_tools:
         newPackages = []
-        for checkpkg in config.systemPackages:
+        for checkpkg in config.build_tools:
             if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
                 newPackages.append(checkpkg)
         if newPackages:
