@@ -74,7 +74,7 @@ class PluginHandler:
         with open(configPath, 'r') as fp:
             self.config = yaml.load(fp) or {}
 
-    def _load_code(self, name, part_name, properties, options_override):
+    def _make_options(self, name, properties, options_override):
         class Options():
             pass
         options = Options()
@@ -91,6 +91,10 @@ class PluginHandler:
         if options_override:
             options = options_override
 
+        return options
+
+    def _load_code(self, name, part_name, properties, options_override):
+        options = self._make_options(name, properties, options_override)
         moduleName = self.config.get('module', name)
 
         # Load code from local plugin dir if it is there
