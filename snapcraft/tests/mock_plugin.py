@@ -14,14 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import snapcraft.common
 
 
-class MakePlugin(snapcraft.BasePlugin):
-
-    def pull(self):
-        return self.handle_source_options()
-
-    def build(self):
-        return self.run(['make']) and \
-            self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+class MockPlugin(snapcraft.BasePlugin):
+    pass

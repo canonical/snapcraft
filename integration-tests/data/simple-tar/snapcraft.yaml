@@ -1,0 +1,14 @@
+parts:
+  oneflat:
+    plugin: tar-content
+    source: oneflat.tar.bz2
+  onedeep:
+    plugin: tar-content
+    source: onedeep.tar.gz
+  flat:
+    plugin: tar-content
+    source: flat.tar.xz
+  project:
+    plugin: make-project
+    source: project.tar.xz
+    source-type: tar

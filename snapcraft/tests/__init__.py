@@ -14,29 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
-import os
-import tempfile
-import unittest
+import fixtures
 
 import snapcraft.dirs
+from snapcraft.tests import fixture_setup
 
 
-@contextmanager
-def chdir(wd):
-    cwd = os.getcwd()
-    try:
-        os.chdir(wd)
-        yield
-    finally:
-        os.chdir(cwd)
-
-
-class TestCase(unittest.TestCase):
+class TestCase(fixtures.TestWithFixtures):
 
     def setUp(self):
         super().setUp()
         snapcraft.dirs.setup_dirs()
-        tempdirObj = tempfile.TemporaryDirectory()
-        self.addCleanup(tempdirObj.cleanup)
-        self.tempdir = tempdirObj.name
+        self.useFixture(fixture_setup.TempCWD())

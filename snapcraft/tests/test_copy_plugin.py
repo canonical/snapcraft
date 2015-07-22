@@ -21,10 +21,7 @@ from unittest.mock import (
 )
 
 from snapcraft.plugins.copy import CopyPlugin
-from snapcraft.tests import (
-    chdir,
-    TestCase,
-)
+from snapcraft.tests import TestCase
 
 
 class TestCopyPlugin(TestCase):
@@ -34,37 +31,39 @@ class TestCopyPlugin(TestCase):
         self.mock_options = Mock()
         self.mock_options.files = {}
         # setup the expected target dir in our tempdir
-        self.dst_prefix = os.path.join(self.tempdir, "parts/copy/install/")
+        self.dst_prefix = "parts/copy/install/"
         os.makedirs(self.dst_prefix)
 
-    def test_copy_plugin_missing_src_warns(self):
+    def test_copy_plugin_any_missing_src_warns_and_errors(self):
+        # ensure that a bad file causes a warning and fails the build even
+        # if there is a good file last
         self.mock_options.files = {
             "src": "dst",
+            "zzz": "zzz",
         }
+        open("zzz", "w").close()
         c = CopyPlugin("copy", self.mock_options)
         with patch("snapcraft.common.log") as mock_log:
             res = c.build()
             self.assertFalse(res)
-            mock_log.assert_callled_with("WARNING: file 'src' missing")
+            mock_log.assert_called_with("WARNING: file 'src' missing")
 
     def test_copy_plugin_copies(self):
-        with chdir(self.tempdir):
-            self.mock_options.files = {
-                "src": "dst",
-            }
-            open("src", "w").close()
+        self.mock_options.files = {
+            "src": "dst",
+        }
+        open("src", "w").close()
 
-            c = CopyPlugin("copy", self.mock_options)
-            self.assertTrue(c.build())
-            self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dst")))
+        c = CopyPlugin("copy", self.mock_options)
+        self.assertTrue(c.build())
+        self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dst")))
 
     def test_copy_plugin_creates_prefixes(self):
-        with chdir(self.tempdir):
-            self.mock_options.files = {
-                "src": "dir/dst",
-            }
-            open("src", "w").close()
+        self.mock_options.files = {
+            "src": "dir/dst",
+        }
+        open("src", "w").close()
 
-            c = CopyPlugin("copy", self.mock_options)
-            self.assertTrue(c.build())
-            self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dir/dst")))
+        c = CopyPlugin("copy", self.mock_options)
+        self.assertTrue(c.build())
+        self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dir/dst")))

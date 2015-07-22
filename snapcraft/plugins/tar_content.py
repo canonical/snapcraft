@@ -17,11 +17,10 @@
 import snapcraft
 
 
-class MakePlugin(snapcraft.BasePlugin):
+class TarContentPlugin(snapcraft.BasePlugin):
 
     def pull(self):
-        return self.handle_source_options()
+        return self.pull_tarball(self.options.source, destdir=self.builddir)
 
     def build(self):
-        return self.run(['make']) and \
-            self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+        return self.extract_tarball(self.options.source, srcdir=self.builddir, destdir=self.installdir)

@@ -1,0 +1,6 @@
+parts:
+    bzr:
+        plugin: make-project
+        source: .
+        source-type: bzr
+        source-tag: initial

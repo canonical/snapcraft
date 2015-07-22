@@ -1,0 +1,6 @@
+parts:
+    git:
+        plugin: make-project
+        source: .
+        source-type: git
+        source-branch: second

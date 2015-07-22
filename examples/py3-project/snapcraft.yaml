@@ -6,5 +6,4 @@ parts:
     plugin: copy
     files:
      sha3sum.py: bin/sha3sum
-snap:
-  meta: meta
+snappy-metadata: meta

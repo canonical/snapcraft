@@ -1,0 +1,8 @@
+parts:
+    local:
+        plugin: ant-project
+        source: .
+    wrapper:
+        plugin: make-project
+        source: .
+snappy-metadata: meta

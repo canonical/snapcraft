@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -14,14 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import os
+import sys
+
+import coverage
+
+# make running from bzr snapshot easy
+topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+if os.path.exists(os.path.join(topdir, 'setup.py')):
+    sys.path = [topdir] + sys.path
+
+# now import
+import snapcraft.main
+import snapcraft.dirs
 
 
-class MakePlugin(snapcraft.BasePlugin):
-
-    def pull(self):
-        return self.handle_source_options()
-
-    def build(self):
-        return self.run(['make']) and \
-            self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+if __name__ == "__main__":
+    cov = coverage.coverage(
+        data_file=os.path.join(topdir, '.coverage'), data_suffix=True,
+        branch=True, source=['snapcraft'])
+    cov.start()
+    try:
+        snapcraft.dirs.setup_dirs()
+        snapcraft.main.main()
+    except:
+        cov.stop()
+        cov.save()
+        raise
