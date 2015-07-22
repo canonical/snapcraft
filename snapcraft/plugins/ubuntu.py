@@ -47,7 +47,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
             and self.fix_symlinks(debdir=self.installdir)
 
     def snap_files(self):
-        return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
+        return (['*'], ['usr/include', 'lib/*/*.a', 'usr/lib/*/*.a'])
 
     def get_all_dep_packages(self, packages):
         cache = apt.Cache()
