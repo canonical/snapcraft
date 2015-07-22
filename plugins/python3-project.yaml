@@ -4,5 +4,3 @@ requires:
 options:
   source:
     required: true
-  configflags:
-    required: false

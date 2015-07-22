@@ -67,35 +67,35 @@ class BasePlugin:
         else:
             return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
 
-    def pull_branch(self, url):
+    def get_source(self, source):
         branchType = None
-        if url.startswith("bzr:") or url.startswith("lp:"):
+        if source.startswith("bzr:") or source.startswith("lp:"):
             branchType = 'bzr'
-        elif url.startswith("git:"):
+        elif source.startswith("git:"):
             branchType = 'git'
-        elif ':' in url:
-            raise Exception("Did not recognize branch url: " + url)
+        elif ':' in source:
+            raise Exception("Did not recognize branch url: " + source)
         # Local branch
-        elif os.path.isdir(os.path.join(url, '.bzr')):
+        elif os.path.isdir(os.path.join(source, '.bzr')):
             branchType = 'bzr'
-            url = os.path.abspath(url)
-        elif os.path.isdir(os.path.join(url, '.git')):
+            source = os.path.abspath(source)
+        elif os.path.isdir(os.path.join(source, '.git')):
             branchType = 'git'
-            url = os.path.abspath(url)
+            source = os.path.abspath(source)
 
         if branchType == 'bzr':
-            if not self.pull_bzr(url):
+            if not self.pull_bzr(source):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
         elif branchType == "git":
-            if not self.pull_git(url):
+            if not self.pull_git(source):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
         else:
             # local branch
-            path = os.path.abspath(url)
+            path = os.path.abspath(source)
             if os.path.isdir(self.builddir):
                 os.rmdir(self.builddir)
             else:
@@ -103,6 +103,9 @@ class BasePlugin:
             os.symlink(path, self.builddir)
 
         return True
+
+    def handle_source_options(self):
+        return self.get_source(self.options.source)
 
     def makedirs(self, d):
         try:

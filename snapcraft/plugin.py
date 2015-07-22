@@ -40,7 +40,7 @@ class PluginError(Exception):
 
 class PluginHandler:
 
-    def __init__(self, name, part_name, properties, options_override=None, load_code=True, load_config=True):
+    def __init__(self, name, part_name, properties, load_code=True, load_config=True):
         self.valid = False
         self.code = None
         self.config = {}
@@ -59,7 +59,7 @@ class PluginHandler:
             if load_config:
                 self._load_config(name)
             if load_code:
-                self._load_code(name, part_name, properties, options_override)
+                self._load_code(name, part_name, properties)
             # only set to valid if it loads without PluginError
             self.part_names.append(part_name)
             self.valid = True
@@ -74,7 +74,7 @@ class PluginHandler:
         with open(configPath, 'r') as fp:
             self.config = yaml.load(fp) or {}
 
-    def _make_options(self, name, properties, options_override):
+    def _make_options(self, name, properties):
         class Options():
             pass
         options = Options()
@@ -88,13 +88,10 @@ class PluginHandler:
                     raise PluginError()
                 setattr(options, opt, None)
 
-        if options_override:
-            options = options_override
-
         return options
 
-    def _load_code(self, name, part_name, properties, options_override):
-        options = self._make_options(name, properties, options_override)
+    def _load_code(self, name, part_name, properties):
+        options = self._make_options(name, properties)
         moduleName = self.config.get('module', name)
 
         # Load code from local plugin dir if it is there

@@ -24,7 +24,7 @@ import sys
 class AntProjectPlugin(snapcraft.BasePlugin):
 
     def pull(self):
-        return self.pull_branch(self.options.source)
+        return self.handle_source_options()
 
     def build(self):
         if not self.run(['ant']):

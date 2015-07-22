@@ -20,7 +20,7 @@ import snapcraft
 class MakePlugin(snapcraft.BasePlugin):
 
     def pull(self):
-        return self.pull_branch(self.options.source)
+        return self.handle_source_options()
 
     def build(self):
         return self.run(['make']) and \
