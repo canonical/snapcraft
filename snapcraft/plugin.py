@@ -261,10 +261,10 @@ class PluginHandler:
             snap_files = set([x for x in snap_files if not x.startswith(excludeDir + '/')])
 
         # Separate dirs from files
-        snapDirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x))])
-        snap_files = snap_files - snapDirs
+        snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x)) and not os.path.islink(os.path.join(self.stagedir, x))])
+        snap_files = snap_files - snap_dirs
 
-        return snapDirs, snap_files
+        return snap_dirs, snap_files
 
     def env(self, root):
         if self.code and hasattr(self.code, 'env'):
