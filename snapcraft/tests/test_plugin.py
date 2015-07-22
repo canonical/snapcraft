@@ -18,7 +18,7 @@ import os
 import tempfile
 from unittest import mock
 
-from snapcraft.plugin import Plugin
+from snapcraft.plugin import Plugin, PluginError
 from snapcraft.tests import TestCase
 
 
@@ -84,3 +84,10 @@ class TestPlugin(TestCase):
         self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))
+
+    def test_collect_snap_files_with_abs_path_raises(self):
+        # ensure that absolute path raise an error
+        # (os.path.join will throw an error otherwise)
+        p = Plugin("mock", "mock-part", {}, load_config=False)
+        with self.assertRaises(PluginError):
+            p.collect_snap_files(['*'], ['/1'])
