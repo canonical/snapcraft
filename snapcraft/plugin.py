@@ -198,7 +198,7 @@ class Plugin:
             if snapDirs:
                 snapcraft.common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
             if snap_files:
-                snapcraft.common.run(['cp', '-aP', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
+                snapcraft.common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
 
             self.mark_done('snap')
         return True
