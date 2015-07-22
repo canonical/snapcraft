@@ -16,6 +16,8 @@
 
 import os
 import snapcraft.common
+import subprocess
+import urllib.parse
 
 
 class BasePlugin:
@@ -54,6 +56,9 @@ class BasePlugin:
             print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
+    def isurl(self, url):
+        return urllib.parse.urlparse(url).scheme != ""
+
     def pull_bzr(self, source, source_tag=None):
         tag_opts = []
         if source_tag:
@@ -81,13 +86,40 @@ class BasePlugin:
                 branch_opts = ['--branch', source_tag or source_branch]
             return self.run(['git', 'clone'] + branch_opts + [source, self.sourcedir], cwd=os.getcwd())
 
+    def pull_tarball(self, source, destdir=None):
+        destdir = destdir or self.sourcedir
+        if self.isurl(source):
+            return self.run(['wget', '-c', source], cwd=destdir)
+        else:
+            return True
+
+    def extract_tarball(self, source, srcdir=None, destdir=None):
+        srcdir = srcdir or self.sourcedir
+        destdir = destdir or self.builddir
+
+        if self.isurl(source):
+            tarball = os.path.join(srcdir, os.path.basename(source))
+        else:
+            tarball = os.path.abspath(source)
+
+        # If there's a single toplevel directory, ignore it
+        try:
+            topfiles = subprocess.check_output(['tar', '--list', '-f', tarball, '--exclude', '*/*']).strip()
+        except Exception:
+            return False
+        strip_cmd = []
+        if topfiles and len(topfiles.split(b'\n')) == 1 and chr(topfiles[-1]) == '/':
+            strip_cmd = ['--strip-components=1']
+
+        return self.run(['tar'] + strip_cmd + ['-xf', tarball], cwd=destdir)
+
     def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
         if source_type is None:
             if source.startswith("bzr:") or source.startswith("lp:"):
                 source_type = 'bzr'
             elif source.startswith("git:"):
                 source_type = 'git'
-            elif ':' in source:
+            elif self.isurl(source):
                 snapcraft.common.fatal("Unrecognized source '%s' for part '%s'." % (source, self.name))
 
         if source_type == 'bzr':
@@ -101,6 +133,15 @@ class BasePlugin:
             if not self.pull_git(source, source_tag=source_tag, source_branch=source_branch):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
+                return False
+        elif source_type == 'tar':
+            if source_branch:
+                snapcraft.common.fatal("You can't specify source-branch for a tar source (part '%s')." % self.name)
+            if source_tag:
+                snapcraft.common.fatal("You can't specify source-tag for a tar source (part '%s')." % self.name)
+            if not self.pull_tarball(source):
+                return False
+            if not self.extract_tarball(source):
                 return False
         else:
             # local source dir

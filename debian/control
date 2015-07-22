@@ -15,6 +15,7 @@ Build-Depends: bzr,
                python3-fixtures,
                python3-setuptools,
                python3-yaml,
+               xz-utils,
 Homepage: https://launchpad.net/snapcraft
 Standards-Version: 3.9.6
 
@@ -27,6 +28,8 @@ Depends: ${misc:Depends},
          python3-apt,
          python3-yaml,
          ubuntu-snappy-cli,
+         wget,
+         xz-utils,
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
