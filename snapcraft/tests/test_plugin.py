@@ -25,8 +25,10 @@ from unittest.mock import (
     patch,
 )
 
-from snapcraft.plugin import PluginHandler, PluginError
-from snapcraft import tests
+from snapcraft import (
+    plugin,
+    tests
+)
 from snapcraft.tests import mock_plugin
 
 
@@ -36,7 +38,7 @@ class TestPlugin(tests.TestCase):
                         properties=None, load_code=False, load_config=False):
         if properties is None:
             properties = {}
-        return PluginHandler(
+        return plugin.PluginHandler(
             name, part_name, properties, load_code=load_code,
             load_config=load_config)
 
@@ -44,9 +46,10 @@ class TestPlugin(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        self.get_test_plugin('test_name', load_config=True)
+        self.get_test_plugin('test_unexisting_name', load_config=True)
 
-        self.assertEqual('Unknown plugin: test_name\n', fake_logger.output)
+        self.assertEqual(
+            'Unknown plugin: test_unexisting_name\n', fake_logger.output)
 
     def test_is_dirty(self):
         p = self.get_test_plugin()
@@ -113,8 +116,8 @@ class TestPlugin(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        plugin = self.get_test_plugin()
-        plugin.notify_stage('test stage')
+        p = self.get_test_plugin()
+        p.notify_stage('test stage')
 
         self.assertEqual('test stage mock-part\n', fake_logger.output)
 
@@ -126,7 +129,7 @@ class TestPlugin(tests.TestCase):
             self.assertTrue(sys.path[0].endswith("parts/plugins"))
             return mock_plugin
         with patch("importlib.import_module", side_effect=mock_import_modules):
-            PluginHandler(
+            plugin.PluginHandler(
                 "x-mock", "mock-part", {}, load_config=False, load_code=True)
         # sys.path is cleaned afterwards
         self.assertFalse(sys.path[0].endswith("parts/plugins"))
@@ -138,12 +141,12 @@ class TestPlugin(tests.TestCase):
             self.assertEqual(module_name, "snapcraft.plugins.mock")
             return mock_plugin
         with patch("importlib.import_module", side_effect=mock_import_modules):
-            PluginHandler(
+            plugin.PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
     def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
         p = self.get_test_plugin()
-        with self.assertRaises(PluginError) as raised:
+        with self.assertRaises(plugin.PluginError) as raised:
             p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
 
         self.assertEqual(
@@ -151,8 +154,22 @@ class TestPlugin(tests.TestCase):
 
     def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
         p = self.get_test_plugin()
-        with self.assertRaises(PluginError) as raised:
+        with self.assertRaises(plugin.PluginError) as raised:
             p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
 
         self.assertEqual(
             "path '/abs/exclude' must be relative", str(raised.exception))
+
+    def test_load_plugin_with_invalid_part_must_exit_with_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        with self.assertRaises(SystemExit) as raised:
+            plugin.load_plugin(
+                'dummy-part', 'test_unexisting_name', load_code=False)
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        self.assertEqual(
+            'Unknown plugin: test_unexisting_name\n'
+            'Could not load part test_unexisting_name\n',
+            fake_logger.output)
