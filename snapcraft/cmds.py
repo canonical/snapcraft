@@ -68,7 +68,13 @@ def wrap_exe(relexepath):
     wrapexec = '"$SNAP_APP_PATH/%s"' % relexepath
     if not os.path.exists(exepath) and '/' not in relexepath:
         # If it doesn't exist it might be in the path
-        wrapexec = relexepath
+        with tempfile.NamedTemporaryFile() as tempf:
+            script = "#!/bin/sh\n%s\nwhich %s" % (snapcraft.common.assemble_env(), relexepath)
+            tempf.write(script)
+            if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapcraft.common.snapdir):
+                wrapexec = relexepath
+            else:
+                snapcraft.common.log("Warning: unable to find %s in the path" % (relexepath))
 
     script = "#!/bin/sh\n%s\nexec %s $*" % (snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH"), wrapexec)
     with open(wrappath, 'w+') as f:
