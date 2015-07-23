@@ -69,14 +69,14 @@ class PluginHandler:
             # only set to valid if it loads without PluginError
             self.part_names.append(part_name)
             self.valid = True
-        except PluginError:
+        except PluginError as e:
+            logger.error(str(e))
             return
 
     def _load_config(self, name):
         configPath = os.path.join(plugindir(name), name + ".yaml")
         if not os.path.exists(configPath):
-            logger.error("Unknown plugin %s" % name)
-            raise PluginError()
+            raise PluginError('Unknown plugin: {}'.format(name))
         with open(configPath, 'r') as fp:
             self.config = yaml.load(fp) or {}
 
@@ -92,8 +92,7 @@ class PluginHandler:
                 setattr(options, attrname, properties[opt])
             else:
                 if opt_parameters.get('required', False):
-                    logger.error("Required field %s missing on part %s" % (opt, name))
-                    raise PluginError()
+                    raise PluginError('Required field {} missing on part {}'.format(opt, name))
                 setattr(options, attrname, None)
 
         return options
@@ -230,7 +229,7 @@ class PluginHandler:
         # validate
         for d in includes + excludes:
             if os.path.isabs(d):
-                raise PluginError("path '%s' must be relative" % d)
+                raise PluginError('path {!r} must be relative'.format(d))
 
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
