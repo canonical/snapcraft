@@ -18,10 +18,12 @@ import glob
 import importlib
 import logging
 import os
-import snapcraft
-import snapcraft.common
 import sys
+
 import yaml
+
+import snapcraft
+from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ def plugindir(name):
     if is_local_plugin(name):
         return os.path.abspath(os.path.join('parts', 'plugins'))
     else:
-        return snapcraft.common.plugindir
+        return common.get_plugindir()
 
 
 class PluginError(Exception):
@@ -157,7 +159,7 @@ class PluginHandler:
         try:
             with open(self.statefile, 'r') as f:
                 lastStep = f.read()
-                return snapcraft.common.commandOrder.index(stage) > snapcraft.common.commandOrder.index(lastStep)
+                return common.COMMAND_ORDER.index(stage) > common.COMMAND_ORDER.index(lastStep)
         except Exception:
             return True
 
@@ -201,7 +203,7 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
-        snapcraft.common.run(['cp', '-arT', self.installdir, self.stagedir])
+        common.run(['cp', '-arT', self.installdir, self.stagedir])
         self.mark_done('stage')
         return True
 
@@ -217,9 +219,9 @@ class PluginHandler:
             snapDirs, snap_files = self.collect_snap_files(includes, excludes)
 
             if snapDirs:
-                snapcraft.common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
+                common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
             if snap_files:
-                snapcraft.common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
+                common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
 
             self.mark_done('snap')
         return True

@@ -16,7 +16,6 @@
 
 import fixtures
 
-import snapcraft.dirs
 from snapcraft.tests import fixture_setup
 
 
@@ -24,5 +23,6 @@ class TestCase(fixtures.TestWithFixtures):
 
     def setUp(self):
         super().setUp()
-        snapcraft.dirs.setup_dirs()
-        self.useFixture(fixture_setup.TempCWD())
+        temp_cwd_fixture = fixture_setup.TempCWD()
+        self.useFixture(temp_cwd_fixture)
+        self.path = temp_cwd_fixture.path

@@ -21,6 +21,10 @@ import unittest
 
 import fixtures
 
+from snapcraft import (
+    common,
+    dirs
+)
 from snapcraft.yaml import Config
 from snapcraft.tests import TestCase
 
@@ -60,6 +64,9 @@ class TestYaml(TestCase):
             fake_logger.output)
 
     def test_config_loop(self):
+        self.addCleanup(common.set_plugindir, common.get_plugindir())
+        dirs.setup_dirs()
+
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
