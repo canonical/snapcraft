@@ -32,9 +32,8 @@ from snapcraft.tests import mock_plugin
 
 class TestPlugin(tests.TestCase):
 
-    def get_test_plugin(
-            self, name='mock', part_name='mock-part', properties=None,
-            load_code=False, load_config=False):
+    def get_test_plugin(self, name='mock', part_name='mock-part',
+                        properties=None, load_code=False, load_config=False):
         if properties is None:
             properties = {}
         return PluginHandler(
