@@ -78,7 +78,7 @@ class InitTestCase(TestCase):
 
         with self.assertRaises(SystemExit) as raised:
             cmds.init('dummy args')
-        self.assertEqual(raised.exception.code, 1)
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
             'snapcraft.yaml already exists!\n', fake_logger.output)
 
@@ -90,7 +90,7 @@ class InitTestCase(TestCase):
         with self.assertRaises(SystemExit) as raised:
             cmds.init(snap_without_parts)
 
-        self.assertEqual(raised.exception.code, 0)
+        self.assertEqual(raised.exception.code, 0, 'Wrong exit code returned.')
         self.assertEqual(
             'Wrote the following as snapcraft.yaml:\n'
             'parts:\n',

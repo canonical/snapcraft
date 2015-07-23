@@ -59,7 +59,7 @@ class TestYaml(TestCase):
         with self.assertRaises(SystemExit) as raised:
             Config()
 
-        self.assertEqual(raised.exception.code, 1)
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
             "Could not find snapcraft.yaml.  Are you sure you're in the right directory?\n"
             "To start a new project, use 'snapcraft init'\n",
@@ -80,7 +80,7 @@ class TestYaml(TestCase):
         with self.assertRaises(SystemExit) as raised:
             Config()
 
-        self.assertEqual(raised.exception.code, 1)
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual('Circular dependency chain!\n', fake_logger.output)
 
     @patch("snapcraft.common.run")
