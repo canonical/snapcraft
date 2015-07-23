@@ -22,8 +22,13 @@ import sys
 import snapcraft.cmds
 
 
+_COLOR_BOLD = '\033[1m'
+_COLOR_END = '\033[0m'
+
+
 def main():
-    logging.basicConfig(format='%(message)s', level=logging.INFO)
+    logging.basicConfig(
+        format=_COLOR_BOLD + '%(message)s' + _COLOR_END, level=logging.INFO)
 
     root_parser = argparse.ArgumentParser()
     subparsers = root_parser.add_subparsers(dest='cmd')
