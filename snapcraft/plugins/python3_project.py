@@ -14,15 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import snapcraft
 
 
-class TgzContentPlugin(snapcraft.BasePlugin):
+class Python3ProjectPlugin(snapcraft.BasePlugin):
+
+    # note that we don't need to setup env(), python figures it out
+    # see python3.py for more details
 
     def pull(self):
-        return self.run(["wget", "-c", self.options.source], cwd=self.builddir)
+        return self.handle_source_options()
 
     def build(self):
-        tar_file = os.path.join(self.builddir, os.path.basename(self.options.source))
-        return self.run(["tar", "xf", tar_file], cwd=self.installdir)
+        return self.run(
+            ["python3", "setup.py", "install", "--install-layout=deb",
+             "--prefix=%s/usr" % self.installdir])

@@ -30,6 +30,3 @@ class AutotoolsPlugin(MakePlugin):
                 return False
         return self.run(['./configure', '--prefix='] + self.options.configflags) and \
             super().build()
-
-    def snap_files(self):
-        return (['*'], ['include'])

@@ -23,16 +23,30 @@ import sys
 import yaml
 
 
-class Plugin:
+def is_local_plugin(name):
+    return name.startswith("x-")
 
-    def __init__(self, name, part_name, properties, options_override=None, load_code=True, load_config=True):
+
+def plugindir(name):
+    if is_local_plugin(name):
+        return os.path.abspath(os.path.join('parts', 'plugins'))
+    else:
+        return snapcraft.common.plugindir
+
+
+class PluginError(Exception):
+    pass
+
+
+class PluginHandler:
+
+    def __init__(self, name, part_name, properties, load_code=True, load_config=True):
         self.valid = False
         self.code = None
-        self.config = None
+        self.config = {}
         self.part_names = []
         self.deps = []
         self.plugin_name = name
-        self.is_local_plugin = False
 
         self.sourcedir = os.path.join(os.getcwd(), "parts", part_name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", part_name, "build")
@@ -41,59 +55,62 @@ class Plugin:
         self.snapdir = os.path.join(os.getcwd(), "snap")
         self.statefile = os.path.join(os.getcwd(), "parts", part_name, "state")
 
-        if load_config:
-            # First look in local path
-            localPluginDir = os.path.abspath(os.path.join('parts', 'plugins'))
-            configPath = os.path.join(localPluginDir, name + ".yaml")
-            if os.path.exists(configPath):
-                self.is_local_plugin = True
-            else:
-                # OK, now look at snapcraft's plugins
-                configPath = os.path.join(snapcraft.common.plugindir, name + ".yaml")
-                if not os.path.exists(configPath):
-                    snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
-                    return
-            with open(configPath, 'r') as fp:
-                self.config = yaml.load(fp) or {}
-
+        try:
+            if load_config:
+                self._load_config(name)
             if load_code:
-                class Options():
-                    pass
-                options = Options()
+                self._load_code(name, part_name, properties)
+            # only set to valid if it loads without PluginError
+            self.part_names.append(part_name)
+            self.valid = True
+        except PluginError:
+            return
 
-                if self.config:
-                    for opt in self.config.get('options', []):
-                        if opt in properties:
-                            setattr(options, opt, properties[opt])
-                        else:
-                            if self.config['options'][opt].get('required', False):
-                                snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
-                                return
-                            setattr(options, opt, None)
-                if options_override:
-                    options = options_override
+    def _load_config(self, name):
+        configPath = os.path.join(plugindir(name), name + ".yaml")
+        if not os.path.exists(configPath):
+            snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
+            raise PluginError()
+        with open(configPath, 'r') as fp:
+            self.config = yaml.load(fp) or {}
 
-                moduleName = self.config.get('module', name)
+    def _make_options(self, name, properties):
+        class Options():
+            pass
+        options = Options()
 
-                # Load code from local plugin dir if it is there
-                if self.is_local_plugin:
-                    sys.path = [localPluginDir] + sys.path
-                else:
-                    moduleName = 'snapcraft.plugins.' + moduleName
+        for opt in self.config.get('options', []):
+            attrname = opt.replace('-', '_')
+            opt_parameters = self.config['options'][opt] or {}
+            if opt in properties:
+                setattr(options, attrname, properties[opt])
+            else:
+                if opt_parameters.get('required', False):
+                    snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+                    raise PluginError()
+                setattr(options, attrname, None)
 
-                module = importlib.import_module(moduleName)
+        return options
 
-                if self.is_local_plugin:
-                    sys.path.pop(0)
+    def _load_code(self, name, part_name, properties):
+        options = self._make_options(name, properties)
+        moduleName = self.config.get('module', name)
 
-                for propName in dir(module):
-                    prop = getattr(module, propName)
-                    if issubclass(prop, snapcraft.BasePlugin):
-                        self.code = prop(part_name, options)
-                        break
+        # Load code from local plugin dir if it is there
+        if is_local_plugin(name):
+            sys.path = [plugindir(name)] + sys.path
+        else:
+            moduleName = 'snapcraft.plugins.' + moduleName
 
-        self.part_names.append(part_name)
-        self.valid = True
+        module = importlib.import_module(moduleName)
+        if is_local_plugin(name):
+            sys.path.pop(0)
+
+        for propName in dir(module):
+            prop = getattr(module, propName)
+            if issubclass(prop, snapcraft.BasePlugin):
+                self.code = prop(part_name, options)
+                break
 
     def __str__(self):
         return self.part_names[0]
@@ -204,6 +221,11 @@ class Plugin:
         return True
 
     def collect_snap_files(self, includes, excludes):
+        # validate
+        for d in includes + excludes:
+            if os.path.isabs(d):
+                raise PluginError("path '%s' must be relative" % d)
+
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
             sourceFiles |= set([os.path.join(root, d) for d in dirs])
@@ -238,10 +260,10 @@ class Plugin:
             snap_files = set([x for x in snap_files if not x.startswith(excludeDir + '/')])
 
         # Separate dirs from files
-        snapDirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x))])
-        snap_files = snap_files - snapDirs
+        snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x)) and not os.path.islink(os.path.join(self.stagedir, x))])
+        snap_files = snap_files - snap_dirs
 
-        return snapDirs, snap_files
+        return snap_dirs, snap_files
 
     def env(self, root):
         if self.code and hasattr(self.code, 'env'):
@@ -250,7 +272,7 @@ class Plugin:
 
 
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
-    part = Plugin(plugin_name, part_name, properties, load_code=load_code)
+    part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
         snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
         sys.exit(1)

@@ -1,5 +1,5 @@
 module: mvn_project
-systemPackages: [maven]
+build-tools: [maven]
 options:
     source:
         required: true

@@ -56,7 +56,7 @@ def main():
     parser.set_defaults(func=snapcraft.cmds.cmd)
 
     parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser])
-    parser.set_defaults(func=snapcraft.cmds.cmd)
+    parser.set_defaults(func=snapcraft.cmds.snap)
 
     parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser], aliases=['all'])
     parser.set_defaults(func=snapcraft.cmds.assemble)
