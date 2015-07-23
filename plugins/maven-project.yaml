@@ -1,4 +1,4 @@
-module: mvn_project
+module: maven_project
 build-tools: [maven]
 options:
     source:
