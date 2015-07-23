@@ -16,7 +16,9 @@
 
 import glob
 import os
+
 import snapcraft
+
 
 class MavenPlugin(snapcraft.BasePlugin):
 
@@ -28,9 +30,6 @@ class MavenPlugin(snapcraft.BasePlugin):
             return False
         for g in ['*.jar', '*.war']:
             files = glob.glob(os.path.join(self.builddir, 'target', g))
-            if not files:
-                continue
-            if not self.run(['cp', '-a'] + files + [self.installdir]):
+            if files and not self.run(['cp', '-a'] + files + [self.installdir]):
                 return False
         return True
-
