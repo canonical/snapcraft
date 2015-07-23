@@ -141,7 +141,7 @@ class TestPlugin(tests.TestCase):
             PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
-    def test_collect_snap_fiels_with_absolute_includes_must_raise_error(self):
+    def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
         p = self.get_test_plugin()
         with self.assertRaises(PluginError) as raised:
             p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
@@ -149,7 +149,7 @@ class TestPlugin(tests.TestCase):
         self.assertEqual(
             "path '/abs/include' must be relative", str(raised.exception))
 
-    def test_collect_snap_fiels_with_absolute_excludes_must_raise_error(self):
+    def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
         p = self.get_test_plugin()
         with self.assertRaises(PluginError) as raised:
             p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
