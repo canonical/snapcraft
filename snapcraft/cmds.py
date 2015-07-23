@@ -70,7 +70,7 @@ def wrap_exe(relexepath):
         # If it doesn't exist it might be in the path
         with tempfile.NamedTemporaryFile() as tempf:
             script = "#!/bin/sh\n%s\nwhich %s" % (snapcraft.common.assemble_env(), relexepath)
-            tempf.write(script)
+            tempf.write(bytes(script, 'UTF-8'))
             if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapcraft.common.snapdir):
                 wrapexec = relexepath
             else:
