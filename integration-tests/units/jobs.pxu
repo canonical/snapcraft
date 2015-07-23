@@ -13,7 +13,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    OUTPUT=$(${SNAPCRAFT} assemble)
+    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Missing snappy metadata file"
 
