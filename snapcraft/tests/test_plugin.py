@@ -16,25 +16,30 @@
 
 import logging
 import os
+import sys
 import tempfile
-from unittest import mock
 
 import fixtures
+from unittest.mock import (
+    Mock,
+    patch,
+)
 
-from snapcraft.plugin import Plugin
+import snapcraft.tests.mock_plugin
+from snapcraft.plugin import PluginHandler, PluginError
 from snapcraft.tests import TestCase
 
 
 class TestPlugin(TestCase):
 
     def get_test_plugin(self):
-        return Plugin('mock', 'mock-part', {}, load_config=False)
+        return PluginHandler('mock', 'mock-part', {}, load_config=False, load_code=False)
 
     def test_is_dirty(self):
         p = self.get_test_plugin()
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
-        p.code = mock.Mock()
+        p.code = Mock()
         # pull once
         p.pull()
         p.code.pull.assert_called()
@@ -99,3 +104,34 @@ class TestPlugin(TestCase):
         plugin.notify_stage('test stage')
 
         self.assertEqual('test stage mock-part\n', fake_logger.output)
+
+    def test_local_plugins(self):
+        """Ensure local plugins are loaded from parts/plugins"""
+        def mock_import_modules(module_name):
+            # called with the name only and sys.path set
+            self.assertEqual(module_name, "x-mock")
+            self.assertTrue(sys.path[0].endswith("parts/plugins"))
+            return snapcraft.tests.mock_plugin
+        with patch("importlib.import_module", side_effect=mock_import_modules):
+            PluginHandler(
+                "x-mock", "mock-part", {}, load_config=False, load_code=True)
+        # sys.path is cleaned afterwards
+        self.assertFalse(sys.path[0].endswith("parts/plugins"))
+
+    def test_non_local_plugins(self):
+        """Ensure regular plugins are loaded from snapcraft only"""
+        def mock_import_modules(module_name):
+            # called with the full snapcraft path
+            self.assertEqual(module_name, "snapcraft.plugins.mock")
+            return snapcraft.tests.mock_plugin
+        with patch("importlib.import_module", side_effect=mock_import_modules):
+            PluginHandler(
+                "mock", "mock-part", {}, load_config=False, load_code=True)
+
+    def test_collect_snap_files_with_abs_path_raises(self):
+        # ensure that absolute path raise an error
+        # (os.path.join will throw an error otherwise)
+        with patch("importlib.import_module", return_value=snapcraft.tests.mock_plugin):
+            p = PluginHandler("mock", "mock-part", {}, load_config=False)
+        with self.assertRaises(PluginError):
+            p.collect_snap_files(['*'], ['/1'])

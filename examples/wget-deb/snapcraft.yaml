@@ -1,5 +1,4 @@
 parts:
   wget:
     plugin: ubuntu
-snap:
-  meta: meta
+snappy-metadata: meta

@@ -4,5 +4,6 @@ requires:
 options:
   source:
     required: true
-  configflags:
-    required: false
+  source-type:
+  source-tag:
+  source-branch:

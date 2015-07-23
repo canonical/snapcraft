@@ -18,15 +18,9 @@ import logging
 import os
 import tempfile
 import unittest
-from unittest.mock import (
-    call,
-    Mock,
-    patch,
-)
 
 import fixtures
 
-import snapcraft.common
 from snapcraft.yaml import Config
 from snapcraft.tests import TestCase
 
@@ -82,15 +76,3 @@ class TestYaml(TestCase):
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual('Circular dependency chain!\n', fake_logger.output)
-
-    @patch("snapcraft.common.run")
-    def test_assemble_uses_config_data(self, mock_run):
-        self.make_snapcraft_yaml("snap:\n meta: meta-dir")
-
-        mock_args = Mock()
-        snapcraft.cmds.assemble(mock_args)
-
-        mock_run.assert_has_calls([
-            call(["cp", "-arv", "meta-dir", snapcraft.common.snapdir]),
-            call(["snappy", "build", snapcraft.common.snapdir]),
-        ])

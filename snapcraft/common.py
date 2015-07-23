@@ -18,6 +18,7 @@
 
 import os
 import subprocess
+import sys
 import tempfile
 
 env = []
@@ -36,6 +37,10 @@ def run(cmd, **kwargs):
         f.write('exec $*')
         f.flush()
         return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
+
+
+def fatal(msg):
+    sys.exit(1)
 
 
 commandOrder = ["pull", "build", "stage", "snap"]

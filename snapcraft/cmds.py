@@ -17,6 +17,7 @@
 import glob
 import logging
 import os
+import shlex
 import snapcraft.common
 import snapcraft.plugin
 import snapcraft.yaml
@@ -24,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import yaml
 
 
 logger = logging.getLogger(__name__)
@@ -52,42 +54,79 @@ def shell(args):
     snapcraft.common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
-        userCommand = ['/usr/bin/env', "PS1='\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] '", '/bin/bash', '--norc']
+        userCommand = ['/usr/bin/env', 'PS1=\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ', '/bin/bash', '--norc']
     snapcraft.common.run(userCommand)
+
+
+def wrap_exe(relexepath):
+    exepath = os.path.join(snapcraft.common.snapdir, relexepath)
+    wrappath = exepath + '.wrapper'
+
+    try:
+        os.remove(wrappath)
+    except Exception:
+        pass
+
+    script = "#!/bin/sh\n%s\nexec %s $*" % (snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH"), '"$SNAP_APP_PATH/%s"' % relexepath)
+    with open(wrappath, 'w+') as f:
+        f.write(script)
+
+    os.chmod(wrappath, 0o755)
+
+    return os.path.relpath(wrappath, snapcraft.common.snapdir)
+
+
+def snap(args):
+    cmd(args)
+
+    # Ensure the snappy metadata files are correct
+    config = snapcraft.yaml.Config()
+
+    if 'snappy-metadata' in config.data:
+        snapcraft.common.run(
+            ['cp', '-arvT', config.data['snappy-metadata'], snapcraft.common.snapdir + '/meta'])
+    if not os.path.exists('snap/meta/package.yaml'):
+        logger.error("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
+        sys.exit(1)
+
+    # wrap all included commands
+    with open("snap/meta/package.yaml", 'r') as f:
+        package = yaml.load(f)
+
+    snapcraft.common.env = config.snap_env()
+
+    def replace_cmd(execparts, cmd):
+        newparts = [cmd] + execparts[1:]
+        return ' '.join([shlex.quote(x) for x in newparts])
+
+    for binary in package.get('binaries', []):
+        execparts = shlex.split(binary.get('exec', binary['name']))
+        execwrap = wrap_exe(execparts[0])
+        if 'exec' in binary:
+            binary['exec'] = replace_cmd(execparts, execwrap)
+        else:
+            binary['name'] = os.path.basename(binary['name'])
+            binary['exec'] = replace_cmd(execparts, execwrap)
+
+    for binary in package.get('services', []):
+        startpath = binary.get('start')
+        if startpath:
+            startparts = shlex.split(startpath)
+            startwrap = wrap_exe(startparts[0])
+            binary['start'] = replace_cmd(startparts, startwrap)
+        stoppath = binary.get('stop')
+        if stoppath:
+            stopparts = shlex.split(stoppath)
+            stopwrap = wrap_exe(stopparts[0])
+            binary['stop'] = replace_cmd(stopparts, stopwrap)
+
+    with open("snap/meta/package.yaml", 'w') as f:
+        yaml.dump(package, f, default_flow_style=False)
 
 
 def assemble(args):
     args.cmd = 'snap'
-    cmd(args)
-
-    config = snapcraft.yaml.Config()
-
-    snapcraft.common.run(
-        ['cp', '-arv', config.data["snap"]["meta"], snapcraft.common.snapdir])
-
-    # wrap all included commands
-    snapcraft.common.env = config.snap_env()
-    script = "#!/bin/sh\n%s\nexec %%s $*" % snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH")
-
-    def wrap_bins(bindir):
-        absbindir = os.path.join(snapcraft.common.snapdir, bindir)
-        if not os.path.exists(absbindir):
-            return
-        for exe in os.listdir(absbindir):
-            if exe.endswith('.real'):
-                continue
-            exePath = os.path.join(absbindir, exe)
-            try:
-                os.remove(exePath + '.real')
-            except:
-                pass
-            os.rename(exePath, exePath + '.real')
-            with open(exePath, 'w+') as f:
-                f.write(script % ('"$SNAP_APP_PATH/' + bindir + '/' + exe + '.real"'))
-            os.chmod(exePath, 0o755)
-    wrap_bins('bin')
-    wrap_bins('usr/bin')
-
+    snap(args)
     snapcraft.common.run(['snappy', 'build', snapcraft.common.snapdir])
 
 
@@ -162,10 +201,7 @@ def cmd(args):
     forceAll = args.force
     forceCommand = None
 
-    if args.cmd == "all":
-        cmds = ['snap']
-    else:
-        cmds = [args.cmd]
+    cmds = [args.cmd]
 
     if cmds[0] in snapcraft.common.commandOrder:
         forceCommand = cmds[0]
@@ -174,9 +210,9 @@ def cmd(args):
     config = snapcraft.yaml.Config()
 
     # Install local packages that we need
-    if config.systemPackages:
+    if config.build_tools:
         newPackages = []
-        for checkpkg in config.systemPackages:
+        for checkpkg in config.build_tools:
             if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
                 newPackages.append(checkpkg)
         if newPackages:

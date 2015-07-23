@@ -1,0 +1,12 @@
+binaries:
+- exec: binary1.wrapper
+  name: assemble-bin
+- exec: subdir/binary2.wrapper
+  name: binary2
+name: assemble
+services:
+- name: assemble-service
+  start: service-start.wrapper
+  stop: service-stop.wrapper with 'ar gs'
+vendor: mterry@ubuntu.com
+version: 1.0

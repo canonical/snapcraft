@@ -14,15 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
+
 import snapcraft
 
 
-class TgzContentPlugin(snapcraft.BasePlugin):
+logger = logging.getLogger(__name__)
 
-    def pull(self):
-        return self.run(["wget", "-c", self.options.source], cwd=self.builddir)
+
+class CopyPlugin(snapcraft.BasePlugin):
 
     def build(self):
-        tar_file = os.path.join(self.builddir, os.path.basename(self.options.source))
-        return self.run(["tar", "xf", tar_file], cwd=self.installdir)
+        res = True
+        for src in sorted(self.options.files):
+            dst = self.options.files[src]
+            if not os.path.lexists(src):
+                logger.warning("WARNING: file '%s' missing" % src)
+                res = False
+                continue
+            dst = os.path.join(self.installdir, dst)
+            dst_dir = os.path.dirname(dst)
+            if not os.path.exists(dst_dir):
+                os.makedirs(dst_dir)
+            res &= self.run(["cp", "--preserve=all", src, dst], cwd=os.getcwd())
+        return res

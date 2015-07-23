@@ -3,9 +3,51 @@ plugin: shell
 estimated_duration: 0.1
 command:
     set -x
-    OUTPUT=$(snapcraft pull 2>&1)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
+
+id: snapcraft/normal/assemble-no-meta
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    OUTPUT=$(${SNAPCRAFT} assemble)
+    test $? = 1 || exit 1
+    echo $OUTPUT | grep "Missing snappy metadata file"
+
+id: snapcraft/normal/assemble-meta-externally
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    # Test that as long as we have meta/ from *somewhere*, assemble doesn't
+    # care where (and you don't need snappy-metadata to find it)
+    touch copy-meta # instructs Makefile to copy snappy/ itself
+    ${SNAPCRAFT} assemble
+
+id: snapcraft/normal/assemble-meta
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    echo "snappy-metadata: snappy" >> snapcraft.yaml
+    ${SNAPCRAFT} assemble
+    diff -u package.yaml.after snap/meta/package.yaml
+    export SNAP_APP_PATH=`pwd`/snap
+    test "$(./snap/service-start.wrapper)" = "service-start"
+    test "$(./snap/service-stop.wrapper)" = "service-stop"
+    test "$(./snap/binary1.wrapper)" = "binary1"
+    test "$(./snap/subdir/binary2.wrapper)" = "binary2"
+    if ./snap/bin/not-wrapped; then
+        exit 1
+    fi
+    if [ -e ./snap/bin/not-wrapped.wrapper ]; then
+        exit 1
+    fi
 
 id: snapcraft/normal/local-source
 plugin: shell
@@ -13,10 +55,10 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-source .
-    snapcraft build
+    ${SNAPCRAFT} build
     test -e stamp-all
     test "$(readlink parts/make-project/build)" = "$(pwd)"
-    snapcraft stage
+    ${SNAPCRAFT} stage
     test -e stamp-install
 
 id: snapcraft/normal/local-plugin
@@ -25,8 +67,22 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
-    snapcraft snap
-    test -e snap/build-stamp
+    ${SNAPCRAFT} stage
+    test -e stage/build-stamp
+
+id: snapcraft/normal/simple-tar
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-tar .
+    ${SNAPCRAFT} stage
+    test -e stage/flat
+    test -e stage/flatdir/flat2
+    test -e stage/onedeep
+    test -e stage/onedeepdir/onedeep2
+    test -e stage/oneflat
+    test "$(./stage/bin/test)" = "tarproject"
 
 id: snapcraft/normal/simple-make
 plugin: shell
@@ -34,8 +90,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
-    snapcraft snap
-    test "$(./snap/bin/test)" = "Hello world"
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/test)" = "Hello world"
 
 id: snapcraft/normal/simple-cmake
 plugin: shell
@@ -43,8 +99,17 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-cmake .
-    snapcraft snap
-    test "$(./snap/bin/simple-cmake)" = "It's a CMake world"
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/simple-cmake)" = "It's a CMake world"
+
+id: snapcraft/normal/simple-copy
+plugin: shell
+estimated_duration: 0.5
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-copy .
+    ${SNAPCRAFT} stage
+    test "$(cat ./stage/dst)" = "I got copied"
 
 id: snapcraft/normal/conflicts
 plugin: shell
@@ -52,7 +117,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
-    OUTPUT=$(snapcraft stage 2>&1)
+    OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
 
@@ -62,10 +127,9 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
-    snapcraft snap
+    ${SNAPCRAFT} stage
     test -x stage/bin/p3
-    test -x snap/bin/p3
-    test "$(snapcraft shell p3)" = 'p1
+    test "$(${SNAPCRAFT} shell p3)" = 'p1
     p1
     p2'
 
@@ -76,7 +140,7 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i "s/p1:/p1:\n    after: [p3]/" snapcraft.yaml
-    OUTPUT=$(snapcraft pull 2>&1)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep -i "circular dependency"
 
@@ -87,5 +151,81 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i '/after/d' snapcraft.yaml
-    snapcraft snap
+    ${SNAPCRAFT} build
     test $? = 1 || exit 1
+
+id: snapcraft/normal/bzr-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
+    bzr init .
+    bzr commit -m "1" --unchanged
+    bzr commit -m "2" --unchanged
+    ${SNAPCRAFT} pull # test initial branch
+    test "$(bzr revno -r -1 parts/bzr/src)" = "2"
+    ${SNAPCRAFT} pull # test pull doesn't fail
+    test "$(bzr revno -r -1 parts/bzr/src)" = "2"
+
+id: snapcraft/normal/bzr-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
+    bzr init .
+    bzr commit -m "1" --unchanged
+    bzr commit -m "2" --unchanged
+    bzr tag -r 1 initial
+    ${SNAPCRAFT} pull # test initial branch
+    test "$(bzr revno -r -1 parts/bzr/src)" = "1"
+    ${SNAPCRAFT} pull # test pull doesn't fail
+    test "$(bzr revno -r -1 parts/bzr/src)" = "1"
+
+id: snapcraft/normal/git-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
+    git init .
+    git commit -m "1" --allow-empty
+    git commit -m "2" --allow-empty
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
+
+id: snapcraft/normal/git-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
+    git init .
+    git commit -m "1" --allow-empty
+    git commit -m "2" --allow-empty
+    git tag initial HEAD@{1}
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
+
+id: snapcraft/normal/git-branch
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
+    git init .
+    git commit -m "1" --allow-empty
+    git commit -m "2" --allow-empty
+    git branch second HEAD@{1}
+    git checkout second
+    git commit -m "3" --allow-empty
+    git checkout master
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
+    ${SNAPCRAFT} pull
+    test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "

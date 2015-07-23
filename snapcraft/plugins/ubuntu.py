@@ -49,10 +49,11 @@ class UbuntuPlugin(snapcraft.BasePlugin):
     def build(self):
         if not self.downloadable_packages:
             self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
-        return self.unpack_debs(self.downloadable_packages, self.installdir)
+        return self.unpack_debs(self.downloadable_packages, self.installdir) \
+            and self.fix_symlinks(debdir=self.installdir)
 
     def snap_files(self):
-        return (['*'], ['/usr/include', '/lib/*/*.a', '/usr/lib/*/*.a'])
+        return (['*'], ['usr/include', 'lib/*/*.a', 'usr/lib/*/*.a'])
 
     def get_all_dep_packages(self, packages):
         cache = apt.Cache()
@@ -106,4 +107,19 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         for p in pkgs:
             if not self.run(['dpkg-deb', '--extract', p + '_*.deb', targetDir], cwd=debdir):
                 return False
+        return True
+
+    def fix_symlinks(self, debdir=None):
+        """Sometimes debs will contain absolute symlinks (e.g. if the relative
+           path would go all the way to root, they just do absolute).  We can't
+           have that, so instead clean those absolute symlinks."""
+        debdir = debdir or self.builddir
+        for root, dirs, files in os.walk(debdir):
+            for entry in files:
+                path = os.path.join(root, entry)
+                if os.path.islink(path) and os.path.isabs(os.readlink(path)):
+                    target = os.path.join(debdir, os.readlink(path)[1:])
+                    if os.path.exists(target):
+                        os.remove(path)
+                        os.symlink(os.path.relpath(target, root), path)
         return True
