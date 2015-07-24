@@ -21,10 +21,7 @@ import unittest
 
 import fixtures
 
-from snapcraft import (
-    common,
-    dirs
-)
+from snapcraft import dirs
 from snapcraft.yaml import Config
 from snapcraft.tests import TestCase
 

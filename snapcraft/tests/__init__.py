@@ -16,6 +16,7 @@
 
 import fixtures
 
+from snapcraft import common
 from snapcraft.tests import fixture_setup
 
 
