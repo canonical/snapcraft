@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import snapcraft.common
+import re
 import tarfile
 import urllib.parse
+
+import snapcraft.common
 
 
 class BasePlugin:
@@ -126,6 +128,8 @@ class BasePlugin:
                         continue
                     if m.name.startswith(common + "/"):
                         m.name = m.name[len(common + "/"):]
+                    # strip leading "/", "./" or "../" as many times as needed
+                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     yield m
 
             tar.extractall(members=filter_members(tar), path=destdir)

@@ -86,6 +86,8 @@ command:
     test -e stage/top-simple
     test -e stage/notop
     test -e stage/notopdir
+    test -e stage/parent
+    test -e stage/slash
     test "$(./stage/bin/test)" = "tarproject"
 
 id: snapcraft/normal/simple-make
