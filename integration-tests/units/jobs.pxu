@@ -82,6 +82,10 @@ command:
     test -e stage/onedeep
     test -e stage/onedeepdir/onedeep2
     test -e stage/oneflat
+    test -e stage/dir-simple
+    test -e stage/top-simple
+    test -e stage/notop
+    test -e stage/notopdir
     test "$(./stage/bin/test)" = "tarproject"
 
 id: snapcraft/normal/simple-make
