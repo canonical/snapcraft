@@ -229,7 +229,7 @@ class PluginHandler:
         # validate
         for d in includes + excludes:
             if os.path.isabs(d):
-                raise PluginError('path {!r} must be relative'.format(d))
+                raise PluginError("path '{}' must be relative".format(d))
 
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
