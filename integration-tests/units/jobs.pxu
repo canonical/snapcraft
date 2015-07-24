@@ -160,6 +160,7 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
+    bzr whoami "Example Dev <dev@example.com>"
     bzr init .
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
@@ -174,6 +175,7 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
+    bzr whoami "Example Dev <dev@example.com>"
     bzr init .
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
