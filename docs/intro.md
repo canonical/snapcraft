@@ -6,7 +6,14 @@ components from different sources like github, launchpad or npm.
 
 # Key concepts
 
-All dependencies are bundled in a snap...
+A .snap package for the Ubuntu Core system contains all its
+dependencies. This has a couple of advantages over traditional deb or
+rpm based dependency handling, the most important one is that a
+developer can always be assured that there no regressions triggered by
+changes of the system.
+
+Snapcraft makes bundling these dependencies easy by allowing to
+specify them as "parts" in the snapcraft.yaml file.
 
 ## Parts
 
