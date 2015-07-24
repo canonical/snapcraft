@@ -192,6 +192,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     ${SNAPCRAFT} pull
@@ -206,6 +208,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git tag initial HEAD@{1}
@@ -221,6 +225,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git branch second HEAD@{1}
