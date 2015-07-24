@@ -12,7 +12,11 @@ export CATALINA_BASE="$SNAP_APP_DATA_PATH"
 mkdir -p "$CATALINA_BASE/logs"
 mkdir -p "$CATALINA_BASE/temp"
 if ! [ -d $CATALINA_BASE/conf ]; then
-    cp -dr $CATALINA_HOME/conf $CATALINA_BASE
+    cp -rd $CATALINA_HOME/tomcat-conf $CATALINA_BASE/conf
+fi
+if ! [ -d $CATALINA_BASE/webapps ]; then
+    cp -rd $CATALINA_HOME/webapps $CATALINA_BASE/
+    cp $CATALINA_HOME/war/*.war $CATALINA_BASE/webapps/
 fi
 
 $CATALINA_HOME/bin/startup.sh

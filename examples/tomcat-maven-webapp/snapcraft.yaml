@@ -5,8 +5,7 @@ parts:
     tomcat:
         plugin: tar-content
         source: http://mirrors.ircam.fr/pub/apache/tomcat/tomcat-8/v8.0.24/bin/apache-tomcat-8.0.24.tar.gz
-    wrapper:
-        plugin: copy
-        files:
-            tomcat-wrapper: bin/tomcat
+    local-files:
+        plugin: make-project
+        source: .
 snappy-metadata: meta

@@ -4,7 +4,7 @@ version: 1.0
 architecture: [amd64]
 services:
  - name: tomcat
-   start: bin/tomcat
+   start: bin/wrapper
    caps:
    - networking
    - network-service
