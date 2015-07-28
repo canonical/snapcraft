@@ -11,9 +11,9 @@ but if you need help setting up a Snappy install, there is help
 
 (Even if you don't have either of those, you can still follow along. You just
 won't be able to use the final snap package you create. But you'll get to see
-how Snapcraft works, which is also super rewarding.)
+how Snapcraft works, which is still super rewarding.)
 
-You should install Snapcraft:
+You should also install Snapcraft:
 
     $ sudo add-apt-repository ppa:snappy-dev/snapcraft-daily
     $ sudo apt-get update
