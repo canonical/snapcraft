@@ -36,7 +36,10 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "snappy-metadata: snappy" >> snapcraft.yaml
     ${SNAPCRAFT} assemble
+    sed -i "s/@ARCH@/$(dpkg-architecture -qDEB_TARGET_ARCH)/g" package.yaml.after
     diff -u package.yaml.after snap/meta/package.yaml
+    sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_TARGET_MULTIARCH)/g" binary1.after
+    diff -u binary1.after snap/binary1.wrapper
     export SNAP_APP_PATH=`pwd`/snap
     test "$(./snap/service-start.wrapper)" = "service-start"
     test "$(./snap/service-stop.wrapper)" = "service-stop"
@@ -82,6 +85,12 @@ command:
     test -e stage/onedeep
     test -e stage/onedeepdir/onedeep2
     test -e stage/oneflat
+    test -e stage/dir-simple
+    test -e stage/top-simple
+    test -e stage/notop
+    test -e stage/notopdir
+    test -e stage/parent
+    test -e stage/slash
     test "$(./stage/bin/test)" = "tarproject"
 
 id: snapcraft/normal/simple-make
@@ -161,6 +170,7 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
     bzr init .
+    bzr whoami --branch "Example Dev <dev@example.com>"
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     ${SNAPCRAFT} pull # test initial branch
@@ -175,6 +185,7 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
     bzr init .
+    bzr whoami --branch "Example Dev <dev@example.com>"
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     bzr tag -r 1 initial
@@ -190,6 +201,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     ${SNAPCRAFT} pull
@@ -204,6 +217,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git tag initial HEAD@{1}
@@ -219,6 +234,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git branch second HEAD@{1}

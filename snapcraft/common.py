@@ -21,6 +21,8 @@ import subprocess
 import sys
 import tempfile
 
+_arch = None
+_arch_triplet = None
 env = []
 
 
@@ -46,6 +48,20 @@ def log(msg, file=None):
 def fatal(msg):
     log(msg, file=sys.stderr)
     sys.exit(1)
+
+
+def get_arch():
+    global _arch
+    if _arch is None:
+        _arch = subprocess.check_output(['dpkg-architecture', '-qDEB_TARGET_ARCH']).strip().decode('utf8')
+    return _arch
+
+
+def get_arch_triplet():
+    global _arch_triplet
+    if _arch_triplet is None:
+        _arch_triplet = subprocess.check_output(['dpkg-architecture', '-qDEB_TARGET_MULTIARCH']).strip().decode('utf8')
+    return _arch_triplet
 
 
 commandOrder = ["pull", "build", "stage", "snap"]
