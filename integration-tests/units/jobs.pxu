@@ -36,7 +36,10 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "snappy-metadata: snappy" >> snapcraft.yaml
     ${SNAPCRAFT} assemble
+    sed -i "s/@ARCH@/$(dpkg-architecture -qDEB_TARGET_ARCH)/g" package.yaml.after
     diff -u package.yaml.after snap/meta/package.yaml
+    sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_TARGET_MULTIARCH)/g" binary1.after
+    diff -u binary1.after snap/binary1.wrapper
     export SNAP_APP_PATH=`pwd`/snap
     test "$(./snap/service-start.wrapper)" = "service-start"
     test "$(./snap/service-stop.wrapper)" = "service-stop"
