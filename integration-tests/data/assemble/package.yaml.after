@@ -9,6 +9,6 @@ name: assemble
 services:
 - name: assemble-service
   start: service-start.wrapper
-  stop: service-stop.wrapper with 'ar gs'
+  stop: service-stop.wrapper with args
 vendor: mterry@ubuntu.com
 version: 1.0
