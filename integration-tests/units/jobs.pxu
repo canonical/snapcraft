@@ -36,6 +36,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "snappy-metadata: snappy" >> snapcraft.yaml
     ${SNAPCRAFT} assemble
+    test -e "assemble_1.0_$(dpkg-architecture -qDEB_TARGET_ARCH).snap"
     sed -i "s/@ARCH@/$(dpkg-architecture -qDEB_TARGET_ARCH)/g" package.yaml.after
     diff -u package.yaml.after snap/meta/package.yaml
     sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_TARGET_MULTIARCH)/g" binary1.after
