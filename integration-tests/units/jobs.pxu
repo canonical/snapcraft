@@ -3,7 +3,7 @@ plugin: shell
 estimated_duration: 0.1
 command:
     set -x
-    OUTPUT=$(${SNAPCRAFT} pull)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 
@@ -13,7 +13,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    OUTPUT=$(${SNAPCRAFT} assemble)
+    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Missing snappy metadata file"
 
@@ -123,7 +123,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
-    OUTPUT=$(${SNAPCRAFT} stage)
+    OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
 
@@ -146,7 +146,7 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i "s/p1:/p1:\n    after: [p3]/" snapcraft.yaml
-    OUTPUT=$(${SNAPCRAFT} pull)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep -i "circular dependency"
 

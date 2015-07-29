@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 
 import snapcraft
+
+
+logger = logging.getLogger(__name__)
 
 
 class CopyPlugin(snapcraft.BasePlugin):
@@ -26,7 +30,7 @@ class CopyPlugin(snapcraft.BasePlugin):
         for src in sorted(self.options.files):
             dst = self.options.files[src]
             if not os.path.lexists(src):
-                snapcraft.common.log("WARNING: file '%s' missing" % src)
+                logger.warning("WARNING: file '%s' missing" % src)
                 res = False
                 continue
             dst = os.path.join(self.installdir, dst)

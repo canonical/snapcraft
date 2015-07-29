@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import glob
+import logging
 import os
 import shlex
 import snapcraft.common
@@ -27,9 +28,12 @@ import time
 import yaml
 
 
+logger = logging.getLogger(__name__)
+
+
 def init(args):
     if os.path.exists("snapcraft.yaml"):
-        snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
+        logger.error('snapcraft.yaml already exists!')
         sys.exit(1)
     yaml = 'parts:\n'
     for part_name in args.part:
@@ -41,7 +45,7 @@ def init(args):
     yaml = yaml.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
-    snapcraft.common.log("Wrote the following as snapcraft.yaml.")
+    logger.info('Wrote the following as snapcraft.yaml.')
     print()
     print(yaml)
     sys.exit(0)
@@ -84,7 +88,7 @@ def snap(args):
         snapcraft.common.run(
             ['cp', '-arvT', config.data['snappy-metadata'], snapcraft.common.snapdir + '/meta'])
     if not os.path.exists('snap/meta/package.yaml'):
-        snapcraft.common.log("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
+        logger.error("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
         sys.exit(1)
 
     # wrap all included commands
@@ -186,7 +190,7 @@ def check_for_collisions(parts):
         for otherPartName in partsFiles:
             common = partFiles & partsFiles[otherPartName]
             if common:
-                snapcraft.common.log("Error: parts %s and %s have the following files in common:\n  %s" % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                logger.error('Error: parts %s and %s have the following files in common:\n  %s' % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
                 return False
 
         # And add our files to the list
@@ -232,5 +236,5 @@ def cmd(args):
             snapcraft.common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
-                snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
+                logger.error('Failed doing %s for %s!' % (cmd, part.names()[0]))
                 sys.exit(1)

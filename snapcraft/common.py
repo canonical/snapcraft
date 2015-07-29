@@ -39,12 +39,7 @@ def run(cmd, **kwargs):
         return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
 
 
-def log(msg, file=None):
-    print('\033[01m' + msg + '\033[0m', file=None)
-
-
 def fatal(msg):
-    log(msg, file=sys.stderr)
     sys.exit(1)
 
 

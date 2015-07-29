@@ -16,11 +16,15 @@
 
 import glob
 import importlib
+import logging
 import os
 import snapcraft
 import snapcraft.common
 import sys
 import yaml
+
+
+logger = logging.getLogger(__name__)
 
 
 def is_local_plugin(name):
@@ -69,7 +73,7 @@ class PluginHandler:
     def _load_config(self, name):
         configPath = os.path.join(plugindir(name), name + ".yaml")
         if not os.path.exists(configPath):
-            snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
+            logger.error("Unknown plugin %s" % name)
             raise PluginError()
         with open(configPath, 'r') as fp:
             self.config = yaml.load(fp) or {}
@@ -86,7 +90,7 @@ class PluginHandler:
                 setattr(options, attrname, properties[opt])
             else:
                 if opt_parameters.get('required', False):
-                    snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
+                    logger.error("Required field %s missing on part %s" % (opt, name))
                     raise PluginError()
                 setattr(options, attrname, None)
 
@@ -147,7 +151,7 @@ class PluginHandler:
         return self.part_names
 
     def notify_stage(self, stage, hint=''):
-        snapcraft.common.log(stage + " " + self.part_names[0] + hint)
+        logger.info(stage + " " + self.part_names[0] + hint)
 
     def is_dirty(self, stage):
         try:
@@ -274,6 +278,6 @@ class PluginHandler:
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
-        snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
+        logger.error("Could not load part %s" % plugin_name)
         sys.exit(1)
     return part
