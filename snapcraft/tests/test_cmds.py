@@ -92,6 +92,5 @@ class InitTestCase(TestCase):
 
         self.assertEqual(raised.exception.code, 0, 'Wrong exit code returned.')
         self.assertEqual(
-            'Wrote the following as snapcraft.yaml:\n'
-            'parts:\n',
+            'Wrote the following as snapcraft.yaml.\n',
             fake_logger.output)
