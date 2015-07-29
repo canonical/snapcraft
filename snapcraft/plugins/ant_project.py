@@ -15,10 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import glob
+import logging
 import os
+import sys
+
 import snapcraft
 import snapcraft.common
-import sys
+
+
+logger = logging.getLogger(__name__)
 
 
 class AntProjectPlugin(snapcraft.BasePlugin):
@@ -31,7 +36,7 @@ class AntProjectPlugin(snapcraft.BasePlugin):
             return False
         files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         if not files:
-            snapcraft.common.log('Could not find any built jar files for part %s' % self.name)
+            logger.error('Could not find any built jar files for part %s' % self.name)
             sys.exit(1)
         jardir = os.path.join(self.installdir, 'jar')
         return self.run(['mkdir', '-p', jardir]) and \
