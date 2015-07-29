@@ -221,12 +221,3 @@ And tell Snapcraft to actually make the snap package:
 
 You should now have a `webcam-webui_1_amd64.snap` file sitting in your
 directory (assuming you are running on amd64). Congratulations!
-
-### Installing
-
-After copying that file to your Snappy device, you can install it with
-`snappy install`.
-
-And make sure to assign it access to the webcam hardware:
-
-    snappy hw-assign 
