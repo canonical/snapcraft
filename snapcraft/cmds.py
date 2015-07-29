@@ -45,7 +45,9 @@ def init(args):
     yaml = yaml.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
-    logger.info('Wrote the following as snapcraft.yaml:\n{}'.format(yaml))
+    logger.info('Wrote the following as snapcraft.yaml.')
+    print()
+    print(yaml)
     sys.exit(0)
 
 
@@ -216,7 +218,7 @@ def cmd(args):
             if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
                 newPackages.append(checkpkg)
         if newPackages:
-            logger.info('Installing required packages on the host system: ' + ', '.join(newPackages))
+            print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
     for part in config.all_parts:

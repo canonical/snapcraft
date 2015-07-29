@@ -59,7 +59,7 @@ class BasePlugin:
         if cwd is None:
             cwd = self.builddir
         if True:
-            logger.info(' '.join(cmd))
+            print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def isurl(self, url):
