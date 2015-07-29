@@ -53,7 +53,7 @@ the downloaded content.
 
 #### Build
 
-The next step is that each part is build in its parts/part-name/build
+The next step is that each part is built in its parts/part-name/build
 directory and installs itself into parts/part-name/install.
 
 ### Stage
