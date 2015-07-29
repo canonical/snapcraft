@@ -19,8 +19,8 @@ import sys
 
 import yaml
 
-import snapcraft.common
 import snapcraft.plugin
+from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ class Config:
         return env
 
     def stage_env(self):
-        root = snapcraft.common.stagedir
+        root = common.get_stagedir()
         env = []
 
         env += self.runtime_env(root)
@@ -149,7 +149,7 @@ class Config:
         return env
 
     def snap_env(self):
-        root = snapcraft.common.snapdir
+        root = common.get_snapdir()
         env = []
 
         env += self.runtime_env(root)
