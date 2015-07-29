@@ -16,7 +16,8 @@
 
 import logging
 import os
-import subprocess
+import re
+import tarfile
 import urllib.parse
 
 import snapcraft.common
@@ -58,7 +59,7 @@ class BasePlugin:
         if cwd is None:
             cwd = self.builddir
         if True:
-            logger.info(' '.join(cmd))
+            print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def isurl(self, url):
@@ -108,16 +109,37 @@ class BasePlugin:
         else:
             tarball = os.path.abspath(source)
 
-        # If there's a single toplevel directory, ignore it
-        try:
-            topfiles = subprocess.check_output(['tar', '--list', '-f', tarball, '--exclude', '*/*']).strip()
-        except Exception:
-            return False
-        strip_cmd = []
-        if topfiles and len(topfiles.split(b'\n')) == 1 and chr(topfiles[-1]) == '/':
-            strip_cmd = ['--strip-components=1']
+        with tarfile.open(tarball) as tar:
+            def filter_members(tar):
+                """Filters members and member names:
+                    - strips common prefix
+                    - bans dangerous names"""
+                members = tar.getmembers()
+                common = os.path.commonprefix([m.name for m in members])
 
-        return self.run(['tar'] + strip_cmd + ['-xf', tarball], cwd=destdir)
+                # commonprefix() works a character at a time and will
+                # consider "d/ab" and "d/abc" to have common prefix "d/ab";
+                # check all members either start with common dir
+                for m in members:
+                    if not (m.name.startswith(common + "/") or
+                            m.isdir() and m.name == common):
+                        # commonprefix() didn't return a dir name; go up one
+                        # level
+                        common = os.path.dirname(common)
+                        break
+
+                for m in members:
+                    if m.name == common:
+                        continue
+                    if m.name.startswith(common + "/"):
+                        m.name = m.name[len(common + "/"):]
+                    # strip leading "/", "./" or "../" as many times as needed
+                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    yield m
+
+            tar.extractall(members=filter_members(tar), path=destdir)
+
+        return True
 
     def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
         if source_type is None:
