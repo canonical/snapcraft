@@ -72,7 +72,10 @@ def wrap_exe(relexepath):
     except Exception:
         pass
 
-    script = "#!/bin/sh\n%s\nexec %s $*" % (common.assemble_env().replace(snapdir, "$SNAP_APP_PATH"), '"$SNAP_APP_PATH/%s"' % relexepath)
+    assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
+    script = ('#!/bin/sh\n' +
+              '{}\n'.format(assembled_env) +
+              'exec "$SNAP_APP_PATH/{}" $*'.format(relexepath))
     with open(wrappath, 'w+') as f:
         f.write(script)
 

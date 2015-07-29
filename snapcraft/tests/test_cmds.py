@@ -21,11 +21,14 @@ from unittest import mock
 
 import fixtures
 
-from snapcraft import cmds
-from snapcraft.tests import TestCase
+from snapcraft import (
+    cmds,
+    common,
+    tests
+)
 
 
-class TestCommands(TestCase):
+class TestCommands(tests.TestCase):
 
     def test_check_for_collisions(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -68,7 +71,7 @@ class TestCommands(TestCase):
             fake_logger.output)
 
 
-class InitTestCase(TestCase):
+class InitTestCase(tests.TestCase):
 
     def test_init_with_existing_snapcraft_yaml_must_fail(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -94,3 +97,21 @@ class InitTestCase(TestCase):
         self.assertEqual(
             'Wrote the following as snapcraft.yaml.\n',
             fake_logger.output)
+
+
+class WrapExeTestCase(tests.TestCase):
+
+    def test_wrap_exe_must_write_wrapper(self):
+        snapdir = common.get_snapdir()
+        os.mkdir(snapdir)
+        relative_exe_path = 'test_relexepath'
+        relative_wrapper_path = cmds.wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+
+        expected = ('#!/bin/sh\n'
+                    '\n'
+                    'exec "$SNAP_APP_PATH/test_relexepath" $*')
+        with open(wrapper_path, 'r') as wrapper_file:
+            wrapper_contents = wrapper_file.read()
+
+        self.assertEqual(expected, wrapper_contents)
