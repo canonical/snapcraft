@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import re
 import tarfile
 import urllib.parse
 
 import snapcraft.common
+
+
+logger = logging.getLogger(__name__)
 
 
 class BasePlugin:
@@ -73,7 +77,8 @@ class BasePlugin:
 
     def pull_git(self, source, source_tag=None, source_branch=None):
         if source_tag and source_branch:
-            snapcraft.common.fatal("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
+            logger.error("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
+            snapcraft.common.fatal()
 
         if os.path.exists(os.path.join(self.sourcedir, ".git")):
             refspec = 'HEAD'
@@ -143,11 +148,13 @@ class BasePlugin:
             elif source.startswith("git:"):
                 source_type = 'git'
             elif self.isurl(source):
-                snapcraft.common.fatal("Unrecognized source '%s' for part '%s'." % (source, self.name))
+                logger.error("Unrecognized source '%s' for part '%s'." % (source, self.name))
+                snapcraft.common.fatal()
 
         if source_type == 'bzr':
             if source_branch:
-                snapcraft.common.fatal("You can't specify source-branch for a bzr source (part '%s')." % self.name)
+                logger.error("You can't specify source-branch for a bzr source (part '%s')." % self.name)
+                snapcraft.common.fatal()
             if not self.pull_bzr(source, source_tag=source_tag):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
@@ -159,9 +166,11 @@ class BasePlugin:
                 return False
         elif source_type == 'tar':
             if source_branch:
-                snapcraft.common.fatal("You can't specify source-branch for a tar source (part '%s')." % self.name)
+                logger.error("You can't specify source-branch for a tar source (part '%s')." % self.name)
+                snapcraft.common.fatal()
             if source_tag:
-                snapcraft.common.fatal("You can't specify source-tag for a tar source (part '%s')." % self.name)
+                logger.error("You can't specify source-tag for a tar source (part '%s')." % self.name)
+                snapcraft.common.fatal()
             if not self.pull_tarball(source):
                 return False
             if not self.extract_tarball(source):

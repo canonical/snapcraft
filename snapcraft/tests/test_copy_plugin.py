@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os.path
-from unittest.mock import (
-    Mock,
-    patch,
-)
+from unittest.mock import Mock
+
+import fixtures
 
 from snapcraft.plugins.copy import CopyPlugin
 from snapcraft.tests import TestCase
@@ -43,12 +43,17 @@ class TestCopyPlugin(TestCase):
         }
         open("zzz", "w").close()
         c = CopyPlugin("copy", self.mock_options)
-        with patch("snapcraft.common.log") as mock_log:
-            res = c.build()
-            self.assertFalse(res)
-            mock_log.assert_called_with("WARNING: file 'src' missing")
+
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        res = c.build()
+        self.assertFalse(res)
+        self.assertEqual("WARNING: file 'src' missing\n", fake_logger.output)
 
     def test_copy_plugin_copies(self):
+        self.useFixture(fixtures.FakeLogger())
+
         self.mock_options.files = {
             "src": "dst",
         }
@@ -59,6 +64,8 @@ class TestCopyPlugin(TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dst")))
 
     def test_copy_plugin_creates_prefixes(self):
+        self.useFixture(fixtures.FakeLogger())
+
         self.mock_options.files = {
             "src": "dir/dst",
         }
