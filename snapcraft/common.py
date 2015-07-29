@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 
+
 COMMAND_ORDER = ["pull", "build", "stage", "snap"]
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
