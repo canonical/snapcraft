@@ -81,6 +81,7 @@ def wrap_exe(relexepath):
                       '{}\n'.format(snapcraft.common.assemble_env()) +
                       'which "{}"'.format(relexepath))
             tempf.write(script)
+            tempf.flush()
             if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
                 wrapexec = relexepath
             else:

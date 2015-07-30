@@ -110,7 +110,7 @@ class WrapExeTestCase(tests.TestCase):
 
         expected = ('#!/bin/sh\n'
                     '\n'
-                    'exec "test_relexepath" $*')
+                    'exec "$SNAP_APP_PATH/test_relexepath" $*')
         with open(wrapper_path, 'r') as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
