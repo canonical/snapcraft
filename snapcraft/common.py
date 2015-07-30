@@ -65,7 +65,7 @@ def get_plugindir():
     return _plugindir
 
 def get_arch():
-    return run(['dpkg-architecture', '-qDEB_HOST_ARCH_CPU'])
+    return subprocess.Popen(['dpkg-architecture', '-qDEB_HOST_ARCH_CPU'], stdout=subprocess.PIPE).communicate()[0].decode("utf-8").strip()
 
 def get_arch_triplet():
-    return run(['dpkg-architecture', '-qDEB_HOST_MULTIARCH'])
+    return subprocess.Popen(['dpkg-architecture', '-qDEB_HOST_MULTIARCH'], stdout=subprocess.PIPE).communicate()[0].decode("utf-8").strip()
