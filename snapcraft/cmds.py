@@ -76,11 +76,11 @@ def wrap_exe(relexepath):
     if not os.path.exists(exepath) and '/' not in relexepath:
         # If it doesn't exist it might be in the path
         logger.info('Checking to see if "{}" is in the $PATH'.format(relexepath))
-        with tempfile.NamedTemporaryFile() as tempf:
+        with tempfile.NamedTemporaryFile('w+') as tempf:
             script = ('#!/bin/sh\n' +
                       '{}\n'.format(snapcraft.common.assemble_env()) +
                       'which "{}"'.format(relexepath))
-            tempf.write(bytes(script, 'UTF-8'))
+            tempf.write(script)
             if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
                 wrapexec = relexepath
             else:
