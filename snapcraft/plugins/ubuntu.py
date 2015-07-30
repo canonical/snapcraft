@@ -34,10 +34,9 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         self.downloadable_packages = []
         self.included_packages = []
         if options.package:
-            if type(options.package) is list:
-                self.included_packages.extend(options.package)
-            else:
-                self.included_packages.append(options.package)
+            self.included_packages.append(options.package)
+        elif options.packages:
+            self.included_packages.extend(options.packages)
         else:
             # User didn't specify a package, use the part name
             if name == 'ubuntu':

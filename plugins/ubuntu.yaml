@@ -2,5 +2,7 @@ build-tools: [devscripts]
 options:
   package:
     required: false
+  packages:
+    required: false
   recommends:
     required: false

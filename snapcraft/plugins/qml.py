@@ -23,11 +23,11 @@ from snapcraft.plugins.ubuntu import UbuntuPlugin
 class QmlPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
-        options.package = None
         super().__init__(name, options)
 
         class QmlPackageOptions:
-            package = [
+            package = None
+            packages = [
                 "qmlscene",
                 "qtdeclarative5-qtmir-plugin",
                 "mir-graphics-drivers-desktop",
