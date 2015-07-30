@@ -14,10 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
-import snapcraft.common
-import subprocess
+import re
+import tarfile
 import urllib.parse
+
+import snapcraft.common
+
+
+logger = logging.getLogger(__name__)
 
 
 class BasePlugin:
@@ -71,7 +77,8 @@ class BasePlugin:
 
     def pull_git(self, source, source_tag=None, source_branch=None):
         if source_tag and source_branch:
-            snapcraft.common.fatal("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
+            logger.error("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
+            snapcraft.common.fatal()
 
         if os.path.exists(os.path.join(self.sourcedir, ".git")):
             refspec = 'HEAD'
@@ -102,16 +109,37 @@ class BasePlugin:
         else:
             tarball = os.path.abspath(source)
 
-        # If there's a single toplevel directory, ignore it
-        try:
-            topfiles = subprocess.check_output(['tar', '--list', '-f', tarball, '--exclude', '*/*']).strip()
-        except Exception:
-            return False
-        strip_cmd = []
-        if topfiles and len(topfiles.split(b'\n')) == 1 and chr(topfiles[-1]) == '/':
-            strip_cmd = ['--strip-components=1']
+        with tarfile.open(tarball) as tar:
+            def filter_members(tar):
+                """Filters members and member names:
+                    - strips common prefix
+                    - bans dangerous names"""
+                members = tar.getmembers()
+                common = os.path.commonprefix([m.name for m in members])
 
-        return self.run(['tar'] + strip_cmd + ['-xf', tarball], cwd=destdir)
+                # commonprefix() works a character at a time and will
+                # consider "d/ab" and "d/abc" to have common prefix "d/ab";
+                # check all members either start with common dir
+                for m in members:
+                    if not (m.name.startswith(common + "/") or
+                            m.isdir() and m.name == common):
+                        # commonprefix() didn't return a dir name; go up one
+                        # level
+                        common = os.path.dirname(common)
+                        break
+
+                for m in members:
+                    if m.name == common:
+                        continue
+                    if m.name.startswith(common + "/"):
+                        m.name = m.name[len(common + "/"):]
+                    # strip leading "/", "./" or "../" as many times as needed
+                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    yield m
+
+            tar.extractall(members=filter_members(tar), path=destdir)
+
+        return True
 
     def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
         if source_type is None:
@@ -120,11 +148,13 @@ class BasePlugin:
             elif source.startswith("git:"):
                 source_type = 'git'
             elif self.isurl(source):
-                snapcraft.common.fatal("Unrecognized source '%s' for part '%s'." % (source, self.name))
+                logger.error("Unrecognized source '%s' for part '%s'." % (source, self.name))
+                snapcraft.common.fatal()
 
         if source_type == 'bzr':
             if source_branch:
-                snapcraft.common.fatal("You can't specify source-branch for a bzr source (part '%s')." % self.name)
+                logger.error("You can't specify source-branch for a bzr source (part '%s')." % self.name)
+                snapcraft.common.fatal()
             if not self.pull_bzr(source, source_tag=source_tag):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
@@ -136,9 +166,11 @@ class BasePlugin:
                 return False
         elif source_type == 'tar':
             if source_branch:
-                snapcraft.common.fatal("You can't specify source-branch for a tar source (part '%s')." % self.name)
+                logger.error("You can't specify source-branch for a tar source (part '%s')." % self.name)
+                snapcraft.common.fatal()
             if source_tag:
-                snapcraft.common.fatal("You can't specify source-tag for a tar source (part '%s')." % self.name)
+                logger.error("You can't specify source-tag for a tar source (part '%s')." % self.name)
+                snapcraft.common.fatal()
             if not self.pull_tarball(source):
                 return False
             if not self.extract_tarball(source):

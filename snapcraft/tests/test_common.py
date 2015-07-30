@@ -14,28 +14,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
 
-import snapcraft
+from snapcraft import (
+    common,
+    tests
+)
 
 
-logger = logging.getLogger(__name__)
+class CommonTestCase(tests.TestCase):
 
+    def test_get_stagedir(self):
+        self.assertEqual(
+            os.path.join(self.path, 'stage'), common.get_stagedir())
 
-class CopyPlugin(snapcraft.BasePlugin):
+    def test_get_snapdir(self):
+        self.assertEqual(
+            os.path.join(self.path, 'snap'), common.get_snapdir())
 
-    def build(self):
-        res = True
-        for src in sorted(self.options.files):
-            dst = self.options.files[src]
-            if not os.path.lexists(src):
-                logger.warning("WARNING: file '%s' missing" % src)
-                res = False
-                continue
-            dst = os.path.join(self.installdir, dst)
-            dst_dir = os.path.dirname(dst)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir)
-            res &= self.run(["cp", "--preserve=all", "-R", src, dst], cwd=os.getcwd())
-        return res
+    def test_get_default_plugindir(self):
+        self.assertEqual(
+            '/usr/share/snapcraft/plugins', common.get_plugindir())
+
+    def test_set_plugindir(self):
+        plugindir = os.path.join(self.path, 'testplugin')
+        common.set_plugindir(plugindir)
+        self.assertEqual(plugindir, common.get_plugindir())

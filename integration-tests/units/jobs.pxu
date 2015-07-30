@@ -3,7 +3,7 @@ plugin: shell
 estimated_duration: 0.1
 command:
     set -x
-    OUTPUT=$(${SNAPCRAFT} pull)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 
@@ -13,7 +13,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    OUTPUT=$(${SNAPCRAFT} assemble)
+    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Missing snappy metadata file"
 
@@ -82,6 +82,12 @@ command:
     test -e stage/onedeep
     test -e stage/onedeepdir/onedeep2
     test -e stage/oneflat
+    test -e stage/dir-simple
+    test -e stage/top-simple
+    test -e stage/notop
+    test -e stage/notopdir
+    test -e stage/parent
+    test -e stage/slash
     test "$(./stage/bin/test)" = "tarproject"
 
 id: snapcraft/normal/simple-make
@@ -117,7 +123,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
-    OUTPUT=$(${SNAPCRAFT} stage)
+    OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
 
@@ -140,7 +146,7 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i "s/p1:/p1:\n    after: [p3]/" snapcraft.yaml
-    OUTPUT=$(${SNAPCRAFT} pull)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep -i "circular dependency"
 
@@ -161,6 +167,7 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
     bzr init .
+    bzr whoami --branch "Example Dev <dev@example.com>"
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     ${SNAPCRAFT} pull # test initial branch
@@ -175,6 +182,7 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
     bzr init .
+    bzr whoami --branch "Example Dev <dev@example.com>"
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     bzr tag -r 1 initial
@@ -190,6 +198,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     ${SNAPCRAFT} pull
@@ -204,6 +214,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git tag initial HEAD@{1}
@@ -219,6 +231,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git branch second HEAD@{1}

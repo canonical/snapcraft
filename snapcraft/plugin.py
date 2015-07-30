@@ -16,11 +16,17 @@
 
 import glob
 import importlib
+import logging
 import os
-import snapcraft
-import snapcraft.common
 import sys
+
 import yaml
+
+import snapcraft
+from snapcraft import common
+
+
+logger = logging.getLogger(__name__)
 
 
 def is_local_plugin(name):
@@ -31,7 +37,7 @@ def plugindir(name):
     if is_local_plugin(name):
         return os.path.abspath(os.path.join('parts', 'plugins'))
     else:
-        return snapcraft.common.plugindir
+        return common.get_plugindir()
 
 
 class PluginError(Exception):
@@ -63,14 +69,14 @@ class PluginHandler:
             # only set to valid if it loads without PluginError
             self.part_names.append(part_name)
             self.valid = True
-        except PluginError:
+        except PluginError as e:
+            logger.error(str(e))
             return
 
     def _load_config(self, name):
         configPath = os.path.join(plugindir(name), name + ".yaml")
         if not os.path.exists(configPath):
-            snapcraft.common.log("Unknown plugin %s" % name, file=sys.stderr)
-            raise PluginError()
+            raise PluginError('Unknown plugin: {}'.format(name))
         with open(configPath, 'r') as fp:
             self.config = yaml.load(fp) or {}
 
@@ -86,8 +92,7 @@ class PluginHandler:
                 setattr(options, attrname, properties[opt])
             else:
                 if opt_parameters.get('required', False):
-                    snapcraft.common.log("Required field %s missing on part %s" % (opt, name), file=sys.stderr)
-                    raise PluginError()
+                    raise PluginError('Required field {} missing on part {}'.format(opt, name))
                 setattr(options, attrname, None)
 
         return options
@@ -147,13 +152,13 @@ class PluginHandler:
         return self.part_names
 
     def notify_stage(self, stage, hint=''):
-        snapcraft.common.log(stage + " " + self.part_names[0] + hint)
+        logger.info(stage + " " + self.part_names[0] + hint)
 
     def is_dirty(self, stage):
         try:
             with open(self.statefile, 'r') as f:
                 lastStep = f.read()
-                return snapcraft.common.commandOrder.index(stage) > snapcraft.common.commandOrder.index(lastStep)
+                return common.COMMAND_ORDER.index(stage) > common.COMMAND_ORDER.index(lastStep)
         except Exception:
             return True
 
@@ -197,7 +202,7 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
-        snapcraft.common.run(['cp', '-arT', self.installdir, self.stagedir])
+        common.run(['cp', '-arT', self.installdir, self.stagedir])
         self.mark_done('stage')
         return True
 
@@ -213,9 +218,9 @@ class PluginHandler:
             snapDirs, snap_files = self.collect_snap_files(includes, excludes)
 
             if snapDirs:
-                snapcraft.common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
+                common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
             if snap_files:
-                snapcraft.common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
+                common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
 
             self.mark_done('snap')
         return True
@@ -224,7 +229,7 @@ class PluginHandler:
         # validate
         for d in includes + excludes:
             if os.path.isabs(d):
-                raise PluginError("path '%s' must be relative" % d)
+                raise PluginError("path '{}' must be relative".format(d))
 
         sourceFiles = set()
         for root, dirs, files in os.walk(self.installdir):
@@ -274,6 +279,6 @@ class PluginHandler:
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
-        snapcraft.common.log("Could not load part %s" % plugin_name, file=sys.stderr)
+        logger.error('Could not load part {}'.format(plugin_name))
         sys.exit(1)
     return part
