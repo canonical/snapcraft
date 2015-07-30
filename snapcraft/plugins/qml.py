@@ -83,8 +83,8 @@ class QmlPlugin(snapcraft.BasePlugin):
         except FileExistsError:
             pass
         config = open(os.path.join(configdir, 'snappy-qt5.conf'), 'w')
-        config.write("./usr/lib/%s/qt5/bin\n" % arch)
-        config.write("./usr/lib/%s\n" % arch)
+        config.write('./usr/lib/{}/qt5/bin\n'.format(arch))
+        config.write('./usr/lib/{}\n'.format(arch))
         config.close
         return True
 
