@@ -144,6 +144,9 @@ def snap(args):
             stopwrap = wrap_exe(stopparts[0])
             binary['stop'] = replace_cmd(stopparts, stopwrap)
 
+    if not package.get('architecture', None):
+        package['architecture'] = common.get_arch()
+
     with open("snap/meta/package.yaml", 'w') as f:
         yaml.dump(package, f, default_flow_style=False)
 

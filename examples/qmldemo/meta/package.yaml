@@ -1,7 +1,6 @@
 name: qmldemo
 version: 1
 vendor: Ted Gould <ted@canonical.com>
-architecture: amd64
 frameworks: [mir]
 binaries:
   - name: qmldemo
