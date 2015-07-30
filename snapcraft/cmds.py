@@ -83,7 +83,7 @@ def wrap_exe(relexepath):
             if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
                 wrapexec = relexepath
             else:
-                snapcraft.common.log('Warning: unable to find "{}" in the path'.format(relexepath))
+                logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
 
     assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
     script = ('#!/bin/sh\n' +
