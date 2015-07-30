@@ -15,21 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import glob
+import logging
 import os
 import shlex
-import snapcraft.common
-import snapcraft.plugin
-import snapcraft.yaml
 import subprocess
 import sys
 import tempfile
 import time
+
 import yaml
+
+import snapcraft.plugin
+import snapcraft.yaml
+from snapcraft import common
+
+
+logger = logging.getLogger(__name__)
 
 
 def init(args):
     if os.path.exists("snapcraft.yaml"):
-        snapcraft.common.log("snapcraft.yaml already exists!", file=sys.stderr)
+        logger.error('snapcraft.yaml already exists!')
         sys.exit(1)
     yaml = 'parts:\n'
     for part_name in args.part:
@@ -41,7 +47,7 @@ def init(args):
     yaml = yaml.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
-    snapcraft.common.log("Wrote the following as snapcraft.yaml.")
+    logger.info('Wrote the following as snapcraft.yaml.')
     print()
     print(yaml)
     sys.exit(0)
@@ -49,15 +55,16 @@ def init(args):
 
 def shell(args):
     config = snapcraft.yaml.Config()
-    snapcraft.common.env = config.stage_env()
+    common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
         userCommand = ['/usr/bin/env', 'PS1=\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ', '/bin/bash', '--norc']
-    snapcraft.common.run(userCommand)
+    common.run(userCommand)
 
 
 def wrap_exe(relexepath):
-    exepath = os.path.join(snapcraft.common.snapdir, relexepath)
+    snapdir = common.get_snapdir()
+    exepath = os.path.join(snapdir, relexepath)
     wrappath = exepath + '.wrapper'
 
     try:
@@ -76,13 +83,17 @@ def wrap_exe(relexepath):
             else:
                 snapcraft.common.log("Warning: unable to find %s in the path" % (relexepath))
 
-    script = "#!/bin/sh\n%s\nexec %s $*" % (snapcraft.common.assemble_env().replace(snapcraft.common.snapdir, "$SNAP_APP_PATH"), wrapexec)
+    assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
+    script = ('#!/bin/sh\n' +
+              '{}\n'.format(assembled_env) +
+              'exec "$SNAP_APP_PATH/{}" $*'.format(relexepath))
+
     with open(wrappath, 'w+') as f:
         f.write(script)
 
     os.chmod(wrappath, 0o755)
 
-    return os.path.relpath(wrappath, snapcraft.common.snapdir)
+    return os.path.relpath(wrappath, snapdir)
 
 
 def snap(args):
@@ -92,17 +103,17 @@ def snap(args):
     config = snapcraft.yaml.Config()
 
     if 'snappy-metadata' in config.data:
-        snapcraft.common.run(
-            ['cp', '-arvT', config.data['snappy-metadata'], snapcraft.common.snapdir + '/meta'])
+        common.run(
+            ['cp', '-arvT', config.data['snappy-metadata'], common.get_snapdir() + '/meta'])
     if not os.path.exists('snap/meta/package.yaml'):
-        snapcraft.common.log("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
+        logger.error("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
         sys.exit(1)
 
     # wrap all included commands
     with open("snap/meta/package.yaml", 'r') as f:
         package = yaml.load(f)
 
-    snapcraft.common.env = config.snap_env()
+    common.env = config.snap_env()
 
     def replace_cmd(execparts, cmd):
         newparts = [cmd] + execparts[1:]
@@ -136,7 +147,7 @@ def snap(args):
 def assemble(args):
     args.cmd = 'snap'
     snap(args)
-    snapcraft.common.run(['snappy', 'build', snapcraft.common.snapdir])
+    common.run(['snappy', 'build', common.get_snapdir()])
 
 
 def run(args):
@@ -147,7 +158,7 @@ def run(args):
                 os.makedirs(qemudir)
             except FileExistsError:
                 pass
-            snapcraft.common.run(
+            common.run(
                 ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
                 cwd=qemudir)
     qemu = subprocess.Popen(
@@ -197,7 +208,7 @@ def check_for_collisions(parts):
         for otherPartName in partsFiles:
             common = partFiles & partsFiles[otherPartName]
             if common:
-                snapcraft.common.log("Error: parts %s and %s have the following files in common:\n  %s" % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                logger.error('Error: parts %s and %s have the following files in common:\n  %s' % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
                 return False
 
         # And add our files to the list
@@ -212,9 +223,9 @@ def cmd(args):
 
     cmds = [args.cmd]
 
-    if cmds[0] in snapcraft.common.commandOrder:
+    if cmds[0] in common.COMMAND_ORDER:
         forceCommand = cmds[0]
-        cmds = snapcraft.common.commandOrder[0:snapcraft.common.commandOrder.index(cmds[0]) + 1]
+        cmds = common.COMMAND_ORDER[0:common.COMMAND_ORDER.index(cmds[0]) + 1]
 
     config = snapcraft.yaml.Config()
 
@@ -240,8 +251,8 @@ def cmd(args):
                 if not check_for_collisions(config.all_parts):
                     sys.exit(1)
 
-            snapcraft.common.env = config.build_env_for_part(part)
+            common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
-                snapcraft.common.log("Failed doing %s for %s!" % (cmd, part.names()[0]))
+                logger.error('Failed doing %s for %s!' % (cmd, part.names()[0]))
                 sys.exit(1)
