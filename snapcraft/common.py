@@ -63,3 +63,9 @@ def set_plugindir(plugindir):
 
 def get_plugindir():
     return _plugindir
+
+def get_arch():
+    return run(['dpkg-architecture', '-qDEB_HOST_ARCH_CPU'])
+
+def get_arch_triplet():
+    return run(['dpkg-architecture', '-qDEB_HOST_MULTIARCH'])

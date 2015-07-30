@@ -75,8 +75,7 @@ class QmlPlugin(snapcraft.BasePlugin):
         return (include, exclude)
 
     def build_qt_config(self):
-        # TODO figure this out
-        arch = 'x86_64-linux-gnu'
+        arch = snapcraft.common.get_arch_triplet()
         configdir = os.path.join(self.installdir, 'etc', 'xdg', 'qtchooser')
         try:
             os.makedirs(configdir)
@@ -92,8 +91,7 @@ class QmlPlugin(snapcraft.BasePlugin):
         return self.ubuntu.build() and self.build_qt_config()
 
     def env(self, root):
-        # TODO figure this out
-        arch = 'x86_64-linux-gnu'
+        arch = snapcraft.common.get_arch_triplet()
         envs = self.ubuntu.env(root)
         envs.extend([
             "LD_LIBRARY_PATH=%s/usr/lib/%s:$LD_LIBRARY_PATH" % (root, arch),
