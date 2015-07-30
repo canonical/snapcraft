@@ -79,7 +79,7 @@ def wrap_exe(relexepath):
         with tempfile.NamedTemporaryFile('w+') as tempf:
             script = ('#!/bin/sh\n' +
                       '{}\n'.format(snapcraft.common.assemble_env()) +
-                      'which "{}"'.format(relexepath))
+                      'which "{}"\n'.format(relexepath))
             tempf.write(script)
             tempf.flush()
             if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
@@ -90,7 +90,7 @@ def wrap_exe(relexepath):
     assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
     script = ('#!/bin/sh\n' +
               '{}\n'.format(assembled_env) +
-              'exec "{}" $*'.format(wrapexec))
+              'exec "{}" $*\n'.format(wrapexec))
 
     with open(wrappath, 'w+') as f:
         f.write(script)
