@@ -43,6 +43,7 @@ class GoPlugin(snapcraft.BasePlugin):
         # on older Ubuntus (like trusty), the installed executable is golang-go
         if os.path.exists(os.path.join(self.ubuntu.installdir, 'usr', 'bin', 'golang-go')):
             os.symlink('golang-go', os.path.join(self.ubuntu.installdir, 'usr', 'bin', 'go'))
+        return True
 
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
