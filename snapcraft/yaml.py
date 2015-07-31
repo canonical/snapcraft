@@ -119,7 +119,7 @@ class Config:
 
     def build_env(self, root):
         env = []
-        env.append('CFLAGS="-I{}/include $CFLAGS"'.format(root))
+        env.append('CFLAGS="-I{0}/include -I{0}/usr/include -I{0}/include/{1} -I{0}/usr/include/{1} $CFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
         env.append('LDFLAGS="-L{0}/lib -L{0}/usr/lib -L{0}/lib/{1} -L{0}/usr/lib/{1} $LDFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
         return env
 

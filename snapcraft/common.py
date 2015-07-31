@@ -53,14 +53,14 @@ def fatal(msg):
 def get_arch():
     global _arch
     if _arch is None:
-        _arch = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_ARCH']).strip().decode('utf8')
+        _arch = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_ARCH']).decode('utf8').strip()
     return _arch
 
 
 def get_arch_triplet():
     global _arch_triplet
     if _arch_triplet is None:
-        _arch_triplet = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']).strip().decode('utf8')
+        _arch_triplet = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']).decode('utf8').strip()
     return _arch_triplet
 
 
