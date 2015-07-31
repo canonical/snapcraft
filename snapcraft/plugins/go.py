@@ -47,7 +47,7 @@ class GoPlugin(snapcraft.BasePlugin):
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
         return self.ubuntu.env(root) + [
-            "PATH={}/go/usr/lib/go/bin:{}/go/usr/bin:$PATH".format(root),
+            "PATH={0}/go/usr/lib/go/bin:{0}/go/usr/bin:$PATH".format(root),
             "GOROOT={}/go/usr/lib/go".format(root),
         ]
 
