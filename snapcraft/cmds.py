@@ -72,10 +72,26 @@ def wrap_exe(relexepath):
     except Exception:
         pass
 
+    wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
+    if not os.path.exists(exepath) and '/' not in relexepath:
+        # If it doesn't exist it might be in the path
+        logger.info('Checking to see if "{}" is in the $PATH'.format(relexepath))
+        with tempfile.NamedTemporaryFile('w+') as tempf:
+            script = ('#!/bin/sh\n' +
+                      '{}\n'.format(snapcraft.common.assemble_env()) +
+                      'which "{}"'.format(relexepath))
+            tempf.write(script)
+            tempf.flush()
+            if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
+                wrapexec = relexepath
+            else:
+                logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
+
     assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
     script = ('#!/bin/sh\n' +
               '{}\n'.format(assembled_env) +
-              'exec "$SNAP_APP_PATH/{}" $*'.format(relexepath))
+              'exec "{}" $*'.format(wrapexec))
+
     with open(wrappath, 'w+') as f:
         f.write(script)
 
