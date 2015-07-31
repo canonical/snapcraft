@@ -1,6 +1,6 @@
-module: go14_project
+module: go_project
 requires:
-  - go1.4
+  - go
 options:
   source:
     required: true

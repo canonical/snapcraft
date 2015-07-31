@@ -15,35 +15,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+
 import snapcraft
-
-# FIXME: add support for i386
-URLS = {
-    'amd64': "https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz",
-}
+from snapcraft.plugins import ubuntu
 
 
-class Go14Plugin(snapcraft.BasePlugin):
+class GoPlugin(snapcraft.BasePlugin):
+
     def __init__(self, name, options):
         super().__init__(name, options)
-        # FIXME: horrible
-        self.arch = "amd64"
 
-    def env(self, root):
-        return [
-            "PATH=%s/usr/local/go/bin:$PATH" % root,
-            "GOROOT=%s/usr/local/go" % root,
-        ]
+        class UbuntuOptions:
+            package = 'golang-go'
+        self.ubuntu = ubuntu.UbuntuPlugin(name, UbuntuOptions())
+
+        # Prefix our files so they don't conflict with anything else,
+        # especially since we aren't even installing them into the snap.
+        # TODO: This can go away if/when we have proper dependency flattening.
+        self.ubuntu.installdir = os.path.join(self.installdir, 'go')
 
     def pull(self):
-        return self.run(['wget', '-c', URLS[self.arch]])
+        return self.ubuntu.pull()
 
     def build(self):
-        tar_file = os.path.join(
-            self.builddir, os.path.basename(URLS[self.arch]))
-        targetdir = os.path.join(self.installdir, 'usr', 'local')
-        self.makedirs(targetdir)
-        return self.run(['tar', 'xf', tar_file], cwd=targetdir)
+        return self.ubuntu.build()
+
+    def env(self, root):
+        return self.ubuntu.env(root) + [
+            "PATH=%s/go/usr/lib/go/bin:$PATH" % root,
+            "GOROOT=%s/go/usr/lib/go" % root,
+        ]
 
     def snap_files(self):
-        return ([], [])
+        return ([], [])  # Go statically links everything, no need for runtime

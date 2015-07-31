@@ -18,7 +18,7 @@ import os
 import snapcraft
 
 
-class Go14ProjectPlugin(snapcraft.BasePlugin):
+class GoProjectPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
         if self.options.source.startswith("lp:"):
