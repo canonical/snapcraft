@@ -38,12 +38,17 @@ class GoPlugin(snapcraft.BasePlugin):
         return self.ubuntu.pull()
 
     def build(self):
-        return self.ubuntu.build()
+        if not self.ubuntu.build():
+            return False
+        # on older Ubuntus (like trusty), the installed executable is golang-go
+        if os.path.exists(os.path.join(self.ubuntu.installdir, 'usr', 'bin', 'golang-go')):
+            os.symlink('golang-go', os.path.join(self.ubuntu.installdir, 'usr', 'bin', 'go'))
 
     def env(self, root):
+        # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
         return self.ubuntu.env(root) + [
-            "PATH=%s/go/usr/lib/go/bin:$PATH" % root,
-            "GOROOT=%s/go/usr/lib/go" % root,
+            "PATH={}/go/usr/lib/go/bin:{}/go/usr/bin:$PATH".format(root),
+            "GOROOT={}/go/usr/lib/go".format(root),
         ]
 
     def snap_files(self):
