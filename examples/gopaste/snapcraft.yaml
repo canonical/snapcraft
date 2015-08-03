@@ -2,5 +2,4 @@ parts:
   gopaste:
     plugin: go1.4-project
     source: git://github.com/wisnij/gopaste/gopasted
-snap:
-  meta: meta
+snappy-metadata: meta

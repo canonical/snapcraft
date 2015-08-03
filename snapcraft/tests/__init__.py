@@ -14,12 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
+import fixtures
 
-import snapcraft.dirs
+from snapcraft import common
+from snapcraft.tests import fixture_setup
 
 
-class TestCase(unittest.TestCase):
+class TestCase(fixtures.TestWithFixtures):
+
     def setUp(self):
         super().setUp()
-        snapcraft.dirs.setup_dirs()
+        temp_cwd_fixture = fixture_setup.TempCWD()
+        self.useFixture(temp_cwd_fixture)
+        self.path = temp_cwd_fixture.path
+        # Some tests will directly or indirectly change the plugindir, which
+        # is a module variable. Make sure that it is returned to the original
+        # value when a test ends.
+        self.addCleanup(common.set_plugindir, common.get_plugindir())

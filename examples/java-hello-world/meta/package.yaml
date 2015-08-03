@@ -1,0 +1,6 @@
+name: java-hello-world
+version: 0
+vendor: mterry@ubuntu.com
+binaries:
+ - name: hello
+   exec: bin/wrapper

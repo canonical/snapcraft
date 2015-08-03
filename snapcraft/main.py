@@ -19,9 +19,11 @@ import argparse
 import sys
 
 import snapcraft.cmds
+from snapcraft import log
 
 
 def main():
+    log.configure()
     root_parser = argparse.ArgumentParser()
     subparsers = root_parser.add_subparsers(dest='cmd')
 
@@ -56,7 +58,7 @@ def main():
     parser.set_defaults(func=snapcraft.cmds.cmd)
 
     parser = subparsers.add_parser('snap', help='put parts into snap area', parents=[cmd_parser])
-    parser.set_defaults(func=snapcraft.cmds.cmd)
+    parser.set_defaults(func=snapcraft.cmds.snap)
 
     parser = subparsers.add_parser('assemble', help='make snap package', parents=[force_parser], aliases=['all'])
     parser.set_defaults(func=snapcraft.cmds.assemble)

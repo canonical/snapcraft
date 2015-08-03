@@ -18,7 +18,13 @@
 
 import os
 import subprocess
+import sys
 import tempfile
+
+
+COMMAND_ORDER = ["pull", "build", "stage", "snap"]
+_DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
+_plugindir = _DEFAULT_PLUGINDIR
 
 env = []
 
@@ -38,11 +44,22 @@ def run(cmd, **kwargs):
         return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
 
 
-def log(msg, file=None):
-    print('\033[01m' + msg + '\033[0m', file=None)
+def fatal(msg):
+    sys.exit(1)
 
-commandOrder = ["pull", "build", "stage", "snap"]
-stagedir = os.path.join(os.getcwd(), "stage")
-snapdir = os.path.join(os.getcwd(), "snap")
 
-plugindir = '/usr/share/snapcraft/plugins'
+def get_stagedir():
+    return os.path.join(os.getcwd(), 'stage')
+
+
+def get_snapdir():
+    return os.path.join(os.getcwd(), 'snap')
+
+
+def set_plugindir(plugindir):
+    global _plugindir
+    _plugindir = plugindir
+
+
+def get_plugindir():
+    return _plugindir

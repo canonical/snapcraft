@@ -14,16 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft.common
-import snapcraft.plugin
+import logging
 import sys
+
 import yaml
+
+import snapcraft.plugin
+from snapcraft import common
+
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
 
     def __init__(self):
-        self.systemPackages = []
+        self.build_tools = []
         self.all_parts = []
         afterRequests = {}
 
@@ -31,9 +37,9 @@ class Config:
             with open("snapcraft.yaml", 'r') as fp:
                 self.data = yaml.load(fp)
         except FileNotFoundError:
-            snapcraft.common.log("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
+            logger.error("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
-        self.systemPackages = self.data.get('systemPackages', [])
+        self.build_tools = self.data.get('build-tools', [])
 
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
@@ -49,13 +55,6 @@ class Config:
             # TODO: support 'filter' or 'blacklist' field to filter what gets put in snap/
 
             self.load_plugin(part_name, plugin_name, properties)
-
-        localPlugins = set()
-        for part in self.all_parts:
-            if part.is_local_plugin:
-                localPlugins.add(part.plugin_name)
-        for localPlugin in localPlugins:
-            snapcraft.common.log("Using local plugin %s" % localPlugin)
 
         # Grab all required dependencies, if not already specified
         newParts = self.all_parts.copy()
@@ -82,7 +81,7 @@ class Config:
                         foundIt = True
                         break
                 if not foundIt:
-                    snapcraft.common.log("Could not find part name %s" % dep)
+                    logger.error("Could not find part name %s" % dep)
                     sys.exit(1)
 
         # Now sort them (this is super inefficient, but easy-ish to follow)
@@ -99,7 +98,7 @@ class Config:
                     topPart = part
                     break
             if not topPart:
-                snapcraft.common.log("Circular dependency chain!")
+                logger.error("Circular dependency chain!")
                 sys.exit(1)
             sortedParts = [topPart] + sortedParts
             self.all_parts.remove(topPart)
@@ -108,7 +107,7 @@ class Config:
     def load_plugin(self, part_name, plugin_name, properties, load_code=True):
         part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties, load_code=load_code)
 
-        self.systemPackages += part.config.get('systemPackages', [])
+        self.build_tools += part.config.get('build-tools', [])
         self.all_parts.append(part)
         return part
 
@@ -139,7 +138,7 @@ class Config:
         return env
 
     def stage_env(self):
-        root = snapcraft.common.stagedir
+        root = common.get_stagedir()
         env = []
 
         env += self.runtime_env(root)
@@ -150,7 +149,7 @@ class Config:
         return env
 
     def snap_env(self):
-        root = snapcraft.common.snapdir
+        root = common.get_snapdir()
         env = []
 
         env += self.runtime_env(root)

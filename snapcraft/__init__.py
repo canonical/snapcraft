@@ -14,8 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
+import re
+import tarfile
+import urllib.parse
+
 import snapcraft.common
+
+
+logger = logging.getLogger(__name__)
 
 
 class BasePlugin:
@@ -54,48 +62,122 @@ class BasePlugin:
             print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
-    def pull_bzr(self, url):
+    def isurl(self, url):
+        return urllib.parse.urlparse(url).scheme != ""
+
+    def pull_bzr(self, source, source_tag=None):
+        tag_opts = []
+        if source_tag:
+            tag_opts = ['-r', 'tag:' + source_tag]
         if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-            return self.run(['bzr', 'pull', url], cwd=self.sourcedir)
+            return self.run(['bzr', 'pull'] + tag_opts + [source, '-d', self.sourcedir], cwd=os.getcwd())
         else:
             os.rmdir(self.sourcedir)
-            return self.run(['bzr', 'branch', url, self.sourcedir])
+            return self.run(['bzr', 'branch'] + tag_opts + [source, self.sourcedir], cwd=os.getcwd())
 
-    def pull_git(self, url):
+    def pull_git(self, source, source_tag=None, source_branch=None):
+        if source_tag and source_branch:
+            logger.error("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
+            snapcraft.common.fatal()
+
         if os.path.exists(os.path.join(self.sourcedir, ".git")):
-            return self.run(['git', 'pull'], cwd=self.sourcedir)
+            refspec = 'HEAD'
+            if source_branch:
+                refspec = 'refs/heads/' + source_branch
+            elif source_tag:
+                refspec = 'refs/tags/' + source_tag
+            return self.run(['git', '-C', self.sourcedir, 'pull', source, refspec], cwd=os.getcwd())
         else:
-            return self.run(['git', 'clone', url, '.'], cwd=self.sourcedir)
+            branch_opts = []
+            if source_tag or source_branch:
+                branch_opts = ['--branch', source_tag or source_branch]
+            return self.run(['git', 'clone'] + branch_opts + [source, self.sourcedir], cwd=os.getcwd())
 
-    def pull_branch(self, url):
-        branchType = None
-        if url.startswith("bzr:") or url.startswith("lp:"):
-            branchType = 'bzr'
-        elif url.startswith("git:"):
-            branchType = 'git'
-        elif ':' in url:
-            raise Exception("Did not recognize branch url: " + url)
-        # Local branch
-        elif os.path.isdir(os.path.join(url, '.bzr')):
-            branchType = 'bzr'
-            url = os.path.abspath(url)
-        elif os.path.isdir(os.path.join(url, '.git')):
-            branchType = 'git'
-            url = os.path.abspath(url)
+    def pull_tarball(self, source, destdir=None):
+        destdir = destdir or self.sourcedir
+        if self.isurl(source):
+            return self.run(['wget', '-c', source], cwd=destdir)
+        else:
+            return True
 
-        if branchType == 'bzr':
-            if not self.pull_bzr(url):
+    def extract_tarball(self, source, srcdir=None, destdir=None):
+        srcdir = srcdir or self.sourcedir
+        destdir = destdir or self.builddir
+
+        if self.isurl(source):
+            tarball = os.path.join(srcdir, os.path.basename(source))
+        else:
+            tarball = os.path.abspath(source)
+
+        with tarfile.open(tarball) as tar:
+            def filter_members(tar):
+                """Filters members and member names:
+                    - strips common prefix
+                    - bans dangerous names"""
+                members = tar.getmembers()
+                common = os.path.commonprefix([m.name for m in members])
+
+                # commonprefix() works a character at a time and will
+                # consider "d/ab" and "d/abc" to have common prefix "d/ab";
+                # check all members either start with common dir
+                for m in members:
+                    if not (m.name.startswith(common + "/") or
+                            m.isdir() and m.name == common):
+                        # commonprefix() didn't return a dir name; go up one
+                        # level
+                        common = os.path.dirname(common)
+                        break
+
+                for m in members:
+                    if m.name == common:
+                        continue
+                    if m.name.startswith(common + "/"):
+                        m.name = m.name[len(common + "/"):]
+                    # strip leading "/", "./" or "../" as many times as needed
+                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    yield m
+
+            tar.extractall(members=filter_members(tar), path=destdir)
+
+        return True
+
+    def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
+        if source_type is None:
+            if source.startswith("bzr:") or source.startswith("lp:"):
+                source_type = 'bzr'
+            elif source.startswith("git:"):
+                source_type = 'git'
+            elif self.isurl(source):
+                logger.error("Unrecognized source '%s' for part '%s'." % (source, self.name))
+                snapcraft.common.fatal()
+
+        if source_type == 'bzr':
+            if source_branch:
+                logger.error("You can't specify source-branch for a bzr source (part '%s')." % self.name)
+                snapcraft.common.fatal()
+            if not self.pull_bzr(source, source_tag=source_tag):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
-        elif branchType == "git":
-            if not self.pull_git(url):
+        elif source_type == 'git':
+            if not self.pull_git(source, source_tag=source_tag, source_branch=source_branch):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False
+        elif source_type == 'tar':
+            if source_branch:
+                logger.error("You can't specify source-branch for a tar source (part '%s')." % self.name)
+                snapcraft.common.fatal()
+            if source_tag:
+                logger.error("You can't specify source-tag for a tar source (part '%s')." % self.name)
+                snapcraft.common.fatal()
+            if not self.pull_tarball(source):
+                return False
+            if not self.extract_tarball(source):
+                return False
         else:
-            # local branch
-            path = os.path.abspath(url)
+            # local source dir
+            path = os.path.abspath(source)
             if os.path.isdir(self.builddir):
                 os.rmdir(self.builddir)
             else:
@@ -103,6 +185,15 @@ class BasePlugin:
             os.symlink(path, self.builddir)
 
         return True
+
+    def handle_source_options(self):
+        stype = getattr(self.options, 'source_type', None)
+        stag = getattr(self.options, 'source_tag', None)
+        sbranch = getattr(self.options, 'source_branch', None)
+        return self.get_source(self.options.source,
+                               source_type=stype,
+                               source_tag=stag,
+                               source_branch=sbranch)
 
     def makedirs(self, d):
         try:

@@ -15,14 +15,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import snapcraft
+
+from snapcraft import (
+    common,
+    tests
+)
 
 
-class TgzContentPlugin(snapcraft.BasePlugin):
+class CommonTestCase(tests.TestCase):
 
-    def pull(self):
-        return self.run(["wget", "-c", self.options.source], cwd=self.builddir)
+    def test_get_stagedir(self):
+        self.assertEqual(
+            os.path.join(self.path, 'stage'), common.get_stagedir())
 
-    def build(self):
-        tar_file = os.path.join(self.builddir, os.path.basename(self.options.source))
-        return self.run(["tar", "xf", tar_file], cwd=self.installdir)
+    def test_get_snapdir(self):
+        self.assertEqual(
+            os.path.join(self.path, 'snap'), common.get_snapdir())
+
+    def test_get_default_plugindir(self):
+        self.assertEqual(
+            '/usr/share/snapcraft/plugins', common.get_plugindir())
+
+    def test_set_plugindir(self):
+        plugindir = os.path.join(self.path, 'testplugin')
+        common.set_plugindir(plugindir)
+        self.assertEqual(plugindir, common.get_plugindir())
