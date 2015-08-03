@@ -23,9 +23,9 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     # see python2.py for more details
 
     def pull(self):
-        return self.pull_branch(self.options.source)
+        return self.handle_source_options()
 
     def build(self):
         return self.run(
             ["python2", "setup.py", "install", "--install-layout=deb",
-             "--prefix=%s/usr" % self.installdir])
+             "--prefix={}/usr".format(self.installdir)])
