@@ -130,7 +130,7 @@ def snap(args):
 
     # Set architecture if none provided
     if 'architecture' not in package and 'architectures' not in package:
-        package['architectures'] = [snapcraft.common.get_arch()]
+        package['architecture'] = snapcraft.common.get_arch()
 
     with open("snap/meta/package.yaml", 'w') as f:
         yaml.dump(package, f, default_flow_style=False)

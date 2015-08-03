@@ -1,5 +1,4 @@
-architectures:
-- @ARCH@
+architecture: @ARCH@
 binaries:
 - exec: binary1.wrapper
   name: assemble-bin
