@@ -16,6 +16,7 @@ Build-Depends: bzr,
                python3-fixtures,
                python3-setuptools,
                python3-yaml,
+               ubuntu-snappy-cli,
                xz-utils,
 Homepage: https://launchpad.net/snapcraft
 Standards-Version: 3.9.6
