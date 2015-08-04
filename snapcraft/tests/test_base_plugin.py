@@ -84,3 +84,17 @@ class TestBasePlugin(TestCase):
 
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake tarball file', tar_file.read())
+
+    def test_get_source_with_unrecognized_source_must_raise_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        with self.assertRaises(SystemExit) as raised:
+            plugin.get_source('unrecognized://test_source')
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        expected = (
+            "Unrecognized source 'unrecognized://test_source' for part "
+            "'test_plugin'.\n")
+        self.assertEqual(expected, fake_logger.output)
