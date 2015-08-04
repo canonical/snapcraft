@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
-from snapcraft.plugins.ubuntu import UbuntuPlugin
+from snapcraft.plugins import ubuntu
 
 
 class Python2Plugin(snapcraft.BasePlugin):
@@ -25,7 +25,7 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         class UbuntuOptions:
             package = "python-dev"
-        self.ubuntu = UbuntuPlugin(name, UbuntuOptions())
+        self.ubuntu = ubuntu.UbuntuPlugin(name, UbuntuOptions())
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
