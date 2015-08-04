@@ -25,6 +25,8 @@ import tempfile
 COMMAND_ORDER = ["pull", "build", "stage", "snap"]
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
+_arch = None
+_arch_triplet = None
 
 env = []
 
@@ -46,6 +48,20 @@ def run(cmd, **kwargs):
 
 def fatal():
     sys.exit(1)
+
+
+def get_arch():
+    global _arch
+    if _arch is None:
+        _arch = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_ARCH']).decode('utf8').strip()
+    return _arch
+
+
+def get_arch_triplet():
+    global _arch_triplet
+    if _arch_triplet is None:
+        _arch_triplet = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']).decode('utf8').strip()
+    return _arch_triplet
 
 
 def get_stagedir():
