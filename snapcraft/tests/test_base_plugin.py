@@ -98,3 +98,18 @@ class TestBasePlugin(TestCase):
             "Unrecognized source 'unrecognized://test_source' for part "
             "'test_plugin'.\n")
         self.assertEqual(expected, fake_logger.output)
+
+    def test_get_bzr_source_with_branch_must_raise_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        with self.assertRaises(SystemExit) as raised:
+            plugin.get_source(
+                'dummy_source', source_type='bzr', source_branch='test_branch')
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        expected = (
+            "You can't specify source-branch for a bzr source "
+            "(part 'test_plugin').\n")
+        self.assertEqual(expected, fake_logger.output)
