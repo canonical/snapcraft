@@ -99,6 +99,17 @@ class TestBasePlugin(tests.TestCase):
             "'test_plugin'.\n")
         self.assertEqual(expected, fake_logger.output)
 
+    def test_makedirs_with_existing_dir(self):
+        plugin = snapcraft.BasePlugin('dummy_plugin', 'dummy_options')
+        plugin.makedirs(self.path)
+        self.assertTrue(os.path.exists(self.path))
+
+    def test_makedirs_with_unexisting_dir(self):
+        path = os.path.join(self.path, 'unexisting')
+        plugin = snapcraft.BasePlugin('dummy_plugin', 'dummy_options')
+        plugin.makedirs(path)
+        self.assertTrue(os.path.exists(path))
+
 
 class GetSourceTestCase(tests.TestCase):
 
