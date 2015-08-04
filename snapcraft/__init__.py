@@ -196,7 +196,4 @@ class BasePlugin:
                                source_branch=sbranch)
 
     def makedirs(self, d):
-        try:
-            os.makedirs(d)
-        except FileExistsError:
-            pass
+        os.makedirs(d, exist_ok=True)

@@ -15,12 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
+import testscenarios
 
 from snapcraft import common
 from snapcraft.tests import fixture_setup
 
 
-class TestCase(fixtures.TestWithFixtures):
+class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
 
     def setUp(self):
         super().setUp()

@@ -46,7 +46,7 @@ def run(cmd, **kwargs):
         return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
 
 
-def fatal(msg):
+def fatal():
     sys.exit(1)
 
 
