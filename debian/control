@@ -16,6 +16,7 @@ Build-Depends: bzr,
                python3-setuptools,
                python3-testscenarios,
                python3-yaml,
+               wget,
                xz-utils,
 Homepage: https://launchpad.net/snapcraft
 Standards-Version: 3.9.6
