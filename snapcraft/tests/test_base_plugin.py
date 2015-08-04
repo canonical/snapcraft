@@ -21,7 +21,7 @@ import os
 import threading
 
 import snapcraft
-from snapcraft.tests import TestCase
+from snapcraft import tests
 
 
 class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
@@ -39,7 +39,7 @@ class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
-class TestBasePlugin(TestCase):
+class TestBasePlugin(tests.TestCase):
 
     def test_isurl(self):
         plugin = snapcraft.BasePlugin('mock', {})
@@ -99,17 +99,39 @@ class TestBasePlugin(TestCase):
             "'test_plugin'.\n")
         self.assertEqual(expected, fake_logger.output)
 
-    def test_get_bzr_source_with_branch_must_raise_error(self):
+
+class GetSourceTestCase(tests.TestCase):
+
+    scenarios = [
+        ('bzr with source branch', {
+            'source_type': 'bzr',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'error': 'source-branch'}),
+        ('tar with source branch', {
+            'source_type': 'tar',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'error': 'source-branch'}),
+        ('tar with source tag', {
+            'source_type': 'tar',
+            'source_branch': None,
+            'source_tag': 'test_tag',
+            'error': 'source-tag'})
+    ]
+
+    def test_get_source_with_branch_must_raise_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
         plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
         with self.assertRaises(SystemExit) as raised:
             plugin.get_source(
-                'dummy_source', source_type='bzr', source_branch='test_branch')
+                'dummy_source', source_type=self.source_type,
+                source_branch=self.source_branch, source_tag=self.source_tag)
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         expected = (
-            "You can't specify source-branch for a bzr source "
-            "(part 'test_plugin').\n")
+            "You can't specify {} for a {} source "
+            "(part 'test_plugin').\n".format(self.error, self.source_type))
         self.assertEqual(expected, fake_logger.output)
