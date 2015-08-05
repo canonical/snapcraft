@@ -1,0 +1,4 @@
+Test-Command: cd integration-tests && ./runtests.sh
+Restrictions: allow-stderr
+Depends: @,
+         plainbox

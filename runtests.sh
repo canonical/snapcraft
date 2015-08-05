@@ -55,8 +55,8 @@ EOF
     fi
 
     # Go to the plainbox provider of snapcraft tests
-    cd integration-tests/
-    sh runtests.sh
+    cd integration-tests
+    ./runtests.sh
 )
 fi
 
