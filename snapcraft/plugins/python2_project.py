@@ -14,21 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
-import testscenarios
-
-from snapcraft import common
-from snapcraft.tests import fixture_setup
+import snapcraft
 
 
-class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
+class Python2ProjectPlugin(snapcraft.BasePlugin):
 
-    def setUp(self):
-        super().setUp()
-        temp_cwd_fixture = fixture_setup.TempCWD()
-        self.useFixture(temp_cwd_fixture)
-        self.path = temp_cwd_fixture.path
-        # Some tests will directly or indirectly change the plugindir, which
-        # is a module variable. Make sure that it is returned to the original
-        # value when a test ends.
-        self.addCleanup(common.set_plugindir, common.get_plugindir())
+    # note that we don't need to setup env(), python figures it out
+    # see python2.py for more details
+
+    def pull(self):
+        return self.handle_source_options()
+
+    def build(self):
+        return self.run(
+            ["python2", "setup.py", "install", "--install-layout=deb",
+             "--prefix={}/usr".format(self.installdir)])

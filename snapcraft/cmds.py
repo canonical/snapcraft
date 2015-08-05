@@ -144,8 +144,9 @@ def snap(args):
             stopwrap = wrap_exe(stopparts[0])
             binary['stop'] = replace_cmd(stopparts, stopwrap)
 
-    if not package.get('architecture', None):
-        package['architecture'] = common.get_arch()
+    # Set architecture if none provided
+    if 'architecture' not in package and 'architectures' not in package:
+        package['architecture'] = snapcraft.common.get_arch()
 
     with open("snap/meta/package.yaml", 'w') as f:
         yaml.dump(package, f, default_flow_style=False)

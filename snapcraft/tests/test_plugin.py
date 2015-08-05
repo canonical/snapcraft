@@ -32,27 +32,28 @@ from snapcraft import (
 from snapcraft.tests import mock_plugin
 
 
-class TestPlugin(tests.TestCase):
+def get_test_plugin(name='mock', part_name='mock-part',
+                    properties=None, load_code=False, load_config=False):
+    if properties is None:
+        properties = {}
+    return plugin.PluginHandler(
+        name, part_name, properties, load_code=load_code,
+        load_config=load_config)
 
-    def get_test_plugin(self, name='mock', part_name='mock-part',
-                        properties=None, load_code=False, load_config=False):
-        if properties is None:
-            properties = {}
-        return plugin.PluginHandler(
-            name, part_name, properties, load_code=load_code,
-            load_config=load_config)
+
+class PluginTestCase(tests.TestCase):
 
     def test_init_unknown_plugin_must_log_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        self.get_test_plugin('test_unexisting_name', load_config=True)
+        get_test_plugin('test_unexisting_name', load_config=True)
 
         self.assertEqual(
             'Unknown plugin: test_unexisting_name\n', fake_logger.output)
 
     def test_is_dirty(self):
-        p = self.get_test_plugin()
+        p = get_test_plugin()
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
         p.code = Mock()
@@ -65,7 +66,7 @@ class TestPlugin(tests.TestCase):
         self.assertFalse(p.code.pull.called)
 
     def test_collect_snap_files(self):
-        p = self.get_test_plugin()
+        p = get_test_plugin()
 
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
@@ -116,7 +117,7 @@ class TestPlugin(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        p = self.get_test_plugin()
+        p = get_test_plugin()
         p.notify_stage('test stage')
 
         self.assertEqual('test stage mock-part\n', fake_logger.output)
@@ -145,7 +146,7 @@ class TestPlugin(tests.TestCase):
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
     def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
-        p = self.get_test_plugin()
+        p = get_test_plugin()
         with self.assertRaises(plugin.PluginError) as raised:
             p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
 
@@ -153,7 +154,7 @@ class TestPlugin(tests.TestCase):
             "path '/abs/include' must be relative", str(raised.exception))
 
     def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
-        p = self.get_test_plugin()
+        p = get_test_plugin()
         with self.assertRaises(plugin.PluginError) as raised:
             p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
 
@@ -173,3 +174,34 @@ class TestPlugin(tests.TestCase):
             'Unknown plugin: test_unexisting_name\n'
             'Could not load part test_unexisting_name\n',
             fake_logger.output)
+
+
+class PluginMakedirsTestCase(tests.TestCase):
+
+    scenarios = [
+        ('existing_dirs', {'make_dirs': True}),
+        ('unexisting_dirs', {'make_dirs': False})
+    ]
+
+    def get_plugin_dirs(self, part_name):
+        parts_dir = os.path.join(self.path, 'parts')
+        return [
+            os.path.join(parts_dir, part_name, 'src'),
+            os.path.join(parts_dir, part_name, 'build'),
+            os.path.join(parts_dir, part_name, 'install'),
+            os.path.join(self.path, 'stage'),
+            os.path.join(self.path, 'snap')
+        ]
+
+    def test_makedirs_with_existing_dirs(self):
+        part_name = 'test_part'
+        dirs = self.get_plugin_dirs(part_name)
+        if self.make_dirs:
+            os.makedirs(os.path.join('parts', part_name))
+            for d in dirs:
+                os.mkdir(d)
+
+        p = get_test_plugin(part_name=part_name)
+        p.makedirs()
+        for d in dirs:
+            self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
