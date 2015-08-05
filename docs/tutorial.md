@@ -221,3 +221,23 @@ And tell Snapcraft to actually make the snap package:
 
 You should now have a `webcam-webui_1_amd64.snap` file sitting in your
 directory (assuming you are running on amd64). Congratulations!
+
+
+## Next steps
+
+Well done, your first snap using snapcraft is ready. If you want to check out
+a few examples for reference or to get inspired, have a look at the 
+`examples` directory in the source directory of snapcraft:
+
+    bzr branch lp:snapcraft
+    cd snapcraft/examples
+
+In `examples/` you can find a diverse set of examples which should help you 
+get started on your own projects.
+
+If you should have any more questions, ask us on
+
+ * `#snappy` on `irc.freenode.net` or
+ * the [snappy-app-devel](https://lists.ubuntu.com/mailman/listinfo/snappy-app-devel)
+   mailing list
+
