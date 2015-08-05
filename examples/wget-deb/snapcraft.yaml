@@ -1,4 +1,5 @@
 parts:
   wget:
     plugin: ubuntu
+    packages: [wget]
 snappy-metadata: meta

@@ -26,7 +26,6 @@ class QmlPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
 
         class QmlPackageOptions:
-            package = None
             packages = [
                 "qmlscene",
                 "qtdeclarative5-qtmir-plugin",

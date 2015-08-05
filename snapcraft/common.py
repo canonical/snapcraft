@@ -79,4 +79,3 @@ def set_plugindir(plugindir):
 
 def get_plugindir():
     return _plugindir
-

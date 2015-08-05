@@ -39,11 +39,11 @@ class TestYaml(TestCase):
     def test_config_loads_plugins(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""parts:
   ubuntu:
-    package: fswebcam
+    packages: [fswebcam]
 """)
         Config()
         mock_loadPlugin.assert_called_with("ubuntu", "ubuntu", {
-            "package": "fswebcam",
+            "packages": ["fswebcam"],
         })
 
     def test_config_raises_on_missing_snapcraft_yaml(self):
@@ -69,9 +69,11 @@ class TestYaml(TestCase):
         self.make_snapcraft_yaml("""parts:
   p1:
     plugin: ubuntu
+    packages: [p1]
     after: [p2]
   p2:
     plugin: ubuntu
+    packages: [p2]
     after: [p1]
 """)
         with self.assertRaises(SystemExit) as raised:

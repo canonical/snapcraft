@@ -24,7 +24,7 @@ class JdkPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
 
         class UbuntuOptions:
-            package = "default-jdk"
+            packages = ["default-jdk"]
         self.ubuntu = UbuntuPlugin(name, UbuntuOptions())
 
     def pull(self):

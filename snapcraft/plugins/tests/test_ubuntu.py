@@ -42,7 +42,7 @@ class TestUbuntu(TestCase):
         os.symlink('/1', tempdir + '/abs-to-1')
 
         options = Mock()
-        options.package = 'test'
+        options.packages = ['test']
         ubuntu = UbuntuPlugin('ubuntu', options)
         ubuntu.fix_symlinks(debdir=tempdir)
 

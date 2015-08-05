@@ -4,6 +4,7 @@ parts:
         source: git://github.com/mikix/golang-static-http
     fswebcam:
         plugin: ubuntu
+        packages: [fswebcam]
     glue:
         plugin: copy
         files:
