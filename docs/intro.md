@@ -6,8 +6,8 @@ or npm.
 
 # Snappy
 
-Snappy Ubuntu Core is a new rendition of Ubuntu with transactional updates — a
-minimal server image with the same libraries as today’s Ubuntu, but
+Snappy Ubuntu Core is a new rendition of Ubuntu with transactional updates - a
+minimal server image with the same libraries as today's Ubuntu, but
 applications are provided through a simpler mechanism.
 
 Snappy apps and Ubuntu Core itself can be upgraded atomically and rolled back
@@ -62,7 +62,7 @@ After the build of each part the parts are combined into a single
 directory tree that is called the “staging area”. It can be found
 under the ./stage directory.
 
-This ./stage directory is useful for building outside code that isn’t in the
+This ./stage directory is useful for building outside code that isn't in the
 snapcraft.yaml recipe against the snap contents. For example, you might build a
 local project against the libraries in ./stage by running
 `snapcraft shell make`. Though in general, you are encouraged to add even local
@@ -78,7 +78,7 @@ The Snappy metadata information about your project will also now be placed in
 ./snap/meta.
 
 This ./snap directory is useful for inspecting what is going into your snap
-and to make any final post-processing on snapcraft’s output.
+and to make any final post-processing on snapcraft's output.
 
 ### Assemble
 
