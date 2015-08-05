@@ -247,3 +247,54 @@ command:
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
     ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
+
+id: snapcraft/normal/hg-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-head .
+    hg init .
+    touch 1
+    hg commit -m "1" --user "Example Dev" -A 1
+    touch 2
+    hg commit -m "2" --user "Example Dev" -A 2
+    ${SNAPCRAFT} pull
+    test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+    ${SNAPCRAFT} pull
+    test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+
+id: snapcraft/normal/hg-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-tag .
+    hg init .
+    touch 1
+    hg commit -m "1" --user "Example Dev" -A 1
+    hg tag initial --user "Example Dev"
+    touch 2
+    hg commit -m "2" --user "Example Dev" -A 2
+    ${SNAPCRAFT} pull
+    test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+    ${SNAPCRAFT} pull
+    test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+
+id: snapcraft/normal/hg-branch
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-branch .
+    hg init .
+    hg branch second
+    touch second
+    hg commit -m "second" --user "Example Dev" -A second
+    hg branch default
+    touch default
+    hg commit -m "default" --user "Example Dev" -A default
+    ${SNAPCRAFT} pull
+    test -e parts/mercurial/src/second
+    ${SNAPCRAFT} pull
+    test -e parts/mercurial/src/second
