@@ -80,13 +80,18 @@ class BasePlugin:
             logger.error("You can't specify both source-tag and source-branch for a mercurial source (part '%s')." % self.name)
             snapcraft.common.fatal()
 
-        ref = []
-        if source_tag or source_branch:
-            ref = ['-u', source_tag or source_branch]
-
         if os.path.exists(os.path.join(self.sourcedir, ".hg")):
-            return self.run(['hg', '--cwd', self.sourcedir, 'pull'] + ref + [source, ], cwd=os.getcwd())
+            ref = []
+            if source_tag:
+                ref = ['-r', source_tag]
+            elif source_branch:
+                ref = ['-b', source_branch]
+            return self.run(['hg', 'pull'] + ref + [source, ], cwd=os.getcwd())
         else:
+            ref = []
+            if source_tag or source_branch:
+                ref = ['-u', source_tag or source_branch]
+
             return self.run(['hg', 'clone'] + ref + [source, self.sourcedir], cwd=os.getcwd())
 
     def pull_git(self, source, source_tag=None, source_branch=None):
