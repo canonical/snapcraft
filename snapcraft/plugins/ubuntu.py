@@ -33,14 +33,16 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.downloadable_packages = []
         self.included_packages = []
-        if options.package:
-            self.included_packages.append(options.package)
+        if options.packages:
+            self.included_packages.extend(options.packages)
         else:
             # User didn't specify a package, use the part name
             if name == 'ubuntu':
                 logger.error('Part %s needs either a package option or a name' % name)
                 sys.exit(1)
             self.included_packages.append(name)
+
+        self.recommends = options.recommends or False
 
     def pull(self):
         self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
@@ -53,7 +55,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
             and self.fix_symlinks(debdir=self.installdir)
 
     def snap_files(self):
-        return (['*'], ['usr/include', 'lib/*/*.a', 'usr/lib/*/*.a'])
+        return (['*'], ['usr/include', 'lib/*/*.a', 'usr/lib/*/*.a', 'usr/share/doc', 'usr/share/man', 'usr/share/lintian', 'usr/share/doc-base'])
 
     def get_all_dep_packages(self, packages):
         cache = apt.Cache()
@@ -77,7 +79,9 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                 try:
                     deps = set()
                     candidatePkg = cache[p].candidate
-                    deps = candidatePkg.dependencies + candidatePkg.recommends
+                    deps = candidatePkg.dependencies
+                    if self.recommends:
+                        deps += candidatePkg.recommends
                     alldeps.add(p)
                     add_deps([x[0].name for x in deps])
                 except:

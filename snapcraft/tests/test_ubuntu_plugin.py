@@ -28,7 +28,7 @@ class UbuntuPluginTestCase(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        test_options = type('obj', (object,), {'package': False})
+        test_options = type('obj', (object,), {'packages': False, 'recommends': False})
         plugin = ubuntu.UbuntuPlugin('test_plugin', test_options)
 
         with self.assertRaises(SystemExit) as raised:
