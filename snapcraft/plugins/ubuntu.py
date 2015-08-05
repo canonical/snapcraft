@@ -33,7 +33,14 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.downloadable_packages = []
         self.included_packages = []
-        self.included_packages.extend(options.packages)
+        if options.packages:
+            self.included_packages.extend(options.packages)
+        else:
+            # User didn't specify a package, use the part name
+            if name == 'ubuntu':
+                logger.error('Part %s needs either a package option or a name' % name)
+                sys.exit(1)
+            self.included_packages.append(name)
 
         self.recommends = options.recommends or False
 
