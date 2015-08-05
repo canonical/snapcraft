@@ -93,7 +93,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         for p in packages:
             if p not in alldeps:
                 exit = True
-                logger.error('Package %s not recognized' % p, file=sys.stderr)
+                logger.error("Package '{}' not recognized".format(p))
         if exit:
             sys.exit(1)
 
