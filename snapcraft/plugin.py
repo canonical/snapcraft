@@ -54,12 +54,13 @@ class PluginHandler:
         self.deps = []
         self.plugin_name = name
 
-        self.sourcedir = os.path.join(os.getcwd(), "parts", part_name, "src")
-        self.builddir = os.path.join(os.getcwd(), "parts", part_name, "build")
-        self.installdir = os.path.join(os.getcwd(), "parts", part_name, "install")
-        self.stagedir = os.path.join(os.getcwd(), "stage")
-        self.snapdir = os.path.join(os.getcwd(), "snap")
-        self.statefile = os.path.join(os.getcwd(), "parts", part_name, "state")
+        parts_dir = os.path.join(os.getcwd(), 'parts')
+        self.sourcedir = os.path.join(parts_dir, part_name, 'src')
+        self.builddir = os.path.join(parts_dir, part_name, 'build')
+        self.installdir = os.path.join(parts_dir, part_name, 'install')
+        self.stagedir = os.path.join(os.getcwd(), 'stage')
+        self.snapdir = os.path.join(os.getcwd(), 'snap')
+        self.statefile = os.path.join(parts_dir, part_name, 'state')
 
         try:
             if load_config:
@@ -124,26 +125,12 @@ class PluginHandler:
         return self.part_names[0]
 
     def makedirs(self):
-        try:
-            os.makedirs(self.sourcedir)
-        except FileExistsError:
-            pass
-        try:
-            os.makedirs(self.builddir)
-        except FileExistsError:
-            pass
-        try:
-            os.makedirs(self.installdir)
-        except FileExistsError:
-            pass
-        try:
-            os.makedirs(self.stagedir)
-        except FileExistsError:
-            pass
-        try:
-            os.makedirs(self.snapdir)
-        except FileExistsError:
-            pass
+        dirs = [
+            self.sourcedir, self.builddir, self.installdir, self.stagedir,
+            self.snapdir
+        ]
+        for d in dirs:
+            os.makedirs(d, exist_ok=True)
 
     def is_valid(self):
         return self.valid
