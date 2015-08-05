@@ -1,7 +1,7 @@
 Test-Command: ./runtests.sh
 Restrictions: allow-stderr
 Depends: @,
-         dep8,
+         pep8,
          plainbox,
          pyflakes,
          python3-fixtures,
