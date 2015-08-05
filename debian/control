@@ -6,7 +6,6 @@ Build-Depends: bzr,
                cmake,
                debhelper (>= 9),
                dh-python,
-               dpkg-dev,
                git,
                pep8,
                plainbox,
@@ -21,6 +20,7 @@ Build-Depends: bzr,
                wget,
                xz-utils,
 Homepage: https://launchpad.net/snapcraft
+Vcs-Bzr: lp:snapcraft
 Standards-Version: 3.9.6
 
 Package: snapcraft
