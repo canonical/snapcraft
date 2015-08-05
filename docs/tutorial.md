@@ -40,9 +40,9 @@ It's trivial to write a complete (but basic) web server in a few lines:
         panic(http.ListenAndServe(":8080", http.FileServer(http.Dir("."))))
     }
 
-This will serve the current directory on port :8080. If there is an index.html
-in the current directory, it will be served. Otherwise a directory listing will
-be shown.
+This will serve the current directory on port `:8080`. If there is an 
+`index.html` in the current directory, it will be served. Otherwise a 
+directory listing will be shown.
 
 I've provided the above code in a simple GitHub
 [repository](https://github.com/mikix/golang-static-http).
@@ -91,8 +91,8 @@ sure everything is in place.
 
 You'll see a bunch of output, including Snapcraft downloading the Go compiler.
 It will use this to compile the code found on GitHub. Eventually when it is
-done, you'll be able to inspect the ./stage folder and see the web server
-executable sitting in ./stage/bin:
+done, you'll be able to inspect the `./stage` folder and see the web server
+executable sitting in `./stage/bin`:
 
     $ ls stage/bin
     golang-static-http
@@ -117,11 +117,11 @@ Now let's stage our recipe again.
 
     $ snapcraft stage
 
-You'll note that Snapcraft skipped downloading and building golang-static-htpp
-again because it knew it had already done so.
+You'll note that Snapcraft skipped downloading and building 
+`golang-static-htpp` again because it knew it had already done so.
 
 You'll also see Snapcraft downloading and unpacking all the Ubuntu packages
-into your snap. If you look at ./stage, you'll see a lot more files now:
+into your snap. If you look at `./stage`, you'll see a lot more files now:
 
     $ ls stage
     bin  etc  lib  usr  var
@@ -164,7 +164,7 @@ Alright, let's put this script in our snap too:
 
 The `copy` plugin takes a list of files to just directly copy without building
 or downloading anything. In this case, we just want to put our glue script in
-the bin/ directory.
+the `bin/` directory.
 
 If we run Snapcraft again, we won't be surprised:
 
