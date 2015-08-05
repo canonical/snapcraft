@@ -130,7 +130,7 @@ class PluginHandler:
             self.snapdir
         ]
         for d in dirs:
-            os.makedirs(d, exists_ok=True)
+            os.makedirs(d, exist_ok=True)
 
     def is_valid(self):
         return self.valid
