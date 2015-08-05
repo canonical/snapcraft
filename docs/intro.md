@@ -23,11 +23,11 @@ developer can always be assured that there are no regressions triggered by
 changes to the system underneath their app.
 
 Snapcraft makes bundling these dependencies easy by allowing you to
-specify them as “parts” in the snapcraft.yaml file.
+specify them as "parts" in the snapcraft.yaml file.
 
 ## Parts
 
-A central aspect of a snapcraft recipe is a “part”. A part is a piece
+A central aspect of a snapcraft recipe is a "part". A part is a piece
 of software or data that the snap package requires to work or to
 build other parts. Each part is managed by a snapcraft plugin and parts
 are usually independent of each other.
@@ -59,7 +59,7 @@ directory and installs itself into parts/part-name/install.
 ### Stage
 
 After the build of each part the parts are combined into a single
-directory tree that is called the “staging area”. It can be found
+directory tree that is called the "staging area". It can be found
 under the ./stage directory.
 
 This ./stage directory is useful for building outside code that isn't in the
