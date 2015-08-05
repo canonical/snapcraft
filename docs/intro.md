@@ -88,5 +88,5 @@ can be uploaded to the Ubuntu Store and published directly to Snappy users.
 # Next
 
 After introducing the key concept of snapcraft it is probably a good
-time to look at [the tutorial](tutorial.md) to see how it works
-for an example project.
+time to look at [the tutorial](your-first-snap.md) to create your first snap
+with snapcraft.
