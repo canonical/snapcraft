@@ -24,7 +24,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         super().__init__(name, options)
 
         class UbuntuOptions:
-            packages = ["python-dev"]
+            packages = ["python-dev", "python-setuptools"]
         self.ubuntu = ubuntu.UbuntuPlugin(name, UbuntuOptions())
 
     # note that we don't need to set PYTHONHOME here,
