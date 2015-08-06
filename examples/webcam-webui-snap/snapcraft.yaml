@@ -2,6 +2,10 @@ parts:
     golang-static-http:
         plugin: go-project
         source: git://github.com/mikix/golang-static-http
-    ubuntu:
-        package: fswebcam
+    fswebcam:
+        plugin: ubuntu
+    glue:
+        plugin: copy
+        files:
+            webcam-webui: bin/webcam-webui
 snappy-metadata: meta

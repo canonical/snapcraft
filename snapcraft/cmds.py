@@ -72,10 +72,26 @@ def wrap_exe(relexepath):
     except Exception:
         pass
 
+    wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
+    if not os.path.exists(exepath) and '/' not in relexepath:
+        # If it doesn't exist it might be in the path
+        logger.info('Checking to see if "{}" is in the $PATH'.format(relexepath))
+        with tempfile.NamedTemporaryFile('w+') as tempf:
+            script = ('#!/bin/sh\n' +
+                      '{}\n'.format(snapcraft.common.assemble_env()) +
+                      'which "{}"\n'.format(relexepath))
+            tempf.write(script)
+            tempf.flush()
+            if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
+                wrapexec = relexepath
+            else:
+                logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
+
     assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
     script = ('#!/bin/sh\n' +
               '{}\n'.format(assembled_env) +
-              'exec "$SNAP_APP_PATH/{}" $*'.format(relexepath))
+              'exec "{}" $*\n'.format(wrapexec))
+
     with open(wrappath, 'w+') as f:
         f.write(script)
 
@@ -127,6 +143,10 @@ def snap(args):
             stopparts = shlex.split(stoppath)
             stopwrap = wrap_exe(stopparts[0])
             binary['stop'] = replace_cmd(stopparts, stopwrap)
+
+    # Set architecture if none provided
+    if 'architecture' not in package and 'architectures' not in package:
+        package['architecture'] = snapcraft.common.get_arch()
 
     with open("snap/meta/package.yaml", 'w') as f:
         yaml.dump(package, f, default_flow_style=False)

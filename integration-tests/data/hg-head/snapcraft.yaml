@@ -1,0 +1,5 @@
+parts:
+    mercurial:
+        plugin: make-project
+        source: .
+        source-type: hg

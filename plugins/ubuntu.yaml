@@ -1,4 +1,6 @@
 build-tools: [devscripts]
 options:
-  package:
+  packages:
+    required: false
+  recommends:
     required: false

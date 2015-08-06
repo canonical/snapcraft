@@ -36,7 +36,11 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "snappy-metadata: snappy" >> snapcraft.yaml
     ${SNAPCRAFT} assemble
+    test -e "assemble_1.0_$(dpkg-architecture -qDEB_BUILD_ARCH).snap"
+    sed -i "s/@ARCH@/$(dpkg-architecture -qDEB_BUILD_ARCH)/g" package.yaml.after
     diff -u package.yaml.after snap/meta/package.yaml
+    sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_BUILD_MULTIARCH)/g" binary1.after
+    diff -u binary1.after snap/binary1.wrapper
     export SNAP_APP_PATH=`pwd`/snap
     test "$(./snap/service-start.wrapper)" = "service-start"
     test "$(./snap/service-stop.wrapper)" = "service-stop"
@@ -243,3 +247,54 @@ command:
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
     ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
+
+id: snapcraft/normal/hg-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-head .
+    hg init .
+    touch 1
+    hg commit -m "1" --user "Example Dev" -A 1
+    touch 2
+    hg commit -m "2" --user "Example Dev" -A 2
+    ${SNAPCRAFT} pull
+    test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+    ${SNAPCRAFT} pull
+    test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+
+id: snapcraft/normal/hg-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-tag .
+    hg init .
+    touch 1
+    hg commit -m "1" --user "Example Dev" -A 1
+    hg tag initial --user "Example Dev"
+    touch 2
+    hg commit -m "2" --user "Example Dev" -A 2
+    ${SNAPCRAFT} pull
+    test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+    ${SNAPCRAFT} pull
+    test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+
+id: snapcraft/normal/hg-branch
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-branch .
+    hg init .
+    hg branch second
+    touch second
+    hg commit -m "second" --user "Example Dev" -A second
+    hg branch default
+    touch default
+    hg commit -m "default" --user "Example Dev" -A default
+    ${SNAPCRAFT} pull
+    test -e parts/mercurial/src/second
+    ${SNAPCRAFT} pull
+    test -e parts/mercurial/src/second

@@ -1,5 +1,5 @@
-snapcraft (0) UNRELEASED; urgency=low
+snapcraft (0.1) wily; urgency=low
 
-  * Testing (just a dummy changelog, will be replaced by daily build scripts)
+  * Initial release
 
  -- Michael Terry <mterry@ubuntu.com>  Mon, 6 Jul 2015 21:55:21 -0500
