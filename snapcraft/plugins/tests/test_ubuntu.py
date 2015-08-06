@@ -51,3 +51,11 @@ class TestUbuntu(TestCase):
         self.assertEqual(os.readlink(tempdir + '/abs-to-b'), '/b')
         self.assertEqual(os.readlink(tempdir + '/rel-to-1'), '1')
         self.assertEqual(os.readlink(tempdir + '/abs-to-1'), '1')
+
+    def test_recommends_ignored_properly(self):
+        class Options:
+            packages = ['my-excellent-package']
+        ubuntu = UbuntuPlugin('myplug', Options())
+
+        self.assertTrue('my-excellent-package' in ubuntu.included_packages)
+        self.assertEqual(ubuntu.recommends, None)

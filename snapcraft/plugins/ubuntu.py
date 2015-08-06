@@ -42,7 +42,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
                 sys.exit(1)
             self.included_packages.append(name)
 
-        self.recommends = options.recommends or False
+        self.recommends = getattr(options, 'recommends', None)
 
     def pull(self):
         self.downloadable_packages = self.get_all_dep_packages(self.included_packages)
