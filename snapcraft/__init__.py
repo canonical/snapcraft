@@ -75,6 +75,25 @@ class BasePlugin:
             os.rmdir(self.sourcedir)
             return self.run(['bzr', 'branch'] + tag_opts + [source, self.sourcedir], cwd=os.getcwd())
 
+    def pull_hg(self, source, source_tag=None, source_branch=None):
+        if source_tag and source_branch:
+            logger.error("You can't specify both source-tag and source-branch for a mercurial source (part '%s')." % self.name)
+            snapcraft.common.fatal()
+
+        if os.path.exists(os.path.join(self.sourcedir, ".hg")):
+            ref = []
+            if source_tag:
+                ref = ['-r', source_tag]
+            elif source_branch:
+                ref = ['-b', source_branch]
+            return self.run(['hg', 'pull'] + ref + [source, ], cwd=os.getcwd())
+        else:
+            ref = []
+            if source_tag or source_branch:
+                ref = ['-u', source_tag or source_branch]
+
+            return self.run(['hg', 'clone'] + ref + [source, self.sourcedir], cwd=os.getcwd())
+
     def pull_git(self, source, source_tag=None, source_branch=None):
         if source_tag and source_branch:
             logger.error("You can't specify both source-tag and source-branch for a git source (part '%s')." % self.name)
@@ -161,6 +180,11 @@ class BasePlugin:
                 return False
         elif source_type == 'git':
             if not self.pull_git(source, source_tag=source_tag, source_branch=source_branch):
+                return False
+            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
+                return False
+        elif source_type == 'hg' or source_type == 'mercurial':
+            if not self.pull_hg(source, source_tag=source_tag, source_branch=source_branch):
                 return False
             if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
                 return False

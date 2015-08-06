@@ -49,22 +49,6 @@ class TestBasePlugin(tests.TestCase):
         self.assertFalse(plugin.isurl('/foo'))
         self.assertFalse(plugin.isurl('/fo:o'))
 
-    def test_pull_git_with_tag_and_branch_must_raise_error(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
-        with self.assertRaises(SystemExit) as raised:
-            plugin.pull_git(
-                'dummy_source', source_tag='test_tag',
-                source_branch='test_branch')
-
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        expected = (
-            "You can't specify both source-tag and source-branch for a git "
-            "source (part 'test_plugin').\n")
-        self.assertEqual(expected, fake_logger.output)
-
     def test_pull_tarball_must_download_to_sourcedir(self):
         server = http.server.HTTPServer(('', 0), FakeTarballHTTPRequestHandler)
         server_thread = threading.Thread(target=server.serve_forever)
@@ -109,6 +93,38 @@ class TestBasePlugin(tests.TestCase):
         plugin = snapcraft.BasePlugin('dummy_plugin', 'dummy_options')
         plugin.makedirs(path)
         self.assertTrue(os.path.exists(path))
+
+
+class GetSourceWithBranches(tests.TestCase):
+
+    scenarios = [
+        ('git with source branch and tag', {
+            'source_type': 'git',
+            'source_branch': 'test_branch',
+            'source_tag': 'tag',
+        }),
+        ('hg with source branch and tag', {
+            'source_type': 'mercurial',
+            'source_branch': 'test_branch',
+            'source_tag': 'tag',
+        }),
+    ]
+
+    def test_get_source_with_branch_and_tag_must_raise_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        with self.assertRaises(SystemExit) as raised:
+            plugin.get_source(
+                'dummy_source', source_type=self.source_type,
+                source_branch=self.source_branch, source_tag=self.source_tag)
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        expected = (
+            "You can't specify both source-tag and source-branch for a {} "
+            "source (part 'test_plugin').\n".format(self.source_type))
+        self.assertEqual(expected, fake_logger.output)
 
 
 class GetSourceTestCase(tests.TestCase):
