@@ -26,7 +26,7 @@ class GoPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
 
         class UbuntuOptions:
-            package = 'golang-go'
+            packages = ['golang-go']
         self.ubuntu = ubuntu.UbuntuPlugin(name, UbuntuOptions())
 
         # Prefix our files so they don't conflict with anything else,
