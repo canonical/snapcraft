@@ -29,6 +29,7 @@ Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
          bzr,
+         devscripts,
          dpkg-dev,
          git,
          python3-apt,
