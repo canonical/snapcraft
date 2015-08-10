@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
 import logging
 import os
 import subprocess
@@ -119,7 +120,9 @@ class UbuntuPlugin(snapcraft.BasePlugin):
            have that, so instead clean those absolute symlinks."""
         debdir = debdir or self.builddir
         for root, dirs, files in os.walk(debdir):
-            for entry in files:
+            # Symlinks to directories will be in dirs, while symlinks to
+            # non-directories will be in files.
+            for entry in itertools.chain(files, dirs):
                 path = os.path.join(root, entry)
                 if os.path.islink(path) and os.path.isabs(os.readlink(path)):
                     target = os.path.join(debdir, os.readlink(path)[1:])
