@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
+from snapcraft.plugins import ubuntu
 
 
 class Python2ProjectPlugin(snapcraft.BasePlugin):
@@ -22,7 +23,24 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     # note that we don't need to setup env(), python figures it out
     # see python2.py for more details
 
+    def __init__(self, name, options):
+        super().__init__(name, options)
+
+        if options.requirements:
+            self.requirements = options.requirements
+
+            class UbuntuOptions:
+                packages = ["python-pip"]
+            self.ubuntu = ubuntu.UbuntuPlugin(name, UbuntuOptions())
+        else:
+            self.requirements = None
+
     def pull(self):
+        if not self.ubuntu.pull():
+            return False
+        if self.requirements and not self.run(
+                ['python2', '-m', 'pip', 'install', '-r', self.requirements, "--prefix={}/usr".format(self.installdir)]):
+            return False
         return self.handle_source_options()
 
     def build(self):
