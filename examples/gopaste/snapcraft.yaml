@@ -1,5 +1,5 @@
 parts:
   gopaste:
-    plugin: go1.4-project
+    plugin: go-project
     source: git://github.com/wisnij/gopaste/gopasted
 snappy-metadata: meta

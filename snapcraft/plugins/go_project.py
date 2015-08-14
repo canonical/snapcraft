@@ -17,33 +17,25 @@
 import os
 import snapcraft
 
-# FIXME: add support for i386
-URLS = {
-    'amd64': "https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz",
-}
 
-
-class Go14Plugin(snapcraft.BasePlugin):
+class GoProjectPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options):
         super().__init__(name, options)
-        # FIXME: horrible
-        self.arch = "amd64"
-
-    def env(self, root):
-        return [
-            "PATH=%s/usr/local/go/bin:$PATH" % root,
-            "GOROOT=%s/usr/local/go" % root,
-        ]
+        if self.options.source.startswith("lp:"):
+            self.fullname = self.options.source.split(":~")[1]
+        else:
+            self.fullname = self.options.source.split("://")[1]
 
     def pull(self):
-        return self.run(['wget', '-c', URLS[self.arch]])
+        return self.run(['go', 'get', '-t', self.fullname])
 
     def build(self):
-        tar_file = os.path.join(
-            self.builddir, os.path.basename(URLS[self.arch]))
-        targetdir = os.path.join(self.installdir, 'usr', 'local')
-        self.makedirs(targetdir)
-        return self.run(['tar', 'xf', tar_file], cwd=targetdir)
+        if not self.run(['go', 'build', self.fullname]):
+            return False
+        if not self.run(['go', 'install', self.fullname]):
+            return False
+        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'), self.installdir])
 
-    def snap_files(self):
-        return ([], [])
+    def run(self, cmd, **kwargs):
+        cmd = ['env', 'GOPATH=' + self.builddir] + cmd
+        return super().run(cmd, **kwargs)
