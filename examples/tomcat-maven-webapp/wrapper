@@ -19,5 +19,5 @@ if ! [ -d $CATALINA_BASE/webapps ]; then
     cp $CATALINA_HOME/war/*.war $CATALINA_BASE/webapps/
 fi
 
-$CATALINA_HOME/bin/startup.sh
+$CATALINA_HOME/bin/catalina.sh run
 
