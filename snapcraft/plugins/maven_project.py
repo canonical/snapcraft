@@ -15,10 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import glob
+import logging
 import os
-import sys
 
 import snapcraft
+import snapcraft.common
+
+
+logger = logging.getLogger(__name__)
 
 
 class MavenPlugin(snapcraft.BasePlugin):
@@ -32,8 +36,8 @@ class MavenPlugin(snapcraft.BasePlugin):
         jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
         if not (jarfiles or warfiles):
-            snapcraft.common.log('Could not find any built jar or war files for part %s' % self.name)
-            sys.exit(1)
+            logger.error('Could not find any built jar or war files for part {}'.format(self.name))
+            snapcraft.common.fatal()
         if jarfiles:
             jardir = os.path.join(self.installdir, 'jar')
             if not os.makedirs(jardir, exist_ok=True):
