@@ -36,13 +36,13 @@ class MavenPlugin(snapcraft.BasePlugin):
             sys.exit(1)
         if jarfiles:
             jardir = os.path.join(self.installdir, 'jar')
-            if not self.run(['mkdir', '-p', jardir]):
+            if not os.makedirs(jardir, exist_ok=True):
                 return False
             if not self.run(['cp', '-a'] + jarfiles + [jardir]):
                 return False
         if warfiles:
             wardir = os.path.join(self.installdir, 'war')
-            if not self.run(['mkdir', '-p', wardir]):
+            if not os.makedirs(wardir, exist_ok=True):
                 return False
             if not self.run(['cp', '-a'] + warfiles + [wardir]):
                 return False
