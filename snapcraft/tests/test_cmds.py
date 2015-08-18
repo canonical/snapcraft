@@ -14,18 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import tempfile
 from unittest import mock
 
-from snapcraft.cmds import check_for_collisions
-from snapcraft.tests import TestCase
+import fixtures
+
+from snapcraft import (
+    cmds,
+    common,
+    tests
+)
 
 
-class TestCommands(TestCase):
+class TestCommands(tests.TestCase):
 
-    @mock.patch('snapcraft.common.log')
-    def test_check_for_collisions(self, logmock):
+    def test_check_for_collisions(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
         tmpdir = tmpdirObject.name
@@ -52,8 +60,58 @@ class TestCommands(TestCase):
         open(part3.installdir + '/1', mode='w').close()
         open(part3.installdir + '/a/2', mode='w').close()
 
-        self.assertTrue(check_for_collisions([part1, part2]))
-        self.assertFalse(logmock.called)
+        self.assertTrue(cmds.check_for_collisions([part1, part2]))
+        self.assertEqual('', fake_logger.output)
 
-        self.assertFalse(check_for_collisions([part1, part2, part3]))
-        logmock.assert_called_with("Error: parts part2 and part3 have the following files in common:\n  1\n  a/2")
+        self.assertFalse(cmds.check_for_collisions([part1, part2, part3]))
+        self.assertEqual(
+            'Error: parts part2 and part3 have the following files in common:\n'
+            '  1\n'
+            '  a/2\n',
+            fake_logger.output)
+
+
+class InitTestCase(tests.TestCase):
+
+    def test_init_with_existing_snapcraft_yaml_must_fail(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        open('snapcraft.yaml', 'w').close()
+
+        with self.assertRaises(SystemExit) as raised:
+            cmds.init('dummy args')
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        self.assertEqual(
+            'snapcraft.yaml already exists!\n', fake_logger.output)
+
+    def test_init_without_parts_must_write_snapcraft_yaml(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        snap_without_parts = type('obj', (object, ), {'part': []})
+        with self.assertRaises(SystemExit) as raised:
+            cmds.init(snap_without_parts)
+
+        self.assertEqual(raised.exception.code, 0, 'Wrong exit code returned.')
+        self.assertEqual(
+            'Wrote the following as snapcraft.yaml.\n',
+            fake_logger.output)
+
+
+class WrapExeTestCase(tests.TestCase):
+
+    def test_wrap_exe_must_write_wrapper(self):
+        snapdir = common.get_snapdir()
+        os.mkdir(snapdir)
+        relative_exe_path = 'test_relexepath'
+        relative_wrapper_path = cmds.wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+
+        expected = ('#!/bin/sh\n'
+                    '\n'
+                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+        with open(wrapper_path, 'r') as wrapper_file:
+            wrapper_contents = wrapper_file.read()
+
+        self.assertEqual(expected, wrapper_contents)

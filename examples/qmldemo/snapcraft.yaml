@@ -1,0 +1,8 @@
+parts:
+  qml:
+    plugin: qml
+  qmldemo:
+    plugin: copy
+    files:
+      demo.qml: demo.qml
+snappy-metadata: meta

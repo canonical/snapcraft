@@ -19,9 +19,11 @@ import argparse
 import sys
 
 import snapcraft.cmds
+from snapcraft import log
 
 
 def main():
+    log.configure()
     root_parser = argparse.ArgumentParser()
     subparsers = root_parser.add_subparsers(dest='cmd')
 

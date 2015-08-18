@@ -14,25 +14,46 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import sys
 import tempfile
 
+import fixtures
 from unittest.mock import (
     Mock,
     patch,
 )
 
-from snapcraft.plugin import PluginHandler, PluginError
-from snapcraft.tests import TestCase
+from snapcraft import (
+    plugin,
+    tests
+)
+from snapcraft.tests import mock_plugin
 
-import snapcraft.tests.mock_plugin
+
+def get_test_plugin(name='mock', part_name='mock-part',
+                    properties=None, load_code=False, load_config=False):
+    if properties is None:
+        properties = {}
+    return plugin.PluginHandler(
+        name, part_name, properties, load_code=load_code,
+        load_config=load_config)
 
 
-class TestPlugin(TestCase):
+class PluginTestCase(tests.TestCase):
+
+    def test_init_unknown_plugin_must_log_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        get_test_plugin('test_unexisting_name', load_config=True)
+
+        self.assertEqual(
+            'Unknown plugin: test_unexisting_name\n', fake_logger.output)
 
     def test_is_dirty(self):
-        p = PluginHandler("mock", "mock-part", {}, load_config=False, load_code=False)
+        p = get_test_plugin()
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
         p.code = Mock()
@@ -45,7 +66,7 @@ class TestPlugin(TestCase):
         self.assertFalse(p.code.pull.called)
 
     def test_collect_snap_files(self):
-        p = PluginHandler("mock", "mock-part", {}, load_config=False, load_code=False)
+        p = get_test_plugin()
 
         tmpdirObject = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdirObject.cleanup)
@@ -92,15 +113,24 @@ class TestPlugin(TestCase):
             set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
             set()))
 
+    def test_notify_stage_must_log_information(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        p = get_test_plugin()
+        p.notify_stage('test stage')
+
+        self.assertEqual('test stage mock-part\n', fake_logger.output)
+
     def test_local_plugins(self):
         """Ensure local plugins are loaded from parts/plugins"""
         def mock_import_modules(module_name):
             # called with the name only and sys.path set
             self.assertEqual(module_name, "x-mock")
             self.assertTrue(sys.path[0].endswith("parts/plugins"))
-            return snapcraft.tests.mock_plugin
+            return mock_plugin
         with patch("importlib.import_module", side_effect=mock_import_modules):
-            PluginHandler(
+            plugin.PluginHandler(
                 "x-mock", "mock-part", {}, load_config=False, load_code=True)
         # sys.path is cleaned afterwards
         self.assertFalse(sys.path[0].endswith("parts/plugins"))
@@ -110,15 +140,68 @@ class TestPlugin(TestCase):
         def mock_import_modules(module_name):
             # called with the full snapcraft path
             self.assertEqual(module_name, "snapcraft.plugins.mock")
-            return snapcraft.tests.mock_plugin
+            return mock_plugin
         with patch("importlib.import_module", side_effect=mock_import_modules):
-            PluginHandler(
+            plugin.PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
-    def test_collect_snap_files_with_abs_path_raises(self):
-        # ensure that absolute path raise an error
-        # (os.path.join will throw an error otherwise)
-        with patch("importlib.import_module", return_value=snapcraft.tests.mock_plugin):
-            p = PluginHandler("mock", "mock-part", {}, load_config=False)
-        with self.assertRaises(PluginError):
-            p.collect_snap_files(['*'], ['/1'])
+    def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
+        p = get_test_plugin()
+        with self.assertRaises(plugin.PluginError) as raised:
+            p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
+
+        self.assertEqual(
+            "path '/abs/include' must be relative", str(raised.exception))
+
+    def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
+        p = get_test_plugin()
+        with self.assertRaises(plugin.PluginError) as raised:
+            p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
+
+        self.assertEqual(
+            "path '/abs/exclude' must be relative", str(raised.exception))
+
+    def test_load_plugin_with_invalid_part_must_exit_with_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        with self.assertRaises(SystemExit) as raised:
+            plugin.load_plugin(
+                'dummy-part', 'test_unexisting_name', load_code=False)
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        self.assertEqual(
+            'Unknown plugin: test_unexisting_name\n'
+            'Could not load part test_unexisting_name\n',
+            fake_logger.output)
+
+
+class PluginMakedirsTestCase(tests.TestCase):
+
+    scenarios = [
+        ('existing_dirs', {'make_dirs': True}),
+        ('unexisting_dirs', {'make_dirs': False})
+    ]
+
+    def get_plugin_dirs(self, part_name):
+        parts_dir = os.path.join(self.path, 'parts')
+        return [
+            os.path.join(parts_dir, part_name, 'src'),
+            os.path.join(parts_dir, part_name, 'build'),
+            os.path.join(parts_dir, part_name, 'install'),
+            os.path.join(self.path, 'stage'),
+            os.path.join(self.path, 'snap')
+        ]
+
+    def test_makedirs_with_existing_dirs(self):
+        part_name = 'test_part'
+        dirs = self.get_plugin_dirs(part_name)
+        if self.make_dirs:
+            os.makedirs(os.path.join('parts', part_name))
+            for d in dirs:
+                os.mkdir(d)
+
+        p = get_test_plugin(part_name=part_name)
+        p.makedirs()
+        for d in dirs:
+            self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))

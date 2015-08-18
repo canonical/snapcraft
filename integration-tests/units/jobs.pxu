@@ -3,7 +3,7 @@ plugin: shell
 estimated_duration: 0.1
 command:
     set -x
-    OUTPUT=$(${SNAPCRAFT} pull)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 
@@ -13,7 +13,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    OUTPUT=$(${SNAPCRAFT} assemble)
+    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Missing snappy metadata file"
 
@@ -36,7 +36,11 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "snappy-metadata: snappy" >> snapcraft.yaml
     ${SNAPCRAFT} assemble
+    test -e "assemble_1.0_$(dpkg-architecture -qDEB_BUILD_ARCH).snap"
+    sed -i "s/@ARCH@/$(dpkg-architecture -qDEB_BUILD_ARCH)/g" package.yaml.after
     diff -u package.yaml.after snap/meta/package.yaml
+    sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_BUILD_MULTIARCH)/g" binary1.after
+    diff -u binary1.after snap/binary1.wrapper
     export SNAP_APP_PATH=`pwd`/snap
     test "$(./snap/service-start.wrapper)" = "service-start"
     test "$(./snap/service-stop.wrapper)" = "service-stop"
@@ -82,6 +86,12 @@ command:
     test -e stage/onedeep
     test -e stage/onedeepdir/onedeep2
     test -e stage/oneflat
+    test -e stage/dir-simple
+    test -e stage/top-simple
+    test -e stage/notop
+    test -e stage/notopdir
+    test -e stage/parent
+    test -e stage/slash
     test "$(./stage/bin/test)" = "tarproject"
 
 id: snapcraft/normal/simple-make
@@ -117,7 +127,7 @@ estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
-    OUTPUT=$(${SNAPCRAFT} stage)
+    OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
 
@@ -140,7 +150,7 @@ command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     sed -i "s/p1:/p1:\n    after: [p3]/" snapcraft.yaml
-    OUTPUT=$(${SNAPCRAFT} pull)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep -i "circular dependency"
 
@@ -161,6 +171,7 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
     bzr init .
+    bzr whoami --branch "Example Dev <dev@example.com>"
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     ${SNAPCRAFT} pull # test initial branch
@@ -175,6 +186,7 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
     bzr init .
+    bzr whoami --branch "Example Dev <dev@example.com>"
     bzr commit -m "1" --unchanged
     bzr commit -m "2" --unchanged
     bzr tag -r 1 initial
@@ -190,6 +202,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     ${SNAPCRAFT} pull
@@ -204,6 +218,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git tag initial HEAD@{1}
@@ -219,6 +235,8 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
     git init .
+    git config --local user.name "Example Dev"
+    git config --local user.email dev@example.com
     git commit -m "1" --allow-empty
     git commit -m "2" --allow-empty
     git branch second HEAD@{1}
@@ -229,3 +247,54 @@ command:
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
     ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
+
+id: snapcraft/normal/hg-head
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-head .
+    hg init .
+    touch 1
+    hg commit -m "1" --user "Example Dev" -A 1
+    touch 2
+    hg commit -m "2" --user "Example Dev" -A 2
+    ${SNAPCRAFT} pull
+    test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+    ${SNAPCRAFT} pull
+    test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+
+id: snapcraft/normal/hg-tag
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-tag .
+    hg init .
+    touch 1
+    hg commit -m "1" --user "Example Dev" -A 1
+    hg tag initial --user "Example Dev"
+    touch 2
+    hg commit -m "2" --user "Example Dev" -A 2
+    ${SNAPCRAFT} pull
+    test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+    ${SNAPCRAFT} pull
+    test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+
+id: snapcraft/normal/hg-branch
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/hg-branch .
+    hg init .
+    hg branch second
+    touch second
+    hg commit -m "second" --user "Example Dev" -A second
+    hg branch default
+    touch default
+    hg commit -m "default" --user "Example Dev" -A default
+    ${SNAPCRAFT} pull
+    test -e parts/mercurial/src/second
+    ${SNAPCRAFT} pull
+    test -e parts/mercurial/src/second

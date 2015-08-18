@@ -14,10 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft.common
-import snapcraft.plugin
+import logging
 import sys
+
 import yaml
+
+import snapcraft.plugin
+from snapcraft import common
+
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -31,7 +37,7 @@ class Config:
             with open("snapcraft.yaml", 'r') as fp:
                 self.data = yaml.load(fp)
         except FileNotFoundError:
-            snapcraft.common.log("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
+            logger.error("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
         self.build_tools = self.data.get('build-tools', [])
 
@@ -75,7 +81,7 @@ class Config:
                         foundIt = True
                         break
                 if not foundIt:
-                    snapcraft.common.log("Could not find part name %s" % dep)
+                    logger.error("Could not find part name %s" % dep)
                     sys.exit(1)
 
         # Now sort them (this is super inefficient, but easy-ish to follow)
@@ -92,7 +98,7 @@ class Config:
                     topPart = part
                     break
             if not topPart:
-                snapcraft.common.log("Circular dependency chain!")
+                logger.error("Circular dependency chain!")
                 sys.exit(1)
             sortedParts = [topPart] + sortedParts
             self.all_parts.remove(topPart)
@@ -107,14 +113,14 @@ class Config:
 
     def runtime_env(self, root):
         env = []
-        env.append("PATH=\"%s/bin:%s/usr/bin:$PATH\"" % (root, root))
-        env.append("LD_LIBRARY_PATH=\"%s/lib:%s/usr/lib:$LD_LIBRARY_PATH\"" % (root, root))
+        env.append('PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(root))
+        env.append('LD_LIBRARY_PATH="{0}/lib:{0}/usr/lib:{0}/lib/{1}:{0}/usr/lib/{1}:$LD_LIBRARY_PATH"'.format(root, snapcraft.common.get_arch_triplet()))
         return env
 
     def build_env(self, root):
         env = []
-        env.append("CFLAGS=\"-I%s/include $CFLAGS\"" % root)
-        env.append("LDFLAGS=\"-L%s/lib -L%s/usr/lib $LDFLAGS\"" % (root, root))
+        env.append('CFLAGS="-I{0}/include -I{0}/usr/include -I{0}/include/{1} -I{0}/usr/include/{1} $CFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
+        env.append('LDFLAGS="-L{0}/lib -L{0}/usr/lib -L{0}/lib/{1} -L{0}/usr/lib/{1} $LDFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
         return env
 
     def build_env_for_part(self, part):
@@ -132,7 +138,7 @@ class Config:
         return env
 
     def stage_env(self):
-        root = snapcraft.common.stagedir
+        root = common.get_stagedir()
         env = []
 
         env += self.runtime_env(root)
@@ -143,7 +149,7 @@ class Config:
         return env
 
     def snap_env(self):
-        root = snapcraft.common.snapdir
+        root = common.get_snapdir()
         env = []
 
         env += self.runtime_env(root)
