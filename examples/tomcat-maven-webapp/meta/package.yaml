@@ -1,7 +1,8 @@
 name: tomcat-webapp-demo
 vendor: Loïc Minier <loic.minier@ubuntu.com>
 version: 1.0
-architecture: [amd64]
+architectures:
+ - amd64
 services:
  - name: tomcat
    start: bin/wrapper
