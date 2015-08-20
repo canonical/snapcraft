@@ -1,0 +1,11 @@
+module: maven_project
+build-tools:
+  - maven
+requires:
+  - jdk
+options:
+  source:
+    required: true
+  source-type:
+  source-tag:
+  source-branch:
