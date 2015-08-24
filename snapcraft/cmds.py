@@ -17,18 +17,15 @@
 import glob
 import logging
 import os
-import shlex
 import subprocess
 import sys
 import tempfile
 import time
 
-import yaml
-
 import snapcraft.plugin
 import snapcraft.yaml
 from snapcraft import common
-
+from snapcraft import meta
 
 logger = logging.getLogger(__name__)
 
@@ -62,98 +59,25 @@ def shell(args):
     common.run(userCommand)
 
 
-def wrap_exe(relexepath):
-    snapdir = common.get_snapdir()
-    exepath = os.path.join(snapdir, relexepath)
-    wrappath = exepath + '.wrapper'
-
-    try:
-        os.remove(wrappath)
-    except Exception:
-        pass
-
-    wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
-    if not os.path.exists(exepath) and '/' not in relexepath:
-        # If it doesn't exist it might be in the path
-        logger.info('Checking to see if "{}" is in the $PATH'.format(relexepath))
-        with tempfile.NamedTemporaryFile('w+') as tempf:
-            script = ('#!/bin/sh\n' +
-                      '{}\n'.format(snapcraft.common.assemble_env()) +
-                      'which "{}"\n'.format(relexepath))
-            tempf.write(script)
-            tempf.flush()
-            if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
-                wrapexec = relexepath
-            else:
-                logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
-
-    assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(assembled_env) +
-              'exec "{}" $*\n'.format(wrapexec))
-
-    with open(wrappath, 'w+') as f:
-        f.write(script)
-
-    os.chmod(wrappath, 0o755)
-
-    return os.path.relpath(wrappath, snapdir)
-
-
 def snap(args):
     cmd(args)
 
-    # Ensure the snappy metadata files are correct
-    config = snapcraft.yaml.Config()
+    # This check is to support manual assembly.
+    if not os.path.exists(os.path.join(common.get_snapdir(), "meta")):
+        arches = [snapcraft.common.get_arch(), ]
 
-    if 'snappy-metadata' in config.data:
-        common.run(
-            ['cp', '-arvT', config.data['snappy-metadata'], common.get_snapdir() + '/meta'])
-    if not os.path.exists('snap/meta/package.yaml'):
-        logger.error("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
-        sys.exit(1)
+        config = snapcraft.yaml.Config()
 
-    # wrap all included commands
-    with open("snap/meta/package.yaml", 'r') as f:
-        package = yaml.load(f)
+        # FIXME this should be done in a more contained manner
+        common.env = config.snap_env()
 
-    common.env = config.snap_env()
-
-    def replace_cmd(execparts, cmd):
-        newparts = [cmd] + execparts[1:]
-        return ' '.join([shlex.quote(x) for x in newparts])
-
-    for binary in package.get('binaries', []):
-        execparts = shlex.split(binary.get('exec', binary['name']))
-        execwrap = wrap_exe(execparts[0])
-        if 'exec' in binary:
-            binary['exec'] = replace_cmd(execparts, execwrap)
-        else:
-            binary['name'] = os.path.basename(binary['name'])
-            binary['exec'] = replace_cmd(execparts, execwrap)
-
-    for binary in package.get('services', []):
-        startpath = binary.get('start')
-        if startpath:
-            startparts = shlex.split(startpath)
-            startwrap = wrap_exe(startparts[0])
-            binary['start'] = replace_cmd(startparts, startwrap)
-        stoppath = binary.get('stop')
-        if stoppath:
-            stopparts = shlex.split(stoppath)
-            stopwrap = wrap_exe(stopparts[0])
-            binary['stop'] = replace_cmd(stopparts, stopwrap)
-
-    # Set architecture if none provided
-    if 'architecture' not in package and 'architectures' not in package:
-        package['architecture'] = snapcraft.common.get_arch()
-
-    with open("snap/meta/package.yaml", 'w') as f:
-        yaml.dump(package, f, default_flow_style=False)
+        meta.create(config.data, arches)
 
 
 def assemble(args):
     args.cmd = 'snap'
+    # With all the data in snapcraft.yaml, maybe it's not a good idea to call
+    # snap(args) and just do a snappy build if assemble was explicitly called.
     snap(args)
     common.run(['snappy', 'build', common.get_snapdir()])
 
