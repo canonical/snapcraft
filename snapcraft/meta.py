@@ -31,6 +31,11 @@ _package_keys = [
     'vendor',
 ]
 
+_optional_package_keys = [
+    'frameworks',
+    'type',
+]
+
 
 def create(config_data, arches=None):
     '''Creates meta in snap_dir from config_data.'''
@@ -59,6 +64,10 @@ def compose_package_yaml(config_data, arches):
 
     for key_name in _package_keys:
         package_yaml[key_name] = config_data[key_name]
+
+    for key_name in _optional_package_keys:
+        if key_name in config_data:
+            package_yaml[key_name] = config_data[key_name]
 
     if arches:
         package_yaml['architectures'] = arches

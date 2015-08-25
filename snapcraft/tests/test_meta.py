@@ -55,6 +55,8 @@ class Compose(tests.TestCase):
         self.assertTrue('amd64' in y['architectures'])
         self.assertTrue('armhf' in y['architectures'])
         self.assertEqual(len(y['architectures']), 2)
+        self.assertFalse('type' in y)
+        self.assertFalse('frameworks' in y)
         self.assertFalse('binaries' in y)
         self.assertFalse('services' in y)
 
@@ -67,6 +69,8 @@ class Compose(tests.TestCase):
         self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
         self.assertFalse('architectures' in y)
         self.assertFalse('architecture' in y)
+        self.assertFalse('type' in y)
+        self.assertFalse('frameworks' in y)
         self.assertFalse('binaries' in y)
         self.assertFalse('services' in y)
 
@@ -89,6 +93,8 @@ class Compose(tests.TestCase):
         self.assertTrue('amd64' in y['architectures'])
         self.assertTrue('armhf' in y['architectures'])
         self.assertEqual(len(y['architectures']), 2)
+        self.assertFalse('type' in y)
+        self.assertFalse('frameworks' in y)
         self.assertFalse('services' in y)
         self.assertEqual(len(y['binaries']), 2)
         self.assertEqual(y['binaries'][0]['name'], 'binary1')
@@ -120,6 +126,8 @@ class Compose(tests.TestCase):
         self.assertTrue('amd64' in y['architectures'])
         self.assertTrue('armhf' in y['architectures'])
         self.assertEqual(len(y['architectures']), 2)
+        self.assertFalse('type' in y)
+        self.assertFalse('frameworks' in y)
         self.assertFalse('binaries' in y)
         self.assertEqual(len(y['services']), 3)
         self.assertEqual(y['services'][0]['name'], 'service1')
@@ -131,6 +139,25 @@ class Compose(tests.TestCase):
         self.assertEqual(y['services'][2]['name'], 'service3')
         self.assertFalse('stop' in y['services'][2])
         self.assertFalse('stop' in y['services'][2])
+
+    def test_plain_no_binaries_or_services_with_optionals(self):
+
+        self.config_data['frameworks'] = ['mir', ]
+
+        y = meta.compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+
+        self.assertEqual(y['name'], 'my-package')
+        self.assertEqual(y['version'], '1.0')
+        self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
+        self.assertFalse('architecture' in y)
+        self.assertTrue('amd64' in y['architectures'])
+        self.assertTrue('armhf' in y['architectures'])
+        self.assertEqual(len(y['architectures']), 2)
+        self.assertEqual(len(y['frameworks']), 1)
+        self.assertEqual(y['frameworks'][0], 'mir')
+        self.assertFalse('type' in y)
+        self.assertFalse('binaries' in y)
+        self.assertFalse('services' in y)
 
     def test_compose_readme(self):
         self.config_data['summary'] = 'one line summary'
