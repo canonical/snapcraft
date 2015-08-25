@@ -90,7 +90,7 @@ class Compose(tests.TestCase):
         self.assertTrue('armhf' in y['architectures'])
         self.assertEqual(len(y['architectures']), 2)
         self.assertFalse('services' in y)
-        self.assertEquals(len(y['binaries']), 2)
+        self.assertEqual(len(y['binaries']), 2)
         self.assertEqual(y['binaries'][0]['name'], 'binary1')
         self.assertEqual(y['binaries'][0]['exec'], 'binary.wrapped go')
         self.assertEqual(y['binaries'][1]['name'], 'binary2')
