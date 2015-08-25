@@ -6,3 +6,4 @@ description: a longer description
 
 parts:
     x-local-plugin:
+      source: .

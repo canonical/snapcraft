@@ -6,6 +6,6 @@
 
 override_dh_auto_test:
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
-	#python3 setup.py test
+	python3 setup.py test
 endif
 
