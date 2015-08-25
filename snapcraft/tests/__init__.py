@@ -32,3 +32,4 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
         self.addCleanup(common.set_plugindir, common.get_plugindir())
+        self.addCleanup(common.set_schemadir, common.get_schemadir())

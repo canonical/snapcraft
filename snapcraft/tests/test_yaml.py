@@ -37,7 +37,15 @@ class TestYaml(TestCase):
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
-        self.make_snapcraft_yaml("""parts:
+        dirs.setup_dirs()
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: test
+
+parts:
   ubuntu:
     packages: [fswebcam]
 """)
@@ -66,7 +74,13 @@ class TestYaml(TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        self.make_snapcraft_yaml("""parts:
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: test
+
+parts:
   p1:
     plugin: ubuntu
     after: [p2]

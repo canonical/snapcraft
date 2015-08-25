@@ -27,3 +27,4 @@ def setup_dirs():
     # only change the default if we are running from a checkout
     if os.path.exists(os.path.join(topdir, "setup.py")):
         common.set_plugindir(os.path.join(topdir, 'plugins'))
+        common.set_schemadir(os.path.join(topdir, 'schema'))
