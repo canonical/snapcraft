@@ -73,7 +73,7 @@ def compose_package_yaml(config_data, arches):
 
 
 def compose_readme(config_data):
-    return '{}\n\n{}'.format(config_data['summary'], config_data['description'])
+    return '{}\n{}\n'.format(config_data['summary'], config_data['description'])
 
 
 def _replace_cmd(execparts, cmd):
