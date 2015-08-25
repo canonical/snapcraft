@@ -1,3 +1,11 @@
+name: spongeshaker
+version: 0
+vendor: Michael Vogt <michael.vogt@ubuntu.com>
+binaries:
+ - name: bin/sha3sum
+summary: A python sha3 implementation
+description: A python2 project using snapcraft
+
 parts:
   spongeshaker:
     plugin: python3-project
@@ -6,4 +14,3 @@ parts:
     plugin: copy
     files:
      sha3sum.py: bin/sha3sum
-snappy-metadata: meta

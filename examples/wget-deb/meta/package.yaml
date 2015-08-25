@@ -1,5 +1,0 @@
-name: wget
-version: 0
-vendor: mterry@ubuntu.com
-binaries:
-    - name: usr/bin/wget

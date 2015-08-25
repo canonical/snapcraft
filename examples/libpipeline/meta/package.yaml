@@ -1,5 +1,0 @@
-name: pipelinetest
-version: 1.0
-vendor: Mike Terry
-binaries:
-  - name: ./bin/pipelinetest
