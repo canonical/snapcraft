@@ -236,8 +236,12 @@ def run(args):
         ssh_opts = [
             # We want to login with the specified ssh identity (key)
             '-i', ssh_key,
+            # We don't want strict host checking because it's a new VM with a
+            # random key each time.
             "-oStrictHostKeyChecking=no",
-            "-oUserKnownHostsFile=%s" % n.name
+            # We don't want to pollute the known_hosts file with new entries
+            # all the time so let's use a temporary file for that
+            "-oUserKnownHostsFile=%s" % n.name,
         ]
         while True:
             ret_code = _call(
