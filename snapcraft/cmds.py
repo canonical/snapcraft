@@ -169,38 +169,42 @@ def run(args):
             common.run(
                 ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
                 cwd=qemudir)
-    qemu = subprocess.Popen(
-        ["kvm", "-m", "768", "-nographic",
-         "-snapshot", "-redir", "tcp:8022::22", qemu_img],
-        stdin=subprocess.PIPE)
-    n = tempfile.NamedTemporaryFile()
-    ssh_opts = [
-        "-oStrictHostKeyChecking=no",
-        "-oUserKnownHostsFile=%s" % n.name
-    ]
-    while True:
+    qemu = None
+    try:
+        qemu = subprocess.Popen(
+            ["kvm", "-m", "768", "-nographic",
+             "-snapshot", "-redir", "tcp:8022::22", qemu_img],
+            stdin=subprocess.PIPE)
+        n = tempfile.NamedTemporaryFile()
+        ssh_opts = [
+            "-oStrictHostKeyChecking=no",
+            "-oUserKnownHostsFile=%s" % n.name
+        ]
+        while True:
+            ret_code = subprocess.call(
+                ["ssh"] + ssh_opts +
+                ["ubuntu@localhost", "-p", "8022", "true"])
+            if ret_code == 0:
+                break
+            print("Waiting for device")
+            time.sleep(1)
+        snap_dir = os.path.join(os.getcwd(), "snap")
+        # copy the snap
+        snaps = glob.glob(snap_dir + "/*.snap")
+        subprocess.call(
+            ["scp"] + ssh_opts + [
+                "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
+        # install the snap
         ret_code = subprocess.call(
             ["ssh"] + ssh_opts +
-            ["ubuntu@localhost", "-p", "8022", "true"])
-        if ret_code == 0:
-            break
-        print("Waiting for device")
-        time.sleep(1)
-    snap_dir = os.path.join(os.getcwd(), "snap")
-    # copy the snap
-    snaps = glob.glob(snap_dir + "/*.snap")
-    subprocess.call(
-        ["scp"] + ssh_opts + [
-            "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
-    # install the snap
-    ret_code = subprocess.call(
-        ["ssh"] + ssh_opts +
-        ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
-    # "login"
-    subprocess.call(
-        ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
-        preexec_fn=os.setsid)
-    qemu.kill()
+            ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
+        # "login"
+        subprocess.call(
+            ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
+            preexec_fn=os.setsid)
+    finally:
+        if qemu:
+            qemu.kill()
 
 
 def check_for_collisions(parts):
