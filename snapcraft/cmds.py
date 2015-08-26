@@ -259,6 +259,10 @@ def run(args):
         # copy the snap with the largest version number into the test VM
         snaps = glob.glob(snap_dir + "/*.snap")
         snaps.sort()
+        if not snaps:
+            logger.error("There are no .snap files ready")
+            logger.error("Perhaps you forgot to run 'snapcraft assemble'")
+            return 1
         _check_call(
             ["scp"] + ssh_opts + [
                 "-P", "8022", snaps[-1], "ubuntu@localhost:~/"])
