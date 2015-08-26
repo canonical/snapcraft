@@ -255,12 +255,13 @@ def run(args):
                 break
             print("Waiting for device")
             time.sleep(1)
-        snap_dir = os.path.join(os.getcwd(), "snap")
-        # copy the snap
+        snap_dir = os.path.join(os.getcwd())
+        # copy the snap with the largest version number into the test VM
         snaps = glob.glob(snap_dir + "/*.snap")
+        snaps.sort()
         _check_call(
             ["scp"] + ssh_opts + [
-                "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
+                "-P", "8022", snaps[-1], "ubuntu@localhost:~/"])
         # install the snap
         _check_call(
             ["ssh"] + ssh_opts +
