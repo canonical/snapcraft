@@ -25,47 +25,68 @@ from snapcraft import common
 logger = logging.getLogger(__name__)
 
 
-_package_keys = [
+_MANDATORY_PACKAGE_KEYS = [
     'name',
     'version',
     'vendor',
 ]
 
-_optional_package_keys = [
+_OPTIONAL_PACKAGE_KEYS = [
     'frameworks',
     'type',
 ]
 
 
 def create(config_data, arches=None):
-    '''Creates meta in snap_dir from config_data.'''
+    '''
+    Create  the meta directory and provision it with package.yaml and readme.md
+    in the snap dir using information from config_data and arches.
+    If provided arches, is a list of arches.
+
+    Returns meta_dir.
+    '''
     # TODO keys for using apparmor, setting an icon missing.
 
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
+    _write_package_yaml(meta_dir, config_data, arches)
+    _write_readme_md(meta_dir, config_data)
+
+    return meta_dir
+
+
+def _write_package_yaml(meta_dir, config_data, arches):
     package_yaml_path = os.path.join(meta_dir, 'package.yaml')
-    package_yaml = compose_package_yaml(config_data, arches)
+    package_yaml = _compose_package_yaml(config_data, arches)
 
     with open(package_yaml_path, 'w') as f:
         yaml.dump(package_yaml, stream=f, default_flow_style=False)
 
+
+def _write_readme_md(meta_dir, config_data):
     readme_md_path = os.path.join(meta_dir, 'readme.md')
-    readme_md = compose_readme(config_data)
+    readme_md = _compose_readme(config_data)
 
     with open(readme_md_path, 'w') as f:
         f.write(readme_md)
 
 
-def compose_package_yaml(config_data, arches):
-    '''Uses config_data to compose a proper package.yaml and returns.'''
+def _compose_package_yaml(config_data, arches):
+    '''
+    Creates a dictionary that can be used to yaml.dump a package.yaml using
+    config_data.
+    If provided arches, is a list of arches.
 
+    Missing key exceptions will be raised if config_data does not hold
+    MANDATORY_KEYS, config_data can be validated against the snapcraft schema.
+    '''
     package_yaml = {}
 
-    for key_name in _package_keys:
+    for key_name in _MANDATORY_PACKAGE_KEYS:
         package_yaml[key_name] = config_data[key_name]
 
-    for key_name in _optional_package_keys:
+    for key_name in _OPTIONAL_PACKAGE_KEYS:
         if key_name in config_data:
             package_yaml[key_name] = config_data[key_name]
 
@@ -81,8 +102,8 @@ def compose_package_yaml(config_data, arches):
     return package_yaml
 
 
-def compose_readme(config_data):
-    return '{}\n{}\n'.format(config_data['summary'], config_data['description'])
+def _compose_readme(config_data):
+    return '{config[summary]}\n{config[description]}\n'.format(config=config_data)
 
 
 def _replace_cmd(execparts, cmd):
@@ -95,15 +116,17 @@ def _wrap_exe(relexepath):
     exepath = os.path.join(snap_dir, relexepath)
     wrappath = exepath + '.wrapper'
 
+    # TODO talk to original author if the exception to be captured here is
+    # FileNotFoundError, the original code was a general catch all
     try:
         os.remove(wrappath)
-    except Exception:
+    except FileNotFoundError:
         pass
 
     wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
     if not os.path.exists(exepath) and '/' not in relexepath:
         # If it doesn't exist it might be in the path
-        logger.info('Checking to see if "{}" is in the $PATH'.format(relexepath))
+        logger.debug('Checking to see if "{}" is in the $PATH'.format(relexepath))
         with tempfile.NamedTemporaryFile('w+') as tempf:
             script = ('#!/bin/sh\n' +
                       '{}\n'.format(common.assemble_env()) +
