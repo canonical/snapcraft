@@ -242,6 +242,10 @@ def run(args):
             # We don't want to pollute the known_hosts file with new entries
             # all the time so let's use a temporary file for that
             "-oUserKnownHostsFile=%s" % n.name,
+            # Don't try keyboard interactive authentication, we're expecting to
+            # login via the key and if that doesn't work then everything else
+            # will fail anyway.
+            "-oKbdInteractiveAuthentication=no",
         ]
         while True:
             ret_code = _call(
