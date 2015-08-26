@@ -29,9 +29,10 @@ from snapcraft import (
 )
 
 
-class Compose(tests.TestCase):
+class ComposeTestCase(tests.TestCase):
 
     def setUp(self):
+        super().setUp()
         self.orig_wrap_exe = meta._wrap_exe
         meta._wrap_exe = Mock(return_value='binary.wrapped')
 
@@ -42,37 +43,33 @@ class Compose(tests.TestCase):
         }
 
     def tearDown(self):
+        super().tearDown()
         meta._wrap_exe = self.orig_wrap_exe
 
     def test_plain_no_binaries_or_services(self):
 
-        y = meta.compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
 
-        self.assertEqual(y['name'], 'my-package')
-        self.assertEqual(y['version'], '1.0')
-        self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
-        self.assertFalse('architecture' in y)
-        self.assertTrue('amd64' in y['architectures'])
-        self.assertTrue('armhf' in y['architectures'])
-        self.assertEqual(len(y['architectures']), 2)
-        self.assertFalse('type' in y)
-        self.assertFalse('frameworks' in y)
-        self.assertFalse('binaries' in y)
-        self.assertFalse('services' in y)
+        expected = {
+            'name': 'my-package',
+            'version': '1.0',
+            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'architectures': ['armhf', 'amd64'],
+        }
+
+        self.assertEqual(y, expected)
 
     def test_plain_no_binaries_or_services_or_arches(self):
 
-        y = meta.compose_package_yaml(self.config_data, None)
+        y = meta._compose_package_yaml(self.config_data, None)
 
-        self.assertEqual(y['name'], 'my-package')
-        self.assertEqual(y['version'], '1.0')
-        self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
-        self.assertFalse('architectures' in y)
-        self.assertFalse('architecture' in y)
-        self.assertFalse('type' in y)
-        self.assertFalse('frameworks' in y)
-        self.assertFalse('binaries' in y)
-        self.assertFalse('services' in y)
+        expected = {
+            'name': 'my-package',
+            'version': '1.0',
+            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+        }
+
+        self.assertEqual(y, expected)
 
     def test_with_binaries(self):
         self.config_data['binaries'] = [
@@ -85,22 +82,26 @@ class Compose(tests.TestCase):
             },
         ]
 
-        y = meta.compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
 
-        self.assertEqual(y['name'], 'my-package')
-        self.assertEqual(y['version'], '1.0')
-        self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
-        self.assertTrue('amd64' in y['architectures'])
-        self.assertTrue('armhf' in y['architectures'])
-        self.assertEqual(len(y['architectures']), 2)
-        self.assertFalse('type' in y)
-        self.assertFalse('frameworks' in y)
-        self.assertFalse('services' in y)
-        self.assertEqual(len(y['binaries']), 2)
-        self.assertEqual(y['binaries'][0]['name'], 'binary1')
-        self.assertEqual(y['binaries'][0]['exec'], 'binary.wrapped go')
-        self.assertEqual(y['binaries'][1]['name'], 'binary2')
-        self.assertEqual(y['binaries'][1]['exec'], 'binary.wrapped')
+        expected = {
+            'name': 'my-package',
+            'version': '1.0',
+            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'architectures': ['armhf', 'amd64'],
+            'binaries': [
+                {
+                    'name': 'binary1',
+                    'exec': 'binary.wrapped go',
+                },
+                {
+                    'name': 'binary2',
+                    'exec': 'binary.wrapped',
+                },
+            ],
+        }
+
+        self.assertEqual(y, expected)
 
     def test_with_services(self):
         self.config_data['services'] = [
@@ -118,46 +119,45 @@ class Compose(tests.TestCase):
             },
         ]
 
-        y = meta.compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
 
-        self.assertEqual(y['name'], 'my-package')
-        self.assertEqual(y['version'], '1.0')
-        self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
-        self.assertTrue('amd64' in y['architectures'])
-        self.assertTrue('armhf' in y['architectures'])
-        self.assertEqual(len(y['architectures']), 2)
-        self.assertFalse('type' in y)
-        self.assertFalse('frameworks' in y)
-        self.assertFalse('binaries' in y)
-        self.assertEqual(len(y['services']), 3)
-        self.assertEqual(y['services'][0]['name'], 'service1')
-        self.assertEqual(y['services'][0]['start'], 'binary.wrapped')
-        self.assertFalse('stop' in y['services'][0])
-        self.assertEqual(y['services'][1]['name'], 'service2')
-        self.assertEqual(y['services'][1]['start'], 'binary.wrapped --start')
-        self.assertEqual(y['services'][1]['stop'], 'binary.wrapped --stop')
-        self.assertEqual(y['services'][2]['name'], 'service3')
-        self.assertFalse('stop' in y['services'][2])
-        self.assertFalse('stop' in y['services'][2])
+        expected = {
+            'name': 'my-package',
+            'version': '1.0',
+            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'architectures': ['armhf', 'amd64'],
+            'services': [
+                {
+                    'name': 'service1',
+                    'start': 'binary.wrapped',
+                },
+                {
+                    'name': 'service2',
+                    'start': 'binary.wrapped --start',
+                    'stop': 'binary.wrapped --stop',
+                },
+                {
+                    'name': 'service3',
+                }
+            ],
+        }
+
+        self.assertEqual(y, expected)
 
     def test_plain_no_binaries_or_services_with_optionals(self):
-
         self.config_data['frameworks'] = ['mir', ]
 
-        y = meta.compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
 
-        self.assertEqual(y['name'], 'my-package')
-        self.assertEqual(y['version'], '1.0')
-        self.assertEqual(y['vendor'], 'Sergio Schvezov <sergio.schvezov@canonical.com>')
-        self.assertFalse('architecture' in y)
-        self.assertTrue('amd64' in y['architectures'])
-        self.assertTrue('armhf' in y['architectures'])
-        self.assertEqual(len(y['architectures']), 2)
-        self.assertEqual(len(y['frameworks']), 1)
-        self.assertEqual(y['frameworks'][0], 'mir')
-        self.assertFalse('type' in y)
-        self.assertFalse('binaries' in y)
-        self.assertFalse('services' in y)
+        expected = {
+            'name': 'my-package',
+            'version': '1.0',
+            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'architectures': ['armhf', 'amd64'],
+            'frameworks': ['mir', ],
+        }
+
+        self.assertEqual(y, expected)
 
     def test_compose_readme(self):
         self.config_data['summary'] = 'one line summary'
@@ -168,12 +168,13 @@ the description
 which can be longer
 '''
 
-        self.assertEqual(meta.compose_readme(self.config_data), readme_text)
+        self.assertEqual(meta._compose_readme(self.config_data), readme_text)
 
 
 class Create(tests.TestCase):
 
     def setUp(self):
+        super().setUp()
         self.orig_os_makedirs = os.makedirs
 
         self.config_data = {
@@ -185,6 +186,7 @@ class Create(tests.TestCase):
         }
 
     def tearDown(self):
+        super().tearDown()
         os.makedirs = self.orig_os_makedirs
 
     def test_create_meta(self):
@@ -195,6 +197,8 @@ class Create(tests.TestCase):
             meta.create(self.config_data, ['amd64'])
 
         meta_dir = os.path.join(os.path.abspath(os.curdir), 'snap', 'meta')
+
+        os.makedirs.assert_called_once_with(meta_dir, exist_ok=True)
 
         mock_the_open.assert_has_calls([
             call(os.path.join(meta_dir, 'package.yaml'), 'w'),
@@ -237,6 +241,7 @@ class Create(tests.TestCase):
         )
 
 
+# TODO this needs more tests.
 class WrapExeTestCase(tests.TestCase):
 
     def test_wrap_exe_must_write_wrapper(self):
@@ -249,7 +254,7 @@ class WrapExeTestCase(tests.TestCase):
         expected = ('#!/bin/sh\n'
                     '\n'
                     'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
-        with open(wrapper_path, 'r') as wrapper_file:
+        with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
