@@ -208,6 +208,14 @@ def run(args):
     else:
         logger.info("Using the following ssh key: %s", ssh_key)
 
+    def _call(args, **kwargs):
+        logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
+        return subprocess.call(args, **kwargs)
+
+    def _check_call(args, **kwargs):
+        logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
+        return subprocess.check_call(args, **kwargs)
+
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
@@ -232,7 +240,7 @@ def run(args):
             "-oUserKnownHostsFile=%s" % n.name
         ]
         while True:
-            ret_code = subprocess.call(
+            ret_code = _call(
                 ["ssh"] + ssh_opts +
                 ["ubuntu@localhost", "-p", "8022", "true"])
             if ret_code == 0:
@@ -242,15 +250,15 @@ def run(args):
         snap_dir = os.path.join(os.getcwd(), "snap")
         # copy the snap
         snaps = glob.glob(snap_dir + "/*.snap")
-        subprocess.call(
+        _call(
             ["scp"] + ssh_opts + [
                 "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
         # install the snap
-        ret_code = subprocess.call(
+        ret_code = _call(
             ["ssh"] + ssh_opts +
             ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
         # "login"
-        subprocess.call(
+        _call(
             ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
             preexec_fn=os.setsid)
     finally:
