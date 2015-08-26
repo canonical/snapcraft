@@ -33,18 +33,16 @@ class ComposeTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.orig_wrap_exe = meta._wrap_exe
-        meta._wrap_exe = Mock(return_value='binary.wrapped')
+        patcher = patch('snapcraft.meta._wrap_exe')
+        mock_wrap_exe = patcher.start()
+        mock_wrap_exe.return_value = 'binary.wrapped'
+        self.addCleanup(patcher.stop)
 
         self.config_data = {
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
         }
-
-    def tearDown(self):
-        super().tearDown()
-        meta._wrap_exe = self.orig_wrap_exe
 
     def test_plain_no_binaries_or_services(self):
 
