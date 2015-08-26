@@ -258,15 +258,15 @@ def run(args):
         snap_dir = os.path.join(os.getcwd(), "snap")
         # copy the snap
         snaps = glob.glob(snap_dir + "/*.snap")
-        _call(
+        _check_call(
             ["scp"] + ssh_opts + [
                 "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
         # install the snap
-        ret_code = _call(
+        _check_call(
             ["ssh"] + ssh_opts +
             ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
         # "login"
-        _call(
+        _check_call(
             ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
             preexec_fn=os.setsid)
     finally:
