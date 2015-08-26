@@ -14,6 +14,7 @@ Build-Depends: bzr,
                python3 (>= 3.2),
                python3-apt,
                python3-fixtures,
+               python3-mccabe
                python3-setuptools,
                python3-testscenarios,
                python3-yaml,

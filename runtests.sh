@@ -22,12 +22,29 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 
 SRC_PATHS="bin snapcraft snapcraft/tests"
 
+# These three checks could easily be done with flake8 in one shot if
+# we had python3-flake8 provide flake8
 # Ignore 501 (line-too-long)
 pep8 $SRC_PATHS --ignore=E501
 
 pyflakes3 $SRC_PATHS
 
+# mccabe in 'warning' mode as we have high complexity
+mccabe_list=
+for unit in $(find . -type f -name '*.py')
+do
+  output=$(python3 -m mccabe --min 10 "$unit")
+  [ -n "$output" ] && mccabe_list="- $unit:\n  $output\n$mccabe_list"
+done
+
+if [ -n "$mccabe_list" ]; then
+  echo -e "\e[1;31mThe project has gotten complex\e[0m."
+  echo "Here's the list of units exceeding 10:"
+  echo -e "$mccabe_list"
+fi
+
 if which python3-coverage >/dev/null 2>&1; then
+    python3-coverage erase
     python3-coverage run --branch --source snapcraft -m unittest
     mv .coverage .coverage.unit
 else
@@ -90,7 +107,11 @@ fi
 if which python3-coverage >/dev/null 2>&1; then
     python3-coverage combine
     python3-coverage report
-    python3-coverage erase
+
+    echo
+    echo "Run 'python3-coverage html' to get a nice report"
+    echo "View it by running 'x-www-browser htmlcov'"
+    echo
 fi
 
 echo -e "\e[1;32mEverything passed\e[0m"
