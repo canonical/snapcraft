@@ -195,6 +195,19 @@ def _find_latest_private_key():
 
 
 def run(args):
+    # Find the ssh key that ubuntu-device-flash would use so that we can use it
+    # ourselves as well. This may not be the default key that the user has
+    # configured.
+    # See: https://bugs.launchpad.net/snapcraft/+bug/1486659
+    try:
+        ssh_key = _find_latest_private_key()
+    except LookupError:
+        logger.error("You need to have an SSH key to use this command")
+        logger.error("Please generate one with ssh-keygen(1)")
+        return 1
+    else:
+        logger.info("Using the following ssh key: %s", ssh_key)
+
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
@@ -213,6 +226,8 @@ def run(args):
             stdin=subprocess.PIPE)
         n = tempfile.NamedTemporaryFile()
         ssh_opts = [
+            # We want to login with the specified ssh identity (key)
+            '-i', ssh_key,
             "-oStrictHostKeyChecking=no",
             "-oUserKnownHostsFile=%s" % n.name
         ]
