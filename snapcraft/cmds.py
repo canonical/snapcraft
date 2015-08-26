@@ -208,6 +208,16 @@ def run(args):
     else:
         logger.info("Using the following ssh key: %s", ssh_key)
 
+    # Find available *.snap files to copy into the test VM
+    snap_dir = os.path.join(os.getcwd())
+    # copy the snap with the largest version number into the test VM
+    snaps = glob.glob(snap_dir + "/*.snap")
+    snaps.sort()
+    if not snaps:
+        logger.error("There are no .snap files ready")
+        logger.error("Perhaps you forgot to run 'snapcraft assemble'")
+        return 1
+
     def _call(args, **kwargs):
         logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
         return subprocess.call(args, **kwargs)
@@ -255,14 +265,7 @@ def run(args):
                 break
             print("Waiting for device")
             time.sleep(1)
-        snap_dir = os.path.join(os.getcwd())
-        # copy the snap with the largest version number into the test VM
-        snaps = glob.glob(snap_dir + "/*.snap")
-        snaps.sort()
-        if not snaps:
-            logger.error("There are no .snap files ready")
-            logger.error("Perhaps you forgot to run 'snapcraft assemble'")
-            return 1
+        # copy the most recent snap into the test VM
         _check_call(
             ["scp"] + ssh_opts + [
                 "-P", "8022", snaps[-1], "ubuntu@localhost:~/"])
