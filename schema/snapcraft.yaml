@@ -11,14 +11,14 @@ properties:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string
     description: package version
-    pattern: "^[a-zA-Z0-9+~-]*$"
+    pattern: "^[a-zA-Z0-9.+~-]*$"
   vendor:
     type: string
     format: email
   summary:
     type: string
     description: one line summary for the package
-    length: 78
+    maxLength: 78
   description:
     type: string
     description: long description of the package
@@ -30,6 +30,8 @@ properties:
       - framework
   frameworks:
     type: array
+    minItems: 1
+    uniqueItems: true
     items:
       - type: string
   services:
@@ -62,8 +64,9 @@ properties:
           - name
   parts:
     type: object
+    minProperties: 1
     patternProperties:
-      "[a-z0-9][a-z0-9+-]":
+      ^[a-z0-9][a-z0-9+-]*$:
         type: object
         properties:
           plugin:
@@ -76,6 +79,7 @@ properties:
         # required:
           # - plugin
           # - source
+    addtionalProperties: false
 required:
   - name
   - version

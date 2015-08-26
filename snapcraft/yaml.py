@@ -28,6 +28,14 @@ from snapcraft import common
 logger = logging.getLogger(__name__)
 
 
+def _validate_snapcraft_yaml(snapcraft_yaml):
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
+    with open(schema_file) as fp:
+        schema = yaml.load(fp)
+
+    jsonschema.validate(snapcraft_yaml, schema)
+
+
 class Config:
 
     def __init__(self):
@@ -44,15 +52,12 @@ class Config:
 
         # Make sure the loaded snapcraft yaml follows the schema
         try:
-            schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
-            with open(schema_file) as fp:
-                schema = yaml.load(fp)
-            jsonschema.validate(self.data, schema)
+            _validate_snapcraft_yaml(self.data)
         except FileNotFoundError:
-            logger.error('Schema is missing, could not validate snapcraft.yaml, check installation', schema_file)
+            logger.error('Schema is missing, could not validate snapcraft.yaml, check installation')
             sys.exit(1)
         except jsonschema.ValidationError as e:
-            msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message),
+            msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
             logger.error(msg)
             sys.exit(1)
 
