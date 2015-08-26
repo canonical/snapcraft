@@ -238,10 +238,22 @@ def run(args):
                 cwd=qemudir)
     qemu = None
     try:
+        # Allow the developer to provide additional arguments to qemu.  This
+        # can be used, for example, to pass through USB devices from the host.
+        # This can enable a lot of hardware-specific use cases directly inside
+        # the snapcraft run workflow.
+        #
+        # For example:
+        # $ export SNAPCRAFT_RUN_QEMU_ARGS="-usb -device usb-host,hostbus=1,hostaddr=10"
+        # $ snapcraft run
+        qemu_args = os.getenv("SNAPCRAFT_RUN_QEMU_ARGS")
+        if qemu_args is not None:
+            qemu_args = shlex.split(qemu_args)
+        else:
+            qemu_args = []
         qemu = subprocess.Popen(
-            ["kvm", "-m", "768", "-nographic",
-             "-snapshot", "-redir", "tcp:8022::22", qemu_img],
-            stdin=subprocess.PIPE)
+            ["kvm", "-m", "768", "-nographic", "-snapshot", "-redir",
+             "tcp:8022::22", qemu_img] + qemu_args, stdin=subprocess.PIPE)
         n = tempfile.NamedTemporaryFile()
         ssh_opts = [
             # We want to login with the specified ssh identity (key)
