@@ -42,7 +42,7 @@ class Config:
             logger.error("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
 
-        # Make sure the loaded snapcraft yaml follows the schmea
+        # Make sure the loaded snapcraft yaml follows the schema
         try:
             schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
             with open(schema_file) as fp:
