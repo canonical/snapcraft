@@ -39,7 +39,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         else:
             # User didn't specify a package, use the part name
             if name == 'ubuntu':
-                logger.error('Part %s needs either a package option or a name' % name)
+                logger.error('Part %s needs either a package option or a name', name)
                 sys.exit(1)
             self.included_packages.append(name)
 
@@ -94,7 +94,7 @@ class UbuntuPlugin(snapcraft.BasePlugin):
         for p in packages:
             if p not in alldeps:
                 exit = True
-                logger.error("Package '{}' not recognized".format(p))
+                logger.error("Package '%s' not recognized", p)
         if exit:
             sys.exit(1)
 

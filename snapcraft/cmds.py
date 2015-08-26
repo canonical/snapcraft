@@ -220,7 +220,7 @@ def check_for_collisions(parts):
         for otherPartName in partsFiles:
             common = partFiles & partsFiles[otherPartName]
             if common:
-                logger.error('Error: parts %s and %s have the following files in common:\n  %s' % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                logger.error('Error: parts %s and %s have the following files in common:\n  %s', otherPartName, part.names()[0], '\n  '.join(sorted(common)))
                 return False
 
         # And add our files to the list
@@ -266,5 +266,5 @@ def cmd(args):
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
-                logger.error('Failed doing %s for %s!' % (cmd, part.names()[0]))
+                logger.error('Failed doing %s for %s!', cmd, part.names()[0])
                 sys.exit(1)
