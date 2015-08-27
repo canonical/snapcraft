@@ -6,6 +6,7 @@ binaries:
    exec: bin/wrapper
 summary: A java exmaple
 description: this is not much more than an example
+icon: icon.png
 
 parts:
     local:

@@ -5,6 +5,7 @@ binaries:
     - name: usr/bin/wget
 summary: wget for snappy
 description: a basic example from ubuntu packages
+icon: icon.png
 
 parts:
   wget:

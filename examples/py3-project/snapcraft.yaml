@@ -5,6 +5,7 @@ binaries:
  - name: bin/sha3sum
 summary: A python sha3 implementation
 description: A python2 project using snapcraft
+icon: icon.png
 
 parts:
   spongeshaker:

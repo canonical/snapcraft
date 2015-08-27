@@ -47,6 +47,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: test
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -82,6 +83,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: test
+icon: my-icon.png
 
 parts:
   p1:
@@ -109,6 +111,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: nothing
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -134,6 +137,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: nothing
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -159,6 +163,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: nothing
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -183,6 +188,7 @@ parts:
 version: "1"
 vendor: me <me@me.com>
 summary: test
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -209,6 +215,7 @@ class TestValidation(TestCase):
             'vendor': 'Me <me@me.com>',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
+            'icon': 'my-icon.png',
             'parts': {
                 'part1': {
                     'type': 'project',

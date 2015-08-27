@@ -3,6 +3,7 @@ version: 1.0
 vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: one line summary
 description: a longer description
+icon: icon.png
 binaries:
   - exec: binary1
     name: assemble-bin

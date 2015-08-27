@@ -5,6 +5,7 @@ binaries:
   - name: ./bin/godd
 summary: Simple dd like tool
 description: written in go so it is self contained and really portable, you would need to use hw-assign to access devices.
+icon: icon.png
 
 parts:
   godd:
