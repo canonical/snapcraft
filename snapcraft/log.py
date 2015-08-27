@@ -43,7 +43,7 @@ def configure(logger_name=None):
     handlers = [stdout_handler, stderr_handler]
 
     formatter = logging.Formatter(
-        _COLOR_BOLD + '{msg}' + _COLOR_END, style='{')
+        _COLOR_BOLD + '{message}' + _COLOR_END, style='{')
     logger = logging.getLogger(logger_name)
     for handler in handlers:
         handler.setFormatter(formatter)
