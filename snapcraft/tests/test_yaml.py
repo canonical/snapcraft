@@ -340,5 +340,5 @@ class TestValidation(TestCase):
         with self.assertRaises(jsonschema.ValidationError) as raised:
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        expected_message = '\'my-icon.png\' is not a icon-path'
+        expected_message = '\'my-icon.png\' is not a \'icon-path\''
         self.assertEqual(raised.exception.message, expected_message, msg=self.data)
