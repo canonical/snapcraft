@@ -8,5 +8,5 @@ tests/unit/stage/
 build
 dist
 *.egg-info
-.coverage
+.coverage**
 htmlcov
