@@ -18,12 +18,32 @@ import logging
 import sys
 
 import yaml
+import jsonschema
+import os
 
 import snapcraft.plugin
 from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
+
+
+class SchemaNotFoundError(Exception):
+
+    def __init__(self, message):
+        self.message = message
+
+
+def _validate_snapcraft_yaml(snapcraft_yaml):
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
+
+    try:
+        with open(schema_file) as fp:
+            schema = yaml.load(fp)
+    except FileNotFoundError:
+        raise SchemaNotFoundError('Schema is missing, could not validate snapcraft.yaml, check installation')
+
+    jsonschema.validate(snapcraft_yaml, schema)
 
 
 class Config:
@@ -39,6 +59,18 @@ class Config:
         except FileNotFoundError:
             logger.error("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
+
+        # Make sure the loaded snapcraft yaml follows the schema
+        try:
+            _validate_snapcraft_yaml(self.data)
+        except SchemaNotFoundError as e:
+            logger.error(e.message)
+            sys.exit(1)
+        except jsonschema.ValidationError as e:
+            msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
+            logger.error(msg)
+            sys.exit(1)
+
         self.build_tools = self.data.get('build-tools', [])
 
         for part_name in self.data.get("parts", []):
