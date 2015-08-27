@@ -19,9 +19,11 @@ import logging
 import os
 import tempfile
 import unittest
+import unittest.mock
 
 import fixtures
 
+import snapcraft.common
 import snapcraft.yaml
 from snapcraft import dirs
 from snapcraft.tests import TestCase
@@ -309,3 +311,16 @@ class TestValidation(TestCase):
 
         expected_message = '\'name\' is a required property'
         self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+
+    def test_schema_file_not_found(self):
+        mock_the_open = unittest.mock.mock_open()
+        mock_the_open.side_effect = FileNotFoundError()
+
+        with unittest.mock.patch('snapcraft.yaml.open', mock_the_open, create=True):
+            with self.assertRaises(snapcraft.yaml.SchemaNotFoundError) as raised:
+                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_path = os.path.join(snapcraft.common.get_schemadir(), 'snapcraft.yaml')
+        mock_the_open.assert_called_once_with(expected_path)
+        expected_message = 'Schema is missing, could not validate snapcraft.yaml, check installation'
+        self.assertEqual(raised.exception.message, expected_message)
