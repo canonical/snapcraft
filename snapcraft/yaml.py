@@ -113,7 +113,7 @@ class Config:
                         foundIt = True
                         break
                 if not foundIt:
-                    logger.error("Could not find part name %s" % dep)
+                    logger.error("Could not find part name %s", dep)
                     sys.exit(1)
 
         # Now sort them (this is super inefficient, but easy-ish to follow)
