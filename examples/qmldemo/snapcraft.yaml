@@ -1,8 +1,20 @@
+name: qmldemo
+version: 1
+vendor: Ted Gould <ted@canonical.com>
+frameworks:
+  - mir
+binaries:
+  - name: qmldemo
+    exec: qmlscene demo.qml --
+    caps:
+      - mir_client
+      - network-client
+summary: qml demo
+description: An example of shipping a usable QML file in a snap using the QML plugin.
+
 parts:
   qml:
     plugin: qml
   qmldemo:
     plugin: copy
     files:
-      demo.qml: demo.qml
-snappy-metadata: meta

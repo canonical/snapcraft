@@ -7,16 +7,6 @@ command:
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 
-id: snapcraft/normal/assemble-no-meta
-plugin: shell
-estimated_duration: 0.3
-command:
-    set -x
-    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
-    test $? = 1 || exit 1
-    echo $OUTPUT | grep "Missing snappy metadata file"
-
 id: snapcraft/normal/assemble-meta-externally
 plugin: shell
 estimated_duration: 0.3
@@ -34,11 +24,8 @@ estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    echo "snappy-metadata: snappy" >> snapcraft.yaml
     ${SNAPCRAFT} assemble
     test -e "assemble_1.0_$(dpkg-architecture -qDEB_BUILD_ARCH).snap"
-    sed -i "s/@ARCH@/$(dpkg-architecture -qDEB_BUILD_ARCH)/g" package.yaml.after
-    diff -u package.yaml.after snap/meta/package.yaml
     sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_BUILD_MULTIARCH)/g" binary1.after
     diff -u binary1.after snap/binary1.wrapper
     export SNAP_APP_PATH=`pwd`/snap

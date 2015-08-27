@@ -1,5 +1,14 @@
+name: gopaste
+version: 1.0
+vendor: Michael Terry <mterry@ubuntu.com>
+services:
+  - name: gopaste
+    description: "gopaste"
+    start: bin/gopaste
+summary: Simple pasting tool
+description: Runs a service that allows you to paste to and share.
+
 parts:
   gopaste:
     plugin: go-project
     source: git://github.com/wisnij/gopaste/gopasted
-snappy-metadata: meta

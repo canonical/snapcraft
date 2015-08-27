@@ -1,3 +1,9 @@
+name: test-package
+version: 0.1
+vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
+summary: one line summary
+description: a longer description
+
 parts:
     bzr:
         plugin: make-project

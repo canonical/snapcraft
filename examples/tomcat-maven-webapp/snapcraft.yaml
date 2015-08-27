@@ -1,3 +1,17 @@
+name: tomcat-webapp-demo
+vendor: Loïc Minier <loic.minier@ubuntu.com>
+version: 1.0
+architectures:
+ - amd64
+services:
+ - name: tomcat
+   start: bin/wrapper
+   caps:
+   - networking
+   - network-service
+summary: Demo of Tomcat-hosted Webapp
+description: This is a demo snap of a Tomcat-hosted webapp produced by snapcraft with maven.
+
 parts:
     webapp:
         plugin: maven-project
@@ -8,4 +22,3 @@ parts:
     local-files:
         plugin: make-project
         source: .
-snappy-metadata: meta
