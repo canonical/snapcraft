@@ -19,14 +19,13 @@ import logging
 import os
 import tempfile
 import unittest
+import unittest.mock
 
 import fixtures
 
+import snapcraft.common
+import snapcraft.yaml
 from snapcraft import dirs
-from snapcraft.yaml import (
-    _validate_snapcraft_yaml,
-    Config,
-)
 from snapcraft.tests import TestCase
 
 
@@ -53,7 +52,7 @@ parts:
   ubuntu:
     packages: [fswebcam]
 """)
-        Config()
+        snapcraft.yaml.Config()
         mock_loadPlugin.assert_called_with("ubuntu", "ubuntu", {
             "packages": ["fswebcam"],
         })
@@ -64,7 +63,7 @@ parts:
 
         # no snapcraft.yaml
         with self.assertRaises(SystemExit) as raised:
-            Config()
+            snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
@@ -93,7 +92,7 @@ parts:
     after: [p1]
 """)
         with self.assertRaises(SystemExit) as raised:
-            Config()
+            snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual('Circular dependency chain!\n', fake_logger.output)
@@ -116,7 +115,7 @@ parts:
     packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
-            Config()
+            snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
@@ -141,7 +140,7 @@ parts:
     packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
-            Config()
+            snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
@@ -166,7 +165,7 @@ parts:
     packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
-            Config()
+            snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
@@ -190,7 +189,7 @@ parts:
     packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
-            Config()
+            snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
@@ -224,7 +223,7 @@ class TestValidation(TestCase):
                 del data[key]
 
                 with self.assertRaises(jsonschema.ValidationError) as raised:
-                    _validate_snapcraft_yaml(data)
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = '\'{}\' is a required property'.format(key)
                 self.assertEqual(raised.exception.message, expected_message, msg=data)
@@ -242,7 +241,7 @@ class TestValidation(TestCase):
                 data['name'] = name
 
                 with self.assertRaises(jsonschema.ValidationError) as raised:
-                    _validate_snapcraft_yaml(data)
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = '\'{}\' does not match \'^[a-z0-9][a-z0-9+-]*$\''.format(name)
                 self.assertEqual(raised.exception.message, expected_message, msg=data)
@@ -250,17 +249,17 @@ class TestValidation(TestCase):
     def test_summary_too_long(self):
         self.data['summary'] = 'a' * 80
         with self.assertRaises(jsonschema.ValidationError) as raised:
-            _validate_snapcraft_yaml(self.data)
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_message = '\'{}\' is too long'.format(self.data['summary'])
         self.assertEqual(raised.exception.message, expected_message, msg=self.data)
 
     def test_valid_types(self):
         self.data['type'] = 'app'
-        _validate_snapcraft_yaml(self.data)
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         self.data['type'] = 'framework'
-        _validate_snapcraft_yaml(self.data)
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
     def test_invalid_types(self):
         invalid_types = [
@@ -277,7 +276,7 @@ class TestValidation(TestCase):
                 data['type'] = t
 
                 with self.assertRaises(jsonschema.ValidationError) as raised:
-                    _validate_snapcraft_yaml(data)
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = '\'{}\' is not one of [\'app\', \'framework\']'.format(t)
                 self.assertEqual(raised.exception.message, expected_message, msg=data)
@@ -298,7 +297,7 @@ class TestValidation(TestCase):
             }
         ]
 
-        _validate_snapcraft_yaml(self.data)
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
     def test_services_required_properties(self):
         self.data['services'] = [
@@ -308,7 +307,20 @@ class TestValidation(TestCase):
         ]
 
         with self.assertRaises(jsonschema.ValidationError) as raised:
-            _validate_snapcraft_yaml(self.data)
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_message = '\'name\' is a required property'
         self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+
+    def test_schema_file_not_found(self):
+        mock_the_open = unittest.mock.mock_open()
+        mock_the_open.side_effect = FileNotFoundError()
+
+        with unittest.mock.patch('snapcraft.yaml.open', mock_the_open, create=True):
+            with self.assertRaises(snapcraft.yaml.SchemaNotFoundError) as raised:
+                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_path = os.path.join(snapcraft.common.get_schemadir(), 'snapcraft.yaml')
+        mock_the_open.assert_called_once_with(expected_path)
+        expected_message = 'Schema is missing, could not validate snapcraft.yaml, check installation'
+        self.assertEqual(raised.exception.message, expected_message)
