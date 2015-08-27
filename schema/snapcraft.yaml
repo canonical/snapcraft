@@ -18,6 +18,7 @@ properties:
   icon:
     type: string
     description: path to a 512x512 icon representing the package.
+    format: icon-path
   summary:
     type: string
     description: one line summary for the package
