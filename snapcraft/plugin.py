@@ -266,6 +266,6 @@ class PluginHandler:
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
-        logger.error('Could not load part {}'.format(plugin_name))
+        logger.error('Could not load part %s', plugin_name)
         sys.exit(1)
     return part
