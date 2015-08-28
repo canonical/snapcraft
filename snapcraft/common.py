@@ -20,6 +20,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import urllib
 
 
 COMMAND_ORDER = ["pull", "build", "stage", "snap"]
@@ -90,3 +91,7 @@ def set_schemadir(schemadir):
 
 def get_schemadir():
     return _schemadir
+
+
+def isurl(url):
+    return urllib.parse.urlparse(url).scheme != ""
