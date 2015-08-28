@@ -7,6 +7,7 @@ services:
    security-template: unconfined
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
+icon: icon.png
 
 parts:
     golang-static-http:

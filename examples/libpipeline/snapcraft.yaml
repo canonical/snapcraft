@@ -5,6 +5,7 @@ binaries:
   - name: ./bin/pipelinetest
 summary: Libpipeline example
 description: this is an example package of an autotools project built with snapcraft using
+icon: icon.png
 
 parts:
     pipelinetest:

@@ -7,6 +7,7 @@ services:
     start: bin/gopaste
 summary: Simple pasting tool
 description: Runs a service that allows you to paste to and share.
+icon: icon.png
 
 parts:
   gopaste:

@@ -20,12 +20,18 @@ import sys
 import yaml
 import jsonschema
 import os
+import os.path
 
 import snapcraft.plugin
 from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
+
+
+@jsonschema.FormatChecker.cls_checks('icon-path')
+def _validate_file_exists(instance):
+    return os.path.exists(instance)
 
 
 class SchemaNotFoundError(Exception):
@@ -43,7 +49,8 @@ def _validate_snapcraft_yaml(snapcraft_yaml):
     except FileNotFoundError:
         raise SchemaNotFoundError('Schema is missing, could not validate snapcraft.yaml, check installation')
 
-    jsonschema.validate(snapcraft_yaml, schema)
+    format_check = jsonschema.FormatChecker()
+    jsonschema.validate(snapcraft_yaml, schema, format_checker=format_check)
 
 
 class Config:

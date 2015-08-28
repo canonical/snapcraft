@@ -17,6 +17,7 @@
 import os
 import logging
 import shlex
+import shutil
 import tempfile
 import yaml
 
@@ -29,6 +30,7 @@ _MANDATORY_PACKAGE_KEYS = [
     'name',
     'version',
     'vendor',
+    'icon',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
@@ -50,6 +52,8 @@ def create(config_data, arches=None):
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
+    config_data['icon'] = _copy_icon(meta_dir, config_data['icon'])
+
     _write_package_yaml(meta_dir, config_data, arches)
     _write_readme_md(meta_dir, config_data)
 
@@ -70,6 +74,13 @@ def _write_readme_md(meta_dir, config_data):
 
     with open(readme_md_path, 'w') as f:
         f.write(readme_md)
+
+
+def _copy_icon(meta_dir, icon_path):
+    new_icon_path = os.path.join(meta_dir, os.path.basename(icon_path))
+    shutil.copyfile(icon_path, new_icon_path)
+
+    return os.path.join('meta', os.path.basename(icon_path))
 
 
 def _compose_package_yaml(config_data, arches):

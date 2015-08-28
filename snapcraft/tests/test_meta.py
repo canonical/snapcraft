@@ -16,7 +16,6 @@
 
 import os
 from unittest.mock import (
-    Mock,
     call,
     mock_open,
     patch,
@@ -42,6 +41,7 @@ class ComposeTestCase(tests.TestCase):
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'icon': 'my-icon.png',
         }
 
     def test_plain_no_binaries_or_services(self):
@@ -52,6 +52,7 @@ class ComposeTestCase(tests.TestCase):
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
         }
 
@@ -65,6 +66,7 @@ class ComposeTestCase(tests.TestCase):
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'icon': 'my-icon.png',
         }
 
         self.assertEqual(y, expected)
@@ -86,6 +88,7 @@ class ComposeTestCase(tests.TestCase):
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
             'binaries': [
                 {
@@ -123,6 +126,7 @@ class ComposeTestCase(tests.TestCase):
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
             'services': [
                 {
@@ -151,6 +155,7 @@ class ComposeTestCase(tests.TestCase):
             'name': 'my-package',
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
+            'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
             'frameworks': ['mir', ],
         }
@@ -173,7 +178,13 @@ class Create(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.orig_os_makedirs = os.makedirs
+        patcher_makedirs = patch('os.makedirs')
+        self.mock_makedirs = patcher_makedirs.start()
+        self.addCleanup(patcher_makedirs.stop)
+
+        patcher_copyfile = patch('shutil.copyfile')
+        self.mock_copyfile = patcher_copyfile.start()
+        self.addCleanup(patcher_copyfile.stop)
 
         self.config_data = {
             'name': 'my-package',
@@ -181,14 +192,10 @@ class Create(tests.TestCase):
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'description': 'my description',
             'summary': 'my summary',
+            'icon': 'my-icon.png',
         }
 
-    def tearDown(self):
-        super().tearDown()
-        os.makedirs = self.orig_os_makedirs
-
     def test_create_meta(self):
-        os.makedirs = Mock()
         mock_the_open = mock_open()
 
         with patch('snapcraft.meta.open', mock_the_open, create=True):
@@ -196,7 +203,7 @@ class Create(tests.TestCase):
 
         meta_dir = os.path.join(os.path.abspath(os.curdir), 'snap', 'meta')
 
-        os.makedirs.assert_called_once_with(meta_dir, exist_ok=True)
+        self.mock_makedirs.assert_called_once_with(meta_dir, exist_ok=True)
 
         mock_the_open.assert_has_calls([
             call(os.path.join(meta_dir, 'package.yaml'), 'w'),
@@ -207,6 +214,11 @@ class Create(tests.TestCase):
             call().write('-'),
             call().write(' '),
             call().write('amd64'),
+            call().write('\n'),
+            call().write('icon'),
+            call().write(':'),
+            call().write(' '),
+            call().write('meta/my-icon.png'),
             call().write('\n'),
             call().write('name'),
             call().write(':'),

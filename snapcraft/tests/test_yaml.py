@@ -31,6 +31,15 @@ from snapcraft.tests import TestCase
 
 class TestYaml(TestCase):
 
+    def setUp(self):
+        super().setUp()
+        dirs.setup_dirs()
+
+        patcher = unittest.mock.patch('os.path.exists')
+        mock_wrap_exe = patcher.start()
+        mock_wrap_exe.return_value = True
+        self.addCleanup(patcher.stop)
+
     def make_snapcraft_yaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
@@ -40,13 +49,12 @@ class TestYaml(TestCase):
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
-        dirs.setup_dirs()
-
         self.make_snapcraft_yaml("""name: test
 version: "1"
 vendor: me <me@me.com>
 summary: test
 description: test
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -72,8 +80,6 @@ parts:
             fake_logger.output)
 
     def test_config_loop(self):
-        dirs.setup_dirs()
-
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -82,6 +88,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: test
+icon: my-icon.png
 
 parts:
   p1:
@@ -99,8 +106,6 @@ parts:
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
-        dirs.setup_dirs()
-
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -109,6 +114,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: nothing
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -124,8 +130,6 @@ parts:
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
-        dirs.setup_dirs()
-
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -134,6 +138,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: nothing
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -149,8 +154,6 @@ parts:
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
-        dirs.setup_dirs()
-
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -159,6 +162,7 @@ version: "1"
 vendor: me <me@me.com>
 summary: test
 description: nothing
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -174,8 +178,6 @@ parts:
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
-        dirs.setup_dirs()
-
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -183,6 +185,7 @@ parts:
 version: "1"
 vendor: me <me@me.com>
 summary: test
+icon: my-icon.png
 
 parts:
   ubuntu:
@@ -203,12 +206,18 @@ class TestValidation(TestCase):
         super().setUp()
         dirs.setup_dirs()
 
+        patcher = unittest.mock.patch('os.path.exists')
+        self.mock_path_exists = patcher.start()
+        self.mock_path_exists.return_value = True
+        self.addCleanup(patcher.stop)
+
         self.data = {
             'name': 'my-package-1',
             'version': '1.0-snapcraft1~ppa1',
             'vendor': 'Me <me@me.com>',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
+            'icon': 'my-icon.png',
             'parts': {
                 'part1': {
                     'type': 'project',
@@ -324,3 +333,12 @@ class TestValidation(TestCase):
         mock_the_open.assert_called_once_with(expected_path)
         expected_message = 'Schema is missing, could not validate snapcraft.yaml, check installation'
         self.assertEqual(raised.exception.message, expected_message)
+
+    def test_icon_missing(self):
+        self.mock_path_exists.return_value = False
+
+        with self.assertRaises(jsonschema.ValidationError) as raised:
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_message = '\'my-icon.png\' is not a \'icon-path\''
+        self.assertEqual(raised.exception.message, expected_message, msg=self.data)
