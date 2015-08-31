@@ -164,7 +164,7 @@ class Tar(Base):
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     yield m
 
-            tar.extractall(members=filter_members(tar), path=self.source_dir)
+            tar.extractall(members=filter_members(tar), path=dst)
 
         return True
 
