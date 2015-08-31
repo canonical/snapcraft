@@ -143,14 +143,6 @@ def run(args):
         logger.error("Perhaps you forgot to run 'snapcraft assemble'")
         return 1
 
-    def _call(args, **kwargs):
-        logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
-        return subprocess.call(args, **kwargs)
-
-    def _check_call(args, **kwargs):
-        logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
-        return subprocess.check_call(args, **kwargs)
-
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
@@ -280,3 +272,13 @@ def cmd(args):
             if not getattr(part, cmd)(force=force):
                 logger.error('Failed doing %s for %s!', cmd, part.names()[0])
                 sys.exit(1)
+
+
+def _call(args, **kwargs):
+    logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
+    return subprocess.call(args, **kwargs)
+
+
+def _check_call(args, **kwargs):
+    logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
+    return subprocess.check_call(args, **kwargs)
