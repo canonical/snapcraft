@@ -34,71 +34,72 @@ class IncompatibleOptionsError(Exception):
 
 class Base:
 
-    def __init__(self, source, source_tag=None, source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
         self.source = source
+        self.source_dir = source_dir
         self.source_tag = source_tag
         self.source_branch = source_branch
 
-    def pull(self, dst):
+    def pull(self):
         raise NotImplementedError('this is just a base class')
 
-    def provision(self, src, dst):
-        return snapcraft.common.run(['cp', '-Trfa', src, dst], cwd=os.getcwd())
+    def provision(self, dst):
+        return snapcraft.common.run(['cp', '-Trfa', self.source_dir, dst], cwd=os.getcwd())
 
 
 class Bazaar(Base):
 
-    def __init__(self, source, source_tag=None, source_branch=None):
-        super().__init__(source, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
         if source_branch:
             raise IncompatibleOptionsError('can\'t specify a source-branch for a bzr source')
 
-    def pull(self, dst):
+    def pull(self):
         tag_opts = []
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
-        if os.path.exists(os.path.join(dst, ".bzr")):
-            cmd = ['bzr', 'pull'] + tag_opts + [self.source, '-d', dst]
+        if os.path.exists(os.path.join(self.source_dir, ".bzr")):
+            cmd = ['bzr', 'pull'] + tag_opts + [self.source, '-d', self.source_dir]
         else:
-            os.rmdir(dst)
-            cmd = ['bzr', 'branch'] + tag_opts + [self.source, dst]
+            os.rmdir(self.source_dir)
+            cmd = ['bzr', 'branch'] + tag_opts + [self.source, self.source_dir]
 
         return snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Git(Base):
 
-    def __init__(self, source, source_tag=None, source_branch=None):
-        super().__init__(source, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError('can\'t specify both source-tag and source-branch for a git source')
 
-    def pull(self, dst):
-        if os.path.exists(os.path.join(dst, ".git")):
+    def pull(self):
+        if os.path.exists(os.path.join(self.source_dir, ".git")):
             refspec = 'HEAD'
             if self.source_branch:
                 refspec = 'refs/heads/' + self.source_branch
             elif self.source_tag:
                 refspec = 'refs/tags/' + self.source_tag
-            cmd = ['git', '-C', dst, 'pull', self.source, refspec]
+            cmd = ['git', '-C', self.source_dir, 'pull', self.source, refspec]
         else:
             branch_opts = []
             if self.source_tag or self.source_branch:
                 branch_opts = ['--branch', self.source_tag or self.source_branch]
-            cmd = ['git', 'clone'] + branch_opts + [self.source, dst]
+            cmd = ['git', 'clone'] + branch_opts + [self.source, self.source_dir]
 
         return snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Mercurial(Base):
 
-    def __init__(self, source, source_tag=None, source_branch=None):
-        super().__init__(source, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError('can\'t specify both source-tag and source-branch for a mercurial source')
 
-    def pull(self, dst):
-        if os.path.exists(os.path.join(dst, ".hg")):
+    def pull(self):
+        if os.path.exists(os.path.join(self.source_dir, ".hg")):
             ref = []
             if self.source_tag:
                 ref = ['-r', self.source_tag]
@@ -109,29 +110,29 @@ class Mercurial(Base):
             ref = []
             if self.source_tag or self.source_branch:
                 ref = ['-u', self.source_tag or self.source_branch]
-            cmd = ['hg', 'clone'] + ref + [self.source, dst]
+            cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
 
         return snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Tar(Base):
 
-    def __init__(self, source, source_tag=None, source_branch=None):
-        super().__init__(source, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag:
             raise IncompatibleOptionsError('can\'t specify a source-tag for a tar source')
         elif source_branch:
             raise IncompatibleOptionsError('can\'t specify a source-branch for a tar source')
 
-    def pull(self, dst):
+    def pull(self):
         if snapcraft.common.isurl(self.source):
-            return snapcraft.common.run(['wget', '-q', '-c', self.source], cwd=dst)
+            return snapcraft.common.run(['wget', '-q', '-c', self.source], cwd=self.source_dir)
         else:
             return True
 
-    def provision(self, src, dst):
+    def provision(self, dst):
         if snapcraft.common.isurl(self.source):
-            tarball = os.path.join(src, os.path.basename(self.source))
+            tarball = os.path.join(self.source_dir, os.path.basename(self.source))
         else:
             tarball = os.path.abspath(self.source)
 
@@ -163,17 +164,17 @@ class Tar(Base):
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     yield m
 
-            tar.extractall(members=filter_members(tar), path=dst)
+            tar.extractall(members=filter_members(tar), path=self.source_dir)
 
         return True
 
 
 class Local(Base):
 
-    def pull(self, dst):
+    def pull(self):
         return True
 
-    def provision(self, src, dst):
+    def provision(self, dst):
         path = os.path.abspath(self.source)
         if os.path.isdir(dst):
             os.rmdir(dst)

@@ -71,13 +71,13 @@ class BasePlugin:
             snapcraft.common.fatal()
 
         try:
-            handler = handler_class(source, source_tag, source_branch)
+            handler = handler_class(source, self.sourcedir, source_tag, source_branch)
         except snapcraft.sources.IncompatibleOptionsError as e:
             logger.error('Issues while setting up sources for part \'%s\': %s.', self.name, e.message)
             snapcraft.common.fatal()
-        if not handler.pull(self.sourcedir):
+        if not handler.pull():
             return False
-        return handler.provision(self.sourcedir, self.builddir)
+        return handler.provision(self.builddir)
 
     def handle_source_options(self):
         stype = getattr(self.options, 'source_type', None)

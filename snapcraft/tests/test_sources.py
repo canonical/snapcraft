@@ -53,9 +53,9 @@ class TestTar(tests.TestCase):
         tar_file_name = 'test.tar'
         source = 'http://{}:{}/{file_name}'.format(
             *server.server_address, file_name=tar_file_name)
-        tar_source = sources.Tar(source)
+        tar_source = sources.Tar(source, dest_dir)
 
-        tar_source.pull(dest_dir)
+        tar_source.pull()
 
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake tarball file', tar_file.read())

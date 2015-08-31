@@ -22,10 +22,10 @@ class TarContentPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.tar = snapcraft.sources.Tar(self.options.source)
+        self.tar = snapcraft.sources.Tar(self.options.source, self.builddir)
 
     def pull(self):
-        return self.tar.pull(self.builddir)
+        return self.tar.pull()
 
     def build(self):
-        return self.tar.provision(self.builddir, self.installdir)
+        return self.tar.provision(self.installdir)
