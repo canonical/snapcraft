@@ -34,9 +34,8 @@ class IncompatibleOptionsError(Exception):
 
 class Base:
 
-    def __init__(self, source, source_type=None, source_tag=None, source_branch=None):
+    def __init__(self, source, source_tag=None, source_branch=None):
         self.source = source
-        self.source_type = source_type
         self.source_tag = source_tag
         self.source_branch = source_branch
 
@@ -49,8 +48,8 @@ class Base:
 
 class Bazaar(Base):
 
-    def __init__(self, source, source_type=None, source_tag=None, source_branch=None):
-        super().__init__(source, source_type, source_tag, source_branch)
+    def __init__(self, source, source_tag=None, source_branch=None):
+        super().__init__(source, source_tag, source_branch)
         if source_branch:
             raise IncompatibleOptionsError('can\'t specify a source-branch for a bzr source')
 
@@ -69,8 +68,8 @@ class Bazaar(Base):
 
 class Git(Base):
 
-    def __init__(self, source, source_type=None, source_tag=None, source_branch=None):
-        super().__init__(source, source_type, source_tag, source_branch)
+    def __init__(self, source, source_tag=None, source_branch=None):
+        super().__init__(source, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError('can\'t specify both source-tag and source-branch for a git source')
 
@@ -93,8 +92,8 @@ class Git(Base):
 
 class Mercurial(Base):
 
-    def __init__(self, source, source_type=None, source_tag=None, source_branch=None):
-        super().__init__(source, source_type, source_tag, source_branch)
+    def __init__(self, source, source_tag=None, source_branch=None):
+        super().__init__(source, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError('can\'t specify both source-tag and source-branch for a mercurial source')
 
@@ -117,8 +116,8 @@ class Mercurial(Base):
 
 class Tar(Base):
 
-    def __init__(self, source, source_type=None, source_tag=None, source_branch=None):
-        super().__init__(source, source_type, source_tag, source_branch)
+    def __init__(self, source, source_tag=None, source_branch=None):
+        super().__init__(source, source_tag, source_branch)
         if source_tag:
             raise IncompatibleOptionsError('can\'t specify a source-tag for a tar source')
         elif source_branch:
