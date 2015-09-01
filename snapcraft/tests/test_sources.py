@@ -194,7 +194,6 @@ class TestMercurial(SourceTestCase):
 
     def test_pull(self):
         hg = sources.Mercurial('hg://my-source', 'source_dir')
-
         hg.pull()
 
         self.mock_run.assert_called_once_with(
