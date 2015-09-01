@@ -16,11 +16,9 @@
 
 import logging
 import os
-import re
-import tarfile
-import urllib.parse
 
 import snapcraft.common
+import snapcraft.sources
 
 
 logger = logging.getLogger(__name__)
@@ -63,152 +61,23 @@ class BasePlugin:
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def isurl(self, url):
-        return urllib.parse.urlparse(url).scheme != ""
-
-    def pull_bzr(self, source, source_tag=None):
-        tag_opts = []
-        if source_tag:
-            tag_opts = ['-r', 'tag:' + source_tag]
-        if os.path.exists(os.path.join(self.sourcedir, ".bzr")):
-            return self.run(['bzr', 'pull'] + tag_opts + [source, '-d', self.sourcedir], cwd=os.getcwd())
-        else:
-            os.rmdir(self.sourcedir)
-            return self.run(['bzr', 'branch'] + tag_opts + [source, self.sourcedir], cwd=os.getcwd())
-
-    def pull_hg(self, source, source_tag=None, source_branch=None):
-        if source_tag and source_branch:
-            logger.error("You can't specify both source-tag and source-branch for a mercurial source (part '%s').", self.name)
-            snapcraft.common.fatal()
-
-        if os.path.exists(os.path.join(self.sourcedir, ".hg")):
-            ref = []
-            if source_tag:
-                ref = ['-r', source_tag]
-            elif source_branch:
-                ref = ['-b', source_branch]
-            return self.run(['hg', 'pull'] + ref + [source, ], cwd=os.getcwd())
-        else:
-            ref = []
-            if source_tag or source_branch:
-                ref = ['-u', source_tag or source_branch]
-
-            return self.run(['hg', 'clone'] + ref + [source, self.sourcedir], cwd=os.getcwd())
-
-    def pull_git(self, source, source_tag=None, source_branch=None):
-        if source_tag and source_branch:
-            logger.error("You can't specify both source-tag and source-branch for a git source (part '%s').", self.name)
-            snapcraft.common.fatal()
-
-        if os.path.exists(os.path.join(self.sourcedir, ".git")):
-            refspec = 'HEAD'
-            if source_branch:
-                refspec = 'refs/heads/' + source_branch
-            elif source_tag:
-                refspec = 'refs/tags/' + source_tag
-            return self.run(['git', '-C', self.sourcedir, 'pull', source, refspec], cwd=os.getcwd())
-        else:
-            branch_opts = []
-            if source_tag or source_branch:
-                branch_opts = ['--branch', source_tag or source_branch]
-            return self.run(['git', 'clone'] + branch_opts + [source, self.sourcedir], cwd=os.getcwd())
-
-    def pull_tarball(self, source, destdir=None):
-        destdir = destdir or self.sourcedir
-        if self.isurl(source):
-            return self.run(['wget', '-c', source], cwd=destdir)
-        else:
-            return True
-
-    def extract_tarball(self, source, srcdir=None, destdir=None):
-        srcdir = srcdir or self.sourcedir
-        destdir = destdir or self.builddir
-
-        if self.isurl(source):
-            tarball = os.path.join(srcdir, os.path.basename(source))
-        else:
-            tarball = os.path.abspath(source)
-
-        with tarfile.open(tarball) as tar:
-            def filter_members(tar):
-                """Filters members and member names:
-                    - strips common prefix
-                    - bans dangerous names"""
-                members = tar.getmembers()
-                common = os.path.commonprefix([m.name for m in members])
-
-                # commonprefix() works a character at a time and will
-                # consider "d/ab" and "d/abc" to have common prefix "d/ab";
-                # check all members either start with common dir
-                for m in members:
-                    if not (m.name.startswith(common + "/") or
-                            m.isdir() and m.name == common):
-                        # commonprefix() didn't return a dir name; go up one
-                        # level
-                        common = os.path.dirname(common)
-                        break
-
-                for m in members:
-                    if m.name == common:
-                        continue
-                    if m.name.startswith(common + "/"):
-                        m.name = m.name[len(common + "/"):]
-                    # strip leading "/", "./" or "../" as many times as needed
-                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
-                    yield m
-
-            tar.extractall(members=filter_members(tar), path=destdir)
-
-        return True
+        return snapcraft.common.isurl(url)
 
     def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
-        if source_type is None:
-            if source.startswith("bzr:") or source.startswith("lp:"):
-                source_type = 'bzr'
-            elif source.startswith("git:"):
-                source_type = 'git'
-            elif self.isurl(source):
-                logger.error("Unrecognized source '%s' for part '%s'.", source, self.name)
-                snapcraft.common.fatal()
+        try:
+            handler_class = _get_source_handler(source_type, source)
+        except ValueError:
+            logger.error("Unrecognized source '%s' for part '%s'.", source, self.name)
+            snapcraft.common.fatal()
 
-        if source_type == 'bzr':
-            if source_branch:
-                logger.error("You can't specify source-branch for a bzr source (part '%s').", self.name)
-                snapcraft.common.fatal()
-            if not self.pull_bzr(source, source_tag=source_tag):
-                return False
-            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
-                return False
-        elif source_type == 'git':
-            if not self.pull_git(source, source_tag=source_tag, source_branch=source_branch):
-                return False
-            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
-                return False
-        elif source_type == 'hg' or source_type == 'mercurial':
-            if not self.pull_hg(source, source_tag=source_tag, source_branch=source_branch):
-                return False
-            if not self.run(['cp', '-Trfa', self.sourcedir, self.builddir]):
-                return False
-        elif source_type == 'tar':
-            if source_branch:
-                logger.error("You can't specify source-branch for a tar source (part '%s').", self.name)
-                snapcraft.common.fatal()
-            if source_tag:
-                logger.error("You can't specify source-tag for a tar source (part '%s').", self.name)
-                snapcraft.common.fatal()
-            if not self.pull_tarball(source):
-                return False
-            if not self.extract_tarball(source):
-                return False
-        else:
-            # local source dir
-            path = os.path.abspath(source)
-            if os.path.isdir(self.builddir):
-                os.rmdir(self.builddir)
-            else:
-                os.remove(self.builddir)
-            os.symlink(path, self.builddir)
-
-        return True
+        try:
+            handler = handler_class(source, self.sourcedir, source_tag, source_branch)
+        except snapcraft.sources.IncompatibleOptionsError as e:
+            logger.error('Issues while setting up sources for part \'%s\': %s.', self.name, e.message)
+            snapcraft.common.fatal()
+        if not handler.pull():
+            return False
+        return handler.provision(self.builddir)
 
     def handle_source_options(self):
         stype = getattr(self.options, 'source_type', None)
@@ -221,3 +90,33 @@ class BasePlugin:
 
     def makedirs(self, d):
         os.makedirs(d, exist_ok=True)
+
+
+def _get_source_handler(source_type, source):
+    if source_type is None:
+        source_type = _get_source_type_from_uri(source)
+
+    if source_type == 'bzr':
+        handler = snapcraft.sources.Bazaar
+    elif source_type == 'git':
+        handler = snapcraft.sources.Git
+    elif source_type == 'mercurial' or source_type == 'hg':
+        handler = snapcraft.sources.Mercurial
+    elif source_type == 'tar':
+        handler = snapcraft.sources.Tar
+    else:
+        handler = snapcraft.sources.Local
+
+    return handler
+
+
+def _get_source_type_from_uri(source):
+    source_type = ''
+    if source.startswith("bzr:") or source.startswith("lp:"):
+        source_type = 'bzr'
+    elif source.startswith("git:"):
+        source_type = 'git'
+    elif snapcraft.common.isurl(source):
+        raise ValueError()
+
+    return source_type
