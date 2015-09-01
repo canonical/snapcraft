@@ -1,4 +1,12 @@
+name: wget
+version: 0
+vendor: Michael Terry <mterry@ubuntu.com>
+binaries:
+    - name: usr/bin/wget
+summary: wget for snappy
+description: a basic example from ubuntu packages
+icon: icon.png
+
 parts:
   wget:
     plugin: ubuntu
-snappy-metadata: meta

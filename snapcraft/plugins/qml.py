@@ -76,10 +76,7 @@ class QmlPlugin(snapcraft.BasePlugin):
     def build_qt_config(self):
         arch = snapcraft.common.get_arch_triplet()
         configdir = os.path.join(self.installdir, 'etc', 'xdg', 'qtchooser')
-        try:
-            os.makedirs(configdir)
-        except FileExistsError:
-            pass
+        os.makedirs(configdir, exist_ok=True)
         config = open(os.path.join(configdir, 'snappy-qt5.conf'), 'w')
         config.write('./usr/lib/{}/qt5/bin\n'.format(arch))
         config.write('./usr/lib/{}\n'.format(arch))

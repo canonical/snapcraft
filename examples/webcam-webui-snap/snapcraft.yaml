@@ -1,6 +1,17 @@
+name: webcam-webui
+version: 1.0.0
+vendor: Loïc Minier <loic.minier@ubuntu.com>
+services:
+ - name: webcam-webui
+   start: bin/webcam-webui
+   security-template: unconfined
+summary: Webcam web UI
+description: Exposes your webcam over a web UI
+icon: icon.png
+
 parts:
     golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
     fswebcam:
         plugin: ubuntu
@@ -8,4 +19,3 @@ parts:
         plugin: copy
         files:
             webcam-webui: bin/webcam-webui
-snappy-metadata: meta

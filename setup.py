@@ -36,6 +36,9 @@ setup(name="snapcraft",
                 'snapcraft.plugins'],
       package_data={'snapcraft.plugins': ['manifest.txt']},
       scripts=['bin/snapcraft'],
-      data_files=[('share/snapcraft/plugins', ['plugins/' + x for x in os.listdir('plugins')])],
+      data_files=[
+          ('share/snapcraft/plugins', ['plugins/' + x for x in os.listdir('plugins')]),
+          ('share/snapcraft/schema', ['schema/' + x for x in os.listdir('schema')]),
+      ],
       cmdclass={'test': TestCommand},
-)
+      )

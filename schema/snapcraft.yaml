@@ -1,0 +1,94 @@
+$schema: http://json-schema.org/draft-04/schema#
+
+title: snapcraft schema
+type: object
+properties:
+  name:
+    type: string
+    description: name of the snap package
+    pattern: "^[a-z0-9][a-z0-9+-]*$"
+  version:
+    # python's defaul yaml loading code loads 1.0 as an int
+    # type: string
+    description: package version
+    pattern: "^[a-zA-Z0-9.+~-]*$"
+  vendor:
+    type: string
+    format: email
+  icon:
+    type: string
+    description: path to a 512x512 icon representing the package.
+    format: icon-path
+  summary:
+    type: string
+    description: one line summary for the package
+    maxLength: 78
+  description:
+    type: string
+    description: long description of the package
+  type:
+    type: string
+    description: the snap type, the implicit type is 'app'
+    enum:
+      - app
+      - framework
+  frameworks:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      - type: string
+  services:
+    type: array
+    items:
+      - type: object
+        properties:
+          name:
+            type: string
+          start:
+            type: string
+            description: command executed to start the service
+          stop:
+            type: string
+            description: command executed to stop the service
+        required:
+          - name
+          - start
+  binaries:
+    type: array
+    items:
+      - type: object
+        properties:
+          name:
+            type: string
+          exec:
+            type: string
+            description: command executed to start the service
+        required:
+          - name
+  parts:
+    type: object
+    minProperties: 1
+    patternProperties:
+      ^[a-z0-9][a-z0-9+-]*$:
+        type: object
+        properties:
+          plugin:
+            type: string
+            description: plugin name
+          source:
+            type: string
+            description: path to the sources
+        # TODO To be enabled once the Ubuntu plugin is removed
+        # required:
+          # - plugin
+          # - source
+    addtionalProperties: false
+required:
+  - name
+  - version
+  - vendor
+  - summary
+  - description
+  - icon
+  - parts

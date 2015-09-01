@@ -1,3 +1,10 @@
+name: test-package
+version: 0.1
+vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
+summary: one line summary
+description: a longer description
+icon: icon.png
+
 parts:
   p1:
     plugin: make-project

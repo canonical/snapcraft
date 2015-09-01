@@ -1,0 +1,8 @@
+module: go_project
+requires:
+  - go
+options:
+  source:
+    required: true
+  configflags:
+    required: false

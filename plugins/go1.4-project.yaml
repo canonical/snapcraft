@@ -1,8 +1,0 @@
-module: go14_project
-requires:
-  - go1.4
-options:
-  source:
-    required: true
-  configflags:
-    required: false

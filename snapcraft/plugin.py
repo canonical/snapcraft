@@ -214,42 +214,16 @@ class PluginHandler:
 
     def collect_snap_files(self, includes, excludes):
         # validate
-        for d in includes + excludes:
-            if os.path.isabs(d):
-                raise PluginError("path '{}' must be relative".format(d))
+        _validate_relative_paths(includes + excludes)
 
-        sourceFiles = set()
-        for root, dirs, files in os.walk(self.installdir):
-            sourceFiles |= set([os.path.join(root, d) for d in dirs])
-            sourceFiles |= set([os.path.join(root, f) for f in files])
-        sourceFiles = set([os.path.relpath(x, self.installdir) for x in sourceFiles])
-
-        includeFiles = set()
-        for include in includes:
-            matches = glob.glob(os.path.join(self.stagedir, include))
-            includeFiles |= set(matches)
-        includeDirs = [x for x in includeFiles if os.path.isdir(x)]
-        includeFiles = set([os.path.relpath(x, self.stagedir) for x in includeFiles])
-
-        # Expand includeFiles, so that an exclude like '*/*.so' will still match
-        # files from an include like 'lib'
-        for includeDir in includeDirs:
-            for root, dirs, files in os.walk(includeDir):
-                includeFiles |= set([os.path.relpath(os.path.join(root, d), self.stagedir) for d in dirs])
-                includeFiles |= set([os.path.relpath(os.path.join(root, f), self.stagedir) for f in files])
-
-        # Grab exclude list
-        excludeFiles = set()
-        for exclude in excludes:
-            matches = glob.glob(os.path.join(self.stagedir, exclude))
-            excludeFiles |= set(matches)
-        excludeDirs = [os.path.relpath(x, self.stagedir) for x in excludeFiles if os.path.isdir(x)]
-        excludeFiles = set([os.path.relpath(x, self.stagedir) for x in excludeFiles])
+        source_files = _generate_source_set(self.installdir)
+        include_files = _generate_include_set(self.stagedir, includes)
+        exclude_files, exclude_dirs = _generate_exclude_set(self.stagedir, excludes)
 
         # And chop files, including whole trees if any dirs are mentioned
-        snap_files = (includeFiles & sourceFiles) - excludeFiles
-        for excludeDir in excludeDirs:
-            snap_files = set([x for x in snap_files if not x.startswith(excludeDir + '/')])
+        snap_files = (include_files & source_files) - exclude_files
+        for exclude_dir in exclude_dirs:
+            snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + '/')])
 
         # Separate dirs from files
         snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x)) and not os.path.islink(os.path.join(self.stagedir, x))])
@@ -266,6 +240,54 @@ class PluginHandler:
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
     if not part.is_valid():
-        logger.error('Could not load part {}'.format(plugin_name))
+        logger.error('Could not load part %s', plugin_name)
         sys.exit(1)
     return part
+
+
+def _generate_source_set(installdir):
+    source_files = set()
+    for root, dirs, files in os.walk(installdir):
+        source_files |= set([os.path.join(root, d) for d in dirs])
+        source_files |= set([os.path.join(root, f) for f in files])
+    source_files = set([os.path.relpath(x, installdir) for x in source_files])
+
+    return source_files
+
+
+def _generate_include_set(stagedir, includes):
+    include_files = set()
+    for include in includes:
+        matches = glob.glob(os.path.join(stagedir, include))
+        include_files |= set(matches)
+
+    include_dirs = [x for x in include_files if os.path.isdir(x)]
+    include_files = set([os.path.relpath(x, stagedir) for x in include_files])
+
+    # Expand includeFiles, so that an exclude like '*/*.so' will still match
+    # files from an include like 'lib'
+    for include_dir in include_dirs:
+        for root, dirs, files in os.walk(include_dir):
+            include_files |= set([os.path.relpath(os.path.join(root, d), stagedir) for d in dirs])
+            include_files |= set([os.path.relpath(os.path.join(root, f), stagedir) for f in files])
+
+    return include_files
+
+
+def _generate_exclude_set(stagedir, excludes):
+    exclude_files = set()
+
+    for exclude in excludes:
+        matches = glob.glob(os.path.join(stagedir, exclude))
+        exclude_files |= set(matches)
+
+    exclude_dirs = [os.path.relpath(x, stagedir) for x in exclude_files if os.path.isdir(x)]
+    exclude_files = set([os.path.relpath(x, stagedir) for x in exclude_files])
+
+    return exclude_files, exclude_dirs
+
+
+def _validate_relative_paths(files):
+    for d in files:
+        if os.path.isabs(d):
+            raise PluginError("path '{}' must be relative".format(d))

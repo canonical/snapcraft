@@ -23,12 +23,10 @@ import sys
 import tempfile
 import time
 
-import yaml
-
 import snapcraft.plugin
 import snapcraft.yaml
 from snapcraft import common
-
+from snapcraft import meta
 
 logger = logging.getLogger(__name__)
 
@@ -62,103 +60,89 @@ def shell(args):
     common.run(userCommand)
 
 
-def wrap_exe(relexepath):
-    snapdir = common.get_snapdir()
-    exepath = os.path.join(snapdir, relexepath)
-    wrappath = exepath + '.wrapper'
-
-    try:
-        os.remove(wrappath)
-    except Exception:
-        pass
-
-    wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
-    if not os.path.exists(exepath) and '/' not in relexepath:
-        # If it doesn't exist it might be in the path
-        logger.info('Checking to see if "{}" is in the $PATH'.format(relexepath))
-        with tempfile.NamedTemporaryFile('w+') as tempf:
-            script = ('#!/bin/sh\n' +
-                      '{}\n'.format(snapcraft.common.assemble_env()) +
-                      'which "{}"\n'.format(relexepath))
-            tempf.write(script)
-            tempf.flush()
-            if snapcraft.common.run(['/bin/sh', tempf.name], cwd=snapdir):
-                wrapexec = relexepath
-            else:
-                logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
-
-    assembled_env = common.assemble_env().replace(snapdir, '$SNAP_APP_PATH')
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(assembled_env) +
-              'exec "{}" $*\n'.format(wrapexec))
-
-    with open(wrappath, 'w+') as f:
-        f.write(script)
-
-    os.chmod(wrappath, 0o755)
-
-    return os.path.relpath(wrappath, snapdir)
-
-
 def snap(args):
     cmd(args)
 
-    # Ensure the snappy metadata files are correct
-    config = snapcraft.yaml.Config()
+    # This check is to support manual assembly.
+    if not os.path.exists(os.path.join(common.get_snapdir(), "meta")):
+        arches = [snapcraft.common.get_arch(), ]
 
-    if 'snappy-metadata' in config.data:
-        common.run(
-            ['cp', '-arvT', config.data['snappy-metadata'], common.get_snapdir() + '/meta'])
-    if not os.path.exists('snap/meta/package.yaml'):
-        logger.error("Missing snappy metadata file 'meta/package.yaml'.  Try specifying 'snappy-metadata' in snapcraft.yaml, pointing to a meta directory in your source tree.")
-        sys.exit(1)
+        config = snapcraft.yaml.Config()
 
-    # wrap all included commands
-    with open("snap/meta/package.yaml", 'r') as f:
-        package = yaml.load(f)
+        # FIXME this should be done in a more contained manner
+        common.env = config.snap_env()
 
-    common.env = config.snap_env()
-
-    def replace_cmd(execparts, cmd):
-        newparts = [cmd] + execparts[1:]
-        return ' '.join([shlex.quote(x) for x in newparts])
-
-    for binary in package.get('binaries', []):
-        execparts = shlex.split(binary.get('exec', binary['name']))
-        execwrap = wrap_exe(execparts[0])
-        if 'exec' in binary:
-            binary['exec'] = replace_cmd(execparts, execwrap)
-        else:
-            binary['name'] = os.path.basename(binary['name'])
-            binary['exec'] = replace_cmd(execparts, execwrap)
-
-    for binary in package.get('services', []):
-        startpath = binary.get('start')
-        if startpath:
-            startparts = shlex.split(startpath)
-            startwrap = wrap_exe(startparts[0])
-            binary['start'] = replace_cmd(startparts, startwrap)
-        stoppath = binary.get('stop')
-        if stoppath:
-            stopparts = shlex.split(stoppath)
-            stopwrap = wrap_exe(stopparts[0])
-            binary['stop'] = replace_cmd(stopparts, stopwrap)
-
-    # Set architecture if none provided
-    if 'architecture' not in package and 'architectures' not in package:
-        package['architecture'] = snapcraft.common.get_arch()
-
-    with open("snap/meta/package.yaml", 'w') as f:
-        yaml.dump(package, f, default_flow_style=False)
+        meta.create(config.data, arches)
 
 
 def assemble(args):
     args.cmd = 'snap'
+    # With all the data in snapcraft.yaml, maybe it's not a good idea to call
+    # snap(args) and just do a snappy build if assemble was explicitly called.
     snap(args)
     common.run(['snappy', 'build', common.get_snapdir()])
 
 
+def _find_latest_private_key():
+    """
+    Find the latest private key in ~/.ssh.
+
+    :returns:
+        Path of the most-recently-modified private SSH key
+    :raises LookupError:
+        If no such key was found.
+
+    This function tries to mimic the logic found in ``ubuntu-device-flash``. It
+    will look for the most recently modified private key in the users' SSH
+    configuration directory.
+    """
+    candidates = []
+    ssh_dir = os.path.expanduser('~/.ssh/')
+    for filename in os.listdir(ssh_dir):
+        # Skip public keys, we want the private key
+        if filename.endswith('.pub'):
+            continue
+        ssh_key = os.path.join(ssh_dir, filename)
+        # Skip non-files
+        if not os.path.isfile(ssh_key):
+            continue
+        # Ensure that it is a real ssh key
+        with open(ssh_key, 'rb') as stream:
+            if stream.readline() != b'-----BEGIN RSA PRIVATE KEY-----\n':
+                continue
+        candidates.append(ssh_key)
+    # Sort the keys by modification time, pick the most recent key
+    candidates.sort(key=lambda f: os.stat(f).st_mtime, reverse=True)
+    logger.debug("Available ssh public keys: %r", candidates)
+    if not candidates:
+        raise LookupError("Unable to find any private ssh key")
+    return candidates[0]
+
+
 def run(args):
+    # Find the ssh key that ubuntu-device-flash would use so that we can use it
+    # ourselves as well. This may not be the default key that the user has
+    # configured.
+    # See: https://bugs.launchpad.net/snapcraft/+bug/1486659
+    try:
+        ssh_key = _find_latest_private_key()
+    except LookupError:
+        logger.error("You need to have an SSH key to use this command")
+        logger.error("Please generate one with ssh-keygen(1)")
+        return 1
+    else:
+        logger.info("Using the following ssh key: %s", ssh_key)
+
+    # Find available *.snap files to copy into the test VM
+    snap_dir = os.path.join(os.getcwd())
+    # copy the snap with the largest version number into the test VM
+    snaps = glob.glob(snap_dir + "/*.snap")
+    snaps.sort()
+    if not snaps:
+        logger.error("There are no .snap files ready")
+        logger.error("Perhaps you forgot to run 'snapcraft assemble'")
+        return 1
+
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
@@ -169,38 +153,62 @@ def run(args):
             common.run(
                 ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
                 cwd=qemudir)
-    qemu = subprocess.Popen(
-        ["kvm", "-m", "768", "-nographic",
-         "-snapshot", "-redir", "tcp:8022::22", qemu_img],
-        stdin=subprocess.PIPE)
-    n = tempfile.NamedTemporaryFile()
-    ssh_opts = [
-        "-oStrictHostKeyChecking=no",
-        "-oUserKnownHostsFile=%s" % n.name
-    ]
-    while True:
-        ret_code = subprocess.call(
+    qemu = None
+    try:
+        # Allow the developer to provide additional arguments to qemu.  This
+        # can be used, for example, to pass through USB devices from the host.
+        # This can enable a lot of hardware-specific use cases directly inside
+        # the snapcraft run workflow.
+        #
+        # For example:
+        # $ export SNAPCRAFT_RUN_QEMU_ARGS="-usb -device usb-host,hostbus=1,hostaddr=10"
+        # $ snapcraft run
+        qemu_args = os.getenv("SNAPCRAFT_RUN_QEMU_ARGS")
+        if qemu_args is not None:
+            qemu_args = shlex.split(qemu_args)
+        else:
+            qemu_args = []
+        qemu = subprocess.Popen(
+            ["kvm", "-m", "768", "-nographic", "-snapshot", "-redir",
+             "tcp:8022::22", qemu_img] + qemu_args, stdin=subprocess.PIPE)
+        n = tempfile.NamedTemporaryFile()
+        ssh_opts = [
+            # We want to login with the specified ssh identity (key)
+            '-i', ssh_key,
+            # We don't want strict host checking because it's a new VM with a
+            # random key each time.
+            "-oStrictHostKeyChecking=no",
+            # We don't want to pollute the known_hosts file with new entries
+            # all the time so let's use a temporary file for that
+            "-oUserKnownHostsFile=%s" % n.name,
+            # Don't try keyboard interactive authentication, we're expecting to
+            # login via the key and if that doesn't work then everything else
+            # will fail anyway.
+            "-oKbdInteractiveAuthentication=no",
+        ]
+        while True:
+            ret_code = _call(
+                ["ssh"] + ssh_opts +
+                ["ubuntu@localhost", "-p", "8022", "true"])
+            if ret_code == 0:
+                break
+            print("Waiting for device")
+            time.sleep(1)
+        # copy the most recent snap into the test VM
+        _check_call(
+            ["scp"] + ssh_opts + [
+                "-P", "8022", snaps[-1], "ubuntu@localhost:~/"])
+        # install the snap
+        _check_call(
             ["ssh"] + ssh_opts +
-            ["ubuntu@localhost", "-p", "8022", "true"])
-        if ret_code == 0:
-            break
-        print("Waiting for device")
-        time.sleep(1)
-    snap_dir = os.path.join(os.getcwd(), "snap")
-    # copy the snap
-    snaps = glob.glob(snap_dir + "/*.snap")
-    subprocess.call(
-        ["scp"] + ssh_opts + [
-            "-P", "8022", "-r"] + snaps + ["ubuntu@localhost:~/"])
-    # install the snap
-    ret_code = subprocess.call(
-        ["ssh"] + ssh_opts +
-        ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
-    # "login"
-    subprocess.call(
-        ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
-        preexec_fn=os.setsid)
-    qemu.kill()
+            ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
+        # "login"
+        _check_call(
+            ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
+            preexec_fn=os.setsid)
+    finally:
+        if qemu:
+            qemu.kill()
 
 
 def check_for_collisions(parts):
@@ -216,7 +224,7 @@ def check_for_collisions(parts):
         for otherPartName in partsFiles:
             common = partFiles & partsFiles[otherPartName]
             if common:
-                logger.error('Error: parts %s and %s have the following files in common:\n  %s' % (otherPartName, part.names()[0], '\n  '.join(sorted(common))))
+                logger.error('Error: parts %s and %s have the following files in common:\n  %s', otherPartName, part.names()[0], '\n  '.join(sorted(common)))
                 return False
 
         # And add our files to the list
@@ -262,5 +270,15 @@ def cmd(args):
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
             if not getattr(part, cmd)(force=force):
-                logger.error('Failed doing %s for %s!' % (cmd, part.names()[0]))
+                logger.error('Failed doing %s for %s!', cmd, part.names()[0])
                 sys.exit(1)
+
+
+def _call(args, **kwargs):
+    logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
+    return subprocess.call(args, **kwargs)
+
+
+def _check_call(args, **kwargs):
+    logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
+    return subprocess.check_call(args, **kwargs)

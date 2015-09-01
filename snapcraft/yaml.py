@@ -18,12 +18,39 @@ import logging
 import sys
 
 import yaml
+import jsonschema
+import os
+import os.path
 
 import snapcraft.plugin
 from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
+
+
+@jsonschema.FormatChecker.cls_checks('icon-path')
+def _validate_file_exists(instance):
+    return os.path.exists(instance)
+
+
+class SchemaNotFoundError(Exception):
+
+    def __init__(self, message):
+        self.message = message
+
+
+def _validate_snapcraft_yaml(snapcraft_yaml):
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
+
+    try:
+        with open(schema_file) as fp:
+            schema = yaml.load(fp)
+    except FileNotFoundError:
+        raise SchemaNotFoundError('Schema is missing, could not validate snapcraft.yaml, check installation')
+
+    format_check = jsonschema.FormatChecker()
+    jsonschema.validate(snapcraft_yaml, schema, format_checker=format_check)
 
 
 class Config:
@@ -39,6 +66,18 @@ class Config:
         except FileNotFoundError:
             logger.error("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
             sys.exit(1)
+
+        # Make sure the loaded snapcraft yaml follows the schema
+        try:
+            _validate_snapcraft_yaml(self.data)
+        except SchemaNotFoundError as e:
+            logger.error(e.message)
+            sys.exit(1)
+        except jsonschema.ValidationError as e:
+            msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
+            logger.error(msg)
+            sys.exit(1)
+
         self.build_tools = self.data.get('build-tools', [])
 
         for part_name in self.data.get("parts", []):
@@ -81,7 +120,7 @@ class Config:
                         foundIt = True
                         break
                 if not foundIt:
-                    logger.error("Could not find part name %s" % dep)
+                    logger.error("Could not find part name %s", dep)
                     sys.exit(1)
 
         # Now sort them (this is super inefficient, but easy-ish to follow)
