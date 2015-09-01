@@ -131,6 +131,7 @@ class Tar(Base):
             return True
 
     def provision(self, dst):
+        # TODO add unit tests.
         if snapcraft.common.isurl(self.source):
             tarball = os.path.join(self.source_dir, os.path.basename(self.source))
         else:
