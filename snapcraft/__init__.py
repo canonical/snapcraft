@@ -19,6 +19,7 @@ import os
 
 import snapcraft.common
 import snapcraft.sources
+import snapcraft.repo
 
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,15 @@ class BasePlugin:
 
     def makedirs(self, d):
         os.makedirs(d, exist_ok=True)
+
+    def stage_packages(self):
+        stage_package_names = getattr(self.options, 'stage_packages', None)
+        if not stage_package_names:
+            return
+
+        ubuntu = snapcraft.repo.Ubuntu(self.builddir)
+        ubuntu.get(stage_package_names)
+        ubuntu.unpack(stage_package_names, self.installdir)
 
 
 def _get_source_handler(source_type, source):

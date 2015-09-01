@@ -16,4 +16,4 @@ services:
 
 parts:
     make-project:
-        source: .
+      source: .

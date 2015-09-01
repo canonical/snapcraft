@@ -24,6 +24,7 @@ import yaml
 
 import snapcraft
 from snapcraft import common
+from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
@@ -189,9 +190,20 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
+
+        try:
+            self._stage_packages()
+        except repo.PackageNotFoundError as e:
+            logger.error(e.message)
+            return False
+
         common.run(['cp', '-arT', self.installdir, self.stagedir])
         self.mark_done('stage')
         return True
+
+    def _stage_packages(self):
+        if self.code and hasattr(self.code, 'stage_packages'):
+            getattr(self.code, 'stage_packages')()
 
     def snap(self, force=False):
         if not self.should_stage_run('snap', force):
