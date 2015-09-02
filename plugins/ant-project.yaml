@@ -9,3 +9,5 @@ options:
   source-tag:
   source-branch:
   stage-packages:
+build-tools:
+  - ant
