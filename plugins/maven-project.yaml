@@ -9,3 +9,4 @@ options:
   source-type:
   source-tag:
   source-branch:
+  stage-packages:

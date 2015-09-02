@@ -17,59 +17,49 @@
 import os
 import snapcraft.common
 
-from snapcraft.plugins.ubuntu import UbuntuPlugin
-
 
 class QmlPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-
-        class QmlPackageOptions:
-            packages = [
-                "qmlscene",
-                "qtdeclarative5-qtmir-plugin",
-                "mir-graphics-drivers-desktop",
-                "qtubuntu-desktop",
-                "ttf-ubuntu-font-family",
-                # if there's a metapackage for these, please swap it in here:
-                "qml-module-qt-labs-folderlistmodel",
-                "qml-module-qt-labs-settings",
-                "qml-module-qt-websockets",
-                "qml-module-qtfeedback",
-                "qml-module-qtgraphicaleffects",
-                "qml-module-qtlocation",
-                "qml-module-qtmultimedia",
-                "qml-module-qtorganizer",
-                "qml-module-qtpositioning",
-                "qml-module-qtqml-models2",
-                "qml-module-qtqml-statemachine",
-                "qml-module-qtquick-controls",
-                "qml-module-qtquick-dialogs",
-                "qml-module-qtquick-layouts",
-                "qml-module-qtquick-localstorage",
-                "qml-module-qtquick-particles2",
-                "qml-module-qtquick-privatewidgets",
-                "qml-module-qtquick-window2",
-                "qml-module-qtquick-xmllistmodel",
-                "qml-module-qtquick2",
-                "qml-module-qtsensors",
-                "qml-module-qtsysteminfo",
-                "qml-module-qttest",
-                "qml-module-qtwebkit",
-                "qml-module-ubuntu-connectivity",
-                "qml-module-ubuntu-onlineaccounts",
-                "qml-module-ubuntu-onlineaccounts-client",
-            ]
-            recommends = False
-
-        self.ubuntu = UbuntuPlugin(name, QmlPackageOptions())
-
-    def pull(self):
-        return self.ubuntu.pull()
+        self.stage_package_names.extend([
+            "qmlscene",
+            "qtdeclarative5-qtmir-plugin",
+            "mir-graphics-drivers-desktop",
+            "qtubuntu-desktop",
+            "ttf-ubuntu-font-family",
+            # if there's a metapackage for these, please swap it in here:
+            "qml-module-qt-labs-folderlistmodel",
+            "qml-module-qt-labs-settings",
+            "qml-module-qt-websockets",
+            "qml-module-qtfeedback",
+            "qml-module-qtgraphicaleffects",
+            "qml-module-qtlocation",
+            "qml-module-qtmultimedia",
+            "qml-module-qtorganizer",
+            "qml-module-qtpositioning",
+            "qml-module-qtqml-models2",
+            "qml-module-qtqml-statemachine",
+            "qml-module-qtquick-controls",
+            "qml-module-qtquick-dialogs",
+            "qml-module-qtquick-layouts",
+            "qml-module-qtquick-localstorage",
+            "qml-module-qtquick-particles2",
+            "qml-module-qtquick-privatewidgets",
+            "qml-module-qtquick-window2",
+            "qml-module-qtquick-xmllistmodel",
+            "qml-module-qtquick2",
+            "qml-module-qtsensors",
+            "qml-module-qtsysteminfo",
+            "qml-module-qttest",
+            "qml-module-qtwebkit",
+            "qml-module-ubuntu-connectivity",
+            "qml-module-ubuntu-onlineaccounts",
+            "qml-module-ubuntu-onlineaccounts-client",
+        ])
 
     def snap_files(self):
-        include, exclude = self.ubuntu.snap_files()
+        include, exclude = ['*'], []
         include.append('./etc/xdg/qtchooser/snappy-qt5.conf')
         return (include, exclude)
 
@@ -84,12 +74,11 @@ class QmlPlugin(snapcraft.BasePlugin):
         return True
 
     def build(self):
-        return self.ubuntu.build() and self.build_qt_config()
+        return self.build_qt_config()
 
     def env(self, root):
         arch = snapcraft.common.get_arch_triplet()
-        envs = self.ubuntu.env(root)
-        envs.extend([
+        return [
             "LD_LIBRARY_PATH=%s/usr/lib/%s:$LD_LIBRARY_PATH" % (root, arch),
             # Mir config
             "MIR_SOCKET=/run/mir_socket",
@@ -118,5 +107,4 @@ class QmlPlugin(snapcraft.BasePlugin):
             # Font Config
             "FONTCONFIG_PATH=%s/etc/fonts/config.d" % root,
             "FONTCONFIG_FILE=%s/etc/fonts/fonts.conf" % root,
-        ])
-        return envs
+        ]

@@ -15,28 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
-from snapcraft.plugins.ubuntu import UbuntuPlugin
+
+
+PLUGIN_STAGE_PACKAGES = [
+    'default-jdk',
+]
 
 
 class JdkPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
-        super().__init__(name, options)
-
-        class UbuntuOptions:
-            packages = ["default-jdk"]
-        self.ubuntu = UbuntuPlugin(name, UbuntuOptions())
-
-    def pull(self):
-        return self.ubuntu.pull()
-
-    def build(self):
-        return self.ubuntu.build()
+        super().__init__(name, options, stage_packages=PLUGIN_STAGE_PACKAGES)
 
     def env(self, root):
-        return self.ubuntu.env(root) + \
-            ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,
-             'PATH=%s/usr/lib/jvm/default-java/bin:%s/usr/lib/jvm/default-java/jre/bin:$PATH' % (root, root)]
+        return ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,
+                'PATH=%s/usr/lib/jvm/default-java/bin:'
+                '%s/usr/lib/jvm/default-java/jre/bin:$PATH' % (root, root)]
 
     def snap_files(self):
         # Cut out jdk bits (jre bits are in default-java/jre)

@@ -8,3 +8,4 @@ options:
     source-branch:
     configflags:
         required: false
+    stage-packages:

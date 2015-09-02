@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import apt
+import glob
 import itertools
 import os
 import subprocess
@@ -49,6 +50,7 @@ class Ubuntu:
         self.download_dir = download_dir
 
     def get(self, package_names):
+        # TODO cleanup download_dir for clean gets and unpacks
         self.all_dep_names = set()
 
         all_package_names = self._compute_deps(package_names)
@@ -56,11 +58,14 @@ class Ubuntu:
         for pkg in all_package_names:
             self.apt_cache[pkg].candidate.fetch_binary(destdir=self.download_dir)
 
-    def unpack(self, package_names, root_dir):
-        for pkg in package_names:
+        return all_package_names
+
+    def unpack(self, root_dir):
+        pkgs_abs_path = glob.glob(os.path.join(self.download_dir, '*.deb'))
+        for pkg in pkgs_abs_path:
+            # TODO needs elegance and error control
             try:
-                subprocess.check_call(
-                    ['dpkg-deb', '--extract', pkg + '_*.deb', root_dir], cwd=self.download_dir)
+                subprocess.check_call(['dpkg-deb', '--extract', pkg, root_dir])
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 

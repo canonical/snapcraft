@@ -27,14 +27,19 @@ logger = logging.getLogger(__name__)
 
 class BasePlugin:
 
-    def __init__(self, name, options):
+    def __init__(self, name, options, stage_packages=[]):
         self.name = name
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
+        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name, 'ubuntu')
         self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
+        self.ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
+        self.stage_packages = stage_packages
+        if hasattr(self.options, 'stage_packages') and hasattr(self.options.stage_packages, '__iter__'):
+            self.stage_packages.extend(self.options.stage_packages)
 
     # The API
     def pull(self):
@@ -92,14 +97,13 @@ class BasePlugin:
     def makedirs(self, d):
         os.makedirs(d, exist_ok=True)
 
-    def stage_packages(self):
-        stage_package_names = getattr(self.options, 'stage_packages', None)
-        if not stage_package_names:
-            return
+    def stage_packages_pull(self):
+        if self.stage_packages:
+            self.ubuntu.get(self.stage_packages)
 
-        ubuntu = snapcraft.repo.Ubuntu(self.builddir)
-        ubuntu.get(stage_package_names)
-        ubuntu.unpack(stage_package_names, self.installdir)
+    def stage_packages_unpack(self):
+        if self.stage_packages:
+            self.ubuntu.unpack(self.installdir)
 
 
 def _get_source_handler(source_type, source):
