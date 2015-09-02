@@ -38,8 +38,6 @@ class BasePlugin:
         self.snapdir = os.path.join(os.getcwd(), "snap")
         self.ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
         self.stage_packages = stage_packages
-        if hasattr(self.options, 'stage_packages') and hasattr(self.options.stage_packages, '__iter__'):
-            self.stage_packages.extend(self.options.stage_packages)
 
     # The API
     def pull(self):
@@ -98,8 +96,9 @@ class BasePlugin:
         os.makedirs(d, exist_ok=True)
 
     def stage_packages_pull(self):
-        if self.stage_packages:
-            self.ubuntu.get(self.stage_packages)
+        part_stage_packages = getattr(self.options, 'stage_packages', None) or []
+        if self.stage_packages or part_stage_packages:
+            self.ubuntu.get(self.stage_packages + part_stage_packages)
 
     def stage_packages_unpack(self):
         if self.stage_packages:

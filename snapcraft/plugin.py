@@ -173,7 +173,7 @@ class PluginHandler:
 
         if self.code and hasattr(self.code, 'stage_packages_pull'):
             try:
-                getattr(self.code, 'stage_packages_pull')()
+                self.code.stage_packages_pull()
             except repo.PackageNotFoundError as e:
                 logger.error(e.message)
                 return False
@@ -192,7 +192,7 @@ class PluginHandler:
 
         if self.code and hasattr(self.code, 'stage_packages_unpack'):
             try:
-                getattr(self.code, 'stage_packages_unpack')()
+                self.code.stage_packages_unpack()
             except repo.PackageNotFoundError as e:
                 logger.error(e.message)
                 return False
