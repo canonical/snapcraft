@@ -17,7 +17,7 @@
 import snapcraft
 
 
-PLUGIN_STAGE_PACKAGES = [
+_PLUGIN_STAGE_PACKAGES = [
     'default-jdk',
 ]
 
@@ -25,7 +25,7 @@ PLUGIN_STAGE_PACKAGES = [
 class JdkPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
-        super().__init__(name, options, stage_packages=PLUGIN_STAGE_PACKAGES)
+        super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
 
     def env(self, root):
         return ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,

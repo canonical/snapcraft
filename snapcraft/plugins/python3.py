@@ -16,7 +16,7 @@
 
 import snapcraft
 
-PLUGIN_STAGE_PACKAGES = [
+_PLUGIN_STAGE_PACKAGES = [
     'python3-dev',
 ]
 
@@ -25,7 +25,7 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        super().__init__(name, options, stage_packages=PLUGIN_STAGE_PACKAGES)
+        super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed

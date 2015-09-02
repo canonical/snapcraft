@@ -93,6 +93,9 @@ class Ubuntu:
 
     def _add_deps(self, package_names):
         for pkg in package_names:
+            # Remove the :any in packages
+            # TODO support multiarch
+            pkg = pkg.rsplit(':', 1)[0]
             if pkg in self.all_dep_names:
                 continue
             if pkg in self.manifest_dep_names and pkg not in package_names:
