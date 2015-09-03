@@ -18,6 +18,8 @@ import os
 import snapcraft
 from snapcraft.plugins import ubuntu
 
+_PLUGIN_STAGE_PACKAGES = [
+]
 
 class Python2ProjectPlugin(snapcraft.BasePlugin):
 
@@ -25,28 +27,17 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     # see python2.py for more details
 
     def __init__(self, name, options):
-        super().__init__(name, options)
-
-        class UbuntuOptions:
-            packages = ['python-dev']
-
-        ubuntu_options = UbuntuOptions()
-
         if options.requirements:
             self.requirements = options.requirements
-            ubuntu_options.packages.append('python-pip')
+            _PLUGIN_STAGE_PACKAGES.append('python-pip')
         else:
             self.requirements = None
 
-        self.ubuntu = ubuntu.UbuntuPlugin(name, ubuntu_options)
+        super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
 
     def pull(self):
-        if not self.ubuntu.pull():
-            return False
-        if self.requirements and not self.run(
+        return self.requirements and not self.run(
                 ['python2', '-m', 'pip', 'install', '-r', os.path.join(os.getcwd(), self.requirements)]):
-            return False
-        return self.handle_source_options()
 
     def build(self):
         return self.run(
