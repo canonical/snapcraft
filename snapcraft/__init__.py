@@ -19,6 +19,7 @@ import os
 
 import snapcraft.common
 import snapcraft.sources
+import snapcraft.repo
 
 
 logger = logging.getLogger(__name__)
@@ -26,14 +27,17 @@ logger = logging.getLogger(__name__)
 
 class BasePlugin:
 
-    def __init__(self, name, options):
+    def __init__(self, name, options, stage_packages=[]):
         self.name = name
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
+        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name, 'ubuntu')
         self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
+        self.ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
+        self.stage_packages = stage_packages
 
     # The API
     def pull(self):
@@ -90,6 +94,15 @@ class BasePlugin:
 
     def makedirs(self, d):
         os.makedirs(d, exist_ok=True)
+
+    def stage_packages_pull(self):
+        part_stage_packages = getattr(self.options, 'stage_packages', None) or []
+        if self.stage_packages or part_stage_packages:
+            self.ubuntu.get(self.stage_packages + part_stage_packages)
+
+    def stage_packages_unpack(self):
+        if self.stage_packages:
+            self.ubuntu.unpack(self.installdir)
 
 
 def _get_source_handler(source_type, source):

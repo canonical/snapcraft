@@ -16,16 +16,21 @@
 
 import os
 import tempfile
-from unittest.mock import (
-    Mock,
-)
 
-from snapcraft.plugins.ubuntu import UbuntuPlugin
-
-from snapcraft.tests import TestCase
+from snapcraft import repo
+from snapcraft import tests
 
 
-class TestUbuntu(TestCase):
+class UbuntuTestCase(tests.TestCase):
+
+    def test_unrecognized_package_raises_exception(self):
+        ubuntu = repo.Ubuntu('download_dir')
+
+        with self.assertRaises(repo.PackageNotFoundError) as raised:
+            ubuntu.get(['test_package'])
+
+        expected_message = 'The Ubuntu package \'test_package\' was not found'
+        self.assertEqual(raised.exception.message, expected_message)
 
     def test_fix_symlinks(self):
         tempdirObj = tempfile.TemporaryDirectory()
@@ -41,21 +46,10 @@ class TestUbuntu(TestCase):
         os.symlink('1', tempdir + '/rel-to-1')
         os.symlink('/1', tempdir + '/abs-to-1')
 
-        options = Mock()
-        options.packages = ['test']
-        ubuntu = UbuntuPlugin('ubuntu', options)
-        ubuntu.fix_symlinks(debdir=tempdir)
+        repo._fix_symlinks(debdir=tempdir)
 
         self.assertEqual(os.readlink(tempdir + '/rel-to-a'), 'a')
         self.assertEqual(os.readlink(tempdir + '/abs-to-a'), 'a')
         self.assertEqual(os.readlink(tempdir + '/abs-to-b'), '/b')
         self.assertEqual(os.readlink(tempdir + '/rel-to-1'), '1')
         self.assertEqual(os.readlink(tempdir + '/abs-to-1'), '1')
-
-    def test_recommends_ignored_properly(self):
-        class Options:
-            packages = ['my-excellent-package']
-        ubuntu = UbuntuPlugin('myplug', Options())
-
-        self.assertTrue('my-excellent-package' in ubuntu.included_packages)
-        self.assertEqual(ubuntu.recommends, None)

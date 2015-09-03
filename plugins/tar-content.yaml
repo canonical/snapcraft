@@ -2,3 +2,4 @@ module: tar_content
 options:
   source:
     required: true
+  stage-packages:

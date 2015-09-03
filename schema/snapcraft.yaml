@@ -79,10 +79,16 @@ properties:
           source:
             type: string
             description: path to the sources
-        # TODO To be enabled once the Ubuntu plugin is removed
+          stage-packages:
+            type: array
+            description: Ubuntu packages used to support the part.
+            minItems: 1
+            uniqueItems: true
+            items:
+              type: string
         # required:
-          # - plugin
-          # - source
+        # - plugin
+        # - source
     addtionalProperties: false
 required:
   - name

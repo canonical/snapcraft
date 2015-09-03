@@ -13,9 +13,9 @@ parts:
     golang-static-http:
         plugin: go-project
         source: git://github.com/mikix/golang-static-http
-    fswebcam:
-        plugin: ubuntu
     glue:
         plugin: copy
+        stage-packages:
+          - fswebcam
         files:
             webcam-webui: bin/webcam-webui

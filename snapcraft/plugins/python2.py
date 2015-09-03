@@ -16,41 +16,31 @@
 
 import os
 import snapcraft
-from snapcraft.plugins import ubuntu
+
+
+_PLUGIN_STAGE_PACKAGES = [
+    'python-dev',
+]
 
 
 class Python2Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
-        super().__init__(name, options)
-
-        class UbuntuOptions:
-            packages = ['python-dev']
-
-        ubuntu_options = UbuntuOptions()
-
         if options.requirements:
             self.requirements = options.requirements
-            ubuntu_options.packages.append('python-pip')
+            _PLUGIN_STAGE_PACKAGES.append('python-pip')
         else:
             self.requirements = None
 
-        self.ubuntu = ubuntu.UbuntuPlugin(name, ubuntu_options)
+        super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location.  And PATH is automatically set by snapcraft.
 
     def pull(self):
-        if not self.ubuntu.pull():
-            return False
         if self.requirements and not self.run(
                 ['python2', '-m', 'pip', 'install', '-r', os.path.join(os.getcwd(), self.requirements)]):
             return False
         return True
 
-    def build(self):
-        return self.ubuntu.build()
-
-    def snap_files(self):
-        return self.ubuntu.snap_files()
