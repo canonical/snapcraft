@@ -178,14 +178,13 @@ program is in stage/usr/bin since it came from Ubuntu):
 ### Package Metadata
 
 "But how do we actually make a snap?", you may be wondering. To do that, we
-need some metadata files required by Snappy that describe how our code should
-be installed and run.
+need to add some Snappy metadata that describes how our code should be
+installed and run.
 
 You can read all about the [format of this metadata](https://developer.ubuntu.com/en/snappy/guides/packaging-format-apps/),
 but we'll assume here that you're already familiar.
 
-Let's make a new subdirectory called `meta` and put our Snappy package files
-there. Here's the contents of `meta/package.yaml`:
+Let's add some metadata to our snapcraft file
 
     name: webcam-webui
     version: 1
@@ -193,15 +192,9 @@ there. Here's the contents of `meta/package.yaml`:
     services:
     - name: webcam-webui
       start: bin/webcam-webui
-
-And a very simple `meta/readme.md`:
-
-    # Webcam web UI
-
-    Exposes your webcam over a web UI
-
-Now that we have that sorted, we can tell Snapcraft where to find our metadata:
-
+    summary: Webcam web UI
+    description: Exposes your webcam over a web UI
+    icon: icon.png
     parts:
       golang-static-http:
         plugin: go-project
@@ -212,9 +205,12 @@ Now that we have that sorted, we can tell Snapcraft where to find our metadata:
         plugin: copy
         files:
           webcam-webui: bin/webcam-webui
-    snappy-metadata: meta
 
-And tell Snapcraft to actually make the snap package:
+Copy a png icon of your choice into your current directory:
+
+    $ cp /usr/share/icons/hicolor/256x256/apps/unity-datetime-panel.png ./icon.png
+
+and tell Snapcraft to actually make the snap package:
 
     $ snapcraft assemble
 
