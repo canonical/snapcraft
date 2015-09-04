@@ -26,9 +26,20 @@ _PLUGIN_STAGE_PACKAGES = [
 class Python2Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
+        if options.requirements:
+            self.requirements = options.requirements
+            _PLUGIN_STAGE_PACKAGES.append('python-pip')
+        else:
+            self.requirements = None
         super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location.  And PATH is automatically set by snapcraft.
 
+    def pull(self):
+        self.run(['env'])
+        if self.requirements and not self.run(
+                ['python2', '-m', 'pip', 'install', '-r', os.path.join(os.getcwd(), self.requirements)]):
+             return False
+        return True
