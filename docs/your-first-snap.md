@@ -70,14 +70,13 @@ Let's start with the web server.
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
 
 You've got a `parts` list with one item, named `golang-static-http`, but we
 could call it anything. That part has a few options. A `plugin` option that
-tells Snapcraft how to interpret the part. In this case, it's a Go project
-using Go 1.4. And finally, a `source` option telling Snapcraft where to
-download the code.
+tells Snapcraft how to interpret the part. In this case, it's a Go project.
+And finally, a `source` option telling Snapcraft where to download the code.
 
 Go ahead and create `snapcraft.yaml` with the above contents in an empty
 directory.
@@ -104,7 +103,7 @@ to look like:
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu
@@ -153,7 +152,7 @@ Alright, let's put this script in our snap too:
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu
@@ -205,7 +204,7 @@ Now that we have that sorted, we can tell Snapcraft where to find our metadata:
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu
