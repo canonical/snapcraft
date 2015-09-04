@@ -36,7 +36,6 @@ class BasePlugin:
         self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
-        self.ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
         self.stage_packages = stage_packages
 
     # The API
@@ -95,14 +94,12 @@ class BasePlugin:
     def makedirs(self, d):
         os.makedirs(d, exist_ok=True)
 
-    def stage_packages_pull(self):
+    def setup_stage_packages(self):
+        ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
         part_stage_packages = getattr(self.options, 'stage_packages', None) or []
         if self.stage_packages or part_stage_packages:
-            self.ubuntu.get(self.stage_packages + part_stage_packages)
-
-    def stage_packages_unpack(self):
-        if self.stage_packages:
-            self.ubuntu.unpack(self.installdir)
+            ubuntu.get(self.stage_packages + part_stage_packages)
+            ubuntu.unpack(self.installdir)
 
 
 def _get_source_handler(source_type, source):
