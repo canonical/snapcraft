@@ -44,6 +44,16 @@ class SnapcraftYamlFileError(Exception):
         self._file = yaml_file
 
 
+class SnapcraftLogicError(Exception):
+
+    @property
+    def message(self):
+        return self._message
+
+    def __init__(self, message):
+        self._message = message
+
+
 class SnapcraftSchemaError(Exception):
 
     @property
@@ -109,10 +119,14 @@ class Config:
                     logger.error("Could not find part name %s", dep)
                     sys.exit(1)
 
-        # Now sort them (this is super inefficient, but easy-ish to follow)
-        sortedParts = []
+        self.all_parts = self._sort_parts()
+
+    def _sort_parts(self):
+        '''Performs an inneficient but easy to follow sorting of parts.'''
+        sorted_parts = []
+
         while self.all_parts:
-            topPart = None
+            top_part = None
             for part in self.all_parts:
                 mentioned = False
                 for other in self.all_parts:
@@ -120,14 +134,14 @@ class Config:
                         mentioned = True
                         break
                 if not mentioned:
-                    topPart = part
+                    top_part = part
                     break
-            if not topPart:
-                logger.error("Circular dependency chain!")
-                sys.exit(1)
-            sortedParts = [topPart] + sortedParts
-            self.all_parts.remove(topPart)
-        self.all_parts = sortedParts
+            if not top_part:
+                raise SnapcraftLogicError('circular dependency chain found in parts definition')
+            sorted_parts = [top_part] + sorted_parts
+            self.all_parts.remove(top_part)
+
+        return sorted_parts
 
     def load_plugin(self, part_name, plugin_name, properties, load_code=True):
         part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties, load_code=load_code)

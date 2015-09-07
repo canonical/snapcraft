@@ -296,3 +296,6 @@ def _load_config():
         msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
         logger.error(msg)
         sys.exit(1)
+    except snapcraft.yaml.SnapcraftLogicError as e:
+        logger.error('Issue detected while analyzing snapcraft.yaml: {}'.format(e.message))
+        sys.exit(1)

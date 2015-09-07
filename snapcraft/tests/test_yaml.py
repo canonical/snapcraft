@@ -94,11 +94,10 @@ parts:
     plugin: go
     after: [p1]
 """)
-        with self.assertRaises(SystemExit) as raised:
+        with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        self.assertEqual('Circular dependency chain!\n', fake_logger.output)
+        self.assertEqual(raised.exception.message, 'circular dependency chain found in parts definition')
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
