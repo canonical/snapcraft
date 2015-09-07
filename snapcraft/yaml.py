@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import sys
 
 import yaml
 import jsonschema
@@ -69,7 +68,7 @@ class Config:
     def __init__(self):
         self.build_tools = []
         self.all_parts = []
-        afterRequests = {}
+        after_requests = {}
 
         self.data = _snapcraft_yaml_load()
         _validate_snapcraft_yaml(self.data)
@@ -84,42 +83,45 @@ class Config:
                 del properties["plugin"]
 
             if "after" in properties:
-                afterRequests[part_name] = properties["after"]
+                after_requests[part_name] = properties["after"]
                 del properties["after"]
 
             # TODO: support 'filter' or 'blacklist' field to filter what gets put in snap/
 
             self.load_plugin(part_name, plugin_name, properties)
 
-        # Grab all required dependencies, if not already specified
-        newParts = self.all_parts.copy()
-        while newParts:
-            part = newParts.pop(0)
-            requires = part.config.get('requires', [])
-            for requiredPart in requires:
-                alreadyPresent = False
-                for p in self.all_parts:
-                    if requiredPart in p.names():
-                        alreadyPresent = True
-                        break
-                if not alreadyPresent:
-                    newParts.append(self.load_plugin(requiredPart, requiredPart, {}))
+        self._load_missing_part_plugins()
+        self._compute_part_dependencies(after_requests)
+        self.all_parts = self._sort_parts()
 
-        # Gather lists of dependencies
+    def _load_missing_part_plugins(self):
+        new_parts = self.all_parts.copy()
+        while new_parts:
+            part = new_parts.pop(0)
+            requires = part.config.get('requires', [])
+            for required_part in requires:
+                present = False
+                for p in self.all_parts:
+                    if required_part in p.names():
+                        present = True
+                        break
+                if not present:
+                    new_parts.append(self.load_plugin(required_part, required_part, {}))
+
+    def _compute_part_dependencies(self, after_requests):
+        '''Gather the lists of dependencies and adds to all_parts.'''
+
         for part in self.all_parts:
-            depNames = part.config.get('requires', []) + afterRequests.get(part.names()[0], [])
-            for dep in depNames:
-                foundIt = False
+            dep_names = part.config.get('requires', []) + after_requests.get(part.names()[0], [])
+            for dep in dep_names:
+                found = False
                 for i in range(len(self.all_parts)):
                     if dep in self.all_parts[i].names():
                         part.deps.append(self.all_parts[i])
-                        foundIt = True
+                        found = True
                         break
-                if not foundIt:
-                    logger.error("Could not find part name %s", dep)
-                    sys.exit(1)
-
-        self.all_parts = self._sort_parts()
+                if not found:
+                    raise SnapcraftLogicError('part name missing {}'.format(dep))
 
     def _sort_parts(self):
         '''Performs an inneficient but easy to follow sorting of parts.'''
