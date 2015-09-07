@@ -34,23 +34,24 @@ def _validate_file_exists(instance):
     return os.path.exists(instance)
 
 
-class SchemaNotFoundError(Exception):
+class SnapcraftYamlFileError(Exception):
+
+    @property
+    def file(self):
+        return self._file
+
+    def __init__(self, yaml_file):
+        self._file = yaml_file
+
+
+class SnapcraftSchemaError(Exception):
+
+    @property
+    def message(self):
+        return self._message
 
     def __init__(self, message):
-        self.message = message
-
-
-def _validate_snapcraft_yaml(snapcraft_yaml):
-    schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
-
-    try:
-        with open(schema_file) as fp:
-            schema = yaml.load(fp)
-    except FileNotFoundError:
-        raise SchemaNotFoundError('Schema is missing, could not validate snapcraft.yaml, check installation')
-
-    format_check = jsonschema.FormatChecker()
-    jsonschema.validate(snapcraft_yaml, schema, format_checker=format_check)
+        self._message = message
 
 
 class Config:
@@ -60,23 +61,8 @@ class Config:
         self.all_parts = []
         afterRequests = {}
 
-        try:
-            with open("snapcraft.yaml", 'r') as fp:
-                self.data = yaml.load(fp)
-        except FileNotFoundError:
-            logger.error("Could not find snapcraft.yaml.  Are you sure you're in the right directory?\nTo start a new project, use 'snapcraft init'")
-            sys.exit(1)
-
-        # Make sure the loaded snapcraft yaml follows the schema
-        try:
-            _validate_snapcraft_yaml(self.data)
-        except SchemaNotFoundError as e:
-            logger.error(e.message)
-            sys.exit(1)
-        except jsonschema.ValidationError as e:
-            msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
-            logger.error(msg)
-            sys.exit(1)
+        self.data = _snapcraft_yaml_load()
+        _validate_snapcraft_yaml(self.data)
 
         self.build_tools = self.data.get('build-tools', [])
 
@@ -196,3 +182,25 @@ class Config:
             env += part.env(root)
 
         return env
+
+
+def _validate_snapcraft_yaml(snapcraft_yaml):
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
+
+    try:
+        with open(schema_file) as fp:
+            schema = yaml.load(fp)
+            format_check = jsonschema.FormatChecker()
+            jsonschema.validate(snapcraft_yaml, schema, format_checker=format_check)
+    except FileNotFoundError:
+        raise SnapcraftSchemaError('snapcraft validation file is missing from installation path')
+    except jsonschema.ValidationError as e:
+        raise SnapcraftSchemaError(e.message)
+
+
+def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
+    try:
+        with open(yaml_file) as fp:
+            return yaml.load(fp)
+    except FileNotFoundError:
+        raise SnapcraftYamlFileError(yaml_file)

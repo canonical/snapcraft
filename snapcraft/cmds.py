@@ -52,7 +52,7 @@ def init(args):
 
 
 def shell(args):
-    config = snapcraft.yaml.Config()
+    config = _load_config()
     common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
@@ -67,7 +67,7 @@ def snap(args):
     if not os.path.exists(os.path.join(common.get_snapdir(), "meta")):
         arches = [snapcraft.common.get_arch(), ]
 
-        config = snapcraft.yaml.Config()
+        config = _load_config()
 
         # FIXME this should be done in a more contained manner
         common.env = config.snap_env()
@@ -243,7 +243,7 @@ def cmd(args):
         forceCommand = cmds[0]
         cmds = common.COMMAND_ORDER[0:common.COMMAND_ORDER.index(cmds[0]) + 1]
 
-    config = snapcraft.yaml.Config()
+    config = _load_config()
 
     # Install local packages that we need
     if config.build_tools:
@@ -282,3 +282,17 @@ def _call(args, **kwargs):
 def _check_call(args, **kwargs):
     logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
     return subprocess.check_call(args, **kwargs)
+
+
+def _load_config():
+    try:
+        return snapcraft.yaml.Config()
+    except snapcraft.yaml.SnapcraftYamlFileError as e:
+        logger.error(
+            'Could not find {}.  Are you sure you are in the right directory?\n'
+            'To start a new project, use \'snapcraft init\''.format(e.file))
+        sys.exit(1)
+    except snapcraft.yaml.SnapcraftSchemaError as e:
+        msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
+        logger.error(msg)
+        sys.exit(1)
