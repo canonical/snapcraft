@@ -186,6 +186,28 @@ parts:
 
         self.assertEqual(raised.exception.message, '\'description\' is a required property')
 
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_tab_in_yaml(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""\tname: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+icon: my-icon.png
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Config()
+
+        self.assertEqual(raised.exception.message, 'found character \'\\t\' that cannot start any token')
+
 
 class TestValidation(TestCase):
 
