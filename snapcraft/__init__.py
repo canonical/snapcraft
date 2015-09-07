@@ -27,7 +27,11 @@ logger = logging.getLogger(__name__)
 
 class BasePlugin:
 
-    def __init__(self, name, options, stage_packages=[]):
+    @property
+    def PLUGIN_STAGE_PACKAGES(self):
+        return getattr(self, '_PLUGIN_STAGE_PACKAGES', [])
+
+    def __init__(self, name, options):
         self.name = name
         self.options = options
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
@@ -36,7 +40,6 @@ class BasePlugin:
         self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
-        self.stage_packages = stage_packages
 
     # The API
     def pull(self):
@@ -97,8 +100,8 @@ class BasePlugin:
     def setup_stage_packages(self):
         ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
         part_stage_packages = getattr(self.options, 'stage_packages', [])
-        if self.stage_packages or part_stage_packages:
-            ubuntu.get(self.stage_packages + part_stage_packages)
+        if self.PLUGIN_STAGE_PACKAGES or part_stage_packages:
+            ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
             ubuntu.unpack(self.installdir)
 
 
