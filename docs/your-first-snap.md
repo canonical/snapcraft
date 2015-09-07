@@ -208,7 +208,7 @@ Let's add some metadata to our snapcraft file
 
 Copy a png icon of your choice into your current directory:
 
-    $ cp /usr/share/icons/hicolor/256x256/apps/unity-datetime-panel.png ./icon.png
+    $ cp /usr/share/icons/hicolor/64/mimetypes/text-x-apport.png ./icon.png
 
 and tell Snapcraft to actually make the snap package:
 
