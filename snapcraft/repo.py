@@ -92,24 +92,26 @@ class Ubuntu:
         return sorted(self.all_dep_names)
 
     def _add_deps(self, package_names):
-        for pkg in package_names:
-            # Remove the :any in packages
-            # TODO support multiarch
-            pkg = pkg.rsplit(':', 1)[0]
-            if pkg in self.all_dep_names:
-                continue
-            if pkg in self.manifest_dep_names and pkg not in package_names:
-                continue
-            deps = set()
-            try:
-                candidate_pkg = self.apt_cache[pkg].candidate
-            except KeyError:
-                raise PackageNotFoundError(pkg)
-            deps = candidate_pkg.dependencies
-            if self.recommends:
-                deps += candidate_pkg.recommends
-            self.all_dep_names.add(pkg)
-            self._add_deps([x[0].name for x in deps])
+        def add_deps(packages):
+            for pkg in packages:
+                # Remove the :any in packages
+                # TODO support multiarch
+                pkg = pkg.rsplit(':', 1)[0]
+                if pkg in self.all_dep_names:
+                    continue
+                if pkg in self.manifest_dep_names and pkg not in package_names:
+                    continue
+                deps = set()
+                try:
+                    candidate_pkg = self.apt_cache[pkg].candidate
+                except KeyError:
+                    raise PackageNotFoundError(pkg)
+                deps = candidate_pkg.dependencies
+                if self.recommends:
+                    deps += candidate_pkg.recommends
+                self.all_dep_names.add(pkg)
+                add_deps([x[0].name for x in deps])
+        add_deps(package_names)
 
 
 def _fix_symlinks(debdir):
