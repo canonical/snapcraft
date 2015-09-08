@@ -37,6 +37,10 @@ class Python2Plugin(snapcraft.BasePlugin):
     # location.  And PATH is automatically set by snapcraft.
 
     def pull(self):
+        # A nice idea here would be to be asking setup tools
+        # to use the deb layout, but that doesn't work with
+        # prefix sadly
+
         if self.requirements and not (self.run(
                 ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'site-packages')]) and self.run(
                 ['python2', os.path.join(self.installdir, 'usr', 'bin', 'easy_install'), '--prefix', os.path.join(self.installdir, 'usr'), 'pip']) and self.run(
