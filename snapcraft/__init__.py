@@ -48,12 +48,12 @@ class BasePlugin:
     def build(self):
         return True
 
-    def snap_files(self):
+    def snap_fileset(self):
         """Returns two iteratables of globs:
             - the first is the set of files/dirs to include
             - the second is the set of files/dirs to exclude
            For example: (['bin', 'lib'], ['lib/*.a'])"""
-        return (['*'], [])
+        return (['*'])
 
     def env(self, root):
         return []

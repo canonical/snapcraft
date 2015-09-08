@@ -65,53 +65,53 @@ class PluginTestCase(tests.TestCase):
         p.pull()
         self.assertFalse(p.code.pull.called)
 
-    def test_collect_snap_files(self):
-        p = get_test_plugin()
+    # def test_collect_snap_files(self):
+        # p = get_test_plugin()
 
-        tmpdirObject = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdirObject.cleanup)
-        tmpdir = tmpdirObject.name
+        # tmpdirObject = tempfile.TemporaryDirectory()
+        # self.addCleanup(tmpdirObject.cleanup)
+        # tmpdir = tmpdirObject.name
 
-        p.installdir = tmpdir + '/install'
-        os.makedirs(tmpdir + '/install/1/1a/1b')
-        os.makedirs(tmpdir + '/install/2/2a')
-        os.makedirs(tmpdir + '/install/3')
-        open(tmpdir + '/install/a', mode='w').close()
-        open(tmpdir + '/install/b', mode='w').close()
-        open(tmpdir + '/install/1/a', mode='w').close()
-        open(tmpdir + '/install/3/a', mode='w').close()
+        # p.installdir = tmpdir + '/install'
+        # os.makedirs(tmpdir + '/install/1/1a/1b')
+        # os.makedirs(tmpdir + '/install/2/2a')
+        # os.makedirs(tmpdir + '/install/3')
+        # open(tmpdir + '/install/a', mode='w').close()
+        # open(tmpdir + '/install/b', mode='w').close()
+        # open(tmpdir + '/install/1/a', mode='w').close()
+        # open(tmpdir + '/install/3/a', mode='w').close()
 
-        p.stagedir = tmpdir + '/stage'
-        os.makedirs(tmpdir + '/stage/1/1a/1b')
-        os.makedirs(tmpdir + '/stage/2/2a')
-        os.makedirs(tmpdir + '/stage/2/2b')
-        os.makedirs(tmpdir + '/stage/3')
-        open(tmpdir + '/stage/a', mode='w').close()
-        open(tmpdir + '/stage/b', mode='w').close()
-        open(tmpdir + '/stage/c', mode='w').close()
-        open(tmpdir + '/stage/1/a', mode='w').close()
-        open(tmpdir + '/stage/2/2b/a', mode='w').close()
-        open(tmpdir + '/stage/3/a', mode='w').close()
+        # p.stagedir = tmpdir + '/stage'
+        # os.makedirs(tmpdir + '/stage/1/1a/1b')
+        # os.makedirs(tmpdir + '/stage/2/2a')
+        # os.makedirs(tmpdir + '/stage/2/2b')
+        # os.makedirs(tmpdir + '/stage/3')
+        # open(tmpdir + '/stage/a', mode='w').close()
+        # open(tmpdir + '/stage/b', mode='w').close()
+        # open(tmpdir + '/stage/c', mode='w').close()
+        # open(tmpdir + '/stage/1/a', mode='w').close()
+        # open(tmpdir + '/stage/2/2b/a', mode='w').close()
+        # open(tmpdir + '/stage/3/a', mode='w').close()
 
-        self.assertEqual(p.collect_snap_files([], []), (set(), set()))
+        # self.assertEqual(p.collect_snap_files([], []), (set(), set()))
 
-        self.assertEqual(p.collect_snap_files(['*'], []), (
-            set(['1', '1/1a', '1/1a/1b', '2', '2/2a', '3']),
-            set(['a', 'b', '1/a', '3/a'])))
+        # self.assertEqual(p.collect_snap_files(['*'], []), (
+        #    set(['1', '1/1a', '1/1a/1b', '2', '2/2a', '3']),
+        #    set(['a', 'b', '1/a', '3/a'])))
 
-        self.assertEqual(p.collect_snap_files(['*'], ['1']), (
-            set(['2', '2/2a', '3']),
-            set(['a', 'b', '3/a'])))
+        # self.assertEqual(p.collect_snap_files(['*'], ['1']), (
+        #    set(['2', '2/2a', '3']),
+        #    set(['a', 'b', '3/a'])))
 
-        self.assertEqual(p.collect_snap_files(['a'], ['*']), (set(), set()))
+        # self.assertEqual(p.collect_snap_files(['a'], ['*']), (set(), set()))
 
-        self.assertEqual(p.collect_snap_files(['*'], ['*/*']), (
-            set(['1', '2', '3']),
-            set(['a', 'b'])))
+        # self.assertEqual(p.collect_snap_files(['*'], ['*/*']), (
+        #    set(['1', '2', '3']),
+        #    set(['a', 'b'])))
 
-        self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
-            set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
-            set()))
+        # self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
+        #     set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
+        #     set()))
 
     def test_notify_stage_must_log_information(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -145,21 +145,21 @@ class PluginTestCase(tests.TestCase):
             plugin.PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
-    def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
-        p = get_test_plugin()
-        with self.assertRaises(plugin.PluginError) as raised:
-            p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
+    # def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
+    #     p = get_test_plugin()
+    #     with self.assertRaises(plugin.PluginError) as raised:
+    #         p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
 
-        self.assertEqual(
-            "path '/abs/include' must be relative", str(raised.exception))
+    #     self.assertEqual(
+    #         "path '/abs/include' must be relative", str(raised.exception))
 
-    def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
-        p = get_test_plugin()
-        with self.assertRaises(plugin.PluginError) as raised:
-            p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
+    # def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
+    #     p = get_test_plugin()
+    #     with self.assertRaises(plugin.PluginError) as raised:
+    #         p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
 
-        self.assertEqual(
-            "path '/abs/exclude' must be relative", str(raised.exception))
+    #     self.assertEqual(
+    #         "path '/abs/exclude' must be relative", str(raised.exception))
 
     def test_load_plugin_with_invalid_part_must_exit_with_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

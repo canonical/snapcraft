@@ -57,10 +57,19 @@ class QmlPlugin(snapcraft.BasePlugin):
         "qml-module-ubuntu-onlineaccounts-client",
     ]
 
-    def snap_files(self):
-        include, exclude = ['*'], []
-        include.append('./etc/xdg/qtchooser/snappy-qt5.conf')
-        return (include, exclude)
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        fileset = [
+            '*',
+            'etc/xdg/qtchooser/snappy-qt5.conf',
+        ]
+        options.stage.extend(fileset)
+        options.snap.extend(fileset)
+
+    def snap_fileset(self):
+        return ['*',
+                'etc/xdg/qtchooser/snappy-qt5.conf',
+                ]
 
     def build_qt_config(self):
         arch = snapcraft.common.get_arch_triplet()
