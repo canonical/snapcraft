@@ -61,8 +61,9 @@ parts:
     stage-packages: [fswebcam]
 """)
         snapcraft.yaml.Config()
-        mock_loadPlugin.assert_called_with("part1", "go", {
-            "stage-packages": ["fswebcam"],
+        mock_loadPlugin.assert_called_with('part1', 'go', {
+            'stage-packages': ['fswebcam'],
+            'stage': [], 'snap': [],
         })
 
     def test_config_raises_on_missing_snapcraft_yaml(self):
@@ -211,6 +212,40 @@ parts:
             'found character \'\\t\' that cannot start any token '
             'on line 2 of snapcraft.yaml')
 
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_config_expands_filesets(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+parts:
+  part1:
+    type: go
+    stage-packages: [fswebcam]
+    filesets:
+      wget:
+        - /usr/lib/wget.so
+        - /usr/bin/wget
+      build-wget:
+        - /usr/lib/wget.a
+    stage:
+      - $wget
+      - $build-wget
+    snap:
+      - $wget
+      - /usr/share/my-icon.png
+""")
+        snapcraft.yaml.Config()
+
+        mock_loadPlugin.assert_called_with('part1', 'go', {
+            'snap': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/share/my-icon.png'],
+            'stage-packages': ['fswebcam'],
+            'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
+        })
+
 
 class TestValidation(TestCase):
 
@@ -354,3 +389,39 @@ class TestValidation(TestCase):
 
         expected_message = '\'my-icon.png\' is not a \'icon-path\''
         self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+
+
+class TestFilesets(TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.properties = {
+            'filesets': {
+                '1': ['1', '2', '3'],
+                '2': [],
+            }
+        }
+
+    def test_expand_var(self):
+        self.properties['stage'] = ['$1']
+
+        fs = snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        self.assertEqual(fs, ['1', '2', '3'])
+
+    def test_no_expansion(self):
+        self.properties['stage'] = ['1']
+
+        fs = snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        self.assertEqual(fs, ['1'])
+
+    def test_invalid_expansion(self):
+        self.properties['stage'] = ['$3']
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
+            snapcraft.yaml._expand_filesets_for('stage', self.properties)
+
+        self.assertEqual(
+            raised.exception.message,
+            '\'$3\' referred to in the \'stage\' fileset but it is not '
+            'in filesets')

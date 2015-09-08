@@ -86,7 +86,11 @@ class Config:
                 after_requests[part_name] = properties["after"]
                 del properties["after"]
 
-            # TODO: support 'filter' or 'blacklist' field to filter what gets put in snap/
+            properties['stage'] = _expand_filesets_for('stage', properties)
+            properties['snap'] = _expand_filesets_for('snap', properties)
+
+            if 'filesets' in properties:
+                del properties['filesets']
 
             self.load_plugin(part_name, plugin_name, properties)
 
@@ -224,3 +228,22 @@ def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
         raise SnapcraftSchemaError(
             '{} on line {} of {}'.format(
                 e.problem, e.problem_mark.line, yaml_file))
+
+
+def _expand_filesets_for(stage, properties):
+    filesets = properties.get('filesets', {})
+    fileset_for_stage = properties.get(stage, {})
+    new_stage_set = []
+
+    for item in fileset_for_stage:
+        if item.startswith('$'):
+            try:
+                new_stage_set.extend(filesets[item[1:]])
+            except KeyError:
+                raise SnapcraftLogicError(
+                    '\'{}\' referred to in the \'{}\' fileset but it is not '
+                    'in filesets'.format(item, stage))
+        else:
+            new_stage_set.append(item)
+
+    return new_stage_set
