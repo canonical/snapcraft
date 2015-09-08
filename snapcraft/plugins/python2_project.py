@@ -18,26 +18,10 @@ import os
 import snapcraft
 from snapcraft.plugins import ubuntu
 
-_PLUGIN_STAGE_PACKAGES = [
-]
-
 class Python2ProjectPlugin(snapcraft.BasePlugin):
 
     # note that we don't need to setup env(), python figures it out
     # see python2.py for more details
-
-    def __init__(self, name, options):
-        if options.requirements:
-            self.requirements = options.requirements
-            _PLUGIN_STAGE_PACKAGES.append('python-pip')
-        else:
-            self.requirements = None
-
-        super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
-
-    def pull(self):
-        return self.requirements and not self.run(
-                ['python2', '-m', 'pip', 'install', '-r', os.path.join(os.getcwd(), self.requirements)]):
 
     def build(self):
         return self.run(
