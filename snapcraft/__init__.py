@@ -49,10 +49,10 @@ class BasePlugin:
         return True
 
     def snap_fileset(self):
-        """Returns two iteratables of globs:
-            - the first is the set of files/dirs to include
-            - the second is the set of files/dirs to exclude
-           For example: (['bin', 'lib'], ['lib/*.a'])"""
+        """Returns one iteratables of globs specific to the plugin:
+            - includes can be just listed
+            - excludes must be preceded by !
+           For example: (['bin', 'lib', '!include'])"""
         return (['*'])
 
     def env(self, root):
