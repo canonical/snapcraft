@@ -18,11 +18,6 @@ import os
 import snapcraft
 
 
-_PLUGIN_STAGE_PACKAGES = [
-    'python-dev',
-]
-
-
 class Python2Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
@@ -32,6 +27,10 @@ class Python2Plugin(snapcraft.BasePlugin):
         else:
             self.requirements = None
         super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
+
+    _PLUGIN_STAGE_PACKAGES = [
+        'python-dev',
+    ]
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed

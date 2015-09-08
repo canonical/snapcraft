@@ -70,14 +70,13 @@ Let's start with the web server.
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
 
 You've got a `parts` list with one item, named `golang-static-http`, but we
 could call it anything. That part has a few options. A `plugin` option that
-tells Snapcraft how to interpret the part. In this case, it's a Go project
-using Go 1.4. And finally, a `source` option telling Snapcraft where to
-download the code.
+tells Snapcraft how to interpret the part. In this case, it's a Go project.
+And finally, a `source` option telling Snapcraft where to download the code.
 
 Go ahead and create `snapcraft.yaml` with the above contents in an empty
 directory.
@@ -104,7 +103,7 @@ to look like:
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu
@@ -153,7 +152,7 @@ Alright, let's put this script in our snap too:
 
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu
@@ -179,14 +178,13 @@ program is in stage/usr/bin since it came from Ubuntu):
 ### Package Metadata
 
 "But how do we actually make a snap?", you may be wondering. To do that, we
-need some metadata files required by Snappy that describe how our code should
-be installed and run.
+need to add some Snappy metadata that describes how our code should be
+installed and run.
 
 You can read all about the [format of this metadata](https://developer.ubuntu.com/en/snappy/guides/packaging-format-apps/),
 but we'll assume here that you're already familiar.
 
-Let's make a new subdirectory called `meta` and put our Snappy package files
-there. Here's the contents of `meta/package.yaml`:
+Let's add some metadata to our snapcraft file
 
     name: webcam-webui
     version: 1
@@ -194,18 +192,12 @@ there. Here's the contents of `meta/package.yaml`:
     services:
     - name: webcam-webui
       start: bin/webcam-webui
-
-And a very simple `meta/readme.md`:
-
-    # Webcam web UI
-
-    Exposes your webcam over a web UI
-
-Now that we have that sorted, we can tell Snapcraft where to find our metadata:
-
+    summary: Webcam web UI
+    description: Exposes your webcam over a web UI
+    icon: icon.png
     parts:
       golang-static-http:
-        plugin: go1.4-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu
@@ -213,9 +205,12 @@ Now that we have that sorted, we can tell Snapcraft where to find our metadata:
         plugin: copy
         files:
           webcam-webui: bin/webcam-webui
-    snappy-metadata: meta
 
-And tell Snapcraft to actually make the snap package:
+Copy a png icon of your choice into your current directory:
+
+    $ cp /usr/share/icons/hicolor/64/mimetypes/text-x-apport.png ./icon.png
+
+and tell Snapcraft to actually make the snap package:
 
     $ snapcraft assemble
 

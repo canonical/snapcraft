@@ -19,3 +19,4 @@ parts:
   qmldemo:
     plugin: copy
     files:
+      demo.qml: demo.qml

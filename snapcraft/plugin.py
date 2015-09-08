@@ -166,15 +166,20 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        if self.code and hasattr(self.code, 'stage_packages_pull'):
+        run_setup_stage_packages = self.code and hasattr(self.code, 'setup_stage_packages')
+        run_pull = self.code and hasattr(self.code, 'pull')
+
+        if run_setup_stage_packages or run_pull:
+            self.notify_stage("Pulling")
+
+        if run_setup_stage_packages:
             try:
-                self.code.stage_packages_pull()
+                self.code.setup_stage_packages()
             except repo.PackageNotFoundError as e:
                 logger.error(e.message)
                 return False
 
-        if self.code and hasattr(self.code, 'pull'):
-            self.notify_stage("Pulling")
+        if run_pull:
             if not getattr(self.code, 'pull')():
                 return False
 
@@ -188,13 +193,6 @@ class PluginHandler:
         if self.code and hasattr(self.code, 'build'):
             self.notify_stage("Building")
             if not getattr(self.code, 'build')():
-                return False
-
-        if self.code and hasattr(self.code, 'stage_packages_unpack'):
-            try:
-                self.code.stage_packages_unpack()
-            except repo.PackageNotFoundError as e:
-                logger.error(e.message)
                 return False
 
         self.mark_done('build')
