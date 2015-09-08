@@ -20,25 +20,26 @@ import snapcraft
 
 class Python2Plugin(snapcraft.BasePlugin):
 
-    def __init__(self, name, options):
-        if options.requirements:
-            self.requirements = options.requirements
-            _PLUGIN_STAGE_PACKAGES.append('python-pip')
-        else:
-            self.requirements = None
-        super().__init__(name, options, stage_packages=_PLUGIN_STAGE_PACKAGES)
-
     _PLUGIN_STAGE_PACKAGES = [
         'python-dev',
     ]
+
+    def __init__(self, name, options):
+        if options.requirements:
+            self.requirements = options.requirements
+            self._PLUGIN_STAGE_PACKAGES.extend(['python-pkg-resources', 'python-setuptools'])
+        else:
+            self.requirements = None
+        super().__init__(name, options)
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location.  And PATH is automatically set by snapcraft.
 
     def pull(self):
-        self.run(['env'])
-        if self.requirements and not self.run(
-                ['python2', '-m', 'pip', 'install', '-r', os.path.join(os.getcwd(), self.requirements)]):
+        if self.requirements and not (self.run(
+                ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'site-packages')]) and self.run(
+                ['python2', os.path.join(self.installdir, 'usr', 'bin', 'easy_install'), '--prefix', os.path.join(self.installdir, 'usr'), 'pip']) and self.run(
+                ['python2', os.path.join(self.installdir, 'usr', 'bin', 'pip2'), 'install', '--root', os.path.join(self.installdir, 'usr', 'lib', 'python2.7'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
              return False
         return True
