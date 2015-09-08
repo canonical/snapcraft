@@ -221,4 +221,6 @@ def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
     except FileNotFoundError:
         raise SnapcraftYamlFileError(yaml_file)
     except yaml.scanner.ScannerError as e:
-        raise SnapcraftSchemaError(e.problem)
+        raise SnapcraftSchemaError(
+            '{} on line {} of {}'.format(
+                e.problem, e.problem_mark.line, yaml_file))

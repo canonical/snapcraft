@@ -191,9 +191,9 @@ parts:
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        self.make_snapcraft_yaml("""\tname: test
+        self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
+\tvendor: me <me@me.com>
 summary: test
 icon: my-icon.png
 
@@ -206,7 +206,10 @@ parts:
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.message, 'found character \'\\t\' that cannot start any token')
+        self.assertEqual(
+            raised.exception.message,
+            'found character \'\\t\' that cannot start any token '
+            'on line 2 of snapcraft.yaml')
 
 
 class TestValidation(TestCase):
