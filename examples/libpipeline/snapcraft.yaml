@@ -9,10 +9,10 @@ icon: icon.png
 
 parts:
     pipelinetest:
-        plugin: make-project
+        type: make-project
         source: lp:~mterry/+junk/pipelinetest
         after:
             - libpipeline
     libpipeline:
-        plugin: autotools-project
+        type: autotools-project
         source: lp:~mterry/libpipeline/printf

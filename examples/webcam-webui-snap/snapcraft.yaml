@@ -11,10 +11,10 @@ icon: icon.png
 
 parts:
     golang-static-http:
-        plugin: go-project
+        type: go-project
         source: git://github.com/mikix/golang-static-http
     glue:
-        plugin: copy
+        type: copy
         stage-packages:
           - fswebcam
         files:

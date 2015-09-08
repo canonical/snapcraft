@@ -15,7 +15,7 @@ icon: icon.png
 
 parts:
   qml:
-    plugin: qml
+    type: qml
   qmldemo:
-    plugin: copy
+    type: copy
     files:

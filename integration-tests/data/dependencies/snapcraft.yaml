@@ -7,13 +7,13 @@ icon: icon.png
 
 parts:
   p1:
-    plugin: make-project
+    type: make-project
     source: p1
   p2:
-    plugin: make-project
+    type: make-project
     source: p2
     after: [p1]
   p3:
-    plugin: make-project
+    type: make-project
     source: p3
     after: [p2]
