@@ -24,6 +24,7 @@ import yaml
 
 import snapcraft
 from snapcraft import common
+from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ class PluginHandler:
         parts_dir = os.path.join(os.getcwd(), 'parts')
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
         self.builddir = os.path.join(parts_dir, part_name, 'build')
+        self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.installdir = os.path.join(parts_dir, part_name, 'install')
         self.stagedir = os.path.join(os.getcwd(), 'stage')
         self.snapdir = os.path.join(os.getcwd(), 'snap')
@@ -127,7 +129,7 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.sourcedir, self.builddir, self.installdir, self.stagedir,
-            self.snapdir
+            self.snapdir, self.ubuntudir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -163,11 +165,25 @@ class PluginHandler:
         if not self.should_stage_run('pull', force):
             return True
         self.makedirs()
-        if self.code and hasattr(self.code, 'pull'):
+
+        run_setup_stage_packages = self.code and hasattr(self.code, 'setup_stage_packages')
+        run_pull = self.code and hasattr(self.code, 'pull')
+
+        if run_setup_stage_packages or run_pull:
             self.notify_stage("Pulling")
+
+        if run_setup_stage_packages:
+            try:
+                self.code.setup_stage_packages()
+            except repo.PackageNotFoundError as e:
+                logger.error(e.message)
+                return False
+
+        if run_pull:
             if not getattr(self.code, 'pull')():
                 return False
-            self.mark_done('pull')
+
+        self.mark_done('pull')
         return True
 
     def build(self, force=False):
@@ -178,7 +194,8 @@ class PluginHandler:
             self.notify_stage("Building")
             if not getattr(self.code, 'build')():
                 return False
-            self.mark_done('build')
+
+        self.mark_done('build')
         return True
 
     def stage(self, force=False):

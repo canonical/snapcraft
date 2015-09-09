@@ -57,12 +57,13 @@ description: test
 icon: my-icon.png
 
 parts:
-  ubuntu:
-    packages: [fswebcam]
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
 """)
         snapcraft.yaml.Config()
-        mock_loadPlugin.assert_called_with("ubuntu", "ubuntu", {
-            "packages": ["fswebcam"],
+        mock_loadPlugin.assert_called_with("part1", "go", {
+            "stage-packages": ["fswebcam"],
         })
 
     def test_config_raises_on_missing_snapcraft_yaml(self):
@@ -92,10 +93,10 @@ icon: my-icon.png
 
 parts:
   p1:
-    plugin: ubuntu
+    plugin: go
     after: [p2]
   p2:
-    plugin: ubuntu
+    plugin: go
     after: [p1]
 """)
         with self.assertRaises(SystemExit) as raised:
@@ -117,8 +118,9 @@ description: nothing
 icon: my-icon.png
 
 parts:
-  ubuntu:
-    packages: [fswebcam]
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
             snapcraft.yaml.Config()
@@ -141,8 +143,9 @@ description: nothing
 icon: my-icon.png
 
 parts:
-  ubuntu:
-    packages: [fswebcam]
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
             snapcraft.yaml.Config()
@@ -165,8 +168,9 @@ description: nothing
 icon: my-icon.png
 
 parts:
-  ubuntu:
-    packages: [fswebcam]
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
             snapcraft.yaml.Config()
@@ -188,8 +192,9 @@ summary: test
 icon: my-icon.png
 
 parts:
-  ubuntu:
-    packages: [fswebcam]
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
 """)
         with self.assertRaises(SystemExit) as raised:
             snapcraft.yaml.Config()
@@ -220,7 +225,7 @@ class TestValidation(TestCase):
             'icon': 'my-icon.png',
             'parts': {
                 'part1': {
-                    'type': 'project',
+                    'plugin': 'project',
                 },
             },
         }

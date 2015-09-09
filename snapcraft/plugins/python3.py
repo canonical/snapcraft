@@ -15,29 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
-from snapcraft.plugins.ubuntu import UbuntuPlugin
 
 
 class Python3Plugin(snapcraft.BasePlugin):
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
-
-        class Py3Options:
-            packages = ["python3-dev"]
-        self.ubuntu = UbuntuPlugin(name, Py3Options())
+    _PLUGIN_STAGE_PACKAGES = [
+        'python3-dev',
+    ]
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location, see https://code.launchpad.net/~mvo/snapcraft/python3-project/+merge/264521/comments/664308
     #
     # PATH is automatically set by snapcraft
-
-    def pull(self):
-        return self.ubuntu.pull()
-
-    def build(self):
-        return self.ubuntu.build()
-
-    def snap_files(self):
-        return self.ubuntu.snap_files()
