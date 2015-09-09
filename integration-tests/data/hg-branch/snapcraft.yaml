@@ -7,7 +7,7 @@ icon: icon.png
 
 parts:
     mercurial:
-        plugin: make-project
+        type: make-project
         source: .
         source-type: hg
         source-branch: second

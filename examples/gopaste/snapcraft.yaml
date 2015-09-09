@@ -11,5 +11,5 @@ icon: icon.png
 
 parts:
   gopaste:
-    plugin: go-project
+    type: go-project
     source: git://github.com/wisnij/gopaste/gopasted

@@ -78,9 +78,9 @@ class Config:
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.get("plugin", part_name)
-            if "plugin" in properties:
-                del properties["plugin"]
+            plugin_name = properties.get("type", part_name)
+            if "type" in properties:
+                del properties["type"]
 
             if "after" in properties:
                 after_requests[part_name] = properties["after"]

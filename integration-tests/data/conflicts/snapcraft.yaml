@@ -7,9 +7,9 @@ icon: icon.png
 
 parts:
   p1:
-    plugin: make-project
+    type: make-project
     source: .
   p2:
-    plugin: make-project
+    type: make-project
     source: .
     after: [p1]

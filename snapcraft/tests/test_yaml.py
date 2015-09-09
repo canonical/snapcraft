@@ -57,7 +57,7 @@ icon: my-icon.png
 
 parts:
   part1:
-    plugin: go
+    type: go
     stage-packages: [fswebcam]
 """)
         snapcraft.yaml.Config()
@@ -88,10 +88,10 @@ icon: my-icon.png
 
 parts:
   p1:
-    plugin: go
+    type: go
     after: [p2]
   p2:
-    plugin: go
+    type: go
     after: [p1]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
@@ -113,7 +113,7 @@ icon: my-icon.png
 
 parts:
   part1:
-    plugin: go
+    type: go
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
@@ -135,7 +135,7 @@ icon: my-icon.png
 
 parts:
   part1:
-    plugin: go
+    type: go
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
@@ -157,7 +157,7 @@ icon: my-icon.png
 
 parts:
   part1:
-    plugin: go
+    type: go
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
@@ -178,7 +178,7 @@ icon: my-icon.png
 
 parts:
   part1:
-    plugin: go
+    type: go
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
@@ -199,7 +199,7 @@ icon: my-icon.png
 
 parts:
   part1:
-    plugin: go
+    type: go
     stage-packages: [fswebcam]
 """)
 
@@ -232,7 +232,7 @@ class TestValidation(TestCase):
             'icon': 'my-icon.png',
             'parts': {
                 'part1': {
-                    'plugin': 'project',
+                    'type': 'project',
                 },
             },
         }
