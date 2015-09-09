@@ -285,3 +285,13 @@ command:
     test -e parts/mercurial/src/second
     ${SNAPCRAFT} pull
     test -e parts/mercurial/src/second
+
+id: snapcraft/normal/pip2/requirements
+plugin: shell
+estimated_duration: 60
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/pip2-requirements .
+    ${SNAPCRAFT} pull
+    test -f parts/python2/install/usr/lib/python2.7/argparse.py
+
