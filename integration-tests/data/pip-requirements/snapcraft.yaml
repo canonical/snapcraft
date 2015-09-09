@@ -1,4 +1,4 @@
-name: pip2-test
+name: pip-test
 version: 1
 vendor: PIP Tests <pip@pippy.pi>
 summary: Why do snapcraft files require a summary?
@@ -8,4 +8,7 @@ icon: icon.svg
 parts:
   python2:
     type: python2
+    requirements: requirements.txt
+  python3:
+    type: python3
     requirements: requirements.txt
