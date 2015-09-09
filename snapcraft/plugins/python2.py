@@ -45,5 +45,5 @@ class Python2Plugin(snapcraft.BasePlugin):
                 ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'site-packages')]) and self.run(
                 ['python2', os.path.join(self.installdir, 'usr', 'bin', 'easy_install'), '--prefix', os.path.join(self.installdir, 'usr'), 'pip']) and self.run(
                 ['python2', os.path.join(self.installdir, 'usr', 'bin', 'pip2'), 'install', '--root', os.path.join(self.installdir, 'usr', 'lib', 'python2.7'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
-             return False
+            return False
         return True
