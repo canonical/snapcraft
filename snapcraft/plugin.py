@@ -267,7 +267,7 @@ def _get_file_list(stage_set):
     excludes = []
 
     for item in stage_set:
-        if item.startswith('!'):
+        if item.startswith('-'):
             excludes.append(item[1:])
         else:
             includes.append(item)

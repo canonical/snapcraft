@@ -65,6 +65,41 @@ class PluginTestCase(tests.TestCase):
         p.pull()
         self.assertFalse(p.code.pull.called)
 
+    def test_fileset_include_excludes(self):
+        stage_set = [
+            '-etc',
+            'opt/something',
+            '-usr/lib/*.a',
+            'usr/bin',
+        ]
+
+        include, exclude = plugin._get_file_list(stage_set)
+
+        self.assertEqual(include, ['opt/something', 'usr/bin'])
+        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+
+    def test_fileset_only_includes(self):
+        stage_set = [
+            'opt/something',
+            'usr/bin',
+        ]
+
+        include, exclude = plugin._get_file_list(stage_set)
+
+        self.assertEqual(include, ['opt/something', 'usr/bin'])
+        self.assertEqual(exclude, [])
+
+    def test_fileset_only_excludes(self):
+        stage_set = [
+            '-etc',
+            '-usr/lib/*.a',
+        ]
+
+        include, exclude = plugin._get_file_list(stage_set)
+
+        self.assertEqual(include, ['*'])
+        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+
     # def test_collect_snap_files(self):
         # p = get_test_plugin()
 

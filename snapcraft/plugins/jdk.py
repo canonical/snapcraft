@@ -30,8 +30,8 @@ class JdkPlugin(snapcraft.BasePlugin):
 
     def snap_fileset(self):
         # Cut out jdk bits (jre bits are in default-java/jre)
-        return (['!usr/lib/jvm/default-java/bin',
-                 '!usr/lib/jvm/default-java/include',
-                 '!usr/lib/jvm/default-java/lib',
-                 '!usr/share/doc',
+        return (['-usr/lib/jvm/default-java/bin',
+                 '-usr/lib/jvm/default-java/include',
+                 '-usr/lib/jvm/default-java/lib',
+                 '-usr/share/doc',
                  ])
