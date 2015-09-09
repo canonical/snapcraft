@@ -294,5 +294,5 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/pip-requirements .
     ${SNAPCRAFT} pull
     test -f parts/python2/install/usr/lib/python2.7/argparse.py
-    test -f parts/python3/install/usr/lib/python3/argparse.py
+    test -f parts/python3/install/usr/lib/python3.4/argparse.py
 
