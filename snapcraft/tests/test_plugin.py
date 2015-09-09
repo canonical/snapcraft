@@ -230,21 +230,19 @@ class PluginTestCase(tests.TestCase):
             plugin.PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
-    # def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
-    #     p = get_test_plugin()
-    #     with self.assertRaises(plugin.PluginError) as raised:
-    #         p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
+    def test_filesets_includes_without_relative_paths(self):
+        with self.assertRaises(plugin.PluginError) as raised:
+            plugin._get_file_list(['rel', '/abs/include'])
 
-    #     self.assertEqual(
-    #         "path '/abs/include' must be relative", str(raised.exception))
+        self.assertEqual(
+            "path '/abs/include' must be relative", str(raised.exception))
 
-    # def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
-    #     p = get_test_plugin()
-    #     with self.assertRaises(plugin.PluginError) as raised:
-    #         p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
+    def test_filesets_exlcudes_without_relative_paths(self):
+        with self.assertRaises(plugin.PluginError) as raised:
+            plugin._get_file_list(['rel', '-/abs/exclude'])
 
-    #     self.assertEqual(
-    #         "path '/abs/exclude' must be relative", str(raised.exception))
+        self.assertEqual(
+            "path '/abs/exclude' must be relative", str(raised.exception))
 
     def test_load_plugin_with_invalid_part_must_exit_with_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
