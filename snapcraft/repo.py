@@ -43,8 +43,17 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, download_dir, recommends=False):
-        self.apt_cache = apt.Cache()
+    def __init__(self, download_dir, recommends=False, sources=None):
+        if not sources:
+            self.apt_cache = apt.Cache()
+        else:
+            os.makedirs(os.path.join(download_dir, 'etc', 'apt'), exist_ok=True)
+            srcfile = os.path.join(download_dir, 'etc', 'apt', 'sources.list')
+            with open(srcfile, 'w') as f:
+                f.write(sources)
+            self.apt_cache = apt.Cache(rootdir=download_dir, memonly=True)
+            self.apt_cache.update(sources_list=srcfile)
+            self.apt_cache.open()
         self.manifest_dep_names = self._manifest_dep_names()
         self.recommends = recommends
         self.download_dir = download_dir
