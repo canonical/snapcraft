@@ -24,7 +24,7 @@ class Python3Plugin(snapcraft.BasePlugin):
         super().__init__(name, options)
 
         class Py3Options:
-            packages = ["python3-dev"]
+            packages = ["python3-dev", "python3-setuptools"]
         self.ubuntu = UbuntuPlugin(name, Py3Options())
 
     # note that we don't need to set PYTHONHOME here,
