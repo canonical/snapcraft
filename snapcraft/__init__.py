@@ -53,7 +53,7 @@ class BasePlugin:
             - includes can be just listed
             - excludes must be preceded by -
            For example: (['bin', 'lib', '-include'])"""
-        return (['*'])
+        return ([])
 
     def env(self, root):
         return []
