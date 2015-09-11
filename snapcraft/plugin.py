@@ -269,6 +269,8 @@ def _get_file_list(stage_set):
     for item in stage_set:
         if item.startswith('-'):
             excludes.append(item[1:])
+        elif item.startswith('\\'):
+            includes.append(item[1:])
         else:
             includes.append(item)
 

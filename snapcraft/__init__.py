@@ -51,8 +51,8 @@ class BasePlugin:
     def snap_fileset(self):
         """Returns one iteratables of globs specific to the plugin:
             - includes can be just listed
-            - excludes must be preceded by !
-           For example: (['bin', 'lib', '!include'])"""
+            - excludes must be preceded by -
+           For example: (['bin', 'lib', '-include'])"""
         return (['*'])
 
     def env(self, root):

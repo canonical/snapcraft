@@ -71,11 +71,13 @@ class PluginTestCase(tests.TestCase):
             'opt/something',
             '-usr/lib/*.a',
             'usr/bin',
+            '\-everything',
+            r'\\a',
         ]
 
         include, exclude = plugin._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin'])
+        self.assertEqual(include, ['opt/something', 'usr/bin', '-everything', r'\a'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
 
     def test_fileset_only_includes(self):
