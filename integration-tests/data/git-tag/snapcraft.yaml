@@ -1,6 +1,13 @@
+name: test-package
+version: 0.1
+vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
+summary: one line summary
+description: a longer description
+icon: icon.png
+
 parts:
     git:
-        plugin: make-project
+        type: make-project
         source: .
         source-type: git
         source-tag: initial

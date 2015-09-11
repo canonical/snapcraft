@@ -15,27 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
-from snapcraft.plugins import ubuntu
 
 
 class Python2Plugin(snapcraft.BasePlugin):
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
-
-        class UbuntuOptions:
-            packages = ["python-dev", "python-setuptools"]
-        self.ubuntu = ubuntu.UbuntuPlugin(name, UbuntuOptions())
+    _PLUGIN_STAGE_PACKAGES = [
+        'python-dev',
+        'python-setuptools',
+    ]
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location.  And PATH is automatically set by snapcraft.
-
-    def pull(self):
-        return self.ubuntu.pull()
-
-    def build(self):
-        return self.ubuntu.build()
-
-    def snap_files(self):
-        return self.ubuntu.snap_files()

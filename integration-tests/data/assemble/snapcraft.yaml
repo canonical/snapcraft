@@ -1,3 +1,19 @@
+name: assemble
+version: 1.0
+vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
+summary: one line summary
+description: a longer description
+icon: icon.png
+binaries:
+  - exec: binary1
+    name: assemble-bin
+  - exec: subdir/binary2
+    name: binary2
+services:
+  - name: assemble-service
+    start: service-start
+    stop: service-stop with args
+
 parts:
     make-project:
-        source: .
+      source: .

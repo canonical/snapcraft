@@ -15,12 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
+import snapcraft.sources
 
 
 class TarContentPlugin(snapcraft.BasePlugin):
 
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.tar = snapcraft.sources.Tar(self.options.source, self.builddir)
+
     def pull(self):
-        return self.pull_tarball(self.options.source, destdir=self.builddir)
+        return self.tar.pull()
 
     def build(self):
-        return self.extract_tarball(self.options.source, srcdir=self.builddir, destdir=self.installdir)
+        return self.tar.provision(self.installdir)

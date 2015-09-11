@@ -1,8 +1,17 @@
+name: java-hello-world
+version: 0
+vendor: Michael Terry <mterry@ubuntu.com>
+binaries:
+ - name: hello
+   exec: bin/wrapper
+summary: A java exmaple
+description: this is not much more than an example
+icon: icon.png
+
 parts:
     local:
-        plugin: ant-project
+        type: ant-project
         source: .
     wrapper:
-        plugin: make-project
+        type: make-project
         source: .
-snappy-metadata: meta

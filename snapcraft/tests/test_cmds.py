@@ -23,7 +23,6 @@ import fixtures
 
 from snapcraft import (
     cmds,
-    common,
     tests
 )
 
@@ -97,21 +96,3 @@ class InitTestCase(tests.TestCase):
         self.assertEqual(
             'Wrote the following as snapcraft.yaml.\n',
             fake_logger.output)
-
-
-class WrapExeTestCase(tests.TestCase):
-
-    def test_wrap_exe_must_write_wrapper(self):
-        snapdir = common.get_snapdir()
-        os.mkdir(snapdir)
-        relative_exe_path = 'test_relexepath'
-        relative_wrapper_path = cmds.wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
-
-        expected = ('#!/bin/sh\n'
-                    '\n'
-                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
-        with open(wrapper_path, 'r') as wrapper_file:
-            wrapper_contents = wrapper_file.read()
-
-        self.assertEqual(expected, wrapper_contents)

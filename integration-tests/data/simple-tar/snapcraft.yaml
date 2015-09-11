@@ -1,26 +1,33 @@
+name: test-package
+version: 0.1
+vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
+summary: one line summary
+description: a longer description
+icon: icon.png
+
 parts:
   oneflat:
-    plugin: tar-content
+    type: tar-content
     source: oneflat.tar.bz2
   onedeep:
-    plugin: tar-content
+    type: tar-content
     source: onedeep.tar.gz
   nodir:
-    plugin: tar-content
+    type: tar-content
     source: nodir.tar.xz
   flat:
-    plugin: tar-content
+    type: tar-content
     source: flat.tar.xz
   simple:
-    plugin: tar-content
+    type: tar-content
     source: simple.tar.bz2
   evil-parent:
-    plugin: tar-content
+    type: tar-content
     source: evil-parent.tar.gz
   evil-slash:
-    plugin: tar-content
+    type: tar-content
     source: evil-slash.tar.gz
   project:
-    plugin: make-project
+    type: make-project
     source: project.tar.xz
     source-type: tar

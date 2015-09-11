@@ -30,7 +30,7 @@ class CopyPlugin(snapcraft.BasePlugin):
         for src in sorted(self.options.files):
             dst = self.options.files[src]
             if not os.path.lexists(src):
-                logger.warning("WARNING: file '%s' missing" % src)
+                logger.warning("WARNING: file '%s' missing", src)
                 res = False
                 continue
             dst = os.path.join(self.installdir, dst)

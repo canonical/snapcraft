@@ -20,11 +20,14 @@ import os
 import subprocess
 import sys
 import tempfile
+import urllib
 
 
 COMMAND_ORDER = ["pull", "build", "stage", "snap"]
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
+_DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
+_schemadir = _DEFAULT_SCHEMADIR
 _arch = None
 _arch_triplet = None
 
@@ -79,3 +82,16 @@ def set_plugindir(plugindir):
 
 def get_plugindir():
     return _plugindir
+
+
+def set_schemadir(schemadir):
+    global _schemadir
+    _schemadir = schemadir
+
+
+def get_schemadir():
+    return _schemadir
+
+
+def isurl(url):
+    return urllib.parse.urlparse(url).scheme != ""

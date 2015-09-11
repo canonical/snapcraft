@@ -1,10 +1,18 @@
+name: pipelinetest
+version: 1.0
+vendor: Mike Terry <mterry@ubuntu.com>
+binaries:
+  - name: ./bin/pipelinetest
+summary: Libpipeline example
+description: this is an example package of an autotools project built with snapcraft using
+icon: icon.png
+
 parts:
     pipelinetest:
-        plugin: make-project
+        type: make-project
         source: lp:~mterry/+junk/pipelinetest
         after:
             - libpipeline
     libpipeline:
-        plugin: autotools-project
+        type: autotools-project
         source: lp:~mterry/libpipeline/printf
-snappy-metadata: meta

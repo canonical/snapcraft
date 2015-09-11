@@ -1,5 +1,13 @@
+name: godd
+version: 1.0
+vendor: Michael Vogt <mvo@ubuntu.com>
+binaries:
+  - name: ./bin/godd
+summary: Simple dd like tool
+description: written in go so it is self contained and really portable, you would need to use hw-assign to access devices.
+icon: icon.png
+
 parts:
   godd:
-    plugin: go-project
+    type: go-project
     source: git://github.com/mvo5/godd
-snappy-metadata: meta
