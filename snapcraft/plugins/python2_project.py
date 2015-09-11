@@ -34,13 +34,14 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
         # used.
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         env = os.environ.copy()
-        env["PYTHONPATH"] = self.dist_packages_dir
+        env['PYTHONPATH'] = self.dist_packages_dir
 
         return self.run(
-            ["python2", "setup.py", "install", "--install-layout=deb",
-             "--prefix={}/usr".format(self.installdir)],
+            ['python2', 'setup.py', 'install', '--install-layout=deb',
+             '--prefix={}/usr'.format(self.installdir)],
             env=env)
 
     @property
     def dist_packages_dir(self):
-        return self.installdir + "/usr/lib/python2.7/dist-packages"
+        return os.path.join(
+            self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')

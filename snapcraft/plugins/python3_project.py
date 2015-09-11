@@ -34,12 +34,13 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         # used.
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         env = os.environ.copy()
-        env["PYTHONPATH"] = self.dist_packages_dir
+        env['PYTHONPATH'] = self.dist_packages_dir
         return self.run(
-            ["python3", "setup.py", "install", "--install-layout=deb",
-             "--prefix=%s/usr" % self.installdir],
+            ['python3', 'setup.py', 'install', '--install-layout=deb',
+             '--prefix=%s/usr' % self.installdir],
             env=env)
 
     @property
     def dist_packages_dir(self):
-        return self.installdir + "/usr/lib/python3/dist-packages"
+        return os.path.join(
+            self.installdir, 'usr', 'lib', 'python3', 'dist-packages')
