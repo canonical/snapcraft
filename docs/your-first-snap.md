@@ -28,6 +28,9 @@ an interesting app.
 Namely, we'll combine a web server with a webcam program and combine
 them to serve a new frame every ten seconds.
 
+> The resulting package is also part of the examples directory in the
+> [snapcraft sources](http://bazaar.launchpad.net/~snappy-dev/snapcraft/core/files/head:/examples/webcam-webui/)
+
 ### The Web Server
 
 Go has a simple web server in its standard libraries. So let's just use that.
