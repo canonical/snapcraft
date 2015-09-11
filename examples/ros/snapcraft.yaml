@@ -1,0 +1,11 @@
+name: ros
+version: 1.0
+vendor: Snappy developers <snappy-dev@lists.canonical.com>
+summary: A ros example
+icon: icon.png
+description: A really small ros examples
+
+parts:
+  ros:
+    type: roscore
+
