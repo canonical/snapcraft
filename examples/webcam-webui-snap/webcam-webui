@@ -1,8 +1,7 @@
 #!/bin/sh
-
 set -e
 
-cd "$SNAPP_APP_DATA_PATH"
+cd "$SNAP_APP_DATA_PATH"
 
 golang-static-http &
 
