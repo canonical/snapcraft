@@ -38,7 +38,7 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         return self.run(
             ["python3", "setup.py", "install", "--install-layout=deb",
              "--prefix=%s/usr" % self.installdir],
-             env=env)
+            env=env)
 
     @property
     def dist_packages_dir(self):
