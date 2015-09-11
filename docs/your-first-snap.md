@@ -141,9 +141,9 @@ contains a yaml list with any supporting Ubuntu packages we want, in this case
 our list has one element with an entry for the `fswebcam` Ubuntu `deb` based
 package.
 
-Now let's stage our recipe again.
+Now let's stage our recipe again (and force it to go through the lifecycle).
 
-    $ snapcraft stage
+    $ snapcraft stage --force
 
 You'll also see Snapcraft downloading and unpacking all the Ubuntu packages
 into your snap. If you look at `./stage`, you'll see a lot more files now:
