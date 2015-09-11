@@ -103,7 +103,7 @@ Let's start with the web server.
         type: go-project
         source: git://github.com/mikix/golang-static-http
 
-You've got a `parts` list with one item, named `cam`, but we
+You've just defined a `part` inside `parts` named `cam`, but you
 could call it anything. That part has a few options. A `type` option that
 tells Snapcraft how to interpret the part. In this case, it's a Go project.
 And finally, a `source` option telling Snapcraft where to download the code.
