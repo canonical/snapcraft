@@ -5,6 +5,6 @@ command:
     for example in ${PLAINBOX_PROVIDER_DATA}/examples/*
     do
       cp -rT $example ${PLAINBOX_SESSION_SHARE}
-      cd $PLAINBOX_SESSION_SHARE && ${SNAPCRAFT}
+      cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
       rm -rf ${PLAINBOX_SESSION_SHARE}/*
     done
