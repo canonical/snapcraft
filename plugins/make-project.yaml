@@ -1,9 +1,11 @@
 module: make_project
 build-tools: [make]
 options:
-    source:
-        required: true
-    source-type:
-    source-tag:
-    source-branch:
-    stage-packages:
+  source:
+    required: true
+  source-type:
+  source-tag:
+  source-branch:
+  stage-packages:
+  snap:
+  stage:

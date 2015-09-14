@@ -9,5 +9,7 @@ options:
   source-tag:
   source-branch:
   stage-packages:
+  snap:
+  stage:
 build-tools:
   - ant
