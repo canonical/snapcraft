@@ -30,6 +30,14 @@ from snapcraft import repo
 logger = logging.getLogger(__name__)
 
 
+_BUILTIN_OPTIONS = {
+    'filesets': {},
+    'snap': [],
+    'stage': [],
+    'stage-packages': [],
+}
+
+
 def is_local_plugin(name):
     return name.startswith("x-")
 
@@ -88,9 +96,16 @@ class PluginHandler:
             pass
         options = Options()
 
-        for opt in self.config.get('options', []):
+        plugin_options = self.config.get('options', {})
+        # Let's append some mandatory options, but not .update() to not lose
+        # original content
+        for key in _BUILTIN_OPTIONS:
+            if key not in plugin_options:
+                plugin_options[key] = _BUILTIN_OPTIONS[key]
+
+        for opt in plugin_options:
             attrname = opt.replace('-', '_')
-            opt_parameters = self.config['options'][opt] or {}
+            opt_parameters = plugin_options[opt] or {}
             if opt in properties:
                 setattr(options, attrname, properties[opt])
             else:
@@ -240,8 +255,7 @@ def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     return part
 
 
-def _migrate_files(fileset, srcdir, dstdir):
-    # validate
+def migratable_filesets(fileset, srcdir):
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
@@ -255,6 +269,12 @@ def _migrate_files(fileset, srcdir, dstdir):
     # Separate dirs from files
     snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(srcdir, x)) and not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
+
+    return snap_files, snap_dirs
+
+
+def _migrate_files(fileset, srcdir, dstdir):
+    snap_files, snap_dirs = migratable_filesets(fileset, srcdir)
 
     if snap_dirs:
         common.run(['mkdir', '-p'] + list(snap_dirs), cwd=dstdir)

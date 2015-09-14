@@ -223,24 +223,22 @@ def run(args):
             qemu.kill()
 
 
-def check_for_collisions(parts):
-    partsFiles = {}
+def _check_for_collisions(parts, stage):
+    parts_files = {}
     for part in parts:
         # Gather our own files up
-        partFiles = set()
-        for root, dirs, files in os.walk(part.installdir):
-            partFiles |= set([os.path.join(root, f) for f in files])
-        partFiles = set([os.path.relpath(x, part.installdir) for x in partFiles])
+        fileset = getattr(part.code.options, stage, ['*']) or ['*']
+        part_files, _ = snapcraft.plugin.migratable_filesets(fileset, part.installdir)
 
         # Scan previous parts for collisions
-        for otherPartName in partsFiles:
-            common = partFiles & partsFiles[otherPartName]
+        for other_part_name in parts_files:
+            common = part_files & parts_files[other_part_name]
             if common:
-                logger.error('Error: parts %s and %s have the following files in common:\n  %s', otherPartName, part.names()[0], '\n  '.join(sorted(common)))
+                logger.error('Error: parts %s and %s have the following files in common:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(common)))
                 return False
 
         # And add our files to the list
-        partsFiles[part.names()[0]] = partFiles
+        parts_files[part.names()[0]] = part_files
 
     return True
 
@@ -269,14 +267,14 @@ def cmd(args):
 
     for part in config.all_parts:
         for cmd in cmds:
-            if cmd == 'stage':
+            if cmd is 'stage' or cmd is 'snap':
                 # This ends up running multiple times, as each part gets to its
                 # staging cmd.  That's inefficient, but largely OK.
                 # FIXME: fix the above by iterating over cmds before iterating
                 # all_parts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not check_for_collisions(config.all_parts):
+                if not _check_for_collisions(config.all_parts, cmd):
                     sys.exit(1)
 
             common.env = config.build_env_for_part(part)
