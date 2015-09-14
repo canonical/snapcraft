@@ -70,7 +70,7 @@ the final snap it will create. But let's not worry about the metadata yet.
 ### Initializing a project
 
 To get started with a base template create a folder that will hold your
-project called `webcam-webui` enter:
+project, and initialize it:
 
     $ mkdir webcam-webui
     $ cd webcam-webui
