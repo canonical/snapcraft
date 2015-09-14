@@ -7,6 +7,7 @@ icon: icon.png
 services:
   - name: webcam-webui
     start: bin/webcam-webui
+config:
 
 parts:
   cam:
@@ -28,4 +29,18 @@ parts:
     type: copy
     files:
       webcam-webui: bin/webcam-webui
+  config:
+    type: python3
+    source: .
+    snap:
+      - config.py
+    filesets:
+      ignore:
+        - -lib/x86_64-linux-gnu/libexpat*
+        - -usr/lib/x86_64-linux-gnu/libexpat*
+        - -usr/share/doc
+    stage:
+      - $ignore
+    snap:
+      - $ignore
 

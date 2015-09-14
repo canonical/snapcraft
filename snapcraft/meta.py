@@ -39,6 +39,16 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
+class InvalidConfigHookError(Exception):
+
+    @property
+    def config(self):
+        return self._config
+
+    def __init__(self, config):
+        self._config = config
+
+
 def create(config_data, arches=None):
     '''
     Create  the meta directory and provision it with package.yaml and readme.md
@@ -57,6 +67,9 @@ def create(config_data, arches=None):
     _write_package_yaml(meta_dir, config_data, arches)
     _write_readme_md(meta_dir, config_data)
 
+    if 'config' in config_data:
+        _setup_config_hook(meta_dir, config_data['config'])
+
     return meta_dir
 
 
@@ -74,6 +87,16 @@ def _write_readme_md(meta_dir, config_data):
 
     with open(readme_md_path, 'w') as f:
         f.write(readme_md)
+
+
+def _setup_config_hook(meta_dir, config):
+    hooks_dir = os.path.join(meta_dir, 'hooks')
+    os.makedirs(hooks_dir)
+
+    if not os.path.exists(os.path.join(meta_dir, config)):
+        raise InvalidConfigHookError(config)
+
+    os.symlink(os.path.join('..', '..', config), os.path.join(hooks_dir, 'config'))
 
 
 def _copy_icon(meta_dir, icon_path):
