@@ -30,6 +30,14 @@ from snapcraft import repo
 logger = logging.getLogger(__name__)
 
 
+_BUILTIN_OPTIONS = [
+    'filesets',
+    'snap',
+    'stage',
+    'stage-packages',
+]
+
+
 def is_local_plugin(name):
     return name.startswith("x-")
 
@@ -88,9 +96,16 @@ class PluginHandler:
             pass
         options = Options()
 
-        for opt in self.config.get('options', []):
+        plugin_options = self.config.get('options', {})
+        # Let's append some mandatory options, but not .update() to not lose
+        # original content
+        for key in _BUILTIN_OPTIONS:
+            if key not in plugin_options:
+                plugin_options[key] = None
+
+        for opt in plugin_options:
             attrname = opt.replace('-', '_')
-            opt_parameters = self.config['options'][opt] or {}
+            opt_parameters = plugin_options[opt] or {}
             if opt in properties:
                 setattr(options, attrname, properties[opt])
             else:
