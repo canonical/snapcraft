@@ -9,5 +9,5 @@ icon: icon.png
 
 parts:
   godd:
-    plugin: go-project
+    type: go-project
     source: git://github.com/mvo5/godd

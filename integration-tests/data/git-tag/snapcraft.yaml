@@ -7,7 +7,7 @@ icon: icon.png
 
 parts:
     git:
-        plugin: make-project
+        type: make-project
         source: .
         source-type: git
         source-tag: initial
