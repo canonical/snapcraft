@@ -70,8 +70,10 @@ the final snap it will create. But let's not worry about the metadata yet.
 ### Initializing a project
 
 To get started with a base template create a folder that will hold your
-project and enter
+project called `webcam-webui` enter:
 
+    $ mkdir webcam-webui
+    $ cd webcam-webui
     $ snapcraft init
 
 then open the created snapcraft.yaml and edit the templated values for `name`,
