@@ -3,9 +3,14 @@ set -e
 
 cd "$SNAP_APP_DATA_PATH"
 
+interval=10
+
+[ -f configuration ] && interval=$(sed -n 's/.*interval: \(.*\)/\1/p' configuration)
+
+
 golang-static-http &
 
 while :; do
     fswebcam shot.jpeg
-    sleep 10
+    sleep $interval
 done

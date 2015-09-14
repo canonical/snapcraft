@@ -91,12 +91,16 @@ def _write_readme_md(meta_dir, config_data):
 
 def _setup_config_hook(meta_dir, config):
     hooks_dir = os.path.join(meta_dir, 'hooks')
-    os.makedirs(hooks_dir)
+    config_path = os.path.join(common.get_snapdir(), config)
 
-    if not os.path.exists(os.path.join(meta_dir, config)):
+    if not os.path.exists(config_path):
         raise InvalidConfigHookError(config)
 
-    os.symlink(os.path.join('..', '..', config), os.path.join(hooks_dir, 'config'))
+    os.makedirs(hooks_dir)
+    # TODO ideally we want to just symlink
+    config_hook = os.path.join(hooks_dir, 'config')
+    shutil.copyfile(config_path, config_hook)
+    os.chmod(config_hook, 0o755)
 
 
 def _copy_icon(meta_dir, icon_path):
