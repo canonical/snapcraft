@@ -21,6 +21,7 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
         'python3-dev',
+        'python3-setuptools',
     ]
 
     # note that we don't need to set PYTHONHOME here,
