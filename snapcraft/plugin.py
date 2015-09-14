@@ -240,8 +240,7 @@ def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     return part
 
 
-def _migrate_files(fileset, srcdir, dstdir):
-    # validate
+def migratable_filesets(fileset, srcdir):
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
@@ -255,6 +254,12 @@ def _migrate_files(fileset, srcdir, dstdir):
     # Separate dirs from files
     snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(srcdir, x)) and not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
+
+    return snap_files, snap_dirs
+
+
+def _migrate_files(fileset, srcdir, dstdir):
+    snap_files, snap_dirs = migratable_filesets(fileset, srcdir)
 
     if snap_dirs:
         common.run(['mkdir', '-p'] + list(snap_dirs), cwd=dstdir)

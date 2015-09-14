@@ -39,12 +39,14 @@ class TestCommands(tests.TestCase):
 
         part1 = mock.Mock()
         part1.names.return_value = ['part1']
+        part1.code.options.stage = ['*']
         part1.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
 
         part2 = mock.Mock()
         part2.names.return_value = ['part2']
+        part2.code.options.stage = ['*']
         part2.installdir = tmpdir + '/install2'
         os.makedirs(part2.installdir + '/a')
         open(part2.installdir + '/1', mode='w').close()
@@ -53,16 +55,17 @@ class TestCommands(tests.TestCase):
 
         part3 = mock.Mock()
         part3.names.return_value = ['part3']
+        part3.code.options.stage = ['*']
         part3.installdir = tmpdir + '/install3'
         os.makedirs(part3.installdir + '/a')
         os.makedirs(part3.installdir + '/b')
         open(part3.installdir + '/1', mode='w').close()
         open(part3.installdir + '/a/2', mode='w').close()
 
-        self.assertTrue(cmds.check_for_collisions([part1, part2]))
+        self.assertTrue(cmds._check_for_collisions([part1, part2], 'stage'))
         self.assertEqual('', fake_logger.output)
 
-        self.assertFalse(cmds.check_for_collisions([part1, part2, part3]))
+        self.assertFalse(cmds._check_for_collisions([part1, part2, part3], 'stage'))
         self.assertEqual(
             'Error: parts part2 and part3 have the following files in common:\n'
             '  1\n'
