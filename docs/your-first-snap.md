@@ -89,7 +89,7 @@ this:
 
 and copy over an icon to `icon.png` or change the path accordingly (if you
 change the path just make sure it is part of your project directory and that
-the path is relative to be able to share your snap crafting):
+the path is relative to be able to share your snapcrafting):
 
     $ cp /usr/share/icons/hicolor/64/mimetypes/text-x-apport.png ./icon.png
 
