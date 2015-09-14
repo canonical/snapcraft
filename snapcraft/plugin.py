@@ -30,12 +30,12 @@ from snapcraft import repo
 logger = logging.getLogger(__name__)
 
 
-_BUILTIN_OPTIONS = [
-    'filesets',
-    'snap',
-    'stage',
-    'stage-packages',
-]
+_BUILTIN_OPTIONS = {
+    'filesets': {},
+    'snap': [],
+    'stage': [],
+    'stage-packages': [],
+}
 
 
 def is_local_plugin(name):
@@ -101,7 +101,7 @@ class PluginHandler:
         # original content
         for key in _BUILTIN_OPTIONS:
             if key not in plugin_options:
-                plugin_options[key] = None
+                plugin_options[key] = _BUILTIN_OPTIONS[key]
 
         for opt in plugin_options:
             attrname = opt.replace('-', '_')
