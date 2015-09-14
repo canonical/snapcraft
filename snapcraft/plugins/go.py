@@ -19,14 +19,8 @@ import snapcraft
 
 class GoPlugin(snapcraft.BasePlugin):
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
-
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
         return [
             "GOPATH={}/go".format(root),
         ]
-
-    def snap_files(self):
-        return ([], [])  # Go statically links everything, no need for runtime

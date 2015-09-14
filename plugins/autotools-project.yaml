@@ -9,3 +9,5 @@ options:
   configflags:
     required: false
   stage-packages:
+  snap:
+  stage:

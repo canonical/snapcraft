@@ -22,6 +22,7 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
         'python-dev',
+        'python-setuptools',
     ]
 
     def __init__(self, name, options):

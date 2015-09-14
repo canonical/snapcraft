@@ -31,11 +31,23 @@ from snapcraft import meta
 logger = logging.getLogger(__name__)
 
 
+_TEMPLATE_YAML = r'''name: # the name of the snap
+version: # the version of the snap
+# The vendor for the snap (replace 'Vendor <email@example.com>')
+vendor: Vendor <email@example.com>
+summary: # 79 char long summary
+description: # A longer description for the snap
+icon: # A path to an icon for the package
+'''
+
+
 def init(args):
     if os.path.exists("snapcraft.yaml"):
         logger.error('snapcraft.yaml already exists!')
         sys.exit(1)
-    yaml = 'parts:\n'
+    yaml = _TEMPLATE_YAML
+    if args.part:
+        yaml += 'parts:\n'
     for part_name in args.part:
         part = snapcraft.plugin.load_plugin(part_name, part_name, load_code=False)
         yaml += '    ' + part.names()[0] + ':\n'

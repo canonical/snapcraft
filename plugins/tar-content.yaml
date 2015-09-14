@@ -3,3 +3,5 @@ options:
   source:
     required: true
   stage-packages:
+  snap:
+  stage:
