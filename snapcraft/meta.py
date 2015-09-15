@@ -57,6 +57,9 @@ def create(config_data, arches=None):
     _write_package_yaml(meta_dir, config_data, arches)
     _write_readme_md(meta_dir, config_data)
 
+    if 'config' in config_data:
+        _setup_config_hook(meta_dir, config_data['config'])
+
     return meta_dir
 
 
@@ -74,6 +77,18 @@ def _write_readme_md(meta_dir, config_data):
 
     with open(readme_md_path, 'w') as f:
         f.write(readme_md)
+
+
+def _setup_config_hook(meta_dir, config):
+    hooks_dir = os.path.join(meta_dir, 'hooks')
+
+    os.makedirs(hooks_dir)
+
+    execparts = shlex.split(config)
+    args = execparts[1:] if len(execparts) > 1 else []
+
+    config_hook_path = os.path.join(hooks_dir, 'config')
+    _write_wrap_exe(execparts[0], config_hook_path, args=args, cwd='$SNAP_APP_PATH')
 
 
 def _copy_icon(meta_dir, icon_path):
@@ -122,6 +137,23 @@ def _replace_cmd(execparts, cmd):
         return ' '.join([shlex.quote(x) for x in newparts])
 
 
+def _write_wrap_exe(wrapexec, wrappath, args=[], cwd=None):
+    args = ' '.join(args) + ' $*' if args else '$*'
+    cwd = 'cd {}'.format(cwd) if cwd else ''
+
+    snap_dir = common.get_snapdir()
+    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
+    script = ('#!/bin/sh\n' +
+              '{}\n'.format(assembled_env) +
+              '{}\n'.format(cwd) +
+              'exec "{}" {}\n'.format(wrapexec, args))
+
+    with open(wrappath, 'w+') as f:
+        f.write(script)
+
+    os.chmod(wrappath, 0o755)
+
+
 def _wrap_exe(relexepath):
     snap_dir = common.get_snapdir()
     exepath = os.path.join(snap_dir, relexepath)
@@ -149,15 +181,7 @@ def _wrap_exe(relexepath):
             else:
                 logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
 
-    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(assembled_env) +
-              'exec "{}" $*\n'.format(wrapexec))
-
-    with open(wrappath, 'w+') as f:
-        f.write(script)
-
-    os.chmod(wrappath, 0o755)
+    _write_wrap_exe(wrapexec, wrappath)
 
     return os.path.relpath(wrappath, snap_dir)
 

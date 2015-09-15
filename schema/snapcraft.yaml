@@ -38,6 +38,9 @@ properties:
     uniqueItems: true
     items:
       - type: string
+  config:
+    type: string
+    description: path to a configure hook to expose configuration for the package
   services:
     type: array
     items:
