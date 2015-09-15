@@ -1,5 +1,4 @@
 module: ant_project
-systemPackages: [ant]
 requires:
   - jdk
 options:
