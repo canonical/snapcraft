@@ -183,9 +183,9 @@ class Create(tests.TestCase):
         self.mock_copyfile = patcher_copyfile.start()
         self.addCleanup(patcher_copyfile.stop)
 
-        patcher_symlink = patch('os.symlink')
-        self.mock_symlink = patcher_symlink.start()
-        self.addCleanup(patcher_symlink.stop)
+        patcher_move = patch('shutil.move')
+        self.mock_move = patcher_move.start()
+        self.addCleanup(patcher_move.stop)
 
         patcher_exists = patch('os.path.exists')
         self.mock_exists = patcher_exists.start()
@@ -250,18 +250,43 @@ class Create(tests.TestCase):
 
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
 
+    @patch('snapcraft.meta._write_wrap_exe')
     @patch('snapcraft.meta.open', create=True)
-    def test_create_meta(self, mock_the_open):
+    def test_create_meta(self, mock_the_open, mock_wrap_exe):
         meta.create(self.config_data, ['amd64'])
 
         self.mock_makedirs.assert_has_calls([
             call(self.meta_dir, exist_ok=True),
             call(self.hooks_dir),
         ])
+
         mock_the_open.assert_has_calls(self.expected_open_calls)
-        self.mock_symlink.called_once_with(
-            os.path.join('..', '..', 'bin', 'config'),
-            os.path.join(self.hooks_dir, 'config'))
+        mock_wrap_exe.assert_called_once_with(
+            'bin/config',
+            os.path.join(os.path.abspath(os.curdir), 'snap', 'meta', 'hooks', 'config'),
+            args=[],
+            cwd='$SNAP_APP_PATH',
+        )
+
+    @patch('snapcraft.meta._write_wrap_exe')
+    @patch('snapcraft.meta.open', create=True)
+    def test_create_meta_with_vararg_config(self, mock_the_open, mock_wrap_exe):
+        self.config_data['config'] = 'python3 my.py --config'
+
+        meta.create(self.config_data, ['amd64'])
+
+        self.mock_makedirs.assert_has_calls([
+            call(self.meta_dir, exist_ok=True),
+            call(self.hooks_dir),
+        ])
+
+        mock_the_open.assert_has_calls(self.expected_open_calls)
+        mock_wrap_exe.assert_called_once_with(
+            'python3',
+            os.path.join(os.path.abspath(os.curdir), 'snap', 'meta', 'hooks', 'config'),
+            args=['my.py', '--config'],
+            cwd='$SNAP_APP_PATH',
+        )
 
     @patch('snapcraft.meta.open', create=True)
     def test_create_meta_without_config(self, mock_the_open):
@@ -271,16 +296,6 @@ class Create(tests.TestCase):
 
         self.mock_makedirs.assert_called_once_with(self.meta_dir, exist_ok=True)
         mock_the_open.assert_has_calls(self.expected_open_calls)
-        self.assertFalse(self.mock_symlink.called)
-
-    @patch('snapcraft.meta.open', create=True)
-    def test_create_meta_invalid_config_path(self, mock_the_open):
-        self.mock_exists.return_value = False
-
-        with self.assertRaises(meta.InvalidConfigHookError) as raised:
-            meta.create(self.config_data, ['amd64'])
-
-        self.assertEqual(raised.exception.config, 'bin/config')
 
 
 # TODO this needs more tests.
@@ -294,7 +309,7 @@ class WrapExeTestCase(tests.TestCase):
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n'
+                    '\n\n'
                     'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()

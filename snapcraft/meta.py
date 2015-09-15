@@ -39,16 +39,6 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
-class InvalidConfigHookError(Exception):
-
-    @property
-    def config(self):
-        return self._config
-
-    def __init__(self, config):
-        self._config = config
-
-
 def create(config_data, arches=None):
     '''
     Create  the meta directory and provision it with package.yaml and readme.md
@@ -91,16 +81,14 @@ def _write_readme_md(meta_dir, config_data):
 
 def _setup_config_hook(meta_dir, config):
     hooks_dir = os.path.join(meta_dir, 'hooks')
-    config_path = os.path.join(common.get_snapdir(), config)
-
-    if not os.path.exists(config_path):
-        raise InvalidConfigHookError(config)
 
     os.makedirs(hooks_dir)
-    # TODO ideally we want to just symlink
-    config_hook = os.path.join(hooks_dir, 'config')
-    shutil.copyfile(config_path, config_hook)
-    os.chmod(config_hook, 0o755)
+
+    execparts = shlex.split(config)
+    args = execparts[1:] if len(execparts) > 1 else []
+
+    config_hook_path = os.path.join(hooks_dir, 'config')
+    _write_wrap_exe(execparts[0], config_hook_path, args=args, cwd='$SNAP_APP_PATH')
 
 
 def _copy_icon(meta_dir, icon_path):
@@ -149,6 +137,23 @@ def _replace_cmd(execparts, cmd):
         return ' '.join([shlex.quote(x) for x in newparts])
 
 
+def _write_wrap_exe(wrapexec, wrappath, args=[], cwd=None):
+    args = ' '.join(args) + ' $*' if args else '$*'
+    cwd = 'cd {}'.format(cwd) if cwd else ''
+
+    snap_dir = common.get_snapdir()
+    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
+    script = ('#!/bin/sh\n' +
+              '{}\n'.format(assembled_env) +
+              '{}\n'.format(cwd) +
+              'exec "{}" {}\n'.format(wrapexec, args))
+
+    with open(wrappath, 'w+') as f:
+        f.write(script)
+
+    os.chmod(wrappath, 0o755)
+
+
 def _wrap_exe(relexepath):
     snap_dir = common.get_snapdir()
     exepath = os.path.join(snap_dir, relexepath)
@@ -176,15 +181,7 @@ def _wrap_exe(relexepath):
             else:
                 logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
 
-    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(assembled_env) +
-              'exec "{}" $*\n'.format(wrapexec))
-
-    with open(wrappath, 'w+') as f:
-        f.write(script)
-
-    os.chmod(wrappath, 0o755)
+    _write_wrap_exe(wrapexec, wrappath)
 
     return os.path.relpath(wrappath, snap_dir)
 

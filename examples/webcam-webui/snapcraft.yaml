@@ -7,7 +7,7 @@ icon: icon.png
 services:
   - name: webcam-webui
     start: bin/webcam-webui
-config: config
+config: python3 usr/bin/config.py
 
 parts:
   cam:
@@ -22,17 +22,6 @@ parts:
         - usr/lib
       go-server:
         - bin/golang-*
-    snap:
-      - $fswebcam
-      - $go-server
-  glue:
-    type: copy
-    files:
-      webcam-webui: bin/webcam-webui
-      config.py: config
-  config:
-    type: python3
-    filesets:
       ignore:
         - -lib/x86_64-linux-gnu/libexpat*
         - -usr/lib/x86_64-linux-gnu/libexpat*
@@ -41,4 +30,12 @@ parts:
       - $ignore
     snap:
       - $ignore
-
+      - $fswebcam
+      - $go-server
+  glue:
+    type: copy
+    files:
+      webcam-webui: bin/webcam-webui
+  config:
+    type: python3-project
+    source: .
