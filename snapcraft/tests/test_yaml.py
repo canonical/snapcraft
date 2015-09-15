@@ -355,6 +355,44 @@ class TestValidation(TestCase):
 
         snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
+    def test_invalid_binary_names(self):
+        invalid_names = {
+            '#': {'name': 'qwe#rty', 'exec': '1'},
+            '_': {'name': 'qwe_rty', 'exec': '1'},
+            'space': {'name': 'qwe rty', 'exec': '1'},
+            'spaces': {'name': 'qwe  rty', 'exec': '1'},
+        }
+
+        for t in invalid_names:
+            data = self.data.copy()
+            with self.subTest(key=t):
+                data['binaries'] = [invalid_names[t]]
+
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
+
+                expected_message = '\'{}\' does not match \'^[A-Za-z0-9/.:-]*$\''.format(invalid_names[t]['name'])
+                self.assertEqual(raised.exception.message, expected_message, msg=data)
+
+    def test_invalid_service_names(self):
+        invalid_names = {
+            '#': {'name': 'qwe#rty', 'start': '1'},
+            '_': {'name': 'qwe_rty', 'start': '1'},
+            'space': {'name': 'qwe rty', 'start': '1'},
+            'spaces': {'name': 'qwe  rty', 'start': '1'},
+        }
+
+        for t in invalid_names:
+            data = self.data.copy()
+            with self.subTest(key=t):
+                data['services'] = [invalid_names[t]]
+
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
+
+                expected_message = '\'{}\' does not match \'^[A-Za-z0-9/.:-]*$\''.format(invalid_names[t]['name'])
+                self.assertEqual(raised.exception.message, expected_message, msg=data)
+
     def test_services_required_properties(self):
         self.data['services'] = [
             {

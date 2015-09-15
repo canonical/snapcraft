@@ -70,11 +70,13 @@ the final snap it will create. But let's not worry about the metadata yet.
 ### Initializing a project
 
 To get started with a base template create a folder that will hold your
-project and runs
+project, and initialize it:
 
+    $ mkdir webcam-webui
+    $ cd webcam-webui
     $ snapcraft init
 
-The open the created snapcraft.yaml and edit the templated values for `name`,
+then open the created snapcraft.yaml and edit the templated values for `name`,
 `version`, `vendor`, `summary` and `description`. You can make it look like
 this:
 
@@ -85,14 +87,16 @@ this:
     description: Exposes your webcam over a web UI
     icon: icon.png
 
-And copy over an icon to `icon.png` or change the path accordingly
+and copy over an icon to `icon.png` or change the path accordingly (if you
+change the path just make sure it is part of your project directory and that
+the path is relative to be able to share your snapcrafting):
 
     $ cp /usr/share/icons/hicolor/64/mimetypes/text-x-apport.png ./icon.png
 
 If you run `snapcraft` now, it will complain about not having any `parts`.
 
-We will look more into this meta data in a bit, but first let's look at adding
-some `parts`
+We will look more into this metadata in a bit, but first let's look at adding
+some `parts`.
 
 ### Web Server Part
 
@@ -104,9 +108,9 @@ Let's start with the web server.
         source: git://github.com/mikix/golang-static-http
 
 You've just defined a `part` inside `parts` named `cam`, but you
-could call it anything. That part has a few options. A `type` option that
-tells Snapcraft how to interpret the part. In this case, it's a Go project.
-And finally, a `source` option telling Snapcraft where to download the code.
+could call it anything. That part has a two options: A `type` option that
+tells Snapcraft how to interpret the part (in this case, it's a Go project),
+and a `source` option telling Snapcraft where to download the code.
 
 Go ahead and append the above contents to your recently created
 `snapcraft.yaml`.
@@ -140,7 +144,7 @@ to make the `cam` part look like:
           - fswebcam
 
 We've just added a new property to the `cam` part called `stage-packages` which
-contains a yaml list with any supporting Ubuntu packages we want, in this case
+contains a yaml list with any supporting Ubuntu package we want; in this case
 our list has one element with an entry for the `fswebcam` Ubuntu `deb` based
 package.
 
@@ -237,14 +241,15 @@ Edit `snapcraft.yaml` once more to make the `cam` part in `parts` to look like:
 What we did was add two `filesets`, one named `fswebcam` and another one named
 `go-server` and then added a `snap` entry referencing these two filesets with
 `$`. All these filesets are inclusion based filesets, you can use `*` to glob
-many files and directories. And exclusion can be added by prefixing the file
+many files and directories (if `*` is the first character, it needs to be
+quoted e.g.; `'*'`). An exclusion can be added by prefixing the file
 with a `-`. Additionally, you don't need to define a fileset, you can explicitly
 mention the file, directory or match under `snap` or `stage`.
 
 ### Extending the Metadata
 
 The defined values in `snapcraft.yaml` are used to build the corresponding
-`meta` data that holds all the package information.
+`meta` directory that holds all the package information.
 
 You can read all about the resulting [format of this metadata](https://developer.ubuntu.com/en/snappy/guides/packaging-format-apps/),
 but we'll assume here that you're already familiar.

@@ -48,6 +48,7 @@ properties:
         properties:
           name:
             type: string
+            pattern: "^[A-Za-z0-9/.:-]*$"
           start:
             type: string
             description: command executed to start the service
@@ -64,6 +65,7 @@ properties:
         properties:
           name:
             type: string
+            pattern: "^[A-Za-z0-9/.:-]*$"
           exec:
             type: string
             description: command executed to start the service
