@@ -1,7 +1,7 @@
 name: downloader
 version: 1.0
 vendor: "Sergio Schvezov <sergio.schvezov@canonical.com>"
-summary: curl based downloaded
+summary: curl based downloader
 description: this is an example package
 icon: icon.png
 binaries:
