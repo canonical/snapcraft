@@ -4,7 +4,7 @@ vendor: Michael Terry <mterry@ubuntu.com>
 binaries:
  - name: hello
    exec: bin/wrapper
-summary: A java exmaple
+summary: A java example
 description: this is not much more than an example
 icon: icon.png
 
