@@ -37,7 +37,9 @@ def get_config(config_file):
 
 def _config(config_yaml={}):
     try:
-        config_yaml['config'][os.environ['SNAP_NAME']]['interval']
+        interval_value = config_yaml['config'][os.environ['SNAP_NAME']]['interval']
+        if not isinstance(interval_value, int):
+            config_yaml['config'][os.environ['SNAP_NAME']]['interval'] = _DEFAULT_INTERVAL
     except KeyError:
         interval = {
             'config': {
