@@ -29,6 +29,7 @@ from snapcraft import common
 logger = logging.getLogger(__name__)
 
 
+@jsonschema.FormatChecker.cls_checks('file-path')
 @jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_file_exists(instance):
     return os.path.exists(instance)

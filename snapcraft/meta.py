@@ -52,7 +52,7 @@ def create(config_data, arches=None):
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
-    config_data['icon'] = _copy_icon(meta_dir, config_data['icon'])
+    config_data['icon'] = _copy(meta_dir, config_data['icon'])
 
     _write_package_yaml(meta_dir, config_data, arches)
     _write_readme_md(meta_dir, config_data)
@@ -65,7 +65,7 @@ def create(config_data, arches=None):
 
 def _write_package_yaml(meta_dir, config_data, arches):
     package_yaml_path = os.path.join(meta_dir, 'package.yaml')
-    package_yaml = _compose_package_yaml(config_data, arches)
+    package_yaml = _compose_package_yaml(meta_dir, config_data, arches)
 
     with open(package_yaml_path, 'w') as f:
         yaml.dump(package_yaml, stream=f, default_flow_style=False)
@@ -91,14 +91,24 @@ def _setup_config_hook(meta_dir, config):
     _write_wrap_exe(execparts[0], config_hook_path, args=args, cwd='$SNAP_APP_PATH')
 
 
-def _copy_icon(meta_dir, icon_path):
-    new_icon_path = os.path.join(meta_dir, os.path.basename(icon_path))
-    shutil.copyfile(icon_path, new_icon_path)
+def _copy(meta_dir, relpath):
+    new_relpath = os.path.join(meta_dir, os.path.basename(relpath))
+    shutil.copyfile(relpath, new_relpath)
 
-    return os.path.join('meta', os.path.basename(icon_path))
+    return os.path.join('meta', os.path.basename(relpath))
 
 
-def _compose_package_yaml(config_data, arches):
+def _copy_security_profiles(meta_dir, runnables):
+    for runnable in runnables:
+        for entry in ('security-policy', 'security-override'):
+            if entry in runnable:
+                runnable[entry]['apparmor'] = _copy(meta_dir, runnable[entry]['apparmor'])
+                runnable[entry]['seccomp'] = _copy(meta_dir, runnable[entry]['seccomp'])
+
+    return runnables
+
+
+def _compose_package_yaml(meta_dir, config_data, arches):
     '''
     Creates a dictionary that can be used to yaml.dump a package.yaml using
     config_data.
@@ -121,9 +131,11 @@ def _compose_package_yaml(config_data, arches):
 
     if 'binaries' in config_data:
         package_yaml['binaries'] = _wrap_binaries(config_data['binaries'])
+        package_yaml['binaries'] = _copy_security_profiles(meta_dir, config_data['binaries'])
 
     if 'services' in config_data:
         package_yaml['services'] = _wrap_services(config_data['services'])
+        package_yaml['services'] = _copy_security_profiles(meta_dir, config_data['services'])
 
     return package_yaml
 
