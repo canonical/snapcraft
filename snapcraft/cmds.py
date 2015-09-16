@@ -41,6 +41,9 @@ icon: # A path to an icon for the package
 '''
 
 
+_config = None
+
+
 def init(args):
     if os.path.exists("snapcraft.yaml"):
         logger.error('snapcraft.yaml already exists!')
@@ -295,8 +298,13 @@ def _check_call(args, **kwargs):
 
 
 def _load_config():
+    global _config
+    if _config:
+        return _config
+
     try:
-        return snapcraft.yaml.Config()
+        _config = snapcraft.yaml.Config()
+        return _config
     except snapcraft.yaml.SnapcraftYamlFileError as e:
         logger.error(
             'Could not find {}.  Are you sure you are in the right directory?\n'
