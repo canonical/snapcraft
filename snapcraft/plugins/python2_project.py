@@ -30,13 +30,10 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
         # and be in the PYTHONPATH. It's harmless if setuptools isn't
         # used.
         os.makedirs(self.dist_packages_dir, exist_ok=True)
-        env = os.environ.copy()
-        env['PYTHONPATH'] = self.dist_packages_dir
 
         return self.run(
             ['python2', 'setup.py', 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir)],
-            env=env)
+             '--prefix={}/usr'.format(self.installdir)])
 
     @property
     def dist_packages_dir(self):

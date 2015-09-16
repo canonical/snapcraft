@@ -37,6 +37,10 @@ class Python2Plugin(snapcraft.BasePlugin):
     # python discovers this automatically from it installed
     # location.  And PATH is automatically set by snapcraft.
 
+    def env(self, root):
+        return ["PYTHONPATH=%s" % os.path.join(
+            root, 'usr', 'lib', 'python2.7', 'dist-packages')]
+
     def pull(self):
         # A nice idea here would be to be asking setup tools
         # to use the deb layout, but that doesn't work with
