@@ -33,12 +33,9 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         # and be in the PYTHONPATH. It's harmless if setuptools isn't
         # used.
         os.makedirs(self.dist_packages_dir, exist_ok=True)
-        env = os.environ.copy()
-        env['PYTHONPATH'] = self.dist_packages_dir
         return self.run(
             ['python3', 'setup.py', 'install', '--install-layout=deb',
-             '--prefix=%s/usr' % self.installdir],
-            env=env)
+             '--prefix=%s/usr' % self.installdir])
 
     @property
     def dist_packages_dir(self):

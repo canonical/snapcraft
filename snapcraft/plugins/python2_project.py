@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright © 2015 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,22 +24,16 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     # note that we don't need to setup env(), python figures it out
     # see python2.py for more details
 
-    def pull(self):
-        return self.handle_source_options()
-
     def build(self):
         # If setuptools is used, it tries to create files in the
         # dist-packages dir and import from there, so it needs to exist
         # and be in the PYTHONPATH. It's harmless if setuptools isn't
         # used.
         os.makedirs(self.dist_packages_dir, exist_ok=True)
-        env = os.environ.copy()
-        env['PYTHONPATH'] = self.dist_packages_dir
 
         return self.run(
             ['python2', 'setup.py', 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir)],
-            env=env)
+             '--prefix={}/usr'.format(self.installdir)])
 
     @property
     def dist_packages_dir(self):

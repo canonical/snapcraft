@@ -180,10 +180,12 @@ class Config:
 
         env = []
 
+        env += part.env(part.installdir)
+        env += self.runtime_env(part.installdir)
+        env += self.build_env(part.installdir)
+
         for dep in part.deps:
             root = dep.installdir
-            env += self.runtime_env(root)
-            env += self.build_env(root)
             env += dep.env(root)
             env += self.build_env_for_part(dep)
 

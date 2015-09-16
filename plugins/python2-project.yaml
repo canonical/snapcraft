@@ -1,6 +1,4 @@
 module: python2_project
-requires:
-  - python2
 options:
   source:
     required: true
