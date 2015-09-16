@@ -39,6 +39,10 @@ class Python3Plugin(snapcraft.BasePlugin):
     #
     # PATH is automatically set by snapcraft
 
+    def env(self, root):
+        return ["PYTHONPATH=%s" % os.path.join(
+            root, 'usr', 'lib', 'python3', 'dist-packages')]
+
     def pull(self):
         # A nice idea here would be to be asking setup tools
         # to use the deb layout, but that doesn't work with
@@ -47,6 +51,6 @@ class Python3Plugin(snapcraft.BasePlugin):
         if self.requirements and not (self.run(
                 ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python3', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', 'python3.4', 'site-packages')]) and self.run(
                 ['python3', os.path.join(self.installdir, 'usr', 'bin', 'easy_install3'), '--prefix', os.path.join(self.installdir, 'usr'), 'pip']) and self.run(
-                ['python3', os.path.join(self.installdir, 'usr', 'bin', 'pip3'), 'install', '--root', os.path.join(self.installdir, 'usr', 'lib', 'python3'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
+                ['python3', os.path.join(self.installdir, 'usr', 'bin', 'pip3'), 'install', '--target', os.path.join(self.installdir, 'usr', 'lib', 'python3.4', 'site-packages'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
             return False
         return True
