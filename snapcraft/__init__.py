@@ -34,6 +34,7 @@ class BasePlugin:
     def __init__(self, name, options):
         self.name = name
         self.options = options
+        self.partdir = os.path.join(os.getcwd(), "parts", self.name)
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
         self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name, 'ubuntu')
