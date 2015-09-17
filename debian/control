@@ -6,43 +6,34 @@ Build-Depends: bzr,
                cmake,
                debhelper (>= 9),
                dh-python,
-               git,
-               mercurial,
-               pep8,
-               plainbox,
-               pyflakes,
                python3 (>= 3.4),
                python3-apt,
-               python3-fixtures,
                python3-jsonschema,
-               python3-mccabe,
-               python3-requests,
                python3-setuptools,
-               python3-testscenarios,
                python3-yaml,
                ubuntu-snappy-cli,
                wget,
-               xz-utils,
+               xz-utils
 Homepage: https://launchpad.net/snapcraft
 Vcs-Bzr: lp:snapcraft
 Standards-Version: 3.9.6
 
 Package: snapcraft
 Architecture: all
-Depends: ${misc:Depends},
-         ${python3:Depends},
-         bzr,
+Depends: bzr,
          dpkg-dev,
          git,
+         mercurial,
          python3-apt,
          python3-jsonschema,
          python3-requests,
          python3-yaml,
-         mercurial,
          sudo,
          ubuntu-snappy-cli,
          wget,
          xz-utils,
+         ${misc:Depends},
+         ${python3:Depends}
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
