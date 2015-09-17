@@ -18,7 +18,6 @@ import glob
 import importlib
 import logging
 import os
-import shutil
 import sys
 
 import yaml
@@ -301,7 +300,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
         dst = os.path.join(dstdir, snap_file)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         if not os.path.exists(dst) and not os.path.islink(dst):
-            shutil.copy2(src, dst, follow_symlinks=False)
+            os.link(src, dst, follow_symlinks=False)
 
 
 def _get_file_list(stage_set):
