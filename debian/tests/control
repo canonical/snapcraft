@@ -1,3 +1,9 @@
-Tests: runtests
-Depends: @, build-essential, pep8, plainbox, pyflakes, python3-fixtures, python3-jsonschema, python3-mccabe, python3-testscenarios
-Restrictions: isolation-container
+Test-Command: ./runtests.sh
+Restrictions: allow-stderr, isolation-container
+Depends: @,
+         pep8,
+         plainbox,
+         pyflakes,
+         python3-fixtures,
+         python3-mccabe,
+         python3-testscenarios
