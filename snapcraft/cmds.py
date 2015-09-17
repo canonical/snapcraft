@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import filecmp
 import glob
 import logging
 import os
@@ -236,13 +237,21 @@ def _check_for_collisions(parts):
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
-            common = part_files & parts_files[other_part_name]
-            if common:
-                logger.error('Error: parts %s and %s have the following files in common:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(common)))
+            common = part_files & parts_files[other_part_name]['files']
+            conflict_files = []
+            for f in common:
+                this = os.path.join(part.installdir, f)
+                other = os.path.join(parts_files[other_part_name]['installdir'], f)
+                if not filecmp.cmp(this, other, shallow=False):
+                    conflict_files.append(f)
+
+            if conflict_files:
+                logger.error('Error: parts %s and %s have the following file paths in common which have different contents:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(conflict_files)))
+
                 return False
 
         # And add our files to the list
-        parts_files[part.names()[0]] = part_files
+        parts_files[part.names()[0]] = {'files': part_files, 'installdir': part.installdir}
 
     return True
 

@@ -24,6 +24,11 @@ class Python2Plugin(snapcraft.BasePlugin):
         'python-setuptools',
     ]
 
+    def snap_fileset(self):
+        return [
+            '-usr/share',
+        ]
+
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location.  And PATH is automatically set by snapcraft.
