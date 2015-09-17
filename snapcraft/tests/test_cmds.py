@@ -61,7 +61,10 @@ class TestCommands(tests.TestCase):
         part3.installdir = tmpdir + '/install3'
         os.makedirs(part3.installdir + '/a')
         os.makedirs(part3.installdir + '/b')
-        open(part3.installdir + '/1', mode='w').close()
+        with open(part3.installdir + '/1', mode='w') as f:
+            f.write('2')
+        with open(part2.installdir + '/2', mode='w') as f:
+            f.write('1')
         open(part3.installdir + '/a/2', mode='w').close()
 
         self.assertTrue(cmds._check_for_collisions([part1, part2]))
