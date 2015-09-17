@@ -1,0 +1,12 @@
+name: pypy-config
+version: 1
+vendor: Vendor <email@example.com>
+summary: test summary
+description: test desc
+icon: icon.png
+config: python3 usr/bin/config.py
+
+parts:
+  config:
+    type: python3-project
+    source: .
