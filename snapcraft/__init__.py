@@ -99,7 +99,7 @@ class BasePlugin:
 
     def setup_stage_packages(self):
         ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
-        part_stage_packages = getattr(self.options, 'stage_packages', [])
+        part_stage_packages = getattr(self.options, 'stage_packages', []) or []
         if self.PLUGIN_STAGE_PACKAGES or part_stage_packages:
             ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
             ubuntu.unpack(self.installdir)

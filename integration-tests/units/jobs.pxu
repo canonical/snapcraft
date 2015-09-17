@@ -116,7 +116,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
     OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
-    echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
+    echo $OUTPUT | grep "Error: parts p1 and p2 have the following file paths in common which have different contents: bin/test" # squished output by bash
 
 id: snapcraft/normal/dependencies
 plugin: shell

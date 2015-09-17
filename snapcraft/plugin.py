@@ -30,6 +30,14 @@ from snapcraft import repo
 logger = logging.getLogger(__name__)
 
 
+_BUILTIN_OPTIONS = {
+    'filesets': {},
+    'snap': [],
+    'stage': [],
+    'stage-packages': [],
+}
+
+
 def is_local_plugin(name):
     return name.startswith("x-")
 
@@ -88,9 +96,16 @@ class PluginHandler:
             pass
         options = Options()
 
-        for opt in self.config.get('options', []):
+        plugin_options = self.config.get('options', {})
+        # Let's append some mandatory options, but not .update() to not lose
+        # original content
+        for key in _BUILTIN_OPTIONS:
+            if key not in plugin_options:
+                plugin_options[key] = _BUILTIN_OPTIONS[key]
+
+        for opt in plugin_options:
             attrname = opt.replace('-', '_')
-            opt_parameters = self.config['options'][opt] or {}
+            opt_parameters = plugin_options[opt] or {}
             if opt in properties:
                 setattr(options, attrname, properties[opt])
             else:
@@ -198,6 +213,12 @@ class PluginHandler:
         self.mark_done('build')
         return True
 
+    def _migratable_fileset_for(self, stage):
+        plugin_fileset = self.code.snap_fileset()
+        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset.extend(plugin_fileset)
+        return migratable_filesets(fileset, self.installdir)
+
     def stage(self, force=False):
         if not self.should_stage_run('stage', force):
             return True
@@ -206,8 +227,15 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
-        fileset = getattr(self.code.options, 'stage', ['*']) or ['*']
-        _migrate_files(fileset, self.installdir, self.stagedir)
+        snap_files, snap_dirs = self._migratable_fileset_for('stage')
+
+        try:
+            _migrate_files(snap_files, snap_dirs, self.installdir, self.stagedir)
+        except FileNotFoundError as e:
+            logger.error('Could not find file %s defined in stage',
+                         os.path.relpath(e.filename, os.path.curdir))
+            return False
+
         self.mark_done('stage')
 
         return True
@@ -218,10 +246,15 @@ class PluginHandler:
         self.makedirs()
 
         self.notify_stage("Snapping")
-        plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, 'snap', ['*']) or ['*']
-        fileset.extend(plugin_fileset)
-        _migrate_files(fileset, self.installdir, self.snapdir)
+        snap_files, snap_dirs = self._migratable_fileset_for('snap')
+
+        try:
+            _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        except FileNotFoundError as e:
+                logger.error('Could not find file %s defined in snap',
+                             os.path.relpath(e.filename, os.path.curdir))
+                return False
+
         self.mark_done('snap')
 
         return True
@@ -240,8 +273,7 @@ def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     return part
 
 
-def _migrate_files(fileset, srcdir, dstdir):
-    # validate
+def migratable_filesets(fileset, srcdir):
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
@@ -256,10 +288,19 @@ def _migrate_files(fileset, srcdir, dstdir):
     snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(srcdir, x)) and not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
 
-    if snap_dirs:
-        common.run(['mkdir', '-p'] + list(snap_dirs), cwd=dstdir)
-    if snap_files:
-        common.run(['cp', '-a', '--parent'] + list(snap_files) + [dstdir], cwd=srcdir)
+    return snap_files, snap_dirs
+
+
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
+    for directory in snap_dirs:
+        os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
+
+    for snap_file in snap_files:
+        src = os.path.join(srcdir, snap_file)
+        dst = os.path.join(dstdir, snap_file)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if not os.path.exists(dst) and not os.path.islink(dst):
+            os.link(src, dst, follow_symlinks=False)
 
 
 def _get_file_list(stage_set):
@@ -284,8 +325,11 @@ def _get_file_list(stage_set):
 def _generate_include_set(directory, includes):
     include_files = set()
     for include in includes:
-        matches = glob.glob(os.path.join(directory, include))
-        include_files |= set(matches)
+        if '*' in include:
+            matches = glob.glob(os.path.join(directory, include))
+            include_files |= set(matches)
+        else:
+            include_files |= set([os.path.join(directory, include), ])
 
     include_dirs = [x for x in include_files if os.path.isdir(x)]
     include_files = set([os.path.relpath(x, directory) for x in include_files])

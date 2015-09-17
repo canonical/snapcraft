@@ -33,6 +33,11 @@ class Python3Plugin(snapcraft.BasePlugin):
             self.requirements = None
         super().__init__(name, options)
 
+    def snap_fileset(self):
+        return [
+            '-usr/share',
+        ]
+
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed
     # location, see https://code.launchpad.net/~mvo/snapcraft/python3-project/+merge/264521/comments/664308

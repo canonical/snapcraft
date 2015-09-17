@@ -22,12 +22,14 @@ import os
 import os.path
 
 import snapcraft.plugin
+import snapcraft.wiki
 from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
 
 
+@jsonschema.FormatChecker.cls_checks('file-path')
 @jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_file_exists(instance):
     return os.path.exists(instance)
@@ -114,6 +116,7 @@ class Config:
 
     def _compute_part_dependencies(self, after_requests):
         '''Gather the lists of dependencies and adds to all_parts.'''
+        w = snapcraft.wiki.Wiki()
 
         for part in self.all_parts:
             dep_names = part.config.get('requires', []) + after_requests.get(part.names()[0], [])
@@ -124,6 +127,11 @@ class Config:
                         part.deps.append(self.all_parts[i])
                         found = True
                         break
+                if not found:
+                    wiki_part = w.get_part(dep)
+                    found = True if wiki_part else False
+                    if found:
+                        part.deps.append(self.load_plugin(dep, wiki_part['type'], wiki_part))
                 if not found:
                     raise SnapcraftLogicError('part name missing {}'.format(dep))
 
