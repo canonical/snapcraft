@@ -18,6 +18,7 @@ import glob
 import importlib
 import logging
 import os
+import shutil
 import sys
 
 import yaml
@@ -213,6 +214,12 @@ class PluginHandler:
         self.mark_done('build')
         return True
 
+    def _migratable_fileset_for(self, stage):
+        plugin_fileset = self.code.snap_fileset()
+        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset.extend(plugin_fileset)
+        return migratable_filesets(fileset, self.installdir)
+
     def stage(self, force=False):
         if not self.should_stage_run('stage', force):
             return True
@@ -221,8 +228,15 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
-        fileset = getattr(self.code.options, 'stage', ['*']) or ['*']
-        _migrate_files(fileset, self.installdir, self.stagedir)
+        snap_files, snap_dirs = self._migratable_fileset_for('stage')
+
+        try:
+            _migrate_files(snap_files, snap_dirs, self.installdir, self.stagedir)
+        except FileNotFoundError as e:
+            logger.error('Could not find file %s defined in stage',
+                         os.path.relpath(e.filename, os.path.curdir))
+            return False
+
         self.mark_done('stage')
 
         return True
@@ -233,10 +247,15 @@ class PluginHandler:
         self.makedirs()
 
         self.notify_stage("Snapping")
-        plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, 'snap', ['*']) or ['*']
-        fileset.extend(plugin_fileset)
-        _migrate_files(fileset, self.installdir, self.snapdir)
+        snap_files, snap_dirs = self._migratable_fileset_for('snap')
+
+        try:
+            _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        except FileNotFoundError as e:
+                logger.error('Could not find file %s defined in snap',
+                             os.path.relpath(e.filename, os.path.curdir))
+                return False
+
         self.mark_done('snap')
 
         return True
@@ -273,13 +292,14 @@ def migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files(fileset, srcdir, dstdir):
-    snap_files, snap_dirs = migratable_filesets(fileset, srcdir)
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
+    for directory in snap_dirs:
+        os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
 
-    if snap_dirs:
-        common.run(['mkdir', '-p'] + list(snap_dirs), cwd=dstdir)
-    if snap_files:
-        common.run(['cp', '-a', '--parent'] + list(snap_files) + [dstdir], cwd=srcdir)
+    for snap_file in snap_files:
+        src = os.path.join(srcdir, snap_file)
+        dst = os.path.join(dstdir, snap_file)
+        shutil.copy2(src, dst, follow_symlinks=False)
 
 
 def _get_file_list(stage_set):
@@ -304,8 +324,11 @@ def _get_file_list(stage_set):
 def _generate_include_set(directory, includes):
     include_files = set()
     for include in includes:
-        matches = glob.glob(os.path.join(directory, include))
-        include_files |= set(matches)
+        if '*' in include:
+            matches = glob.glob(os.path.join(directory, include))
+            include_files |= set(matches)
+        else:
+            include_files |= set([os.path.join(directory, include), ])
 
     include_dirs = [x for x in include_files if os.path.isdir(x)]
     include_files = set([os.path.relpath(x, directory) for x in include_files])
