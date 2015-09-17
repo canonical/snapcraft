@@ -1,6 +1,7 @@
 Test-Command: ./runtests.sh
 Restrictions: allow-stderr, isolation-container
 Depends: @,
+         build-essential,
          pep8,
          plainbox,
          pyflakes,
