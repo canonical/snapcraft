@@ -24,6 +24,9 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     # note that we don't need to setup env(), python figures it out
     # see python2.py for more details
 
+    def pull(self):
+        return self.handle_source_options()
+
     def build(self):
         # If setuptools is used, it tries to create files in the
         # dist-packages dir and import from there, so it needs to exist
