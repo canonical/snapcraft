@@ -90,6 +90,22 @@ command:
     ${SNAPCRAFT} stage
     test "$(./stage/bin/test)" = "Hello world"
 
+id: snapcraft/normal/simple-make-clean
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
+    ${SNAPCRAFT} snap
+    test "$(./stage/bin/test)" = "Hello world"
+    test -d ./stage
+    test -d ./parts
+    test -d ./snap
+    ${SNAPCRAFT} clean
+    test ! -d ./stage
+    test ! -d ./parts
+    test ! -d ./snap
+
 id: snapcraft/normal/simple-cmake
 plugin: shell
 estimated_duration: 0.3
