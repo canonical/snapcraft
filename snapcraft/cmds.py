@@ -228,6 +228,27 @@ def run(args):
             qemu.kill()
 
 
+def clean(args):
+    config = _load_config()
+
+    for part in config.all_parts:
+        logger.info('Cleaning up for part %r', part.names()[0])
+        if os.path.exists(part.partdir):
+            shutil.rmtree(part.partdir)
+
+    # parts dir does not contain only generated code.
+    if not os.listdir(common.get_partsdir()):
+        os.rmdir(common.get_partsdir())
+
+    logger.info('Cleaning up staging area')
+    if os.path.exists(common.get_stagedir()):
+        shutil.rmtree(common.get_stagedir())
+
+    logger.info('Cleaning up snapping area')
+    if os.path.exists(common.get_snapdir()):
+        shutil.rmtree(common.get_snapdir())
+
+
 def _check_for_collisions(parts):
     parts_files = {}
     for part in parts:
