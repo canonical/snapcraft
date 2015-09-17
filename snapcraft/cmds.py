@@ -236,6 +236,10 @@ def clean(args):
         if os.path.exists(part.partdir):
             shutil.rmtree(part.partdir)
 
+    # parts dir does not contain only generated code.
+    if not os.listdir(common.get_partsdir()):
+        os.rmdir(common.get_partsdir())
+
     logger.info('Cleaning up staging area')
     if os.path.exists(common.get_stagedir()):
         shutil.rmtree(common.get_stagedir())

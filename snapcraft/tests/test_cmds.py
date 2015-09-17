@@ -92,6 +92,15 @@ class CleanTestCase(tests.TestCase):
         self.mock_exists = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('os.listdir')
+        self.mock_listdir = patcher.start()
+        self.mock_listdir.return_value = []
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('os.rmdir')
+        self.mock_rmdir = patcher.start()
+        self.addCleanup(patcher.stop)
+
         class FakePart:
 
             def __init__(self, name, partdir):
@@ -139,6 +148,8 @@ class CleanTestCase(tests.TestCase):
             mock.call(common.get_snapdir()),
         ])
 
+        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
+
     def test_everything_is_clean(self):
         self.mock_exists.return_value = False
 
@@ -151,6 +162,8 @@ class CleanTestCase(tests.TestCase):
             mock.call(common.get_stagedir()),
             mock.call(common.get_snapdir()),
         ])
+
+        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
 
         self.assertFalse(self.mock_rmtree.called)
 
@@ -172,6 +185,8 @@ class CleanTestCase(tests.TestCase):
             mock.call(common.get_stagedir()),
             mock.call(common.get_snapdir()),
         ])
+
+        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
 
 
 class InitTestCase(tests.TestCase):
