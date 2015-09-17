@@ -22,16 +22,13 @@ parts:
         - usr/lib
       go-server:
         - bin/golang-*
-      ignore:
-        - -lib/x86_64-linux-gnu/libexpat*
-        - -usr/lib/x86_64-linux-gnu/libexpat*
-        - -usr/share/doc
     stage:
-      - $ignore
-    snap:
-      - $ignore
       - $fswebcam
       - $go-server
+    snap:
+      - $fswebcam
+      - $go-server
+      - -usr/share/doc
   glue:
     type: copy
     files:

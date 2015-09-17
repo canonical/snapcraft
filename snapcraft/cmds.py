@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import filecmp
 import glob
 import logging
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -39,6 +41,9 @@ summary: # 79 char long summary
 description: # A longer description for the snap
 icon: # A path to an icon for the package
 '''
+
+
+_config = None
 
 
 def init(args):
@@ -223,22 +228,30 @@ def run(args):
             qemu.kill()
 
 
-def _check_for_collisions(parts, stage):
+def _check_for_collisions(parts):
     parts_files = {}
     for part in parts:
         # Gather our own files up
-        fileset = getattr(part.code.options, stage, ['*']) or ['*']
+        fileset = getattr(part.code.options, 'stage', ['*']) or ['*']
         part_files, _ = snapcraft.plugin.migratable_filesets(fileset, part.installdir)
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
-            common = part_files & parts_files[other_part_name]
-            if common:
-                logger.error('Error: parts %s and %s have the following files in common:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(common)))
+            common = part_files & parts_files[other_part_name]['files']
+            conflict_files = []
+            for f in common:
+                this = os.path.join(part.installdir, f)
+                other = os.path.join(parts_files[other_part_name]['installdir'], f)
+                if not filecmp.cmp(this, other, shallow=False):
+                    conflict_files.append(f)
+
+            if conflict_files:
+                logger.error('Error: parts %s and %s have the following file paths in common which have different contents:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(conflict_files)))
+
                 return False
 
         # And add our files to the list
-        parts_files[part.names()[0]] = part_files
+        parts_files[part.names()[0]] = {'files': part_files, 'installdir': part.installdir}
 
     return True
 
@@ -265,20 +278,29 @@ def cmd(args):
             print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
+    # clean the snap dir before Snapping
+    snap_clean = False
+
     for part in config.all_parts:
         for cmd in cmds:
-            if cmd is 'stage' or cmd is 'snap':
+            if cmd is 'stage':
                 # This ends up running multiple times, as each part gets to its
                 # staging cmd.  That's inefficient, but largely OK.
                 # FIXME: fix the above by iterating over cmds before iterating
                 # all_parts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not _check_for_collisions(config.all_parts, cmd):
+                if not _check_for_collisions(config.all_parts):
                     sys.exit(1)
+
+            # We want to make sure we have a clean snap dir
+            if cmd is 'snap' and not snap_clean:
+                shutil.rmtree(common.get_snapdir())
+                snap_clean = True
 
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
+
             if not getattr(part, cmd)(force=force):
                 logger.error('Failed doing %s for %s!', cmd, part.names()[0])
                 sys.exit(1)
@@ -295,8 +317,13 @@ def _check_call(args, **kwargs):
 
 
 def _load_config():
+    global _config
+    if _config:
+        return _config
+
     try:
-        return snapcraft.yaml.Config()
+        _config = snapcraft.yaml.Config()
+        return _config
     except snapcraft.yaml.SnapcraftYamlFileError as e:
         logger.error(
             'Could not find {}.  Are you sure you are in the right directory?\n'

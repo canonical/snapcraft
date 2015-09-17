@@ -11,5 +11,5 @@ parts:
     source: .
   p2:
     type: make-project
-    source: .
+    source: ./p2
     after: [p1]
