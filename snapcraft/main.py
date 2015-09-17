@@ -48,6 +48,9 @@ def main():
     parser = subparsers.add_parser('run', help='run snap in kvm', add_help=False)
     parser.set_defaults(func=snapcraft.cmds.run)
 
+    parser = subparsers.add_parser('clean', help='clean up the environment (to start from scratch)')
+    parser.set_defaults(func=snapcraft.cmds.clean)
+
     parser = subparsers.add_parser('pull', help='get sources', parents=[cmd_parser])
     parser.set_defaults(func=snapcraft.cmds.cmd)
 

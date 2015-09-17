@@ -63,7 +63,8 @@ class PluginHandler:
         self.deps = []
         self.plugin_name = name
 
-        parts_dir = os.path.join(os.getcwd(), 'parts')
+        parts_dir = common.get_partsdir()
+        self.partdir = os.path.join(parts_dir, part_name)
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
         self.builddir = os.path.join(parts_dir, part_name, 'build')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
