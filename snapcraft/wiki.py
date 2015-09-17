@@ -28,23 +28,22 @@ logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 
 class Wiki:
-
-    def __init__(self):
-        self.wiki_parts = self._fetch()
+    wiki_parts = None
 
     def _fetch(self):
-        raw_content = requests.get(PARTS_URI, params=PARTS_URI_PARAMS)
-        content = raw_content.text.strip()
+        if self.wiki_parts is None:
+            raw_content = requests.get(PARTS_URI, params=PARTS_URI_PARAMS)
+            content = raw_content.text.strip()
 
-        if content.startswith(_WIKI_OPEN):
-            content = content[len(_WIKI_OPEN):].strip()
-        if content.endswith(_WIKI_CLOSE):
-            content = content[:-len(_WIKI_CLOSE)]
+            if content.startswith(_WIKI_OPEN):
+                content = content[len(_WIKI_OPEN):].strip()
+            if content.endswith(_WIKI_CLOSE):
+                content = content[:-len(_WIKI_CLOSE)]
 
-        return yaml.load(content)
+            self.wiki_parts = yaml.load(content)
 
     def get_part(self, name):
-        try:
+        self._fetch()
+
+        if name in self.wiki_parts:
             return self.wiki_parts[name]
-        except KeyError:
-            return None

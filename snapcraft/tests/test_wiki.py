@@ -42,9 +42,9 @@ class TestYaml(TestCase):
     def test_get_part(self):
         w = snapcraft.wiki.Wiki()
 
+        self.assertEqual(w.get_part('part1'), {'type': 'go'})
+        self.assertEqual(w.get_part('part2'), None)
+
         self.mock_requests.assert_called_once_with(
             'https://wiki.ubuntu.com/Snappy/Parts',
             params={'action': 'raw'})
-
-        self.assertEqual(w.get_part('part1'), {'type': 'go'})
-        self.assertEqual(w.get_part('part2'), None)
