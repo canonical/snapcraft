@@ -252,6 +252,7 @@ class PluginHandler:
         try:
             _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
         except FileNotFoundError as e:
+                print(e)
                 logger.error('Could not find file %s defined in snap',
                              os.path.relpath(e.filename, os.path.curdir))
                 return False
@@ -299,7 +300,9 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
-        shutil.copy2(src, dst, follow_symlinks=False)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if not os.path.exists(dst) and not os.path.islink(dst):
+            shutil.copy2(src, dst, follow_symlinks=False)
 
 
 def _get_file_list(stage_set):
