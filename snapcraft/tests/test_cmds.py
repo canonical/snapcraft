@@ -62,10 +62,10 @@ class TestCommands(tests.TestCase):
         open(part3.installdir + '/1', mode='w').close()
         open(part3.installdir + '/a/2', mode='w').close()
 
-        self.assertTrue(cmds._check_for_collisions([part1, part2], 'stage'))
+        self.assertTrue(cmds._check_for_collisions([part1, part2]))
         self.assertEqual('', fake_logger.output)
 
-        self.assertFalse(cmds._check_for_collisions([part1, part2, part3], 'stage'))
+        self.assertFalse(cmds._check_for_collisions([part1, part2, part3]))
         self.assertEqual(
             'Error: parts part2 and part3 have the following files in common:\n'
             '  1\n'

@@ -183,7 +183,8 @@ class PluginTestCase(tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                plugin._migrate_files(filesets[key]['fileset'], srcdir, dstdir)
+                snap_files, snap_dirs = plugin.migratable_filesets(filesets[key]['fileset'], srcdir)
+                plugin._migrate_files(snap_files, snap_dirs, srcdir, dstdir)
 
                 expected = []
                 for item in filesets[key]['result']:

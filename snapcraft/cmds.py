@@ -18,6 +18,7 @@ import glob
 import logging
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -226,11 +227,11 @@ def run(args):
             qemu.kill()
 
 
-def _check_for_collisions(parts, stage):
+def _check_for_collisions(parts):
     parts_files = {}
     for part in parts:
         # Gather our own files up
-        fileset = getattr(part.code.options, stage, ['*']) or ['*']
+        fileset = getattr(part.code.options, 'stage', ['*']) or ['*']
         part_files, _ = snapcraft.plugin.migratable_filesets(fileset, part.installdir)
 
         # Scan previous parts for collisions
@@ -268,20 +269,29 @@ def cmd(args):
             print("Installing required packages on the host system: " + ", ".join(newPackages))
             subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
 
+    # clean the snap dir before Snapping
+    snap_clean = False
+
     for part in config.all_parts:
         for cmd in cmds:
-            if cmd is 'stage' or cmd is 'snap':
+            if cmd is 'stage':
                 # This ends up running multiple times, as each part gets to its
                 # staging cmd.  That's inefficient, but largely OK.
                 # FIXME: fix the above by iterating over cmds before iterating
                 # all_parts.  But then we need to make sure we continue to handle
                 # cases like go, where you want go built before trying to pull
                 # a go project.
-                if not _check_for_collisions(config.all_parts, cmd):
+                if not _check_for_collisions(config.all_parts):
                     sys.exit(1)
+
+            # We want to make sure we have a clean snap dir
+            if cmd is 'snap' and not snap_clean:
+                shutil.rmtree(common.get_snapdir())
+                snap_clean = True
 
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
+
             if not getattr(part, cmd)(force=force):
                 logger.error('Failed doing %s for %s!', cmd, part.names()[0])
                 sys.exit(1)
