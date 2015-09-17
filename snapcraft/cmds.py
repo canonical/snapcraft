@@ -232,7 +232,7 @@ def clean(args):
     config = _load_config()
 
     for part in config.all_parts:
-        logger.info('Cleaning up for part \'%s\'', part.names()[0])
+        logger.info('Cleaning up for part %r', part.names()[0])
         if os.path.exists(part.partdir):
             shutil.rmtree(part.partdir)
 
