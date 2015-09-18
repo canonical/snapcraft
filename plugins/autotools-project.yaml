@@ -1,5 +1,5 @@
 module: autotools_project
-build-tools: [autoconf, automake, autopoint]
+build-packages: [autoconf, automake, autopoint]
 options:
   source:
     required: true
