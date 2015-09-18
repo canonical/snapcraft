@@ -134,6 +134,8 @@ class CleanTestCase(tests.TestCase):
             mock.call().__bool__(),
             mock.call('partdir3'),
             mock.call().__bool__(),
+            mock.call(common.get_partsdir()),
+            mock.call().__bool__(),
             mock.call(common.get_stagedir()),
             mock.call().__bool__(),
             mock.call(common.get_snapdir()),
@@ -152,6 +154,7 @@ class CleanTestCase(tests.TestCase):
 
     def test_everything_is_clean(self):
         self.mock_exists.return_value = False
+        self.mock_listdir.side_effect = FileNotFoundError()
 
         cmds.clean({})
 
@@ -159,12 +162,12 @@ class CleanTestCase(tests.TestCase):
             mock.call('partdir1'),
             mock.call('partdir2'),
             mock.call('partdir3'),
+            mock.call(common.get_partsdir()),
             mock.call(common.get_stagedir()),
             mock.call(common.get_snapdir()),
         ])
 
-        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
-
+        self.assertFalse(self.mock_rmdir.called)
         self.assertFalse(self.mock_rmtree.called)
 
     def test_no_parts_defined(self):
