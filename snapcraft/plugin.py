@@ -19,7 +19,7 @@ import importlib
 import logging
 import os
 import sys
-
+import shutil
 import yaml
 
 import snapcraft
@@ -35,6 +35,7 @@ _BUILTIN_OPTIONS = {
     'snap': [],
     'stage': [],
     'stage-packages': [],
+    'organize': {}
 }
 
 
@@ -220,6 +221,25 @@ class PluginHandler:
         fileset.extend(plugin_fileset)
         return migratable_filesets(fileset, self.installdir)
 
+    def _organize(self):
+        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
+
+        for key in organize_fileset:
+            src = os.path.join(self.installdir, key)
+            dst = os.path.join(self.installdir, organize_fileset[key])
+
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+            if os.path.exists(dst):
+                logger.warning(
+                    'Stepping over existing file for organization %r',
+                    os.path.relpath(dst, self.installdir))
+                if os.path.isdir(dst):
+                    shutil.rmtree(dst)
+                else:
+                    os.remove(dst)
+            shutil.move(src, dst)
+
     def stage(self, force=False):
         if not self.should_stage_run('stage', force):
             return True
@@ -228,6 +248,7 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
+        self._organize()
         snap_files, snap_dirs = self._migratable_fileset_for('stage')
 
         try:
