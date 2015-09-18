@@ -42,6 +42,7 @@ run_test_plan(){
         else
             BASEDIR=$(ls $(dirname $ADT_ARTIFACTS)/build*/snapcraft* -d)
         fi
+        echo $BASEDIR
         ln -fs ${BASEDIR}/examples ${BASEDIR}/integration-tests/data/examples
     fi
     # Run the test plan
