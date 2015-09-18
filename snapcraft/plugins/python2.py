@@ -44,7 +44,7 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     def env(self, root):
         return ["PYTHONPATH=%s" % os.path.join(
-            root, 'usr', 'lib', 'python2.7', 'dist-packages')]
+            root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
         # A nice idea here would be to be asking setup tools
@@ -52,8 +52,12 @@ class Python2Plugin(snapcraft.BasePlugin):
         # prefix sadly
 
         if self.requirements and not (self.run(
-                ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'site-packages')]) and self.run(
+                ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'site-packages')]) and self.run(
                 ['python2', os.path.join(self.installdir, 'usr', 'bin', 'easy_install'), '--prefix', os.path.join(self.installdir, 'usr'), 'pip']) and self.run(
-                ['python2', os.path.join(self.installdir, 'usr', 'bin', 'pip2'), 'install', '--target', os.path.join(self.installdir, 'usr', 'lib', 'python2.7', 'site-packages'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
+                ['python2', os.path.join(self.installdir, 'usr', 'bin', 'pip2'), 'install', '--target', os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'site-packages'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
             return False
         return True
+
+    @property
+    def python_version(self):
+        return self.run_output(['pyversions', '-i'])

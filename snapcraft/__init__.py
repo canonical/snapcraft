@@ -67,6 +67,13 @@ class BasePlugin:
             print(' '.join(cmd))
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
+    def run_output(self, cmd, cwd=None, **kwargs):
+        if cwd is None:
+            cwd = self.builddir
+        if True:
+            print(' '.join(cmd))
+        return snapcraft.common.run_output(cmd, cwd=cwd, **kwargs)
+
     def isurl(self, url):
         return snapcraft.common.isurl(url)
 

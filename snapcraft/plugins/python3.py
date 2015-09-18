@@ -54,8 +54,12 @@ class Python3Plugin(snapcraft.BasePlugin):
         # prefix sadly
 
         if self.requirements and not (self.run(
-                ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python3', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', 'python3.4', 'site-packages')]) and self.run(
+                ['ln', '-s', os.path.join(self.installdir, 'usr', 'lib', 'python3', 'dist-packages'), os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'site-packages')]) and self.run(
                 ['python3', os.path.join(self.installdir, 'usr', 'bin', 'easy_install3'), '--prefix', os.path.join(self.installdir, 'usr'), 'pip']) and self.run(
-                ['python3', os.path.join(self.installdir, 'usr', 'bin', 'pip3'), 'install', '--target', os.path.join(self.installdir, 'usr', 'lib', 'python3.4', 'site-packages'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
+                ['python3', os.path.join(self.installdir, 'usr', 'bin', 'pip3'), 'install', '--target', os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'site-packages'), '--requirement', os.path.join(os.getcwd(), self.requirements)])):
             return False
         return True
+
+    @property
+    def python_version(self):
+        return self.run_output(['py3versions', '-i'])
