@@ -1,5 +1,5 @@
 module: make_project
-build-tools: [make]
+build-packages: [make]
 options:
   source:
     required: true

@@ -75,7 +75,7 @@ class Config:
         self.data = _snapcraft_yaml_load()
         _validate_snapcraft_yaml(self.data)
 
-        self.build_tools = self.data.get('build-tools', [])
+        self.build_tools = self.data.get('build-packages', [])
 
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
@@ -160,7 +160,7 @@ class Config:
     def load_plugin(self, part_name, plugin_name, properties, load_code=True):
         part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties, load_code=load_code)
 
-        self.build_tools += part.config.get('build-tools', [])
+        self.build_tools += part.config.get('build-packages', [])
         self.all_parts.append(part)
         return part
 
