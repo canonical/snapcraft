@@ -223,8 +223,6 @@ class PluginHandler:
 
     def _organize(self):
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
-        if not organize_fileset:
-            return
 
         for key in organize_fileset:
             src = os.path.join(self.installdir, key)
