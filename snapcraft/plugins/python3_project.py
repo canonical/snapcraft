@@ -24,6 +24,10 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
     # note that we don't need to setup env(), python figures it out
     # see python3.py for more details
 
+    def env(self, root):
+        return ["PYTHONPATH=%s" % os.path.join(
+            root, 'usr', 'lib', 'python3', 'dist-packages')]
+
     def pull(self):
         return self.handle_source_options()
 

@@ -29,6 +29,7 @@ from snapcraft import common
 logger = logging.getLogger(__name__)
 
 
+@jsonschema.FormatChecker.cls_checks('file-path')
 @jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_file_exists(instance):
     return os.path.exists(instance)
@@ -188,6 +189,10 @@ class Config:
             root = dep.installdir
             env += dep.env(root)
             env += self.build_env_for_part(dep)
+
+        env += part.env(part.installdir)
+        env += self.runtime_env(part.installdir)
+        env += self.build_env(part.installdir)
 
         return env
 
