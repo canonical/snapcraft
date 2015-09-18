@@ -1,0 +1,38 @@
+name: webcam-webui
+version: 1
+vendor: Vendor <email@example.com>
+summary: Webcam web UI
+description: Exposes your webcam over a web UI
+icon: icon.png
+services:
+  - name: webcam-webui
+    start: bin/webcam-webui
+config: python3 usr/bin/config.py
+
+parts:
+  cam:
+    type: go-project
+    source: git://github.com/mikix/golang-static-http
+    stage-packages:
+      - fswebcam
+    filesets:
+      fswebcam:
+        - usr/bin/fswebcam
+        - lib
+        - usr/lib
+      go-server:
+        - bin/golang-*
+    stage:
+      - $fswebcam
+      - $go-server
+    snap:
+      - $fswebcam
+      - $go-server
+      - -usr/share/doc
+  glue:
+    type: copy
+    files:
+      webcam-webui: bin/webcam-webui
+  config:
+    type: python3-project
+    source: .

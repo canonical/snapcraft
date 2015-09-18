@@ -70,37 +70,11 @@ EOF
         python3-coverage erase
         export PROJECT_PATH=$(pwd)
         export SNAPCRAFT=snapcraft-coverage
-    else
-        export SNAPCRAFT=snapcraft
     fi
 
     # Go to the plainbox provider of snapcraft tests
-    cd integration-tests/
-    # Create a temporary directory so that we can run 'manage.py develop' and
-    # create the .provider file there
-    temp_dir=$(mktemp -d)
-    # Develop the provider, this will let us run tests on it
-    ./manage.py develop -d $temp_dir
-    # Set PROVIDERPATH (see plainbox(1)) so that we can see the provider
-    # without installing it.
-    export PROVIDERPATH=$PROVIDERPATH:$temp_dir
-    # Run the 'normal' test plan
-    plainbox run \
-        -T 2015.com.canonical.snapcraft::normal \
-        -f json -o $temp_dir/result.json
-    # Analyze the result and fail if there are any failures
-    python3 - << __PYTHON__
-import json
-with open("$temp_dir/result.json", "rt", encoding="utf-8") as stream:
-    results = json.load(stream)
-failed = False
-for test_id, result in sorted(results['result_map'].items()):
-    print('{0}: {1}'.format(test_id, result['outcome']))
-    if result['outcome'] != 'pass':
-        failed = True
-print("Overall: {0}".format("fail" if failed else "pass"))
-raise SystemExit(failed)
-__PYTHON__
+    cd integration-tests
+    ./runtests.sh
 }
 
 run_unit_tests

@@ -1,5 +1,19 @@
 $schema: http://json-schema.org/draft-04/schema#
 
+definitions:
+  security:
+    type: object
+    required:
+      - apparmor
+      - seccomp
+    properties:
+      apparmor:
+        type: string
+        format: file-path
+      seccomp:
+        type: string
+        format: file-path
+
 title: snapcraft schema
 type: object
 properties:
@@ -38,34 +52,47 @@ properties:
     uniqueItems: true
     items:
       - type: string
+  config:
+    type: string
+    description: path to a configure hook to expose configuration for the package
   services:
     type: array
     items:
       - type: object
+        required:
+          - name
+          - start
         properties:
           name:
             type: string
+            pattern: "^[A-Za-z0-9/.:-]*$"
           start:
             type: string
             description: command executed to start the service
           stop:
             type: string
             description: command executed to stop the service
-        required:
-          - name
-          - start
+          security-policy:
+            $ref: "#definitions/security"
+          security-override:
+            $ref: "#definitions/security"
   binaries:
     type: array
     items:
       - type: object
+        required:
+          - name
         properties:
           name:
             type: string
+            pattern: "^[A-Za-z0-9/.:-]*$"
           exec:
             type: string
             description: command executed to start the service
-        required:
-          - name
+          security-policy:
+            $ref: "#definitions/security"
+          security-override:
+            $ref: "#definitions/security"
   parts:
     type: object
     minProperties: 1

@@ -30,6 +30,14 @@ from snapcraft import repo
 logger = logging.getLogger(__name__)
 
 
+_BUILTIN_OPTIONS = {
+    'filesets': {},
+    'snap': [],
+    'stage': [],
+    'stage-packages': [],
+}
+
+
 def is_local_plugin(name):
     return name.startswith("x-")
 
@@ -55,7 +63,8 @@ class PluginHandler:
         self.deps = []
         self.plugin_name = name
 
-        parts_dir = os.path.join(os.getcwd(), 'parts')
+        parts_dir = common.get_partsdir()
+        self.partdir = os.path.join(parts_dir, part_name)
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
         self.builddir = os.path.join(parts_dir, part_name, 'build')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
@@ -88,9 +97,16 @@ class PluginHandler:
             pass
         options = Options()
 
-        for opt in self.config.get('options', []):
+        plugin_options = self.config.get('options', {})
+        # Let's append some mandatory options, but not .update() to not lose
+        # original content
+        for key in _BUILTIN_OPTIONS:
+            if key not in plugin_options:
+                plugin_options[key] = _BUILTIN_OPTIONS[key]
+
+        for opt in plugin_options:
             attrname = opt.replace('-', '_')
-            opt_parameters = self.config['options'][opt] or {}
+            opt_parameters = plugin_options[opt] or {}
             if opt in properties:
                 setattr(options, attrname, properties[opt])
             else:
@@ -198,6 +214,12 @@ class PluginHandler:
         self.mark_done('build')
         return True
 
+    def _migratable_fileset_for(self, stage):
+        plugin_fileset = self.code.snap_fileset()
+        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset.extend(plugin_fileset)
+        return migratable_filesets(fileset, self.installdir)
+
     def stage(self, force=False):
         if not self.should_stage_run('stage', force):
             return True
@@ -206,8 +228,17 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
-        common.run(['cp', '-arT', self.installdir, self.stagedir])
+        snap_files, snap_dirs = self._migratable_fileset_for('stage')
+
+        try:
+            _migrate_files(snap_files, snap_dirs, self.installdir, self.stagedir)
+        except FileNotFoundError as e:
+            logger.error('Could not find file %s defined in stage',
+                         os.path.relpath(e.filename, os.path.curdir))
+            return False
+
         self.mark_done('stage')
+
         return True
 
     def snap(self, force=False):
@@ -215,38 +246,19 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        if self.code and hasattr(self.code, 'snap_files'):
-            self.notify_stage("Snapping")
+        self.notify_stage("Snapping")
+        snap_files, snap_dirs = self._migratable_fileset_for('snap')
 
-            includes, excludes = getattr(self.code, 'snap_files')()
-            snapDirs, snap_files = self.collect_snap_files(includes, excludes)
+        try:
+            _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        except FileNotFoundError as e:
+                logger.error('Could not find file %s defined in snap',
+                             os.path.relpath(e.filename, os.path.curdir))
+                return False
 
-            if snapDirs:
-                common.run(['mkdir', '-p'] + list(snapDirs), cwd=self.stagedir)
-            if snap_files:
-                common.run(['cp', '-a', '--parent'] + list(snap_files) + [self.snapdir], cwd=self.stagedir)
+        self.mark_done('snap')
 
-            self.mark_done('snap')
         return True
-
-    def collect_snap_files(self, includes, excludes):
-        # validate
-        _validate_relative_paths(includes + excludes)
-
-        source_files = _generate_source_set(self.installdir)
-        include_files = _generate_include_set(self.stagedir, includes)
-        exclude_files, exclude_dirs = _generate_exclude_set(self.stagedir, excludes)
-
-        # And chop files, including whole trees if any dirs are mentioned
-        snap_files = (include_files & source_files) - exclude_files
-        for exclude_dir in exclude_dirs:
-            snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + '/')])
-
-        # Separate dirs from files
-        snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(self.stagedir, x)) and not os.path.islink(os.path.join(self.stagedir, x))])
-        snap_files = snap_files - snap_dirs
-
-        return snap_dirs, snap_files
 
     def env(self, root):
         if self.code and hasattr(self.code, 'env'):
@@ -262,44 +274,86 @@ def load_plugin(part_name, plugin_name, properties={}, load_code=True):
     return part
 
 
-def _generate_source_set(installdir):
-    source_files = set()
-    for root, dirs, files in os.walk(installdir):
-        source_files |= set([os.path.join(root, d) for d in dirs])
-        source_files |= set([os.path.join(root, f) for f in files])
-    source_files = set([os.path.relpath(x, installdir) for x in source_files])
+def migratable_filesets(fileset, srcdir):
+    includes, excludes = _get_file_list(fileset)
 
-    return source_files
+    include_files = _generate_include_set(srcdir, includes)
+    exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
+
+    # And chop files, including whole trees if any dirs are mentioned
+    snap_files = include_files - exclude_files
+    for exclude_dir in exclude_dirs:
+        snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + '/')])
+
+    # Separate dirs from files
+    snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(srcdir, x)) and not os.path.islink(os.path.join(srcdir, x))])
+    snap_files = snap_files - snap_dirs
+
+    return snap_files, snap_dirs
 
 
-def _generate_include_set(stagedir, includes):
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
+    for directory in snap_dirs:
+        os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
+
+    for snap_file in snap_files:
+        src = os.path.join(srcdir, snap_file)
+        dst = os.path.join(dstdir, snap_file)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if not os.path.exists(dst) and not os.path.islink(dst):
+            os.link(src, dst, follow_symlinks=False)
+
+
+def _get_file_list(stage_set):
+    includes = []
+    excludes = []
+
+    for item in stage_set:
+        if item.startswith('-'):
+            excludes.append(item[1:])
+        elif item.startswith('\\'):
+            includes.append(item[1:])
+        else:
+            includes.append(item)
+
+    _validate_relative_paths(includes + excludes)
+
+    includes = includes or ['*']
+
+    return includes, excludes
+
+
+def _generate_include_set(directory, includes):
     include_files = set()
     for include in includes:
-        matches = glob.glob(os.path.join(stagedir, include))
-        include_files |= set(matches)
+        if '*' in include:
+            matches = glob.glob(os.path.join(directory, include))
+            include_files |= set(matches)
+        else:
+            include_files |= set([os.path.join(directory, include), ])
 
     include_dirs = [x for x in include_files if os.path.isdir(x)]
-    include_files = set([os.path.relpath(x, stagedir) for x in include_files])
+    include_files = set([os.path.relpath(x, directory) for x in include_files])
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= set([os.path.relpath(os.path.join(root, d), stagedir) for d in dirs])
-            include_files |= set([os.path.relpath(os.path.join(root, f), stagedir) for f in files])
+            include_files |= set([os.path.relpath(os.path.join(root, d), directory) for d in dirs])
+            include_files |= set([os.path.relpath(os.path.join(root, f), directory) for f in files])
 
     return include_files
 
 
-def _generate_exclude_set(stagedir, excludes):
+def _generate_exclude_set(directory, excludes):
     exclude_files = set()
 
     for exclude in excludes:
-        matches = glob.glob(os.path.join(stagedir, exclude))
+        matches = glob.glob(os.path.join(directory, exclude))
         exclude_files |= set(matches)
 
-    exclude_dirs = [os.path.relpath(x, stagedir) for x in exclude_files if os.path.isdir(x)]
-    exclude_files = set([os.path.relpath(x, stagedir) for x in exclude_files])
+    exclude_dirs = [os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)]
+    exclude_files = set([os.path.relpath(x, directory) for x in exclude_files])
 
     return exclude_files, exclude_dirs
 

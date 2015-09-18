@@ -17,7 +17,6 @@
 import os
 from unittest.mock import (
     call,
-    mock_open,
     patch,
 )
 
@@ -45,8 +44,7 @@ class ComposeTestCase(tests.TestCase):
         }
 
     def test_plain_no_binaries_or_services(self):
-
-        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
 
         expected = {
             'name': 'my-package',
@@ -59,8 +57,7 @@ class ComposeTestCase(tests.TestCase):
         self.assertEqual(y, expected)
 
     def test_plain_no_binaries_or_services_or_arches(self):
-
-        y = meta._compose_package_yaml(self.config_data, None)
+        y = meta._compose_package_yaml('meta', self.config_data, None)
 
         expected = {
             'name': 'my-package',
@@ -82,7 +79,7 @@ class ComposeTestCase(tests.TestCase):
             },
         ]
 
-        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
 
         expected = {
             'name': 'my-package',
@@ -120,7 +117,7 @@ class ComposeTestCase(tests.TestCase):
             },
         ]
 
-        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
 
         expected = {
             'name': 'my-package',
@@ -149,7 +146,7 @@ class ComposeTestCase(tests.TestCase):
     def test_plain_no_binaries_or_services_with_optionals(self):
         self.config_data['frameworks'] = ['mir', ]
 
-        y = meta._compose_package_yaml(self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
 
         expected = {
             'name': 'my-package',
@@ -186,6 +183,15 @@ class Create(tests.TestCase):
         self.mock_copyfile = patcher_copyfile.start()
         self.addCleanup(patcher_copyfile.stop)
 
+        patcher_move = patch('shutil.move')
+        self.mock_move = patcher_move.start()
+        self.addCleanup(patcher_move.stop)
+
+        patcher_exists = patch('os.path.exists')
+        self.mock_exists = patcher_exists.start()
+        self.mock_exists.return_value = True
+        self.addCleanup(patcher_exists.stop)
+
         self.config_data = {
             'name': 'my-package',
             'version': '1.0',
@@ -193,62 +199,162 @@ class Create(tests.TestCase):
             'description': 'my description',
             'summary': 'my summary',
             'icon': 'my-icon.png',
+            'config': 'bin/config',
+            'binaries': [
+                {
+                    'name': 'bash',
+                    'exec': 'bin/bash',
+                    'security-policy': {
+                        'apparmor': 'file.apparmor',
+                        'seccomp': 'file.seccomp',
+                    },
+                }
+            ]
         }
 
-    def test_create_meta(self):
-        mock_the_open = mock_open()
+        self.meta_dir = os.path.join(os.path.abspath(os.curdir), 'snap', 'meta')
+        self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
 
-        with patch('snapcraft.meta.open', mock_the_open, create=True):
-            meta.create(self.config_data, ['amd64'])
-
-        meta_dir = os.path.join(os.path.abspath(os.curdir), 'snap', 'meta')
-
-        self.mock_makedirs.assert_called_once_with(meta_dir, exist_ok=True)
-
-        mock_the_open.assert_has_calls([
-            call(os.path.join(meta_dir, 'package.yaml'), 'w'),
+        self.expected_open_calls = [
+            call(os.path.join(self.meta_dir, 'package.yaml'), 'w'),
             call().__enter__(),
-            call().write('architectures'),
-            call().write(':'),
-            call().write('\n'),
-            call().write('-'),
-            call().write(' '),
-            call().write('amd64'),
-            call().write('\n'),
-            call().write('icon'),
-            call().write(':'),
-            call().write(' '),
-            call().write('meta/my-icon.png'),
-            call().write('\n'),
-            call().write('name'),
-            call().write(':'),
-            call().write(' '),
-            call().write('my-package'),
-            call().write('\n'),
-            call().write('vendor'),
-            call().write(':'),
-            call().write(' '),
-            call().write('Sergio'),
-            call().write(' '),
-            call().write('Schvezov'),
-            call().write(' '),
-            call().write('<sergio.schvezov@canonical.com>'),
-            call().write('\n'),
-            call().write('version'),
-            call().write(':'),
-            call().write(" '"),
-            call().write('1.0'),
-            call().write("'"),
-            call().write('\n'),
-            call().flush(),
-            call().flush(),
+            call().__enter__().write('architectures'),
+            call().__enter__().write(':'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('-'),
+            call().__enter__().write(' '),
+            call().__enter__().write('amd64'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('binaries'),
+            call().__enter__().write(':'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('-'),
+            call().__enter__().write(' '),
+            call().__enter__().write('exec'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('bin/bash.wrapper'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('  '),
+            call().__enter__().write('name'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('bash'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('  '),
+            call().__enter__().write('security-policy'),
+            call().__enter__().write(':'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('    '),
+            call().__enter__().write('apparmor'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('meta/file.apparmor'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('    '),
+            call().__enter__().write('seccomp'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('meta/file.seccomp'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('icon'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('meta/my-icon.png'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('name'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('my-package'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('vendor'),
+            call().__enter__().write(':'),
+            call().__enter__().write(' '),
+            call().__enter__().write('Sergio'),
+            call().__enter__().write(' '),
+            call().__enter__().write('Schvezov'),
+            call().__enter__().write(' '),
+            call().__enter__().write('<sergio.schvezov@canonical.com>'),
+            call().__enter__().write('\n'),
+            call().__enter__().write('version'),
+            call().__enter__().write(':'),
+            call().__enter__().write(" '"),
+            call().__enter__().write('1.0'),
+            call().__enter__().write("'"),
+            call().__enter__().write('\n'),
+            call().__enter__().flush(),
+            call().__enter__().flush(),
             call().__exit__(None, None, None),
-            call(os.path.join(meta_dir, 'readme.md'), 'w'),
+            call(os.path.join(self.meta_dir, 'readme.md'), 'w'),
             call().__enter__(),
-            call().write('my summary\nmy description\n'),
+            call().__enter__().write('my summary\nmy description\n'),
             call().__exit__(None, None, None),
         ]
-        )
+
+    @patch('snapcraft.meta._write_wrap_exe')
+    @patch('snapcraft.meta.open', create=True)
+    def test_create_meta(self, mock_the_open, mock_wrap_exe):
+        meta.create(self.config_data, ['amd64'])
+
+        self.mock_makedirs.assert_has_calls([
+            call(self.meta_dir, exist_ok=True),
+            call(self.hooks_dir),
+        ])
+
+        mock_the_open.assert_has_calls(self.expected_open_calls)
+        mock_wrap_exe.assert_has_calls([
+            call(
+                '$SNAP_APP_PATH/bin/bash',
+                os.path.join(os.path.abspath(os.curdir), 'snap/bin/bash.wrapper'),
+            ),
+            call(
+                'bin/config',
+                os.path.join(self.hooks_dir, 'config'),
+                args=[],
+                cwd='$SNAP_APP_PATH',
+            ),
+        ])
+        self.mock_copyfile.assert_has_calls([
+            call('my-icon.png', os.path.join(self.meta_dir, 'my-icon.png')),
+            call('file.apparmor', os.path.join(self.meta_dir, 'file.apparmor')),
+            call('file.seccomp', os.path.join(self.meta_dir, 'file.seccomp')),
+        ])
+
+    @patch('snapcraft.meta._write_wrap_exe')
+    @patch('snapcraft.meta.open', create=True)
+    def test_create_meta_with_vararg_config(self, mock_the_open, mock_wrap_exe):
+        self.config_data['config'] = 'python3 my.py --config'
+
+        meta.create(self.config_data, ['amd64'])
+
+        self.mock_makedirs.assert_has_calls([
+            call(self.meta_dir, exist_ok=True),
+            call(self.hooks_dir),
+        ])
+
+        mock_the_open.assert_has_calls(self.expected_open_calls)
+        mock_wrap_exe.assert_has_calls([
+            call(
+                '$SNAP_APP_PATH/bin/bash',
+                os.path.join(os.path.abspath(os.curdir), 'snap/bin/bash.wrapper'),
+            ),
+            call(
+                'python3',
+                os.path.join(self.hooks_dir, 'config'),
+                args=['my.py', '--config'],
+                cwd='$SNAP_APP_PATH',
+            ),
+        ])
+
+    @patch('snapcraft.meta._write_wrap_exe')
+    @patch('snapcraft.meta.open', create=True)
+    def test_create_meta_without_config(self, mock_the_open, mock_wrap_exe):
+        del self.config_data['config']
+
+        meta.create(self.config_data, ['amd64'])
+
+        self.mock_makedirs.assert_called_once_with(self.meta_dir, exist_ok=True)
+        mock_the_open.assert_has_calls(self.expected_open_calls)
 
 
 # TODO this needs more tests.
@@ -262,7 +368,7 @@ class WrapExeTestCase(tests.TestCase):
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n'
+                    '\n\n'
                     'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()

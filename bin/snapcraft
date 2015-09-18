@@ -31,4 +31,3 @@ import snapcraft.dirs
 if __name__ == "__main__":
     snapcraft.dirs.setup_dirs()
     snapcraft.main.main()
-    

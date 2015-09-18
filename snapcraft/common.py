@@ -67,6 +67,10 @@ def get_arch_triplet():
     return _arch_triplet
 
 
+def get_partsdir():
+    return os.path.join(os.getcwd(), 'parts')
+
+
 def get_stagedir():
     return os.path.join(os.getcwd(), 'stage')
 

@@ -81,6 +81,20 @@ command:
     test -e stage/slash
     test "$(./stage/bin/test)" = "tarproject"
 
+id: snapcraft/normal/pypi-config
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/pypi-config .
+    ${SNAPCRAFT} snap
+    test -f ./stage/usr/bin/config.py
+    test -f ./stage/usr/bin/python3
+    test -f ./snap/usr/bin/config.py
+    test -f ./snap/usr/bin/python3
+    test -f ./snap/meta/hooks/config
+    grep -q 'exec "python3" usr/bin/config.py $*' ./snap/meta/hooks/config
+
 id: snapcraft/normal/simple-make
 plugin: shell
 estimated_duration: 0.3
@@ -89,6 +103,22 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
     ${SNAPCRAFT} stage
     test "$(./stage/bin/test)" = "Hello world"
+
+id: snapcraft/normal/simple-make-clean
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
+    ${SNAPCRAFT} snap
+    test "$(./stage/bin/test)" = "Hello world"
+    test -d ./stage
+    test -d ./parts
+    test -d ./snap
+    ${SNAPCRAFT} clean
+    test ! -d ./stage
+    test ! -d ./parts
+    test ! -d ./snap
 
 id: snapcraft/normal/simple-cmake
 plugin: shell
@@ -116,7 +146,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
     OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
-    echo $OUTPUT | grep "Error: parts p1 and p2 have the following files in common: bin/test" # squished output by bash
+    echo $OUTPUT | grep "Error: parts p1 and p2 have the following file paths in common which have different contents: bin/test" # squished output by bash
 
 id: snapcraft/normal/dependencies
 plugin: shell

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import snapcraft
 
 
@@ -26,6 +28,20 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
         return self.handle_source_options()
 
     def build(self):
+        # If setuptools is used, it tries to create files in the
+        # dist-packages dir and import from there, so it needs to exist
+        # and be in the PYTHONPATH. It's harmless if setuptools isn't
+        # used.
+        os.makedirs(self.dist_packages_dir, exist_ok=True)
+        env = os.environ.copy()
+        env['PYTHONPATH'] = self.dist_packages_dir
+
         return self.run(
-            ["python2", "setup.py", "install", "--install-layout=deb",
-             "--prefix={}/usr".format(self.installdir)])
+            ['python2', 'setup.py', 'install', '--install-layout=deb',
+             '--prefix={}/usr'.format(self.installdir)],
+            env=env)
+
+    @property
+    def dist_packages_dir(self):
+        return os.path.join(
+            self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')

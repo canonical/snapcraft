@@ -21,7 +21,13 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
         'python-dev',
+        'python-setuptools',
     ]
+
+    def snap_fileset(self):
+        return [
+            '-usr/share',
+        ]
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed

@@ -21,7 +21,13 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
         'python3-dev',
+        'python3-setuptools',
     ]
+
+    def snap_fileset(self):
+        return [
+            '-usr/share',
+        ]
 
     # note that we don't need to set PYTHONHOME here,
     # python discovers this automatically from it installed

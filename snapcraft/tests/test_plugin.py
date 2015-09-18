@@ -65,53 +65,141 @@ class PluginTestCase(tests.TestCase):
         p.pull()
         self.assertFalse(p.code.pull.called)
 
-    def test_collect_snap_files(self):
-        p = get_test_plugin()
+    def test_fileset_include_excludes(self):
+        stage_set = [
+            '-etc',
+            'opt/something',
+            '-usr/lib/*.a',
+            'usr/bin',
+            '\-everything',
+            r'\\a',
+        ]
 
-        tmpdirObject = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdirObject.cleanup)
-        tmpdir = tmpdirObject.name
+        include, exclude = plugin._get_file_list(stage_set)
 
-        p.installdir = tmpdir + '/install'
-        os.makedirs(tmpdir + '/install/1/1a/1b')
-        os.makedirs(tmpdir + '/install/2/2a')
-        os.makedirs(tmpdir + '/install/3')
-        open(tmpdir + '/install/a', mode='w').close()
-        open(tmpdir + '/install/b', mode='w').close()
-        open(tmpdir + '/install/1/a', mode='w').close()
-        open(tmpdir + '/install/3/a', mode='w').close()
+        self.assertEqual(include, ['opt/something', 'usr/bin', '-everything', r'\a'])
+        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
 
-        p.stagedir = tmpdir + '/stage'
-        os.makedirs(tmpdir + '/stage/1/1a/1b')
-        os.makedirs(tmpdir + '/stage/2/2a')
-        os.makedirs(tmpdir + '/stage/2/2b')
-        os.makedirs(tmpdir + '/stage/3')
-        open(tmpdir + '/stage/a', mode='w').close()
-        open(tmpdir + '/stage/b', mode='w').close()
-        open(tmpdir + '/stage/c', mode='w').close()
-        open(tmpdir + '/stage/1/a', mode='w').close()
-        open(tmpdir + '/stage/2/2b/a', mode='w').close()
-        open(tmpdir + '/stage/3/a', mode='w').close()
+    def test_fileset_only_includes(self):
+        stage_set = [
+            'opt/something',
+            'usr/bin',
+        ]
 
-        self.assertEqual(p.collect_snap_files([], []), (set(), set()))
+        include, exclude = plugin._get_file_list(stage_set)
 
-        self.assertEqual(p.collect_snap_files(['*'], []), (
-            set(['1', '1/1a', '1/1a/1b', '2', '2/2a', '3']),
-            set(['a', 'b', '1/a', '3/a'])))
+        self.assertEqual(include, ['opt/something', 'usr/bin'])
+        self.assertEqual(exclude, [])
 
-        self.assertEqual(p.collect_snap_files(['*'], ['1']), (
-            set(['2', '2/2a', '3']),
-            set(['a', 'b', '3/a'])))
+    def test_fileset_only_excludes(self):
+        stage_set = [
+            '-etc',
+            '-usr/lib/*.a',
+        ]
 
-        self.assertEqual(p.collect_snap_files(['a'], ['*']), (set(), set()))
+        include, exclude = plugin._get_file_list(stage_set)
 
-        self.assertEqual(p.collect_snap_files(['*'], ['*/*']), (
-            set(['1', '2', '3']),
-            set(['a', 'b'])))
+        self.assertEqual(include, ['*'])
+        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
 
-        self.assertEqual(p.collect_snap_files(['1', '2'], ['*/a']), (
-            set(['1', '1/1a', '1/1a/1b', '2', '2/2a']),
-            set()))
+    def test_migrate_snap_files(self):
+        filesets = {
+            'nothing': {
+                'fileset': ['-*'],
+                'result': []
+            },
+            'all': {
+                'fileset': ['*'],
+                'result': [
+                    'stage/1',
+                    'stage/1/1a/1b',
+                    'stage/1/1a',
+                    'stage/1/a',
+                    'stage/2',
+                    'stage/2/2a',
+                    'stage/3',
+                    'stage/3/a',
+                    'stage/a',
+                    'stage/b',
+                ],
+            },
+            'no1': {
+                'fileset': ['-1'],
+                'result': [
+                    'stage/2',
+                    'stage/2/2a',
+                    'stage/3',
+                    'stage/3/a',
+                    'stage/a',
+                    'stage/b',
+                ],
+            },
+            'onlya': {
+                'fileset': ['a'],
+                'result': [
+                    'stage/a',
+                ],
+            },
+            'onlybase': {
+                'fileset': ['*', '-*/*'],
+                'result': [
+                    'stage/a',
+                    'stage/b',
+                    'stage/1',
+                    'stage/2',
+                    'stage/3',
+                ],
+            },
+            'nostara': {
+                'fileset': ['-*/a'],
+                'result': [
+                    'stage/1',
+                    'stage/1/1a/1b',
+                    'stage/1/1a',
+                    'stage/2',
+                    'stage/2/2a',
+                    'stage/3',
+                    'stage/a',
+                    'stage/b',
+                ],
+            },
+        }
+
+        for key in filesets:
+            with self.subTest(key=key):
+                tmpdirObject = tempfile.TemporaryDirectory()
+                self.addCleanup(tmpdirObject.cleanup)
+                tmpdir = tmpdirObject.name
+
+                srcdir = tmpdir + '/install'
+                os.makedirs(tmpdir + '/install/1/1a/1b')
+                os.makedirs(tmpdir + '/install/2/2a')
+                os.makedirs(tmpdir + '/install/3')
+                open(tmpdir + '/install/a', mode='w').close()
+                open(tmpdir + '/install/b', mode='w').close()
+                open(tmpdir + '/install/1/a', mode='w').close()
+                open(tmpdir + '/install/3/a', mode='w').close()
+
+                dstdir = tmpdir + '/stage'
+                os.makedirs(dstdir)
+
+                snap_files, snap_dirs = plugin.migratable_filesets(filesets[key]['fileset'], srcdir)
+                plugin._migrate_files(snap_files, snap_dirs, srcdir, dstdir)
+
+                expected = []
+                for item in filesets[key]['result']:
+                    expected.append(os.path.join(tmpdir, item))
+                expected.sort()
+
+                result = []
+                for root, subdirs, files in os.walk(dstdir):
+                    for item in files:
+                        result.append(os.path.join(root, item))
+                    for item in subdirs:
+                        result.append(os.path.join(root, item))
+                result.sort()
+
+                self.assertEqual(expected, result)
 
     def test_notify_stage_must_log_information(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -145,18 +233,16 @@ class PluginTestCase(tests.TestCase):
             plugin.PluginHandler(
                 "mock", "mock-part", {}, load_config=False, load_code=True)
 
-    def test_collect_snap_files_with_absolute_includes_must_raise_error(self):
-        p = get_test_plugin()
+    def test_filesets_includes_without_relative_paths(self):
         with self.assertRaises(plugin.PluginError) as raised:
-            p.collect_snap_files(includes=['rel', '/abs/include'], excludes=[])
+            plugin._get_file_list(['rel', '/abs/include'])
 
         self.assertEqual(
             "path '/abs/include' must be relative", str(raised.exception))
 
-    def test_collect_snap_files_with_absolute_excludes_must_raise_error(self):
-        p = get_test_plugin()
+    def test_filesets_exlcudes_without_relative_paths(self):
         with self.assertRaises(plugin.PluginError) as raised:
-            p.collect_snap_files(includes=[], excludes=['rel', '/abs/exclude'])
+            plugin._get_file_list(['rel', '-/abs/exclude'])
 
         self.assertEqual(
             "path '/abs/exclude' must be relative", str(raised.exception))

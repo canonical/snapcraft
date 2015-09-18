@@ -39,6 +39,10 @@ class TestYaml(TestCase):
         mock_wrap_exe.return_value = True
         self.addCleanup(patcher.stop)
 
+        patcher = unittest.mock.patch('snapcraft.wiki.Wiki')
+        self.mock_wiki = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def make_snapcraft_yaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
@@ -61,9 +65,36 @@ parts:
     stage-packages: [fswebcam]
 """)
         snapcraft.yaml.Config()
-        mock_loadPlugin.assert_called_with("part1", "go", {
-            "stage-packages": ["fswebcam"],
+        mock_loadPlugin.assert_called_with('part1', 'go', {
+            'stage-packages': ['fswebcam'],
+            'stage': [], 'snap': [],
         })
+
+        self.assertFalse(self.mock_wiki.get_part.called)
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_config_loads_plugins_with_wiki_part(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+parts:
+  part1:
+    after:
+      - part2wiki
+    type: go
+    stage-packages: [fswebcam]
+""")
+        snapcraft.yaml.Config()
+        mock_loadPlugin.assert_called_with('part1', 'go', {
+            'stage-packages': ['fswebcam'],
+            'stage': [], 'snap': [],
+        })
+
+        self.assertFalse(self.mock_wiki.get_part.called)
 
     def test_config_raises_on_missing_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -98,6 +129,7 @@ parts:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message, 'circular dependency chain found in parts definition')
+        self.assertFalse(self.mock_wiki.get_part.called)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
@@ -211,6 +243,40 @@ parts:
             'found character \'\\t\' that cannot start any token '
             'on line 2 of snapcraft.yaml')
 
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_config_expands_filesets(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+parts:
+  part1:
+    type: go
+    stage-packages: [fswebcam]
+    filesets:
+      wget:
+        - /usr/lib/wget.so
+        - /usr/bin/wget
+      build-wget:
+        - /usr/lib/wget.a
+    stage:
+      - $wget
+      - $build-wget
+    snap:
+      - $wget
+      - /usr/share/my-icon.png
+""")
+        snapcraft.yaml.Config()
+
+        mock_loadPlugin.assert_called_with('part1', 'go', {
+            'snap': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/share/my-icon.png'],
+            'stage-packages': ['fswebcam'],
+            'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
+        })
+
 
 class TestValidation(TestCase):
 
@@ -320,6 +386,44 @@ class TestValidation(TestCase):
 
         snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
+    def test_invalid_binary_names(self):
+        invalid_names = {
+            '#': {'name': 'qwe#rty', 'exec': '1'},
+            '_': {'name': 'qwe_rty', 'exec': '1'},
+            'space': {'name': 'qwe rty', 'exec': '1'},
+            'spaces': {'name': 'qwe  rty', 'exec': '1'},
+        }
+
+        for t in invalid_names:
+            data = self.data.copy()
+            with self.subTest(key=t):
+                data['binaries'] = [invalid_names[t]]
+
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
+
+                expected_message = '\'{}\' does not match \'^[A-Za-z0-9/.:-]*$\''.format(invalid_names[t]['name'])
+                self.assertEqual(raised.exception.message, expected_message, msg=data)
+
+    def test_invalid_service_names(self):
+        invalid_names = {
+            '#': {'name': 'qwe#rty', 'start': '1'},
+            '_': {'name': 'qwe_rty', 'start': '1'},
+            'space': {'name': 'qwe rty', 'start': '1'},
+            'spaces': {'name': 'qwe  rty', 'start': '1'},
+        }
+
+        for t in invalid_names:
+            data = self.data.copy()
+            with self.subTest(key=t):
+                data['services'] = [invalid_names[t]]
+
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
+
+                expected_message = '\'{}\' does not match \'^[A-Za-z0-9/.:-]*$\''.format(invalid_names[t]['name'])
+                self.assertEqual(raised.exception.message, expected_message, msg=data)
+
     def test_services_required_properties(self):
         self.data['services'] = [
             {
@@ -354,3 +458,39 @@ class TestValidation(TestCase):
 
         expected_message = '\'my-icon.png\' is not a \'icon-path\''
         self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+
+
+class TestFilesets(TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.properties = {
+            'filesets': {
+                '1': ['1', '2', '3'],
+                '2': [],
+            }
+        }
+
+    def test_expand_var(self):
+        self.properties['stage'] = ['$1']
+
+        fs = snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        self.assertEqual(fs, ['1', '2', '3'])
+
+    def test_no_expansion(self):
+        self.properties['stage'] = ['1']
+
+        fs = snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        self.assertEqual(fs, ['1'])
+
+    def test_invalid_expansion(self):
+        self.properties['stage'] = ['$3']
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
+            snapcraft.yaml._expand_filesets_for('stage', self.properties)
+
+        self.assertEqual(
+            raised.exception.message,
+            '\'$3\' referred to in the \'stage\' fileset but it is not '
+            'in filesets')

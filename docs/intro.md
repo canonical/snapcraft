@@ -1,8 +1,8 @@
 # Intro
 
 Snapcraft allows easy crafting of packages for Snappy Ubuntu. It makes it
-easy to incorporate components from different sources like GitHub, Launchpad,
-or npm.
+easy to incorporate components from different sources and build technologies or
+solutions.
 
 # Snappy
 
@@ -17,8 +17,8 @@ data and system.
 # Key concepts
 
 A `.snap` package for the Ubuntu Core system contains all its
-dependencies. This has a couple of advantages over traditional deb or
-rpm based dependency handling, the most important being that a
+dependencies. This has a couple of advantages over traditional `deb` or
+`rpm` based dependency handling, the most important being that a
 developer can always be assured that there are no regressions triggered by
 changes to the system underneath their app.
 
@@ -32,12 +32,12 @@ of software or data that the snap package requires to work or to
 build other parts. Each part is managed by a snapcraft plugin and parts
 are usually independent of each other.
 
-## Plugins
+## Type of a Part
 
-Snapcraft plugins are written in Python and have a yaml
-description. A lot of default plugins are included, for example for
-projects written in Go, Java, Python or C. It is also possible
-to simply download binary content as part of the snapcraft recipe.
+Each part has a `type` associated to it, this `type` provides the mechanism
+to handle it. The `type` a part has is extendable through plugins, there are
+a variety of plugins already included for python 2 and 3, go, java, and cmake or
+autotools based projects.
 
 ## Lifecycle
 
