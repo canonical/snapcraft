@@ -37,7 +37,12 @@ run_test_plan(){
     # create symlink from the provider's data directory to examples for them to
     # be available to the tests
     if [ $TEST_PLAN == "examples" ]; then
-        ln -fs ../../examples data/examples
+        if [ -z $ADT_ARTIFACTS ]; then
+            BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )
+        else
+            BASEDIR=$(ls $(dirname $ADT_ARTIFACTS)/build*/snapcraft* -d)
+        fi
+        ln -fs ${BASEDIR}/examples ${BASEDIR}/integration-tests/data/examples
     fi
     # Run the test plan
     plainbox run \
@@ -45,7 +50,7 @@ run_test_plan(){
              -f json -o $temp_dir/result.json
     # remove the examples symlink
     if [ $TEST_PLAN == "examples" ]; then
-        rm data/examples
+        rm ${BASEDIR}/integration-tests/data/examples
     fi
     # Analyze the result and fail if there are any failures
     python3 - << __PYTHON__
