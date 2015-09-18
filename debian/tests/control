@@ -1,5 +1,6 @@
-Test-Command: ./runtests.sh
-Restrictions: allow-stderr, isolation-container
+Tests: runtests
+       runexamples
+Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          build-essential,
          pep8,
