@@ -17,24 +17,38 @@
 
 set -e
 
-if [ -z "$SNAPCRAFT" ]; then
-    export SNAPCRAFT=snapcraft
-fi
+parseargs(){
+    export TEST_PLAN=$1
+}
 
-# Create a temporary directory so that we can run 'manage.py develop' and
-# create the .provider file there
-temp_dir=$(mktemp -d)
-# Develop the provider, this will let us run tests on it
-./manage.py develop -d $temp_dir
-# Set PROVIDERPATH (see plainbox(1)) so that we can see the provider
-# without installing it.
-export PROVIDERPATH=$PROVIDERPATH:$temp_dir
-# Run the 'normal' test plan
-plainbox run \
-    -T 2015.com.canonical.snapcraft::normal \
-    -f json -o $temp_dir/result.json
-# Analyze the result and fail if there are any failures
-python3 - << __PYTHON__
+run_test_plan(){
+    if [ -z "$SNAPCRAFT" ]; then
+        export SNAPCRAFT=snapcraft
+    fi
+
+    # Create a temporary directory so that we can run 'manage.py develop' and
+    # create the .provider file there
+    temp_dir=$(mktemp -d)
+    # Develop the provider, this will let us run tests on it
+    ./manage.py develop -d $temp_dir
+    # Set PROVIDERPATH (see plainbox(1)) so that we can see the provider
+    # without installing it.
+    export PROVIDERPATH=$PROVIDERPATH:$temp_dir
+    # create symlink from the provider's data directory to examples for them to
+    # be available to the tests
+    if [ $TEST_PLAN == "examples" ]; then
+        ln -fs ../../examples data/examples
+    fi
+    # Run the test plan
+    plainbox run \
+             -T 2015.com.canonical.snapcraft::"$TEST_PLAN" \
+             -f json -o $temp_dir/result.json
+    # remove the examples symlink
+    if [ $TEST_PLAN == "examples" ]; then
+        rm data/examples
+    fi
+    # Analyze the result and fail if there are any failures
+    python3 - << __PYTHON__
 import json
 with open("$temp_dir/result.json", "rt", encoding="utf-8") as stream:
     results = json.load(stream)
@@ -46,3 +60,8 @@ for test_id, result in sorted(results['result_map'].items()):
 print("Overall: {0}".format("fail" if failed else "pass"))
 raise SystemExit(failed)
 __PYTHON__
+}
+
+parseargs "$@"
+
+run_test_plan

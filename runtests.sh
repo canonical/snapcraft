@@ -20,6 +20,28 @@ set -e
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
+parseargs(){
+    if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
+        export RUN_UNIT="true"
+        export RUN_PLAINBOX="true"
+        export PLAINBOX_TEST_PLANS="normal"
+    else
+        if [ "$1" == "unit" ] ; then
+            export RUN_UNIT="true"
+        elif [ "$1" == "plainbox" ] ; then
+            export RUN_PLAINBOX="true"
+            if [ "$#" -gt 1 ]; then
+                export PLAINBOX_TEST_PLANS="$2"
+            else
+                export PLAINBOX_TEST_PLANS="normal"
+            fi
+        else
+            echo "Not recognized option, should be one of all, unit or plainbox"
+            exit 1
+        fi
+    fi
+}
+
 run_unit_tests(){
     SRC_PATHS="bin snapcraft snapcraft/tests"
 
@@ -74,12 +96,16 @@ EOF
 
     # Go to the plainbox provider of snapcraft tests
     cd integration-tests
-    ./runtests.sh
+    ./runtests.sh $PLAINBOX_TEST_PLANS
 }
 
-run_unit_tests
+parseargs "$@"
 
-if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
+if [ ! -z "$RUN_UNIT" ]; then
+    run_unit_tests
+fi
+
+if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ] && [ ! -z "$RUN_PLAINBOX" ] ; then
     run_plainbox
 fi
 
