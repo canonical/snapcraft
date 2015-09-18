@@ -104,6 +104,24 @@ command:
     ${SNAPCRAFT} stage
     test "$(./stage/bin/test)" = "Hello world"
 
+id: snapcraft/normal/simple-make-filesets
+plugin: shell
+estimated_duration: 0.3
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-make-filesets .
+    ${SNAPCRAFT} snap
+    test -d ./stage/new/dir1
+    test -d ./stage/new/dir2
+    grep -q 'file1' ./stage/share/file1
+    grep -q 'file2' ./stage/share/file2
+    grep -q 'file1' ./stage/new/dir2/file1
+    test ! -d ./snap/new/dir1
+    test -d ./snap/new/dir2
+    grep -q 'file1' ./snap/share/file1
+    grep -q 'file2' ./snap/share/file2
+    grep -q 'file1' ./snap/new/dir2/file1
+
 id: snapcraft/normal/simple-make-clean
 plugin: shell
 estimated_duration: 0.3
