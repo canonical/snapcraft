@@ -174,6 +174,7 @@ class Config:
         env = []
         env.append('CFLAGS="-I{0}/include -I{0}/usr/include -I{0}/include/{1} -I{0}/usr/include/{1} $CFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
         env.append('LDFLAGS="-L{0}/lib -L{0}/usr/lib -L{0}/lib/{1} -L{0}/usr/lib/{1} $LDFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
+        env.append("PKG_CONFIG_SYSROOT_DIR={0}".format(root))
         return env
 
     def build_env_for_part(self, part):
