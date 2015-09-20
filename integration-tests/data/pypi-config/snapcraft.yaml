@@ -8,7 +8,7 @@ description: |
 
  This package will download its dependencies from pypi.
 icon: icon.png
-config: python3 usr/bin/config.py
+config: usr/bin/config.py
 
 parts:
   config:
