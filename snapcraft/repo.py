@@ -61,6 +61,7 @@ class UnpackError(Exception):
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
+        sources = sources or _DEFAULT_SOURCES
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.apt_cache = _setup_apt_cache(rootdir, sources)
