@@ -1,5 +1,6 @@
 adduser
 apt
+apt-utils
 base-files
 base-passwd
 bash
@@ -7,6 +8,7 @@ bsdutils
 coreutils
 dash
 debconf
+debconf-i18n
 debianutils
 diffutils
 dmsetup
@@ -28,6 +30,7 @@ insserv
 libacl1
 libapparmor1
 libapt
+libapt-inst1.5
 libapt-pkg4.12
 libattr1
 libaudit-common
