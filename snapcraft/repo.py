@@ -14,23 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
 import glob
 import itertools
 import os
+import string
 import subprocess
+import urllib
+import urllib.request
 
+import apt
+from xml.etree import ElementTree
 
-_DEFAULT_SOURCES = '''deb http://us.archive.ubuntu.com/ubuntu/ vivid main restricted
-deb http://us.archive.ubuntu.com/ubuntu/ vivid-updates main restricted
-deb http://us.archive.ubuntu.com/ubuntu/ vivid universe
-deb http://us.archive.ubuntu.com/ubuntu/ vivid-updates universe
-deb http://us.archive.ubuntu.com/ubuntu/ vivid multiverse
-deb http://us.archive.ubuntu.com/ubuntu/ vivid-updates multiverse
+_DEFAULT_SOURCES = '''deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid main restricted
+deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid-updates main restricted
+deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid universe
+deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid-updates universe
+deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid multiverse
+deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid-updates multiverse
 deb http://security.ubuntu.com/ubuntu vivid-security main restricted
 deb http://security.ubuntu.com/ubuntu vivid-security universe
 deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
+_GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
 
 class PackageNotFoundError(Exception):
@@ -104,11 +109,28 @@ class Ubuntu:
         return manifest_dep_names
 
 
+def get_geoip_country_code_prefix():
+    try:
+        with urllib.request.urlopen(_GEOIP_SERVER) as f:
+            xml_data = f.read()
+        et = ElementTree.fromstring(xml_data)
+        cc = et.find("CountryCode")
+        if cc is None:
+            return ""
+        return cc.text.lower()+"."
+    except (ElementTree.ParseError, urllib.error.URLError):
+        pass
+    return ""
+
+
 def _setup_apt_cache(rootdir, sources):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
     with open(srcfile, 'w') as f:
-        f.write(sources)
+        mirror_prefix = get_geoip_country_code_prefix()
+        sources_list = string.Template(sources).substitute(
+            {"mirror": mirror_prefix})
+        f.write(sources_list)
     progress = apt.progress.text.AcquireProgress()
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
