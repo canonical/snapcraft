@@ -5,12 +5,12 @@ summary: one line summary
 description: a longer description
 icon: icon.png
 binaries:
-  - exec: binary1
-    name: assemble-bin
-  - exec: subdir/binary2
-    name: binary2
+  assemble-bin:
+    exec: binary1
+  binary2:
+    exec: subdir/binary2
 services:
-  - name: assemble-service
+  assemble-service:
     start: service-start
     stop: service-stop with args
 

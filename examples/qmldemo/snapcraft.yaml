@@ -4,7 +4,7 @@ vendor: Ted Gould <ted@canonical.com>
 frameworks:
   - mir
 binaries:
-  - name: qmldemo
+  qmldemo:
     exec: qmlscene demo.qml --
     caps:
       - mir_client

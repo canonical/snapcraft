@@ -2,7 +2,7 @@ name: gopaste
 version: 1.0
 vendor: Michael Terry <mterry@ubuntu.com>
 services:
-  - name: gopaste
+  gopaste:
     description: "gopaste"
     start: bin/gopasted
 summary: Simple pasting tool
