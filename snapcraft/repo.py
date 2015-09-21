@@ -61,6 +61,7 @@ class UnpackError(Exception):
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
+        sources = sources or _DEFAULT_SOURCES
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.apt_cache = _setup_apt_cache(rootdir, sources)
@@ -80,8 +81,8 @@ class Ubuntu:
         for pkg in self.apt_cache:
             # those should be already on each system, it also prevents
             # diving into downloading libc6
-            if (pkg.candidate.priority in 'essential'
-               and pkg.name not in package_names):
+            if (pkg.candidate.priority in 'essential' and
+               pkg.name not in package_names):
                 print('Skipping priority essential/imporant %s' % pkg.name)
                 continue
             if (pkg.name in manifest_dep_names and pkg.name not in package_names):
