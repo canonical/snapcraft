@@ -72,7 +72,10 @@ class Ubuntu:
         manifest_dep_names = self._manifest_dep_names()
 
         for name in package_names:
-            self.apt_cache[name].mark_install()
+            try:
+                self.apt_cache[name].mark_install()
+            except KeyError:
+                raise PackageNotFoundError(name)
 
         for pkg in self.apt_cache:
             # those should be already on each system, it also prevents
