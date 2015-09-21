@@ -7,7 +7,7 @@ icon: icon.png
 services:
   - name: webcam-webui
     start: bin/webcam-webui
-config: python3 usr/bin/config.py
+config: usr/bin/config.py
 
 parts:
   cam:
