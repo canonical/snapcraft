@@ -164,6 +164,7 @@ def run(args):
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
         os.makedirs(qemudir, exist_ok=True)
+        logger.info('Setting up virtual snappy environment, root access required')
         common.run([
             'sudo', 'ubuntu-device-flash', 'core', '15.04', '--developer-mode',
             '--enable-ssh', '-o', os.path.relpath(qemu_img, qemudir)],
