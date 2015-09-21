@@ -16,12 +16,53 @@
 
 import os
 import tempfile
+import unittest.mock
 
 from snapcraft import repo
 from snapcraft import tests
 
 
 class UbuntuTestCase(tests.TestCase):
+
+    @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
+    def test_sources_amd64_vivid(self, mock_cc):
+        mock_cc.return_value = 'ar'
+
+        sources_list = repo._format_sources_list(
+            repo._DEFAULT_SOURCES, 'amd64', 'vivid')
+
+        expected_sources_list = '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
+deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates main restricted
+deb http://ar.archive.ubuntu.com/ubuntu/ vivid universe
+deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates universe
+deb http://ar.archive.ubuntu.com/ubuntu/ vivid multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates multiverse
+deb http://security.ubuntu.com/ubuntu vivid-security main restricted
+deb http://security.ubuntu.com/ubuntu vivid-security universe
+deb http://security.ubuntu.com/ubuntu vivid-security multiverse
+'''
+        self.assertEqual(sources_list, expected_sources_list)
+
+    @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
+    def test_sources_armhf_trusty(self, mock_cc):
+        sources_list = repo._format_sources_list(
+            repo._DEFAULT_SOURCES, 'armhf', 'trusty')
+
+        expected_sources_list = '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
+deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
+deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
+deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe
+deb http://ports.ubuntu.com/ubuntu-ports/ trusty multiverse
+deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates multiverse
+deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
+deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
+deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
+'''
+        self.assertEqual(sources_list, expected_sources_list)
+        self.assertFalse(mock_cc.called)
+
+        print()
+        print(sources_list)
 
     def test_fix_symlinks(self):
         tempdirObj = tempfile.TemporaryDirectory()

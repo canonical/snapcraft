@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import apt
 import glob
 import itertools
 import os
@@ -22,18 +23,19 @@ import subprocess
 import urllib
 import urllib.request
 
-import apt
 from xml.etree import ElementTree
 
-_DEFAULT_SOURCES = '''deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid main restricted
-deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid-updates main restricted
-deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid universe
-deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid-updates universe
-deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid multiverse
-deb http://${mirror}archive.ubuntu.com/ubuntu/ vivid-updates multiverse
-deb http://security.ubuntu.com/ubuntu vivid-security main restricted
-deb http://security.ubuntu.com/ubuntu vivid-security universe
-deb http://security.ubuntu.com/ubuntu vivid-security multiverse
+import snapcraft.common
+
+_DEFAULT_SOURCES = '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
+deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
@@ -114,7 +116,7 @@ class Ubuntu:
         return manifest_dep_names
 
 
-def get_geoip_country_code_prefix():
+def _get_geoip_country_code_prefix():
     try:
         with urllib.request.urlopen(_GEOIP_SERVER) as f:
             xml_data = f.read()
@@ -122,20 +124,37 @@ def get_geoip_country_code_prefix():
         cc = et.find("CountryCode")
         if cc is None:
             return ""
-        return cc.text.lower() + "."
+        return cc.text.lower()
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
     return ""
 
 
+def _format_sources_list(sources, arch, release='vivid'):
+    if arch in ('amd64', 'i386'):
+        prefix = _get_geoip_country_code_prefix() + '.archive'
+        suffix = 'ubuntu'
+        security = 'security'
+    else:
+        prefix = 'ports'
+        suffix = 'ubuntu-ports'
+        security = 'ports'
+
+    return string.Template(sources).substitute({
+        'prefix': prefix,
+        'release': release,
+        'suffix': suffix,
+        'security': security,
+    })
+
+
 def _setup_apt_cache(rootdir, sources):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
+
     with open(srcfile, 'w') as f:
-        mirror_prefix = get_geoip_country_code_prefix()
-        sources_list = string.Template(sources).substitute(
-            {"mirror": mirror_prefix})
-        f.write(sources_list)
+        f.write(_format_sources_list(sources, snapcraft.common.get_arch()))
+
     progress = apt.progress.text.AcquireProgress()
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
