@@ -5,7 +5,7 @@ summary: Webcam web UI
 description: Exposes your webcam over a web UI
 icon: icon.png
 services:
-  - name: webcam-webui
+  webcam-webui:
     start: bin/webcam-webui
 config: usr/bin/config.py
 

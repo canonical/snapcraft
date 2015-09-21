@@ -5,7 +5,8 @@ summary: curl based downloader
 description: this is an example package
 icon: icon.png
 binaries:
-    - name: bin/test
+    test:
+        exec: bin/test
 
 parts:
     main:
