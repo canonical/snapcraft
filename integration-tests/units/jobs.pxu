@@ -7,6 +7,15 @@ command:
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 
+id: snapcraft/normal/no-yaml-run
+plugin: shell
+estimated_duration: 0.1
+command:
+    set -x
+    OUTPUT=$(${SNAPCRAFT} run 2>&1)
+    test $? = 1 || exit 1
+    echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
+
 id: snapcraft/normal/assemble-meta-externally
 plugin: shell
 estimated_duration: 0.3
