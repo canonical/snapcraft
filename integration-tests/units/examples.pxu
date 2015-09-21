@@ -6,5 +6,5 @@ command:
     do
       cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
       cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
-      rm -rf {PLAINBOX_SESSION_SHARE}/*
+      rm -rf ${PLAINBOX_SESSION_SHARE}/*
     done
