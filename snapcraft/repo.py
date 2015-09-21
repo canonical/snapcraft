@@ -78,8 +78,8 @@ class Ubuntu:
         for pkg in self.apt_cache:
             # those should be already on each system, it also prevents
             # diving into downloading libc6
-            if (pkg.candidate.priority in 'essential'
-               and pkg.name not in package_names):
+            if (pkg.candidate.priority in 'essential' and
+               pkg.name not in package_names):
                 print('Skipping priority essential/imporant %s' % pkg.name)
                 continue
             if (pkg.name in manifest_dep_names and pkg.name not in package_names):
