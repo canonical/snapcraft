@@ -31,6 +31,10 @@ class BasePlugin:
     def PLUGIN_STAGE_PACKAGES(self):
         return getattr(self, '_PLUGIN_STAGE_PACKAGES', [])
 
+    @property
+    def PLUGIN_STAGE_SOURCES(self):
+        return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
+
     def __init__(self, name, options):
         self.name = name
         self.options = options
@@ -99,9 +103,9 @@ class BasePlugin:
         os.makedirs(d, exist_ok=True)
 
     def setup_stage_packages(self):
-        ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir)
         part_stage_packages = getattr(self.options, 'stage_packages', []) or []
         if self.PLUGIN_STAGE_PACKAGES or part_stage_packages:
+            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
             ubuntu.unpack(self.installdir)
 
