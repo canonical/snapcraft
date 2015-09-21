@@ -38,7 +38,7 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
 
         return self.run(
             ['python2', setuptemp.name, 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir)])
+             '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
 
     @property
     def dist_packages_dir(self):
@@ -48,12 +48,12 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.
     def copy_setup(self):
-        setupout = tempfile.NamedTemporaryFile(mode='w+')
+        setupout = tempfile.NamedTemporaryFile(dir=self.builddir, mode='w+')
 
         setupout.write('import sys\n')
         setupout.write('sys.executable = "usr/bin/python2"\n\n')
 
-        with open('setup.py', 'r') as f:
+        with open(os.path.join(self.builddir, 'setup.py'), 'r') as f:
             for line in f:
                 setupout.write(line)
 
