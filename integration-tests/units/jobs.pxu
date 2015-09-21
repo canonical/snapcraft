@@ -6,6 +6,7 @@ command:
     OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
+flags: simple has-leftovers
 
 id: snapcraft/normal/assemble-meta-externally
 plugin: shell
@@ -17,6 +18,7 @@ command:
     # care where (and you don't need snappy-metadata to find it)
     touch copy-meta # instructs Makefile to copy snappy/ itself
     ${SNAPCRAFT} assemble
+flags: simple has-leftovers
 
 id: snapcraft/normal/assemble-meta
 plugin: shell
@@ -39,6 +41,7 @@ command:
     if [ -e ./snap/bin/not-wrapped.wrapper ]; then
         exit 1
     fi
+flags: simple has-leftovers
 
 id: snapcraft/normal/local-source
 plugin: shell
@@ -51,6 +54,7 @@ command:
     test "$(readlink parts/make-project/build)" = "$(pwd)"
     ${SNAPCRAFT} stage
     test -e stamp-install
+flags: simple has-leftovers
 
 id: snapcraft/normal/local-plugin
 plugin: shell
@@ -60,6 +64,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
     ${SNAPCRAFT} stage
     test -e stage/build-stamp
+flags: simple has-leftovers
 
 id: snapcraft/normal/simple-tar
 plugin: shell
@@ -80,6 +85,7 @@ command:
     test -e stage/parent
     test -e stage/slash
     test "$(./stage/bin/test)" = "tarproject"
+flags: simple has-leftovers
 
 id: snapcraft/normal/pypi-config
 plugin: shell
@@ -94,6 +100,7 @@ command:
     test -f ./snap/usr/bin/python3
     test -f ./snap/meta/hooks/config
     grep -q 'exec "usr/bin/config.py" $*' ./snap/meta/hooks/config
+flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make
 plugin: shell
@@ -103,6 +110,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
     ${SNAPCRAFT} stage
     test "$(./stage/bin/test)" = "Hello world"
+flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make-filesets
 plugin: shell
@@ -121,6 +129,7 @@ command:
     grep -q 'file1' ./snap/share/file1
     grep -q 'file2' ./snap/share/file2
     grep -q 'file1' ./snap/new/dir2/file1
+flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make-clean
 plugin: shell
@@ -140,6 +149,7 @@ command:
     # Clean a second time doesn't fail.
     # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1497371
     ${SNAPCRAFT} clean
+flags: simple has-leftovers
 
 id: snapcraft/normal/simple-cmake
 plugin: shell
@@ -149,6 +159,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-cmake .
     ${SNAPCRAFT} stage
     test "$(./stage/bin/simple-cmake)" = "It's a CMake world"
+flags: simple has-leftovers
 
 id: snapcraft/normal/simple-copy
 plugin: shell
@@ -158,6 +169,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-copy .
     ${SNAPCRAFT} stage
     test "$(cat ./stage/dst)" = "I got copied"
+flags: simple has-leftovers
 
 id: snapcraft/normal/conflicts
 plugin: shell
@@ -168,6 +180,7 @@ command:
     OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Error: parts p1 and p2 have the following file paths in common which have different contents: bin/test" # squished output by bash
+flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies
 plugin: shell
@@ -180,6 +193,7 @@ command:
     test "$(${SNAPCRAFT} shell p3)" = 'p1
     p1
     p2'
+flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies-circular
 plugin: shell
@@ -191,6 +205,7 @@ command:
     OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep -i "circular dependency"
+flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies-fail
 plugin: shell
@@ -201,6 +216,7 @@ command:
     sed -i '/after/d' snapcraft.yaml
     ${SNAPCRAFT} build
     test $? = 1 || exit 1
+flags: simple has-leftovers
 
 id: snapcraft/normal/bzr-head
 plugin: shell
@@ -216,6 +232,7 @@ command:
     test "$(bzr revno -r -1 parts/bzr/src)" = "2"
     ${SNAPCRAFT} pull # test pull doesn't fail
     test "$(bzr revno -r -1 parts/bzr/src)" = "2"
+flags: simple has-leftovers
 
 id: snapcraft/normal/bzr-tag
 plugin: shell
@@ -232,6 +249,7 @@ command:
     test "$(bzr revno -r -1 parts/bzr/src)" = "1"
     ${SNAPCRAFT} pull # test pull doesn't fail
     test "$(bzr revno -r -1 parts/bzr/src)" = "1"
+flags: simple has-leftovers
 
 id: snapcraft/normal/git-head
 plugin: shell
@@ -248,6 +266,7 @@ command:
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
     ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "2"
+flags: simple has-leftovers
 
 id: snapcraft/normal/git-tag
 plugin: shell
@@ -265,6 +284,7 @@ command:
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
     ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -1 --oneline | cut -d' ' -f2)" = "1"
+flags: simple has-leftovers
 
 id: snapcraft/normal/git-branch
 plugin: shell
@@ -285,6 +305,7 @@ command:
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
     ${SNAPCRAFT} pull
     test "$(git -C parts/git/src log -2 --oneline | cut -d' ' -f2 | tr '\n' ' ')" = "3 1 "
+flags: simple has-leftovers
 
 id: snapcraft/normal/hg-head
 plugin: shell
@@ -301,6 +322,7 @@ command:
     test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
     ${SNAPCRAFT} pull
     test "$(hg log --cwd parts/mercurial/src --template "{desc}" -r -1)" = "2"
+flags: simple has-leftovers
 
 id: snapcraft/normal/hg-tag
 plugin: shell
@@ -318,6 +340,7 @@ command:
     test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
     ${SNAPCRAFT} pull
     test "$(ls -1 parts/mercurial/src/ | wc -l )" = "1"
+flags: simple has-leftovers
 
 id: snapcraft/normal/hg-branch
 plugin: shell
@@ -336,6 +359,7 @@ command:
     test -e parts/mercurial/src/second
     ${SNAPCRAFT} pull
     test -e parts/mercurial/src/second
+flags: simple has-leftovers
 
 id: snapcraft/normal/pip-requirements
 plugin: shell
@@ -346,3 +370,4 @@ command:
     ${SNAPCRAFT} pull
     test -f parts/python2/install/usr/lib/python2.7/argparse.py
     test -f parts/python3/install/usr/lib/python3.4/argparse.py
+flags: simple has-leftovers
