@@ -37,11 +37,7 @@ run_test_plan(){
     # create symlink from the provider's data directory to examples for them to
     # be available to the tests
     if [ $TEST_PLAN == "examples" ]; then
-        if [ -z $ADT_ARTIFACTS ]; then
-            BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )
-        else
-            BASEDIR=$(ls $(dirname $ADT_ARTIFACTS)/build*/snapcraft* -d)
-        fi
+        BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )
         ln -fs ${BASEDIR}/examples ${BASEDIR}/integration-tests/data/examples
     fi
     # Run the test plan

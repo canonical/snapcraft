@@ -2,9 +2,9 @@ id: snapcraft/examples/build
 plugin: shell
 command:
     set -e
-    for example in $(ls ${PLAINBOX_PROVIDER_DATA}/examples/*)
+    for example in ${PLAINBOX_PROVIDER_DATA}/examples/*
     do
       cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
       cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
-      rm -rf $(ls {PLAINBOX_SESSION_SHARE}/*)
+      rm -rf {PLAINBOX_SESSION_SHARE}/*
     done
