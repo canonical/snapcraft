@@ -69,79 +69,38 @@ class ComposeTestCase(tests.TestCase):
         self.assertEqual(y, expected)
 
     def test_with_binaries(self):
-        self.config_data['binaries'] = [
-            {
-                'name': 'binary1',
-                'exec': 'binary1.sh go',
-            },
-            {
-                'name': 'binary2',
-            },
-        ]
+        self.config_data['binaries'] = {
+            'binary1': {'exec': 'binary1.sh go'},
+            'binary2': {'exec': 'binary2.sh'},
+        }
 
         y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
 
-        expected = {
-            'name': 'my-package',
-            'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
-            'icon': 'my-icon.png',
-            'architectures': ['armhf', 'amd64'],
-            'binaries': [
-                {
-                    'name': 'binary1',
-                    'exec': 'binary.wrapped go',
-                },
-                {
-                    'name': 'binary2',
-                    'exec': 'binary.wrapped',
-                },
-            ],
-        }
-
-        self.assertEqual(y, expected)
+        self.assertEqual(len(y['binaries']), 2)
+        for b in y['binaries']:
+            if b['name'] is 'binary1':
+                self.assertEqual(b['exec'], 'binary.wrapped go')
+            else:
+                self.assertEqual(b['exec'], 'binary.wrapped')
 
     def test_with_services(self):
-        self.config_data['services'] = [
-            {
-                'name': 'service1',
-                'start': 'binary1',
-            },
-            {
-                'name': 'service2',
+        self.config_data['services'] = {
+            'service1': {'start': 'binary1'},
+            'service2': {
                 'start': 'binary2 --start',
                 'stop': 'binary2 --stop',
             },
-            {
-                'name': 'service3',
-            },
-        ]
+        }
 
         y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
 
-        expected = {
-            'name': 'my-package',
-            'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
-            'icon': 'my-icon.png',
-            'architectures': ['armhf', 'amd64'],
-            'services': [
-                {
-                    'name': 'service1',
-                    'start': 'binary.wrapped',
-                },
-                {
-                    'name': 'service2',
-                    'start': 'binary.wrapped --start',
-                    'stop': 'binary.wrapped --stop',
-                },
-                {
-                    'name': 'service3',
-                }
-            ],
-        }
-
-        self.assertEqual(y, expected)
+        self.assertEqual(len(y['services']), 2)
+        for b in y['services']:
+            if b['name'] is 'service1':
+                self.assertEqual(b['start'], 'binary.wrapped')
+            else:
+                self.assertEqual(b['start'], 'binary.wrapped --start')
+                self.assertEqual(b['stop'], 'binary.wrapped --stop')
 
     def test_plain_no_binaries_or_services_with_optionals(self):
         self.config_data['frameworks'] = ['mir', ]
@@ -200,16 +159,15 @@ class Create(tests.TestCase):
             'summary': 'my summary',
             'icon': 'my-icon.png',
             'config': 'bin/config',
-            'binaries': [
-                {
-                    'name': 'bash',
+            'binaries': {
+                'bash': {
                     'exec': 'bin/bash',
                     'security-policy': {
                         'apparmor': 'file.apparmor',
                         'seccomp': 'file.seccomp',
                     },
                 }
-            ]
+            }
         }
 
         self.meta_dir = os.path.join(os.path.abspath(os.curdir), 'snap', 'meta')

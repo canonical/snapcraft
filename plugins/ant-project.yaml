@@ -10,5 +10,5 @@ options:
   stage-packages:
   snap:
   stage:
-build-tools:
+build-packages:
   - ant

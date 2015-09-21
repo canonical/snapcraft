@@ -130,14 +130,24 @@ def _compose_package_yaml(meta_dir, config_data, arches):
         package_yaml['architectures'] = arches
 
     if 'binaries' in config_data:
-        package_yaml['binaries'] = _wrap_binaries(config_data['binaries'])
-        package_yaml['binaries'] = _copy_security_profiles(meta_dir, config_data['binaries'])
+        binaries = config_data['binaries']
+        binaries = _wrap_binaries(binaries)
+        package_yaml['binaries'] = _copy_security_profiles(meta_dir, _repack_names(binaries))
 
     if 'services' in config_data:
-        package_yaml['services'] = _wrap_services(config_data['services'])
-        package_yaml['services'] = _copy_security_profiles(meta_dir, config_data['services'])
+        services = config_data['services']
+        services = _wrap_services(services)
+        package_yaml['services'] = _copy_security_profiles(meta_dir, _repack_names(services))
 
     return package_yaml
+
+
+def _repack_names(names):
+    repack = []
+    for name in names:
+        names[name].update({'name': name})
+        repack.append(names[name])
+    return repack
 
 
 def _compose_readme(config_data):
@@ -199,29 +209,25 @@ def _wrap_exe(relexepath):
 
 
 def _wrap_binaries(binaries):
-    for binary in binaries:
-        execparts = shlex.split(binary.get('exec', binary['name']))
+    for name in binaries:
+        execparts = shlex.split(binaries[name]['exec'])
         execwrap = _wrap_exe(execparts[0])
-        if 'exec' in binary:
-            binary['exec'] = _replace_cmd(execparts, execwrap)
-        else:
-            binary['name'] = os.path.basename(binary['name'])
-            binary['exec'] = _replace_cmd(execparts, execwrap)
+        binaries[name]['exec'] = _replace_cmd(execparts, execwrap)
 
     return binaries
 
 
 def _wrap_services(services):
-    for binary in services:
-        startpath = binary.get('start')
+    for name in services:
+        startpath = services[name].get('start')
         if startpath:
             startparts = shlex.split(startpath)
             startwrap = _wrap_exe(startparts[0])
-            binary['start'] = _replace_cmd(startparts, startwrap)
-        stoppath = binary.get('stop')
+            services[name]['start'] = _replace_cmd(startparts, startwrap)
+        stoppath = services[name].get('stop')
         if stoppath:
             stopparts = shlex.split(stoppath)
             stopwrap = _wrap_exe(stopparts[0])
-            binary['stop'] = _replace_cmd(stopparts, stopwrap)
+            services[name]['stop'] = _replace_cmd(stopparts, stopwrap)
 
     return services

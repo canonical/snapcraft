@@ -56,16 +56,14 @@ properties:
     type: string
     description: path to a configure hook to expose configuration for the package
   services:
-    type: array
-    items:
-      - type: object
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^[A-Za-z0-9:-]*$":
+        type: object
         required:
-          - name
           - start
         properties:
-          name:
-            type: string
-            pattern: "^[A-Za-z0-9/.:-]*$"
           start:
             type: string
             description: command executed to start the service
@@ -77,18 +75,17 @@ properties:
           security-override:
             $ref: "#definitions/security"
   binaries:
-    type: array
-    items:
-      - type: object
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^[A-Za-z0-9:-]*$":
+        type: object
         required:
-          - name
+          - exec
         properties:
-          name:
-            type: string
-            pattern: "^[A-Za-z0-9/.:-]*$"
           exec:
             type: string
-            description: command executed to start the service
+            description: command executed to run the binary
           security-policy:
             $ref: "#definitions/security"
           security-override:
@@ -96,6 +93,7 @@ properties:
   parts:
     type: object
     minProperties: 1
+    additionalProperties: false
     patternProperties:
       ^[a-z0-9][a-z0-9+-]*$:
         type: object
@@ -116,7 +114,6 @@ properties:
         # required:
         # - plugin
         # - source
-    addtionalProperties: false
 required:
   - name
   - version
