@@ -21,6 +21,18 @@ import os
 import subprocess
 
 
+_DEFAULT_SOURCES = '''deb http://us.archive.ubuntu.com/ubuntu/ vivid main restricted
+deb http://us.archive.ubuntu.com/ubuntu/ vivid-updates main restricted
+deb http://us.archive.ubuntu.com/ubuntu/ vivid universe
+deb http://us.archive.ubuntu.com/ubuntu/ vivid-updates universe
+deb http://us.archive.ubuntu.com/ubuntu/ vivid multiverse
+deb http://us.archive.ubuntu.com/ubuntu/ vivid-updates multiverse
+deb http://security.ubuntu.com/ubuntu vivid-security main restricted
+deb http://security.ubuntu.com/ubuntu vivid-security universe
+deb http://security.ubuntu.com/ubuntu vivid-security multiverse
+'''
+
+
 class PackageNotFoundError(Exception):
 
     @property
@@ -43,22 +55,31 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, download_dir, recommends=False):
-        self.apt_cache = apt.Cache()
-        self.manifest_dep_names = self._manifest_dep_names()
+    def __init__(self, download_dir, recommends=False, sources=_DEFAULT_SOURCES):
+        self.apt_cache = _setup_apt_cache(download_dir, sources)
         self.recommends = recommends
         self.download_dir = download_dir
 
     def get(self, package_names):
-        # TODO cleanup download_dir for clean gets and unpacks
-        self.all_dep_names = set()
+        manifest_dep_names = self._manifest_dep_names()
 
-        all_package_names = self._compute_deps(package_names)
+        for name in package_names:
+            self.apt_cache[name].mark_install()
 
-        for pkg in all_package_names:
-            self.apt_cache[pkg].candidate.fetch_binary(destdir=self.download_dir)
+        for pkg in self.apt_cache:
+            # those should be already on each system, it also prevents
+            # diving into downloading libc6
+            if (pkg.candidate.priority in 'essential'
+               and pkg.name not in package_names):
+                print('Skipping priority essential/imporant %s' % pkg.name)
+                continue
+            if (pkg.name in manifest_dep_names and pkg.name not in package_names):
+                print('Skipping blacklisted from manifest package %s' % pkg.name)
+                continue
+            if pkg.marked_install:
+                pkg.candidate.fetch_binary(destdir=self.download_dir)
 
-        return all_package_names
+        return
 
     def unpack(self, root_dir):
         pkgs_abs_path = glob.glob(os.path.join(self.download_dir, '*.deb'))
@@ -82,36 +103,18 @@ class Ubuntu:
 
         return manifest_dep_names
 
-    def _compute_deps(self, package_names):
-        self._add_deps(package_names)
 
-        for pkg in package_names:
-            if pkg not in self.all_dep_names:
-                raise PackageNotFoundError(pkg)
+def _setup_apt_cache(rootdir, sources):
+    os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
+    srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
+    with open(srcfile, 'w') as f:
+        f.write(sources)
+    progress = apt.progress.text.AcquireProgress()
+    apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+    apt_cache.update(fetch_progress=progress, sources_list=srcfile)
+    apt_cache.open()
 
-        return sorted(self.all_dep_names)
-
-    def _add_deps(self, package_names):
-        def add_deps(packages):
-            for pkg in packages:
-                # Remove the :any in packages
-                # TODO support multiarch
-                pkg = pkg.rsplit(':', 1)[0]
-                if pkg in self.all_dep_names:
-                    continue
-                if pkg in self.manifest_dep_names and pkg not in package_names:
-                    continue
-                deps = set()
-                try:
-                    candidate_pkg = self.apt_cache[pkg].candidate
-                except KeyError:
-                    raise PackageNotFoundError(pkg)
-                deps = candidate_pkg.dependencies
-                if self.recommends:
-                    deps += candidate_pkg.recommends
-                self.all_dep_names.add(pkg)
-                add_deps([x[0].name for x in deps])
-        add_deps(package_names)
+    return apt_cache
 
 
 def _fix_symlinks(debdir):
