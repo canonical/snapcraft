@@ -60,12 +60,15 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, download_dir, recommends=False, sources=_DEFAULT_SOURCES):
-        self.apt_cache = _setup_apt_cache(download_dir, sources)
+    def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
+        self.downloaddir = os.path.join(rootdir, 'download')
+        self.rootdir = rootdir
+        self.apt_cache = _setup_apt_cache(rootdir, sources)
         self.recommends = recommends
-        self.download_dir = download_dir
 
     def get(self, package_names):
+        os.makedirs(self.downloaddir, exist_ok=True)
+
         manifest_dep_names = self._manifest_dep_names()
 
         for name in package_names:
@@ -82,20 +85,18 @@ class Ubuntu:
                 print('Skipping blacklisted from manifest package %s' % pkg.name)
                 continue
             if pkg.marked_install:
-                pkg.candidate.fetch_binary(destdir=self.download_dir)
+                pkg.candidate.fetch_binary(destdir=self.downloaddir)
 
-        return
-
-    def unpack(self, root_dir):
-        pkgs_abs_path = glob.glob(os.path.join(self.download_dir, '*.deb'))
+    def unpack(self, rootdir):
+        pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
             # TODO needs elegance and error control
             try:
-                subprocess.check_call(['dpkg-deb', '--extract', pkg, root_dir])
+                subprocess.check_call(['dpkg-deb', '--extract', pkg, rootdir])
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 
-        _fix_symlinks(root_dir)
+        _fix_symlinks(rootdir)
 
     def _manifest_dep_names(self):
         manifest_dep_names = set()
@@ -117,7 +118,7 @@ def get_geoip_country_code_prefix():
         cc = et.find("CountryCode")
         if cc is None:
             return ""
-        return cc.text.lower()+"."
+        return cc.text.lower() + "."
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
     return ""
