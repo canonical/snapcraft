@@ -23,6 +23,7 @@ import fixtures
 
 from snapcraft import (
     cmds,
+    common,
     tests
 )
 
@@ -39,35 +40,156 @@ class TestCommands(tests.TestCase):
 
         part1 = mock.Mock()
         part1.names.return_value = ['part1']
+        part1.code.options.stage = ['*']
         part1.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
 
         part2 = mock.Mock()
         part2.names.return_value = ['part2']
+        part2.code.options.stage = ['*']
         part2.installdir = tmpdir + '/install2'
         os.makedirs(part2.installdir + '/a')
-        open(part2.installdir + '/1', mode='w').close()
+        with open(part2.installdir + '/1', mode='w') as f:
+            f.write('1')
         open(part2.installdir + '/2', mode='w').close()
-        open(part2.installdir + '/a/2', mode='w').close()
+        with open(part2.installdir + '/a/2', mode='w') as f:
+            f.write('a/2')
 
         part3 = mock.Mock()
         part3.names.return_value = ['part3']
+        part3.code.options.stage = ['*']
         part3.installdir = tmpdir + '/install3'
         os.makedirs(part3.installdir + '/a')
         os.makedirs(part3.installdir + '/b')
-        open(part3.installdir + '/1', mode='w').close()
+        with open(part3.installdir + '/1', mode='w') as f:
+            f.write('2')
+        with open(part2.installdir + '/2', mode='w') as f:
+            f.write('1')
         open(part3.installdir + '/a/2', mode='w').close()
 
-        self.assertTrue(cmds.check_for_collisions([part1, part2]))
+        self.assertTrue(cmds._check_for_collisions([part1, part2]))
         self.assertEqual('', fake_logger.output)
 
-        self.assertFalse(cmds.check_for_collisions([part1, part2, part3]))
+        self.assertFalse(cmds._check_for_collisions([part1, part2, part3]))
         self.assertEqual(
-            'Error: parts part2 and part3 have the following files in common:\n'
+            'Error: parts part2 and part3 have the following file paths in common which have different contents:\n'
             '  1\n'
             '  a/2\n',
             fake_logger.output)
+
+
+class CleanTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('shutil.rmtree')
+        self.mock_rmtree = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('os.path.exists')
+        self.mock_exists = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('os.listdir')
+        self.mock_listdir = patcher.start()
+        self.mock_listdir.return_value = []
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('os.rmdir')
+        self.mock_rmdir = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        class FakePart:
+
+            def __init__(self, name, partdir):
+                self.name = name
+                self.partdir = partdir
+
+            def names(self):
+                return [self.name, ]
+
+        class FakeConfig:
+            all_parts = [
+                FakePart('part1', 'partdir1'),
+                FakePart('part2', 'partdir2'),
+                FakePart('part3', 'partdir3'),
+            ]
+
+        self.fake_config = FakeConfig()
+
+        patcher = mock.patch('snapcraft.cmds._load_config')
+        self.mock_load_config = patcher.start()
+        self.mock_load_config.return_value = self.fake_config
+        self.addCleanup(patcher.stop)
+
+    def test_clean_all(self):
+        cmds.clean({})
+
+        self.mock_exists.assert_has_calls([
+            mock.call('partdir1'),
+            mock.call().__bool__(),
+            mock.call('partdir2'),
+            mock.call().__bool__(),
+            mock.call('partdir3'),
+            mock.call().__bool__(),
+            mock.call(common.get_partsdir()),
+            mock.call().__bool__(),
+            mock.call(common.get_stagedir()),
+            mock.call().__bool__(),
+            mock.call(common.get_snapdir()),
+            mock.call().__bool__(),
+        ])
+
+        self.mock_rmtree.assert_has_calls([
+            mock.call('partdir1'),
+            mock.call('partdir2'),
+            mock.call('partdir3'),
+            mock.call(common.get_stagedir()),
+            mock.call(common.get_snapdir()),
+        ])
+
+        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
+
+    def test_everything_is_clean(self):
+        self.mock_exists.return_value = False
+        self.mock_listdir.side_effect = FileNotFoundError()
+
+        cmds.clean({})
+
+        self.mock_exists.assert_has_calls([
+            mock.call('partdir1'),
+            mock.call('partdir2'),
+            mock.call('partdir3'),
+            mock.call(common.get_partsdir()),
+            mock.call(common.get_stagedir()),
+            mock.call(common.get_snapdir()),
+        ])
+
+        self.assertFalse(self.mock_rmdir.called)
+        self.assertFalse(self.mock_rmtree.called)
+
+    def test_no_parts_defined(self):
+        self.fake_config.all_parts = []
+
+        self.mock_load_config.return_value = self.fake_config
+
+        cmds.clean({})
+
+        self.mock_exists.assert_has_calls([
+            mock.call(common.get_stagedir()),
+            mock.call().__bool__(),
+            mock.call(common.get_snapdir()),
+            mock.call().__bool__(),
+        ])
+
+        self.mock_rmtree.assert_has_calls([
+            mock.call(common.get_stagedir()),
+            mock.call(common.get_snapdir()),
+        ])
+
+        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
 
 
 class InitTestCase(tests.TestCase):

@@ -52,17 +52,20 @@ def create(config_data, arches=None):
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
-    config_data['icon'] = _copy_icon(meta_dir, config_data['icon'])
+    config_data['icon'] = _copy(meta_dir, config_data['icon'])
 
     _write_package_yaml(meta_dir, config_data, arches)
     _write_readme_md(meta_dir, config_data)
+
+    if 'config' in config_data:
+        _setup_config_hook(meta_dir, config_data['config'])
 
     return meta_dir
 
 
 def _write_package_yaml(meta_dir, config_data, arches):
     package_yaml_path = os.path.join(meta_dir, 'package.yaml')
-    package_yaml = _compose_package_yaml(config_data, arches)
+    package_yaml = _compose_package_yaml(meta_dir, config_data, arches)
 
     with open(package_yaml_path, 'w') as f:
         yaml.dump(package_yaml, stream=f, default_flow_style=False)
@@ -76,14 +79,36 @@ def _write_readme_md(meta_dir, config_data):
         f.write(readme_md)
 
 
-def _copy_icon(meta_dir, icon_path):
-    new_icon_path = os.path.join(meta_dir, os.path.basename(icon_path))
-    shutil.copyfile(icon_path, new_icon_path)
+def _setup_config_hook(meta_dir, config):
+    hooks_dir = os.path.join(meta_dir, 'hooks')
 
-    return os.path.join('meta', os.path.basename(icon_path))
+    os.makedirs(hooks_dir)
+
+    execparts = shlex.split(config)
+    args = execparts[1:] if len(execparts) > 1 else []
+
+    config_hook_path = os.path.join(hooks_dir, 'config')
+    _write_wrap_exe(execparts[0], config_hook_path, args=args, cwd='$SNAP_APP_PATH')
 
 
-def _compose_package_yaml(config_data, arches):
+def _copy(meta_dir, relpath):
+    new_relpath = os.path.join(meta_dir, os.path.basename(relpath))
+    shutil.copyfile(relpath, new_relpath)
+
+    return os.path.join('meta', os.path.basename(relpath))
+
+
+def _copy_security_profiles(meta_dir, runnables):
+    for runnable in runnables:
+        for entry in ('security-policy', 'security-override'):
+            if entry in runnable:
+                runnable[entry]['apparmor'] = _copy(meta_dir, runnable[entry]['apparmor'])
+                runnable[entry]['seccomp'] = _copy(meta_dir, runnable[entry]['seccomp'])
+
+    return runnables
+
+
+def _compose_package_yaml(meta_dir, config_data, arches):
     '''
     Creates a dictionary that can be used to yaml.dump a package.yaml using
     config_data.
@@ -105,12 +130,24 @@ def _compose_package_yaml(config_data, arches):
         package_yaml['architectures'] = arches
 
     if 'binaries' in config_data:
-        package_yaml['binaries'] = _wrap_binaries(config_data['binaries'])
+        binaries = config_data['binaries']
+        binaries = _wrap_binaries(binaries)
+        package_yaml['binaries'] = _copy_security_profiles(meta_dir, _repack_names(binaries))
 
     if 'services' in config_data:
-        package_yaml['services'] = _wrap_services(config_data['services'])
+        services = config_data['services']
+        services = _wrap_services(services)
+        package_yaml['services'] = _copy_security_profiles(meta_dir, _repack_names(services))
 
     return package_yaml
+
+
+def _repack_names(names):
+    repack = []
+    for name in names:
+        names[name].update({'name': name})
+        repack.append(names[name])
+    return repack
 
 
 def _compose_readme(config_data):
@@ -120,6 +157,23 @@ def _compose_readme(config_data):
 def _replace_cmd(execparts, cmd):
         newparts = [cmd] + execparts[1:]
         return ' '.join([shlex.quote(x) for x in newparts])
+
+
+def _write_wrap_exe(wrapexec, wrappath, args=[], cwd=None):
+    args = ' '.join(args) + ' $*' if args else '$*'
+    cwd = 'cd {}'.format(cwd) if cwd else ''
+
+    snap_dir = common.get_snapdir()
+    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
+    script = ('#!/bin/sh\n' +
+              '{}\n'.format(assembled_env) +
+              '{}\n'.format(cwd) +
+              'exec "{}" {}\n'.format(wrapexec, args))
+
+    with open(wrappath, 'w+') as f:
+        f.write(script)
+
+    os.chmod(wrappath, 0o755)
 
 
 def _wrap_exe(relexepath):
@@ -149,43 +203,31 @@ def _wrap_exe(relexepath):
             else:
                 logger.warning('Warning: unable to find "{}" in the path'.format(relexepath))
 
-    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(assembled_env) +
-              'exec "{}" $*\n'.format(wrapexec))
-
-    with open(wrappath, 'w+') as f:
-        f.write(script)
-
-    os.chmod(wrappath, 0o755)
+    _write_wrap_exe(wrapexec, wrappath)
 
     return os.path.relpath(wrappath, snap_dir)
 
 
 def _wrap_binaries(binaries):
-    for binary in binaries:
-        execparts = shlex.split(binary.get('exec', binary['name']))
+    for name in binaries:
+        execparts = shlex.split(binaries[name]['exec'])
         execwrap = _wrap_exe(execparts[0])
-        if 'exec' in binary:
-            binary['exec'] = _replace_cmd(execparts, execwrap)
-        else:
-            binary['name'] = os.path.basename(binary['name'])
-            binary['exec'] = _replace_cmd(execparts, execwrap)
+        binaries[name]['exec'] = _replace_cmd(execparts, execwrap)
 
     return binaries
 
 
 def _wrap_services(services):
-    for binary in services:
-        startpath = binary.get('start')
+    for name in services:
+        startpath = services[name].get('start')
         if startpath:
             startparts = shlex.split(startpath)
             startwrap = _wrap_exe(startparts[0])
-            binary['start'] = _replace_cmd(startparts, startwrap)
-        stoppath = binary.get('stop')
+            services[name]['start'] = _replace_cmd(startparts, startwrap)
+        stoppath = services[name].get('stop')
         if stoppath:
             stopparts = shlex.split(stoppath)
             stopwrap = _wrap_exe(stopparts[0])
-            binary['stop'] = _replace_cmd(stopparts, stopwrap)
+            services[name]['stop'] = _replace_cmd(stopparts, stopwrap)
 
     return services

@@ -1,5 +1,5 @@
 module: maven_project
-build-tools:
+build-packages:
   - maven
 requires:
   - jdk
@@ -10,3 +10,5 @@ options:
   source-tag:
   source-branch:
   stage-packages:
+  snap:
+  stage:

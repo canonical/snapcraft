@@ -38,6 +38,7 @@ class BasePlugin:
     def __init__(self, name, options):
         self.name = name
         self.options = options
+        self.partdir = os.path.join(os.getcwd(), "parts", self.name)
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
         self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name, 'ubuntu')
@@ -52,12 +53,12 @@ class BasePlugin:
     def build(self):
         return True
 
-    def snap_files(self):
-        """Returns two iteratables of globs:
-            - the first is the set of files/dirs to include
-            - the second is the set of files/dirs to exclude
-           For example: (['bin', 'lib'], ['lib/*.a'])"""
-        return (['*'], [])
+    def snap_fileset(self):
+        """Returns one iteratables of globs specific to the plugin:
+            - includes can be just listed
+            - excludes must be preceded by -
+           For example: (['bin', 'lib', '-include'])"""
+        return ([])
 
     def env(self, root):
         return []
@@ -102,9 +103,9 @@ class BasePlugin:
         os.makedirs(d, exist_ok=True)
 
     def setup_stage_packages(self):
-        ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
-        part_stage_packages = getattr(self.options, 'stage_packages', [])
+        part_stage_packages = getattr(self.options, 'stage_packages', []) or []
         if self.PLUGIN_STAGE_PACKAGES or part_stage_packages:
+            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
             ubuntu.unpack(self.installdir)
 

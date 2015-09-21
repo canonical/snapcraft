@@ -1,0 +1,16 @@
+name: downloader
+version: 1.0
+vendor: "Sergio Schvezov <sergio.schvezov@canonical.com>"
+summary: curl based downloader
+description: this is an example package
+icon: icon.png
+binaries:
+    test:
+        exec: bin/test
+
+parts:
+    main:
+        type: make-project
+        source: .
+        after:
+            - curl

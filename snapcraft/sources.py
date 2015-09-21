@@ -177,7 +177,9 @@ class Local(Base):
 
     def provision(self, dst):
         path = os.path.abspath(self.source)
-        if os.path.isdir(dst):
+        if os.path.islink(dst):
+            os.remove(dst)
+        elif os.path.isdir(dst):
             os.rmdir(dst)
         else:
             os.remove(dst)

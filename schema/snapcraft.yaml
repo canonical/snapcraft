@@ -1,5 +1,19 @@
 $schema: http://json-schema.org/draft-04/schema#
 
+definitions:
+  security:
+    type: object
+    required:
+      - apparmor
+      - seccomp
+    properties:
+      apparmor:
+        type: string
+        format: file-path
+      seccomp:
+        type: string
+        format: file-path
+
 title: snapcraft schema
 type: object
 properties:
@@ -38,37 +52,48 @@ properties:
     uniqueItems: true
     items:
       - type: string
+  config:
+    type: string
+    description: path to a configure hook to expose configuration for the package
   services:
-    type: array
-    items:
-      - type: object
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^[A-Za-z0-9:-]*$":
+        type: object
+        required:
+          - start
         properties:
-          name:
-            type: string
           start:
             type: string
             description: command executed to start the service
           stop:
             type: string
             description: command executed to stop the service
-        required:
-          - name
-          - start
+          security-policy:
+            $ref: "#definitions/security"
+          security-override:
+            $ref: "#definitions/security"
   binaries:
-    type: array
-    items:
-      - type: object
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^[A-Za-z0-9:-]*$":
+        type: object
+        required:
+          - exec
         properties:
-          name:
-            type: string
           exec:
             type: string
-            description: command executed to start the service
-        required:
-          - name
+            description: command executed to run the binary
+          security-policy:
+            $ref: "#definitions/security"
+          security-override:
+            $ref: "#definitions/security"
   parts:
     type: object
     minProperties: 1
+    additionalProperties: false
     patternProperties:
       ^[a-z0-9][a-z0-9+-]*$:
         type: object
@@ -89,7 +114,6 @@ properties:
         # required:
         # - plugin
         # - source
-    addtionalProperties: false
 required:
   - name
   - version

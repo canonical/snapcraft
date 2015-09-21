@@ -1,5 +1,4 @@
 module: ant_project
-systemPackages: [ant]
 requires:
   - jdk
 options:
@@ -9,5 +8,7 @@ options:
   source-tag:
   source-branch:
   stage-packages:
-build-tools:
+  snap:
+  stage:
+build-packages:
   - ant
