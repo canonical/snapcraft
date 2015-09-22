@@ -163,13 +163,11 @@ def run(args):
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
-            try:
-                os.makedirs(qemudir)
-            except FileExistsError:
-                pass
-            common.run(
-                ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
-                cwd=qemudir)
+        os.makedirs(qemudir, exist_ok=True)
+        common.run([
+            'sudo', 'ubuntu-device-flash', 'core', '15.04', '--developer-mode',
+            '--enable-ssh', '-o', os.path.relpath(qemu_img, qemudir)],
+            cwd=qemudir)
     qemu = None
     try:
         # Allow the developer to provide additional arguments to qemu.  This
