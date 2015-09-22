@@ -12,5 +12,6 @@ parts:
   godd:
     type: go-project
     source: git://github.com/mvo5/godd
+    stage-packages: [libgudev-1.0-0]
 build-packages: 
     - libgudev-1.0-dev
