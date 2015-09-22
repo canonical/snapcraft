@@ -39,7 +39,7 @@ _BUILTIN_OPTIONS = {
 }
 
 
-def local_plugindir():
+def _local_plugindir():
     return os.path.abspath(os.path.join('parts', 'plugins'))
 
 
@@ -82,7 +82,7 @@ class PluginHandler:
     def _load_config(self, name):
         config_path = os.path.join(common.get_plugindir(), name + ".yaml")
         if not os.path.exists(config_path):
-            config_path = os.path.join(local_plugindir(), name + ".yaml")
+            config_path = os.path.join(_local_plugindir(), name + ".yaml")
         if not os.path.exists(config_path):
             raise PluginError('Unknown plugin: {}'.format(name))
         with open(config_path, 'r') as fp:
@@ -123,7 +123,7 @@ class PluginHandler:
 
         if not module:
             logger.info('Searching for local plugin for %s', name)
-            sys.path = [local_plugindir()] + sys.path
+            sys.path = [_local_plugindir()] + sys.path
             module = importlib.import_module(module_name)
             sys.path.pop(0)
 
