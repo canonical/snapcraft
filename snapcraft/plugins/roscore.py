@@ -17,7 +17,6 @@
 import snapcraft
 import os
 
-
 class RosCorePlugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
@@ -46,3 +45,23 @@ class RosCorePlugin(snapcraft.BasePlugin):
         return [
             os.path.join('bin', self.name + '-rosmaster-service')
         ]
+
+    def snap (self, config={}):
+        if not 'services' in config.data:
+            config.data['services'] = {}
+
+        rosserv = {
+            'start': os.path.join('bin', self.name + '-rosemaster-service'),
+            'description': 'ROS Master service',
+            'ports': {
+                'internal': {
+                    'rosmaster': {
+                        'port': '11311/tcp',
+                        'negotiable': False
+                    }
+                }
+            }
+        }
+
+        config.data['services'][self.name + '-rosmaster'] = rosserv
+        return True

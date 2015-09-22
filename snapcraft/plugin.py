@@ -277,6 +277,10 @@ class PluginHandler:
                              os.path.relpath(e.filename, os.path.curdir))
                 return False
 
+        if self.code and hasattr(self.code, 'snap'):
+            if not getattr(self.code, 'snap')(config=config):
+                return False
+
         self.mark_done('snap')
 
         return True
