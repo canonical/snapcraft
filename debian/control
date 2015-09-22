@@ -42,7 +42,7 @@ Description: easily craft snaps
 
 Package: snapcraft-examples
 Architecture: all
-Depends: snapcraft (= ${binary:Version}), ${misc:Depends}, ${python:Depends}
+Depends: snapcraft (= ${binary:Version}), ${misc:Depends}, ${python3:Depends}
 Description: examples for snapcraft
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
