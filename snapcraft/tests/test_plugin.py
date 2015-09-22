@@ -214,7 +214,7 @@ class PluginTestCase(tests.TestCase):
         """Ensure local plugins are loaded from parts/plugins"""
         def mock_import_modules(module_name):
             # called with the name only and sys.path set
-            self.assertEqual(module_name, "x-mock")
+            self.assertEqual(module_name, "x_mock")
             self.assertTrue(sys.path[0].endswith("parts/plugins"))
             return mock_plugin
         with patch("importlib.import_module", side_effect=mock_import_modules):

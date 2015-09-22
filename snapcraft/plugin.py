@@ -119,20 +119,20 @@ class PluginHandler:
 
     def _load_code(self, name, part_name, properties):
         options = self._make_options(name, properties)
-        moduleName = self.config.get('module', name)
+        module_name = name.replace('-', '_')
 
         # Load code from local plugin dir if it is there
         if is_local_plugin(name):
             sys.path = [plugindir(name)] + sys.path
         else:
-            moduleName = 'snapcraft.plugins.' + moduleName
+            module_name = 'snapcraft.plugins.' + module_name
 
-        module = importlib.import_module(moduleName)
+        module = importlib.import_module(module_name)
         if is_local_plugin(name):
             sys.path.pop(0)
 
-        for propName in dir(module):
-            prop = getattr(module, propName)
+        for prop_name in dir(module):
+            prop = getattr(module, prop_name)
             if issubclass(prop, snapcraft.BasePlugin):
                 self.code = prop(part_name, options)
                 break
