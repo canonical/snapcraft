@@ -268,8 +268,8 @@ your resulting `snapcraft.yaml` should look very similar to:
     description: Exposes your webcam over a web UI
     icon: icon.png
     services:
-    - name: webcam-webui
-      start: bin/webcam-webui
+      webcam-webui:
+        start: bin/webcam-webui
 
     parts:
       golang-static-http:
