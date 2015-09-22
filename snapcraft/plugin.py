@@ -39,15 +39,8 @@ _BUILTIN_OPTIONS = {
 }
 
 
-def is_local_plugin(name):
-    return name.startswith("x-")
-
-
-def plugindir(name):
-    if is_local_plugin(name):
-        return os.path.abspath(os.path.join('parts', 'plugins'))
-    else:
-        return common.get_plugindir()
+def local_plugindir():
+    return os.path.abspath(os.path.join('parts', 'plugins'))
 
 
 class PluginError(Exception):
@@ -87,10 +80,12 @@ class PluginHandler:
             return
 
     def _load_config(self, name):
-        configPath = os.path.join(plugindir(name), name + ".yaml")
-        if not os.path.exists(configPath):
+        config_path = os.path.join(common.get_plugindir(), name + ".yaml")
+        if not os.path.exists(config_path):
+            config_path = os.path.join(local_plugindir(), name + ".yaml")
+        if not os.path.exists(config_path):
             raise PluginError('Unknown plugin: {}'.format(name))
-        with open(configPath, 'r') as fp:
+        with open(config_path, 'r') as fp:
             self.config = yaml.load(fp) or {}
 
     def _make_options(self, name, properties):
@@ -121,14 +116,15 @@ class PluginHandler:
         options = self._make_options(name, properties)
         module_name = name.replace('-', '_')
 
-        # Load code from local plugin dir if it is there
-        if is_local_plugin(name):
-            sys.path = [plugindir(name)] + sys.path
-        else:
-            module_name = 'snapcraft.plugins.' + module_name
+        try:
+            module = importlib.import_module('snapcraft.plugins.' + module_name)
+        except ImportError:
+            module = None
 
-        module = importlib.import_module(module_name)
-        if is_local_plugin(name):
+        if not module:
+            logger.info('Searching for local plugin for %s', name)
+            sys.path = [local_plugindir()] + sys.path
+            module = importlib.import_module(module_name)
             sys.path.pop(0)
 
         for prop_name in dir(module):
