@@ -323,7 +323,7 @@ def cmd(args):
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
 
-            if not getattr(part, cmd)(force=force):
+            if not getattr(part, cmd)(force=force, config=config):
                 logger.error('Failed doing %s for %s!', cmd, part.names()[0])
                 sys.exit(1)
 

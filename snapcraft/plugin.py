@@ -178,7 +178,7 @@ class PluginHandler:
         with open(self.statefile, 'w+') as f:
             f.write(stage)
 
-    def pull(self, force=False):
+    def pull(self, force=False, config={}):
         if not self.should_stage_run('pull', force):
             return True
         self.makedirs()
@@ -203,7 +203,7 @@ class PluginHandler:
         self.mark_done('pull')
         return True
 
-    def build(self, force=False):
+    def build(self, force=False, config={}):
         if not self.should_stage_run('build', force):
             return True
         self.makedirs()
@@ -240,7 +240,7 @@ class PluginHandler:
                     os.remove(dst)
             shutil.move(src, dst)
 
-    def stage(self, force=False):
+    def stage(self, force=False, config={}):
         if not self.should_stage_run('stage', force):
             return True
         self.makedirs()
@@ -262,7 +262,7 @@ class PluginHandler:
 
         return True
 
-    def snap(self, force=False):
+    def snap(self, force=False, config={}):
         if not self.should_stage_run('snap', force):
             return True
         self.makedirs()
