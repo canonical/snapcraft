@@ -38,7 +38,13 @@ run_test_plan(){
     # be available to the tests
     if [ $TEST_PLAN == "examples" ]; then
         BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )
-        ln -fs ${BASEDIR}/examples ${BASEDIR}/integration-tests/data/examples
+        TARGET_PATH=${BASEDIR}/integration-tests/data/examples
+        if [ -z $ADT_ARTIFACTS ]; then
+            EXAMPLES_PATH=${BASEDIR}/examples
+        else
+            EXAMPLES_PATH=/usr/share/snapcraft/examples
+        fi
+        ln -fs ${EXAMPLES_PATH} ${TARGET_PATH}
     fi
     # Run the test plan
     plainbox run \
@@ -46,7 +52,7 @@ run_test_plan(){
              -f json -o $temp_dir/result.json
     # remove the examples symlink
     if [ $TEST_PLAN == "examples" ]; then
-        rm ${BASEDIR}/integration-tests/data/examples
+        rm ${TARGET_PATH}
     fi
     # Analyze the result and fail if there are any failures
     python3 - << __PYTHON__
