@@ -1,4 +1,3 @@
-module: go_project
 requires:
   - go
 options:

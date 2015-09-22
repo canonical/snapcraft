@@ -137,6 +137,10 @@ def _find_latest_private_key():
 
 
 def run(args):
+    # We are mostly making sure we are operating from the correct location. In
+    # the future this could do more by using target attribute in snapcraft.yaml
+    # to create the correct target image.
+    _load_config()
     # Find the ssh key that ubuntu-device-flash would use so that we can use it
     # ourselves as well. This may not be the default key that the user has
     # configured.
@@ -163,13 +167,12 @@ def run(args):
     qemudir = os.path.join(os.getcwd(), "image")
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
-            try:
-                os.makedirs(qemudir)
-            except FileExistsError:
-                pass
-            common.run(
-                ['sudo', 'ubuntu-device-flash', 'core', '--developer-mode', '--enable-ssh', '15.04', '-o', qemu_img],
-                cwd=qemudir)
+        os.makedirs(qemudir, exist_ok=True)
+        logger.info('Setting up virtual snappy environment, root access required')
+        common.run([
+            'sudo', 'ubuntu-device-flash', 'core', '15.04', '--developer-mode',
+            '--enable-ssh', '-o', os.path.relpath(qemu_img, qemudir)],
+            cwd=qemudir)
     qemu = None
     try:
         # Allow the developer to provide additional arguments to qemu.  This

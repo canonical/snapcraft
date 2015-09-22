@@ -23,15 +23,6 @@ from snapcraft import tests
 
 class UbuntuTestCase(tests.TestCase):
 
-    def test_unrecognized_package_raises_exception(self):
-        ubuntu = repo.Ubuntu('download_dir')
-
-        with self.assertRaises(repo.PackageNotFoundError) as raised:
-            ubuntu.get(['test_package'])
-
-        expected_message = 'The Ubuntu package \'test_package\' was not found'
-        self.assertEqual(raised.exception.message, expected_message)
-
     def test_fix_symlinks(self):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
