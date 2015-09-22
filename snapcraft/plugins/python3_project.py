@@ -25,12 +25,32 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
     # note that we don't need to setup env(), python figures it out
     # see python3.py for more details
 
+    _PLUGIN_STAGE_PACKAGES = [
+        'python3-dev',
+        'python3-pkg-resources',
+        'python3-setuptools',
+    ]
+
     def env(self, root):
         return ["PYTHONPATH=%s" % os.path.join(
             root, 'usr', 'lib', 'python3', 'dist-packages')]
 
     def pull(self):
-        return self.handle_source_options()
+        if not self.handle_source_options():
+            return False
+
+        if os.path.exists('setup.py'):
+            easy_install = os.path.join(self.installdir, 'usr', 'bin', 'easy_install3')
+            prefix = os.path.join(self.installdir, 'usr')
+
+            os.symlink(
+                os.path.join(prefix, 'lib', 'python3', 'dist-packages'),
+                os.path.join(prefix, 'lib', 'python3.4', 'site-packages'))
+
+            if not self.run(['python3', easy_install, '--prefix', prefix, '.']):
+                return False
+
+        return True
 
     def build(self):
         # If setuptools is used, it tries to create files in the

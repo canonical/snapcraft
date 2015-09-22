@@ -1,5 +1,3 @@
-requires:
-  - python3
 options:
   source:
     required: true
