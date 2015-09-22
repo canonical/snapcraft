@@ -80,18 +80,26 @@ class Ubuntu:
             except KeyError:
                 raise PackageNotFoundError(name)
 
+        # unmark some base packages here
+        # note that this will break the consistency check inside apt_cache
+        # (self.apt_cache.broken_count will be > 0)
+        # but that is ok as it was consistent before we excluded
+        # these base package
         for pkg in self.apt_cache:
             # those should be already on each system, it also prevents
             # diving into downloading libc6
             if (pkg.candidate.priority in 'essential' and
                pkg.name not in package_names):
-                print('Skipping priority essential/imporant %s' % pkg.name)
+                print('Skipping priority essential/important %s' % pkg.name)
+                pkg.mark_keep()
                 continue
             if (pkg.name in manifest_dep_names and pkg.name not in package_names):
                 print('Skipping blacklisted from manifest package %s' % pkg.name)
+                pkg.mark_keep()
                 continue
-            if pkg.marked_install:
-                pkg.candidate.fetch_binary(destdir=self.downloaddir)
+        # download the remaining ones with proper progress
+        apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
+        self.apt_cache.fetch_archives()
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
