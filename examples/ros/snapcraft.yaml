@@ -7,3 +7,4 @@ description: A really small ros examples
 
 parts:
   roscore:
+    type: roscore
