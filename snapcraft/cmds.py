@@ -137,6 +137,10 @@ def _find_latest_private_key():
 
 
 def run(args):
+    # We are mostly making sure we are operating from the correct location. In
+    # the future this could do more by using target attribute in snapcraft.yaml
+    # to create the correct target image.
+    _load_config()
     # Find the ssh key that ubuntu-device-flash would use so that we can use it
     # ourselves as well. This may not be the default key that the user has
     # configured.
