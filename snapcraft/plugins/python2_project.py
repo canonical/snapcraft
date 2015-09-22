@@ -43,7 +43,11 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
     @property
     def dist_packages_dir(self):
         return os.path.join(
-            self.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+            self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')
+
+    @property
+    def python_version(self):
+        return self.run_output(['pyversions', '-i'])
 
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.
