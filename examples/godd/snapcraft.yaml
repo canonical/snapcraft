@@ -13,4 +13,9 @@ parts:
     type: go-project
     source: git://github.com/mvo5/godd
     stage-packages: [libgudev-1.0-dev]
-    snap: [usr/lib/x86_64-linux-gnu/libgudev-1.0.so*, bin/godd*]
+    snap:
+     - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
+     - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
+     - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
+     - usr/lib/x86_64-linux-gnu/libpcre.so.*
+     - bin/godd*
