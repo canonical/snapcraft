@@ -354,6 +354,6 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/build-tools .
     ${SNAPCRAFT} stage
-    ${SNAPCRAFT} shell pkg-config --cflags glib-2.0 | grep `pwd`
-    ${SNAPCRAFT} shell xml2-config --cflags | grep `pwd`
-    ${SNAPCRAFT} shell xslt-config --cflags | grep `pwd`
+    ${SNAPCRAFT} shell pkg-config --cflags glib-2.0 | grep -q `pwd`
+    ${SNAPCRAFT} shell xml2-config --cflags | grep -q `pwd`
+    ${SNAPCRAFT} shell xslt-config --cflags | grep -q `pwd`
