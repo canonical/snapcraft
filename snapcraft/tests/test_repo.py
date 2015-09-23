@@ -61,9 +61,6 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         self.assertEqual(sources_list, expected_sources_list)
         self.assertFalse(mock_cc.called)
 
-        print()
-        print(sources_list)
-
     def test_fix_symlinks(self):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
