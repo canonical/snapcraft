@@ -1,7 +1,7 @@
 snapcraft (0.2) UNRELEASED; urgency=medium
 
   * Better setuptools support:
-    - LP: #1482864
+    - Better support python-setuptools (LP: #1481864),
     - Used builddir as a base for setup.py overrides (LP: #1498212),
     - Fix build (LP: #1494825),
   * Plugin fixes:
