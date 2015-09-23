@@ -1,0 +1,14 @@
+name: build-tools-test
+version: 0.1
+vendor: Napoleon Bonaparte <napoleon@short-guys-rock.co.fr>
+summary: one line summary
+description: a longer description
+icon: icon.svg
+
+parts:
+  make-project:
+    source: .
+    stage-packages:
+      - libxml2-dev
+      - libxslt1-dev
+      - libglib2.0-dev

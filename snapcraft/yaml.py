@@ -166,14 +166,46 @@ class Config:
 
     def runtime_env(self, root):
         env = []
-        env.append('PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(root))
-        env.append('LD_LIBRARY_PATH="{0}/lib:{0}/usr/lib:{0}/lib/{1}:{0}/usr/lib/{1}:$LD_LIBRARY_PATH"'.format(root, snapcraft.common.get_arch_triplet()))
+        env.append('PATH="' + ':'.join([
+            '{0}/bin',
+            '{0}/usr/bin',
+            '$PATH'
+        ]).format(root) + '"')
+        env.append('LD_LIBRARY_PATH="' + ':'.join([
+            '{0}/lib',
+            '{0}/usr/lib',
+            '{0}/lib/{1}',
+            '{0}/usr/lib/{1}',
+            '$LD_LIBRARY_PATH'
+        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
         return env
 
     def build_env(self, root):
         env = []
-        env.append('CFLAGS="-I{0}/include -I{0}/usr/include -I{0}/include/{1} -I{0}/usr/include/{1} $CFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
-        env.append('LDFLAGS="-L{0}/lib -L{0}/usr/lib -L{0}/lib/{1} -L{0}/usr/lib/{1} $LDFLAGS"'.format(root, snapcraft.common.get_arch_triplet()))
+        env.append('CFLAGS="' + ' '.join([
+            '-I{0}/include',
+            '-I{0}/usr/include',
+            '-I{0}/include/{1}',
+            '-I{0}/usr/include/{1}',
+            '$CFLAGS'
+        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        env.append('LDFLAGS="' + ' '.join([
+            '-L{0}/lib',
+            '-L{0}/usr/lib',
+            '-L{0}/lib/{1}',
+            '-L{0}/usr/lib/{1}',
+            '$LDFLAGS'
+        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(root))
+        env.append('PKG_CONFIG_PATH=' + ':'.join([
+            '{0}/usr/lib/pkgconfig',
+            '{0}/usr/lib/{1}/pkgconfig',
+            '{0}/usr/share/pkgconfig',
+            '{0}/usr/local/lib/pkgconfig',
+            '{0}/usr/local/lib/{1}/pkgconfig',
+            '{0}/usr/local/share/pkgconfig',
+            '$PKG_CONFIG_PATH'
+        ]).format(root, snapcraft.common.get_arch_triplet()))
         return env
 
     def build_env_for_part(self, part):

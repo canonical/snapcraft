@@ -49,6 +49,17 @@ def run(cmd, **kwargs):
         return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
 
 
+def run_output(cmd, **kwargs):
+    assert isinstance(cmd, list), "run command must be a list"
+    # FIXME: This is gross to keep writing this, even when env is the same
+    with tempfile.NamedTemporaryFile(mode='w+') as f:
+        f.write(assemble_env())
+        f.write('\n')
+        f.write('exec $*')
+        f.flush()
+        return subprocess.check_output(['/bin/sh', f.name] + cmd, **kwargs).decode('utf8').strip()
+
+
 def fatal():
     sys.exit(1)
 

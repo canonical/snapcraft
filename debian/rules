@@ -3,3 +3,6 @@
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_compress:
+	dh_compress -X/usr/share/snapcraft/examples

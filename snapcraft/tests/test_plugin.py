@@ -16,7 +16,6 @@
 
 import logging
 import os
-import sys
 import tempfile
 
 import fixtures
@@ -209,19 +208,6 @@ class PluginTestCase(tests.TestCase):
         p.notify_stage('test stage')
 
         self.assertEqual('test stage mock-part\n', fake_logger.output)
-
-    def test_local_plugins(self):
-        """Ensure local plugins are loaded from parts/plugins"""
-        def mock_import_modules(module_name):
-            # called with the name only and sys.path set
-            self.assertEqual(module_name, "x-mock")
-            self.assertTrue(sys.path[0].endswith("parts/plugins"))
-            return mock_plugin
-        with patch("importlib.import_module", side_effect=mock_import_modules):
-            plugin.PluginHandler(
-                "x-mock", "mock-part", {}, load_config=False, load_code=True)
-        # sys.path is cleaned afterwards
-        self.assertFalse(sys.path[0].endswith("parts/plugins"))
 
     def test_non_local_plugins(self):
         """Ensure regular plugins are loaded from snapcraft only"""
