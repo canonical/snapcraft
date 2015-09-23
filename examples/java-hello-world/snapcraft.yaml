@@ -2,7 +2,7 @@ name: java-hello-world
 version: 0
 vendor: Michael Terry <mterry@ubuntu.com>
 binaries:
- - name: hello
+ hello:
    exec: bin/wrapper
 summary: A java example
 description: this is not much more than an example

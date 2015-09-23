@@ -39,15 +39,8 @@ _BUILTIN_OPTIONS = {
 }
 
 
-def is_local_plugin(name):
-    return name.startswith("x-")
-
-
-def plugindir(name):
-    if is_local_plugin(name):
-        return os.path.abspath(os.path.join('parts', 'plugins'))
-    else:
-        return common.get_plugindir()
+def _local_plugindir():
+    return os.path.abspath(os.path.join('parts', 'plugins'))
 
 
 class PluginError(Exception):
@@ -87,10 +80,12 @@ class PluginHandler:
             return
 
     def _load_config(self, name):
-        configPath = os.path.join(plugindir(name), name + ".yaml")
-        if not os.path.exists(configPath):
+        config_path = os.path.join(common.get_plugindir(), name + ".yaml")
+        if not os.path.exists(config_path):
+            config_path = os.path.join(_local_plugindir(), name + ".yaml")
+        if not os.path.exists(config_path):
             raise PluginError('Unknown plugin: {}'.format(name))
-        with open(configPath, 'r') as fp:
+        with open(config_path, 'r') as fp:
             self.config = yaml.load(fp) or {}
 
     def _make_options(self, name, properties):
@@ -119,20 +114,21 @@ class PluginHandler:
 
     def _load_code(self, name, part_name, properties):
         options = self._make_options(name, properties)
-        moduleName = self.config.get('module', name)
+        module_name = name.replace('-', '_')
 
-        # Load code from local plugin dir if it is there
-        if is_local_plugin(name):
-            sys.path = [plugindir(name)] + sys.path
-        else:
-            moduleName = 'snapcraft.plugins.' + moduleName
+        try:
+            module = importlib.import_module('snapcraft.plugins.' + module_name)
+        except ImportError:
+            module = None
 
-        module = importlib.import_module(moduleName)
-        if is_local_plugin(name):
+        if not module:
+            logger.info('Searching for local plugin for %s', name)
+            sys.path = [_local_plugindir()] + sys.path
+            module = importlib.import_module(module_name)
             sys.path.pop(0)
 
-        for propName in dir(module):
-            prop = getattr(module, propName)
+        for prop_name in dir(module):
+            prop = getattr(module, prop_name)
             if issubclass(prop, snapcraft.BasePlugin):
                 self.code = prop(part_name, options)
                 break

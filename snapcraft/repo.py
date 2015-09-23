@@ -18,7 +18,26 @@ import apt
 import glob
 import itertools
 import os
+import string
 import subprocess
+import urllib
+import urllib.request
+
+from xml.etree import ElementTree
+
+import snapcraft.common
+
+_DEFAULT_SOURCES = '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
+deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+'''
+_GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
 
 class PackageNotFoundError(Exception):
@@ -43,33 +62,55 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, download_dir, recommends=False):
-        self.apt_cache = apt.Cache()
-        self.manifest_dep_names = self._manifest_dep_names()
+    def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
+        sources = sources or _DEFAULT_SOURCES
+        self.downloaddir = os.path.join(rootdir, 'download')
+        self.rootdir = rootdir
+        self.apt_cache = _setup_apt_cache(rootdir, sources)
         self.recommends = recommends
-        self.download_dir = download_dir
 
     def get(self, package_names):
-        # TODO cleanup download_dir for clean gets and unpacks
-        self.all_dep_names = set()
+        os.makedirs(self.downloaddir, exist_ok=True)
 
-        all_package_names = self._compute_deps(package_names)
+        manifest_dep_names = self._manifest_dep_names()
 
-        for pkg in all_package_names:
-            self.apt_cache[pkg].candidate.fetch_binary(destdir=self.download_dir)
+        for name in package_names:
+            try:
+                self.apt_cache[name].mark_install()
+            except KeyError:
+                raise PackageNotFoundError(name)
 
-        return all_package_names
+        # unmark some base packages here
+        # note that this will break the consistency check inside apt_cache
+        # (self.apt_cache.broken_count will be > 0)
+        # but that is ok as it was consistent before we excluded
+        # these base package
+        for pkg in self.apt_cache:
+            # those should be already on each system, it also prevents
+            # diving into downloading libc6
+            if (pkg.candidate.priority in 'essential' and
+               pkg.name not in package_names):
+                print('Skipping priority essential/important %s' % pkg.name)
+                pkg.mark_keep()
+                continue
+            if (pkg.name in manifest_dep_names and pkg.name not in package_names):
+                print('Skipping blacklisted from manifest package %s' % pkg.name)
+                pkg.mark_keep()
+                continue
+        # download the remaining ones with proper progress
+        apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
+        self.apt_cache.fetch_archives()
 
-    def unpack(self, root_dir):
-        pkgs_abs_path = glob.glob(os.path.join(self.download_dir, '*.deb'))
+    def unpack(self, rootdir):
+        pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
             # TODO needs elegance and error control
             try:
-                subprocess.check_call(['dpkg-deb', '--extract', pkg, root_dir])
+                subprocess.check_call(['dpkg-deb', '--extract', pkg, rootdir])
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 
-        _fix_symlinks(root_dir)
+        _fix_symlinks(rootdir)
 
     def _manifest_dep_names(self):
         manifest_dep_names = set()
@@ -82,36 +123,52 @@ class Ubuntu:
 
         return manifest_dep_names
 
-    def _compute_deps(self, package_names):
-        self._add_deps(package_names)
 
-        for pkg in package_names:
-            if pkg not in self.all_dep_names:
-                raise PackageNotFoundError(pkg)
+def _get_geoip_country_code_prefix():
+    try:
+        with urllib.request.urlopen(_GEOIP_SERVER) as f:
+            xml_data = f.read()
+        et = ElementTree.fromstring(xml_data)
+        cc = et.find("CountryCode")
+        if cc is None:
+            return ""
+        return cc.text.lower()
+    except (ElementTree.ParseError, urllib.error.URLError):
+        pass
+    return ""
 
-        return sorted(self.all_dep_names)
 
-    def _add_deps(self, package_names):
-        def add_deps(packages):
-            for pkg in packages:
-                # Remove the :any in packages
-                # TODO support multiarch
-                pkg = pkg.rsplit(':', 1)[0]
-                if pkg in self.all_dep_names:
-                    continue
-                if pkg in self.manifest_dep_names and pkg not in package_names:
-                    continue
-                deps = set()
-                try:
-                    candidate_pkg = self.apt_cache[pkg].candidate
-                except KeyError:
-                    raise PackageNotFoundError(pkg)
-                deps = candidate_pkg.dependencies
-                if self.recommends:
-                    deps += candidate_pkg.recommends
-                self.all_dep_names.add(pkg)
-                add_deps([x[0].name for x in deps])
-        add_deps(package_names)
+def _format_sources_list(sources, arch, release='vivid'):
+    if arch in ('amd64', 'i386'):
+        prefix = _get_geoip_country_code_prefix() + '.archive'
+        suffix = 'ubuntu'
+        security = 'security'
+    else:
+        prefix = 'ports'
+        suffix = 'ubuntu-ports'
+        security = 'ports'
+
+    return string.Template(sources).substitute({
+        'prefix': prefix,
+        'release': release,
+        'suffix': suffix,
+        'security': security,
+    })
+
+
+def _setup_apt_cache(rootdir, sources):
+    os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
+    srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
+
+    with open(srcfile, 'w') as f:
+        f.write(_format_sources_list(sources, snapcraft.common.get_arch()))
+
+    progress = apt.progress.text.AcquireProgress()
+    apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+    apt_cache.update(fetch_progress=progress, sources_list=srcfile)
+    apt_cache.open()
+
+    return apt_cache
 
 
 def _fix_symlinks(debdir):
