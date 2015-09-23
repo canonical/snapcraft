@@ -102,11 +102,9 @@ class Ubuntu:
                 continue
 
         if skipped_essential:
-            print('Skipping priority essential packages: {}'.format(
-                ' '.join(skipped_essential)))
+            print('Skipping priority essential packages:', skipped_essential)
         if skipped_blacklisted:
-            print('Skipping blacklisted from manifest packages: {}'.format(
-                ' '.join(skipped_blacklisted)))
+            print('Skipping blacklisted from manifest packages:', skipped_blacklisted)
 
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
