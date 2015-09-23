@@ -7,8 +7,8 @@ icon: icon.svg
 
 parts:
   python2:
-    type: python2
+    type: python2-project
     requirements: requirements.txt
   python3:
-    type: python3
+    type: python3-project
     requirements: requirements.txt

@@ -22,20 +22,67 @@ import snapcraft
 
 class Python2ProjectPlugin(snapcraft.BasePlugin):
 
-    # note that we don't need to setup env(), python figures it out
-    # see python2.py for more details
+    _PLUGIN_STAGE_PACKAGES = [
+        'python-dev',
+        'python-pkg-resources',
+        'python-setuptools',
+    ]
+
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.requirements = options.requirements
+        self.source = options.source
+
+    def env(self, root):
+        return ["PYTHONPATH=%s" % os.path.join(
+            root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        return self.handle_source_options()
+        if self.source and not self.handle_source_options():
+            return False
+
+        setup = 'setup.py'
+        if os.path.exists(setup) or self.requirements:
+            easy_install = os.path.join(
+                self.installdir, 'usr', 'bin', 'easy_install')
+            prefix = os.path.join(self.installdir, 'usr')
+            site_packages_dir = os.path.join(
+                prefix, 'lib', self.python_version, 'site-packages')
+
+            if not os.path.exists(site_packages_dir):
+                os.symlink(
+                    os.path.join(prefix, 'lib', self.python_version, 'dist-packages'),
+                    site_packages_dir)
+
+            if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
+                return False
+
+            pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
+            pip_install = ['python2', pip2, 'install', '--target',
+                           site_packages_dir]
+
+            if self.requirements:
+                requirements = os.path.join(os.getcwd(), self.requirements)
+                if not self.run(pip_install + ['--requirement', requirements]):
+                    return False
+
+            if os.path.exists(setup):
+                if not self.run(pip_install + ['.', ]):
+                    return False
+
+        return True
 
     def build(self):
         # If setuptools is used, it tries to create files in the
         # dist-packages dir and import from there, so it needs to exist
         # and be in the PYTHONPATH. It's harmless if setuptools isn't
         # used.
+
+        if not os.path.exists(os.path.join(self.builddir, 'setup.py')):
+            return True
+
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         setuptemp = self.copy_setup()
-
         return self.run(
             ['python2', setuptemp.name, 'install', '--install-layout=deb',
              '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
