@@ -267,6 +267,8 @@ def _check_for_collisions(parts):
             for f in common:
                 this = os.path.join(part.installdir, f)
                 other = os.path.join(parts_files[other_part_name]['installdir'], f)
+                if os.path.islink(this) and os.path.islink(other):
+                    continue
                 if not filecmp.cmp(this, other, shallow=False):
                     conflict_files.append(f)
 

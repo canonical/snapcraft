@@ -54,7 +54,7 @@ run_unit_tests(){
 
     # mccabe in 'warning' mode as we have high complexity
     mccabe_list=
-    for unit in $(find . -type f -name '*.py')
+    for unit in $(find snapcraft -type f -name '*.py')
     do
         output=$(python3 -m mccabe --min 10 "$unit")
         [ -n "$output" ] && mccabe_list="- $unit:\n  $output\n$mccabe_list"
