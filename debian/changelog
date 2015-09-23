@@ -1,6 +1,5 @@
 snapcraft (0.2) UNRELEASED; urgency=medium
 
-  * Allow pulling armhf ubuntu packages (LP: #1498157).
   * Better setuptools support:
     - LP: #1482864
     - LP: #1498212
