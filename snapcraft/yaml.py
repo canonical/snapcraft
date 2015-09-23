@@ -197,7 +197,7 @@ class Config:
             '$LDFLAGS'
         ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
         env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(root))
-        env.append("PKG_CONFIG_PATH=" + ':'.join([
+        env.append('PKG_CONFIG_PATH=' + ':'.join([
             '{0}/usr/lib/pkgconfig',
             '{0}/usr/lib/{1}/pkgconfig',
             '{0}/usr/share/pkgconfig',
