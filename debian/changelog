@@ -1,8 +1,45 @@
-snapcraft (0.2) UNRELEASED; urgency=medium
+snapcraft (0.2) wily; urgency=medium
 
-  * 
+  * Better setuptools support:
+    - Better support python-setuptools (LP: #1481864),
+    - Used builddir as a base for setup.py overrides (LP: #1498212),
+    - Fix build (LP: #1494825),
+  * Plugin fixes:
+    - Add demo.qml back to the snapcraft.yaml for the QML Demo (LP: #1491301),
+    - stage package libgudev-1.0-0, which makes the godd snap actually 
+      work (LP: #1498347),
+    - Wrap setup.py calls to configure the shebang writer (LP: #1486680),
+    - Update tomcat upstream URL, fixes example again (LP: #1491303),
+    - Add libgudev-1.0-dev as build-tools for godd example,
+      Ensure C library configuration tools don't use system 
+      paths (LP: #1496789),
+  * Snapcraft cli:
+    - On clean, check the contents of the parts dir only if it 
+      exists. (LP: #1497371)
+    - Load the config before trying to run (LP: #1498140),
+    - Notify user why the password is being requested (LP: #1481499),
+    - Fix numerous issues in snapcraft run (LP: #1486659),
+  * Snapcraft stage-packages:
+    - Enable ports for architectures that are not amd64 or 
+      i386 (LP: #1498157),
+    - Improving stage-package handling (LP: #1497453, LP: #1497582)
+    - Fetch all packages in a single download run with proper 
+      progress (LP: #1498333),
+  * Snapcraft wiki queries excessive (LP: #1496381),
+  * Snapcraft internals:
+    - Add 'simple' and 'has-leftovers' flags to all integration tests job
+      units. (LP: #1484596),
+    - Regex for binary and service names (LP: #1495662),
+    - Provide a nice error when tabs found in snapcraft.yaml (LP: #1477875),
+    - Use relative paths for image creation (LP: #1497108),
+    - Use the python logger (LP: #1476452),
+    - snapcraft now has less exit points (LP: #1477639),
+    - Depend and Build-Depend on python3-requests (LP: #1496363),
+    - Add autopkgtest, reshuffle build-deps accordingly (LP: #1496392),
+    - Fix "snapcraft run" (LP: #1484720),
+  * Examples packaged (LP: #1498189).
 
- -- Daniel Holbach <daniel.holbach@ubuntu.com>  Tue, 18 Aug 2015 14:23:24 +0200
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 24 Sep 2015 14:23:24 -0300
 
 snapcraft (0.1) wily; urgency=low
 
