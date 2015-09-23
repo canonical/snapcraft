@@ -380,3 +380,15 @@ command:
     test -f parts/python2/install/usr/lib/python2.7/argparse.py
     test -f parts/python3/install/usr/lib/python3.4/argparse.py
 flags: simple has-leftovers
+
+id: snapcraft/normal/build-tool-paths
+plugin: shell
+estimated_duration: 30
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/build-tools .
+    ${SNAPCRAFT} stage
+    ${SNAPCRAFT} shell pkg-config --cflags glib-2.0 | grep -q `pwd`
+    ${SNAPCRAFT} shell xml2-config --cflags | grep -q `pwd`
+    ${SNAPCRAFT} shell xslt-config --cflags | grep -q `pwd`
+flags: simple has-leftovers

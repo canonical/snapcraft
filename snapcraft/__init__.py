@@ -117,6 +117,13 @@ class BasePlugin:
             ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
             ubuntu.unpack(self.installdir)
+            self._fixup(self.installdir)
+
+    def _fixup(self, root):
+        if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xml2-config')):
+            self.run(['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.format(root), os.path.join(root, 'usr', 'bin', 'xml2-config')])
+        if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xslt-config')):
+            self.run(['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.format(root), os.path.join(root, 'usr', 'bin', 'xslt-config')])
 
 
 def _get_source_handler(source_type, source):
