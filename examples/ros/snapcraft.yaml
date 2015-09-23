@@ -8,3 +8,6 @@ description: A really small ros examples
 parts:
   roscore:
     type: roscore
+  catkin-tutorials:
+    source: git://github.com/ros/catkin_tutorials.git
+    type: catkin
