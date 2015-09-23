@@ -80,6 +80,9 @@ class Ubuntu:
             except KeyError:
                 raise PackageNotFoundError(name)
 
+        skipped_essential = []
+        skipped_blacklisted = []
+
         # unmark some base packages here
         # note that this will break the consistency check inside apt_cache
         # (self.apt_cache.broken_count will be > 0)
@@ -90,13 +93,21 @@ class Ubuntu:
             # diving into downloading libc6
             if (pkg.candidate.priority in 'essential' and
                pkg.name not in package_names):
-                print('Skipping priority essential/important %s' % pkg.name)
+                skipped_essential.append(pkg.name)
                 pkg.mark_keep()
                 continue
             if (pkg.name in manifest_dep_names and pkg.name not in package_names):
-                print('Skipping blacklisted from manifest package %s' % pkg.name)
+                skipped_blacklisted.append(pkg.name)
                 pkg.mark_keep()
                 continue
+
+        if skipped_essential:
+            print('Skipping priority essential packages: {}'.format(
+                ' '.join(skipped_essential)))
+        if skipped_blacklisted:
+            print('Skipping blacklisted from manifest packages: {}'.format(
+                ' '.join(skipped_blacklisted)))
+
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
         self.apt_cache.fetch_archives()
