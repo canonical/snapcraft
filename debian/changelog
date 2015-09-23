@@ -1,4 +1,4 @@
-snapcraft (0.2) UNRELEASED; urgency=medium
+snapcraft (0.2) wily; urgency=medium
 
   * Better setuptools support:
     - Better support python-setuptools (LP: #1481864),
