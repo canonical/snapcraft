@@ -1,4 +1,3 @@
-module: make_project
 build-packages: [make]
 options:
   source:

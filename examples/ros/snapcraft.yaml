@@ -1,11 +1,10 @@
 name: ros
 version: 1.0
-vendor: Snappy developers <snappy-dev@lists.canonical.com>
-summary: A ros example
+vendor: Number Nine <number-nine@is-alive.com>
+summary: A robot example
 icon: icon.svg
 description: A really small ros examples
 
 parts:
-  ros:
+  roscore:
     type: roscore
-

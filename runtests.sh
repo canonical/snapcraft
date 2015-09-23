@@ -20,39 +20,62 @@ set -e
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-SRC_PATHS="bin snapcraft snapcraft/tests"
+parseargs(){
+    if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
+        export RUN_UNIT="true"
+        export RUN_PLAINBOX="true"
+        export PLAINBOX_TEST_PLANS="normal"
+    else
+        if [ "$1" == "unit" ] ; then
+            export RUN_UNIT="true"
+        elif [ "$1" == "plainbox" ] ; then
+            export RUN_PLAINBOX="true"
+            if [ "$#" -gt 1 ]; then
+                export PLAINBOX_TEST_PLANS="$2"
+            else
+                export PLAINBOX_TEST_PLANS="normal"
+            fi
+        else
+            echo "Not recognized option, should be one of all, unit or plainbox"
+            exit 1
+        fi
+    fi
+}
 
-# These three checks could easily be done with flake8 in one shot if
-# we had python3-flake8 provide flake8
-# Ignore 501 (line-too-long)
-pep8 $SRC_PATHS --ignore=E501
+run_unit_tests(){
+    SRC_PATHS="bin snapcraft snapcraft/tests"
 
-pyflakes3 $SRC_PATHS
+    # These three checks could easily be done with flake8 in one shot if
+    # we had python3-flake8 provide flake8
+    # Ignore 501 (line-too-long)
+    pep8 $SRC_PATHS --ignore=E501
 
-# mccabe in 'warning' mode as we have high complexity
-mccabe_list=
-for unit in $(find snapcraft -type f -name '*.py')
-do
-  output=$(python3 -m mccabe --min 10 "$unit")
-  [ -n "$output" ] && mccabe_list="- $unit:\n  $output\n$mccabe_list"
-done
+    pyflakes3 $SRC_PATHS
 
-if [ -n "$mccabe_list" ]; then
-  echo -e "\e[1;31mThe project has gotten complex\e[0m."
-  echo "Here's the list of units exceeding 10:"
-  echo -e "$mccabe_list"
-fi
+    # mccabe in 'warning' mode as we have high complexity
+    mccabe_list=
+    for unit in $(find snapcraft -type f -name '*.py')
+    do
+        output=$(python3 -m mccabe --min 10 "$unit")
+        [ -n "$output" ] && mccabe_list="- $unit:\n  $output\n$mccabe_list"
+    done
 
-if which python3-coverage >/dev/null 2>&1; then
-    python3-coverage erase
-    python3-coverage run --branch --source snapcraft -m unittest
-    mv .coverage .coverage.unit
-else
-    python3 -m unittest
-fi
+    if [ -n "$mccabe_list" ]; then
+        echo -e "\e[1;31mThe project has gotten complex\e[0m."
+        echo "Here's the list of units exceeding 10:"
+        echo -e "$mccabe_list"
+    fi
 
-if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ]; then
-(
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage erase
+        python3-coverage run --branch --source snapcraft -m unittest
+        mv .coverage .coverage.unit
+    else
+        python3 -m unittest
+    fi
+}
+
+run_plainbox(){
     # well, well, what can we do
     if ! which plainbox >/dev/null; then
         cat <<EOF
@@ -73,8 +96,17 @@ EOF
 
     # Go to the plainbox provider of snapcraft tests
     cd integration-tests
-    ./runtests.sh
-)
+    ./runtests.sh $PLAINBOX_TEST_PLANS
+}
+
+parseargs "$@"
+
+if [ ! -z "$RUN_UNIT" ]; then
+    run_unit_tests
+fi
+
+if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ] && [ ! -z "$RUN_PLAINBOX" ] ; then
+    run_plainbox
 fi
 
 if which python3-coverage >/dev/null 2>&1; then

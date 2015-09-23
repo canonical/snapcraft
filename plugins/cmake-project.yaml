@@ -1,4 +1,3 @@
-module: cmake_project
 build-packages: [cmake]
 options:
   source:

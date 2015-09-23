@@ -1,4 +1,3 @@
-module: autotools_project
 build-packages: [autoconf, automake, autopoint]
 options:
   source:

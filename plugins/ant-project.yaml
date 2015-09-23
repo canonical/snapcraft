@@ -1,4 +1,3 @@
-module: ant_project
 requires:
   - jdk
 options:

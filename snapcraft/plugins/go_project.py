@@ -27,7 +27,9 @@ class GoProjectPlugin(snapcraft.BasePlugin):
             self.fullname = self.options.source.split("://")[1]
 
     def pull(self):
-        return self.run(['go', 'get', '-t', self.fullname])
+        # use -d to only download (build will happen later)
+        # use -t to also get the test-deps
+        return self.run(['go', 'get', '-t', '-d', self.fullname])
 
     def build(self):
         if not self.run(['go', 'build', self.fullname]):
