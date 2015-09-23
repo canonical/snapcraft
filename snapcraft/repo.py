@@ -63,11 +63,16 @@ class UnpackError(Exception):
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
-        sources = sources or _DEFAULT_SOURCES
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
-        self.apt_cache = _setup_apt_cache(rootdir, sources)
         self.recommends = recommends
+        sources = sources or _DEFAULT_SOURCES
+        local = False
+        if 'SNAPCRAFT_LOCAL_SOURCES' in os.environ:
+            print('using local sources')
+            sources = _get_local_sources_list()
+            local = True
+        self.apt_cache = _setup_apt_cache(rootdir, sources, local)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -133,6 +138,18 @@ class Ubuntu:
         return manifest_dep_names
 
 
+def _get_local_sources_list():
+    sources_list = glob.glob('/etc/apt/sources.list.d/*.list')
+    sources_list.append('/etc/apt/sources.list')
+
+    sources = ''
+    for source in sources_list:
+        with open(source) as f:
+            sources += f.read()
+
+    return sources
+
+
 def _get_geoip_country_code_prefix():
     try:
         with urllib.request.urlopen(_GEOIP_SERVER) as f:
@@ -165,12 +182,15 @@ def _format_sources_list(sources, arch, release='vivid'):
     })
 
 
-def _setup_apt_cache(rootdir, sources):
+def _setup_apt_cache(rootdir, sources, local=False):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
+    if not local:
+        sources = _format_sources_list(sources, snapcraft.common.get_arch())
+
     with open(srcfile, 'w') as f:
-        f.write(_format_sources_list(sources, snapcraft.common.get_arch()))
+        f.write(sources)
 
     progress = apt.progress.text.AcquireProgress()
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
