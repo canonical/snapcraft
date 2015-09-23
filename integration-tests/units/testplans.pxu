@@ -1,4 +1,9 @@
 unit: test plan
 id: normal
-name: Tests for Snapcraft 
+name: Tests for Snapcraft
 include: snapcraft/normal/.*
+
+unit: test plan
+id: examples
+name: Test for building Snapcraft examples
+include: snapcraft/examples/.*

@@ -14,3 +14,4 @@ parts:
         source: .
         after:
             - curl
+build-packages: [libssl-dev]
