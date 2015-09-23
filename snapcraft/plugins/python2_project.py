@@ -41,37 +41,42 @@ class Python2ProjectPlugin(snapcraft.BasePlugin):
         if self.source and not self.handle_source_options():
             return False
 
+        return self._pip()
+
+    def _pip(self):
         setup = 'setup.py'
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if os.path.exists(setup) or self.requirements:
-            easy_install = os.path.join(
-                self.installdir, 'usr', 'bin', 'easy_install')
-            prefix = os.path.join(self.installdir, 'usr')
-            site_packages_dir = os.path.join(
-                prefix, 'lib', self.python_version, 'site-packages')
+        if not os.path.exists(setup) and not self.requirements:
+            return True
 
-            if not os.path.exists(site_packages_dir):
-                os.symlink(
-                    os.path.join(prefix, 'lib', self.python_version, 'dist-packages'),
-                    site_packages_dir)
+        requirements = os.path.join(os.getcwd(), self.requirements)
 
-            if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
-                return False
+        easy_install = os.path.join(
+            self.installdir, 'usr', 'bin', 'easy_install')
+        prefix = os.path.join(self.installdir, 'usr')
+        site_packages_dir = os.path.join(
+            prefix, 'lib', self.python_version, 'site-packages')
 
-            pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
-            pip_install = ['python2', pip2, 'install', '--target',
-                           site_packages_dir]
+        if not os.path.exists(site_packages_dir):
+            os.symlink(
+                os.path.join(prefix, 'lib', self.python_version, 'dist-packages'),
+                site_packages_dir)
 
-            if self.requirements:
-                requirements = os.path.join(os.getcwd(), self.requirements)
-                if not self.run(pip_install + ['--requirement', requirements]):
-                    return False
+        if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
+            return False
 
-            if os.path.exists(setup):
-                if not self.run(pip_install + ['.', ]):
-                    return False
+        pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
+        pip_install = ['python2', pip2, 'install', '--target',
+                       site_packages_dir]
+
+        if self.requirements and not self.run(
+                pip_install + ['--requirement', requirements]):
+            return False
+
+        if os.path.exists(setup) and not self.run(pip_install + ['.', ]):
+            return False
 
         return True
 
