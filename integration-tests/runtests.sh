@@ -17,11 +17,9 @@
 
 set -e
 
-parseargs(){
-    export TEST_PLAN=$1
-}
-
 run_test_plan(){
+    TEST_PLAN=$1
+    
     if [ -z "$SNAPCRAFT" ]; then
         export SNAPCRAFT=snapcraft
     fi
@@ -36,7 +34,7 @@ run_test_plan(){
     export PROVIDERPATH=$PROVIDERPATH:$temp_dir
     # create symlink from the provider's data directory to examples for them to
     # be available to the tests
-    if [ $TEST_PLAN == "examples" ]; then
+    if [ "$TEST_PLAN" = "examples" ]; then
         BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )
         TARGET_PATH=${BASEDIR}/integration-tests/data/examples
         if [ -z $ADT_ARTIFACTS ]; then
@@ -51,7 +49,7 @@ run_test_plan(){
              -T 2015.com.canonical.snapcraft::"$TEST_PLAN" \
              -f json -o $temp_dir/result.json
     # remove the examples symlink
-    if [ $TEST_PLAN == "examples" ]; then
+    if [ "$TEST_PLAN" = "examples" ]; then
         rm ${TARGET_PATH}
     fi
     # Analyze the result and fail if there are any failures
@@ -69,6 +67,9 @@ raise SystemExit(failed)
 __PYTHON__
 }
 
-parseargs "$@"
+if [ -z "$1" ]; then
+    echo "need test plan as first argument"
+    exit 1
+fi
 
-run_test_plan
+run_test_plan "$@"
