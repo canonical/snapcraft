@@ -42,6 +42,9 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
             return False
 
         setup = 'setup.py'
+        if os.listdir(self.sourcedir):
+            setup = os.path.join(self.sourcedir, 'setup.py')
+
         if os.path.exists(setup) or self.requirements:
             easy_install = os.path.join(
                 self.installdir, 'usr', 'bin', 'easy_install3')
