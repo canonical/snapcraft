@@ -9,5 +9,6 @@ parts:
   roscore:
     type: roscore
   catkin-tutorials:
-    source: git://github.com/ros/catkin_tutorials.git
+    source: .
     type: catkin
+    catkin-pkg: beginner_tutorials
