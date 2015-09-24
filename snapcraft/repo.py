@@ -161,12 +161,13 @@ def _get_geoip_country_code_prefix():
         return cc.text.lower()
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
-    return ""
+    return ''
 
 
 def _format_sources_list(sources, arch, release='vivid'):
     if arch in ('amd64', 'i386'):
-        prefix = _get_geoip_country_code_prefix() + '.archive'
+        geoip_prefix = _get_geoip_country_code_prefix()
+        prefix = geoip_prefix + '.archive' if geoip_prefix else 'archive'
         suffix = 'ubuntu'
         security = 'security'
     else:
