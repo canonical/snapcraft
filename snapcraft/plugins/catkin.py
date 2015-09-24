@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import tempfile
 import snapcraft
 
 class CatkinPlugin (snapcraft.BasePlugin):
@@ -28,8 +29,19 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
     def __init__ (self, name, options):
         self.rosversion = options.rosversion or 'jade'
+        self.package = options.catkin_pkg or 'jade'
         self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-ros-base')
         super().__init__(name, options)
+
+    def env(self, root):
+        return [
+            'PYTHONPATH={0}'.format(os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')),
+            'DESTDIR={0}'.format(self.installdir)
+        ]
+
+    @property
+    def python_version(self):
+        return self.run_output(['pyversions', '-i'])
 
     def pull(self):
         if not self.handle_source_options():
@@ -39,3 +51,24 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         return True
 
+    def build(self):
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            f.write('set -ex\n')
+            f.write('_CATKIN_SETUP_DIR=' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion) + '\n')
+            f.write('source ' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
+            f.write(' '.join([
+                'exec',
+                'catkin_make', self.package,
+                '--directory', self.builddir, 
+                '--cmake-args',
+                '-DCATKIN_DEVEL_PREFIX={}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion)),
+                '-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir),
+                '-Dcatkin_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'catkin', 'cmake')),
+                '-Droscpp_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'roscpp', 'cmake')),
+                '-Drospy_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'rospy', 'cmake')),
+                '-Dgenmsg_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'genmsg', 'cmake')),
+                '\n'
+            ]))
+            f.flush()
+
+            return self.run(['/bin/bash', f.name], cwd=self.builddir)
