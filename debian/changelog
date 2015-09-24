@@ -1,3 +1,9 @@
+snapcraft (0.3) wily; urgency=medium
+
+  * 
+
+ -- Daniel Holbach <daniel.holbach@ubuntu.com>  Thu, 24 Sep 2015 11:37:36 +0200
+
 snapcraft (0.2) wily; urgency=medium
 
   * Better setuptools support:
