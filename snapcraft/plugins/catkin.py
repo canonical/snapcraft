@@ -30,18 +30,24 @@ class CatkinPlugin (snapcraft.BasePlugin):
     def __init__ (self, name, options):
         self.rosversion = options.rosversion or 'jade'
         self.package = options.catkin_pkg or 'jade'
-        self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-ros-base')
+        self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-ros-core')
         super().__init__(name, options)
 
     def env(self, root):
         return [
             'PYTHONPATH={0}'.format(os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')),
-            'DESTDIR={0}'.format(self.installdir)
+            'DESTDIR={0}'.format(self.installdir),
+            'CPPFLAGS="-std=c++11 $CPPFLAGS"', # ROS needs it but doesn't set it :-/
         ]
 
     @property
     def python_version(self):
         return self.run_output(['pyversions', '-i'])
+
+    @property
+    def rosdir(self):
+        return os.path.join(self.installdir, 'opt', 'ros', self.rosversion)
+
 
     def pull(self):
         if not self.handle_source_options():
@@ -52,15 +58,27 @@ class CatkinPlugin (snapcraft.BasePlugin):
         return True
 
     def build(self):
+        # Fixup ROS Cmake files that have hardcoded paths in them
+        if not self.run([
+            'find', self.rosdir, '-name', '*.cmake',
+            '-exec', 'sed', '-i', '-e', 's|\\(\W\\)/usr/lib/|\\1{0}/usr/lib/|g'.format(self.installdir), '{}', ';'
+        ]):
+            return False
+
         with tempfile.NamedTemporaryFile(mode='w') as f:
             f.write('set -ex\n')
             f.write('_CATKIN_SETUP_DIR=' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion) + '\n')
             f.write('source ' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
+            f.write('env | sort | grep FLAG\n')
+            f.write('export VERBOSE=1\n')
             f.write(' '.join([
-                'exec',
-                'catkin_make', self.package,
+                'catkin_make',
+                '--pkg', self.package,
                 '--directory', self.builddir, 
                 '--cmake-args',
+                '-DCMAKE_C_FLAGS="$CFLAGS"',
+                '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
+                '-DCMAKE_LD_FLAGS="$LDFLAGS"',
                 '-DCATKIN_DEVEL_PREFIX={}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion)),
                 '-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir),
                 '-Dcatkin_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'catkin', 'cmake')),
@@ -69,6 +87,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 '-Dgenmsg_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'genmsg', 'cmake')),
                 '\n'
             ]))
+            f.write('catkin_make install\n')
             f.flush()
 
             return self.run(['/bin/bash', f.name], cwd=self.builddir)
