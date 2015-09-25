@@ -1,3 +1,9 @@
+snapcraft (0.3) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Daniel Holbach <daniel.holbach@ubuntu.com>  Fri, 25 Sep 2015 12:46:23 +0200
+
 snapcraft (0.2.1) wily; urgency=medium
 
   * New upstream release (LP: #1499265)
