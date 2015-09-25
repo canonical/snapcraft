@@ -37,7 +37,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         return [
             'PYTHONPATH={0}'.format(os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')),
             'DESTDIR={0}'.format(self.installdir),
-            'CPPFLAGS="-std=c++11 $CPPFLAGS"', # ROS needs it but doesn't set it :-/
+            'CPPFLAGS="-std=c++11 $CPPFLAGS -I{0} -I{1}"'.format(os.path.join(root, 'usr', 'include', 'c++', '4.9'), os.path.join(root, 'usr', 'include', snapcraft.common.get_arch_triplet(), 'c++', '4.9')), # ROS needs it but doesn't set it :-/
         ]
 
     @property
@@ -76,15 +76,20 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 '--pkg', self.package,
                 '--directory', self.builddir, 
                 '--cmake-args',
-                '-DCMAKE_C_FLAGS="$CFLAGS"',
-                '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
-                '-DCMAKE_LD_FLAGS="$LDFLAGS"',
+                # Setting the ROS paths
                 '-DCATKIN_DEVEL_PREFIX={}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion)),
                 '-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir),
+                # Finding CMake Macros
                 '-Dcatkin_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'catkin', 'cmake')),
                 '-Droscpp_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'roscpp', 'cmake')),
                 '-Drospy_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'rospy', 'cmake')),
                 '-Dgenmsg_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'genmsg', 'cmake')),
+                # Compiler fun
+                '-DCMAKE_C_FLAGS="$CFLAGS"',
+                '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
+                '-DCMAKE_LD_FLAGS="$LDFLAGS"',
+                '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
+                '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++')),
                 '\n'
             ]))
             f.write('catkin_make install\n')

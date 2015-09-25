@@ -194,7 +194,7 @@ class Config:
             '-I{0}/usr/include',
             '-I{0}/include/{1}',
             '-I{0}/usr/include/{1}',
-            '$CFLAGS'
+            '$CPPFLAGS'
         ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
         env.append('LDFLAGS="' + ' '.join([
             '-L{0}/lib',
