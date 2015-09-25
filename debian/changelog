@@ -1,6 +1,10 @@
-snapcraft (0.3) wily; urgency=medium
+snapcraft (0.2.1) wily; urgency=medium
 
-  * 
+  * New upstream release (LP: #1499265)
+  * Brown-paper bag release:
+    - Fix install path of examples. Thanks Martin Pitt for noticing.
+    - Allow using local sources through an env var (mostly useful for
+      Launchpad building).
 
  -- Daniel Holbach <daniel.holbach@ubuntu.com>  Thu, 24 Sep 2015 11:37:36 +0200
 
