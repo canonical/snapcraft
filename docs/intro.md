@@ -51,7 +51,7 @@ like the Java SDK. Snapcraft will create a `parts/` directory with
 sub-directories like `parts/part-name/src` for each part that contains
 the downloaded content.
 
-#### Build
+### Build
 
 The next step is that each part is built in its `parts/part-name/build`
 directory and installs itself into `parts/part-name/install`.
