@@ -38,8 +38,8 @@ from? How are they built?
 
 ### Prerequisites during the build
 
-The example named `downloader-with-wiki-parts` shows how very easily make sure
-that its build dependencies are installed:
+The example named `downloader-with-wiki-parts` shows how very easy you can
+make sure that the relevant build dependencies are installed:
 
 	build-packages: [libssl-dev]
 
@@ -101,8 +101,8 @@ What's happening during the `snapcraft` run is:
 
 ### Putting your parts in order
 
-If you app comprises of multiple parts, it might be necessary to build and
-stage parts in a particular order. This can be done by using the `after`
+If your app is comprised of multiple parts, it might be necessary to build 
+and stage parts in a particular order. This can be done by using the `after`
 keyword:
 
 	parts:
@@ -116,8 +116,8 @@ keyword:
 	        source: lp:~mterry/libpipeline/printf
 
 
-In the case of the `libpipeline` example above, the part named `libpipeline`
-will be built before `pipelinetest`. Especially if you need specific 
+In the case of the `libpipeline` example above, the part named `pipelinetest`
+will be built after `libpipeline`. Especially if you need specific 
 functionality during a build or as part of checks during the `snap` phase,
 this will be handy.
 
@@ -142,7 +142,7 @@ then `main`.
 
 ### Individual files
 
-If you are planning to provide binaries and servies to the users of your
+If you are planning to provide binaries and services to the users of your
 apps, you need to specify them in your definition first. It's just a matter 
 of enumerating them.
 
@@ -172,8 +172,8 @@ thoughts on services and their security, visit the
 
 To check the list of files included in your snap, you can use `dpkg -c` on 
 the resulting `.snap` file. If you find that certain files should not be
-shipped to the user (download size being just one factor), you can use 
-`snapcraft`'s feature of defining specific filesets:
+shipped to the user (download size being just one factor), you can 
+explicitly tell `snapcraft` which files to snap:
 
 	    snap:
 	     - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
@@ -185,5 +185,4 @@ Here `godd` further defines the list of files to be placed in the app
 during the `snap` phase. As you can see above, globs (using asterisks as
 wildcard characters) are a good way of handling complexities within the
 directory structure.
-
 
