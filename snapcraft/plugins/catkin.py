@@ -95,4 +95,5 @@ class CatkinPlugin (snapcraft.BasePlugin):
             f.write('catkin_make install\n')
             f.flush()
 
-            return self.run(['/bin/bash', f.name], cwd=self.builddir)
+            return self.run(['/bin/bash', f.name], cwd=self.builddir) and self.run(['find', self.installdir, '-name', '*.cmake', '-delete']) and self.run(['rm', '-f', 'opt/ros/' + self.rosversion + '/.catkin', 'opt/ros/' + self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion + '/setup.sh', 'opt/ros/' + self.rosversion + '/_setup_util.py'], cwd=self.installdir)
+
