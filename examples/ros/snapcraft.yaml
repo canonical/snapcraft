@@ -1,4 +1,4 @@
-name: ros
+name: ros-example
 version: 1.0
 vendor: Number Nine <number-nine@is-alive.com>
 summary: A robot example
@@ -12,3 +12,9 @@ parts:
     source: .
     type: catkin
     catkin-pkg: beginner_tutorials
+
+binaries:
+  listener:
+    exec: opt/ros/jade/lib/beginner_tutorials/listener
+  talker:
+    exec: opt/ros/jade/lib/beginner_tutorials/talker
