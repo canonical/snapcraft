@@ -57,6 +57,16 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         return True
 
+    def rosrun(self, commandlist, cwd=None):
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            f.write('set -ex\n')
+            f.write('_CATKIN_SETUP_DIR=' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion) + '\n')
+            f.write('source ' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
+            f.write('exec {}\n'.format(' '.join(commandlist)))
+            f.flush()
+
+            return self.run(['/bin/bash', f.name], cwd=cwd)
+
     def build(self):
         # Fixup ROS Cmake files that have hardcoded paths in them
         if not self.run([
@@ -65,13 +75,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         ]):
             return False
 
-        with tempfile.NamedTemporaryFile(mode='w') as f:
-            f.write('set -ex\n')
-            f.write('_CATKIN_SETUP_DIR=' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion) + '\n')
-            f.write('source ' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
-            f.write('env | sort | grep FLAG\n')
-            f.write('export VERBOSE=1\n')
-            f.write(' '.join([
+        if not self.rosrun([
                 'catkin_make',
                 '--pkg', self.package,
                 '--directory', self.builddir, 
@@ -89,11 +93,17 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
                 '-DCMAKE_LD_FLAGS="$LDFLAGS"',
                 '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
-                '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++')),
-                '\n'
-            ]))
-            f.write('catkin_make install\n')
-            f.flush()
+                '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
+            ]):
+            return False
 
-            return self.run(['/bin/bash', f.name], cwd=self.builddir) and self.run(['find', self.installdir, '-name', '*.cmake', '-delete']) and self.run(['rm', '-f', 'opt/ros/' + self.rosversion + '/.catkin', 'opt/ros/' + self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion + '/setup.sh', 'opt/ros/' + self.rosversion + '/_setup_util.py'], cwd=self.installdir)
+        if not self.rosrun(['catkin_make', 'install']):
+            return False
 
+        if not self.run(['find', self.installdir, '-name', '*.cmake', '-delete']):
+            return False
+        
+        if not self.run(['rm', '-f', 'opt/ros/' + self.rosversion + '/.catkin', 'opt/ros/' + self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion + '/setup.sh', 'opt/ros/' + self.rosversion + '/_setup_util.py'], cwd=self.installdir):
+            return False
+
+        return True
