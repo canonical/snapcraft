@@ -1,0 +1,14 @@
+import os.path
+
+env = Environment()
+hello = env.Program('main.c')
+DESTDIR = os.environ.get('DESTDIR', '')
+install_dir = os.path.join('usr', 'bin')
+
+if DESTDIR:
+   install_dir = os.path.join(DESTDIR, install_dir)
+else:
+   install_dir = os.path.join(os.path.sep, install_dir)
+
+env.Install(install_dir,  hello)
+env.Alias('install', install_dir)
