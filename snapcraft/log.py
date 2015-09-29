@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import os
 import sys
 
 
@@ -42,8 +43,10 @@ def configure(logger_name=None):
     stderr_handler.addFilter(_StderrFilter())
     handlers = [stdout_handler, stderr_handler]
 
-    formatter = logging.Formatter(
-        _COLOR_BOLD + '{message}' + _COLOR_END, style='{')
+    fmt = '{message}'
+    if os.isatty(1):
+        fmt = _COLOR_BOLD + fmt + _COLOR_END
+    formatter = logging.Formatter(fmt, style='{')
     logger = logging.getLogger(logger_name)
     for handler in handlers:
         handler.setFormatter(formatter)

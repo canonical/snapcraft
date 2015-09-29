@@ -20,6 +20,7 @@ import itertools
 import os
 import string
 import subprocess
+import sys
 import urllib
 import urllib.request
 
@@ -198,7 +199,18 @@ def _setup_apt_cache(rootdir, sources, local=False):
     for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
         apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
 
-    progress = apt.progress.text.AcquireProgress()
+    if not os.isatty(1) and not sys.stdout.line_buffering:
+        # Line buffering makes logs easier to handle; AcquireProgress only
+        # explicitly flushes when not writing a newline.
+        stdout_linebuf = open(os.dup(1), mode='w', buffering=1)
+    else:
+        stdout_linebuf = sys.stdout
+    progress = apt.progress.text.AcquireProgress(outfile=stdout_linebuf)
+    if not os.isatty(1):
+        # Make output more suitable for logging.
+        progress.pulse = lambda owner: True
+        progress._width = 0
+
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
     apt_cache.open()
