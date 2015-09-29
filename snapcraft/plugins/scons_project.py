@@ -21,11 +21,17 @@ import snapcraft
 
 class SconsPlugin(snapcraft.BasePlugin):
 
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.scons_options = []
+        if options.scons_options:
+            self.scons_options = options.scons_options
+
     def pull(self):
         return self.handle_source_options()
 
     def build(self):
         env = os.environ.copy()
         env['DESTDIR'] = self.installdir
-        return self.run(['scons', 'prefix=/usr']) and \
-            self.run(['scons', 'install'], env=env)
+        return (self.run(['scons', ] + self.scons_options) and
+                self.run(['scons', 'install'], env=env))
