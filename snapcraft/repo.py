@@ -20,7 +20,6 @@ import itertools
 import os
 import string
 import subprocess
-import sys
 import urllib
 import urllib.request
 
@@ -73,7 +72,8 @@ class Ubuntu:
             print('using local sources')
             sources = _get_local_sources_list()
             local = True
-        self.apt_cache = _setup_apt_cache(rootdir, sources, local)
+        self.apt_cache, self.apt_progress = _setup_apt_cache(
+            rootdir, sources, local)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -114,7 +114,7 @@ class Ubuntu:
 
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
-        self.apt_cache.fetch_archives()
+        self.apt_cache.fetch_archives(progress=self.apt_progress)
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
@@ -199,13 +199,7 @@ def _setup_apt_cache(rootdir, sources, local=False):
     for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
         apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
 
-    if not os.isatty(1) and not sys.stdout.line_buffering:
-        # Line buffering makes logs easier to handle; AcquireProgress only
-        # explicitly flushes when not writing a newline.
-        stdout_linebuf = open(os.dup(1), mode='w', buffering=1)
-    else:
-        stdout_linebuf = sys.stdout
-    progress = apt.progress.text.AcquireProgress(outfile=stdout_linebuf)
+    progress = apt.progress.text.AcquireProgress()
     if not os.isatty(1):
         # Make output more suitable for logging.
         progress.pulse = lambda owner: True
@@ -215,7 +209,7 @@ def _setup_apt_cache(rootdir, sources, local=False):
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
     apt_cache.open()
 
-    return apt_cache
+    return apt_cache, progress
 
 
 def _fix_symlinks(debdir):
