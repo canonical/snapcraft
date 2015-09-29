@@ -1,14 +1,22 @@
 import os.path
 
+AddOption('--prefix',
+          dest='prefix',
+          type='string',
+          nargs=1,
+          default='/usr/local',
+          action='store',
+          metavar='DIR',
+          help='installation prefix')
+
 env = Environment()
 hello = env.Program('main.c')
 DESTDIR = os.environ.get('DESTDIR', '')
-install_dir = os.path.join('usr', 'bin')
 
 if DESTDIR:
-   install_dir = os.path.join(DESTDIR, install_dir)
+    install_dir = os.path.join(DESTDIR + os.path.sep + GetOption('prefix'), 'bin')
 else:
-   install_dir = os.path.join(os.path.sep, install_dir)
+    install_dir = os.path.join(GetOption('prefix'), 'bin')
 
-env.Install(install_dir,  hello)
+env.Install(install_dir, hello)
 env.Alias('install', install_dir)

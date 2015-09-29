@@ -34,4 +34,4 @@ class SconsPlugin(snapcraft.BasePlugin):
         env = os.environ.copy()
         env['DESTDIR'] = self.installdir
         return (self.run(['scons', ] + self.scons_options) and
-                self.run(['scons', 'install'], env=env))
+                self.run(['scons', 'install'] + self.scons_options, env=env))
