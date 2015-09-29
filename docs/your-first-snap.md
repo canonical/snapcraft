@@ -104,11 +104,11 @@ Let's start with the web server.
 
     parts:
       cam:
-        type: go-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
 
 You've just defined a `part` inside `parts` named `cam`, but you
-could call it anything. That part has a two options: A `type` option that
+could call it anything. That part has a two options: A `plugin` option that
 tells Snapcraft how to interpret the part (in this case, it's a Go project),
 and a `source` option telling Snapcraft where to download the code.
 
@@ -138,7 +138,7 @@ to make the `cam` part look like:
 
     parts:
       cam:
-        type: go-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
         stage-packages:
           - fswebcam
@@ -185,16 +185,16 @@ Alright, let's put this script in our snap too:
 
     parts:
       cam:
-        type: go-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
         stage-packages:
           - fswebcam
       glue:
-        type: copy
+        plugin: copy
         files:
           webcam-webui: bin/webcam-webui
 
-A part of type `copy` takes a list of files to just directly copy without
+The `copy` plugin takes a list of files to just directly copy without
 building or downloading anything. In this case, we just want to put our glue
 script in the `bin/` directory.
 
@@ -219,7 +219,7 @@ Edit `snapcraft.yaml` once more to make the `cam` part in `parts` to look like:
 
     parts:
       cam:
-        type: go-project
+        plugin: go-project
         source: git://github.com/mikix/golang-static-http
         stage-packages:
           - fswebcam
@@ -234,7 +234,7 @@ Edit `snapcraft.yaml` once more to make the `cam` part in `parts` to look like:
           - $fswebcam
           - $go-server
       glue:
-        type: copy
+        plugin: copy
         files:
           webcam-webui: bin/webcam-webui
 
