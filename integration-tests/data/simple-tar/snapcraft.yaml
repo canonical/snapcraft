@@ -27,6 +27,9 @@ parts:
   evil-slash:
     type: tar-content
     source: evil-slash.tar.gz
+  readonly-files:
+    type: tar-content
+    source: readonly-files.tar.gz
   project:
     type: make-project
     source: project.tar.xz

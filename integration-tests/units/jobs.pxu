@@ -93,7 +93,10 @@ command:
     test -e stage/notopdir
     test -e stage/parent
     test -e stage/slash
+    test -e stage/readonly_file
     test "$(./stage/bin/test)" = "tarproject"
+    # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1500728
+    ${SNAPCRAFT} pull --force
 flags: simple has-leftovers
 
 id: snapcraft/normal/pypi-config
