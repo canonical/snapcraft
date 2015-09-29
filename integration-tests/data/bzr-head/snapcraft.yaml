@@ -7,6 +7,6 @@ icon: icon.png
 
 parts:
     bzr:
-        type: make-project
+        plugin: make-project
         source: .
         source-type: bzr
