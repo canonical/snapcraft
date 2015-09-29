@@ -107,6 +107,14 @@ command:
     test "$(./stage/bin/test)" = "Hello world"
 flags: simple has-leftovers
 
+id: snapcraft/normal/simple-scons
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-scons .
+    ${SNAPCRAFT} stage
+    test "$(./stage/opt/bin/main)" = "Hello world"
+flags: simple has-leftovers
+
 id: snapcraft/normal/simple-make-filesets
 command:
     set -ex

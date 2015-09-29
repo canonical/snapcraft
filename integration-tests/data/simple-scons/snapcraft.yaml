@@ -7,5 +7,7 @@ icon: icon.png
 
 parts:
   scons-project:
+    scons-options:
+      - --prefix=/opt
     plugin: scons-project
     source: .
