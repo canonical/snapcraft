@@ -10,9 +10,9 @@ icon: icon.png
 
 parts:
   spongeshaker:
-    type: python3-project
+    plugin: python3-project
     source: git://github.com/markokr/spongeshaker.git
   sha3:
-    type: copy
+    plugin: copy
     files:
      sha3sum.py: bin/sha3sum

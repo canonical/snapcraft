@@ -7,27 +7,30 @@ icon: icon.png
 
 parts:
   oneflat:
-    type: tar-content
+    plugin: tar-content
     source: oneflat.tar.bz2
   onedeep:
-    type: tar-content
+    plugin: tar-content
     source: onedeep.tar.gz
   nodir:
-    type: tar-content
+    plugin: tar-content
     source: nodir.tar.xz
   flat:
-    type: tar-content
+    plugin: tar-content
     source: flat.tar.xz
   simple:
-    type: tar-content
+    plugin: tar-content
     source: simple.tar.bz2
   evil-parent:
-    type: tar-content
+    plugin: tar-content
     source: evil-parent.tar.gz
   evil-slash:
-    type: tar-content
+    plugin: tar-content
     source: evil-slash.tar.gz
+  readonly-files:
+    plugin: tar-content
+    source: readonly-files.tar.gz
   project:
-    type: make-project
+    plugin: make-project
     source: project.tar.xz
     source-type: tar

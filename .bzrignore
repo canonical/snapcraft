@@ -11,3 +11,4 @@ dist
 .coverage**
 htmlcov
 __pycache__
+docs/**.html
