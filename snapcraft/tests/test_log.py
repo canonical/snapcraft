@@ -24,12 +24,13 @@ from snapcraft import (
 )
 
 
+@mock.patch('os.isatty', return_value=True)
 @mock.patch('sys.stdout', new_callable=io.StringIO)
 @mock.patch('sys.stderr', new_callable=io.StringIO)
 class LogTestCase(tests.TestCase):
 
     def test_configure_must_send_messages_to_stdout(
-            self, mock_stderr, mock_stdout):
+            self, mock_stderr, mock_stdout, mock_isatty):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
@@ -48,7 +49,7 @@ class LogTestCase(tests.TestCase):
         self.assertEqual('', mock_stderr.getvalue())
 
     def test_configure_must_send_errors_to_stderr(
-            self, mock_stderr, mock_stdout):
+            self, mock_stderr, mock_stdout, mock_isatty):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
@@ -65,7 +66,7 @@ class LogTestCase(tests.TestCase):
         self.assertEqual('', mock_stdout.getvalue())
 
     def test_configure_must_log_info_and_higher(
-            self, mock_stderr, mock_stdout):
+            self, mock_stderr, mock_stdout, mock_isatty):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
