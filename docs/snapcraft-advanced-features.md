@@ -59,23 +59,23 @@ paragraph:
 
 	parts:
  	  gopaste:
-    	    type: go-project
+    	    plugin: go-project
             source: git://github.com/wisnij/gopaste/gopasted
 
 It starts off with the name of the specific part (`gopaste` here), the origin
-of the part (it's a `git` URL) and how to build it (type: `go-project`).
+of the part (it's a `git` URL) and how to build it (plugin: `go-project`).
 Other possible scenarios would be Bazaar or Mercurial branches, or local
 directories.
 
 ### Mixing and matching plugins
 
 An interesting example is `py2-project` because it defines only one part
-(`spongeshaker`), but uses plugins of two types (`python2-project` and 
+(`spongeshaker`), but uses two different plugins (`python2-project` and 
 `make-project) to assemble and build the snap:
 
 	parts:
   	  spongeshaker:
-	    type: python2-project
+	    plugin: python2-project
 	    source: git://github.com/markokr/spongeshaker.git
 	  make-project:
 	    source: .
@@ -107,12 +107,12 @@ keyword:
 
 	parts:
 	    pipelinetest:
-	        type: make-project
+	        plugin: make-project
 	        source: lp:~mterry/+junk/pipelinetest
 	        after:
 	            - libpipeline
 	    libpipeline:
-	        type: autotools-project
+	        plugin: autotools-project
 	        source: lp:~mterry/libpipeline/printf
 
 
