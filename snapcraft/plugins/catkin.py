@@ -29,7 +29,8 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
     def __init__ (self, name, options):
         self.rosversion = options.rosversion or 'jade'
-        self.package = options.catkin_pkg or 'jade'
+        self.packages = options.catkin_packages
+        self.dependencies = []
         self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-ros-core')
         super().__init__(name, options)
 
@@ -75,26 +76,36 @@ class CatkinPlugin (snapcraft.BasePlugin):
         ]):
             return False
 
-        if not self.rosrun([
-                'catkin_make',
-                '--pkg', self.package,
-                '--directory', self.builddir, 
-                '--cmake-args',
-                # Setting the ROS paths
-                '-DCATKIN_DEVEL_PREFIX={}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion)),
-                '-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir),
-                # Finding CMake Macros
-                '-Dcatkin_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'catkin', 'cmake')),
-                '-Droscpp_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'roscpp', 'cmake')),
-                '-Drospy_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'rospy', 'cmake')),
-                '-Dgenmsg_DIR={0}'.format(os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'share', 'genmsg', 'cmake')),
-                # Compiler fun
-                '-DCMAKE_C_FLAGS="$CFLAGS"',
-                '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
-                '-DCMAKE_LD_FLAGS="$LDFLAGS"',
-                '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
-                '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
-            ]):
+        catkincmd = ['catkin_make']
+
+        for pkg in self.packages:
+            catkincmd.append('--pkg')
+            catkincmd.append(pkg)
+
+        # Define the location
+        catkincmd.extend(['--directory', self.builddir])
+
+        # Start the CMake Commands
+        catkincmd.append('--cmake-args')
+
+        # CMake directories
+        catkincmd.append('-DCATKIN_DEVEL_PREFIX={}'.format(self.rosdir))
+        catkincmd.append('-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir))
+
+        # Dep CMake files
+        for dep in ['catkin', 'roscpp', 'rospy', 'genmsg'] + self.dependencies:
+            catkincmd.append('-D{0}_DIR={1}'.format(dep, os.path.join(self.rosdir, 'share', dep, 'cmake')))
+
+        # Compiler fun
+        catkincmd.extend([
+            '-DCMAKE_C_FLAGS="$CFLAGS"',
+            '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
+            '-DCMAKE_LD_FLAGS="$LDFLAGS"',
+            '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
+            '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
+        ])
+
+        if not self.rosrun(catkincmd):
             return False
 
         if not self.rosrun(['catkin_make', 'install']):
