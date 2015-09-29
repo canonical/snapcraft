@@ -142,6 +142,9 @@ class Tar(Base):
             shutil.rmtree(dst)
             os.makedirs(dst)
 
+        return self._extract(tarball, dst)
+
+    def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
             def filter_members(tar):
                 """Filters members and member names:
@@ -168,6 +171,8 @@ class Tar(Base):
                         m.name = m.name[len(common + "/"):]
                     # strip leading "/", "./" or "../" as many times as needed
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    # We mask all files to be writable to be able to easily
+                    # extract on top.
                     m.mode = m.mode | 0o222
                     yield m
 
