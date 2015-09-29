@@ -193,6 +193,11 @@ def _setup_apt_cache(rootdir, sources, local=False):
     with open(srcfile, 'w') as f:
         f.write(sources)
 
+    # Make sure we always use the system GPG configuration, even with
+    # apt.Cache(rootdir).
+    for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
+        apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
+
     progress = apt.progress.text.AcquireProgress()
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
