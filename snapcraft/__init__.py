@@ -16,6 +16,7 @@
 
 import logging
 import os
+import re
 
 import snapcraft.common
 import snapcraft.sources
@@ -150,6 +151,8 @@ def _get_source_type_from_uri(source):
         source_type = 'bzr'
     elif source.startswith("git:"):
         source_type = 'git'
+    elif re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$').match(source):
+        source_type = 'tar'
     elif snapcraft.common.isurl(source):
         raise ValueError()
 

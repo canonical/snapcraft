@@ -57,6 +57,19 @@ class TestBasePlugin(tests.TestCase):
         plugin.makedirs(path)
         self.assertTrue(os.path.exists(path))
 
+    def test_get_tar_source_from_uri(self):
+        sources = [
+            'https://golang.tar.gz',
+            'https://golang.tar.xz',
+            'https://golang.tar.bz2',
+            'https://golang.tar.tgz',
+        ]
+
+        for source in sources:
+            with self.subTest(key=source):
+                self.assertEqual(
+                    snapcraft._get_source_type_from_uri(source), 'tar')
+
 
 class GetSourceWithBranches(tests.TestCase):
 
