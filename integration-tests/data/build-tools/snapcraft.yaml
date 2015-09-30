@@ -7,6 +7,7 @@ icon: icon.svg
 
 parts:
   make-project:
+    plugin: make-project
     source: .
     stage-packages:
       - libxml2-dev
