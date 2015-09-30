@@ -41,6 +41,7 @@ class RosCorePlugin(snapcraft.BasePlugin):
             f.write('source ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
             f.write('export PYTHONPATH={}:$PYTHONPATH\n'.format(os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'lib', 'python2.7', 'dist-packages')))
             f.write('exec ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'bin', 'rosmaster') + '\n')
+        self.run(['chmod', '+x', os.path.join(self.installdir, 'bin', self.name + '-rosmaster-service')])
         return True
 
     def snap_fileset (self):
