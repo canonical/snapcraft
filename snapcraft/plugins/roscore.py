@@ -36,16 +36,21 @@ class RosCorePlugin(snapcraft.BasePlugin):
 
     def build(self):
         os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
-        with open(os.path.join(self.installdir, 'bin', self.name + '-rosmaster-service'), 'w') as f:
+        ros_dir = os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion)
+        service_wrapper = os.path.join(
+            self.installdir, 'bin', '{}-rosmaster-service'.format(self.name))
+
+        with open(os.path.join(service_wrapper), 'w') as f:
             f.write('#!/bin/bash\n')
-            f.write('_CATKIN_SETUP_DIR=' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion) + '\n')
-            f.write('source ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
-            f.write('export PYTHONPATH={}:$PYTHONPATH\n'.format(os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'lib', 'python2.7', 'dist-packages')))
-            f.write('exec ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'bin', 'rosmaster') + '\n')
-        self.run(['chmod', '+x', os.path.join(self.installdir, 'bin', self.name + '-rosmaster-service')])
+            f.write('_CATKIN_SETUP_DIR={}\n'.format(ros_dir))
+            f.write('source {}/setup.bash\n'.format(ros_dir))
+            f.write('export PYTHONPATH={}:$PYTHONPATH\n'.format(os.path.join(ros_dir, 'lib', 'python2.7', 'dist-packages')))
+            f.write('exec {}/bin/rosmaster\n'.format(ros_dir))
+
+        os.chmod(service_wrapper, 0o755)
         return True
 
-    def snap_fileset (self):
+    def snap_fileset(self):
         return ([
             os.path.join('bin', self.name + '-rosmaster-service'),
             '-opt/ros/' + self.rosversion + '/share/*/cmake/*',
