@@ -1,6 +1,6 @@
 name: ros-example
 version: 1.0
-vendor: Number Nine <number-nine@is-alive.com>
+vendor: Number Five <number-five@is-alive.com>
 summary: A robot example
 icon: icon.svg
 description: A really small ros examples
@@ -11,10 +11,11 @@ parts:
   catkin-tutorials:
     source: .
     type: catkin
-    catkin-pkg: beginner_tutorials
+    catkin-packages:
+      - beginner_tutorials
 
 binaries:
   listener:
-    exec: opt/ros/jade/lib/beginner_tutorials/listener
+    exec: opt/ros/indigo/lib/beginner_tutorials/listener
   talker:
-    exec: opt/ros/jade/lib/beginner_tutorials/talker
+    exec: opt/ros/indigo/lib/beginner_tutorials/talker

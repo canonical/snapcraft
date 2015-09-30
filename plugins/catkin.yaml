@@ -2,7 +2,7 @@ module: catkin
 options:
   rosversion:
     required: false
-  catkin-pkg:
+  catkin-packages:
     required: true
   source:
     required: true

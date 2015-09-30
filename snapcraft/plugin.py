@@ -185,15 +185,15 @@ class PluginHandler:
         if run_setup_stage_packages or run_pull:
             self.notify_stage("Pulling")
 
+        if run_pull:
+            if not getattr(self.code, 'pull')():
+                return False
+
         if run_setup_stage_packages:
             try:
                 self.code.setup_stage_packages()
             except repo.PackageNotFoundError as e:
                 logger.error(e.message)
-                return False
-
-        if run_pull:
-            if not getattr(self.code, 'pull')():
                 return False
 
         self.mark_done('pull')
@@ -213,7 +213,7 @@ class PluginHandler:
 
     def _migratable_fileset_for(self, stage):
         plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset = getattr(self.code.options, stage, []) or []
         fileset.extend(plugin_fileset)
         return migratable_filesets(fileset, self.installdir)
 
@@ -244,6 +244,11 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
+
+        if self.code and hasattr(self.code, 'stage'):
+            if not getattr(self.code, 'stage')():
+                return False
+
         self._organize()
         snap_files, snap_dirs = self._migratable_fileset_for('stage')
 
