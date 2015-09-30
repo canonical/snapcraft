@@ -55,6 +55,10 @@ properties:
   config:
     type: string
     description: path to a configure hook to expose configuration for the package
+  framework-policy:
+    type: string
+    description: framework policies to add to the package
+    format: file-path
   services:
     type: object
     additionalProperties: false
