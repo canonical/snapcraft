@@ -39,6 +39,7 @@ class RosCorePlugin(snapcraft.BasePlugin):
             f.write('#!/bin/bash\n')
             f.write('_CATKIN_SETUP_DIR=' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion) + '\n')
             f.write('source ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
+            f.write('export PYTHONPATH={}:$PYTHONPATH\n'.format(os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'lib', 'python2.7', 'dist-packages')))
             f.write('exec ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'bin', 'rosmaster') + '\n')
         return True
 
