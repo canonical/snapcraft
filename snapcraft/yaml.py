@@ -65,6 +65,10 @@ class SnapcraftSchemaError(Exception):
         self._message = message
 
 
+class PluginNotDefinedError(Exception):
+    pass
+
+
 class Config:
 
     def __init__(self):
@@ -80,9 +84,10 @@ class Config:
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.get("plugin", part_name)
-            if "plugin" in properties:
-                del properties["plugin"]
+            plugin_name = properties.pop("plugin", None)
+            # TODO search the wiki
+            if not plugin_name:
+                raise PluginNotDefinedError
 
             if "after" in properties:
                 after_requests[part_name] = properties["after"]

@@ -7,4 +7,5 @@ icon: icon.png
 
 parts:
     x-local-plugin:
+      plugin: x-local-plugin
       source: .
