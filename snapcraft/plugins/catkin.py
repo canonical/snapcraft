@@ -25,9 +25,6 @@ import snapcraft
 class CatkinPlugin (snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
-        'gcc',
-        'g++',
-        'libstdc++-4.8-dev',
     ]
 
     _PLUGIN_STAGE_SOURCES = ('deb http://packages.ros.org/ros/ubuntu/ trusty main\n'
@@ -47,17 +44,21 @@ class CatkinPlugin (snapcraft.BasePlugin):
             'DESTDIR={0}'.format(self.installdir),
             # ROS needs it but doesn't set it :-/
             'CPPFLAGS="-std=c++11 $CPPFLAGS -I{0} -I{1}"'.format(
-                os.path.join(root, 'usr', 'include', 'c++', '4.8'),
+                os.path.join(root, 'usr', 'include', 'c++', self.gcc_version),
                 os.path.join(root, 'usr', 'include',
-                             snapcraft.common.get_arch_triplet(), 'c++', '4.8')),
+                             snapcraft.common.get_arch_triplet(), 'c++', self.gcc_version)),
             'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(root, self.rosversion),
             '_CATKIN_SETUP_DIR=' + os.path.join(root, 'opt', 'ros', self.rosversion),
-            'if test -e {0}; then\nsource {0}\nfi'.format(os.path.join(root, 'opt', 'ros', self.rosversion, 'setup.sh'))
+            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(os.path.join(root, 'opt', 'ros', self.rosversion, 'setup.sh'))
         ]
 
     @property
     def python_version(self):
         return self.run_output(['pyversions', '-i'])
+
+    @property
+    def gcc_version(self):
+        return self.run_output(['gcc', '-dumpversion'])
 
     @property
     def rosdir(self):
@@ -84,7 +85,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
             self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
 
             if dep == 'roscpp':
-                self._PLUGIN_STAGE_PACKAGES.extend(['g++', 'libstdc++-4.8-dev'])
+                self._PLUGIN_STAGE_PACKAGES.extend(['g++'])
 
         return True
 
