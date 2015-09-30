@@ -36,6 +36,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         self.rosversion = options.rosversion if options.rosversion else 'indigo'
         self.packages = options.catkin_packages
         self.dependencies = ['ros-core']
+        self.package_deps_found = False
         super().__init__(name, options)
 
     def env(self, root):
@@ -48,6 +49,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 os.path.join(root, 'usr', 'include',
                              snapcraft.common.get_arch_triplet(), 'c++', self.gcc_version)),
             'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(root, self.rosversion),
+            'ROS_MASTER_URI=http://localhost:11311',
             '_CATKIN_SETUP_DIR=' + os.path.join(root, 'opt', 'ros', self.rosversion),
             'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(os.path.join(root, 'opt', 'ros', self.rosversion, 'setup.sh'))
         ]
@@ -64,9 +66,9 @@ class CatkinPlugin (snapcraft.BasePlugin):
     def rosdir(self):
         return os.path.join(self.installdir, 'opt', 'ros', self.rosversion)
 
-    def pull(self):
-        if not self.handle_source_options():
-            return False
+    def find_package_deps(self):
+        if self.package_deps_found:
+            return
 
         # Look for a package definition and pull deps if there are any
         for pkg in self.packages:
@@ -79,6 +81,14 @@ class CatkinPlugin (snapcraft.BasePlugin):
                             self.dependencies.append(dep.text)
             except:
                 pass
+
+        self.package_deps_found = True
+
+    def pull(self):
+        if not self.handle_source_options():
+            return False
+
+        self.find_package_deps()
 
         # Make sure we get the ROS package for our dependencies
         for dep in self.dependencies:
@@ -122,6 +132,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         catkincmd.append('-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir))
 
         # Dep CMake files
+        self.find_package_deps()
         for dep in self.dependencies:
             catkincmd.append('-D{0}_DIR={1}'.format(dep, os.path.join(self.rosdir, 'share', dep, 'cmake')))
 
