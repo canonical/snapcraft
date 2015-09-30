@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import lxml.etree
 import os
 import shutil
 import tempfile
@@ -35,10 +36,9 @@ class CatkinPlugin (snapcraft.BasePlugin):
                              'deb http://archive.ubuntu.com/ubuntu/ trusty-security main universe\n')
 
     def __init__(self, name, options):
-        self.rosversion = options.rosversion or 'jade'
+        self.rosversion = options.rosversion if options.rosversion else 'indigo'
         self.packages = options.catkin_packages
-        self.dependencies = []
-        self._PLUGIN_STAGE_PACKAGES.extend(['ros-' + self.rosversion + '-ros-core', ])
+        self.dependencies = ['ros-core']
         super().__init__(name, options)
 
     def env(self, root):
@@ -65,7 +65,24 @@ class CatkinPlugin (snapcraft.BasePlugin):
         if not self.handle_source_options():
             return False
 
-        # Look for a package definition
+        # Look for a package definition and pull deps if there are any
+        for pkg in self.packages:
+            try:
+                with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
+                    tree = lxml.etree.parse(f)
+
+                    for deptype in ['buildtool_depend', 'build_depend', 'run_depend']:
+                        for dep in tree.xpath('/package/' + deptype):
+                            self.dependencies.append(dep.text)
+            except:
+                pass
+
+        # Make sure we get the ROS package for our dependencies
+        for dep in self.dependencies:
+            self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
+
+            if dep == 'roscpp':
+                self._PLUGIN_STAGE_PACKAGES.extend(['g++', 'libstdc++-4.8-dev'])
 
         return True
 
@@ -104,7 +121,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         catkincmd.append('-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir))
 
         # Dep CMake files
-        for dep in ['catkin', 'roscpp', 'rospy', 'genmsg'] + self.dependencies:
+        for dep in self.dependencies:
             catkincmd.append('-D{0}_DIR={1}'.format(dep, os.path.join(self.rosdir, 'share', dep, 'cmake')))
 
         # Compiler fun
