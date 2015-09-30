@@ -14,14 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import lxml.etree
 import os
-import sys
+import shutil
 import tempfile
-from lxml import etree
+
 import snapcraft
 
+
 class CatkinPlugin (snapcraft.BasePlugin):
+
     _PLUGIN_STAGE_PACKAGES = [
+        'gcc',
+        'g++',
+        'libstdc++-4.8-dev',
     ]
 
     _PLUGIN_STAGE_SOURCES = ('deb http://packages.ros.org/ros/ubuntu/ trusty main\n'
@@ -29,8 +35,8 @@ class CatkinPlugin (snapcraft.BasePlugin):
                              'deb http://archive.ubuntu.com/ubuntu/ trusty-updates main universe\n'
                              'deb http://archive.ubuntu.com/ubuntu/ trusty-security main universe\n')
 
-    def __init__ (self, name, options):
-        self.rosversion = options.rosversion or 'indigo'
+    def __init__(self, name, options):
+        self.rosversion = options.rosversion if options.rosversion else 'indigo'
         self.packages = options.catkin_packages
         self.dependencies = ['ros-core']
         super().__init__(name, options)
@@ -39,7 +45,12 @@ class CatkinPlugin (snapcraft.BasePlugin):
         return [
             'PYTHONPATH={0}'.format(os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')),
             'DESTDIR={0}'.format(self.installdir),
-            'CPPFLAGS="-std=c++11 $CPPFLAGS -I{0} -I{1}"'.format(os.path.join(root, 'usr', 'include', 'c++', '4.8'), os.path.join(root, 'usr', 'include', snapcraft.common.get_arch_triplet(), 'c++', '4.8')), # ROS needs it but doesn't set it :-/
+            # ROS needs it but doesn't set it :-/
+            'CPPFLAGS="-std=c++11 $CPPFLAGS -I{0} -I{1}"'.format(
+                os.path.join(root, 'usr', 'include', 'c++', '4.8'),
+                os.path.join(root, 'usr', 'include',
+                             snapcraft.common.get_arch_triplet(), 'c++', '4.8')),
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}/opt/ros/indigo/lib'.format(root),
         ]
 
     @property
@@ -50,9 +61,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
     def rosdir(self):
         return os.path.join(self.installdir, 'opt', 'ros', self.rosversion)
 
-
     def pull(self):
-        # Get the source code
         if not self.handle_source_options():
             return False
 
@@ -60,7 +69,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         for pkg in self.packages:
             try:
                 with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
-                    tree = etree.parse(f)
+                    tree = lxml.etree.parse(f)
 
                     for deptype in ['buildtool_depend', 'build_depend', 'run_depend']:
                         for dep in tree.xpath('/package/' + deptype):
@@ -73,7 +82,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
             self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
 
             if dep == 'roscpp':
-                self._PLUGIN_STAGE_PACKAGES.append('g++')
+                self._PLUGIN_STAGE_PACKAGES.extend(['g++', 'libstdc++-4.8-dev'])
 
         return True
 
@@ -130,10 +139,19 @@ class CatkinPlugin (snapcraft.BasePlugin):
         if not self.rosrun(['catkin_make', 'install']):
             return False
 
+        # the hacks
         if not self.run(['find', self.installdir, '-name', '*.cmake', '-delete']):
             return False
-        
-        if not self.run(['rm', '-f', 'opt/ros/' + self.rosversion + '/.catkin', 'opt/ros/' + self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion + '/setup.sh', 'opt/ros/' + self.rosversion + '/_setup_util.py', 'usr/bin/xml2-config'], cwd=self.installdir):
+
+        if not self.run(
+            ['rm', '-f', 'opt/ros/' +
+             self.rosversion + '/.catkin', 'opt/ros/' +
+             self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion +
+             '/setup.sh', 'opt/ros/' + self.rosversion +
+             '/_setup_util.py'], cwd=self.installdir):
             return False
+
+        shutil.rmtree(os.path.join(self.installdir, 'home'))
+        os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
 
         return True

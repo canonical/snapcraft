@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import io
+import os
 import sys
 
 
@@ -36,14 +38,22 @@ class _StderrFilter(logging.Filter):
 
 
 def configure(logger_name=None):
+    if not os.isatty(1) and not sys.stdout.line_buffering:
+        # Line buffering makes logs easier to handle.
+        sys.stdout.flush()
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.detach(), encoding='UTF-8', line_buffering=True)
+
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     stdout_handler.addFilter(_StdoutFilter())
     stderr_handler = logging.StreamHandler(stream=sys.stderr)
     stderr_handler.addFilter(_StderrFilter())
     handlers = [stdout_handler, stderr_handler]
 
-    formatter = logging.Formatter(
-        _COLOR_BOLD + '{message}' + _COLOR_END, style='{')
+    fmt = '{message}'
+    if os.isatty(1):
+        fmt = _COLOR_BOLD + fmt + _COLOR_END
+    formatter = logging.Formatter(fmt, style='{')
     logger = logging.getLogger(logger_name)
     for handler in handlers:
         handler.setFormatter(formatter)

@@ -32,12 +32,12 @@ of software or data that the snap package requires to work or to
 build other parts. Each part is managed by a snapcraft plugin and parts
 are usually independent of each other.
 
-## Type of a Part
+## Plugin
 
-Each part has a `type` associated to it, this `type` provides the mechanism
-to handle it. The `type` a part has is extendable through plugins, there are
-a variety of plugins already included for python 2 and 3, go, java, and cmake or
-autotools based projects.
+Each part has a `plugin` associated to it, this `plugin` provides the mechanism
+to handle it. Parts are driven through plugins, there are a variety of plugins
+already included for python 2 and 3, go, java, and cmake or autotools based
+projects.
 
 ## Lifecycle
 
@@ -51,7 +51,7 @@ like the Java SDK. Snapcraft will create a `parts/` directory with
 sub-directories like `parts/part-name/src` for each part that contains
 the downloaded content.
 
-#### Build
+### Build
 
 The next step is that each part is built in its `parts/part-name/build`
 directory and installs itself into `parts/part-name/install`.

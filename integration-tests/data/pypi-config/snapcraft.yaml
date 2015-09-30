@@ -12,5 +12,5 @@ config: usr/bin/config.py
 
 parts:
   config:
-    type: python3-project
+    plugin: python3-project
     source: .

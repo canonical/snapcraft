@@ -7,6 +7,6 @@ icon: icon.png
 
 parts:
   copy-example:
-    type: copy
+    plugin: copy
     files:
       src: dst

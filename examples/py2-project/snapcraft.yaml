@@ -10,7 +10,7 @@ icon: icon.png
 
 parts:
   spongeshaker:
-    type: python2-project
+    plugin: python2-project
     source: git://github.com/markokr/spongeshaker.git
   make-project:
     source: .

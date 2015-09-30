@@ -1,12 +1,13 @@
 name: test-package
 version: 0.1
 vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
-summary: one line summary
+summary: test a simple scons project
 description: a longer description
 icon: icon.png
 
 parts:
-    bzr:
-        plugin: make-project
-        source: .
-        source-type: bzr
+  scons-project:
+    scons-options:
+      - --prefix=/opt
+    plugin: scons-project
+    source: .

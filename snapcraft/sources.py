@@ -17,6 +17,7 @@
 import logging
 import os
 import os.path
+import shutil
 import tarfile
 import re
 
@@ -130,13 +131,20 @@ class Tar(Base):
         else:
             return True
 
-    def provision(self, dst):
+    def provision(self, dst, clean_target=True):
         # TODO add unit tests.
         if snapcraft.common.isurl(self.source):
             tarball = os.path.join(self.source_dir, os.path.basename(self.source))
         else:
             tarball = os.path.abspath(self.source)
 
+        if clean_target:
+            shutil.rmtree(dst)
+            os.makedirs(dst)
+
+        return self._extract(tarball, dst)
+
+    def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
             def filter_members(tar):
                 """Filters members and member names:
@@ -163,6 +171,9 @@ class Tar(Base):
                         m.name = m.name[len(common + "/"):]
                     # strip leading "/", "./" or "../" as many times as needed
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    # We mask all files to be writable to be able to easily
+                    # extract on top.
+                    m.mode = m.mode | 0o222
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)

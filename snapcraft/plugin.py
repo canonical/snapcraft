@@ -288,7 +288,7 @@ class PluginHandler:
 
     def env(self, root):
         if self.code and hasattr(self.code, 'env'):
-            return getattr(self.code, 'env')(root)
+            return self.code.env(root)
         return []
 
 

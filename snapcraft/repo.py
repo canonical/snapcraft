@@ -63,11 +63,17 @@ class UnpackError(Exception):
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
-        sources = sources or _DEFAULT_SOURCES
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
-        self.apt_cache = _setup_apt_cache(rootdir, sources)
         self.recommends = recommends
+        sources = sources or _DEFAULT_SOURCES
+        local = False
+        if 'SNAPCRAFT_LOCAL_SOURCES' in os.environ:
+            print('using local sources')
+            sources = _get_local_sources_list()
+            local = True
+        self.apt_cache, self.apt_progress = _setup_apt_cache(
+            rootdir, sources, local)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -108,7 +114,7 @@ class Ubuntu:
 
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
-        self.apt_cache.fetch_archives()
+        self.apt_cache.fetch_archives(progress=self.apt_progress)
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
@@ -133,6 +139,18 @@ class Ubuntu:
         return manifest_dep_names
 
 
+def _get_local_sources_list():
+    sources_list = glob.glob('/etc/apt/sources.list.d/*.list')
+    sources_list.append('/etc/apt/sources.list')
+
+    sources = ''
+    for source in sources_list:
+        with open(source) as f:
+            sources += f.read()
+
+    return sources
+
+
 def _get_geoip_country_code_prefix():
     try:
         with urllib.request.urlopen(_GEOIP_SERVER) as f:
@@ -144,12 +162,13 @@ def _get_geoip_country_code_prefix():
         return cc.text.lower()
     except (ElementTree.ParseError, urllib.error.URLError):
         pass
-    return ""
+    return ''
 
 
 def _format_sources_list(sources, arch, release='vivid'):
     if arch in ('amd64', 'i386'):
-        prefix = _get_geoip_country_code_prefix() + '.archive'
+        geoip_prefix = _get_geoip_country_code_prefix()
+        prefix = geoip_prefix + '.archive' if geoip_prefix else 'archive'
         suffix = 'ubuntu'
         security = 'security'
     else:
@@ -165,19 +184,32 @@ def _format_sources_list(sources, arch, release='vivid'):
     })
 
 
-def _setup_apt_cache(rootdir, sources):
+def _setup_apt_cache(rootdir, sources, local=False):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
+    if not local:
+        sources = _format_sources_list(sources, snapcraft.common.get_arch())
+
     with open(srcfile, 'w') as f:
-        f.write(_format_sources_list(sources, snapcraft.common.get_arch()))
+        f.write(sources)
+
+    # Make sure we always use the system GPG configuration, even with
+    # apt.Cache(rootdir).
+    for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
+        apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
 
     progress = apt.progress.text.AcquireProgress()
+    if not os.isatty(1):
+        # Make output more suitable for logging.
+        progress.pulse = lambda owner: True
+        progress._width = 0
+
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
     apt_cache.open()
 
-    return apt_cache
+    return apt_cache, progress
 
 
 def _fix_symlinks(debdir):

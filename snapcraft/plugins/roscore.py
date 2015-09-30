@@ -17,6 +17,7 @@
 import snapcraft
 import os
 
+
 class RosCorePlugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
@@ -27,12 +28,12 @@ class RosCorePlugin(snapcraft.BasePlugin):
                              'deb http://archive.ubuntu.com/ubuntu/ trusty-updates main universe\n'
                              'deb http://archive.ubuntu.com/ubuntu/ trusty-security main universe\n')
 
-    def __init__ (self, name, options):
-        self.rosversion = options.rosversion or 'indigo'
+    def __init__(self, name, options):
+        self.rosversion = options.rosversion if options.rosversion else 'indigo'
         self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-ros-core')
         super().__init__(name, options)
 
-    def build (self):
+    def build(self):
         os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
         with open(os.path.join(self.installdir, 'bin', self.name + '-rosmaster-service'), 'w') as f:
             f.write('#!/bin/bash\n')
@@ -52,12 +53,12 @@ class RosCorePlugin(snapcraft.BasePlugin):
             '-opt/ros/' + self.rosversion + '/_setup_util.py'
         ])
 
-    def snap (self, config={}):
-        if not 'services' in config.data:
+    def snap(self, config={}):
+        if 'services' not in config.data:
             config.data['services'] = {}
 
         rosserv = {
-            'start': os.path.join('bin', self.name + '-rosemaster-service'),
+            'start': os.path.join('bin', self.name + '-rosmaster-service'),
             'description': 'ROS Master service',
             'ports': {
                 'internal': {

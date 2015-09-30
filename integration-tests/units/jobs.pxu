@@ -1,6 +1,4 @@
 id: snapcraft/normal/no-yaml
-plugin: shell
-estimated_duration: 0.1
 command:
     set -x
     OUTPUT=$(${SNAPCRAFT} pull 2>&1)
@@ -9,17 +7,14 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/no-yaml-run
-plugin: shell
-estimated_duration: 0.1
 command:
     set -x
     OUTPUT=$(${SNAPCRAFT} run 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
+flags: simple has-leftovers
 
 id: snapcraft/normal/assemble-meta-externally
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
@@ -30,8 +25,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/assemble-meta
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
@@ -52,9 +45,18 @@ command:
     fi
 flags: simple has-leftovers
 
+id: snapcraft/normal/assemble-meta-with-policy
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/framework-policy .
+    ${SNAPCRAFT} assemble
+    test -e ./snap/meta/framework-policy/a
+    test -e ./snap/meta/framework-policy/b
+    test -e ./snap/one
+    test ! -e ./snap/dir
+flags: simple has-leftovers
+
 id: snapcraft/normal/local-source
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-source .
@@ -66,8 +68,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/local-plugin
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-plugin .
@@ -76,8 +76,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-tar
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-tar .
@@ -93,12 +91,13 @@ command:
     test -e stage/notopdir
     test -e stage/parent
     test -e stage/slash
+    test -e stage/readonly_file
     test "$(./stage/bin/test)" = "tarproject"
+    # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1500728
+    ${SNAPCRAFT} pull --force
 flags: simple has-leftovers
 
 id: snapcraft/normal/pypi-config
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/pypi-config .
@@ -112,8 +111,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
@@ -121,9 +118,15 @@ command:
     test "$(./stage/bin/test)" = "Hello world"
 flags: simple has-leftovers
 
+id: snapcraft/normal/simple-scons
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-scons .
+    ${SNAPCRAFT} stage
+    test "$(./stage/opt/bin/main)" = "Hello world"
+flags: simple has-leftovers
+
 id: snapcraft/normal/simple-make-filesets
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make-filesets .
@@ -141,8 +144,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make-clean
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
@@ -161,8 +162,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-cmake
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-cmake .
@@ -171,8 +170,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-copy
-plugin: shell
-estimated_duration: 0.5
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-copy .
@@ -181,8 +178,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/conflicts
-plugin: shell
-estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
@@ -192,8 +187,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
@@ -205,8 +198,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies-circular
-plugin: shell
-estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
@@ -217,8 +208,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies-fail
-plugin: shell
-estimated_duration: 0.3
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
@@ -228,8 +217,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/bzr-head
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-head .
@@ -244,8 +231,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/bzr-tag
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/bzr-tag .
@@ -261,8 +246,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/git-head
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-head .
@@ -278,8 +261,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/git-tag
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-tag .
@@ -296,8 +277,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/git-branch
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/git-branch .
@@ -317,8 +296,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/hg-head
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/hg-head .
@@ -334,8 +311,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/hg-tag
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/hg-tag .
@@ -352,8 +327,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/hg-branch
-plugin: shell
-estimated_duration: 0.3
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/hg-branch .
@@ -371,8 +344,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/pip-requirements
-plugin: shell
-estimated_duration: 60
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/pip-requirements .
@@ -382,8 +353,6 @@ command:
 flags: simple has-leftovers
 
 id: snapcraft/normal/build-tool-paths
-plugin: shell
-estimated_duration: 30
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/build-tools .

@@ -1,21 +1,22 @@
 name: ros-example
 version: 1.0
-vendor: Number Five <number-five@is-alive.com>
+vendor: Number Nine <number-nine@is-alive.com>
 summary: A robot example
 icon: icon.svg
 description: A really small ros examples
-
-parts:
-  roscore:
-    type: roscore
-  catkin-tutorials:
-    source: .
-    type: catkin
-    catkin-packages:
-      - beginner_tutorials
-
 binaries:
   listener:
     exec: opt/ros/indigo/lib/beginner_tutorials/listener
   talker:
     exec: opt/ros/indigo/lib/beginner_tutorials/talker
+
+parts:
+  roscore:
+    plugin: roscore
+    rosversion: indigo
+  catkin-tutorials:
+    plugin: catkin
+    source: .
+    rosversion: indigo
+    catkin-packages:
+      - beginner_tutorials
