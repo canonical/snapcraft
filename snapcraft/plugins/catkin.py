@@ -50,7 +50,9 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 os.path.join(root, 'usr', 'include', 'c++', '4.8'),
                 os.path.join(root, 'usr', 'include',
                              snapcraft.common.get_arch_triplet(), 'c++', '4.8')),
-            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}/opt/ros/indigo/lib'.format(root),
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(root, self.rosversion),
+            '_CATKIN_SETUP_DIR=' + os.path.join(root, 'opt', 'ros', self.rosversion),
+            'if test -e {0}; then\nsource {0}\nfi'.format(os.path.join(root, 'opt', 'ros', self.rosversion, 'setup.sh'))
         ]
 
     @property
@@ -89,8 +91,6 @@ class CatkinPlugin (snapcraft.BasePlugin):
     def rosrun(self, commandlist, cwd=None):
         with tempfile.NamedTemporaryFile(mode='w') as f:
             f.write('set -ex\n')
-            f.write('_CATKIN_SETUP_DIR=' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion) + '\n')
-            f.write('source ' + os.path.join(self.installdir, 'opt', 'ros', self.rosversion, 'setup.bash') + '\n')
             f.write('exec {}\n'.format(' '.join(commandlist)))
             f.flush()
 
