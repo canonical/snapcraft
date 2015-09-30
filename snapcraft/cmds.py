@@ -362,8 +362,8 @@ def _load_config():
         sys.exit(1)
     except snapcraft.yaml.PluginNotDefinedError as e:
         logger.error(
-            'Issues while validating snapcraft.yaml: the plugin has not been '
-            'and wiki support for the feature is still in progress.')
+            'Issues while validating snapcraft.yaml: the plugin keyword is '
+            'missing and wiki support for the feature is still in progress.')
         sys.exit(1)
     except snapcraft.yaml.SnapcraftLogicError as e:
         logger.error('Issue detected while analyzing snapcraft.yaml: {}'.format(e.message))

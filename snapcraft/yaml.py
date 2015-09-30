@@ -84,10 +84,7 @@ class Config:
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.get("plugin", None)
-            if "plugin" in properties:
-                del properties["plugin"]
-
+            plugin_name = properties.pop("plugin", None)
             # TODO search the wiki
             if not plugin_name:
                 raise PluginNotDefinedError
