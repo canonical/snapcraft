@@ -72,7 +72,8 @@ class Ubuntu:
             print('using local sources')
             sources = _get_local_sources_list()
             local = True
-        self.apt_cache = _setup_apt_cache(rootdir, sources, local)
+        self.apt_cache, self.apt_progress = _setup_apt_cache(
+            rootdir, sources, local)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -113,7 +114,7 @@ class Ubuntu:
 
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
-        self.apt_cache.fetch_archives()
+        self.apt_cache.fetch_archives(progress=self.apt_progress)
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
@@ -193,12 +194,22 @@ def _setup_apt_cache(rootdir, sources, local=False):
     with open(srcfile, 'w') as f:
         f.write(sources)
 
+    # Make sure we always use the system GPG configuration, even with
+    # apt.Cache(rootdir).
+    for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
+        apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
+
     progress = apt.progress.text.AcquireProgress()
+    if not os.isatty(1):
+        # Make output more suitable for logging.
+        progress.pulse = lambda owner: True
+        progress._width = 0
+
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
     apt_cache.open()
 
-    return apt_cache
+    return apt_cache, progress
 
 
 def _fix_symlinks(debdir):

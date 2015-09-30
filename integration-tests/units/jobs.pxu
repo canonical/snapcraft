@@ -45,6 +45,17 @@ command:
     fi
 flags: simple has-leftovers
 
+id: snapcraft/normal/assemble-meta-with-policy
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/framework-policy .
+    ${SNAPCRAFT} assemble
+    test -e ./snap/meta/framework-policy/a
+    test -e ./snap/meta/framework-policy/b
+    test -e ./snap/one
+    test ! -e ./snap/dir
+flags: simple has-leftovers
+
 id: snapcraft/normal/local-source
 command:
     set -ex
