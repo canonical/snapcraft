@@ -86,6 +86,10 @@ class Config:
 
             plugin_name = properties.pop("plugin", None)
             # TODO search the wiki
+            if not plugin_name and 'type' in properties:
+                plugin_name = properties.pop('type')
+                logger.warning('DEPRECATED: Use "plugin" instead of "type"')
+
             if not plugin_name:
                 raise PluginNotDefinedError
 
