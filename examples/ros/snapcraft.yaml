@@ -4,17 +4,19 @@ vendor: Number Nine <number-nine@is-alive.com>
 summary: A robot example
 icon: icon.svg
 description: A really small ros examples
+binaries:
+  listener:
+    exec: opt/ros/indigo/lib/beginner_tutorials/listener
+  talker:
+    exec: opt/ros/indigo/lib/beginner_tutorials/talker
 
 parts:
   roscore:
-    type: roscore
+    plugin: roscore
+    rosversion: indigo
   catkin-tutorials:
+    plugin: catkin
     source: .
-    type: catkin
-    catkin-pkg: beginner_tutorials
-
-binaries:
-  listener:
-    exec: opt/ros/jade/lib/beginner_tutorials/listener
-  talker:
-    exec: opt/ros/jade/lib/beginner_tutorials/talker
+    rosversion: indigo
+    catkin-packages:
+      - beginner_tutorials
