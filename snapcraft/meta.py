@@ -54,6 +54,9 @@ def create(config_data, arches=None):
 
     config_data['icon'] = _copy(meta_dir, config_data['icon'])
 
+    if 'framework-policy' in config_data:
+        _copy(meta_dir, config_data['framework-policy'], 'framework-policy')
+
     _write_package_yaml(meta_dir, config_data, arches)
     _write_readme_md(meta_dir, config_data)
 
@@ -91,9 +94,14 @@ def _setup_config_hook(meta_dir, config):
     _write_wrap_exe(execparts[0], config_hook_path, args=args, cwd='$SNAP_APP_PATH')
 
 
-def _copy(meta_dir, relpath):
-    new_relpath = os.path.join(meta_dir, os.path.basename(relpath))
-    shutil.copyfile(relpath, new_relpath)
+def _copy(meta_dir, relpath, new_relpath=None):
+    new_base = new_relpath or os.path.basename(relpath)
+    new_relpath = os.path.join(meta_dir, new_base)
+
+    if os.path.isdir(relpath):
+        shutil.copytree(relpath, new_relpath)
+    else:
+        shutil.copyfile(relpath, new_relpath)
 
     return os.path.join('meta', os.path.basename(relpath))
 
