@@ -42,10 +42,9 @@ class RosCorePlugin(snapcraft.BasePlugin):
             f.write('exec ' + os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion, 'bin', 'rosmaster') + '\n')
         return True
 
-    def snap_fileset(self):
+    def env(self, root):
         return [
-            os.path.join('bin', self.name + '-rosmaster-service'),
-            '-usr/bin/xml2-config',
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}/opt/ros/indigo/lib'.format(root),
         ]
 
     def snap(self, config={}):
@@ -53,7 +52,7 @@ class RosCorePlugin(snapcraft.BasePlugin):
             config.data['services'] = {}
 
         rosserv = {
-            'start': os.path.join('bin', self.name + '-rosemaster-service'),
+            'start': os.path.join('bin', self.name + '-rosmaster-service'),
             'description': 'ROS Master service',
             'ports': {
                 'internal': {

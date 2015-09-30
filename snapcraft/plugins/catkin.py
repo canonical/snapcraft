@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
 import tempfile
+
 import snapcraft
 
 
@@ -48,6 +50,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 os.path.join(root, 'usr', 'include', 'c++', '4.8'),
                 os.path.join(root, 'usr', 'include',
                              snapcraft.common.get_arch_triplet(), 'c++', '4.8')),
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}/opt/ros/indigo/lib'.format(root),
         ]
 
     @property
@@ -119,11 +122,19 @@ class CatkinPlugin (snapcraft.BasePlugin):
         if not self.rosrun(['catkin_make', 'install']):
             return False
 
+        # the hacks
         if not self.run(['find', self.installdir, '-name', '*.cmake', '-delete']):
             return False
 
-        os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
-        if not self.run(['rm', '-f', 'opt/ros/' + self.rosversion + '/.catkin', 'opt/ros/' + self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion + '/setup.sh', 'opt/ros/' + self.rosversion + '/_setup_util.py'], cwd=self.installdir):
+        if not self.run(
+            ['rm', '-f', 'opt/ros/' +
+             self.rosversion + '/.catkin', 'opt/ros/' +
+             self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion +
+             '/setup.sh', 'opt/ros/' + self.rosversion +
+             '/_setup_util.py'], cwd=self.installdir):
             return False
+
+        shutil.rmtree(os.path.join(self.installdir, 'home'))
+        os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
 
         return True
