@@ -93,6 +93,13 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         # Make sure we get the ROS package for our dependencies
         for dep in self.dependencies:
+            # Make sure we're not providing the dep ourselves
+            if dep in self.packages:
+                continue
+			# If we're already getting this through a stage package, we don't need it
+            if dep in self.options.stage_packages or dep.replace('_', '-') in self.options.stage_packages:
+                continue
+
             self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
 
             if dep == 'roscpp':
