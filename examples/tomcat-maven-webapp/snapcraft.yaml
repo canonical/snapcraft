@@ -15,11 +15,11 @@ icon: icon.png
 
 parts:
     webapp:
-        plugin: maven-project
+        plugin: maven
         source: git://github.com/lool/snappy-mvn-demo.git
     tomcat:
         plugin: tar-content
         source: http://mirrors.ircam.fr/pub/apache/tomcat/tomcat-8/v8.0.26/bin/apache-tomcat-8.0.26.tar.gz
     local-files:
-        plugin: make-project
+        plugin: make
         source: .

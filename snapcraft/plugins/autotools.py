@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from snapcraft.plugins.make_project import MakePlugin
+from snapcraft.plugins.make import MakePlugin
 
 
 class AutotoolsPlugin(MakePlugin):

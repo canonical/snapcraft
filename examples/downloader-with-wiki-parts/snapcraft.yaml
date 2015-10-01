@@ -10,7 +10,7 @@ binaries:
 
 parts:
     main:
-        plugin: make-project
+        plugin: make
         source: .
         after:
             - curl
