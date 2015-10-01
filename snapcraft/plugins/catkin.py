@@ -123,7 +123,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         ]):
             return False
 
-        catkincmd = ['catkin_make']
+        catkincmd = ['catkin_make_isolated']
 
         for pkg in self.packages:
             catkincmd.append('--pkg')
