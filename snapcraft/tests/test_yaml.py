@@ -119,10 +119,12 @@ icon: my-icon.png
 
 parts:
   p1:
-    plugin: go
+    plugin: tar-content
+    source: .
     after: [p2]
   p2:
-    plugin: go
+    plugin: tar-content
+    source: .
     after: [p1]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:

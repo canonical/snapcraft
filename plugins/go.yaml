@@ -1,2 +1,10 @@
 build-packages:
   - golang-go
+options:
+  source:
+    required: true
+  configflags:
+    required: false
+  stage-packages:
+  snap:
+  stage:

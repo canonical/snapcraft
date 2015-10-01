@@ -26,7 +26,7 @@ import snapcraft.common
 logger = logging.getLogger(__name__)
 
 
-class AntProjectPlugin(snapcraft.BasePlugin):
+class AntPlugin(snapcraft.BasePlugin):
 
     def pull(self):
         return self.handle_source_options()

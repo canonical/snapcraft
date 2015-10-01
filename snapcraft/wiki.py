@@ -46,4 +46,6 @@ class Wiki:
         self._fetch()
 
         if name in self.wiki_parts:
+            if 'plugin' and 'type' in self.wiki_parts[name]:
+                del self.wiki_parts[name]['type']
             return self.wiki_parts[name]

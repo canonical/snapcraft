@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.make_project import MakePlugin
+from snapcraft.plugins.make import MakePlugin
 
 
 class CMakePlugin(MakePlugin):
