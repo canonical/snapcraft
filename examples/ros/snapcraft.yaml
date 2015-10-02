@@ -1,14 +1,14 @@
 name: ros-example
 version: 1.0
-vendor: Number Nine <number-nine@is-alive.com>
+vendor: Number Five <number-five@is-alive.com>
 summary: A robot example
 icon: icon.svg
 description: A really small ros examples
 binaries:
   listener:
-    exec: opt/ros/indigo/lib/beginner_tutorials/listener
+    exec: opt/ros/indigo/beginner_tutorials/listener
   talker:
-    exec: opt/ros/indigo/lib/beginner_tutorials/talker
+    exec: opt/ros/indigo/beginner_tutorials/talker
 
 parts:
   roscore:
