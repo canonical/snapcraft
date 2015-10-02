@@ -103,7 +103,8 @@ class Ubuntu:
                 skipped_essential.append(pkg.name)
                 pkg.mark_keep()
                 continue
-            if (pkg.name in manifest_dep_names and pkg.name not in package_names):
+            if (pkg.name in manifest_dep_names and
+                    pkg.name not in package_names):
                 skipped_blacklisted.append(pkg.name)
                 pkg.mark_keep()
                 continue
@@ -111,7 +112,8 @@ class Ubuntu:
         if skipped_essential:
             print('Skipping priority essential packages:', skipped_essential)
         if skipped_blacklisted:
-            print('Skipping blacklisted from manifest packages:', skipped_blacklisted)
+            print('Skipping blacklisted from manifest packages:',
+                  skipped_blacklisted)
 
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
@@ -131,7 +133,8 @@ class Ubuntu:
     def _manifest_dep_names(self):
         manifest_dep_names = set()
 
-        with open(os.path.abspath(os.path.join(__file__, '..', 'manifest.txt'))) as f:
+        with open(os.path.abspath(os.path.join(__file__, '..',
+                                               'manifest.txt'))) as f:
             for line in f:
                 pkg = line.strip()
                 if pkg in self.apt_cache:

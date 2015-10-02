@@ -57,7 +57,8 @@ def run_output(cmd, **kwargs):
         f.write('\n')
         f.write('exec $*')
         f.flush()
-        return subprocess.check_output(['/bin/sh', f.name] + cmd, **kwargs).decode('utf8').strip()
+        return subprocess.check_output(['/bin/sh', f.name] + cmd,
+                                       **kwargs).decode('utf8').strip()
 
 
 def fatal():
@@ -67,14 +68,17 @@ def fatal():
 def get_arch():
     global _arch
     if _arch is None:
-        _arch = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_ARCH']).decode('utf8').strip()
+        _arch = subprocess.check_output(
+            ['dpkg-architecture', '-qDEB_BUILD_ARCH']).decode('utf8').strip()
     return _arch
 
 
 def get_arch_triplet():
     global _arch_triplet
     if _arch_triplet is None:
-        _arch_triplet = subprocess.check_output(['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']).decode('utf8').strip()
+        _arch_triplet = subprocess.check_output(
+            ['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']).
+        decode('utf8').strip()
     return _arch_triplet
 
 

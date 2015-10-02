@@ -101,7 +101,8 @@ parts:
         self.useFixture(fake_logger)
 
         # no snapcraft.yaml
-        with self.assertRaises(snapcraft.yaml.SnapcraftYamlFileError) as raised:
+        with self.assertRaises(snapcraft.yaml.SnapcraftYamlFileError)
+        as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.file, 'snapcraft.yaml')
@@ -130,7 +131,9 @@ parts:
         with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.message, 'circular dependency chain found in parts definition')
+        self.assertEqual(
+            raised.exception.message,
+            'circular dependency chain found in parts definition')
         self.assertFalse(self.mock_wiki.get_part.called)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
@@ -153,7 +156,8 @@ parts:
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.message, '\'name\' is a required property')
+        self.assertEqual(raised.exception.message,
+                         '\'name\' is a required property')
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
@@ -175,7 +179,8 @@ parts:
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.message, '1 is not of type \'string\'')
+        self.assertEqual(raised.exception.message,
+                         '1 is not of type \'string\'')
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
@@ -197,7 +202,9 @@ parts:
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.message, '\'myapp@me_1.0\' does not match \'^[a-z0-9][a-z0-9+-]*$\'')
+        self.assertEqual(
+            raised.exception.message,
+            '\'myapp@me_1.0\' does not match \'^[a-z0-9][a-z0-9+-]*$\'')
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_deprecation_for_type(self, mock_loadPlugin):
@@ -240,7 +247,9 @@ parts:
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
-        self.assertEqual(raised.exception.message, '\'description\' is a required property')
+        self.assertEqual(
+            raised.exception.message,
+            '\'description\' is a required property')
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
@@ -296,7 +305,8 @@ parts:
         snapcraft.yaml.Config()
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
-            'snap': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/share/my-icon.png'],
+            'snap': ['/usr/lib/wget.so', '/usr/bin/wget',
+                     '/usr/share/my-icon.png'],
             'stage-packages': ['fswebcam'],
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
@@ -333,11 +343,13 @@ class TestValidation(TestCase):
             with self.subTest(key=key):
                 del data[key]
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
+                as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = '\'{}\' is a required property'.format(key)
-                self.assertEqual(raised.exception.message, expected_message, msg=data)
+                self.assertEqual(raised.exception.message, expected_message,
+                                 msg=data)
 
     def test_invalid_names(self):
         invalid_names = [
@@ -351,11 +363,14 @@ class TestValidation(TestCase):
             with self.subTest(key=name):
                 data['name'] = name
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
+                as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = '\'{}\' does not match \'^[a-z0-9][a-z0-9+-]*$\''.format(name)
-                self.assertEqual(raised.exception.message, expected_message, msg=data)
+                expected_message = '\'{}\' does not match '
+                '\'^[a-z0-9][a-z0-9+-]*$\''.format(name)
+                self.assertEqual(raised.exception.message, expected_message,
+                                 msg=data)
 
     def test_summary_too_long(self):
         self.data['summary'] = 'a' * 80
@@ -363,7 +378,8 @@ class TestValidation(TestCase):
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_message = '\'{}\' is too long'.format(self.data['summary'])
-        self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
 
     def test_valid_types(self):
         self.data['type'] = 'app'
@@ -386,11 +402,14 @@ class TestValidation(TestCase):
             with self.subTest(key=t):
                 data['type'] = t
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
+                as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = '\'{}\' is not one of [\'app\', \'framework\']'.format(t)
-                self.assertEqual(raised.exception.message, expected_message, msg=data)
+                expected_message = '\'{}\' is not one of ' +
+                '[\'app\', \'framework\']'.format(t)
+                self.assertEqual(raised.exception.message, expected_message,
+                                 msg=data)
 
     def test_valid_services(self):
         self.data['services'] = {
@@ -416,11 +435,14 @@ class TestValidation(TestCase):
             with self.subTest(key=t):
                 data['binaries'] = {t: invalid_names[t]}
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
+                as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = 'Additional properties are not allowed (\'{}\' was unexpected)'.format(t)
-                self.assertEqual(raised.exception.message, expected_message, msg=data)
+                expected_message = ('Additional properties are not allowed '
+                                    '(\'{}\' was unexpected)').format(t)
+                self.assertEqual(raised.exception.message, expected_message,
+                                 msg=data)
 
     def test_invalid_service_names(self):
         invalid_names = {
@@ -435,11 +457,14 @@ class TestValidation(TestCase):
             with self.subTest(key=t):
                 data['services'] = {t: invalid_names[t]}
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
+                as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = 'Additional properties are not allowed (\'{}\' was unexpected)'.format(t)
-                self.assertEqual(raised.exception.message, expected_message, msg=data)
+                expected_message = ('Additional properties are not allowed '
+                                    '(\'{}\' was unexpected)').format(t)
+                self.assertEqual(raised.exception.message, expected_message,
+                                 msg=data)
 
     def test_services_required_properties(self):
         self.data['services'] = {'service1': {}}
@@ -448,19 +473,24 @@ class TestValidation(TestCase):
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_message = '\'start\' is a required property'
-        self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
 
     def test_schema_file_not_found(self):
         mock_the_open = unittest.mock.mock_open()
         mock_the_open.side_effect = FileNotFoundError()
 
-        with unittest.mock.patch('snapcraft.yaml.open', mock_the_open, create=True):
-            with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with unittest.mock.patch('snapcraft.yaml.open', mock_the_open,
+                                 create=True):
+            with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
+            as raised:
                 snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        expected_path = os.path.join(snapcraft.common.get_schemadir(), 'snapcraft.yaml')
+        expected_path = os.path.join(snapcraft.common.get_schemadir(),
+                                     'snapcraft.yaml')
         mock_the_open.assert_called_once_with(expected_path)
-        expected_message = 'snapcraft validation file is missing from installation path'
+        expected_message = ('snapcraft validation file is missing from '
+                            'installation path')
         self.assertEqual(raised.exception.message, expected_message)
 
     def test_icon_missing(self):
@@ -470,7 +500,8 @@ class TestValidation(TestCase):
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_message = '\'my-icon.png\' is not a \'icon-path\''
-        self.assertEqual(raised.exception.message, expected_message, msg=self.data)
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
 
 
 class TestFilesets(TestCase):

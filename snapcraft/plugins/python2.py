@@ -62,7 +62,8 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         if not os.path.exists(site_packages_dir):
             os.symlink(
-                os.path.join(prefix, 'lib', self.python_version, 'dist-packages'),
+                os.path.join(prefix, 'lib', self.python_version,
+                             'dist-packages'),
                 site_packages_dir)
 
         if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
@@ -99,7 +100,8 @@ class Python2Plugin(snapcraft.BasePlugin):
     @property
     def dist_packages_dir(self):
         return os.path.join(
-            self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')
+            self.installdir, 'usr', 'lib', self.python_version,
+            'dist-packages')
 
     @property
     def python_version(self):

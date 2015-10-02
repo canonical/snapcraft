@@ -17,7 +17,9 @@ def main():
     if config_yaml:
         set_config(config_file, config_yaml)
 
-    yaml.dump(get_config(config_file), stream=sys.stdout, default_flow_style=False)
+    yaml.dump(get_config(config_file),
+              stream=sys.stdout,
+              default_flow_style=False)
 
 
 def set_config(config_file, config_yaml={}):
@@ -37,9 +39,11 @@ def get_config(config_file):
 
 def _config(config_yaml={}):
     try:
-        interval_value = config_yaml['config'][os.environ['SNAP_NAME']]['interval']
+        interval_value = config_yaml['config'][
+            os.environ['SNAP_NAME']]['interval']
         if not isinstance(interval_value, int):
-            config_yaml['config'][os.environ['SNAP_NAME']]['interval'] = _DEFAULT_INTERVAL
+            config_yaml['config'][
+                os.environ['SNAP_NAME']]['interval'] = _DEFAULT_INTERVAL
     except KeyError:
         interval = {
             'config': {

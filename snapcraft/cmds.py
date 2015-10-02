@@ -54,7 +54,8 @@ def init(args):
     if args.part:
         yaml += 'parts:\n'
     for part_name in args.part:
-        part = snapcraft.plugin.load_plugin(part_name, part_name, load_code=False)
+        part = snapcraft.plugin.load_plugin(part_name, part_name,
+                                            load_code=False)
         yaml += '    ' + part.names()[0] + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
@@ -73,7 +74,10 @@ def shell(args):
     common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
-        userCommand = ['/usr/bin/env', 'PS1=\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ', '/bin/bash', '--norc']
+        userCommand = ['/usr/bin/env',
+                       'PS1=\[\e[1;32m\]snapcraft:\w\$\[\e[0m\] ',
+                       '/bin/bash',
+                       '--norc']
     common.run(userCommand)
 
 
@@ -168,7 +172,8 @@ def run(args):
     qemu_img = os.path.join(qemudir, "15.04.img")
     if not os.path.exists(qemu_img):
         os.makedirs(qemudir, exist_ok=True)
-        logger.info('Setting up virtual snappy environment, root access required')
+        logger.info(
+            'Setting up virtual snappy environment, root access required')
         common.run([
             'sudo', 'ubuntu-device-flash', 'core', '15.04', '--developer-mode',
             '--enable-ssh', '-o', os.path.relpath(qemu_img, qemudir)],
@@ -181,7 +186,8 @@ def run(args):
         # the snapcraft run workflow.
         #
         # For example:
-        # $ export SNAPCRAFT_RUN_QEMU_ARGS="-usb -device usb-host,hostbus=1,hostaddr=10"
+        # $ export SNAPCRAFT_RUN_QEMU_ARGS=\
+        #       "-usb -device usb-host,hostbus=1,hostaddr=10"
         # $ snapcraft run
         qemu_args = os.getenv("SNAPCRAFT_RUN_QEMU_ARGS")
         if qemu_args is not None:
@@ -258,7 +264,9 @@ def _check_for_collisions(parts):
     for part in parts:
         # Gather our own files up
         fileset = getattr(part.code.options, 'stage', ['*']) or ['*']
-        part_files, _ = snapcraft.plugin.migratable_filesets(fileset, part.installdir)
+        part_files, _ = snapcraft.plugin.migratable_filesets(
+            fileset,
+            part.installdir)
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
@@ -266,19 +274,27 @@ def _check_for_collisions(parts):
             conflict_files = []
             for f in common:
                 this = os.path.join(part.installdir, f)
-                other = os.path.join(parts_files[other_part_name]['installdir'], f)
+                other = os.path.join(
+                    parts_files[other_part_name]['installdir'],
+                    f)
                 if os.path.islink(this) and os.path.islink(other):
                     continue
                 if not filecmp.cmp(this, other, shallow=False):
                     conflict_files.append(f)
 
             if conflict_files:
-                logger.error('Error: parts %s and %s have the following file paths in common which have different contents:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(conflict_files)))
+                logger.error('Error: parts %s and %s have the following file '
+                             'paths in common which have different '
+                             'contents:\n  %s',
+                             other_part_name,
+                             part.names()[0],
+                             '\n  '.join(sorted(conflict_files)))
 
                 return False
 
         # And add our files to the list
-        parts_files[part.names()[0]] = {'files': part_files, 'installdir': part.installdir}
+        parts_files[part.names()[0]] = {'files': part_files,
+                                        'installdir': part.installdir}
 
     return True
 
@@ -299,11 +315,16 @@ def cmd(args):
     if config.build_tools:
         newPackages = []
         for checkpkg in config.build_tools:
-            if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
+            if subprocess.call(['dpkg-query', '-s', checkpkg],
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL) != 0:
                 newPackages.append(checkpkg)
         if newPackages:
-            print("Installing required packages on the host system: " + ", ".join(newPackages))
-            subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
+            print("Installing required packages on the host system: " +
+                  ", ".join(newPackages))
+            subprocess.call(['sudo', 'apt-get', '-y', 'install'] +
+                            newPackages,
+                            stdout=subprocess.DEVNULL)
 
     # clean the snap dir before Snapping
     snap_clean = False
@@ -314,9 +335,9 @@ def cmd(args):
                 # This ends up running multiple times, as each part gets to its
                 # staging cmd.  That's inefficient, but largely OK.
                 # FIXME: fix the above by iterating over cmds before iterating
-                # all_parts.  But then we need to make sure we continue to handle
-                # cases like go, where you want go built before trying to pull
-                # a go project.
+                # all_parts.  But then we need to make sure we continue to
+                # handle cases like go, where you want go built before trying
+                # to pull a go project.
                 if not _check_for_collisions(config.all_parts):
                     sys.exit(1)
 
@@ -353,8 +374,9 @@ def _load_config():
         return _config
     except snapcraft.yaml.SnapcraftYamlFileError as e:
         logger.error(
-            'Could not find {}.  Are you sure you are in the right directory?\n'
-            'To start a new project, use \'snapcraft init\''.format(e.file))
+            'Could not find {}.  Are you sure you are in the right '
+            'directory?\nTo start a new project, use \'snapcraft '
+            'init\''.format(e.file))
         sys.exit(1)
     except snapcraft.yaml.SnapcraftSchemaError as e:
         msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
@@ -366,5 +388,6 @@ def _load_config():
             'missing and wiki support for the feature is still in progress.')
         sys.exit(1)
     except snapcraft.yaml.SnapcraftLogicError as e:
-        logger.error('Issue detected while analyzing snapcraft.yaml: {}'.format(e.message))
+        logger.error('Issue detected while analyzing '
+                     'snapcraft.yaml: {}'.format(e.message))
         sys.exit(1)

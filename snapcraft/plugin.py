@@ -49,7 +49,8 @@ class PluginError(Exception):
 
 class PluginHandler:
 
-    def __init__(self, name, part_name, properties, load_code=True, load_config=True):
+    def __init__(self, name, part_name, properties, load_code=True,
+                 load_config=True):
         self.valid = False
         self.code = None
         self.config = {}
@@ -107,7 +108,8 @@ class PluginHandler:
                 setattr(options, attrname, properties[opt])
             else:
                 if opt_parameters.get('required', False):
-                    raise PluginError('Required field {} missing on part {}'.format(opt, name))
+                    raise PluginError('Required field {} missing on part {}'.
+                                      format(opt, name))
                 setattr(options, attrname, None)
 
         return options
@@ -117,7 +119,8 @@ class PluginHandler:
         module_name = name.replace('-', '_')
 
         try:
-            module = importlib.import_module('snapcraft.plugins.' + module_name)
+            module = importlib.import_module('snapcraft.plugins.' +
+                                             module_name)
         except ImportError:
             module = None
 
@@ -160,7 +163,8 @@ class PluginHandler:
         try:
             with open(self.statefile, 'r') as f:
                 lastStep = f.read()
-                return common.COMMAND_ORDER.index(stage) > common.COMMAND_ORDER.index(lastStep)
+                return (common.COMMAND_ORDER.index(stage) >
+                        common.COMMAND_ORDER.index(lastStep))
         except Exception:
             return True
 
@@ -179,7 +183,8 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        run_setup_stage_packages = self.code and hasattr(self.code, 'setup_stage_packages')
+        run_setup_stage_packages = self.code and hasattr(
+                self.code, 'setup_stage_packages')
         run_pull = self.code and hasattr(self.code, 'pull')
 
         if run_setup_stage_packages or run_pull:
@@ -248,7 +253,8 @@ class PluginHandler:
         snap_files, snap_dirs = self._migratable_fileset_for('stage')
 
         try:
-            _migrate_files(snap_files, snap_dirs, self.installdir, self.stagedir)
+            _migrate_files(snap_files, snap_dirs, self.installdir,
+                           self.stagedir)
         except FileNotFoundError as e:
             logger.error('Could not find file %s defined in stage',
                          os.path.relpath(e.filename, os.path.curdir))
@@ -284,7 +290,8 @@ class PluginHandler:
 
 
 def load_plugin(part_name, plugin_name, properties={}, load_code=True):
-    part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
+    part = PluginHandler(plugin_name, part_name, properties,
+                         load_code=load_code)
     if not part.is_valid():
         logger.error('Could not load part %s', plugin_name)
         sys.exit(1)
@@ -300,10 +307,13 @@ def migratable_filesets(fileset, srcdir):
     # And chop files, including whole trees if any dirs are mentioned
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
-        snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + '/')])
+        snap_files = set([x for x in snap_files
+                          if not x.startswith(exclude_dir + '/')])
 
     # Separate dirs from files
-    snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(srcdir, x)) and not os.path.islink(os.path.join(srcdir, x))])
+    snap_dirs = set([x for x in snap_files
+                     if os.path.isdir(os.path.join(srcdir, x)) and
+                     not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
 
     return snap_files, snap_dirs
@@ -356,8 +366,12 @@ def _generate_include_set(directory, includes):
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= set([os.path.relpath(os.path.join(root, d), directory) for d in dirs])
-            include_files |= set([os.path.relpath(os.path.join(root, f), directory) for f in files])
+            include_files |= \
+                set([os.path.relpath(os.path.join(root, d), directory)
+                     for d in dirs])
+            include_files |= \
+                set([os.path.relpath(os.path.join(root, f), directory)
+                     for f in files])
 
     return include_files
 
@@ -369,8 +383,10 @@ def _generate_exclude_set(directory, excludes):
         matches = glob.glob(os.path.join(directory, exclude))
         exclude_files |= set(matches)
 
-    exclude_dirs = [os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)]
-    exclude_files = set([os.path.relpath(x, directory) for x in exclude_files])
+    exclude_dirs = [os.path.relpath(x, directory)
+                    for x in exclude_files if os.path.isdir(x)]
+    exclude_files = set([os.path.relpath(x, directory)
+                         for x in exclude_files])
 
     return exclude_files, exclude_dirs
 
