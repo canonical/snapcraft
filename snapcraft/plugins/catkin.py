@@ -18,9 +18,11 @@ import lxml.etree
 import os
 import shutil
 import tempfile
+import logging
 
 import snapcraft
 
+logger = logging.getLogger(__name__)
 
 class CatkinPlugin (snapcraft.BasePlugin):
 
@@ -38,6 +40,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         self.packages = options.catkin_packages
         self.dependencies = ['ros-core']
         self.package_deps_found = False
+        self.package_local_deps = {}
         super().__init__(name, options)
 
     def env(self, root):
@@ -73,14 +76,35 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         # Look for a package definition and pull deps if there are any
         for pkg in self.packages:
+            if not pkg in self.package_local_deps:
+                self.package_local_deps[pkg] = []
+
             try:
                 with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
                     tree = lxml.etree.parse(f)
 
-                    for deptype in ['buildtool_depend', 'build_depend', 'run_depend']:
-                        for dep in tree.xpath('/package/' + deptype):
-                            self.dependencies.append(dep.text)
+                    for deptype in ['buildtool_depend', 'build_depend', 'run_depend', 'snapcraft_depend']:
+                        for xmldep in tree.xpath('/package/' + deptype):
+                            dep = xmldep.text
+
+                            self.dependencies.append(dep)
+
+                            # Make sure we're not providing the dep ourselves
+                            if dep in self.packages:
+                                self.package_local_deps[pkg].append(dep)
+                                continue
+
+                            # If we're already getting this through a stage package, we don't need it
+                            if dep in self.options.stage_packages or dep.replace('_', '-') in self.options.stage_packages:
+                                continue
+
+                            # Get the ROS package for it
+                            self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
+
+                            if dep == 'roscpp':
+                                self._PLUGIN_STAGE_PACKAGES.append('g++')
             except:
+                logger.warning("Unable to get packages.xml for '" + pkg + "'")
                 pass
 
         self.package_deps_found = True
@@ -90,20 +114,6 @@ class CatkinPlugin (snapcraft.BasePlugin):
             return False
 
         self.find_package_deps()
-
-        # Make sure we get the ROS package for our dependencies
-        for dep in self.dependencies:
-            # Make sure we're not providing the dep ourselves
-            if dep in self.packages:
-                continue
-			# If we're already getting this through a stage package, we don't need it
-            if dep in self.options.stage_packages or dep.replace('_', '-') in self.options.stage_packages:
-                continue
-
-            self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
-
-            if dep == 'roscpp':
-                self._PLUGIN_STAGE_PACKAGES.extend(['g++'])
 
         return True
 
@@ -123,40 +133,35 @@ class CatkinPlugin (snapcraft.BasePlugin):
         ]):
             return False
 
-        catkincmd = ['catkin_make_isolated']
-
-        for pkg in self.packages:
-            catkincmd.append('--pkg')
-            catkincmd.append(pkg)
-
-        # Define the location
-        catkincmd.extend(['--directory', self.builddir])
-
-        # Start the CMake Commands
-        catkincmd.append('--cmake-args')
-
-        # CMake directories
-        catkincmd.append('-DCATKIN_DEVEL_PREFIX={}'.format(self.rosdir))
-        catkincmd.append('-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir))
-
-        # Dep CMake files
         self.find_package_deps()
-        for dep in self.dependencies:
-            catkincmd.append('-D{0}_DIR={1}'.format(dep, os.path.join(self.rosdir, 'share', dep, 'cmake')))
 
-        # Compiler fun
-        catkincmd.extend([
-            '-DCMAKE_C_FLAGS="$CFLAGS"',
-            '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
-            '-DCMAKE_LD_FLAGS="$LDFLAGS"',
-            '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
-            '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
-        ])
+        # Ugly dependency resolution, just loop through until we can
+        # find something to build. When we do, build it. Loop until we
+        # either can't build anything or we built everything.
+        built = []
+        built_pkg = True
+        while len(built) != len(self.packages) and built_pkg:
+            built_pkg = False
+            for pkg in self.packages:
+                if pkg in built:
+                    continue
 
-        if not self.rosrun(catkincmd):
-            return False
+                deps_built = True
+                for dep in self.package_local_deps[pkg]:
+                    if not dep in built:
+                        deps_built = False
+                        break
 
-        if not self.rosrun(['catkin_make', 'install']):
+                if not deps_built:
+                    continue
+
+                if not self.handle_package(pkg):
+                    return False
+
+                built.append(pkg)
+                built_pkg = True
+
+        if not built_pkg:
             return False
 
         # the hacks
@@ -171,7 +176,41 @@ class CatkinPlugin (snapcraft.BasePlugin):
              '/_setup_util.py'], cwd=self.installdir):
             return False
 
-        shutil.rmtree(os.path.join(self.installdir, 'home'))
         os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
 
         return True
+
+    def handle_package(self, pkg):
+        catkincmd = ['catkin_make_isolated']
+
+        catkincmd.append('--pkg')
+        catkincmd.append(pkg)
+
+        # Define the location
+        catkincmd.extend(['--directory', self.builddir])
+
+        # Start the CMake Commands
+        catkincmd.append('--cmake-args')
+
+        # CMake directories
+        catkincmd.append('-DCATKIN_DEVEL_PREFIX={}'.format(self.rosdir))
+        catkincmd.append('-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir))
+
+        # Dep CMake files
+        for dep in self.dependencies:
+            catkincmd.append('-D{0}_DIR={1}'.format(dep.replace('-', '_'), os.path.join(self.rosdir, 'share', dep, 'cmake')))
+
+        # Compiler fun
+        catkincmd.extend([
+            '-DCMAKE_C_FLAGS="$CFLAGS"',
+            '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
+            '-DCMAKE_LD_FLAGS="$LDFLAGS"',
+            '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
+            '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
+        ])
+
+        if not self.rosrun(catkincmd):
+            return False
+
+        return True
+
