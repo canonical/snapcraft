@@ -13,4 +13,5 @@ parts:
     plugin: python2
     source: git://github.com/markokr/spongeshaker.git
   make-project:
+    plugin: make
     source: .
