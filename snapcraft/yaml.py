@@ -78,7 +78,13 @@ class SnapcraftSchemaError(Exception):
 
 
 class PluginNotDefinedError(Exception):
-    pass
+
+    @property
+    def part(self):
+        return self._part
+
+    def __init__(self, part):
+        self._part = part
 
 
 class Config:
@@ -103,7 +109,7 @@ class Config:
                 logger.warning('DEPRECATED: Use "plugin" instead of "type"')
 
             if not plugin_name:
-                raise PluginNotDefinedError
+                raise PluginNotDefinedError(part_name)
 
             if plugin_name in _DEPRECATION_LIST:
                 plugin_name = plugin_name.rsplit('-project')[0]
