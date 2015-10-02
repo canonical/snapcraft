@@ -13,10 +13,8 @@ binaries:
 parts:
   roscore:
     plugin: roscore
-    rosversion: indigo
   catkin-tutorials:
     plugin: catkin
     source: .
-    rosversion: indigo
     catkin-packages:
       - beginner_tutorials
