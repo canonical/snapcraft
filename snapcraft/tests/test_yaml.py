@@ -101,8 +101,8 @@ parts:
         self.useFixture(fake_logger)
 
         # no snapcraft.yaml
-        with self.assertRaises(snapcraft.yaml.SnapcraftYamlFileError)
-        as raised:
+        with self.assertRaises(
+                snapcraft.yaml.SnapcraftYamlFileError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.file, 'snapcraft.yaml')
@@ -343,8 +343,8 @@ class TestValidation(TestCase):
             with self.subTest(key=key):
                 del data[key]
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
-                as raised:
+                with self.assertRaises(
+                        snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = '\'{}\' is a required property'.format(key)
@@ -363,8 +363,8 @@ class TestValidation(TestCase):
             with self.subTest(key=name):
                 data['name'] = name
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
-                as raised:
+                with self.assertRaises(
+                        snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = '\'{}\' does not match '
@@ -402,12 +402,12 @@ class TestValidation(TestCase):
             with self.subTest(key=t):
                 data['type'] = t
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
-                as raised:
+                with self.assertRaises(
+                        snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = '\'{}\' is not one of ' +
-                '[\'app\', \'framework\']'.format(t)
+                expected_message = ('\'{}\' is not one of ' +
+                                    '[\'app\', \'framework\']').format(t)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
@@ -435,8 +435,8 @@ class TestValidation(TestCase):
             with self.subTest(key=t):
                 data['binaries'] = {t: invalid_names[t]}
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
-                as raised:
+                with self.assertRaises(
+                        snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = ('Additional properties are not allowed '
@@ -457,8 +457,8 @@ class TestValidation(TestCase):
             with self.subTest(key=t):
                 data['services'] = {t: invalid_names[t]}
 
-                with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
-                as raised:
+                with self.assertRaises(
+                        snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = ('Additional properties are not allowed '
@@ -482,8 +482,8 @@ class TestValidation(TestCase):
 
         with unittest.mock.patch('snapcraft.yaml.open', mock_the_open,
                                  create=True):
-            with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError)
-            as raised:
+            with self.assertRaises(
+                    snapcraft.yaml.SnapcraftSchemaError) as raised:
                 snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_path = os.path.join(snapcraft.common.get_schemadir(),
