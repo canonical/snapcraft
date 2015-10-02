@@ -95,7 +95,9 @@ class CatkinPlugin (snapcraft.BasePlugin):
                                 continue
 
                             # If we're already getting this through a stage package, we don't need it
-                            if dep in self.options.stage_packages or dep.replace('_', '-') in self.options.stage_packages:
+                            if self.options.stage_packages and (
+                                    dep in self.options.stage_packages or
+                                    dep.replace('_', '-') in self.options.stage_packages):
                                 continue
 
                             # Get the ROS package for it
