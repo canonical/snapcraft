@@ -26,7 +26,7 @@ class RosCorePlugin(snapcraft.BasePlugin):
     _PLUGIN_STAGE_SOURCES = ('deb http://packages.ros.org/ros/ubuntu/ trusty main\n'
                              'deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe\n'
                              'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n' 
+                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n'
                              'deb http://${security}.ubuntu.com/${suffix} trusty-security main universe\n')
 
     def __init__(self, name, options):

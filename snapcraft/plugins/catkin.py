@@ -16,13 +16,13 @@
 
 import lxml.etree
 import os
-import shutil
 import tempfile
 import logging
 
 import snapcraft
 
 logger = logging.getLogger(__name__)
+
 
 class CatkinPlugin (snapcraft.BasePlugin):
 
@@ -32,7 +32,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
     _PLUGIN_STAGE_SOURCES = ('deb http://packages.ros.org/ros/ubuntu/ trusty main\n'
                              'deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe\n'
                              'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n' 
+                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n'
                              'deb http://${security}.ubuntu.com/${suffix} trusty-security main universe\n')
 
     def __init__(self, name, options):
@@ -76,7 +76,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         # Look for a package definition and pull deps if there are any
         for pkg in self.packages:
-            if not pkg in self.package_local_deps:
+            if pkg not in self.package_local_deps:
                 self.package_local_deps[pkg] = []
 
             try:
@@ -150,7 +150,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
                 deps_built = True
                 for dep in self.package_local_deps[pkg]:
-                    if not dep in built:
+                    if dep not in built:
                         deps_built = False
                         break
 
@@ -215,4 +215,3 @@ class CatkinPlugin (snapcraft.BasePlugin):
             return False
 
         return True
-
