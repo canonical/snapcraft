@@ -103,7 +103,7 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     @property
     def python_version(self):
-        return self.run_output(['py3versions', '-i'])
+        return self.run_output(['py3versions', '-i']).split()[0]
 
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.
