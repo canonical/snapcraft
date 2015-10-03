@@ -10,8 +10,8 @@ icon: icon.png
 
 parts:
     local:
-        plugin: ant-project
+        plugin: ant
         source: .
     wrapper:
-        plugin: make-project
+        plugin: make
         source: .

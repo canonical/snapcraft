@@ -104,7 +104,7 @@ Let's start with the web server.
 
     parts:
       cam:
-        plugin: go-project
+        plugin: go
         source: git://github.com/mikix/golang-static-http
 
 You've just defined a `part` inside `parts` named `cam`, but you
@@ -138,7 +138,7 @@ to make the `cam` part look like:
 
     parts:
       cam:
-        plugin: go-project
+        plugin: go
         source: git://github.com/mikix/golang-static-http
         stage-packages:
           - fswebcam
@@ -185,7 +185,7 @@ Alright, let's put this script in our snap too:
 
     parts:
       cam:
-        plugin: go-project
+        plugin: go
         source: git://github.com/mikix/golang-static-http
         stage-packages:
           - fswebcam
@@ -219,7 +219,7 @@ Edit `snapcraft.yaml` once more to make the `cam` part in `parts` to look like:
 
     parts:
       cam:
-        plugin: go-project
+        plugin: go
         source: git://github.com/mikix/golang-static-http
         stage-packages:
           - fswebcam
@@ -273,7 +273,7 @@ your resulting `snapcraft.yaml` should look very similar to:
 
     parts:
       golang-static-http:
-        plugin: go-project
+        plugin: go
         source: git://github.com/mikix/golang-static-http
       fswebcam:
         plugin: ubuntu

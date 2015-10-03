@@ -56,6 +56,16 @@ command:
     test ! -e ./snap/dir
 flags: simple has-leftovers
 
+id: snapcraft/normal/assemble-no-plugin
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    sed -e '/.*plugin: make-project$/d' -i snapcraft.yaml
+    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
+    test $? = 1 || exit 1
+    echo $OUTPUT | grep -q 'Issues while validating snapcraft.yaml: the "plugin" keyword is missing for the "make-project" part.'
+flags: simple has-leftovers
+
 id: snapcraft/normal/local-source
 command:
     set -ex

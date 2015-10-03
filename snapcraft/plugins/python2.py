@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright © 2015 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,12 +20,12 @@ import tempfile
 import snapcraft
 
 
-class Python3ProjectPlugin(snapcraft.BasePlugin):
+class Python2Plugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_PACKAGES = [
-        'python3-dev',
-        'python3-pkg-resources',
-        'python3-setuptools',
+        'python-dev',
+        'python-pkg-resources',
+        'python-setuptools',
     ]
 
     def __init__(self, name, options):
@@ -55,21 +55,21 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
             return True
 
         easy_install = os.path.join(
-            self.installdir, 'usr', 'bin', 'easy_install3')
+            self.installdir, 'usr', 'bin', 'easy_install')
         prefix = os.path.join(self.installdir, 'usr')
         site_packages_dir = os.path.join(
             prefix, 'lib', self.python_version, 'site-packages')
 
         if not os.path.exists(site_packages_dir):
             os.symlink(
-                os.path.join(prefix, 'lib', 'python3', 'dist-packages'),
+                os.path.join(prefix, 'lib', self.python_version, 'dist-packages'),
                 site_packages_dir)
 
-        if not self.run(['python3', easy_install, '--prefix', prefix, 'pip']):
+        if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
             return False
 
-        pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
-        pip_install = ['python3', pip3, 'install', '--target',
+        pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
+        pip_install = ['python2', pip2, 'install', '--target',
                        site_packages_dir]
 
         if self.requirements and not self.run(
@@ -93,7 +93,7 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         setuptemp = self.copy_setup()
         return self.run(
-            ['python3', setuptemp.name, 'install', '--install-layout=deb',
+            ['python2', setuptemp.name, 'install', '--install-layout=deb',
              '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
 
     @property
@@ -103,7 +103,7 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
 
     @property
     def python_version(self):
-        return self.run_output(['py3versions', '-i'])
+        return self.run_output(['pyversions', '-i'])
 
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.
@@ -111,7 +111,7 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         setupout = tempfile.NamedTemporaryFile(dir=self.builddir, mode='w+')
 
         setupout.write('import sys\n')
-        setupout.write('sys.executable = "usr/bin/python3"\n\n')
+        setupout.write('sys.executable = "usr/bin/python2"\n\n')
 
         with open(os.path.join(self.builddir, 'setup.py'), 'r') as f:
             for line in f:

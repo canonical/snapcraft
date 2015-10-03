@@ -18,6 +18,7 @@ import apt
 import glob
 import itertools
 import os
+import platform
 import string
 import subprocess
 import urllib
@@ -189,7 +190,9 @@ def _setup_apt_cache(rootdir, sources, local=False):
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
     if not local:
-        sources = _format_sources_list(sources, snapcraft.common.get_arch())
+        arch = snapcraft.common.get_arch()
+        series = platform.linux_distribution()[2]
+        sources = _format_sources_list(sources, arch, series)
 
     with open(srcfile, 'w') as f:
         f.write(sources)

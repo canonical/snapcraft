@@ -7,4 +7,5 @@ icon: icon.png
 
 parts:
   cmake-project:
+    plugin: cmake-project
     source: .
