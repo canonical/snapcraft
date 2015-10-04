@@ -294,16 +294,7 @@ def cmd(args):
         cmds = common.COMMAND_ORDER[0:common.COMMAND_ORDER.index(cmds[0]) + 1]
 
     config = _load_config()
-
-    # Install local packages that we need
-    if config.build_tools:
-        newPackages = []
-        for checkpkg in config.build_tools:
-            if subprocess.call(['dpkg-query', '-s', checkpkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
-                newPackages.append(checkpkg)
-        if newPackages:
-            print("Installing required packages on the host system: " + ", ".join(newPackages))
-            subprocess.call(['sudo', 'apt-get', '-y', 'install'] + newPackages, stdout=subprocess.DEVNULL)
+    _install_build_packages(config.build_tools)
 
     # clean the snap dir before Snapping
     snap_clean = False
@@ -341,6 +332,23 @@ def _call(args, **kwargs):
 def _check_call(args, **kwargs):
     logger.info('Running: %s', ' '.join(shlex.quote(arg) for arg in args))
     return subprocess.check_call(args, **kwargs)
+
+
+def _install_build_packages(packages):
+    new_packages = []
+    for check_pkg in packages:
+        if subprocess.call(['dpkg-query', '-s', check_pkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
+            new_packages.append(check_pkg)
+    if new_packages:
+        logger.info('Installing required packages on the host system')
+        try:
+            _check_call(
+                ['sudo', 'apt-get', '-y', 'install'] + new_packages,
+                stdout=subprocess.DEVNULL)
+        except subprocess.CalledProcessError:
+            logger.error('Could not find all the "build-packages" required '
+                         'in snapcraft.yaml')
+            sys.exit(1)
 
 
 def _load_config():
