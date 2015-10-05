@@ -144,33 +144,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         self.find_package_deps()
 
-        # Ugly dependency resolution, just loop through until we can
-        # find something to build. When we do, build it. Loop until we
-        # either can't build anything or we built everything.
-        built = []
-        built_pkg = True
-        while len(built) != len(self.packages) and built_pkg:
-            built_pkg = False
-            for pkg in self.packages:
-                if pkg in built:
-                    continue
-
-                deps_built = True
-                for dep in self.package_local_deps[pkg]:
-                    if dep not in built:
-                        deps_built = False
-                        break
-
-                if not deps_built:
-                    continue
-
-                if not self.handle_package(pkg):
-                    return False
-
-                built.append(pkg)
-                built_pkg = True
-
-        if not built_pkg:
+        if not self.build_packages_deps():
             return False
 
         # the hacks
@@ -186,6 +160,30 @@ class CatkinPlugin (snapcraft.BasePlugin):
             return False
 
         os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
+
+        return True
+
+    def build_packages_deps(self):
+        # Ugly dependency resolution, just loop through until we can
+        # find something to build. When we do, build it. Loop until we
+        # either can't build anything or we built everything.
+        built = []
+        built_pkg = True
+
+        while len(built) != len(self.packages) and built_pkg:
+            built_pkg = False
+            for pkg in self.packages - built:
+                if len(self.package_local_deps[pkg] - built) > 0:
+                    continue
+
+                if not self.handle_package(pkg):
+                    return False
+
+                built.append(pkg)
+                built_pkg = True
+
+        if not built_pkg:
+            return False
 
         return True
 
