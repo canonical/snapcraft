@@ -28,7 +28,8 @@ from xml.etree import ElementTree
 
 import snapcraft.common
 
-_DEFAULT_SOURCES = '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+_DEFAULT_SOURCES = \
+    '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
 deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
 deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
 deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe

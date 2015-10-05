@@ -65,7 +65,7 @@ class Bazaar(Base):
             tag_opts = ['-r', 'tag:' + self.source_tag]
         if os.path.exists(os.path.join(self.source_dir, ".bzr")):
             cmd = ['bzr', 'pull'] + tag_opts + \
-                    [self.source, '-d', self.source_dir]
+                  [self.source, '-d', self.source_dir]
         else:
             os.rmdir(self.source_dir)
             cmd = ['bzr', 'branch'] + tag_opts + \

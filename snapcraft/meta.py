@@ -111,12 +111,10 @@ def _copy_security_profiles(meta_dir, runnables):
     for runnable in runnables:
         for entry in ('security-policy', 'security-override'):
             if entry in runnable:
-                runnable[entry]['apparmor'] = _copy(
-                                                meta_dir,
-                                                runnable[entry]['apparmor'])
-                runnable[entry]['seccomp'] = _copy(
-                                                meta_dir,
-                                                runnable[entry]['seccomp'])
+                runnable[entry]['apparmor'] = \
+                    _copy(meta_dir, runnable[entry]['apparmor'])
+                runnable[entry]['seccomp'] = \
+                    _copy(meta_dir, runnable[entry]['seccomp'])
 
     return runnables
 
@@ -145,16 +143,14 @@ def _compose_package_yaml(meta_dir, config_data, arches):
     if 'binaries' in config_data:
         binaries = config_data['binaries']
         binaries = _wrap_binaries(binaries)
-        package_yaml['binaries'] = _copy_security_profiles(
-                                    meta_dir,
-                                    _repack_names(binaries))
+        package_yaml['binaries'] = \
+            _copy_security_profiles(meta_dir, _repack_names(binaries))
 
     if 'services' in config_data:
         services = config_data['services']
         services = _wrap_services(services)
-        package_yaml['services'] = _copy_security_profiles(
-                                    meta_dir,
-                                    _repack_names(services))
+        package_yaml['services'] = \
+            _copy_security_profiles(meta_dir, _repack_names(services))
 
     return package_yaml
 
@@ -168,8 +164,8 @@ def _repack_names(names):
 
 
 def _compose_readme(config_data):
-    return '{config[summary]}\n{config[description]}\n'.format(
-                config=config_data)
+    s = '{config[summary]}\n{config[description]}\n'
+    return s.format(config=config_data)
 
 
 def _replace_cmd(execparts, cmd):

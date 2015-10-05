@@ -31,7 +31,8 @@ class UbuntuTestCase(tests.TestCase):
         sources_list = repo._format_sources_list(
             repo._DEFAULT_SOURCES, 'amd64', 'vivid')
 
-        expected_sources_list = '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
+        expected_sources_list = \
+            '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
 deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates main restricted
 deb http://ar.archive.ubuntu.com/ubuntu/ vivid universe
 deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates universe
@@ -48,7 +49,8 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
         sources_list = repo._format_sources_list(
             repo._DEFAULT_SOURCES, 'armhf', 'trusty')
 
-        expected_sources_list = '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
+        expected_sources_list = \
+            '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
 deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
 deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
 deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe

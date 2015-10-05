@@ -154,7 +154,7 @@ class Config:
 
         for part in self.all_parts:
             dep_names = part.config.get('requires', []) + \
-                        after_requests.get(part.names()[0], [])
+                after_requests.get(part.names()[0], [])
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):

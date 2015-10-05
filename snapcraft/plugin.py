@@ -183,8 +183,8 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        run_setup_stage_packages = self.code and hasattr(
-                self.code, 'setup_stage_packages')
+        run_setup_stage_packages = self.code and \
+            hasattr(self.code, 'setup_stage_packages')
         run_pull = self.code and hasattr(self.code, 'pull')
 
         if run_setup_stage_packages or run_pull:
