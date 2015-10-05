@@ -369,7 +369,7 @@ class TestValidation(TestCase):
 
                 expected_message = (
                     '\'{}\' does not match \'^[a-z0-9][a-z0-9+-]*$\'').format(
-                        name)
+                    name)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
