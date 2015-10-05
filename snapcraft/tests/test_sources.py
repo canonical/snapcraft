@@ -270,8 +270,9 @@ class TestMercurial(SourceTestCase):
             sources.Mercurial('hg://mysource', 'source_dir', source_tag='tag',
                               source_branch='branch')
 
-        expected_message = 'can\'t specify both source-tag and source-branch '
-        'for a mercurial source'
+        expected_message = (
+            'can\'t specify both source-tag and source-branch for a mercurial '
+            'source')
         self.assertEqual(raised.exception.message, expected_message)
 
 
