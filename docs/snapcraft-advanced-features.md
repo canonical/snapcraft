@@ -74,11 +74,11 @@ An interesting example is `py2-project` because it defines only one part
 assemble and build the snap:
 
 	parts:
-  	spongeshaker:
+  	  spongeshaker:
 	    plugin: python2
 	    source: git://github.com/markokr/spongeshaker.git
 	  make-project:
-		  plugin: make
+	    plugin: make
 	    source: .
 
 The example above mixes and matches parts of different origin. Locally it

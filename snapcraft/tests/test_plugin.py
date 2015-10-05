@@ -76,7 +76,8 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = plugin._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin', '-everything', r'\a'])
+        self.assertEqual(include, ['opt/something', 'usr/bin',
+                                   '-everything', r'\a'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
 
     def test_fileset_only_includes(self):
@@ -182,7 +183,8 @@ class PluginTestCase(tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                snap_files, snap_dirs = plugin.migratable_filesets(filesets[key]['fileset'], srcdir)
+                snap_files, snap_dirs = plugin.migratable_filesets(
+                    filesets[key]['fileset'], srcdir)
                 plugin._migrate_files(snap_files, snap_dirs, srcdir, dstdir)
 
                 expected = []
