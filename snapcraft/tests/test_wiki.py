@@ -31,7 +31,7 @@ class TestYaml(TestCase):
             @property
             def text(self):
                 return '''{{{part1:
-  type: go
+  plugin: go
 }}}'''
 
         patcher = unittest.mock.patch('requests.get')
@@ -42,7 +42,7 @@ class TestYaml(TestCase):
     def test_get_part(self):
         w = snapcraft.wiki.Wiki()
 
-        self.assertEqual(w.get_part('part1'), {'type': 'go'})
+        self.assertEqual(w.get_part('part1'), {'plugin': 'go'})
         self.assertEqual(w.get_part('part2'), None)
 
         self.mock_requests.assert_called_once_with(

@@ -53,6 +53,8 @@ class RosCorePlugin(snapcraft.BasePlugin):
     def snap_fileset(self):
         return ([
             os.path.join('bin', self.name + '-rosmaster-service'),
+             'opt/ros/' + self.rosversion + '/bin/*',
+             'opt/ros/' + self.rosversion + '/lib/*',
             '-opt/ros/' + self.rosversion + '/share/*/cmake/*',
             '-opt/ros/' + self.rosversion + '/include',
             '-opt/ros/' + self.rosversion + '/.catkin',

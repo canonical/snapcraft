@@ -29,6 +29,18 @@ from snapcraft import common
 logger = logging.getLogger(__name__)
 
 
+_DEPRECATION_LIST = [
+    'ant-project',
+    'autotools-project',
+    'cmake-project',
+    'go-project',
+    'make-project',
+    'maven-project',
+    'python2-project',
+    'python3-project',
+]
+
+
 @jsonschema.FormatChecker.cls_checks('file-path')
 @jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_file_exists(instance):
@@ -65,6 +77,16 @@ class SnapcraftSchemaError(Exception):
         self._message = message
 
 
+class PluginNotDefinedError(Exception):
+
+    @property
+    def part(self):
+        return self._part
+
+    def __init__(self, part):
+        self._part = part
+
+
 class Config:
 
     def __init__(self):
@@ -80,13 +102,24 @@ class Config:
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.get("plugin", part_name)
-            if "plugin" in properties:
-                del properties["plugin"]
+            plugin_name = properties.pop("plugin", None)
+            # TODO search the wiki
+            if not plugin_name and 'type' in properties:
+                plugin_name = properties.pop('type')
+                logger.warning('DEPRECATED: Use "plugin" instead of "type"')
+
+            if not plugin_name:
+                raise PluginNotDefinedError(part_name)
+
+            if plugin_name in _DEPRECATION_LIST:
+                plugin_name = plugin_name.rsplit('-project')[0]
+                logger.warning(
+                    'DEPRECATED: plugin names ending in -project are '
+                    'deprecated. Using {0} instead of {0}-project'.format(
+                        plugin_name))
 
             if "after" in properties:
-                after_requests[part_name] = properties["after"]
-                del properties["after"]
+                after_requests[part_name] = properties.pop('after')
 
             properties['stage'] = _expand_filesets_for('stage', properties)
             properties['snap'] = _expand_filesets_for('snap', properties)
@@ -131,7 +164,7 @@ class Config:
                     wiki_part = w.get_part(dep)
                     found = True if wiki_part else False
                     if found:
-                        part.deps.append(self.load_plugin(dep, wiki_part['type'], wiki_part))
+                        part.deps.append(self.load_plugin(dep, wiki_part['plugin'], wiki_part))
                 if not found:
                     raise SnapcraftLogicError('part name missing {}'.format(dep))
 

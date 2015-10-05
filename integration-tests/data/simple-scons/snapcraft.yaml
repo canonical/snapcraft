@@ -9,5 +9,5 @@ parts:
   scons-project:
     scons-options:
       - --prefix=/opt
-    plugin: scons-project
+    plugin: scons
     source: .

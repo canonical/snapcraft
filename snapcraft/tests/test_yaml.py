@@ -119,10 +119,12 @@ icon: my-icon.png
 
 parts:
   p1:
-    plugin: go
+    plugin: tar-content
+    source: .
     after: [p2]
   p2:
-    plugin: go
+    plugin: tar-content
+    source: .
     after: [p1]
 """)
         with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
@@ -196,6 +198,28 @@ parts:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message, '\'myapp@me_1.0\' does not match \'^[a-z0-9][a-z0-9+-]*$\'')
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_deprecation_for_type(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: myapp
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: nothing
+icon: my-icon.png
+
+parts:
+  part1:
+    type: go
+    stage-packages: [fswebcam]
+""")
+        config = snapcraft.yaml.Config()
+        self.assertEqual(fake_logger.output,
+                         'DEPRECATED: Use "plugin" instead of "type"\n')
+        self.assertFalse('type' in config.data)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):

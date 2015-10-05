@@ -95,8 +95,9 @@ EOF
     fi
 
     # Go to the plainbox provider of snapcraft tests
-    cd integration-tests
+    pushd integration-tests
     ./runtests.sh $PLAINBOX_TEST_PLANS
+    popd
 }
 
 parseargs "$@"
