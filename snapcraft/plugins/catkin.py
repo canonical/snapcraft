@@ -138,7 +138,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         # Fixup ROS Cmake files that have hardcoded paths in them
         if not self.run([
             'find', self.rosdir, '-name', '*.cmake',
-            '-exec', 'sed', '-i', '-e', 's|\\(\W\\)/usr/lib/|\\1{0}/usr/lib/|g'.format(self.installdir), '{}', ';'
+            '-exec', 'sed', '-i', '-e', r's|\(\W\)/usr/lib/|\1{0}/usr/lib/|g'.format(self.installdir), '{}', ';'
         ]):
             return False
 
