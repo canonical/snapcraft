@@ -73,7 +73,8 @@ class TestCommands(tests.TestCase):
 
         self.assertFalse(cmds._check_for_collisions([part1, part2, part3]))
         self.assertEqual(
-            'Error: parts part2 and part3 have the following file paths in common which have different contents:\n'
+            'Error: parts part2 and part3 have the following file paths in '
+            'common which have different contents:\n'
             '  1\n'
             '  a/2\n',
             fake_logger.output)

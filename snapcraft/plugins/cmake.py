@@ -24,5 +24,5 @@ class CMakePlugin(MakePlugin):
             self.options.configflags = []
 
     def build(self):
-        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] + self.options.configflags) and \
-            super().build()
+        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
+                        self.options.configflags) and super().build()

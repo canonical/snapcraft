@@ -44,7 +44,8 @@ class ComposeTestCase(tests.TestCase):
         }
 
     def test_plain_no_binaries_or_services(self):
-        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data,
+                                       ['armhf', 'amd64'])
 
         expected = {
             'name': 'my-package',
@@ -74,7 +75,8 @@ class ComposeTestCase(tests.TestCase):
             'binary2': {'exec': 'binary2.sh'},
         }
 
-        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data,
+                                       ['armhf', 'amd64'])
 
         self.assertEqual(len(y['binaries']), 2)
         for b in y['binaries']:
@@ -92,7 +94,8 @@ class ComposeTestCase(tests.TestCase):
             },
         }
 
-        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data,
+                                       ['armhf', 'amd64'])
 
         self.assertEqual(len(y['services']), 2)
         for b in y['services']:
@@ -105,7 +108,8 @@ class ComposeTestCase(tests.TestCase):
     def test_plain_no_binaries_or_services_with_optionals(self):
         self.config_data['frameworks'] = ['mir', ]
 
-        y = meta._compose_package_yaml('meta', self.config_data, ['armhf', 'amd64'])
+        y = meta._compose_package_yaml('meta', self.config_data,
+                                       ['armhf', 'amd64'])
 
         expected = {
             'name': 'my-package',
@@ -120,7 +124,8 @@ class ComposeTestCase(tests.TestCase):
 
     def test_compose_readme(self):
         self.config_data['summary'] = 'one line summary'
-        self.config_data['description'] = 'the description\nwhich can be longer'
+        self.config_data['description'] = \
+            'the description\nwhich can be longer'
 
         readme_text = '''one line summary
 the description
@@ -170,7 +175,8 @@ class Create(tests.TestCase):
             }
         }
 
-        self.meta_dir = os.path.join(os.path.abspath(os.curdir), 'snap', 'meta')
+        self.meta_dir = os.path.join(os.path.abspath(os.curdir),
+                                     'snap', 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
 
         self.expected_open_calls = [
@@ -263,7 +269,8 @@ class Create(tests.TestCase):
         mock_wrap_exe.assert_has_calls([
             call(
                 '$SNAP_APP_PATH/bin/bash',
-                os.path.join(os.path.abspath(os.curdir), 'snap/bin/bash.wrapper'),
+                os.path.join(os.path.abspath(os.curdir),
+                             'snap/bin/bash.wrapper'),
             ),
             call(
                 'bin/config',
@@ -273,14 +280,18 @@ class Create(tests.TestCase):
             ),
         ])
         self.mock_copyfile.assert_has_calls([
-            call('my-icon.png', os.path.join(self.meta_dir, 'my-icon.png')),
-            call('file.apparmor', os.path.join(self.meta_dir, 'file.apparmor')),
-            call('file.seccomp', os.path.join(self.meta_dir, 'file.seccomp')),
+            call('my-icon.png', os.path.join(self.meta_dir,
+                 'my-icon.png')),
+            call('file.apparmor', os.path.join(self.meta_dir,
+                 'file.apparmor')),
+            call('file.seccomp', os.path.join(self.meta_dir,
+                 'file.seccomp')),
         ])
 
     @patch('snapcraft.meta._write_wrap_exe')
     @patch('snapcraft.meta.open', create=True)
-    def test_create_meta_with_vararg_config(self, mock_the_open, mock_wrap_exe):
+    def test_create_meta_with_vararg_config(self, mock_the_open,
+                                            mock_wrap_exe):
         self.config_data['config'] = 'python3 my.py --config'
 
         meta.create(self.config_data, ['amd64'])
@@ -294,7 +305,8 @@ class Create(tests.TestCase):
         mock_wrap_exe.assert_has_calls([
             call(
                 '$SNAP_APP_PATH/bin/bash',
-                os.path.join(os.path.abspath(os.curdir), 'snap/bin/bash.wrapper'),
+                os.path.join(os.path.abspath(os.curdir),
+                             'snap/bin/bash.wrapper'),
             ),
             call(
                 'python3',
@@ -311,7 +323,8 @@ class Create(tests.TestCase):
 
         meta.create(self.config_data, ['amd64'])
 
-        self.mock_makedirs.assert_called_once_with(self.meta_dir, exist_ok=True)
+        self.mock_makedirs.assert_called_once_with(self.meta_dir,
+                                                   exist_ok=True)
         mock_the_open.assert_has_calls(self.expected_open_calls)
 
 

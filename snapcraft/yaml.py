@@ -145,14 +145,16 @@ class Config:
                         present = True
                         break
                 if not present:
-                    new_parts.append(self.load_plugin(required_part, required_part, {}))
+                    new_parts.append(self.load_plugin(required_part,
+                                                      required_part, {}))
 
     def _compute_part_dependencies(self, after_requests):
         '''Gather the lists of dependencies and adds to all_parts.'''
         w = snapcraft.wiki.Wiki()
 
         for part in self.all_parts:
-            dep_names = part.config.get('requires', []) + after_requests.get(part.names()[0], [])
+            dep_names = part.config.get('requires', []) + \
+                after_requests.get(part.names()[0], [])
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
@@ -164,9 +166,11 @@ class Config:
                     wiki_part = w.get_part(dep)
                     found = True if wiki_part else False
                     if found:
-                        part.deps.append(self.load_plugin(dep, wiki_part['plugin'], wiki_part))
+                        part.deps.append(self.load_plugin(
+                            dep, wiki_part['plugin'], wiki_part))
                 if not found:
-                    raise SnapcraftLogicError('part name missing {}'.format(dep))
+                    raise SnapcraftLogicError(
+                        'part name missing {}'.format(dep))
 
     def _sort_parts(self):
         '''Performs an inneficient but easy to follow sorting of parts.'''
@@ -184,14 +188,16 @@ class Config:
                     top_part = part
                     break
             if not top_part:
-                raise SnapcraftLogicError('circular dependency chain found in parts definition')
+                raise SnapcraftLogicError(
+                    'circular dependency chain found in parts definition')
             sorted_parts = [top_part] + sorted_parts
             self.all_parts.remove(top_part)
 
         return sorted_parts
 
     def load_plugin(self, part_name, plugin_name, properties, load_code=True):
-        part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties, load_code=load_code)
+        part = snapcraft.plugin.load_plugin(part_name, plugin_name,
+                                            properties, load_code=load_code)
 
         self.build_tools += part.config.get('build-packages', [])
         self.all_parts.append(part)
@@ -280,15 +286,18 @@ class Config:
 
 
 def _validate_snapcraft_yaml(snapcraft_yaml):
-    schema_file = os.path.abspath(os.path.join(common.get_schemadir(), 'snapcraft.yaml'))
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(),
+                                               'snapcraft.yaml'))
 
     try:
         with open(schema_file) as fp:
             schema = yaml.load(fp)
             format_check = jsonschema.FormatChecker()
-            jsonschema.validate(snapcraft_yaml, schema, format_checker=format_check)
+            jsonschema.validate(snapcraft_yaml, schema,
+                                format_checker=format_check)
     except FileNotFoundError:
-        raise SnapcraftSchemaError('snapcraft validation file is missing from installation path')
+        raise SnapcraftSchemaError(
+            'snapcraft validation file is missing from installation path')
     except jsonschema.ValidationError as e:
         raise SnapcraftSchemaError(e.message)
 
