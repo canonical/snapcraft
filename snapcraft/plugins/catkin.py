@@ -70,6 +70,36 @@ class CatkinPlugin (snapcraft.BasePlugin):
     def rosdir(self):
         return os.path.join(self.installdir, 'opt', 'ros', self.rosversion)
 
+    def deps_from_packagesxml(self, f, pkg):
+        try:
+            tree = lxml.etree.parse(f)
+        except lxml.etree.ParseError:
+            logger.warning("Unable to read packages.xml file for '" + pkg + "'")
+            return
+
+        for deptype in ['buildtool_depend', 'build_depend', 'run_depend']:
+            for xmldep in tree.xpath('/package/' + deptype):
+                dep = xmldep.text
+
+                self.dependencies.append(dep)
+
+                # Make sure we're not providing the dep ourselves
+                if dep in self.packages:
+                    self.package_local_deps[pkg].append(dep)
+                    continue
+
+                # If we're already getting this through a stage package, we don't need it
+                if self.options.stage_packages and (
+                        dep in self.options.stage_packages or
+                        dep.replace('_', '-') in self.options.stage_packages):
+                    continue
+
+                # Get the ROS package for it
+                self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
+
+                if dep == 'roscpp':
+                    self._PLUGIN_STAGE_PACKAGES.append('g++')
+
     def find_package_deps(self):
         if self.package_deps_found:
             return
@@ -81,32 +111,9 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
             try:
                 with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
-                    tree = lxml.etree.parse(f)
-
-                    for deptype in ['buildtool_depend', 'build_depend', 'run_depend', 'snapcraft_depend']:
-                        for xmldep in tree.xpath('/package/' + deptype):
-                            dep = xmldep.text
-
-                            self.dependencies.append(dep)
-
-                            # Make sure we're not providing the dep ourselves
-                            if dep in self.packages:
-                                self.package_local_deps[pkg].append(dep)
-                                continue
-
-                            # If we're already getting this through a stage package, we don't need it
-                            if self.options.stage_packages and (
-                                    dep in self.options.stage_packages or
-                                    dep.replace('_', '-') in self.options.stage_packages):
-                                continue
-
-                            # Get the ROS package for it
-                            self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
-
-                            if dep == 'roscpp':
-                                self._PLUGIN_STAGE_PACKAGES.append('g++')
-            except:
-                logger.warning("Unable to get packages.xml for '" + pkg + "'")
+                    self.deps_from_packagesxml(f, pkg)
+            except os.FileNotFound:
+                logger.warning("Unable to find packages.xml for '" + pkg + "'")
                 pass
 
         self.package_deps_found = True
