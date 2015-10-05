@@ -20,7 +20,6 @@ import logging
 import os
 import sys
 import shutil
-import yaml
 
 import snapcraft
 from snapcraft import common
@@ -28,7 +27,6 @@ from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
-
 
 _BUILTIN_OPTIONS = {
     'filesets': {},
@@ -49,7 +47,7 @@ class PluginError(Exception):
 
 class PluginHandler:
 
-    def __init__(self, name, part_name, properties, load_code=True, load_config=True):
+    def __init__(self, name, part_name, properties):
         self.valid = False
         self.code = None
         self.config = {}
@@ -68,10 +66,7 @@ class PluginHandler:
         self.statefile = os.path.join(parts_dir, part_name, 'state')
 
         try:
-            if load_config:
-                self._load_config(name)
-            if load_code:
-                self._load_code(name, part_name, properties)
+            self._load_code(name, part_name, properties)
             # only set to valid if it loads without PluginError
             self.part_names.append(part_name)
             self.valid = True
@@ -79,42 +74,28 @@ class PluginHandler:
             logger.error(str(e))
             return
 
-    def _load_config(self, name):
-        config_path = os.path.join(common.get_plugindir(), name + ".yaml")
-        if not os.path.exists(config_path):
-            config_path = os.path.join(_local_plugindir(), name + ".yaml")
-        if not os.path.exists(config_path):
-            raise PluginError('Unknown plugin: {}'.format(name))
-        with open(config_path, 'r') as fp:
-            self.config = yaml.load(fp) or {}
-
-    def _make_options(self, name, properties):
+    def _make_options(self, plugin_options, properties):
         class Options():
             pass
         options = Options()
 
-        plugin_options = self.config.get('options', {})
-        # Let's append some mandatory options, but not .update() to not lose
-        # original content
-        for key in _BUILTIN_OPTIONS:
-            if key not in plugin_options:
-                plugin_options[key] = _BUILTIN_OPTIONS[key]
-
+        plugin_options.update(_BUILTIN_OPTIONS)
         for opt in plugin_options:
-            attrname = opt.replace('-', '_')
-            opt_parameters = plugin_options[opt] or {}
-            if opt in properties:
-                setattr(options, attrname, properties[opt])
-            else:
-                if opt_parameters.get('required', False):
-                    raise PluginError('Required field {} missing on part {}'.format(opt, name))
-                setattr(options, attrname, None)
+            attr_name = opt.replace('-', '_')
+            attr_value = properties.get(opt, plugin_options[opt])
+            setattr(options, attr_name, attr_value)
 
         return options
 
     def _load_code(self, name, part_name, properties):
-        options = self._make_options(name, properties)
         module_name = name.replace('-', '_')
+
+        if name.startswith('x-'):
+            logger.info('Searching for local plugin for %s', name)
+            try:
+                module = _load_local(module_name)
+            except ImportError:
+                raise PluginError('Cannot find local plugin {}'.format(name))
 
         try:
             module = importlib.import_module('snapcraft.plugins.' + module_name)
@@ -123,15 +104,19 @@ class PluginHandler:
 
         if not module:
             logger.info('Searching for local plugin for %s', name)
-            sys.path = [_local_plugindir()] + sys.path
-            module = importlib.import_module(module_name)
-            sys.path.pop(0)
+            module = _load_local(module_name)
+
+        plugin_options = getattr(module, 'PLUGIN_OPTIONS', {})
+        options = self._make_options(plugin_options, properties)
 
         for prop_name in dir(module):
             prop = getattr(module, prop_name)
-            if issubclass(prop, snapcraft.BasePlugin):
-                self.code = prop(part_name, options)
-                break
+            try:
+                if issubclass(prop, snapcraft.BasePlugin):
+                    self.code = prop(part_name, options)
+                    return
+            except TypeError:
+                continue
 
     def __str__(self):
         return self.part_names[0]
@@ -283,8 +268,16 @@ class PluginHandler:
         return []
 
 
-def load_plugin(part_name, plugin_name, properties={}, load_code=True):
-    part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
+def _load_local(module_name):
+    sys.path = [_local_plugindir()] + sys.path
+    module = importlib.import_module(module_name)
+    sys.path.pop(0)
+
+    return module
+
+
+def load_plugin(part_name, plugin_name, properties={}):
+    part = PluginHandler(plugin_name, part_name, properties)
     if not part.is_valid():
         logger.error('Could not load part %s', plugin_name)
         sys.exit(1)

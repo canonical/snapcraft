@@ -17,6 +17,10 @@
 import snapcraft
 import snapcraft.sources
 
+PLUGIN_OPTIONS = {
+    'source': '',
+}
+
 
 class TarContentPlugin(snapcraft.BasePlugin):
 

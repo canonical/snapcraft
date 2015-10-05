@@ -22,6 +22,10 @@ import snapcraft
 
 logger = logging.getLogger(__name__)
 
+PLUGIN_OPTIONS = {
+    'files': {},
+}
+
 
 class CopyPlugin(snapcraft.BasePlugin):
 

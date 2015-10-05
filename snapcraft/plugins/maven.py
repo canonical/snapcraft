@@ -24,13 +24,27 @@ import snapcraft.common
 
 logger = logging.getLogger(__name__)
 
+PLUGIN_OPTIONS = {
+    'source': '',
+    'source-type': '',
+    'source-tag': '',
+    'source-branch': '',
+}
 
-class MavenPlugin(snapcraft.BasePlugin):
+
+class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
+
+    _PLUGIN_BUILD_PACKAGES = [
+        'maven',
+    ]
 
     def pull(self):
+        super().pull()
         return self.handle_source_options()
 
     def build(self):
+        super().build()
+
         if not self.run(['mvn', 'package']):
             return False
         jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))

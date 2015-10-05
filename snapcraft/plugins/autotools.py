@@ -17,8 +17,23 @@
 import os
 from snapcraft.plugins.make import MakePlugin
 
+PLUGIN_OPTIONS = {
+    'source': '',
+    'source-type': '',
+    'source-tag': '',
+    'source-branch': '',
+    'configflags': [],
+}
+
 
 class AutotoolsPlugin(MakePlugin):
+
+    _PLUGIN_BUILD_PACKAGES = [
+        'autoconf',
+        'automake',
+        'autopoint',
+    ]
+
     def __init__(self, name, options):
         super().__init__(name, options)
         if self.options.configflags is None:

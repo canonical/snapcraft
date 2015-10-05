@@ -21,17 +21,31 @@ import sys
 
 import snapcraft
 import snapcraft.common
+import snapcraft.plugins.jdk
 
 
 logger = logging.getLogger(__name__)
 
+PLUGIN_OPTIONS = {
+    'source': '',
+    'source-type': '',
+    'source-tag': '',
+    'source-branch': '',
+}
 
-class AntPlugin(snapcraft.BasePlugin):
+
+class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
+
+    _PLUGIN_BUILD_PACKAGES = [
+        'ant',
+    ]
 
     def pull(self):
+        super().pull()
         return self.handle_source_options()
 
     def build(self):
+        super().build()
         if not self.run(['ant']):
             return False
         files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
@@ -45,6 +59,7 @@ class AntPlugin(snapcraft.BasePlugin):
     def env(self, root):
         jars = glob.glob(os.path.join(self.installdir, 'jar', '*.jar'))
         if not jars:
-            return []
+            return super().env()
         jars = [os.path.join(root, 'jar', os.path.basename(x)) for x in jars]
-        return ['CLASSPATH=%s:$CLASSPATH' % ':'.join(jars)]
+        return ['CLASSPATH=%s:$CLASSPATH' % ':'.join(jars)].extend(
+            super().env())

@@ -16,8 +16,19 @@
 
 import snapcraft
 
+PLUGIN_OPTIONS = {
+    'source': '',
+    'source-type': '',
+    'source-tag': '',
+    'source-branch': '',
+}
+
 
 class MakePlugin(snapcraft.BasePlugin):
+
+    _PLUGIN_BUILD_PACKAGES = [
+        'make',
+    ]
 
     def pull(self):
         return self.handle_source_options()

@@ -36,6 +36,10 @@ class BasePlugin:
     def PLUGIN_STAGE_SOURCES(self):
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
+    @property
+    def PLUGIN_BUILD_PACKAGES(self):
+        return getattr(self, '_PLUGIN_BUILD_PACKAGES', [])
+
     def __init__(self, name, options):
         self.name = name
         self.options = options

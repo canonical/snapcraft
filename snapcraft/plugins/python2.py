@@ -19,6 +19,14 @@ import tempfile
 
 import snapcraft
 
+PLUGIN_OPTIONS = {
+    'source': '',
+    'source-type': '',
+    'source-tag': '',
+    'source-branch': '',
+    'requirements': '',
+}
+
 
 class Python2Plugin(snapcraft.BasePlugin):
 

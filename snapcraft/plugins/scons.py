@@ -18,8 +18,20 @@ import os
 
 import snapcraft
 
+PLUGIN_OPTIONS = {
+    'source': '',
+    'source-type': '',
+    'source-tag': '',
+    'source-branch': '',
+    'scons-options': [],
+}
+
 
 class SconsPlugin(snapcraft.BasePlugin):
+
+    _PLUGIN_BUILD_PACKAGES = [
+        'scons',
+    ]
 
     def __init__(self, name, options):
         super().__init__(name, options)
