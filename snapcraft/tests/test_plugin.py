@@ -197,15 +197,6 @@ class PluginTestCase(tests.TestCase):
 
                 self.assertEqual(expected, result)
 
-    def test_notify_stage_must_log_information(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        p = get_test_plugin()
-        p.notify_stage('test stage')
-
-        self.assertEqual('test stage mock-part\n', fake_logger.output)
-
     def test_non_local_plugins(self):
         """Ensure regular plugins are loaded from snapcraft only"""
         def mock_import_modules(module_name):

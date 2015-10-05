@@ -141,7 +141,7 @@ class Config:
             for required_part in requires:
                 present = False
                 for p in self.all_parts:
-                    if required_part in p.names():
+                    if required_part in p.name:
                         present = True
                         break
                 if not present:
@@ -152,11 +152,11 @@ class Config:
         w = snapcraft.wiki.Wiki()
 
         for part in self.all_parts:
-            dep_names = part.config.get('requires', []) + after_requests.get(part.names()[0], [])
+            dep_names = part.config.get('requires', []) + after_requests.get(part.name, [])
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
-                    if dep in self.all_parts[i].names():
+                    if dep in self.all_parts[i].name:
                         part.deps.append(self.all_parts[i])
                         found = True
                         break

@@ -47,11 +47,15 @@ class PluginError(Exception):
 
 class PluginHandler:
 
+    @property
+    def name(self):
+        return self.part_name
+
     def __init__(self, name, part_name, properties):
         self.valid = False
         self.code = None
         self.config = {}
-        self.part_names = []
+        self.part_name = part_name
         self.deps = []
         self.plugin_name = name
 
@@ -68,7 +72,6 @@ class PluginHandler:
         try:
             self._load_code(name, part_name, properties)
             # only set to valid if it loads without PluginError
-            self.part_names.append(part_name)
             self.valid = True
         except PluginError as e:
             logger.error(str(e))
@@ -104,7 +107,10 @@ class PluginHandler:
 
         if not module:
             logger.info('Searching for local plugin for %s', name)
-            module = _load_local(module_name)
+            try:
+                module = _load_local(module_name)
+            except ImportError:
+                raise PluginError('Unknown plugin: {}'.format(name))
 
         plugin_options = getattr(module, 'PLUGIN_OPTIONS', {})
         options = self._make_options(plugin_options, properties)
@@ -119,10 +125,10 @@ class PluginHandler:
                 continue
 
     def __str__(self):
-        return self.part_names[0]
+        return self.part_name
 
     def __repr__(self):
-        return self.part_names[0]
+        return self.part_name
 
     def makedirs(self):
         dirs = [
@@ -135,11 +141,8 @@ class PluginHandler:
     def is_valid(self):
         return self.valid
 
-    def names(self):
-        return self.part_names
-
     def notify_stage(self, stage, hint=''):
-        logger.info(stage + " " + self.part_names[0] + hint)
+        logger.info('%s %s %s', stage, self.part_name, hint)
 
     def is_dirty(self, stage):
         try:

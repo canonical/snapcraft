@@ -55,7 +55,7 @@ def init(args):
         yaml += 'parts:\n'
     for part_name in args.part:
         part = snapcraft.plugin.load_plugin(part_name, part_name)
-        yaml += '    ' + part.names()[0] + ':\n'
+        yaml += '    ' + part.name + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
                 yaml += '        ' + opt + ':\n'
@@ -235,7 +235,7 @@ def clean(args):
     config = _load_config()
 
     for part in config.all_parts:
-        logger.info('Cleaning up for part %r', part.names()[0])
+        logger.info('Cleaning up for part %r', part.name)
         if os.path.exists(part.partdir):
             shutil.rmtree(part.partdir)
 
@@ -273,12 +273,12 @@ def _check_for_collisions(parts):
                     conflict_files.append(f)
 
             if conflict_files:
-                logger.error('Error: parts %s and %s have the following file paths in common which have different contents:\n  %s', other_part_name, part.names()[0], '\n  '.join(sorted(conflict_files)))
+                logger.error('Error: parts %s and %s have the following file paths in common which have different contents:\n  %s', other_part_name, part.name, '\n  '.join(sorted(conflict_files)))
 
                 return False
 
         # And add our files to the list
-        parts_files[part.names()[0]] = {'files': part_files, 'installdir': part.installdir}
+        parts_files[part.name] = {'files': part_files, 'installdir': part.installdir}
 
     return True
 
@@ -329,7 +329,7 @@ def cmd(args):
             force = forceAll or cmd == forceCommand
 
             if not getattr(part, cmd)(force=force):
-                logger.error('Failed doing %s for %s!', cmd, part.names()[0])
+                logger.error('Failed doing %s for %s!', cmd, part.name)
                 sys.exit(1)
 
 
