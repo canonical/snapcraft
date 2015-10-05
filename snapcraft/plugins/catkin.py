@@ -37,7 +37,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         self.rosversion = options.rosversion if options.rosversion else 'indigo'
-        self.packages = options.catkin_packages
+        self.packages = set(options.catkin_packages)
         self.dependencies = ['ros-core']
         self.package_deps_found = False
         self.package_local_deps = {}
@@ -85,7 +85,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
                 # Make sure we're not providing the dep ourselves
                 if dep in self.packages:
-                    self.package_local_deps[pkg].append(dep)
+                    self.package_local_deps[pkg].add(dep)
                     continue
 
                 # If we're already getting this through a stage package, we don't need it
@@ -107,7 +107,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
         # Look for a package definition and pull deps if there are any
         for pkg in self.packages:
             if pkg not in self.package_local_deps:
-                self.package_local_deps[pkg] = []
+                self.package_local_deps[pkg] = set()
 
             try:
                 with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
@@ -167,10 +167,10 @@ class CatkinPlugin (snapcraft.BasePlugin):
         # Ugly dependency resolution, just loop through until we can
         # find something to build. When we do, build it. Loop until we
         # either can't build anything or we built everything.
-        built = []
+        built = set()
         built_pkg = True
 
-        while len(built) != len(self.packages) and built_pkg:
+        while len(built) < len(self.packages) and built_pkg:
             built_pkg = False
             for pkg in self.packages - built:
                 if len(self.package_local_deps[pkg] - built) > 0:
@@ -179,7 +179,7 @@ class CatkinPlugin (snapcraft.BasePlugin):
                 if not self.handle_package(pkg):
                     return False
 
-                built.append(pkg)
+                built.add(pkg)
                 built_pkg = True
 
         if not built_pkg:
