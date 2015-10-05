@@ -78,7 +78,7 @@ def get_arch_triplet():
     if _arch_triplet is None:
         _arch_triplet = subprocess.check_output(
             ['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']).decode(
-             'utf8').strip()
+            'utf8').strip()
     return _arch_triplet
 
 
