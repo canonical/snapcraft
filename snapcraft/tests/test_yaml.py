@@ -367,8 +367,9 @@ class TestValidation(TestCase):
                         snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = '\'{}\' does not match '
-                '\'^[a-z0-9][a-z0-9+-]*$\''.format(name)
+                expected_message = (
+                    '\'{}\' does not match \'^[a-z0-9][a-z0-9+-]*$\'').format(
+                        name)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
