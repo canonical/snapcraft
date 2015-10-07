@@ -1,0 +1,17 @@
+options:
+  requirements:
+    required: false
+  source:
+    required: false
+  accesskeyid:
+    required: true
+  secretaccesskey:
+    required: true
+  region:
+    required: true
+  stage-packages:
+  snap:
+  stage:
+build-packages:
+  - python3
+  - python3-pip
