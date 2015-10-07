@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.python3_project import Python3ProjectPlugin
+from snapcraft.plugins.python3 import Python3Plugin
 
 import os
 import os.path
 
-class AWSCLIPlugin(Python3ProjectPlugin):
+class AWSCLIPlugin(Python3Plugin):
     def __init__(self, name, options):
         super().__init__(name, options)
         self.accesskeyid = options.accesskeyid
