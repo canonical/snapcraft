@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fixtures
+import logging
 import os
 import tempfile
 import unittest.mock
@@ -64,6 +66,8 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         self.assertFalse(mock_cc.called)
 
     def test_fix_symlinks(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
         tempdir = tempdirObj.name
