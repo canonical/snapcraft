@@ -36,9 +36,9 @@ PLUGIN_OPTIONS = {
 
 class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'ant',
-    ]
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.build_packages.append('ant')
 
     def pull(self):
         super().pull()

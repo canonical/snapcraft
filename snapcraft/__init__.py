@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 import os
 import re
@@ -29,19 +30,19 @@ logger = logging.getLogger(__name__)
 class BasePlugin:
 
     @property
-    def PLUGIN_STAGE_PACKAGES(self):
-        return getattr(self, '_PLUGIN_STAGE_PACKAGES', [])
-
-    @property
     def PLUGIN_STAGE_SOURCES(self):
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
-    @property
-    def PLUGIN_BUILD_PACKAGES(self):
-        return getattr(self, '_PLUGIN_BUILD_PACKAGES', [])
-
     def __init__(self, name, options):
         self.name = name
+        self.build_packages = []
+        self.stage_packages = []
+
+        with contextlib.suppress(AttributeError):
+            self.stage_packages = options.stage_packages
+        with contextlib.suppress(AttributeError):
+            self.build_packages = options.build_packages
+
         self.options = options
         self.partdir = os.path.join(os.getcwd(), "parts", self.name)
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
@@ -117,10 +118,9 @@ class BasePlugin:
         os.makedirs(d, exist_ok=True)
 
     def setup_stage_packages(self):
-        part_stage_packages = getattr(self.options, 'stage_packages', []) or []
-        if self.PLUGIN_STAGE_PACKAGES or part_stage_packages:
+        if self.stage_packages:
             ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
-            ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
+            ubuntu.get(self.stage_packages)
             ubuntu.unpack(self.installdir)
             self._fixup(self.installdir)
 
@@ -132,7 +132,7 @@ class BasePlugin:
 
 
 def _get_source_handler(source_type, source):
-    if source_type is None:
+    if not source_type:
         source_type = _get_source_type_from_uri(source)
 
     if source_type == 'bzr':

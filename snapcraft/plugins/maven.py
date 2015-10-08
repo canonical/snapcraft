@@ -34,9 +34,9 @@ PLUGIN_OPTIONS = {
 
 class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'maven',
-    ]
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.build_packages.append('maven')
 
     def pull(self):
         super().pull()

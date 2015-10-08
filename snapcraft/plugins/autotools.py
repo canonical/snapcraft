@@ -28,16 +28,13 @@ PLUGIN_OPTIONS = {
 
 class AutotoolsPlugin(MakePlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'autoconf',
-        'automake',
-        'autopoint',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
-        if self.options.configflags is None:
-            self.options.configflags = []
+        self.build_packages.extend([
+            'autoconf',
+            'automake',
+            'autopoint',
+        ])
 
     def build(self):
         if not os.path.exists(os.path.join(self.builddir, "configure")):

@@ -30,16 +30,15 @@ PLUGIN_OPTIONS = {
 
 class Python2Plugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-        'python-dev',
-        'python-pkg-resources',
-        'python-setuptools',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
         self.requirements = options.requirements
         self.source = options.source
+        self.stage_packages.extend([
+            'python-dev',
+            'python-pkg-resources',
+            'python-setuptools',
+        ])
 
     def env(self, root):
         return ["PYTHONPATH=%s" % os.path.join(

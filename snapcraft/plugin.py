@@ -167,22 +167,16 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        run_setup_stage_packages = self.code and hasattr(self.code, 'setup_stage_packages')
-        run_pull = self.code and hasattr(self.code, 'pull')
+        self.notify_stage("Pulling")
 
-        if run_setup_stage_packages or run_pull:
-            self.notify_stage("Pulling")
+        try:
+            self.code.setup_stage_packages()
+        except repo.PackageNotFoundError as e:
+            logger.error(e.message)
+            return False
 
-        if run_setup_stage_packages:
-            try:
-                self.code.setup_stage_packages()
-            except repo.PackageNotFoundError as e:
-                logger.error(e.message)
-                return False
-
-        if run_pull:
-            if not getattr(self.code, 'pull')():
-                return False
+        if not self.code.pull():
+            return False
 
         self.mark_done('pull')
         return True

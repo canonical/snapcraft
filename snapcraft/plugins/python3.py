@@ -30,16 +30,15 @@ PLUGIN_OPTIONS = {
 
 class Python3Plugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-        'python3-dev',
-        'python3-pkg-resources',
-        'python3-setuptools',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
         self.requirements = options.requirements
         self.source = options.source
+        self.stage_packages.extend([
+            'python3-dev',
+            'python3-pkg-resources',
+            'python3-setuptools',
+        ])
 
     def env(self, root):
         return ["PYTHONPATH=%s" % os.path.join(

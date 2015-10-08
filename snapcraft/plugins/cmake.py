@@ -33,8 +33,7 @@ class CMakePlugin(MakePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        if self.options.configflags is None:
-            self.options.configflags = []
+        self.build_packages.append('cmake')
 
     def build(self):
         return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] + self.options.configflags) and \

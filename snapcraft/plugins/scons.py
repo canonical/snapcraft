@@ -29,12 +29,9 @@ PLUGIN_OPTIONS = {
 
 class SconsPlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'scons',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
+        self.build_packages.append('scons')
         self.scons_options = []
         if options.scons_options:
             self.scons_options = options.scons_options
