@@ -193,7 +193,7 @@ class Tar(Base):
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
-                    m.mode = m.mode | 0o222
+                    m.mode = m.mode | 0o200
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)
