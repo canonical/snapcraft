@@ -240,7 +240,8 @@ def _fix_symlinks(debdir):
                     logger.debug('Skipping {}'.format(target))
                     continue
                 if not os.path.exists(target):
-                    _try_copy_local(path, target)
+                    if not _try_copy_local(path, target):
+                        continue
                 os.remove(path)
                 os.symlink(os.path.relpath(target, root), path)
 
@@ -263,6 +264,8 @@ def _try_copy_local(path, target):
         logger.warning(
             'Copying needed target link from the system {}'.format(real_path))
         shutil.copyfile(os.readlink(path), target)
+        return True
     else:
         logger.warning(
             '{} will be a dangling symlink'.format(path))
+        return False
