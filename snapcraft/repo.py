@@ -17,9 +17,11 @@
 import apt
 import glob
 import itertools
+import logging
 import os
 import platform
 import string
+import shutil
 import subprocess
 import urllib
 import urllib.request
@@ -27,6 +29,8 @@ import urllib.request
 from xml.etree import ElementTree
 
 import snapcraft.common
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_SOURCES = \
     '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
@@ -232,6 +236,33 @@ def _fix_symlinks(debdir):
             path = os.path.join(root, entry)
             if os.path.islink(path) and os.path.isabs(os.readlink(path)):
                 target = os.path.join(debdir, os.readlink(path)[1:])
-                if os.path.exists(target):
-                    os.remove(path)
-                    os.symlink(os.path.relpath(target, root), path)
+                if _skip_link(os.readlink(path)):
+                    logger.debug('Skipping {}'.format(target))
+                    continue
+                if not os.path.exists(target):
+                    _try_copy_local(path, target)
+                os.remove(path)
+                os.symlink(os.path.relpath(target, root), path)
+
+
+_skip_list = None
+
+
+def _skip_link(target):
+    global _skip_list
+    if not _skip_list:
+        output = snapcraft.common.run_output(['dpkg', '-L', 'libc6']).split()
+        _skip_list = [i for i in output if 'lib' in i]
+
+    return target in _skip_list
+
+
+def _try_copy_local(path, target):
+    real_path = os.path.realpath(path)
+    if os.path.exists(real_path):
+        logger.warning(
+            'Copying needed target link from the system {}'.format(real_path))
+        shutil.copyfile(os.readlink(path), target)
+    else:
+        logger.warning(
+            '{} will be a dangling symlink'.format(path))
