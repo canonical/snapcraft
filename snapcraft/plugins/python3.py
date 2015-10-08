@@ -106,7 +106,8 @@ class Python3Plugin(snapcraft.BasePlugin):
     @property
     def dist_packages_dir(self):
         return os.path.join(
-            self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')
+            self.installdir, 'usr', 'lib', self.python_version,
+            'dist-packages')
 
     @property
     def python_version(self):

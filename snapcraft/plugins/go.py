@@ -53,7 +53,8 @@ class GoPlugin(snapcraft.BasePlugin):
             return False
         if not self.run(['go', 'install', self.fullname]):
             return False
-        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'), self.installdir])
+        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'),
+                        self.installdir])
 
     def run(self, cmd, **kwargs):
         cmd = ['env', 'GOPATH=' + self.builddir] + cmd

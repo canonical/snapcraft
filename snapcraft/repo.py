@@ -17,9 +17,11 @@
 import apt
 import glob
 import itertools
+import logging
 import os
 import platform
 import string
+import shutil
 import subprocess
 import urllib
 import urllib.request
@@ -28,7 +30,10 @@ from xml.etree import ElementTree
 
 import snapcraft.common
 
-_DEFAULT_SOURCES = '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+logger = logging.getLogger(__name__)
+
+_DEFAULT_SOURCES = \
+    '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
 deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
 deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
 deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
@@ -103,7 +108,8 @@ class Ubuntu:
                 skipped_essential.append(pkg.name)
                 pkg.mark_keep()
                 continue
-            if (pkg.name in manifest_dep_names and pkg.name not in package_names):
+            if (pkg.name in manifest_dep_names and
+                    pkg.name not in package_names):
                 skipped_blacklisted.append(pkg.name)
                 pkg.mark_keep()
                 continue
@@ -111,7 +117,8 @@ class Ubuntu:
         if skipped_essential:
             print('Skipping priority essential packages:', skipped_essential)
         if skipped_blacklisted:
-            print('Skipping blacklisted from manifest packages:', skipped_blacklisted)
+            print('Skipping blacklisted from manifest packages:',
+                  skipped_blacklisted)
 
         # download the remaining ones with proper progress
         apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
@@ -131,7 +138,8 @@ class Ubuntu:
     def _manifest_dep_names(self):
         manifest_dep_names = set()
 
-        with open(os.path.abspath(os.path.join(__file__, '..', 'manifest.txt'))) as f:
+        with open(os.path.abspath(os.path.join(__file__, '..',
+                                               'manifest.txt'))) as f:
             for line in f:
                 pkg = line.strip()
                 if pkg in self.apt_cache:
@@ -228,6 +236,36 @@ def _fix_symlinks(debdir):
             path = os.path.join(root, entry)
             if os.path.islink(path) and os.path.isabs(os.readlink(path)):
                 target = os.path.join(debdir, os.readlink(path)[1:])
-                if os.path.exists(target):
-                    os.remove(path)
-                    os.symlink(os.path.relpath(target, root), path)
+                if _skip_link(os.readlink(path)):
+                    logger.debug('Skipping {}'.format(target))
+                    continue
+                if not os.path.exists(target):
+                    if not _try_copy_local(path, target):
+                        continue
+                os.remove(path)
+                os.symlink(os.path.relpath(target, root), path)
+
+
+_skip_list = None
+
+
+def _skip_link(target):
+    global _skip_list
+    if not _skip_list:
+        output = snapcraft.common.run_output(['dpkg', '-L', 'libc6']).split()
+        _skip_list = [i for i in output if 'lib' in i]
+
+    return target in _skip_list
+
+
+def _try_copy_local(path, target):
+    real_path = os.path.realpath(path)
+    if os.path.exists(real_path):
+        logger.warning(
+            'Copying needed target link from the system {}'.format(real_path))
+        shutil.copyfile(os.readlink(path), target)
+        return True
+    else:
+        logger.warning(
+            '{} will be a dangling symlink'.format(path))
+        return False

@@ -41,5 +41,6 @@ class CopyPlugin(snapcraft.BasePlugin):
             dst_dir = os.path.dirname(dst)
             if not os.path.exists(dst_dir):
                 os.makedirs(dst_dir)
-            res &= self.run(["cp", "--preserve=all", "-R", src, dst], cwd=os.getcwd())
+            res &= self.run(["cp", "--preserve=all", "-R", src, dst],
+                            cwd=os.getcwd())
         return res

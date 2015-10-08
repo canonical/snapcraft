@@ -36,5 +36,5 @@ class CMakePlugin(MakePlugin):
         self.build_packages.append('cmake')
 
     def build(self):
-        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] + self.options.configflags) and \
-            super().build()
+        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
+                        self.options.configflags) and super().build()

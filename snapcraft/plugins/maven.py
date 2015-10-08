@@ -50,7 +50,8 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
         jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
         if not (jarfiles or warfiles):
-            logger.error('Could not find any built jar or war files for part %s', self.name)
+            logger.error('Could not find any built jar or war files for '
+                         'part %s', self.name)
             snapcraft.common.fatal()
         if jarfiles:
             jardir = os.path.join(self.installdir, 'jar')

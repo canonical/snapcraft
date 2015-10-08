@@ -47,8 +47,10 @@ class BasePlugin:
         self.partdir = os.path.join(os.getcwd(), "parts", self.name)
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
-        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name, 'ubuntu')
-        self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
+        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name,
+                                      'ubuntu')
+        self.installdir = os.path.join(os.getcwd(), "parts", self.name,
+                                       "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
 
@@ -89,17 +91,23 @@ class BasePlugin:
     def isurl(self, url):
         return snapcraft.common.isurl(url)
 
-    def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
+    def get_source(self, source, source_type=None, source_tag=None,
+                   source_branch=None):
         try:
             handler_class = _get_source_handler(source_type, source)
         except ValueError:
-            logger.error("Unrecognized source '%s' for part '%s'.", source, self.name)
+            logger.error("Unrecognized source '%s' for part '%s'.", source,
+                         self.name)
             snapcraft.common.fatal()
 
         try:
-            handler = handler_class(source, self.sourcedir, source_tag, source_branch)
+            handler = handler_class(source, self.sourcedir, source_tag,
+                                    source_branch)
         except snapcraft.sources.IncompatibleOptionsError as e:
-            logger.error('Issues while setting up sources for part \'%s\': %s.', self.name, e.message)
+            logger.error(
+                'Issues while setting up sources for part \'%s\': %s.',
+                self.name,
+                e.message)
             snapcraft.common.fatal()
         if not handler.pull():
             return False
@@ -119,16 +127,23 @@ class BasePlugin:
 
     def setup_stage_packages(self):
         if self.stage_packages:
-            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
+            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir,
+                                           sources=self.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.stage_packages)
             ubuntu.unpack(self.installdir)
             self._fixup(self.installdir)
 
     def _fixup(self, root):
         if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xml2-config')):
-            self.run(['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.format(root), os.path.join(root, 'usr', 'bin', 'xml2-config')])
+            self.run(
+                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
+                    format(root),
+                 os.path.join(root, 'usr', 'bin', 'xml2-config')])
         if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xslt-config')):
-            self.run(['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.format(root), os.path.join(root, 'usr', 'bin', 'xslt-config')])
+            self.run(
+                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
+                    format(root),
+                 os.path.join(root, 'usr', 'bin', 'xslt-config')])
 
 
 def _get_source_handler(source_type, source):

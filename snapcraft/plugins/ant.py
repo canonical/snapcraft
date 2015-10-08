@@ -50,7 +50,8 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
             return False
         files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         if not files:
-            logger.error('Could not find any built jar files for part %s', self.name)
+            logger.error('Could not find any built jar files for part %s',
+                         self.name)
             sys.exit(1)
         jardir = os.path.join(self.installdir, 'jar')
         return self.run(['mkdir', '-p', jardir]) and \

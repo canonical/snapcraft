@@ -12,4 +12,3 @@ if __name__ == "__main__":
         data = fp.read()
     h.update(data)
     print(h.hexdigest())
-
