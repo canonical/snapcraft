@@ -22,6 +22,7 @@ import os
 import platform
 import string
 import shutil
+import stat
 import subprocess
 import urllib
 import urllib.request
@@ -133,7 +134,7 @@ class Ubuntu:
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 
-        _fix_symlinks(rootdir)
+        _fix_contents(rootdir)
 
     def _manifest_dep_names(self):
         manifest_dep_names = set()
@@ -223,11 +224,14 @@ def _setup_apt_cache(rootdir, sources, local=False):
     return apt_cache, progress
 
 
-def _fix_symlinks(debdir):
+def _fix_contents(debdir):
     '''
     Sometimes debs will contain absolute symlinks (e.g. if the relative
     path would go all the way to root, they just do absolute).  We can't
     have that, so instead clean those absolute symlinks.
+
+    Some unpacked items will also contain suid binaries which we do not want in
+    the resulting snap.
     '''
     for root, dirs, files in os.walk(debdir):
         # Symlinks to directories will be in dirs, while symlinks to
@@ -244,6 +248,15 @@ def _fix_symlinks(debdir):
                         continue
                 os.remove(path)
                 os.symlink(os.path.relpath(target, root), path)
+            elif os.path.exists(path):
+                _fix_filemode(path)
+
+
+def _fix_filemode(path):
+    mode = stat.S_IMODE(os.stat(path).st_mode)
+    if mode & 0o4000 or mode & 0o2000:
+        logger.debug('Removing suid/guid from {}'.format(path))
+        os.chmod(path, mode & 0o1777)
 
 
 _skip_list = None
