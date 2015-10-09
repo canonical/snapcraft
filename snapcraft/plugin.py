@@ -62,7 +62,7 @@ class PluginHandler:
         self.statefile = os.path.join(parts_dir, part_name, 'state')
 
         try:
-            self._load_code(plugin_name, part_name, properties)
+            self._load_code(plugin_name, properties)
             # only set to valid if it loads without PluginError
             self.valid = True
         except PluginError as e:
@@ -86,7 +86,7 @@ class PluginHandler:
 
         return options
 
-    def _load_code(self, plugin_name, part_name, properties):
+    def _load_code(self, plugin_name, properties):
         module_name = plugin_name.replace('-', '_')
         module = None
 
@@ -113,14 +113,14 @@ class PluginHandler:
             prop = getattr(module, prop_name)
             with contextlib.suppress(TypeError):
                 if issubclass(prop, snapcraft.BasePlugin):
-                    self.code = prop(part_name, options)
+                    self.code = prop(self.name, options)
                     return
 
     def __str__(self):
-        return self.part_name
+        return self.name
 
     def __repr__(self):
-        return self.part_name
+        return self.name
 
     def makedirs(self):
         dirs = [
