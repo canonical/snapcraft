@@ -27,10 +27,6 @@ PLUGIN_OPTIONS = {
 
 class CMakePlugin(MakePlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'cmake',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('cmake')
