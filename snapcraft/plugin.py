@@ -111,12 +111,10 @@ class PluginHandler:
 
         for prop_name in dir(module):
             prop = getattr(module, prop_name)
-            try:
+            with contextlib.suppress(TypeError):
                 if issubclass(prop, snapcraft.BasePlugin):
                     self.code = prop(part_name, options)
                     return
-            except TypeError:
-                continue
 
     def __str__(self):
         return self.part_name
