@@ -24,10 +24,6 @@ PLUGIN_OPTIONS = {
 
 class GoPlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'golang-go',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('golang-go')

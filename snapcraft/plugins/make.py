@@ -26,10 +26,6 @@ PLUGIN_OPTIONS = {
 
 class MakePlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_BUILD_PACKAGES = [
-        'make',
-    ]
-
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('make')
