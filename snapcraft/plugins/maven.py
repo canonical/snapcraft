@@ -20,6 +20,7 @@ import os
 
 import snapcraft
 import snapcraft.common
+import snapcraft.plugins.jdk
 
 
 logger = logging.getLogger(__name__)
