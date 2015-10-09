@@ -42,15 +42,14 @@ class PluginHandler:
 
     @property
     def name(self):
-        return self.part_name
+        return self._name
 
-    def __init__(self, name, part_name, properties):
+    def __init__(self, plugin_name, part_name, properties):
         self.valid = False
         self.code = None
         self.config = {}
-        self.part_name = part_name
+        self._name = part_name
         self.deps = []
-        self.plugin_name = name
 
         parts_dir = common.get_partsdir()
         self.partdir = os.path.join(parts_dir, part_name)
@@ -63,7 +62,7 @@ class PluginHandler:
         self.statefile = os.path.join(parts_dir, part_name, 'state')
 
         try:
-            self._load_code(name, part_name, properties)
+            self._load_code(plugin_name, part_name, properties)
             # only set to valid if it loads without PluginError
             self.valid = True
         except PluginError as e:
@@ -137,7 +136,7 @@ class PluginHandler:
         return self.valid
 
     def notify_stage(self, stage, hint=''):
-        logger.info('%s %s %s', stage, self.part_name, hint)
+        logger.info('%s %s %s', stage, self.name, hint)
 
     def is_dirty(self, stage):
         try:
