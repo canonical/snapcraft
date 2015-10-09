@@ -28,7 +28,6 @@ from snapcraft import (
     plugin,
     tests
 )
-from snapcraft.tests import mock_plugin
 
 
 def get_test_plugin(name='mock', part_name='mock-part', properties=None):
@@ -199,14 +198,13 @@ class PluginTestCase(tests.TestCase):
 
                 self.assertEqual(expected, result)
 
-    def test_non_local_plugins(self):
-        """Ensure regular plugins are loaded from snapcraft only"""
-        def mock_import_modules(module_name):
-            # called with the full snapcraft path
-            self.assertEqual(module_name, "snapcraft.plugins.mock")
-            return mock_plugin
-        with patch("importlib.import_module", side_effect=mock_import_modules):
-            plugin.PluginHandler('mock', 'mock-part', {})
+    @patch('importlib.import_module')
+    @patch('snapcraft.plugin._load_local')
+    def test_non_local_plugins(self, local_load_mock, import_mock):
+        local_load_mock.side_effect = ImportError()
+        plugin.PluginHandler('mock', 'mock-part', {})
+        import_mock.assert_called_with('snapcraft.plugins.mock')
+        local_load_mock.assert_called_with('x-mock')
 
     def test_filesets_includes_without_relative_paths(self):
         with self.assertRaises(plugin.PluginError) as raised:

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import glob
 import importlib
 import logging
@@ -27,15 +28,6 @@ from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
-
-
-_BUILTIN_OPTIONS = {
-    'filesets': {},
-    'snap': [],
-    'stage': [],
-    'stage-packages': [],
-    'organize': {}
-}
 
 
 def _local_plugindir():
@@ -83,7 +75,11 @@ class PluginHandler:
             pass
         options = Options()
 
-        plugin_options.update(_BUILTIN_OPTIONS)
+        builtin_options = _builtin_options()
+        for key in builtin_options:
+            if key not in plugin_options:
+                plugin_options[key] = builtin_options[key]
+
         for opt in plugin_options:
             attr_name = opt.replace('-', '_')
             attr_value = properties.get(opt, plugin_options[opt])
@@ -91,28 +87,25 @@ class PluginHandler:
 
         return options
 
-    def _load_code(self, name, part_name, properties):
-        module_name = name.replace('-', '_')
+    def _load_code(self, plugin_name, part_name, properties):
+        module_name = plugin_name.replace('-', '_')
+        module = None
 
-        if name.startswith('x-'):
-            logger.info('Searching for local plugin for %s', name)
-            try:
-                module = _load_local(module_name)
-            except ImportError:
-                raise PluginError('Cannot find local plugin {}'.format(name))
-
-        try:
-            module = importlib.import_module('snapcraft.plugins.' +
-                                             module_name)
-        except ImportError:
-            module = None
+        with contextlib.suppress(ImportError):
+            module = _load_local('x-{}'.format(plugin_name))
+            logger.info('Loaded local plugin for %s', plugin_name)
 
         if not module:
-            logger.info('Searching for local plugin for %s', name)
-            try:
+            with contextlib.suppress(ImportError):
+                module = importlib.import_module(
+                    'snapcraft.plugins.{}'.format(module_name))
+
+        if not module:
+            logger.info('Searching for local plugin for %s', plugin_name)
+            with contextlib.suppress(ImportError):
                 module = _load_local(module_name)
-            except ImportError:
-                raise PluginError('Unknown plugin: {}'.format(name))
+            if not module:
+                raise PluginError('Unknown plugin: {}'.format(plugin_name))
 
         plugin_options = getattr(module, 'PLUGIN_OPTIONS', {})
         options = self._make_options(plugin_options, properties)
@@ -382,3 +375,14 @@ def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
             raise PluginError("path '{}' must be relative".format(d))
+
+
+def _builtin_options():
+    return {
+        'filesets': {},
+        'snap': [],
+        'stage': [],
+        'stage-packages': [],
+        'build-packages': [],
+        'organize': {}
+    }

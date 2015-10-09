@@ -58,9 +58,11 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
             self.run(['cp', '-a'] + files + [jardir])
 
     def env(self, root):
+        env = super().env(root)
         jars = glob.glob(os.path.join(self.installdir, 'jar', '*.jar'))
-        if not jars:
-            return super().env()
-        jars = [os.path.join(root, 'jar', os.path.basename(x)) for x in jars]
-        return ['CLASSPATH=%s:$CLASSPATH' % ':'.join(jars)].extend(
-            super().env())
+        if jars:
+            jars = [os.path.join(root, 'jar',
+                    os.path.basename(x)) for x in jars]
+            env.extend(
+                ['CLASSPATH=%s:$CLASSPATH' % ':'.join(jars)])
+        return env
