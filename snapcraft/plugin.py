@@ -180,10 +180,9 @@ class PluginHandler:
         if not self.should_stage_run('build', force):
             return True
         self.makedirs()
-        if self.code and hasattr(self.code, 'build'):
-            self.notify_stage("Building")
-            if not getattr(self.code, 'build')():
-                return False
+        self.notify_stage("Building")
+        if not self.code.build():
+            return False
 
         self.mark_done('build')
         return True
@@ -256,9 +255,7 @@ class PluginHandler:
         return True
 
     def env(self, root):
-        if self.code and hasattr(self.code, 'env'):
-            return getattr(self.code, 'env')(root)
-        return []
+        return self.code.env(root)
 
 
 def _load_local(module_name):
