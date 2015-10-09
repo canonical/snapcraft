@@ -32,8 +32,6 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.requirements = options.requirements
-        self.source = options.source
         self.stage_packages.extend([
             'python-dev',
             'python-pkg-resources',
@@ -45,7 +43,7 @@ class Python2Plugin(snapcraft.BasePlugin):
             root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        if self.source and not self.handle_source_options():
+        if self.options.source and not self.handle_source_options():
             return False
 
         return self._pip()
@@ -55,10 +53,10 @@ class Python2Plugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if self.requirements:
-            requirements = os.path.join(os.getcwd(), self.requirements)
+        if self.options.requirements:
+            requirements = os.path.join(os.getcwd(), self.options.requirements)
 
-        if not os.path.exists(setup) and not self.requirements:
+        if not os.path.exists(setup) and not self.options.requirements:
             return True
 
         easy_install = os.path.join(
@@ -80,7 +78,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         pip_install = ['python2', pip2, 'install', '--target',
                        site_packages_dir]
 
-        if self.requirements and not self.run(
+        if self.options.requirements and not self.run(
                 pip_install + ['--requirement', requirements]):
             return False
 
