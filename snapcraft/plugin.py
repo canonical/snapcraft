@@ -17,6 +17,7 @@
 import contextlib
 import glob
 import importlib
+import jsonschema
 import logging
 import os
 import sys
@@ -68,23 +69,10 @@ class PluginHandler:
         except PluginError as e:
             logger.error(str(e))
             return
-
-    def _make_options(self, plugin_options, properties):
-        class Options():
-            pass
-        options = Options()
-
-        builtin_options = _builtin_options()
-        for key in builtin_options:
-            if key not in plugin_options:
-                plugin_options[key] = builtin_options[key]
-
-        for opt in plugin_options:
-            attr_name = opt.replace('-', '_')
-            attr_value = properties.get(opt, plugin_options[opt])
-            setattr(options, attr_name, attr_value)
-
-        return options
+        except jsonschema.ValidationError as e:
+            logger.error('Issues while loading properties for '
+                         '{}: {}'.format(part_name, e.message))
+            return
 
     def _load_code(self, plugin_name, properties):
         module_name = plugin_name.replace('-', '_')
@@ -106,15 +94,9 @@ class PluginHandler:
             if not module:
                 raise PluginError('Unknown plugin: {}'.format(plugin_name))
 
-        plugin_options = getattr(module, 'PLUGIN_OPTIONS', {})
-        options = self._make_options(plugin_options, properties)
-
-        for prop_name in dir(module):
-            prop = getattr(module, prop_name)
-            with contextlib.suppress(TypeError):
-                if issubclass(prop, snapcraft.BasePlugin):
-                    self.code = prop(self.name, options)
-                    return
+        plugin = _get_plugin(module)
+        options = _make_options(properties, plugin.schema())
+        self.code = plugin(self.name, options)
 
     def __str__(self):
         return self.name
@@ -256,6 +238,46 @@ class PluginHandler:
         return self.code.env(root)
 
 
+def _builtin_options():
+    return {
+        'filesets': {},
+        'snap': [],
+        'stage': [],
+        'stage-packages': [],
+        'build-packages': [],
+        'organize': {}
+    }
+
+
+def _make_options(properties, schema):
+    class Options():
+        pass
+    options = Options()
+
+    # Built in options are already validated
+    builtin_options = _builtin_options()
+    for key in builtin_options:
+        value = properties.pop(key, builtin_options[key])
+        setattr(options, key.replace('-', '_'), value)
+
+    jsonschema.validate(properties, schema)
+
+    schema_properties = schema.get('properties', {})
+    for key in schema_properties:
+        attr_name = key.replace('-', '_')
+        default_value = schema_properties[key].get('default')
+        attr_value = properties.get(key, default_value)
+        setattr(options, attr_name, attr_value)
+
+    return options
+
+
+def _get_plugin(module):
+    for attr in vars(module).values():
+        if isinstance(attr, type) and issubclass(attr, snapcraft.BasePlugin):
+            return attr
+
+
 def _load_local(module_name):
     sys.path = [_local_plugindir()] + sys.path
     module = importlib.import_module(module_name)
@@ -369,14 +391,3 @@ def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
             raise PluginError("path '{}' must be relative".format(d))
-
-
-def _builtin_options():
-    return {
-        'filesets': {},
-        'snap': [],
-        'stage': [],
-        'stage-packages': [],
-        'build-packages': [],
-        'organize': {}
-    }

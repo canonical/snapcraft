@@ -16,13 +16,6 @@
 
 import snapcraft
 
-PLUGIN_OPTIONS = {
-    'source': '',
-    'source-type': '',
-    'source-tag': '',
-    'source-branch': '',
-}
-
 
 class MakePlugin(snapcraft.BasePlugin):
 

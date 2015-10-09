@@ -19,16 +19,18 @@ import tempfile
 
 import snapcraft
 
-PLUGIN_OPTIONS = {
-    'source': '',
-    'source-type': '',
-    'source-tag': '',
-    'source-branch': '',
-    'requirements': '',
-}
-
 
 class Python3Plugin(snapcraft.BasePlugin):
+
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['requirements'] = {
+            'type': 'string',
+        }
+        schema.pop('required')
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)

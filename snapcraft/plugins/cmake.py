@@ -14,18 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.make import MakePlugin
-
-PLUGIN_OPTIONS = {
-    'source': '',
-    'source-type': '',
-    'source-tag': '',
-    'source-branch': '',
-    'configflags': [],
-}
+import snapcraft.plugins.make
 
 
-class CMakePlugin(MakePlugin):
+class CMakePlugin(snapcraft.plugins.make.MakePlugin):
+
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['configflags'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)

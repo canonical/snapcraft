@@ -17,12 +17,21 @@
 import snapcraft
 import snapcraft.sources
 
-PLUGIN_OPTIONS = {
-    'source': '',
-}
-
 
 class TarContentPlugin(snapcraft.BasePlugin):
+
+    @classmethod
+    def schema(cls):
+        return {
+            'properties': {
+                'source': {
+                    'type': 'string',
+                },
+            },
+            'required': [
+                'source',
+            ]
+        }
 
     def __init__(self, name, options):
         super().__init__(name, options)

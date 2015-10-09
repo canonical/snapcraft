@@ -18,16 +18,23 @@ import os
 
 import snapcraft
 
-PLUGIN_OPTIONS = {
-    'source': '',
-    'source-type': '',
-    'source-tag': '',
-    'source-branch': '',
-    'scons-options': [],
-}
-
 
 class SconsPlugin(snapcraft.BasePlugin):
+
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['scons-options'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
+        }
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)

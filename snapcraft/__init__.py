@@ -29,6 +29,42 @@ logger = logging.getLogger(__name__)
 
 class BasePlugin:
 
+    @classmethod
+    def schema(cls):
+        '''
+        Returns a json-schema for the plugin's properties as a dictionary.
+        Of importance to plugin authors is the 'properties' keyword and
+        optionally the 'requires' keyword with a list of required
+        'properties'.
+
+        By default the the properties will be that of a standard VCS, override
+        in custom implementations if required.
+        '''
+        return {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+                'source': {
+                    'type': 'string',
+                },
+                'source-type': {
+                    'type': 'string',
+                    'default': '',
+                },
+                'source-branch': {
+                    'type': 'string',
+                    'default': '',
+                },
+                'source-tag': {
+                    'type:': 'string',
+                    'default': '',
+                },
+            },
+            'required': [
+                'source',
+            ]
+        }
+
     @property
     def PLUGIN_STAGE_SOURCES(self):
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])

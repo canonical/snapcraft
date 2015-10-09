@@ -26,13 +26,6 @@ import snapcraft.plugins.jdk
 
 logger = logging.getLogger(__name__)
 
-PLUGIN_OPTIONS = {
-    'source': '',
-    'source-type': '',
-    'source-tag': '',
-    'source-branch': '',
-}
-
 
 class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
 

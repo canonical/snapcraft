@@ -22,12 +22,21 @@ import snapcraft
 
 logger = logging.getLogger(__name__)
 
-PLUGIN_OPTIONS = {
-    'files': {},
-}
-
 
 class CopyPlugin(snapcraft.BasePlugin):
+
+    @classmethod
+    def schema(cls):
+        return {
+            'properties': {
+                'files': {
+                    'type': 'object',
+                },
+            },
+            'required': [
+                'files',
+            ]
+        }
 
     def build(self):
         res = True

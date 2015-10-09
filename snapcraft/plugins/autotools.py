@@ -17,16 +17,23 @@
 import os
 from snapcraft.plugins.make import MakePlugin
 
-PLUGIN_OPTIONS = {
-    'source': '',
-    'source-type': '',
-    'source-tag': '',
-    'source-branch': '',
-    'configflags': [],
-}
-
 
 class AutotoolsPlugin(MakePlugin):
+
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['configflags'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)

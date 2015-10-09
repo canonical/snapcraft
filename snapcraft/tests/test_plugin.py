@@ -200,7 +200,12 @@ class PluginTestCase(tests.TestCase):
 
     @patch('importlib.import_module')
     @patch('snapcraft.plugin._load_local')
-    def test_non_local_plugins(self, local_load_mock, import_mock):
+    @patch('snapcraft.plugin._get_plugin')
+    def test_non_local_plugins(self, plugin_mock,
+                               local_load_mock, import_mock):
+        mock_plugin = Mock()
+        mock_plugin.schema.return_value = {}
+        plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
         plugin.PluginHandler('mock', 'mock-part', {})
         import_mock.assert_called_with('snapcraft.plugins.mock')
