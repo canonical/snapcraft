@@ -21,11 +21,24 @@ import snapcraft
 
 class SconsPlugin(snapcraft.BasePlugin):
 
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['scons-options'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
+        }
+
+        return schema
+
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.scons_options = []
-        if options.scons_options:
-            self.scons_options = options.scons_options
+        self.build_packages.append('scons')
 
     def pull(self):
         return self.handle_source_options()
@@ -33,5 +46,6 @@ class SconsPlugin(snapcraft.BasePlugin):
     def build(self):
         env = os.environ.copy()
         env['DESTDIR'] = self.installdir
-        return (self.run(['scons', ] + self.scons_options) and
-                self.run(['scons', 'install'] + self.scons_options, env=env))
+        return (self.run(['scons', ] + self.options.scons_options) and
+                self.run(['scons', 'install'] +
+                         self.options.scons_options, env=env))

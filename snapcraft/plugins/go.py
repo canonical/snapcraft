@@ -20,8 +20,23 @@ import snapcraft
 
 class GoPlugin(snapcraft.BasePlugin):
 
+    @classmethod
+    def schema(cls):
+        return {
+            'properties': {
+                'source': {
+                    'type': 'string',
+                },
+            },
+            'required': [
+                'source',
+            ]
+        }
+
     def __init__(self, name, options):
         super().__init__(name, options)
+        self.build_packages.append('golang-go')
+
         if self.options.source.startswith("lp:"):
             self.fullname = self.options.source.split(":~")[1]
         else:
