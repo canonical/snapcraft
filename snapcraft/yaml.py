@@ -181,7 +181,7 @@ class Config:
     def load_plugin(self, part_name, plugin_name, properties):
         part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties)
 
-        self.build_tools += part.config.get('build-packages', [])
+        self.build_tools += part.code.build_packages
         self.all_parts.append(part)
         return part
 
