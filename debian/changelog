@@ -1,8 +1,35 @@
-snapcraft (0.3) UNRELEASED; urgency=medium
+snapcraft (0.3) wily; urgency=medium
 
-  * 
+  * Core imprevements:
+    - Add deprecation messages for deprecated keywords (LP: #1501494)
+    - Remove suid/guid from staged packages (LP: #1503495)
+    - Autodetect tar sources (LP: #1500726)
+    - Better logging if output is not a tty (LP: #1500887)
+    - Improved error message when a plugin is not found (LP: #1501980)
+  * Plugin improvements:
+    - Types instead of plugin as a keyword (LP: #1500857)
+    - Plugin names no longer have '-project' as a suffix (LP: #1501496)
+    - Local plugins can override built-in ones with x-[plugin].py
+      (LP: #1500873)
+  * New plugins:
+    - Scons support added (LP: #1500758)
+  * Bug fixes:
+    - Multi python3 install support (LP: #1499429)
+    - Use the system series for stage-packages (LP: #1501035)
+    - Handle framework policies (LP: #1501037).
+    - Don't infer a plugin name from a part name (LP: #1501413)
+    - Installation errors during build-package's setup now errors
+      (LP: #1502449)
+    - When a dangling symlink is found, try and satisfy it with a
+      package on the host (LP: #1500505)
+    - Support reextraction when using tar sources (LP: #1500728)
+    - Do not require geoip (LP: #1499158)
+  * Examples:
+    - Fix build requirements issue with python2 project (LP: #1501997)
+    - Add missing plugin keyword for the python2 example (LP: #1501977)
+    - Updated the upstream tarball for tomcat (LP: #1504174)
 
- -- Daniel Holbach <daniel.holbach@ubuntu.com>  Fri, 25 Sep 2015 12:46:23 +0200
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Fri, 25 Sep 2015 12:46:23 +0200
 
 snapcraft (0.2.1) wily; urgency=medium
 
