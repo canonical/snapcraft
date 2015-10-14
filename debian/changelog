@@ -1,3 +1,9 @@
+snapcraft (0.4) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Daniel Holbach <daniel.holbach@ubuntu.com>  Wed, 14 Oct 2015 13:31:11 +0200
+
 snapcraft (0.3) wily; urgency=medium
 
   * Core imprevements:
