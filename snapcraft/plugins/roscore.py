@@ -21,7 +21,7 @@ import os
 class RosCorePlugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_SOURCES = '''
-deb http://packages.ros.org/ros/ubuntu/ vivid main
+deb http://packages.ros.org/ros/ubuntu/ trusty main
 deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe
 deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe
 deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe
