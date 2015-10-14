@@ -17,6 +17,7 @@
 import fixtures
 import logging
 import os
+import unittest.mock
 
 import snapcraft
 from snapcraft import tests
@@ -43,7 +44,24 @@ class TestBasePlugin(tests.TestCase):
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         expected = (
             "Unrecognized source 'unrecognized://test_source' for part "
-            "'test_plugin'.\n")
+            "'test_plugin': No handler to manage source.\n")
+        self.assertEqual(expected, fake_logger.output)
+
+    @unittest.mock.patch('os.path.isdir')
+    def test_local_non_dir_source_path_must_raise_error(self, mock_isdir):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        mock_isdir.return_value = False
+        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        with self.assertRaises(SystemExit) as raised:
+            plugin.get_source('file')
+
+        mock_isdir.assert_called_once_with('file')
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        expected = (
+            "Unrecognized source 'file' for part 'test_plugin': "
+            "Local source is not a directory.\n")
         self.assertEqual(expected, fake_logger.output)
 
     def test_makedirs_with_existing_dir(self):
