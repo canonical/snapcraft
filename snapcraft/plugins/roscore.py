@@ -20,12 +20,13 @@ import os
 
 class RosCorePlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_SOURCES = (
-        'deb http://packages.ros.org/ros/ubuntu/ vivid main\n'
-        'deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe\n'
-        'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe\n'
-        'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n'
-        'deb http://${security}.ubuntu.com/${suffix} trusty-security main universe\n')
+    _PLUGIN_STAGE_SOURCES = '''
+deb http://packages.ros.org/ros/ubuntu/ trusty main
+deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe
+deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe
+deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe
+deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
+'''
 
     @classmethod
     def schema(cls):
@@ -66,8 +67,8 @@ class RosCorePlugin(snapcraft.BasePlugin):
     def snap_fileset(self):
         return ([
             os.path.join('bin', self.name + '-rosmaster-service'),
-             'opt/ros/' + self.rosversion + '/bin/*',
-             'opt/ros/' + self.rosversion + '/lib/*',
+            'opt/ros/' + self.rosversion + '/bin/*',
+            'opt/ros/' + self.rosversion + '/lib/*',
             '-opt/ros/' + self.rosversion + '/share/*/cmake/*',
             '-opt/ros/' + self.rosversion + '/include',
             '-opt/ros/' + self.rosversion + '/.catkin',
