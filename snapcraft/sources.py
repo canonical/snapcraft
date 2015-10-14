@@ -17,6 +17,7 @@
 import logging
 import os
 import os.path
+import shutil
 import tarfile
 import re
 
@@ -34,7 +35,8 @@ class IncompatibleOptionsError(Exception):
 
 class Base:
 
-    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
         self.source = source
         self.source_dir = source_dir
         self.source_tag = source_tag
@@ -44,35 +46,43 @@ class Base:
         raise NotImplementedError('this is just a base class')
 
     def provision(self, dst):
-        return snapcraft.common.run(['cp', '-Trfa', self.source_dir, dst], cwd=os.getcwd())
+        return snapcraft.common.run(['cp', '-Trfa', self.source_dir, dst],
+                                    cwd=os.getcwd())
 
 
 class Bazaar(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
         super().__init__(source, source_dir, source_tag, source_branch)
         if source_branch:
-            raise IncompatibleOptionsError('can\'t specify a source-branch for a bzr source')
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a bzr source')
 
     def pull(self):
         tag_opts = []
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
         if os.path.exists(os.path.join(self.source_dir, ".bzr")):
-            cmd = ['bzr', 'pull'] + tag_opts + [self.source, '-d', self.source_dir]
+            cmd = ['bzr', 'pull'] + tag_opts + \
+                  [self.source, '-d', self.source_dir]
         else:
             os.rmdir(self.source_dir)
-            cmd = ['bzr', 'branch'] + tag_opts + [self.source, self.source_dir]
+            cmd = ['bzr', 'branch'] + tag_opts + \
+                  [self.source, self.source_dir]
 
         return snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Git(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
         super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
-            raise IncompatibleOptionsError('can\'t specify both source-tag and source-branch for a git source')
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-tag and source-branch for '
+                'a git source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, ".git")):
@@ -85,18 +95,23 @@ class Git(Base):
         else:
             branch_opts = []
             if self.source_tag or self.source_branch:
-                branch_opts = ['--branch', self.source_tag or self.source_branch]
-            cmd = ['git', 'clone'] + branch_opts + [self.source, self.source_dir]
+                branch_opts = ['--branch',
+                               self.source_tag or self.source_branch]
+            cmd = ['git', 'clone'] + branch_opts + \
+                  [self.source, self.source_dir]
 
         return snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Mercurial(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
         super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
-            raise IncompatibleOptionsError('can\'t specify both source-tag and source-branch for a mercurial source')
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-tag and source-branch for a '
+                'mercurial source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, ".hg")):
@@ -117,26 +132,39 @@ class Mercurial(Base):
 
 class Tar(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
         super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag:
-            raise IncompatibleOptionsError('can\'t specify a source-tag for a tar source')
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-tag for a tar source')
         elif source_branch:
-            raise IncompatibleOptionsError('can\'t specify a source-branch for a tar source')
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a tar source')
 
     def pull(self):
         if snapcraft.common.isurl(self.source):
-            return snapcraft.common.run(['wget', '-q', '-c', self.source], cwd=self.source_dir)
+            return snapcraft.common.run(['wget', '-q', '-c', self.source],
+                                        cwd=self.source_dir)
         else:
             return True
 
-    def provision(self, dst):
+    def provision(self, dst, clean_target=True):
         # TODO add unit tests.
         if snapcraft.common.isurl(self.source):
-            tarball = os.path.join(self.source_dir, os.path.basename(self.source))
+            tarball = os.path.join(
+                self.source_dir,
+                os.path.basename(self.source))
         else:
             tarball = os.path.abspath(self.source)
 
+        if clean_target:
+            shutil.rmtree(dst)
+            os.makedirs(dst)
+
+        return self._extract(tarball, dst)
+
+    def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
             def filter_members(tar):
                 """Filters members and member names:
@@ -163,6 +191,9 @@ class Tar(Base):
                         m.name = m.name[len(common + "/"):]
                     # strip leading "/", "./" or "../" as many times as needed
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    # We mask all files to be writable to be able to easily
+                    # extract on top.
+                    m.mode = m.mode | 0o200
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)

@@ -1,11 +1,14 @@
-name: test-package
-version: 0.1
+name: assemble
+version: 1.0
 vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: one line summary
 description: a longer description
 icon: icon.png
+framework-policy: dir
 
 parts:
-    x-local-plugin:
-      plugin: x-local-plugin
-      source: .
+    framework-project:
+      plugin: copy
+      files:
+        one: one
+

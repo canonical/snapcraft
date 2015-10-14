@@ -20,25 +20,32 @@ import tempfile
 import snapcraft
 
 
-class Python3ProjectPlugin(snapcraft.BasePlugin):
+class Python3Plugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-        'python3-dev',
-        'python3-pkg-resources',
-        'python3-setuptools',
-    ]
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['requirements'] = {
+            'type': 'string',
+        }
+        schema.pop('required')
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.requirements = options.requirements
-        self.source = options.source
+        self.stage_packages.extend([
+            'python3-dev',
+            'python3-pkg-resources',
+            'python3-setuptools',
+        ])
 
     def env(self, root):
         return ["PYTHONPATH=%s" % os.path.join(
             root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        if self.source and not self.handle_source_options():
+        if self.options.source and not self.handle_source_options():
             return False
 
         return self._pip()
@@ -48,10 +55,10 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if self.requirements:
-            requirements = os.path.join(os.getcwd(), self.requirements)
+        if self.options.requirements:
+            requirements = os.path.join(os.getcwd(), self.options.requirements)
 
-        if not os.path.exists(setup) and not self.requirements:
+        if not os.path.exists(setup) and not self.options.requirements:
             return True
 
         easy_install = os.path.join(
@@ -72,7 +79,7 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
         pip_install = ['python3', pip3, 'install', '--target',
                        site_packages_dir]
 
-        if self.requirements and not self.run(
+        if self.options.requirements and not self.run(
                 pip_install + ['--requirement', requirements]):
             return False
 
@@ -99,11 +106,12 @@ class Python3ProjectPlugin(snapcraft.BasePlugin):
     @property
     def dist_packages_dir(self):
         return os.path.join(
-            self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')
+            self.installdir, 'usr', 'lib', self.python_version,
+            'dist-packages')
 
     @property
     def python_version(self):
-        return self.run_output(['py3versions', '-i'])
+        return self.run_output(['py3versions', '-i']).split()[0]
 
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.

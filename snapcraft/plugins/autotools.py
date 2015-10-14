@@ -14,31 +14,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
-import snapcraft.sources
+import os
+from snapcraft.plugins.make import MakePlugin
 
 
-class TarContentPlugin(snapcraft.BasePlugin):
+class AutotoolsPlugin(MakePlugin):
 
     @classmethod
     def schema(cls):
-        return {
-            'properties': {
-                'source': {
-                    'type': 'string',
-                },
+        schema = super().schema()
+        schema['properties']['configflags'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
             },
-            'required': [
-                'source',
-            ]
+            'default': [],
         }
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.tar = snapcraft.sources.Tar(self.options.source, self.builddir)
-
-    def pull(self):
-        return self.tar.pull()
+        self.build_packages.extend([
+            'autoconf',
+            'automake',
+            'autopoint',
+        ])
 
     def build(self):
-        return self.tar.provision(self.installdir)
+        if not os.path.exists(os.path.join(self.builddir, "configure")):
+            if not self.run(['env', 'NOCONFIGURE=1', './autogen.sh']):
+                return False
+        return self.run(['./configure', '--prefix='] +
+                        self.options.configflags) and super().build()

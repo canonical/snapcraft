@@ -28,16 +28,12 @@ from snapcraft import (
     plugin,
     tests
 )
-from snapcraft.tests import mock_plugin
 
 
-def get_test_plugin(name='mock', part_name='mock-part',
-                    properties=None, load_code=False, load_config=False):
+def get_test_plugin(name='mock', part_name='mock-part', properties=None):
     if properties is None:
         properties = {}
-    return plugin.PluginHandler(
-        name, part_name, properties, load_code=load_code,
-        load_config=load_config)
+    return plugin.PluginHandler(name, part_name, properties)
 
 
 class PluginTestCase(tests.TestCase):
@@ -46,7 +42,7 @@ class PluginTestCase(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        get_test_plugin('test_unexisting_name', load_config=True)
+        get_test_plugin('test_unexisting_name')
 
         self.assertEqual(
             'Unknown plugin: test_unexisting_name\n', fake_logger.output)
@@ -76,7 +72,8 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = plugin._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin', '-everything', r'\a'])
+        self.assertEqual(include, ['opt/something', 'usr/bin',
+                                   '-everything', r'\a'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
 
     def test_fileset_only_includes(self):
@@ -182,7 +179,8 @@ class PluginTestCase(tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                snap_files, snap_dirs = plugin.migratable_filesets(filesets[key]['fileset'], srcdir)
+                snap_files, snap_dirs = plugin.migratable_filesets(
+                    filesets[key]['fileset'], srcdir)
                 plugin._migrate_files(snap_files, snap_dirs, srcdir, dstdir)
 
                 expected = []
@@ -200,24 +198,18 @@ class PluginTestCase(tests.TestCase):
 
                 self.assertEqual(expected, result)
 
-    def test_notify_stage_must_log_information(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        p = get_test_plugin()
-        p.notify_stage('test stage')
-
-        self.assertEqual('test stage mock-part\n', fake_logger.output)
-
-    def test_non_local_plugins(self):
-        """Ensure regular plugins are loaded from snapcraft only"""
-        def mock_import_modules(module_name):
-            # called with the full snapcraft path
-            self.assertEqual(module_name, "snapcraft.plugins.mock")
-            return mock_plugin
-        with patch("importlib.import_module", side_effect=mock_import_modules):
-            plugin.PluginHandler(
-                "mock", "mock-part", {}, load_config=False, load_code=True)
+    @patch('importlib.import_module')
+    @patch('snapcraft.plugin._load_local')
+    @patch('snapcraft.plugin._get_plugin')
+    def test_non_local_plugins(self, plugin_mock,
+                               local_load_mock, import_mock):
+        mock_plugin = Mock()
+        mock_plugin.schema.return_value = {}
+        plugin_mock.return_value = mock_plugin
+        local_load_mock.side_effect = ImportError()
+        plugin.PluginHandler('mock', 'mock-part', {})
+        import_mock.assert_called_with('snapcraft.plugins.mock')
+        local_load_mock.assert_called_with('x-mock')
 
     def test_filesets_includes_without_relative_paths(self):
         with self.assertRaises(plugin.PluginError) as raised:
@@ -238,8 +230,7 @@ class PluginTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         with self.assertRaises(SystemExit) as raised:
-            plugin.load_plugin(
-                'dummy-part', 'test_unexisting_name', load_code=False)
+            plugin.load_plugin('dummy-part', 'test_unexisting_name')
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(

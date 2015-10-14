@@ -48,7 +48,7 @@ run_unit_tests(){
     # These three checks could easily be done with flake8 in one shot if
     # we had python3-flake8 provide flake8
     # Ignore 501 (line-too-long)
-    pep8 $SRC_PATHS --ignore=E501
+    pep8 $SRC_PATHS
 
     pyflakes3 $SRC_PATHS
 
@@ -95,8 +95,9 @@ EOF
     fi
 
     # Go to the plainbox provider of snapcraft tests
-    cd integration-tests
+    pushd integration-tests
     ./runtests.sh $PLAINBOX_TEST_PLANS
+    popd
 }
 
 parseargs "$@"

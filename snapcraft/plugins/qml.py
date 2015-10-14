@@ -21,41 +21,47 @@ import snapcraft.common
 
 class QmlPlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-        "qmlscene",
-        "qtdeclarative5-qtmir-plugin",
-        "mir-graphics-drivers-desktop",
-        "qtubuntu-desktop",
-        "ttf-ubuntu-font-family",
-        # if there's a metapackage for these, please swap it in here:
-        "qml-module-qt-labs-folderlistmodel",
-        "qml-module-qt-labs-settings",
-        "qml-module-qt-websockets",
-        "qml-module-qtfeedback",
-        "qml-module-qtgraphicaleffects",
-        "qml-module-qtlocation",
-        "qml-module-qtmultimedia",
-        "qml-module-qtorganizer",
-        "qml-module-qtpositioning",
-        "qml-module-qtqml-models2",
-        "qml-module-qtqml-statemachine",
-        "qml-module-qtquick-controls",
-        "qml-module-qtquick-dialogs",
-        "qml-module-qtquick-layouts",
-        "qml-module-qtquick-localstorage",
-        "qml-module-qtquick-particles2",
-        "qml-module-qtquick-privatewidgets",
-        "qml-module-qtquick-window2",
-        "qml-module-qtquick-xmllistmodel",
-        "qml-module-qtquick2",
-        "qml-module-qtsensors",
-        "qml-module-qtsysteminfo",
-        "qml-module-qttest",
-        "qml-module-qtwebkit",
-        "qml-module-ubuntu-connectivity",
-        "qml-module-ubuntu-onlineaccounts",
-        "qml-module-ubuntu-onlineaccounts-client",
-    ]
+    @classmethod
+    def schema(cls):
+        return {}
+
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.stage_packages.extend([
+            "qmlscene",
+            "qtdeclarative5-qtmir-plugin",
+            "mir-graphics-drivers-desktop",
+            "qtubuntu-desktop",
+            "ttf-ubuntu-font-family",
+            # if there's a metapackage for these, please swap it in here:
+            "qml-module-qt-labs-folderlistmodel",
+            "qml-module-qt-labs-settings",
+            "qml-module-qt-websockets",
+            "qml-module-qtfeedback",
+            "qml-module-qtgraphicaleffects",
+            "qml-module-qtlocation",
+            "qml-module-qtmultimedia",
+            "qml-module-qtorganizer",
+            "qml-module-qtpositioning",
+            "qml-module-qtqml-models2",
+            "qml-module-qtqml-statemachine",
+            "qml-module-qtquick-controls",
+            "qml-module-qtquick-dialogs",
+            "qml-module-qtquick-layouts",
+            "qml-module-qtquick-localstorage",
+            "qml-module-qtquick-particles2",
+            "qml-module-qtquick-privatewidgets",
+            "qml-module-qtquick-window2",
+            "qml-module-qtquick-xmllistmodel",
+            "qml-module-qtquick2",
+            "qml-module-qtsensors",
+            "qml-module-qtsysteminfo",
+            "qml-module-qttest",
+            "qml-module-qtwebkit",
+            "qml-module-ubuntu-connectivity",
+            "qml-module-ubuntu-onlineaccounts",
+            "qml-module-ubuntu-onlineaccounts-client",
+        ])
 
     def snap_fileset(self):
         return ['*',
@@ -81,7 +87,8 @@ class QmlPlugin(snapcraft.BasePlugin):
             "LD_LIBRARY_PATH=%s/usr/lib/%s:$LD_LIBRARY_PATH" % (root, arch),
             # Mir config
             "MIR_SOCKET=/run/mir_socket",
-            "MIR_CLIENT_PLATFORM_PATH=%s/usr/lib/%s/mir/client-platform" % (root, arch),
+            "MIR_CLIENT_PLATFORM_PATH={}/usr/lib/{}/mir/client-platform"
+            .format(root, arch),
             # XKB config
             "XKB_CONFIG_ROOT=%s/usr/share/X11/xkb" % root,
             # Qt Platform to Mir
@@ -89,14 +96,18 @@ class QmlPlugin(snapcraft.BasePlugin):
             "QTCHOOSER_NO_GLOBAL_DIR=1",
             "QT_SELECT=snappy-qt5",
             # Qt Libs
-            "LD_LIBRARY_PATH=%s/usr/lib/%s/qt5/libs:$LD_LIBRARY_PATH" % (root, arch),
-            "LD_LIBRARY_PATH=%s/usr/lib/%s/pulseaudio:$LD_LIBRARY_PATH" % (root, arch),
+            "LD_LIBRARY_PATH={}/usr/lib/{}/qt5/libs:$LD_LIBRARY_PATH"
+            .format(root, arch),
+            "LD_LIBRARY_PATH={}/usr/lib/{}/pulseaudio:$LD_LIBRARY_PATH"
+            .format(root, arch),
             # Qt Modules
             "QT_PLUGIN_PATH=%s/usr/lib/%s/qt5/plugins" % (root, arch),
             "QML2_IMPORT_PATH=%s/usr/lib/%s/qt5/qml" % (root, arch),
             # Mesa Libs
-            "LD_LIBRARY_PATH=%s/usr/lib/%s/mesa:$LD_LIBRARY_PATH" % (root, arch),
-            "LD_LIBRARY_PATH=%s/usr/lib/%s/mesa-egl:$LD_LIBRARY_PATH" % (root, arch),
+            "LD_LIBRARY_PATH={}/usr/lib/{}/mesa:$LD_LIBRARY_PATH"
+            .format(root, arch),
+            "LD_LIBRARY_PATH={}/usr/lib/{}/mesa-egl:$LD_LIBRARY_PATH"
+            .format(root, arch),
             # XDG Config
             "XDG_CONFIG_DIRS=%s/etc/xdg:$XDG_CONFIG_DIRS" % root,
             "XDG_CONFIG_DIRS=%s/usr/xdg:$XDG_CONFIG_DIRS" % root,

@@ -1,6 +1,6 @@
 unit: test plan
 id: normal
-name: Tests for Snapcraft
+_name: Tests for Snapcraft
 include: snapcraft/normal/.*
 
 unit: test plan

@@ -15,18 +15,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from snapcraft.plugins.make_project import MakePlugin
+
+import snapcraft
 
 
-class AutotoolsPlugin(MakePlugin):
+class SconsPlugin(snapcraft.BasePlugin):
+
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['scons-options'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
+        }
+
+        return schema
+
     def __init__(self, name, options):
         super().__init__(name, options)
-        if self.options.configflags is None:
-            self.options.configflags = []
+        self.build_packages.append('scons')
+
+    def pull(self):
+        return self.handle_source_options()
 
     def build(self):
-        if not os.path.exists(os.path.join(self.builddir, "configure")):
-            if not self.run(['env', 'NOCONFIGURE=1', './autogen.sh']):
-                return False
-        return self.run(['./configure', '--prefix='] + self.options.configflags) and \
-            super().build()
+        env = os.environ.copy()
+        env['DESTDIR'] = self.installdir
+        return (self.run(['scons', ] + self.options.scons_options) and
+                self.run(['scons', 'install'] +
+                         self.options.scons_options, env=env))

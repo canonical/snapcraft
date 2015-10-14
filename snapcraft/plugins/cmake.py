@@ -14,14 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import snapcraft.plugins.make
 
 
-class MakePlugin(snapcraft.BasePlugin):
+class CMakePlugin(snapcraft.plugins.make.MakePlugin):
 
-    def pull(self):
-        return self.handle_source_options()
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['configflags'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
+        return schema
+
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.build_packages.append('cmake')
 
     def build(self):
-        return self.run(['make']) and \
-            self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
+                        self.options.configflags) and super().build()

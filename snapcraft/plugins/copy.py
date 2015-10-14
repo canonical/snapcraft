@@ -25,6 +25,19 @@ logger = logging.getLogger(__name__)
 
 class CopyPlugin(snapcraft.BasePlugin):
 
+    @classmethod
+    def schema(cls):
+        return {
+            'properties': {
+                'files': {
+                    'type': 'object',
+                },
+            },
+            'required': [
+                'files',
+            ]
+        }
+
     def build(self):
         res = True
         for src in sorted(self.options.files):
@@ -37,5 +50,6 @@ class CopyPlugin(snapcraft.BasePlugin):
             dst_dir = os.path.dirname(dst)
             if not os.path.exists(dst_dir):
                 os.makedirs(dst_dir)
-            res &= self.run(["cp", "--preserve=all", "-R", src, dst], cwd=os.getcwd())
+            res &= self.run(["cp", "--preserve=all", "-R", src, dst],
+                            cwd=os.getcwd())
         return res

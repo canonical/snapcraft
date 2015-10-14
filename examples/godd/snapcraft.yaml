@@ -10,7 +10,7 @@ icon: icon.png
 
 parts:
   godd:
-    type: go-project
+    plugin: go
     source: git://github.com/mvo5/godd
     stage-packages: [libgudev-1.0-dev]
     snap:

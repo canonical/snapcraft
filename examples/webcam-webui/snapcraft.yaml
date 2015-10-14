@@ -11,7 +11,7 @@ config: usr/bin/config.py
 
 parts:
   cam:
-    type: go-project
+    plugin: go-project
     source: git://github.com/mikix/golang-static-http
     stage-packages:
       - fswebcam
@@ -30,9 +30,9 @@ parts:
       - $go-server
       - -usr/share/doc
   glue:
-    type: copy
+    plugin: copy
     files:
       webcam-webui: bin/webcam-webui
   config:
-    type: python3-project
+    plugin: python3-project
     source: .

@@ -73,4 +73,5 @@ class TestCopyPlugin(TestCase):
 
         c = CopyPlugin("copy", self.mock_options)
         self.assertTrue(c.build())
-        self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dir/dst")))
+        self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
+                                                    "dir/dst")))

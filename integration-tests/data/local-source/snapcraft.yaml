@@ -7,4 +7,5 @@ icon: icon.png
 
 parts:
     make-project:
+        plugin: make-project
         source: .
