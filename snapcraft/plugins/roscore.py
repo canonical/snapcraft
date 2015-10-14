@@ -20,9 +20,6 @@ import os
 
 class RosCorePlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-    ]
-
     _PLUGIN_STAGE_SOURCES = (
         'deb http://packages.ros.org/ros/ubuntu/ vivid main\n'
         'deb http://archive.ubuntu.com/ubuntu/ vivid main universe\n'
@@ -42,11 +39,11 @@ class RosCorePlugin(snapcraft.BasePlugin):
         }
 
     def __init__(self, name, options):
+        super().__init__(name, options)
         self.rosversion = options.rosversion or 'jade'
-        self._PLUGIN_STAGE_PACKAGES.append(
+        self.stage_packages.append(
             'ros-' + self.rosversion + '-ros-core'
         )
-        super().__init__(name, options)
 
     def build(self):
         dirname = os.path.join(self.installdir, 'bin')
