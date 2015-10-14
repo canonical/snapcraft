@@ -41,7 +41,9 @@ class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 class TestTar(tests.TestCase):
 
     def test_pull_tarball_must_download_to_sourcedir(self):
-        server = http.server.HTTPServer(('', 0), FakeTarballHTTPRequestHandler)
+        os.environ['no_proxy'] = '127.0.0.1'
+        server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
         server_thread = threading.Thread(target=server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(server.server_close)
@@ -56,7 +58,7 @@ class TestTar(tests.TestCase):
             *server.server_address, file_name=tar_file_name)
         tar_source = sources.Tar(source, dest_dir)
 
-        tar_source.pull()
+        self.assertTrue(tar_source.pull())
 
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake tarball file', tar_file.read())
