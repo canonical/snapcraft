@@ -1,6 +1,0 @@
-options:
-  files:
-    required: true
-  stage-packages:
-  snap:
-  stage:

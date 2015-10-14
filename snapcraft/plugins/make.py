@@ -19,6 +19,10 @@ import snapcraft
 
 class MakePlugin(snapcraft.BasePlugin):
 
+    def __init__(self, name, options):
+        super().__init__(name, options)
+        self.build_packages.append('make')
+
     def pull(self):
         return self.handle_source_options()
 

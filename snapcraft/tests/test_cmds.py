@@ -39,14 +39,14 @@ class TestCommands(tests.TestCase):
         tmpdir = tmpdirObject.name
 
         part1 = mock.Mock()
-        part1.names.return_value = ['part1']
+        part1.name = 'part1'
         part1.code.options.stage = ['*']
         part1.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
 
         part2 = mock.Mock()
-        part2.names.return_value = ['part2']
+        part2.name = 'part2'
         part2.code.options.stage = ['*']
         part2.installdir = tmpdir + '/install2'
         os.makedirs(part2.installdir + '/a')
@@ -57,7 +57,7 @@ class TestCommands(tests.TestCase):
             f.write('a/2')
 
         part3 = mock.Mock()
-        part3.names.return_value = ['part3']
+        part3.name = 'part3'
         part3.code.options.stage = ['*']
         part3.installdir = tmpdir + '/install3'
         os.makedirs(part3.installdir + '/a')
@@ -73,7 +73,8 @@ class TestCommands(tests.TestCase):
 
         self.assertFalse(cmds._check_for_collisions([part1, part2, part3]))
         self.assertEqual(
-            'Error: parts part2 and part3 have the following file paths in common which have different contents:\n'
+            'Error: parts part2 and part3 have the following file paths in '
+            'common which have different contents:\n'
             '  1\n'
             '  a/2\n',
             fake_logger.output)

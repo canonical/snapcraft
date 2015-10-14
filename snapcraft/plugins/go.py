@@ -20,8 +20,23 @@ import snapcraft
 
 class GoPlugin(snapcraft.BasePlugin):
 
+    @classmethod
+    def schema(cls):
+        return {
+            'properties': {
+                'source': {
+                    'type': 'string',
+                },
+            },
+            'required': [
+                'source',
+            ]
+        }
+
     def __init__(self, name, options):
         super().__init__(name, options)
+        self.build_packages.append('golang-go')
+
         if self.options.source.startswith("lp:"):
             self.fullname = self.options.source.split(":~")[1]
         else:
@@ -43,7 +58,8 @@ class GoPlugin(snapcraft.BasePlugin):
             return False
         if not self.run(['go', 'install', self.fullname]):
             return False
-        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'), self.installdir])
+        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'),
+                        self.installdir])
 
     def run(self, cmd, **kwargs):
         cmd = ['env', 'GOPATH=' + self.builddir] + cmd

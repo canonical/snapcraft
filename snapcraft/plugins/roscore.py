@@ -20,19 +20,31 @@ import os
 
 class RosCorePlugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-    ]
+    _PLUGIN_STAGE_SOURCES = (
+        'deb http://packages.ros.org/ros/ubuntu/ vivid main\n'
+        'deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe\n'
+        'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe\n'
+        'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n'
+        'deb http://${security}.ubuntu.com/${suffix} trusty-security main universe\n')
 
-    _PLUGIN_STAGE_SOURCES = ('deb http://packages.ros.org/ros/ubuntu/ trusty main\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n'
-                             'deb http://${security}.ubuntu.com/${suffix} trusty-security main universe\n')
+    @classmethod
+    def schema(cls):
+        return {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+                'rosversion': {
+                    'type': 'string',
+                },
+            }
+        }
 
     def __init__(self, name, options):
-        self.rosversion = options.rosversion if options.rosversion else 'indigo'
-        self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-ros-core')
         super().__init__(name, options)
+        self.rosversion = options.rosversion or 'indigo'
+        self.stage_packages.append(
+            'ros-' + self.rosversion + '-ros-core'
+        )
 
     def build(self):
         os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
@@ -44,7 +56,8 @@ class RosCorePlugin(snapcraft.BasePlugin):
             f.write('#!/bin/bash\n')
             f.write('_CATKIN_SETUP_DIR={}\n'.format(ros_dir))
             f.write('source {}/setup.bash\n'.format(ros_dir))
-            f.write('export PYTHONPATH={}:$PYTHONPATH\n'.format(os.path.join(ros_dir, 'lib', 'python2.7', 'dist-packages')))
+            f.write('export PYTHONPATH={}:$PYTHONPATH\n'.format(
+                os.path.join(ros_dir, 'lib', 'python2.7', 'dist-packages')))
             f.write('exec {}/bin/rosmaster\n'.format(ros_dir))
 
         os.chmod(service_wrapper, 0o755)
@@ -62,23 +75,3 @@ class RosCorePlugin(snapcraft.BasePlugin):
             '-opt/ros/' + self.rosversion + '/setup.sh',
             '-opt/ros/' + self.rosversion + '/_setup_util.py'
         ])
-
-    def snap(self, config={}):
-        if 'services' not in config.data:
-            config.data['services'] = {}
-
-        rosserv = {
-            'start': os.path.join('bin', self.name + '-rosmaster-service'),
-            'description': 'ROS Master service',
-            'ports': {
-                'internal': {
-                    'rosmaster': {
-                        'port': '11311/tcp',
-                        'negotiable': False
-                    }
-                }
-            }
-        }
-
-        config.data['services'][self.name + '-rosmaster'] = rosserv
-        return True

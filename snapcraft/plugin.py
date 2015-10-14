@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import glob
 import importlib
+import jsonschema
 import logging
 import os
 import sys
 import shutil
-import yaml
 
 import snapcraft
 from snapcraft import common
@@ -28,15 +29,6 @@ from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
-
-
-_BUILTIN_OPTIONS = {
-    'filesets': {},
-    'snap': [],
-    'stage': [],
-    'stage-packages': [],
-    'organize': {}
-}
 
 
 def _local_plugindir():
@@ -49,13 +41,16 @@ class PluginError(Exception):
 
 class PluginHandler:
 
-    def __init__(self, name, part_name, properties, load_code=True, load_config=True):
+    @property
+    def name(self):
+        return self._name
+
+    def __init__(self, plugin_name, part_name, properties):
         self.valid = False
         self.code = None
         self.config = {}
-        self.part_names = []
+        self._name = part_name
         self.deps = []
-        self.plugin_name = name
 
         parts_dir = common.get_partsdir()
         self.partdir = os.path.join(parts_dir, part_name)
@@ -68,76 +63,46 @@ class PluginHandler:
         self.statefile = os.path.join(parts_dir, part_name, 'state')
 
         try:
-            if load_config:
-                self._load_config(name)
-            if load_code:
-                self._load_code(name, part_name, properties)
+            self._load_code(plugin_name, properties)
             # only set to valid if it loads without PluginError
-            self.part_names.append(part_name)
             self.valid = True
         except PluginError as e:
             logger.error(str(e))
             return
+        except jsonschema.ValidationError as e:
+            logger.error('Issues while loading properties for '
+                         '{}: {}'.format(part_name, e.message))
+            return
 
-    def _load_config(self, name):
-        config_path = os.path.join(common.get_plugindir(), name + ".yaml")
-        if not os.path.exists(config_path):
-            config_path = os.path.join(_local_plugindir(), name + ".yaml")
-        if not os.path.exists(config_path):
-            raise PluginError('Unknown plugin: {}'.format(name))
-        with open(config_path, 'r') as fp:
-            self.config = yaml.load(fp) or {}
+    def _load_code(self, plugin_name, properties):
+        module_name = plugin_name.replace('-', '_')
+        module = None
 
-    def _make_options(self, name, properties):
-        class Options():
-            pass
-        options = Options()
-
-        plugin_options = self.config.get('options', {})
-        # Let's append some mandatory options, but not .update() to not lose
-        # original content
-        for key in _BUILTIN_OPTIONS:
-            if key not in plugin_options:
-                plugin_options[key] = _BUILTIN_OPTIONS[key]
-
-        for opt in plugin_options:
-            attrname = opt.replace('-', '_')
-            opt_parameters = plugin_options[opt] or {}
-            if opt in properties:
-                setattr(options, attrname, properties[opt])
-            else:
-                if opt_parameters.get('required', False):
-                    raise PluginError('Required field {} missing on part {}'.format(opt, name))
-                setattr(options, attrname, None)
-
-        return options
-
-    def _load_code(self, name, part_name, properties):
-        options = self._make_options(name, properties)
-        module_name = name.replace('-', '_')
-
-        try:
-            module = importlib.import_module('snapcraft.plugins.' + module_name)
-        except ImportError:
-            module = None
+        with contextlib.suppress(ImportError):
+            module = _load_local('x-{}'.format(plugin_name))
+            logger.info('Loaded local plugin for %s', plugin_name)
 
         if not module:
-            logger.info('Searching for local plugin for %s', name)
-            sys.path = [_local_plugindir()] + sys.path
-            module = importlib.import_module(module_name)
-            sys.path.pop(0)
+            with contextlib.suppress(ImportError):
+                module = importlib.import_module(
+                    'snapcraft.plugins.{}'.format(module_name))
 
-        for prop_name in dir(module):
-            prop = getattr(module, prop_name)
-            if issubclass(prop, snapcraft.BasePlugin):
-                self.code = prop(part_name, options)
-                break
+        if not module:
+            logger.info('Searching for local plugin for %s', plugin_name)
+            with contextlib.suppress(ImportError):
+                module = _load_local(module_name)
+            if not module:
+                raise PluginError('Unknown plugin: {}'.format(plugin_name))
+
+        plugin = _get_plugin(module)
+        options = _make_options(properties, plugin.schema())
+        self.code = plugin(self.name, options)
 
     def __str__(self):
-        return self.part_names[0]
+        return self.name
 
     def __repr__(self):
-        return self.part_names[0]
+        return self.name
 
     def makedirs(self):
         dirs = [
@@ -150,17 +115,15 @@ class PluginHandler:
     def is_valid(self):
         return self.valid
 
-    def names(self):
-        return self.part_names
-
     def notify_stage(self, stage, hint=''):
-        logger.info(stage + " " + self.part_names[0] + hint)
+        logger.info('%s %s %s', stage, self.name, hint)
 
     def is_dirty(self, stage):
         try:
             with open(self.statefile, 'r') as f:
                 lastStep = f.read()
-                return common.COMMAND_ORDER.index(stage) > common.COMMAND_ORDER.index(lastStep)
+                return (common.COMMAND_ORDER.index(stage) >
+                        common.COMMAND_ORDER.index(lastStep))
         except Exception:
             return True
 
@@ -179,22 +142,16 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        run_setup_stage_packages = self.code and hasattr(self.code, 'setup_stage_packages')
-        run_pull = self.code and hasattr(self.code, 'pull')
+        self.notify_stage("Pulling")
 
-        if run_setup_stage_packages or run_pull:
-            self.notify_stage("Pulling")
+        try:
+            self.code.setup_stage_packages()
+        except repo.PackageNotFoundError as e:
+            logger.error(e.message)
+            return False
 
-        if run_pull:
-            if not getattr(self.code, 'pull')():
-                return False
-
-        if run_setup_stage_packages:
-            try:
-                self.code.setup_stage_packages()
-            except repo.PackageNotFoundError as e:
-                logger.error(e.message)
-                return False
+        if not self.code.pull():
+            return False
 
         self.mark_done('pull')
         return True
@@ -203,10 +160,9 @@ class PluginHandler:
         if not self.should_stage_run('build', force):
             return True
         self.makedirs()
-        if self.code and hasattr(self.code, 'build'):
-            self.notify_stage("Building")
-            if not getattr(self.code, 'build')():
-                return False
+        self.notify_stage("Building")
+        if not self.code.build():
+            return False
 
         self.mark_done('build')
         return True
@@ -253,7 +209,8 @@ class PluginHandler:
         snap_files, snap_dirs = self._migratable_fileset_for('stage')
 
         try:
-            _migrate_files(snap_files, snap_dirs, self.installdir, self.stagedir)
+            _migrate_files(snap_files, snap_dirs, self.installdir,
+                           self.stagedir)
         except FileNotFoundError as e:
             logger.error('Could not find file %s defined in stage',
                          os.path.relpath(e.filename, os.path.curdir))
@@ -287,13 +244,59 @@ class PluginHandler:
         return True
 
     def env(self, root):
-        if self.code and hasattr(self.code, 'env'):
-            return self.code.env(root)
-        return []
+        return self.code.env(root)
 
 
-def load_plugin(part_name, plugin_name, properties={}, load_code=True):
-    part = PluginHandler(plugin_name, part_name, properties, load_code=load_code)
+def _builtin_options():
+    return {
+        'filesets': {},
+        'snap': [],
+        'stage': [],
+        'stage-packages': [],
+        'build-packages': [],
+        'organize': {}
+    }
+
+
+def _make_options(properties, schema):
+    class Options():
+        pass
+    options = Options()
+
+    # Built in options are already validated
+    builtin_options = _builtin_options()
+    for key in builtin_options:
+        value = properties.pop(key, builtin_options[key])
+        setattr(options, key.replace('-', '_'), value)
+
+    jsonschema.validate(properties, schema)
+
+    schema_properties = schema.get('properties', {})
+    for key in schema_properties:
+        attr_name = key.replace('-', '_')
+        default_value = schema_properties[key].get('default')
+        attr_value = properties.get(key, default_value)
+        setattr(options, attr_name, attr_value)
+
+    return options
+
+
+def _get_plugin(module):
+    for attr in vars(module).values():
+        if isinstance(attr, type) and issubclass(attr, snapcraft.BasePlugin):
+            return attr
+
+
+def _load_local(module_name):
+    sys.path = [_local_plugindir()] + sys.path
+    module = importlib.import_module(module_name)
+    sys.path.pop(0)
+
+    return module
+
+
+def load_plugin(part_name, plugin_name, properties={}):
+    part = PluginHandler(plugin_name, part_name, properties)
     if not part.is_valid():
         logger.error('Could not load part %s', plugin_name)
         sys.exit(1)
@@ -309,10 +312,13 @@ def migratable_filesets(fileset, srcdir):
     # And chop files, including whole trees if any dirs are mentioned
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
-        snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + '/')])
+        snap_files = set([x for x in snap_files
+                          if not x.startswith(exclude_dir + '/')])
 
     # Separate dirs from files
-    snap_dirs = set([x for x in snap_files if os.path.isdir(os.path.join(srcdir, x)) and not os.path.islink(os.path.join(srcdir, x))])
+    snap_dirs = set([x for x in snap_files
+                     if os.path.isdir(os.path.join(srcdir, x)) and
+                     not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
 
     return snap_files, snap_dirs
@@ -365,8 +371,12 @@ def _generate_include_set(directory, includes):
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= set([os.path.relpath(os.path.join(root, d), directory) for d in dirs])
-            include_files |= set([os.path.relpath(os.path.join(root, f), directory) for f in files])
+            include_files |= \
+                set([os.path.relpath(os.path.join(root, d), directory)
+                     for d in dirs])
+            include_files |= \
+                set([os.path.relpath(os.path.join(root, f), directory)
+                     for f in files])
 
     return include_files
 
@@ -378,8 +388,10 @@ def _generate_exclude_set(directory, excludes):
         matches = glob.glob(os.path.join(directory, exclude))
         exclude_files |= set(matches)
 
-    exclude_dirs = [os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)]
-    exclude_files = set([os.path.relpath(x, directory) for x in exclude_files])
+    exclude_dirs = [os.path.relpath(x, directory)
+                    for x in exclude_files if os.path.isdir(x)]
+    exclude_files = set([os.path.relpath(x, directory)
+                         for x in exclude_files])
 
     return exclude_files, exclude_dirs
 

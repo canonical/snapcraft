@@ -3,7 +3,7 @@ version: 1.0
 vendor: Number Five <number-five@is-alive.com>
 summary: A robot example
 icon: icon.svg
-description: A really small ros examples
+description: A really small ROS example
 binaries:
   listener:
     exec: opt/ros/indigo/beginner_tutorials/listener
@@ -18,3 +18,13 @@ parts:
     source: .
     catkin-packages:
       - beginner_tutorials
+
+services:
+  rosmaster:
+    start: bin/roscore-rosmaster-service
+    description: ROS Master Service
+    ports:
+      internal:
+        rosmaster:
+          port: 11311/tcp
+          negotiable: false

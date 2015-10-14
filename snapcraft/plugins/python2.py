@@ -22,23 +22,30 @@ import snapcraft
 
 class Python2Plugin(snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-        'python-dev',
-        'python-pkg-resources',
-        'python-setuptools',
-    ]
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['requirements'] = {
+            'type': 'string',
+        }
+        schema.pop('required')
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.requirements = options.requirements
-        self.source = options.source
+        self.stage_packages.extend([
+            'python-dev',
+            'python-pkg-resources',
+            'python-setuptools',
+        ])
 
     def env(self, root):
         return ["PYTHONPATH=%s" % os.path.join(
             root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        if self.source and not self.handle_source_options():
+        if self.options.source and not self.handle_source_options():
             return False
 
         return self._pip()
@@ -48,10 +55,10 @@ class Python2Plugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if self.requirements:
-            requirements = os.path.join(os.getcwd(), self.requirements)
+        if self.options.requirements:
+            requirements = os.path.join(os.getcwd(), self.options.requirements)
 
-        if not os.path.exists(setup) and not self.requirements:
+        if not os.path.exists(setup) and not self.options.requirements:
             return True
 
         easy_install = os.path.join(
@@ -62,7 +69,8 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         if not os.path.exists(site_packages_dir):
             os.symlink(
-                os.path.join(prefix, 'lib', self.python_version, 'dist-packages'),
+                os.path.join(prefix, 'lib', self.python_version,
+                             'dist-packages'),
                 site_packages_dir)
 
         if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
@@ -72,7 +80,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         pip_install = ['python2', pip2, 'install', '--target',
                        site_packages_dir]
 
-        if self.requirements and not self.run(
+        if self.options.requirements and not self.run(
                 pip_install + ['--requirement', requirements]):
             return False
 
@@ -99,7 +107,8 @@ class Python2Plugin(snapcraft.BasePlugin):
     @property
     def dist_packages_dir(self):
         return os.path.join(
-            self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')
+            self.installdir, 'usr', 'lib', self.python_version,
+            'dist-packages')
 
     @property
     def python_version(self):

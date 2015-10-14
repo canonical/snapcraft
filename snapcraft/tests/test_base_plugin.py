@@ -137,5 +137,6 @@ class GetSourceTestCase(tests.TestCase):
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         expected = (
             'Issues while setting up sources for part \'test_plugin\': can\'t '
-            'specify a {} for a {} source.\n'.format(self.error, self.source_type))
+            'specify a {} for a {} source.\n'
+            .format(self.error, self.source_type))
         self.assertEqual(expected, fake_logger.output)

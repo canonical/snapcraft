@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 import os
 import re
@@ -28,9 +29,41 @@ logger = logging.getLogger(__name__)
 
 class BasePlugin:
 
-    @property
-    def PLUGIN_STAGE_PACKAGES(self):
-        return getattr(self, '_PLUGIN_STAGE_PACKAGES', [])
+    @classmethod
+    def schema(cls):
+        '''
+        Returns a json-schema for the plugin's properties as a dictionary.
+        Of importance to plugin authors is the 'properties' keyword and
+        optionally the 'requires' keyword with a list of required
+        'properties'.
+
+        By default the the properties will be that of a standard VCS, override
+        in custom implementations if required.
+        '''
+        return {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+                'source': {
+                    'type': 'string',
+                },
+                'source-type': {
+                    'type': 'string',
+                    'default': '',
+                },
+                'source-branch': {
+                    'type': 'string',
+                    'default': '',
+                },
+                'source-tag': {
+                    'type:': 'string',
+                    'default': '',
+                },
+            },
+            'required': [
+                'source',
+            ]
+        }
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
@@ -38,12 +71,22 @@ class BasePlugin:
 
     def __init__(self, name, options):
         self.name = name
+        self.build_packages = []
+        self.stage_packages = []
+
+        with contextlib.suppress(AttributeError):
+            self.stage_packages = options.stage_packages
+        with contextlib.suppress(AttributeError):
+            self.build_packages = options.build_packages
+
         self.options = options
         self.partdir = os.path.join(os.getcwd(), "parts", self.name)
         self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
         self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
-        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name, 'ubuntu')
-        self.installdir = os.path.join(os.getcwd(), "parts", self.name, "install")
+        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name,
+                                      'ubuntu')
+        self.installdir = os.path.join(os.getcwd(), "parts", self.name,
+                                       "install")
         self.stagedir = os.path.join(os.getcwd(), "stage")
         self.snapdir = os.path.join(os.getcwd(), "snap")
 
@@ -84,17 +127,23 @@ class BasePlugin:
     def isurl(self, url):
         return snapcraft.common.isurl(url)
 
-    def get_source(self, source, source_type=None, source_tag=None, source_branch=None):
+    def get_source(self, source, source_type=None, source_tag=None,
+                   source_branch=None):
         try:
             handler_class = _get_source_handler(source_type, source)
         except ValueError:
-            logger.error("Unrecognized source '%s' for part '%s'.", source, self.name)
+            logger.error("Unrecognized source '%s' for part '%s'.", source,
+                         self.name)
             snapcraft.common.fatal()
 
         try:
-            handler = handler_class(source, self.sourcedir, source_tag, source_branch)
+            handler = handler_class(source, self.sourcedir, source_tag,
+                                    source_branch)
         except snapcraft.sources.IncompatibleOptionsError as e:
-            logger.error('Issues while setting up sources for part \'%s\': %s.', self.name, e.message)
+            logger.error(
+                'Issues while setting up sources for part \'%s\': %s.',
+                self.name,
+                e.message)
             snapcraft.common.fatal()
         if not handler.pull():
             return False
@@ -113,22 +162,28 @@ class BasePlugin:
         os.makedirs(d, exist_ok=True)
 
     def setup_stage_packages(self):
-        part_stage_packages = getattr(self.options, 'stage_packages', []) or []
-        if self.PLUGIN_STAGE_PACKAGES or part_stage_packages:
-            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
-            ubuntu.get(self.PLUGIN_STAGE_PACKAGES + part_stage_packages)
+        if self.stage_packages:
+            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir,
+                                           sources=self.PLUGIN_STAGE_SOURCES)
+            ubuntu.get(self.stage_packages)
             ubuntu.unpack(self.installdir)
             self._fixup(self.installdir)
 
     def _fixup(self, root):
         if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xml2-config')):
-            self.run(['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.format(root), os.path.join(root, 'usr', 'bin', 'xml2-config')])
+            self.run(
+                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
+                    format(root),
+                 os.path.join(root, 'usr', 'bin', 'xml2-config')])
         if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xslt-config')):
-            self.run(['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.format(root), os.path.join(root, 'usr', 'bin', 'xslt-config')])
+            self.run(
+                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
+                    format(root),
+                 os.path.join(root, 'usr', 'bin', 'xslt-config')])
 
 
 def _get_source_handler(source_type, source):
-    if source_type is None:
+    if not source_type:
         source_type = _get_source_type_from_uri(source)
 
     if source_type == 'bzr':
