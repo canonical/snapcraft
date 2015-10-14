@@ -31,12 +31,15 @@ class RosCorePlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
-        schema = super().schema()
-        schema['properties']['rosversion'] = {
-            'type': 'string',
+        return {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+                'rosversion': {
+                    'type': 'string',
+                },
+            }
         }
-
-        return schema
 
     def __init__(self, name, options):
         self.rosversion = options.rosversion or 'jade'

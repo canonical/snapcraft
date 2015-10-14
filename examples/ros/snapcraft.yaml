@@ -1,10 +1,10 @@
-name: ros
+name: ros-example
 version: 1.0
-vendor: Number Nine <number-nine@is-alive.com>
+vendor: Number Five <number-five@is-alive.com>
 summary: A robot example
 icon: icon.svg
 description: A really small ros examples
 
 parts:
   roscore:
-    type: roscore
+    plugin: roscore
