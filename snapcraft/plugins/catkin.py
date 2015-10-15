@@ -26,22 +26,42 @@ logger = logging.getLogger(__name__)
 
 class CatkinPlugin (snapcraft.BasePlugin):
 
-    _PLUGIN_STAGE_PACKAGES = [
-    ]
+    _PLUGIN_STAGE_SOURCES = '''
+deb http://packages.ros.org/ros/ubuntu/ trusty main
+deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe
+deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe
+deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe
+deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
+'''
 
-    _PLUGIN_STAGE_SOURCES = ('deb http://packages.ros.org/ros/ubuntu/ trusty main\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe\n'
-                             'deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe\n'
-                             'deb http://${security}.ubuntu.com/${suffix} trusty-security main universe\n')
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['rosversion'] = {
+            'type': 'string',
+            'default': 'indigo'
+        }
+        schema['properties']['catkin-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
+        }
+
+        schema['required'].append('catkin-packages')
+
+        return schema
 
     def __init__(self, name, options):
-        self.rosversion = options.rosversion if options.rosversion else 'indigo'
+        super().__init__(name, options)
+        self.rosversion = options.rosversion
         self.packages = set(options.catkin_packages)
         self.dependencies = ['ros-core']
         self.package_deps_found = False
         self.package_local_deps = {}
-        super().__init__(name, options)
 
     def env(self, root):
         return [
@@ -95,10 +115,10 @@ class CatkinPlugin (snapcraft.BasePlugin):
                     continue
 
                 # Get the ROS package for it
-                self._PLUGIN_STAGE_PACKAGES.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
+                self.stage_packages.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
 
                 if dep == 'roscpp':
-                    self._PLUGIN_STAGE_PACKAGES.append('g++')
+                    self.stage_packages.append('g++')
 
     def find_package_deps(self):
         if self.package_deps_found:
@@ -118,13 +138,13 @@ class CatkinPlugin (snapcraft.BasePlugin):
 
         self.package_deps_found = True
 
-    def pull(self):
+    def setup_stage_packages(self):
         if not self.handle_source_options():
             return False
 
         self.find_package_deps()
 
-        return True
+        return super().setup_stage_packages()
 
     def rosrun(self, commandlist, cwd=None):
         with tempfile.NamedTemporaryFile(mode='w') as f:
