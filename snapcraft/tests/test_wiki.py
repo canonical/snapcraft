@@ -30,8 +30,9 @@ class TestYaml(TestCase):
 
             @property
             def text(self):
-                return '''{{{part1:
+                return '''{{{part-in-wiki:
   plugin: go
+  source: http://somesource
 }}}'''
 
         patcher = unittest.mock.patch('requests.get')
@@ -39,12 +40,37 @@ class TestYaml(TestCase):
         self.mock_requests.return_value = Content()
         self.addCleanup(patcher.stop)
 
-    def test_get_part(self):
-        w = snapcraft.wiki.Wiki()
+        self.w = snapcraft.wiki.Wiki()
 
-        self.assertEqual(w.get_part('part1'), {'plugin': 'go'})
-        self.assertEqual(w.get_part('part2'), None)
-
+    def tearDown(self):
         self.mock_requests.assert_called_once_with(
             'https://wiki.ubuntu.com/Snappy/Parts',
             params={'action': 'raw'})
+
+    def test_get_part(self):
+        self.assertEqual(self.w.get_part('part-in-wiki'), {
+            'plugin': 'go', 'source': 'http://somesource'})
+        self.assertEqual(self.w.get_part('part-not-in-wiki'), None)
+
+    def test_compose_part_with_properties_from_the_wiki(self):
+        properties = self.w.compose(
+            'part-in-wiki', {'source': '.', 'another': 'different'})
+        expected_properties = {
+            'plugin': 'go', 'source': '.', 'another': 'different'}
+
+        self.assertEqual(properties, expected_properties)
+
+    def test_compose_part_with_properties_from_the_wiki_using_source(self):
+        properties = self.w.compose(
+            'part-in-wiki', {'another': 'different'})
+        expected_properties = {
+            'plugin': 'go', 'source': 'http://somesource',
+            'another': 'different'}
+
+        self.assertEqual(properties, expected_properties)
+
+    def test_compose_part_for_part_not_in_wiki_raises_exception(self):
+        with self.assertRaises(KeyError) as raised:
+            self.w.compose('part-not-in-wiki',
+                           {'source': '.', 'another': 'different'})
+        self.assertEqual(raised.exception.args, ('part-not-in-wiki',))

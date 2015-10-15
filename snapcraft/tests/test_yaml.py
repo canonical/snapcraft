@@ -39,10 +39,6 @@ class TestYaml(TestCase):
         mock_wrap_exe.return_value = True
         self.addCleanup(patcher.stop)
 
-        patcher = unittest.mock.patch('snapcraft.wiki.Wiki')
-        self.mock_wiki = patcher.start()
-        self.addCleanup(patcher.stop)
-
     def make_snapcraft_yaml(self, content):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
@@ -51,7 +47,8 @@ class TestYaml(TestCase):
             fp.write(content)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    def test_config_loads_plugins(self, mock_loadPlugin):
+    @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
+    def test_config_loads_plugins(self, mock_get_part, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 vendor: me <me@me.com>
@@ -70,10 +67,35 @@ parts:
             'stage': [], 'snap': [],
         })
 
-        self.assertFalse(self.mock_wiki.get_part.called)
+        self.assertFalse(mock_get_part.called)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    def test_config_loads_plugins_with_wiki_part(self, mock_loadPlugin):
+    @unittest.mock.patch('snapcraft.wiki.Wiki.compose')
+    def test_config_loads_part_from_wiki(self, mock_compose, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+parts:
+  part1:
+    stage-packages: [fswebcam]
+""")
+        mock_compose.return_value = {
+            'plugin': 'go',
+            'source': 'http://source.tar.gz',
+        }
+
+        snapcraft.yaml.Config()
+
+        mock_loadPlugin.assert_called_with('part1', 'go', {
+            'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
+
+    @unittest.mock.patch('snapcraft.plugin.load_plugin')
+    @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
+    def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 vendor: me <me@me.com>
@@ -88,13 +110,30 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        snapcraft.yaml.Config()
-        mock_loadPlugin.assert_called_with('part1', 'go', {
-            'stage-packages': ['fswebcam'],
-            'stage': [], 'snap': [],
-        })
 
-        self.assertFalse(self.mock_wiki.get_part.called)
+        def load_effect(*args, **kwargs):
+            mock_part = unittest.mock.Mock()
+            mock_part.code.build_packages = []
+            mock_part.deps = []
+            mock_part.name = args[0]
+
+            return mock_part
+
+        mock_load.side_effect = load_effect
+        mock_get_part.return_value = {
+            'plugin': 'go',
+            'source': 'http://somesource'
+        }
+
+        snapcraft.yaml.Config()
+
+        call1 = unittest.mock.call('part1', 'go', {
+            'stage-packages': ['fswebcam'], 'stage': [], 'snap': []})
+        call2 = unittest.mock.call('part2wiki', 'go', {
+            'source': 'http://somesource'})
+
+        mock_load.assert_has_calls([call1, call2])
+        self.assertTrue(mock_get_part.called)
 
     def test_config_raises_on_missing_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -134,7 +173,6 @@ parts:
         self.assertEqual(
             raised.exception.message,
             'circular dependency chain found in parts definition')
-        self.assertFalse(self.mock_wiki.get_part.called)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
