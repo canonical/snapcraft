@@ -49,3 +49,23 @@ class Wiki:
             if 'plugin' and 'type' in self.wiki_parts[name]:
                 del self.wiki_parts[name]['type']
             return self.wiki_parts[name]
+
+    def compose(self, name, properties):
+        """Return properties composed with the ones from part name in the wiki.
+
+        :param str name: The name of the part to query from the wiki
+        :param dict properties: The current set of properties
+        :return: Part properties from the wiki composed with the properties
+                 passed as a parameter. If there is no wiki part named name,
+                 properties will be returned.
+        :rtype: dict
+        :raises KeyError: if the part named name is not found in the wiki.
+        """
+        self._fetch()
+
+        wiki_properties = self.wiki_parts[name]
+        for key in wiki_properties:
+            properties[key] = properties.get(key, wiki_properties[key])
+        properties['plugin'] = wiki_properties.get('plugin', None)
+
+        return properties
