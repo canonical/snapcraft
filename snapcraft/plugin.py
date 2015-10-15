@@ -169,7 +169,7 @@ class PluginHandler:
 
     def _migratable_fileset_for(self, stage):
         plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, stage, []) or []
+        fileset = getattr(self.code.options, stage, ['*']) or ['*']
         fileset.extend(plugin_fileset)
         return migratable_filesets(fileset, self.installdir)
 
@@ -200,11 +200,6 @@ class PluginHandler:
             return True
 
         self.notify_stage("Staging")
-
-        if self.code and hasattr(self.code, 'stage'):
-            if not getattr(self.code, 'stage')():
-                return False
-
         self._organize()
         snap_files, snap_dirs = self._migratable_fileset_for('stage')
 
@@ -233,10 +228,6 @@ class PluginHandler:
         except FileNotFoundError as e:
                 logger.error('Could not find file %s defined in snap',
                              os.path.relpath(e.filename, os.path.curdir))
-                return False
-
-        if self.code and hasattr(self.code, 'snap'):
-            if not getattr(self.code, 'snap')():
                 return False
 
         self.mark_done('snap')
