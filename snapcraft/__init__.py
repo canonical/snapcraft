@@ -131,9 +131,9 @@ class BasePlugin:
                    source_branch=None):
         try:
             handler_class = _get_source_handler(source_type, source)
-        except ValueError:
-            logger.error("Unrecognized source '%s' for part '%s'.", source,
-                         self.name)
+        except ValueError as e:
+            logger.error('Unrecognized source %r for part %r: %s.', source,
+                         self.name, e)
             snapcraft.common.fatal()
 
         try:
@@ -209,6 +209,8 @@ def _get_source_type_from_uri(source):
     elif re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$').match(source):
         source_type = 'tar'
     elif snapcraft.common.isurl(source):
-        raise ValueError()
+        raise ValueError('No handler to manage source')
+    elif not os.path.isdir(source):
+        raise ValueError('Local source is not a directory')
 
     return source_type

@@ -45,6 +45,13 @@ command:
     fi
 flags: simple has-leftovers
 
+id: snapcraft/normal/complete-part-with-wiki
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/wiki .
+    ${SNAPCRAFT} pull
+flags: simple has-leftovers
+
 id: snapcraft/normal/assemble-meta-with-policy
 command:
     set -ex

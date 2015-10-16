@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-
-import yaml
+import contextlib
 import jsonschema
+import logging
 import os
 import os.path
+import yaml
 
 import snapcraft.plugin
 import snapcraft.wiki
@@ -99,14 +99,23 @@ class Config:
 
         self.build_tools = self.data.get('build-packages', [])
 
+        self._wiki = snapcraft.wiki.Wiki()
+
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.pop("plugin", None)
+            plugin_name = properties.pop('plugin', None)
             # TODO search the wiki
             if not plugin_name and 'type' in properties:
                 plugin_name = properties.pop('type')
                 logger.warning('DEPRECATED: Use "plugin" instead of "type"')
+            elif not plugin_name:
+                logger.info(
+                    'Searching the wiki to compose part "{}"'.format(
+                        part_name))
+                with contextlib.suppress(KeyError):
+                    properties = self._wiki.compose(part_name, properties)
+                    plugin_name = properties.pop('plugin', None)
 
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
@@ -134,7 +143,6 @@ class Config:
 
     def _compute_part_dependencies(self, after_requests):
         '''Gather the lists of dependencies and adds to all_parts.'''
-        w = snapcraft.wiki.Wiki()
 
         for part in self.all_parts:
             dep_names = after_requests.get(part.name, [])
@@ -146,11 +154,12 @@ class Config:
                         found = True
                         break
                 if not found:
-                    wiki_part = w.get_part(dep)
+                    wiki_part = self._wiki.get_part(dep)
                     found = True if wiki_part else False
                     if found:
+                        plugin_name = wiki_part.pop('plugin')
                         part.deps.append(self.load_plugin(
-                            dep, wiki_part['plugin'], wiki_part))
+                            dep, plugin_name, wiki_part))
                 if not found:
                     raise SnapcraftLogicError(
                         'part name missing {}'.format(dep))
