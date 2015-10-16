@@ -65,14 +65,15 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         return True
 
     def snap_fileset(self):
+        rospath = os.path.join('opt', 'ros', self.rosversion)
         return ([
             os.path.join('bin', self.name + '-rosmaster-service'),
-            'opt/ros/' + self.rosversion + '/bin/*',
-            'opt/ros/' + self.rosversion + '/lib/*',
-            '-opt/ros/' + self.rosversion + '/share/*/cmake/*',
-            '-opt/ros/' + self.rosversion + '/include',
-            '-opt/ros/' + self.rosversion + '/.catkin',
-            '-opt/ros/' + self.rosversion + '/.rosinstall',
-            '-opt/ros/' + self.rosversion + '/setup.sh',
-            '-opt/ros/' + self.rosversion + '/_setup_util.py'
+            os.path.join(rospath, 'bin', '*'),
+            os.path.join(rospath, 'lib', '*'),
+            '-' + os.path.join(rospath, 'share', '*', 'cmake', '*'),
+            '-' + os.path.join(rospath, 'include'),
+            '-' + os.path.join(rospath, '.catkin'),
+            '-' + os.path.join(rospath, '.rosinstall'),
+            '-' + os.path.join(rospath, 'setup.sh'),
+            '-' + os.path.join(rospath, '_setup_util.py')
         ])
