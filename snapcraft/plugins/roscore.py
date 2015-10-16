@@ -49,7 +49,11 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def build(self):
         os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
-        ros_dir = os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.options.rosversion)
+        ros_dir = os.path.join(
+            '$SNAP_APP_PATH',
+            'opt',
+            'ros',
+            self.options.rosversion)
         service_wrapper = os.path.join(
             self.installdir, 'bin', '{}-rosmaster-service'.format(self.name))
 

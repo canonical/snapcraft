@@ -64,17 +64,32 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def env(self, root):
         return [
-            'PYTHONPATH={0}'.format(os.path.join(self.installdir, 'usr', 'lib', self.python_version, 'dist-packages')),
+            'PYTHONPATH={0}'.format(
+                os.path.join(
+                    self.installdir,
+                    'usr',
+                    'lib',
+                    self.python_version,
+                    'dist-packages')),
             'DESTDIR={0}'.format(self.installdir),
             # ROS needs it but doesn't set it :-/
             'CPPFLAGS="-std=c++11 $CPPFLAGS -I{0} -I{1}"'.format(
                 os.path.join(root, 'usr', 'include', 'c++', self.gcc_version),
-                os.path.join(root, 'usr', 'include',
-                             snapcraft.common.get_arch_triplet(), 'c++', self.gcc_version)),
-            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(root, self.options.rosversion),
+                os.path.join(root,
+                             'usr',
+                             'include',
+                             snapcraft.common.get_arch_triplet(),
+                             'c++',
+                             self.gcc_version)),
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(
+                root,
+                self.options.rosversion),
             'ROS_MASTER_URI=http://localhost:11311',
-            '_CATKIN_SETUP_DIR=' + os.path.join(root, 'opt', 'ros', self.options.rosversion),
-            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(os.path.join(root, 'opt', 'ros', self.options.rosversion, 'setup.sh'))
+            '_CATKIN_SETUP_DIR={}'.format(os.path.join(
+                root, 'opt', 'ros', self.options.rosversion)),
+            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
+                os.path.join(
+                    root, 'opt', 'ros', self.options.rosversion, 'setup.sh'))
         ]
 
     @property
@@ -87,13 +102,15 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     @property
     def rosdir(self):
-        return os.path.join(self.installdir, 'opt', 'ros', self.options.rosversion)
+        return os.path.join(self.installdir,
+                            'opt', 'ros', self.options.rosversion)
 
     def _deps_from_packagesxml(self, f, pkg):
         try:
             tree = lxml.etree.parse(f)
         except lxml.etree.ParseError:
-            logger.warning("Unable to read packages.xml file for '{}'".format(pkg))
+            logger.warning("Unable to read packages.xml file for '{}'".format(
+                pkg))
             return
 
         for deptype in ('buildtool_depend', 'build_depend', 'run_depend'):
@@ -107,14 +124,16 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     self.package_local_deps[pkg].add(dep)
                     continue
 
-                # If we're already getting this through a stage package, we don't need it
+                # If we're already getting this through a stage package,
+                # we don't need it
                 if self.options.stage_packages and (
                         dep in self.options.stage_packages or
                         dep.replace('_', '-') in self.options.stage_packages):
                     continue
 
                 # Get the ROS package for it
-                self.stage_packages.append('ros-' + self.options.rosversion + '-' + dep.replace('_', '-'))
+                self.stage_packages.append(
+                    'ros-'+self.options.rosversion+'-'+dep.replace('_', '-'))
 
                 if dep == 'roscpp':
                     self.stage_packages.append('g++')
@@ -129,7 +148,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 self.package_local_deps[pkg] = set()
 
             try:
-                with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
+                filename = os.path.join(
+                    self.builddir, 'src', pkg, 'package.xml')
+                with open(filename, 'r') as f:
                     self._deps_from_packagesxml(f, pkg)
             except os.FileNotFound:
                 logger.warning("Unable to find packages.xml for '" + pkg + "'")
@@ -157,7 +178,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         # Fixup ROS Cmake files that have hardcoded paths in them
         if not self.run([
             'find', self.rosdir, '-name', '*.cmake',
-            '-exec', 'sed', '-i', '-e', r's|\(\W\)/usr/lib/|\1{0}/usr/lib/|g'.format(self.installdir), '{}', ';'
+            '-exec', 'sed', '-i', '-e',
+            r's|\(\W\)/usr/lib/|\1{0}/usr/lib/|g'.format(self.installdir),
+            '{}', ';'
         ]):
             return False
 
@@ -167,15 +190,17 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             return False
 
         # the hacks
-        if not self.run(['find', self.installdir, '-name', '*.cmake', '-delete']):
+        findcmd = ['find', self.installdir, '-name', '*.cmake', '-delete']
+        if not self.run(findcmd):
             return False
 
         if not self.run(
-            ['rm', '-f', 'opt/ros/' +
-             self.options.rosversion + '/.catkin', 'opt/ros/' +
-             self.options.rosversion + '/.rosinstall', 'opt/ros/' + self.options.rosversion +
-             '/setup.sh', 'opt/ros/' + self.options.rosversion +
-             '/_setup_util.py'], cwd=self.installdir):
+            ['rm', '-f',
+             'opt/ros/' + self.options.rosversion + '/.catkin',
+             'opt/ros/' + self.options.rosversion + '/.rosinstall',
+             'opt/ros/' + self.options.rosversion + '/setup.sh',
+             'opt/ros/' + self.options.rosversion + '/_setup_util.py'],
+                cwd=self.installdir):
             return False
 
         os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
@@ -224,15 +249,19 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         # Dep CMake files
         for dep in self.dependencies:
-            catkincmd.append('-D{0}_DIR={1}'.format(dep.replace('-', '_'), os.path.join(self.rosdir, 'share', dep, 'cmake')))
+            catkincmd.append('-D{0}_DIR={1}'.format(
+                dep.replace('-', '_'),
+                os.path.join(self.rosdir, 'share', dep, 'cmake')))
 
         # Compiler fun
         catkincmd.extend([
             '-DCMAKE_C_FLAGS="$CFLAGS"',
             '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
             '-DCMAKE_LD_FLAGS="$LDFLAGS"',
-            '-DCMAKE_C_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
-            '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
+            '-DCMAKE_C_COMPILER={}'.format(
+                os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
+            '-DCMAKE_CXX_COMPILER={}'.format(
+                os.path.join(self.installdir, 'usr', 'bin', 'g++'))
         ])
 
         if not self._rosrun(catkincmd):
