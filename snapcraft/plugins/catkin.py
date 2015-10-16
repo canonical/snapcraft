@@ -96,7 +96,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             logger.warning("Unable to read packages.xml file for '{}'".format(pkg))
             return
 
-        for deptype in ['buildtool_depend', 'build_depend', 'run_depend']:
+        for deptype in ('buildtool_depend', 'build_depend', 'run_depend'):
             for xmldep in tree.xpath('/package/' + deptype):
                 dep = xmldep.text
 
