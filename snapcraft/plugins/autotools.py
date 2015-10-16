@@ -41,11 +41,16 @@ class AutotoolsPlugin(MakePlugin):
             'autoconf',
             'automake',
             'autopoint',
+            'libtool',
         ])
 
     def build(self):
         if not os.path.exists(os.path.join(self.builddir, "configure")):
-            if not self.run(['env', 'NOCONFIGURE=1', './autogen.sh']):
-                return False
+            if os.path.exists(os.path.join(self.builddir, "autogen.sh")):
+                if not self.run(['env', 'NOCONFIGURE=1', './autogen.sh'], cwd=self.builddir):
+                    return False
+            else:
+                if not self.run(['autoreconf', '-i'], cwd=self.builddir):
+                    return False
         return self.run(['./configure', '--prefix='] +
                         self.options.configflags) and super().build()
