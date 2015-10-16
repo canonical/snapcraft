@@ -93,7 +93,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         try:
             tree = lxml.etree.parse(f)
         except lxml.etree.ParseError:
-            logger.warning("Unable to read packages.xml file for '" + pkg + "'")
+            logger.warning("Unable to read packages.xml file for '{}'".format(pkg))
             return
 
         for deptype in ['buildtool_depend', 'build_depend', 'run_depend']:
