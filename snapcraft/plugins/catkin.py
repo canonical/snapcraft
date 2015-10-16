@@ -57,7 +57,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.rosversion = options.rosversion
         self.packages = set(options.catkin_packages)
         self.dependencies = ['ros-core']
         self.package_deps_found = False
@@ -72,10 +71,10 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 os.path.join(root, 'usr', 'include', 'c++', self.gcc_version),
                 os.path.join(root, 'usr', 'include',
                              snapcraft.common.get_arch_triplet(), 'c++', self.gcc_version)),
-            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(root, self.rosversion),
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(root, self.options.rosversion),
             'ROS_MASTER_URI=http://localhost:11311',
-            '_CATKIN_SETUP_DIR=' + os.path.join(root, 'opt', 'ros', self.rosversion),
-            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(os.path.join(root, 'opt', 'ros', self.rosversion, 'setup.sh'))
+            '_CATKIN_SETUP_DIR=' + os.path.join(root, 'opt', 'ros', self.options.rosversion),
+            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(os.path.join(root, 'opt', 'ros', self.options.rosversion, 'setup.sh'))
         ]
 
     @property
@@ -88,7 +87,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     @property
     def rosdir(self):
-        return os.path.join(self.installdir, 'opt', 'ros', self.rosversion)
+        return os.path.join(self.installdir, 'opt', 'ros', self.options.rosversion)
 
     def _deps_from_packagesxml(self, f, pkg):
         try:
@@ -115,7 +114,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     continue
 
                 # Get the ROS package for it
-                self.stage_packages.append('ros-' + self.rosversion + '-' + dep.replace('_', '-'))
+                self.stage_packages.append('ros-' + self.options.rosversion + '-' + dep.replace('_', '-'))
 
                 if dep == 'roscpp':
                     self.stage_packages.append('g++')
@@ -173,9 +172,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         if not self.run(
             ['rm', '-f', 'opt/ros/' +
-             self.rosversion + '/.catkin', 'opt/ros/' +
-             self.rosversion + '/.rosinstall', 'opt/ros/' + self.rosversion +
-             '/setup.sh', 'opt/ros/' + self.rosversion +
+             self.options.rosversion + '/.catkin', 'opt/ros/' +
+             self.options.rosversion + '/.rosinstall', 'opt/ros/' + self.options.rosversion +
+             '/setup.sh', 'opt/ros/' + self.options.rosversion +
              '/_setup_util.py'], cwd=self.installdir):
             return False
 

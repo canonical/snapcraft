@@ -36,20 +36,20 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             'properties': {
                 'rosversion': {
                     'type': 'string',
+                    'default': 'indigo'
                 },
             }
         }
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.rosversion = options.rosversion or 'indigo'
         self.stage_packages.append(
-            'ros-' + self.rosversion + '-ros-core'
+            'ros-' + self.options.rosversion + '-ros-core'
         )
 
     def build(self):
         os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
-        ros_dir = os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.rosversion)
+        ros_dir = os.path.join('$SNAP_APP_PATH', 'opt', 'ros', self.options.rosversion)
         service_wrapper = os.path.join(
             self.installdir, 'bin', '{}-rosmaster-service'.format(self.name))
 
@@ -65,7 +65,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         return True
 
     def snap_fileset(self):
-        rospath = os.path.join('opt', 'ros', self.rosversion)
+        rospath = os.path.join('opt', 'ros', self.options.rosversion)
         return ([
             os.path.join('bin', self.name + '-rosmaster-service'),
             os.path.join(rospath, 'bin', '*'),
