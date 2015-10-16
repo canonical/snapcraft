@@ -90,7 +90,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     def rosdir(self):
         return os.path.join(self.installdir, 'opt', 'ros', self.rosversion)
 
-    def deps_from_packagesxml(self, f, pkg):
+    def _deps_from_packagesxml(self, f, pkg):
         try:
             tree = lxml.etree.parse(f)
         except lxml.etree.ParseError:
@@ -120,7 +120,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 if dep == 'roscpp':
                     self.stage_packages.append('g++')
 
-    def find_package_deps(self):
+    def _find_package_deps(self):
         if self.package_deps_found:
             return
 
@@ -131,7 +131,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             try:
                 with open(os.path.join(self.builddir, 'src', pkg, 'package.xml'), 'r') as f:
-                    self.deps_from_packagesxml(f, pkg)
+                    self._deps_from_packagesxml(f, pkg)
             except os.FileNotFound:
                 logger.warning("Unable to find packages.xml for '" + pkg + "'")
                 pass
@@ -142,11 +142,11 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         if not self.handle_source_options():
             return False
 
-        self.find_package_deps()
+        self._find_package_deps()
 
         return super().setup_stage_packages()
 
-    def rosrun(self, commandlist, cwd=None):
+    def _rosrun(self, commandlist, cwd=None):
         with tempfile.NamedTemporaryFile(mode='w') as f:
             f.write('set -ex\n')
             f.write('exec {}\n'.format(' '.join(commandlist)))
@@ -162,9 +162,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         ]):
             return False
 
-        self.find_package_deps()
+        self._find_package_deps()
 
-        if not self.build_packages_deps():
+        if not self._build_packages_deps():
             return False
 
         # the hacks
@@ -183,7 +183,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         return True
 
-    def build_packages_deps(self):
+    def _build_packages_deps(self):
         # Ugly dependency resolution, just loop through until we can
         # find something to build. When we do, build it. Loop until we
         # either can't build anything or we built everything.
@@ -196,7 +196,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 if len(self.package_local_deps[pkg] - built) > 0:
                     continue
 
-                if not self.handle_package(pkg):
+                if not self._handle_package(pkg):
                     return False
 
                 built.add(pkg)
@@ -207,7 +207,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         return True
 
-    def handle_package(self, pkg):
+    def _handle_package(self, pkg):
         catkincmd = ['catkin_make_isolated']
 
         catkincmd.append('--pkg')
@@ -236,7 +236,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             '-DCMAKE_CXX_COMPILER={}'.format(os.path.join(self.installdir, 'usr', 'bin', 'g++'))
         ])
 
-        if not self.rosrun(catkincmd):
+        if not self._rosrun(catkincmd):
             return False
 
         return True
