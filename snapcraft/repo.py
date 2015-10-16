@@ -276,6 +276,7 @@ def _try_copy_local(path, target):
     if os.path.exists(real_path):
         logger.warning(
             'Copying needed target link from the system {}'.format(real_path))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
         shutil.copyfile(os.readlink(path), target)
         return True
     else:
