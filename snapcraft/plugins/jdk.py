@@ -23,6 +23,9 @@ class JdkPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.stage_packages.append('default-jdk')
 
+    def pull(self):
+        return True
+
     def env(self, root):
         return ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,
                 'PATH=%s/usr/lib/jvm/default-java/bin:'

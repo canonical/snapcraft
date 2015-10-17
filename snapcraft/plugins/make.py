@@ -23,9 +23,6 @@ class MakePlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.build_packages.append('make')
 
-    def pull(self):
-        return self.handle_source_options()
-
     def build(self):
         return self.run(['make']) and \
             self.run(['make', 'install', 'DESTDIR=' + self.installdir])

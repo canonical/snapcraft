@@ -52,6 +52,7 @@ class PluginTestCase(tests.TestCase):
         p.statefile = tempfile.NamedTemporaryFile().name
         self.addCleanup(os.remove, p.statefile)
         p.code = Mock()
+        p._setup_stage_packages = Mock()
         # pull once
         p.pull()
         p.code.pull.assert_called()

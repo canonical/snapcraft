@@ -45,7 +45,7 @@ class Python3Plugin(snapcraft.BasePlugin):
             root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        if self.options.source and not self.handle_source_options():
+        if not super().pull():
             return False
 
         return self._pip()

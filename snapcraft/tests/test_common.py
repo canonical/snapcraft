@@ -40,3 +40,10 @@ class CommonTestCase(tests.TestCase):
         plugindir = os.path.join(self.path, 'testplugin')
         common.set_plugindir(plugindir)
         self.assertEqual(plugindir, common.get_plugindir())
+
+    def test_isurl(self):
+        self.assertTrue(common.isurl('git://'))
+        self.assertTrue(common.isurl('bzr://'))
+        self.assertFalse(common.isurl('./'))
+        self.assertFalse(common.isurl('/foo'))
+        self.assertFalse(common.isurl('/fo:o'))

@@ -17,7 +17,6 @@
 import contextlib
 import logging
 import os
-import re
 
 import snapcraft.common
 import snapcraft.sources
@@ -31,15 +30,14 @@ class BasePlugin:
 
     @classmethod
     def schema(cls):
-        '''
-        Returns a json-schema for the plugin's properties as a dictionary.
+        """Return a json-schema for the plugin's properties as a dictionary.
         Of importance to plugin authors is the 'properties' keyword and
         optionally the 'requires' keyword with a list of required
         'properties'.
 
         By default the the properties will be that of a standard VCS, override
         in custom implementations if required.
-        '''
+        """
         return {
             '$schema': 'http://json-schema.org/draft-04/schema#',
             'type': 'object',
@@ -67,6 +65,7 @@ class BasePlugin:
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
+        """Define additional sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
     def __init__(self, name, options):
@@ -92,19 +91,81 @@ class BasePlugin:
 
     # The API
     def pull(self):
-        return True
+        """Implement the pull phase of a plugin's lifecycle.
+
+        The pull phase is the phase in the lifecycle when source code and
+        internal requirements for the part to be able to build are taken care
+        of.
+
+        By default, the base implementation for pull will use the following
+        part properties to retrieve source code:
+
+        - source
+        - source-branch
+        - source-tag
+        - source-type
+
+        If source is empty or does not exist, the phase will be skipped.
+
+        Override or inherit from this method if you need to implement or
+        enhance with custom pull logic.
+        """
+        if not getattr(self.options, 'source', None):
+            return True
+        try:
+            return snapcraft.sources.get(
+                self.sourcedir, self.builddir, self.options)
+        except ValueError as e:
+            logger.error('Unrecognized source %r for part %r: %s.',
+                         self.options.source, self.name, e)
+            snapcraft.common.fatal()
+        except snapcraft.sources.IncompatibleOptionsError as e:
+            logger.error(
+                'Issues while setting up sources for part \'%s\': %s.',
+                self.name,
+                e.message)
+            snapcraft.common.fatal()
 
     def build(self):
+        """Implement the build phase of a plugin's lifecycle.
+
+        This build phase is the phase in the lifecycle where source code
+        retrieved from the pull phase is built using the build mechanism
+        the plugin is providing. This is where the plugin generally adds
+        value as a plugin.
+
+        The base implementation does nothing by default.
+        """
         return True
 
     def snap_fileset(self):
-        """Returns one iteratables of globs specific to the plugin:
+        """Return a list of files to include or exclude in the resulting snap
+
+        The staging phase of a plugins lifecycle may populate many things
+        into the staging directory in order to succeed in building a project.
+        During the stripping phase and in order to have a clean snap, the
+        plugin can provide additional logic for stripping build components
+        from the final snap and alleviate the part author from doing so for
+        repetetive filesets.
+
+        These are the rules to honor when creating such list:
+
             - includes can be just listed
             - excludes must be preceded by -
-           For example: (['bin', 'lib', '-include'])"""
+
+        For example: (['bin', 'lib', '-include'])
+        """
         return ([])
 
     def env(self, root):
+        """Expand a list with the execution environment for building.
+
+        Plugins often need special environment variables exported to the
+        system for some builds to take place. This is a list of strings
+        of the form key=value. The parameter root is the path to this part.
+
+        :param str root: The root for the part
+        """
         return []
 
     # Helpers
@@ -113,7 +174,7 @@ class BasePlugin:
             cwd = self.builddir
         if True:
             print(' '.join(cmd))
-        self.makedirs(cwd)
+        os.makedirs(cwd, exist_ok=True)
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def run_output(self, cmd, cwd=None, **kwargs):
@@ -121,96 +182,5 @@ class BasePlugin:
             cwd = self.builddir
         if True:
             print(' '.join(cmd))
-        self.makedirs(cwd)
+        os.makedirs(cwd, exist_ok=True)
         return snapcraft.common.run_output(cmd, cwd=cwd, **kwargs)
-
-    def isurl(self, url):
-        return snapcraft.common.isurl(url)
-
-    def get_source(self, source, source_type=None, source_tag=None,
-                   source_branch=None):
-        try:
-            handler_class = _get_source_handler(source_type, source)
-        except ValueError as e:
-            logger.error('Unrecognized source %r for part %r: %s.', source,
-                         self.name, e)
-            snapcraft.common.fatal()
-
-        try:
-            handler = handler_class(source, self.sourcedir, source_tag,
-                                    source_branch)
-        except snapcraft.sources.IncompatibleOptionsError as e:
-            logger.error(
-                'Issues while setting up sources for part \'%s\': %s.',
-                self.name,
-                e.message)
-            snapcraft.common.fatal()
-        if not handler.pull():
-            return False
-        return handler.provision(self.builddir)
-
-    def handle_source_options(self):
-        stype = getattr(self.options, 'source_type', None)
-        stag = getattr(self.options, 'source_tag', None)
-        sbranch = getattr(self.options, 'source_branch', None)
-        return self.get_source(self.options.source,
-                               source_type=stype,
-                               source_tag=stag,
-                               source_branch=sbranch)
-
-    def makedirs(self, d):
-        os.makedirs(d, exist_ok=True)
-
-    def setup_stage_packages(self):
-        if self.stage_packages:
-            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir,
-                                           sources=self.PLUGIN_STAGE_SOURCES)
-            ubuntu.get(self.stage_packages)
-            ubuntu.unpack(self.installdir)
-            self._fixup(self.installdir)
-
-    def _fixup(self, root):
-        if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xml2-config')):
-            self.run(
-                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                    format(root),
-                 os.path.join(root, 'usr', 'bin', 'xml2-config')])
-        if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xslt-config')):
-            self.run(
-                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                    format(root),
-                 os.path.join(root, 'usr', 'bin', 'xslt-config')])
-
-
-def _get_source_handler(source_type, source):
-    if not source_type:
-        source_type = _get_source_type_from_uri(source)
-
-    if source_type == 'bzr':
-        handler = snapcraft.sources.Bazaar
-    elif source_type == 'git':
-        handler = snapcraft.sources.Git
-    elif source_type == 'mercurial' or source_type == 'hg':
-        handler = snapcraft.sources.Mercurial
-    elif source_type == 'tar':
-        handler = snapcraft.sources.Tar
-    else:
-        handler = snapcraft.sources.Local
-
-    return handler
-
-
-def _get_source_type_from_uri(source):
-    source_type = ''
-    if source.startswith("bzr:") or source.startswith("lp:"):
-        source_type = 'bzr'
-    elif source.startswith("git:"):
-        source_type = 'git'
-    elif re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$').match(source):
-        source_type = 'tar'
-    elif snapcraft.common.isurl(source):
-        raise ValueError('No handler to manage source')
-    elif not os.path.isdir(source):
-        raise ValueError('Local source is not a directory')
-
-    return source_type
