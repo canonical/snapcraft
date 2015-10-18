@@ -116,10 +116,11 @@ class Python3Plugin(snapcraft.BasePlugin):
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.
     def copy_setup(self):
+        executable = os.path.join(self.installdir, 'usr/bin/python3')
         setupout = tempfile.NamedTemporaryFile(dir=self.builddir, mode='w+')
 
         setupout.write('import sys\n')
-        setupout.write('sys.executable = "usr/bin/python3"\n\n')
+        setupout.write('sys.executable = "{}"\n\n'.format(executable))
 
         with open(os.path.join(self.builddir, 'setup.py'), 'r') as f:
             for line in f:
