@@ -41,6 +41,7 @@ class AutotoolsPlugin(MakePlugin):
             'autoconf',
             'automake',
             'autopoint',
+            'bison', # Workaround for bison not being really relocatable
             'libtool',
         ])
 
