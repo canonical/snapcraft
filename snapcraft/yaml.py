@@ -243,6 +243,7 @@ class Config:
             '{0}/usr/local/share/pkgconfig',
             '$PKG_CONFIG_PATH'
         ]).format(root, snapcraft.common.get_arch_triplet()))
+        env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
         return env
 
     def build_env_for_part(self, part):
