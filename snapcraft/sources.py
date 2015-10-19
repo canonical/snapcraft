@@ -242,22 +242,20 @@ def get(sourcedir, builddir, options):
     return handler.provision(builddir)
 
 
+_source_handler = {
+    'bzr': Bazaar,
+    'git': Git,
+    'hg': Mercurial,
+    'mercurial': Mercurial,
+    'tar': Tar,
+}
+
+
 def _get_source_handler(source_type, source):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 
-    if source_type == 'bzr':
-        handler = Bazaar
-    elif source_type == 'git':
-        handler = Git
-    elif source_type == 'mercurial' or source_type == 'hg':
-        handler = Mercurial
-    elif source_type == 'tar':
-        handler = Tar
-    else:
-        handler = Local
-
-    return handler
+    return _source_handler.get(source_type, Local)
 
 
 def _get_source_type_from_uri(source):
