@@ -91,11 +91,7 @@ class BasePlugin:
 
     # The API
     def pull(self):
-        """Implement the pull phase of a plugin's lifecycle.
-
-        The pull phase is the phase in the lifecycle when source code and
-        internal requirements for the part to be able to build are taken care
-        of.
+        """Pull the source code and/or internal prereqs to build the part.
 
         By default, the base implementation for pull will use the following
         part properties to retrieve source code:
@@ -127,21 +123,17 @@ class BasePlugin:
             snapcraft.common.fatal()
 
     def build(self):
-        """Implement the build phase of a plugin's lifecycle.
+        """Build the source code retrieved from the pull phase.
 
-        This build phase is the phase in the lifecycle where source code
-        retrieved from the pull phase is built using the build mechanism
-        the plugin is providing. This is where the plugin generally adds
-        value as a plugin.
-
-        The base implementation does nothing by default.
+        The base implementation does nothing by default. Override this method
+        if you need to process the source code to make it runnable.
         """
         return True
 
     def snap_fileset(self):
         """Return a list of files to include or exclude in the resulting snap
 
-        The staging phase of a plugins lifecycle may populate many things
+        The staging phase of a plugin's lifecycle may populate many things
         into the staging directory in order to succeed in building a project.
         During the stripping phase and in order to have a clean snap, the
         plugin can provide additional logic for stripping build components
@@ -153,12 +145,13 @@ class BasePlugin:
             - includes can be just listed
             - excludes must be preceded by -
 
-        For example: (['bin', 'lib', '-include'])
+        For example::
+            (['bin', 'lib', '-include'])
         """
         return ([])
 
     def env(self, root):
-        """Expand a list with the execution environment for building.
+        """Return a list with the execution environment for building.
 
         Plugins often need special environment variables exported to the
         system for some builds to take place. This is a list of strings
