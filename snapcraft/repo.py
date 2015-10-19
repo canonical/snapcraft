@@ -17,9 +17,12 @@
 import apt
 import glob
 import itertools
+import logging
 import os
 import platform
 import string
+import shutil
+import stat
 import subprocess
 import urllib
 import urllib.request
@@ -27,6 +30,8 @@ import urllib.request
 from xml.etree import ElementTree
 
 import snapcraft.common
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_SOURCES = \
     '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
@@ -129,7 +134,7 @@ class Ubuntu:
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 
-        _fix_symlinks(rootdir)
+        _fix_contents(rootdir)
 
     def _manifest_dep_names(self):
         manifest_dep_names = set()
@@ -219,11 +224,14 @@ def _setup_apt_cache(rootdir, sources, local=False):
     return apt_cache, progress
 
 
-def _fix_symlinks(debdir):
+def _fix_contents(debdir):
     '''
     Sometimes debs will contain absolute symlinks (e.g. if the relative
     path would go all the way to root, they just do absolute).  We can't
     have that, so instead clean those absolute symlinks.
+
+    Some unpacked items will also contain suid binaries which we do not want in
+    the resulting snap.
     '''
     for root, dirs, files in os.walk(debdir):
         # Symlinks to directories will be in dirs, while symlinks to
@@ -232,6 +240,46 @@ def _fix_symlinks(debdir):
             path = os.path.join(root, entry)
             if os.path.islink(path) and os.path.isabs(os.readlink(path)):
                 target = os.path.join(debdir, os.readlink(path)[1:])
-                if os.path.exists(target):
-                    os.remove(path)
-                    os.symlink(os.path.relpath(target, root), path)
+                if _skip_link(os.readlink(path)):
+                    logger.debug('Skipping {}'.format(target))
+                    continue
+                if not os.path.exists(target):
+                    if not _try_copy_local(path, target):
+                        continue
+                os.remove(path)
+                os.symlink(os.path.relpath(target, root), path)
+            elif os.path.exists(path):
+                _fix_filemode(path)
+
+
+def _fix_filemode(path):
+    mode = stat.S_IMODE(os.stat(path).st_mode)
+    if mode & 0o4000 or mode & 0o2000:
+        logger.debug('Removing suid/guid from {}'.format(path))
+        os.chmod(path, mode & 0o1777)
+
+
+_skip_list = None
+
+
+def _skip_link(target):
+    global _skip_list
+    if not _skip_list:
+        output = snapcraft.common.run_output(['dpkg', '-L', 'libc6']).split()
+        _skip_list = [i for i in output if 'lib' in i]
+
+    return target in _skip_list
+
+
+def _try_copy_local(path, target):
+    real_path = os.path.realpath(path)
+    if os.path.exists(real_path):
+        logger.warning(
+            'Copying needed target link from the system {}'.format(real_path))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copyfile(os.readlink(path), target)
+        return True
+    else:
+        logger.warning(
+            '{} will be a dangling symlink'.format(path))
+        return False

@@ -1,0 +1,27 @@
+name: ros-example
+version: 1.0
+vendor: Number Five <number-five@is-alive.com>
+summary: A robot example
+icon: icon.svg
+description: A really small ROS example
+
+binaries:
+  listener:
+    exec: opt/ros/indigo/beginner_tutorials/listener
+  talker:
+    exec: opt/ros/indigo/beginner_tutorials/talker
+
+services:
+  rosmaster:
+    start: bin/roscore-rosmaster-service
+    description: ROS Master Service
+
+parts:
+  roscore:
+    plugin: roscore
+  catkin-tutorials:
+    plugin: catkin
+    source: .
+    catkin-packages:
+      - beginner_tutorials
+

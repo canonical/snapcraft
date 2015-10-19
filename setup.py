@@ -22,11 +22,6 @@ from setuptools import setup
 from setuptools.command.test import test
 
 
-class TestCommand(test):
-    def run(self):
-        subprocess.check_call(['./runtests.sh'])
-
-
 setup(name="snapcraft",
       version="0",
       description="Easily craft snaps",
@@ -37,10 +32,8 @@ setup(name="snapcraft",
       package_data={'snapcraft': ['manifest.txt']},
       scripts=['bin/snapcraft'],
       data_files=[
-          ('share/snapcraft/plugins',
-              ['plugins/' + x for x in os.listdir('plugins')]),
           ('share/snapcraft/schema',
               ['schema/' + x for x in os.listdir('schema')]),
       ],
-      cmdclass={'test': TestCommand},
+      test_suite='snapcraft.tests',
       )

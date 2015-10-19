@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-
-import yaml
+import contextlib
 import jsonschema
+import logging
 import os
 import os.path
+import yaml
 
 import snapcraft.plugin
 import snapcraft.wiki
@@ -99,14 +99,23 @@ class Config:
 
         self.build_tools = self.data.get('build-packages', [])
 
+        self._wiki = snapcraft.wiki.Wiki()
+
         for part_name in self.data.get("parts", []):
             properties = self.data["parts"][part_name] or {}
 
-            plugin_name = properties.pop("plugin", None)
+            plugin_name = properties.pop('plugin', None)
             # TODO search the wiki
             if not plugin_name and 'type' in properties:
                 plugin_name = properties.pop('type')
                 logger.warning('DEPRECATED: Use "plugin" instead of "type"')
+            elif not plugin_name:
+                logger.info(
+                    'Searching the wiki to compose part "{}"'.format(
+                        part_name))
+                with contextlib.suppress(KeyError):
+                    properties = self._wiki.compose(part_name, properties)
+                    plugin_name = properties.pop('plugin', None)
 
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
@@ -129,45 +138,28 @@ class Config:
 
             self.load_plugin(part_name, plugin_name, properties)
 
-        self._load_missing_part_plugins()
         self._compute_part_dependencies(after_requests)
         self.all_parts = self._sort_parts()
 
-    def _load_missing_part_plugins(self):
-        new_parts = self.all_parts.copy()
-        while new_parts:
-            part = new_parts.pop(0)
-            requires = part.config.get('requires', [])
-            for required_part in requires:
-                present = False
-                for p in self.all_parts:
-                    if required_part in p.names():
-                        present = True
-                        break
-                if not present:
-                    new_parts.append(self.load_plugin(required_part,
-                                                      required_part, {}))
-
     def _compute_part_dependencies(self, after_requests):
         '''Gather the lists of dependencies and adds to all_parts.'''
-        w = snapcraft.wiki.Wiki()
 
         for part in self.all_parts:
-            dep_names = part.config.get('requires', []) + \
-                after_requests.get(part.names()[0], [])
+            dep_names = after_requests.get(part.name, [])
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
-                    if dep in self.all_parts[i].names():
+                    if dep in self.all_parts[i].name:
                         part.deps.append(self.all_parts[i])
                         found = True
                         break
                 if not found:
-                    wiki_part = w.get_part(dep)
+                    wiki_part = self._wiki.get_part(dep)
                     found = True if wiki_part else False
                     if found:
+                        plugin_name = wiki_part.pop('plugin')
                         part.deps.append(self.load_plugin(
-                            dep, wiki_part['plugin'], wiki_part))
+                            dep, plugin_name, wiki_part))
                 if not found:
                     raise SnapcraftLogicError(
                         'part name missing {}'.format(dep))
@@ -195,11 +187,10 @@ class Config:
 
         return sorted_parts
 
-    def load_plugin(self, part_name, plugin_name, properties, load_code=True):
-        part = snapcraft.plugin.load_plugin(part_name, plugin_name,
-                                            properties, load_code=load_code)
+    def load_plugin(self, part_name, plugin_name, properties):
+        part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties)
 
-        self.build_tools += part.config.get('build-packages', [])
+        self.build_tools += part.code.build_packages
         self.all_parts.append(part)
         return part
 
@@ -228,6 +219,13 @@ class Config:
             '-I{0}/usr/include/{1}',
             '$CFLAGS'
         ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        env.append('CPPFLAGS="' + ' '.join([
+            '-I{0}/include',
+            '-I{0}/usr/include',
+            '-I{0}/include/{1}',
+            '-I{0}/usr/include/{1}',
+            '$CPPFLAGS'
+        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
         env.append('LDFLAGS="' + ' '.join([
             '-L{0}/lib',
             '-L{0}/usr/lib',
@@ -245,6 +243,7 @@ class Config:
             '{0}/usr/local/share/pkgconfig',
             '$PKG_CONFIG_PATH'
         ]).format(root, snapcraft.common.get_arch_triplet()))
+        env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
         return env
 
     def build_env_for_part(self, part):

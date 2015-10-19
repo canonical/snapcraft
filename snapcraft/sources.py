@@ -17,6 +17,7 @@
 import logging
 import os
 import os.path
+import requests
 import shutil
 import tarfile
 import re
@@ -25,6 +26,7 @@ import snapcraft.common
 
 
 logger = logging.getLogger(__name__)
+logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
 class IncompatibleOptionsError(Exception):
@@ -143,11 +145,19 @@ class Tar(Base):
                 'can\'t specify a source-branch for a tar source')
 
     def pull(self):
-        if snapcraft.common.isurl(self.source):
-            return snapcraft.common.run(['wget', '-q', '-c', self.source],
-                                        cwd=self.source_dir)
-        else:
+        if not snapcraft.common.isurl(self.source):
             return True
+
+        req = requests.get(self.source, stream=True, allow_redirects=True)
+        if req.status_code is not 200:
+            return False
+
+        file = os.path.join(self.source_dir, os.path.basename(self.source))
+        with open(file, 'wb') as f:
+            for chunk in req.iter_content(1024):
+                f.write(chunk)
+
+        return True
 
     def provision(self, dst, clean_target=True):
         # TODO add unit tests.
@@ -193,7 +203,7 @@ class Tar(Base):
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
-                    m.mode = m.mode | 0o222
+                    m.mode = m.mode | 0o200
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)
