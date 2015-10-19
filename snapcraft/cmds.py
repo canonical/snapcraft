@@ -25,7 +25,7 @@ import sys
 import tempfile
 import time
 
-import snapcraft.plugin
+import snapcraft.lifecycle
 import snapcraft.yaml
 from snapcraft import common
 from snapcraft import meta
@@ -54,7 +54,7 @@ def init(args):
     if args.part:
         yaml += 'parts:\n'
     for part_name in args.part:
-        part = snapcraft.plugin.load_plugin(part_name, part_name)
+        part = snapcraft.lifecycle.load_plugin(part_name, part_name)
         yaml += '    ' + part.name + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
@@ -263,7 +263,7 @@ def _check_for_collisions(parts):
     for part in parts:
         # Gather our own files up
         fileset = getattr(part.code.options, 'stage', ['*']) or ['*']
-        part_files, _ = snapcraft.plugin.migratable_filesets(
+        part_files, _ = snapcraft.lifecycle.migratable_filesets(
             fileset,
             part.installdir)
 
