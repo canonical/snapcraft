@@ -32,10 +32,6 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
         super().__init__(name, options)
         self.build_packages.append('maven')
 
-    def pull(self):
-        super().pull()
-        return self.handle_source_options()
-
     def build(self):
         super().build()
 

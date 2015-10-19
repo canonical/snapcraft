@@ -137,6 +137,13 @@ class PluginHandler:
         with open(self.statefile, 'w+') as f:
             f.write(stage)
 
+    def _setup_stage_packages(self):
+        if self.code.stage_packages:
+            ubuntu = snapcraft.repo.Ubuntu(
+                self.code.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+            ubuntu.get(self.code.stage_packages)
+            ubuntu.unpack(self.code.installdir)
+
     def pull(self, force=False):
         if not self.should_stage_run('pull', force):
             return True
@@ -145,7 +152,7 @@ class PluginHandler:
         self.notify_stage("Pulling")
 
         try:
-            self.code.setup_stage_packages()
+            self._setup_stage_packages()
         except repo.PackageNotFoundError as e:
             logger.error(e.message)
             return False

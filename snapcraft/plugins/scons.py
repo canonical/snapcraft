@@ -40,9 +40,6 @@ class SconsPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.build_packages.append('scons')
 
-    def pull(self):
-        return self.handle_source_options()
-
     def build(self):
         env = os.environ.copy()
         env['DESTDIR'] = self.installdir

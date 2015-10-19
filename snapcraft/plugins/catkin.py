@@ -20,6 +20,7 @@ import tempfile
 import logging
 
 import snapcraft
+import snapcraft.repo
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,19 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self.dependencies = ['ros-core']
         self.package_deps_found = False
         self.package_local_deps = {}
+        self._deb_packages = []
+
+    def pull(self):
+        if not super().pull():
+            return False
+
+        try:
+            self._setup_deb_packages()
+        except snapcraft.repo.PackageNotFoundError as e:
+            logger.error(e.message)
+            return False
+
+        return True
 
     def env(self, root):
         return [
@@ -124,19 +138,18 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     self.package_local_deps[pkg].add(dep)
                     continue
 
-                # If we're already getting this through a stage package,
+                # If we're already getting this through a deb package,
                 # we don't need it
-                if self.options.stage_packages and (
-                        dep in self.options.stage_packages or
-                        dep.replace('_', '-') in self.options.stage_packages):
+                if (dep in self._deb_packages or
+                        dep.replace('_', '-') in self._deb_packages):
                     continue
 
                 # Get the ROS package for it
-                self.stage_packages.append(
+                self._deb_packages.append(
                     'ros-'+self.options.rosversion+'-'+dep.replace('_', '-'))
 
                 if dep == 'roscpp':
-                    self.stage_packages.append('g++')
+                    self._deb_packages.append('g++')
 
     def _find_package_deps(self):
         if self.package_deps_found:
@@ -158,13 +171,14 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         self.package_deps_found = True
 
-    def setup_stage_packages(self):
-        if not self.handle_source_options():
-            return False
-
+    def _setup_deb_packages(self):
         self._find_package_deps()
 
-        return super().setup_stage_packages()
+        if self._deb_packages:
+            ubuntu = snapcraft.repo.Ubuntu(
+                self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
+            ubuntu.get(self._deb_packages)
+            ubuntu.unpack(self.installdir)
 
     def _rosrun(self, commandlist, cwd=None):
         with tempfile.NamedTemporaryFile(mode='w') as f:

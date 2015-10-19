@@ -135,6 +135,7 @@ class Ubuntu:
                 raise UnpackError(pkg)
 
         _fix_contents(rootdir)
+        _fix_xml_tools(rootdir)
 
     def _manifest_dep_names(self):
         manifest_dep_names = set()
@@ -250,6 +251,20 @@ def _fix_contents(debdir):
                 os.symlink(os.path.relpath(target, root), path)
             elif os.path.exists(path):
                 _fix_filemode(path)
+
+
+def _fix_xml_tools(root):
+    xml2_config_path = os.path.join(root, 'usr', 'bin', 'xml2-config')
+    if os.path.isfile(xml2_config_path):
+        snapcraft.common.run(
+            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
+                format(root), xml2_config_path])
+
+    xslt_config_path = os.path.join(root, 'usr', 'bin', 'xslt-config')
+    if os.path.isfile(xslt_config_path):
+        snapcraft.common.run(
+            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
+                format(root), xslt_config_path])
 
 
 def _fix_filemode(path):

@@ -16,30 +16,32 @@
 
 import fixtures
 import logging
-import os
 import unittest.mock
 
 import snapcraft
 from snapcraft import tests
 
 
-class TestBasePlugin(tests.TestCase):
+class MockOptions:
 
-    def test_isurl(self):
-        plugin = snapcraft.BasePlugin('mock', {})
-        self.assertTrue(plugin.isurl('git://'))
-        self.assertTrue(plugin.isurl('bzr://'))
-        self.assertFalse(plugin.isurl('./'))
-        self.assertFalse(plugin.isurl('/foo'))
-        self.assertFalse(plugin.isurl('/fo:o'))
+    def __init__(self, source, source_type=None, source_branch=None,
+                 source_tag=None):
+        self.source = source
+        self.source_type = source_type
+        self.source_branch = source_branch
+        self.source_tag = source_tag
+
+
+class TestBasePlugin(tests.TestCase):
 
     def test_get_source_with_unrecognized_source_must_raise_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        options = MockOptions('unrecognized://test_source')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(SystemExit) as raised:
-            plugin.get_source('unrecognized://test_source')
+            plugin.pull()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         expected = (
@@ -52,10 +54,11 @@ class TestBasePlugin(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
+        options = MockOptions('file')
         mock_isdir.return_value = False
-        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(SystemExit) as raised:
-            plugin.get_source('file')
+            plugin.pull()
 
         mock_isdir.assert_called_once_with('file')
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
@@ -63,30 +66,6 @@ class TestBasePlugin(tests.TestCase):
             "Unrecognized source 'file' for part 'test_plugin': "
             "Local source is not a directory.\n")
         self.assertEqual(expected, fake_logger.output)
-
-    def test_makedirs_with_existing_dir(self):
-        plugin = snapcraft.BasePlugin('dummy_plugin', 'dummy_options')
-        plugin.makedirs(self.path)
-        self.assertTrue(os.path.exists(self.path))
-
-    def test_makedirs_with_unexisting_dir(self):
-        path = os.path.join(self.path, 'unexisting')
-        plugin = snapcraft.BasePlugin('dummy_plugin', 'dummy_options')
-        plugin.makedirs(path)
-        self.assertTrue(os.path.exists(path))
-
-    def test_get_tar_source_from_uri(self):
-        sources = [
-            'https://golang.tar.gz',
-            'https://golang.tar.xz',
-            'https://golang.tar.bz2',
-            'https://golang.tar.tgz',
-        ]
-
-        for source in sources:
-            with self.subTest(key=source):
-                self.assertEqual(
-                    snapcraft._get_source_type_from_uri(source), 'tar')
 
 
 class GetSourceWithBranches(tests.TestCase):
@@ -108,11 +87,11 @@ class GetSourceWithBranches(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        options = MockOptions('lp:source', self.source_type,
+                              self.source_branch, self.source_tag)
+        plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(SystemExit) as raised:
-            plugin.get_source(
-                'dummy_source', source_type=self.source_type,
-                source_branch=self.source_branch, source_tag=self.source_tag)
+            plugin.pull()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         expected = (
@@ -146,11 +125,12 @@ class GetSourceTestCase(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        plugin = snapcraft.BasePlugin('test_plugin', 'dummy_options')
+        options = MockOptions('lp:this', self.source_type, self.source_branch,
+                              self.source_tag)
+        plugin = snapcraft.BasePlugin('test_plugin', options)
+
         with self.assertRaises(SystemExit) as raised:
-            plugin.get_source(
-                'dummy_source', source_type=self.source_type,
-                source_branch=self.source_branch, source_tag=self.source_tag)
+            plugin.pull()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         expected = (

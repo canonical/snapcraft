@@ -227,3 +227,51 @@ class Local(Base):
         os.symlink(path, dst)
 
         return True
+
+
+def get(sourcedir, builddir, options):
+    source_type = getattr(options, 'source_type', None)
+    source_tag = getattr(options, 'source_tag', None)
+    source_branch = getattr(options, 'source_branch', None)
+
+    handler_class = _get_source_handler(source_type, options.source)
+    handler = handler_class(options.source, sourcedir, source_tag,
+                            source_branch)
+    if not handler.pull():
+        return False
+    return handler.provision(builddir)
+
+
+_source_handler = {
+    'bzr': Bazaar,
+    'git': Git,
+    'hg': Mercurial,
+    'mercurial': Mercurial,
+    'tar': Tar,
+}
+
+
+def _get_source_handler(source_type, source):
+    if not source_type:
+        source_type = _get_source_type_from_uri(source)
+
+    return _source_handler.get(source_type, Local)
+
+
+_tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
+
+
+def _get_source_type_from_uri(source):
+    source_type = ''
+    if source.startswith("bzr:") or source.startswith("lp:"):
+        source_type = 'bzr'
+    elif source.startswith("git:"):
+        source_type = 'git'
+    elif _tar_type_regex.match(source):
+        source_type = 'tar'
+    elif snapcraft.common.isurl(source):
+        raise ValueError('No handler to manage source')
+    elif not os.path.isdir(source):
+        raise ValueError('Local source is not a directory')
+
+    return source_type
