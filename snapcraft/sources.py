@@ -258,13 +258,16 @@ def _get_source_handler(source_type, source):
     return _source_handler.get(source_type, Local)
 
 
+_tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
+
+
 def _get_source_type_from_uri(source):
     source_type = ''
     if source.startswith("bzr:") or source.startswith("lp:"):
         source_type = 'bzr'
     elif source.startswith("git:"):
         source_type = 'git'
-    elif re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$').match(source):
+    elif _tar_type_regex.match(source):
         source_type = 'tar'
     elif snapcraft.common.isurl(source):
         raise ValueError('No handler to manage source')
