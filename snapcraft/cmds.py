@@ -362,9 +362,8 @@ def _install_build_packages(packages):
             sys.exit(1)
     if new_packages:
         logger.info('Installing required packages on the host system')
-        _check_call(
-            ['sudo', 'apt-get', '-y', 'install'] + new_packages,
-            stdout=subprocess.DEVNULL)
+        _check_call(['sudo', 'apt-get', '-o', 'Dpkg::Progress-Fancy=1',
+                     '-y', 'install'] + new_packages)
 
 
 def _load_config():
