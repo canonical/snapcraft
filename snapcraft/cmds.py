@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import apt
 import filecmp
 import glob
 import logging
@@ -351,21 +352,19 @@ def _check_call(args, **kwargs):
 
 def _install_build_packages(packages):
     new_packages = []
-    for check_pkg in packages:
-        if subprocess.call(['dpkg-query', '-s', check_pkg],
-                           stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL) != 0:
-            new_packages.append(check_pkg)
-    if new_packages:
-        logger.info('Installing required packages on the host system')
+    for pkg in packages:
         try:
-            _check_call(
-                ['sudo', 'apt-get', '-y', 'install'] + new_packages,
-                stdout=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+            if not apt.Cache()[pkg].installed:
+                new_packages.append(pkg)
+        except KeyError:
             logger.error('Could not find all the "build-packages" required '
                          'in snapcraft.yaml')
             sys.exit(1)
+    if new_packages:
+        logger.info('Installing required packages on the host system')
+        _check_call(
+            ['sudo', 'apt-get', '-y', 'install'] + new_packages,
+            stdout=subprocess.DEVNULL)
 
 
 def _load_config():
