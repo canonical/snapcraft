@@ -135,6 +135,13 @@ command:
     test "$(./stage/bin/test)" = "Hello world"
 flags: simple has-leftovers
 
+id: snapcraft/normal/simple-maven
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-maven .
+    ${SNAPCRAFT} build
+flags: simple has-leftovers
+
 id: snapcraft/normal/simple-scons
 command:
     set -ex

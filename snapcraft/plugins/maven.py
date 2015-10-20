@@ -28,6 +28,21 @@ logger = logging.getLogger(__name__)
 
 class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['maven-options'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
+        return schema
+
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('maven')
@@ -35,7 +50,7 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
     def build(self):
         super().build()
 
-        if not self.run(['mvn', 'package']):
+        if not self.run(['mvn', 'package'] + self.options.maven_options):
             return False
         jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
