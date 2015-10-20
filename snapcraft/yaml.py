@@ -21,7 +21,7 @@ import os
 import os.path
 import yaml
 
-import snapcraft.plugin
+import snapcraft.lifecycle
 import snapcraft.wiki
 from snapcraft import common
 
@@ -188,7 +188,8 @@ class Config:
         return sorted_parts
 
     def load_plugin(self, part_name, plugin_name, properties):
-        part = snapcraft.plugin.load_plugin(part_name, plugin_name, properties)
+        part = snapcraft.lifecycle.load_plugin(
+            part_name, plugin_name, properties)
 
         self.build_tools += part.code.build_packages
         self.all_parts.append(part)

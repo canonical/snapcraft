@@ -93,7 +93,7 @@ parts:
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
 
-    @unittest.mock.patch('snapcraft.plugin.load_plugin')
+    @unittest.mock.patch('snapcraft.lifecycle.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
     def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test

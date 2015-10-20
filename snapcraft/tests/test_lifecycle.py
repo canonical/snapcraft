@@ -24,19 +24,17 @@ from unittest.mock import (
     patch,
 )
 
-from snapcraft import (
-    plugin,
-    tests
-)
+import snapcraft.lifecycle
+import snapcraft.tests
 
 
 def get_test_plugin(name='mock', part_name='mock-part', properties=None):
     if properties is None:
         properties = {}
-    return plugin.PluginHandler(name, part_name, properties)
+    return snapcraft.lifecycle.PluginHandler(name, part_name, properties)
 
 
-class PluginTestCase(tests.TestCase):
+class PluginTestCase(snapcraft.tests.TestCase):
 
     def test_init_unknown_plugin_must_log_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -71,7 +69,7 @@ class PluginTestCase(tests.TestCase):
             r'\\a',
         ]
 
-        include, exclude = plugin._get_file_list(stage_set)
+        include, exclude = snapcraft.lifecycle._get_file_list(stage_set)
 
         self.assertEqual(include, ['opt/something', 'usr/bin',
                                    '-everything', r'\a'])
@@ -83,7 +81,7 @@ class PluginTestCase(tests.TestCase):
             'usr/bin',
         ]
 
-        include, exclude = plugin._get_file_list(stage_set)
+        include, exclude = snapcraft.lifecycle._get_file_list(stage_set)
 
         self.assertEqual(include, ['opt/something', 'usr/bin'])
         self.assertEqual(exclude, [])
@@ -94,7 +92,7 @@ class PluginTestCase(tests.TestCase):
             '-usr/lib/*.a',
         ]
 
-        include, exclude = plugin._get_file_list(stage_set)
+        include, exclude = snapcraft.lifecycle._get_file_list(stage_set)
 
         self.assertEqual(include, ['*'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
@@ -180,9 +178,9 @@ class PluginTestCase(tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                snap_files, snap_dirs = plugin.migratable_filesets(
+                files, dirs = snapcraft.lifecycle.migratable_filesets(
                     filesets[key]['fileset'], srcdir)
-                plugin._migrate_files(snap_files, snap_dirs, srcdir, dstdir)
+                snapcraft.lifecycle._migrate_files(files, dirs, srcdir, dstdir)
 
                 expected = []
                 for item in filesets[key]['result']:
@@ -200,28 +198,28 @@ class PluginTestCase(tests.TestCase):
                 self.assertEqual(expected, result)
 
     @patch('importlib.import_module')
-    @patch('snapcraft.plugin._load_local')
-    @patch('snapcraft.plugin._get_plugin')
+    @patch('snapcraft.lifecycle._load_local')
+    @patch('snapcraft.lifecycle._get_plugin')
     def test_non_local_plugins(self, plugin_mock,
                                local_load_mock, import_mock):
         mock_plugin = Mock()
         mock_plugin.schema.return_value = {}
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
-        plugin.PluginHandler('mock', 'mock-part', {})
+        snapcraft.lifecycle.PluginHandler('mock', 'mock-part', {})
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock')
 
     def test_filesets_includes_without_relative_paths(self):
-        with self.assertRaises(plugin.PluginError) as raised:
-            plugin._get_file_list(['rel', '/abs/include'])
+        with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
+            snapcraft.lifecycle._get_file_list(['rel', '/abs/include'])
 
         self.assertEqual(
             "path '/abs/include' must be relative", str(raised.exception))
 
     def test_filesets_exlcudes_without_relative_paths(self):
-        with self.assertRaises(plugin.PluginError) as raised:
-            plugin._get_file_list(['rel', '-/abs/exclude'])
+        with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
+            snapcraft.lifecycle._get_file_list(['rel', '-/abs/exclude'])
 
         self.assertEqual(
             "path '/abs/exclude' must be relative", str(raised.exception))
@@ -231,7 +229,8 @@ class PluginTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         with self.assertRaises(SystemExit) as raised:
-            plugin.load_plugin('dummy-part', 'test_unexisting_name')
+            snapcraft.lifecycle.load_plugin(
+                'dummy-part', 'test_unexisting_name')
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
@@ -240,7 +239,7 @@ class PluginTestCase(tests.TestCase):
             fake_logger.output)
 
 
-class PluginMakedirsTestCase(tests.TestCase):
+class PluginMakedirsTestCase(snapcraft.tests.TestCase):
 
     scenarios = [
         ('existing_dirs', {'make_dirs': True}),
