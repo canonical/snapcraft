@@ -337,7 +337,7 @@ def cmd(args):
 
             try:
                 getattr(part, cmd)(force=force)
-            except lifecycle.PluginError as e:
+            except Exception as e:
                 logger.error('Failed doing %s for %s: %s', cmd, part.name, e)
                 sys.exit(1)
 

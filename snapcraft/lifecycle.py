@@ -25,7 +25,6 @@ import shutil
 
 import snapcraft
 from snapcraft import common
-from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
@@ -140,17 +139,8 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage("Pulling")
-
-        try:
-            self._setup_stage_packages()
-        except repo.PackageNotFoundError as e:
-            raise PluginError from e
-
-        try:
-            self.code.pull()
-        except Exception as e:
-            raise PluginError from e
-
+        self._setup_stage_packages()
+        self.code.pull()
         self.mark_done('pull')
 
     def build(self, force=False):
@@ -158,12 +148,7 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage("Building")
-
-        try:
-            self.code.build()
-        except Exception as e:
-            raise PluginError from e
-
+        self.code.build()
         self.mark_done('build')
 
     def _migratable_fileset_for(self, stage):
