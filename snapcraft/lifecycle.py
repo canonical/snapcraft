@@ -64,15 +64,9 @@ class PluginHandler:
 
         try:
             self._load_code(plugin_name, properties)
-            # only set to valid if it loads without PluginError
-            self.valid = True
-        except PluginError as e:
-            logger.error(str(e))
-            return
         except jsonschema.ValidationError as e:
-            logger.error('Issues while loading properties for '
-                         '{}: {}'.format(part_name, e.message))
-            return
+            raise PluginError('properties failed to load for {}: {}'.format(
+                part_name, e.message))
 
     def _load_code(self, plugin_name, properties):
         module_name = plugin_name.replace('-', '_')
@@ -92,7 +86,7 @@ class PluginHandler:
             with contextlib.suppress(ImportError):
                 module = _load_local(module_name)
             if not module:
-                raise PluginError('Unknown plugin: {}'.format(plugin_name))
+                raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
         options = _make_options(properties, plugin.schema())
@@ -106,14 +100,11 @@ class PluginHandler:
 
     def makedirs(self):
         dirs = [
-            self.sourcedir, self.builddir, self.installdir, self.stagedir,
-            self.snapdir, self.ubuntudir
+            self.code.sourcedir, self.code.builddir, self.code.installdir,
+            self.code.stagedir, self.code.snapdir, self.code.ubuntudir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
-
-    def is_valid(self):
-        return self.valid
 
     def notify_stage(self, stage, hint=''):
         logger.info('%s %s %s', stage, self.name, hint)
@@ -146,33 +137,34 @@ class PluginHandler:
 
     def pull(self, force=False):
         if not self.should_stage_run('pull', force):
-            return True
+            return
         self.makedirs()
-
         self.notify_stage("Pulling")
 
         try:
             self._setup_stage_packages()
         except repo.PackageNotFoundError as e:
-            logger.error(e.message)
-            return False
+            raise PluginError from e
 
-        if not self.code.pull():
-            return False
+        try:
+            self.code.pull()
+        except Exception as e:
+            raise PluginError from e
 
         self.mark_done('pull')
-        return True
 
     def build(self, force=False):
         if not self.should_stage_run('build', force):
-            return True
+            return
         self.makedirs()
         self.notify_stage("Building")
-        if not self.code.build():
-            return False
+
+        try:
+            self.code.build()
+        except Exception as e:
+            raise PluginError from e
 
         self.mark_done('build')
-        return True
 
     def _migratable_fileset_for(self, stage):
         plugin_fileset = self.code.snap_fileset()
@@ -294,11 +286,7 @@ def _load_local(module_name):
 
 
 def load_plugin(part_name, plugin_name, properties={}):
-    part = PluginHandler(plugin_name, part_name, properties)
-    if not part.is_valid():
-        logger.error('Could not load part %s', plugin_name)
-        sys.exit(1)
-    return part
+    return PluginHandler(plugin_name, part_name, properties)
 
 
 def migratable_filesets(fileset, srcdir):

@@ -68,7 +68,7 @@ class QmlPlugin(snapcraft.BasePlugin):
                 'etc/xdg/qtchooser/snappy-qt5.conf',
                 ]
 
-    def build_qt_config(self):
+    def _build_qt_config(self):
         arch = snapcraft.common.get_arch_triplet()
         configdir = os.path.join(self.installdir, 'etc', 'xdg', 'qtchooser')
         os.makedirs(configdir, exist_ok=True)
@@ -76,10 +76,9 @@ class QmlPlugin(snapcraft.BasePlugin):
         config.write('./usr/lib/{}/qt5/bin\n'.format(arch))
         config.write('./usr/lib/{}\n'.format(arch))
         config.close
-        return True
 
     def build(self):
-        return self.build_qt_config()
+        self._build_qt_config()
 
     def env(self, root):
         arch = snapcraft.common.get_arch_triplet()

@@ -28,36 +28,23 @@ import snapcraft.lifecycle
 import snapcraft.tests
 
 
-def get_test_plugin(name='mock', part_name='mock-part', properties=None):
+def get_test_plugin(name='copy', part_name='mock-part', properties=None):
     if properties is None:
-        properties = {}
+        properties = {'files': {'1': '1'}}
     return snapcraft.lifecycle.PluginHandler(name, part_name, properties)
 
 
 class PluginTestCase(snapcraft.tests.TestCase):
 
-    def test_init_unknown_plugin_must_log_error(self):
+    def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        get_test_plugin('test_unexisting_name')
+        with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
+            get_test_plugin('test_unexisting_name')
 
-        self.assertEqual(
-            'Unknown plugin: test_unexisting_name\n', fake_logger.output)
-
-    def test_is_dirty(self):
-        p = get_test_plugin()
-        p.statefile = tempfile.NamedTemporaryFile().name
-        self.addCleanup(os.remove, p.statefile)
-        p.code = Mock()
-        p._setup_stage_packages = Mock()
-        # pull once
-        p.pull()
-        p.code.pull.assert_called()
-        # pull again, not dirty no need to pull
-        p.code.pull.reset_mock()
-        p.pull()
-        self.assertFalse(p.code.pull.called)
+        self.assertEqual(raised.exception.__str__(),
+                         'unknown plugin: test_unexisting_name')
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -223,20 +210,6 @@ class PluginTestCase(snapcraft.tests.TestCase):
 
         self.assertEqual(
             "path '/abs/exclude' must be relative", str(raised.exception))
-
-    def test_load_plugin_with_invalid_part_must_exit_with_error(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        with self.assertRaises(SystemExit) as raised:
-            snapcraft.lifecycle.load_plugin(
-                'dummy-part', 'test_unexisting_name')
-
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        self.assertEqual(
-            'Unknown plugin: test_unexisting_name\n'
-            'Could not load part test_unexisting_name\n',
-            fake_logger.output)
 
 
 class PluginMakedirsTestCase(snapcraft.tests.TestCase):

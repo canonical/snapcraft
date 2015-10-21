@@ -39,5 +39,6 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.build_packages.append('cmake')
 
     def build(self):
-        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
-                        self.options.configflags) and super().build()
+        self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
+                 self.options.configflags)
+        super().build()

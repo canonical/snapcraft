@@ -50,22 +50,16 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
     def build(self):
         super().build()
 
-        if not self.run(['mvn', 'package'] + self.options.maven_options):
-            return False
+        self.run(['mvn', 'package'] + self.options.maven_options)
         jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
         if not (jarfiles or warfiles):
-            logger.error('Could not find any built jar or war files for '
-                         'part %s', self.name)
-            snapcraft.common.fatal()
+            raise RuntimeError('could not find any built jar files for part')
         if jarfiles:
             jardir = os.path.join(self.installdir, 'jar')
             os.makedirs(jardir, exist_ok=True)
-            if not self.run(['cp', '-a'] + jarfiles + [jardir]):
-                return False
+            self.run(['cp', '-a'] + jarfiles + [jardir])
         if warfiles:
             wardir = os.path.join(self.installdir, 'war')
             os.makedirs(wardir, exist_ok=True)
-            if not self.run(['cp', '-a'] + warfiles + [wardir]):
-                return False
-        return True
+            self.run(['cp', '-a'] + warfiles + [wardir])

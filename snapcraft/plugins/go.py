@@ -51,16 +51,14 @@ class GoPlugin(snapcraft.BasePlugin):
     def pull(self):
         # use -d to only download (build will happen later)
         # use -t to also get the test-deps
-        return self.run(['go', 'get', '-t', '-d', self.fullname])
+        self._run(['go', 'get', '-t', '-d', self.fullname])
 
     def build(self):
-        if not self.run(['go', 'build', self.fullname]):
-            return False
-        if not self.run(['go', 'install', self.fullname]):
-            return False
-        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'),
-                        self.installdir])
+        self._run(['go', 'build', self.fullname])
+        self._run(['go', 'install', self.fullname])
+        self._run(['cp', '-a', os.path.join(self.builddir, 'bin'),
+                  self.installdir])
 
-    def run(self, cmd, **kwargs):
+    def _run(self, cmd, **kwargs):
         cmd = ['env', 'GOPATH=' + self.builddir] + cmd
-        return super().run(cmd, **kwargs)
+        return self.run(cmd, **kwargs)

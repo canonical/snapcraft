@@ -14,11 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
-import logging
 import unittest.mock
 
 import snapcraft
+from snapcraft import sources
 from snapcraft import tests
 
 
@@ -34,38 +33,27 @@ class MockOptions:
 
 class TestBasePlugin(tests.TestCase):
 
-    def test_get_source_with_unrecognized_source_must_raise_error(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
+    def test_get_source_with_unrecognized_source_must_raise_exception(self):
         options = MockOptions('unrecognized://test_source')
         plugin = snapcraft.BasePlugin('test_plugin', options)
-        with self.assertRaises(SystemExit) as raised:
+        with self.assertRaises(ValueError) as raised:
             plugin.pull()
 
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        expected = (
-            "Unrecognized source 'unrecognized://test_source' for part "
-            "'test_plugin': No handler to manage source.\n")
-        self.assertEqual(expected, fake_logger.output)
+        self.assertEqual(raised.exception.__str__(),
+                         'no handler to manage source')
 
     @unittest.mock.patch('os.path.isdir')
-    def test_local_non_dir_source_path_must_raise_error(self, mock_isdir):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
+    def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
         options = MockOptions('file')
         mock_isdir.return_value = False
         plugin = snapcraft.BasePlugin('test_plugin', options)
-        with self.assertRaises(SystemExit) as raised:
+        with self.assertRaises(ValueError) as raised:
             plugin.pull()
 
         mock_isdir.assert_called_once_with('file')
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        expected = (
-            "Unrecognized source 'file' for part 'test_plugin': "
-            "Local source is not a directory.\n")
-        self.assertEqual(expected, fake_logger.output)
+
+        self.assertEqual(raised.exception.__str__(),
+                         'local source is not a directory')
 
 
 class GetSourceWithBranches(tests.TestCase):
@@ -84,21 +72,16 @@ class GetSourceWithBranches(tests.TestCase):
     ]
 
     def test_get_source_with_branch_and_tag_must_raise_error(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
         options = MockOptions('lp:source', self.source_type,
                               self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
-        with self.assertRaises(SystemExit) as raised:
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
             plugin.pull()
 
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        expected = (
-            'Issues while setting up sources for part \'test_plugin\': '
+        self.assertEqual(
+            raised.exception.__str__(),
             'can\'t specify both source-tag and source-branch for a {} '
-            "source.\n".format(self.source_type))
-        self.assertEqual(expected, fake_logger.output)
+            'source'.format(self.source_type))
 
 
 class GetSourceTestCase(tests.TestCase):
@@ -122,19 +105,14 @@ class GetSourceTestCase(tests.TestCase):
     ]
 
     def test_get_source_with_branch_must_raise_error(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
         options = MockOptions('lp:this', self.source_type, self.source_branch,
                               self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
-        with self.assertRaises(SystemExit) as raised:
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
             plugin.pull()
 
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        expected = (
-            'Issues while setting up sources for part \'test_plugin\': can\'t '
-            'specify a {} for a {} source.\n'
-            .format(self.error, self.source_type))
-        self.assertEqual(expected, fake_logger.output)
+        self.assertEqual(
+            raised.exception.__str__(),
+            'can\'t specify a {} for a {} source'.format(
+                self.error, self.source_type))

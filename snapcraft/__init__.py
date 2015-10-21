@@ -107,20 +107,9 @@ class BasePlugin:
         enhance with custom pull logic.
         """
         if not getattr(self.options, 'source', None):
-            return True
-        try:
-            return snapcraft.sources.get(
-                self.sourcedir, self.builddir, self.options)
-        except ValueError as e:
-            logger.error('Unrecognized source %r for part %r: %s.',
-                         self.options.source, self.name, e)
-            snapcraft.common.fatal()
-        except snapcraft.sources.IncompatibleOptionsError as e:
-            logger.error(
-                'Issues while setting up sources for part \'%s\': %s.',
-                self.name,
-                e.message)
-            snapcraft.common.fatal()
+            return
+        return snapcraft.sources.get(
+            self.sourcedir, self.builddir, self.options)
 
     def build(self):
         """Build the source code retrieved from the pull phase.
@@ -128,7 +117,7 @@ class BasePlugin:
         The base implementation does nothing by default. Override this method
         if you need to process the source code to make it runnable.
         """
-        return True
+        pass
 
     def snap_fileset(self):
         """Return a list of files to include or exclude in the resulting snap

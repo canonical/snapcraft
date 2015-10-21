@@ -216,11 +216,8 @@ def _wrap_exe(relexepath):
                       'which "{}"\n'.format(relexepath))
             tempf.write(script)
             tempf.flush()
-            if common.run(['/bin/sh', tempf.name], cwd=snap_dir):
-                wrapexec = relexepath
-            else:
-                logger.warning('Warning: unable to find "{}" in the path'.
-                               format(relexepath))
+            common.run(['/bin/sh', tempf.name], cwd=snap_dir)
+            wrapexec = relexepath
 
     _write_wrap_exe(wrapexec, wrappath)
 

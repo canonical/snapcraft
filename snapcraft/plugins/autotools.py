@@ -47,11 +47,10 @@ class AutotoolsPlugin(MakePlugin):
     def build(self):
         if not os.path.exists(os.path.join(self.builddir, "configure")):
             if os.path.exists(os.path.join(self.builddir, "autogen.sh")):
-                if not self.run(['env', 'NOCONFIGURE=1', './autogen.sh'],
-                                cwd=self.builddir):
-                    return False
+                self.run(['env', 'NOCONFIGURE=1', './autogen.sh'],
+                         cwd=self.builddir)
             else:
-                if not self.run(['autoreconf', '-i'], cwd=self.builddir):
-                    return False
-        return self.run(['./configure', '--prefix='] +
-                        self.options.configflags) and super().build()
+                self.run(['autoreconf', '-i'], cwd=self.builddir)
+        self.run(['./configure', '--prefix='] +
+                 self.options.configflags)
+        super().build()

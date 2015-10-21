@@ -26,9 +26,9 @@ import sys
 import tempfile
 import time
 
-import snapcraft.lifecycle
 import snapcraft.yaml
 from snapcraft import common
+from snapcraft import lifecycle
 from snapcraft import meta
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def init(args):
     if args.part:
         yaml += 'parts:\n'
     for part_name in args.part:
-        part = snapcraft.lifecycle.load_plugin(part_name, part_name)
+        part = lifecycle.load_plugin(part_name, part_name)
         yaml += '    ' + part.name + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
@@ -264,7 +264,7 @@ def _check_for_collisions(parts):
     for part in parts:
         # Gather our own files up
         fileset = getattr(part.code.options, 'stage', ['*']) or ['*']
-        part_files, _ = snapcraft.lifecycle.migratable_filesets(
+        part_files, _ = lifecycle.migratable_filesets(
             fileset,
             part.installdir)
 
@@ -335,8 +335,10 @@ def cmd(args):
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
 
-            if not getattr(part, cmd)(force=force):
-                logger.error('Failed doing %s for %s!', cmd, part.name)
+            try:
+                getattr(part, cmd)(force=force)
+            except lifecycle.PluginError as e:
+                logger.error('Failed doing %s for %s: %s', cmd, part.name, e)
                 sys.exit(1)
 
 
@@ -393,3 +395,5 @@ def _load_config():
         logger.error('Issue detected while analyzing '
                      'snapcraft.yaml: {}'.format(e.message))
         sys.exit(1)
+    except lifecycle.PluginError as e:
+        logger.error('Issue while loading plugin: {}'.format(e))
