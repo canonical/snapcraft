@@ -20,6 +20,29 @@ import os
 import os.path
 
 class AWSCLIPlugin(Python3Plugin):
+
+    @classmethod
+    def schema(cls):
+        return {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+                'accesskeyid': {
+                    'type': 'string',
+                    'default': ''
+                },
+                'secretaccesskey': {
+                    'type': 'string',
+                    'default': ''
+                },
+                'region': {
+                    'type': 'string',
+                    'default': 'us-east-1'
+                },
+            },
+            'required': ['accesskeyid', 'secretaccesskey']
+        }
+
     def __init__(self, name, options):
         super().__init__(name, options)
         self.accesskeyid = options.accesskeyid
