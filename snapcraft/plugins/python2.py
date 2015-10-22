@@ -28,6 +28,15 @@ class Python2Plugin(snapcraft.BasePlugin):
         schema['properties']['requirements'] = {
             'type': 'string',
         }
+        schema['properties']['pip-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
+        }
         schema.pop('required')
 
         return schema
@@ -58,7 +67,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         if self.options.requirements:
             requirements = os.path.join(os.getcwd(), self.options.requirements)
 
-        if not os.path.exists(setup) and not self.options.requirements:
+        if not os.path.exists(setup) and not (self.options.requirements or self.options.pip_packages):
             return True
 
         easy_install = os.path.join(
@@ -82,6 +91,10 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         if self.options.requirements and not self.run(
                 pip_install + ['--requirement', requirements]):
+            return False
+
+        if self.options.pip_packages and not self.run(
+                pip_install + ['--upgrade'] + self.options.pip_packages):
             return False
 
         if os.path.exists(setup) and not self.run(pip_install + ['.', ]):

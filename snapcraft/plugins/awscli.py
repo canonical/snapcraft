@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.python3 import Python3Plugin
+from snapcraft.plugins.python2 import Python2Plugin
 
 import os
 import os.path
@@ -44,36 +44,22 @@ class AWSCLIPlugin(Python3Plugin):
         }
 
     def __init__(self, name, options):
+        options.pip_packages = ['awscli']
         super().__init__(name, options)
         self.accesskeyid = options.accesskeyid
         self.secretaccesskey = options.secretaccesskey
         self.region = options.region
 
     def build(self):
-        easy_install = os.path.join(
-            self.installdir, 'usr', 'bin', 'easy_install3')
-        prefix = os.path.join(self.installdir, 'usr')
-        site_packages_dir = os.path.join(
-            prefix, 'lib', self.python_version, 'site-packages')
-
-        if not os.path.exists(site_packages_dir):
-            os.symlink(
-                os.path.join(prefix, 'lib', 'python3', 'dist-packages'),
-                site_packages_dir)
-
-        if not self.run(['python3', easy_install, '--prefix', prefix, 'pip']):
+        if not super().build():
             return False
 
-        pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
-        pip_install = ['python3', pip3, 'install','--no-compile', '--target',
-                       site_packages_dir]
-
-        if not self.run(pip_install + ['--upgrade','awscli', ]):
+        if not self.run(['aws','configure','set','region',self.region]):
             return False
-
-        self.run(['aws','configure','set','region',self.region])
-        self.run(['aws','configure','set','aws_access_key_id',self.accesskeyid])
-        self.run(['aws','configure','set','aws_secret_access_key',self.secretaccesskey])
+        if not self.run(['aws','configure','set','aws_access_key_id',self.accesskeyid]):
+            return False
+        if not self.run(['aws','configure','set','aws_secret_access_key',self.secretaccesskey]):
+            return False
 
         #TODO remove hack when two python parts can run at the same time.
         for root, dirs, files in os.walk(self.installdir):
@@ -86,7 +72,6 @@ class AWSCLIPlugin(Python3Plugin):
             if os.path.exists(pip_path):
                 os.remove(pip_path)
 
-        #return super().build()
         return True
 
     def env(self, root):

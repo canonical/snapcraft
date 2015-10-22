@@ -10,8 +10,8 @@ binaries:
 parts:
     awscli:
         plugin: awscli
-        accesskeyid: <key goes here>
-        secretaccesskey: <secret goes here>
+        accesskeyid: key-goes-here
+        secretaccesskey: secret-goes-here
         region: us-east-1
     awsiot:
         plugin: awsiot
