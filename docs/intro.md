@@ -1,18 +1,8 @@
 # Intro
 
-Snapcraft allows easy crafting of packages for Snappy Ubuntu. It makes it
-easy to incorporate components from different sources and build technologies or
-solutions.
-
-# Snappy
-
-Snappy Ubuntu Core is a new rendition of Ubuntu with transactional updates - a
-minimal server image with the same libraries as today's Ubuntu, but
-applications are provided through a simpler mechanism.
-
-Snappy apps and Ubuntu Core itself can be upgraded atomically and rolled back
-if needed. Apps are also strictly confined and sandboxed to safeguard your
-data and system.
+Snapcraft is a build and packaging tool which helps you package your software
+as a snap. It makes it easy to incorporate components from different sources 
+and build technologies or solutions.
 
 # Key concepts
 
@@ -24,6 +14,16 @@ changes to the system underneath their app.
 
 Snapcraft makes bundling these dependencies easy by allowing you to
 specify them as "parts" in the `snapcraft.yaml` file.
+
+# Snappy
+
+Snappy Ubuntu Core is a new rendition of Ubuntu with transactional updates - a
+minimal server image with the same libraries as today's Ubuntu, but
+applications are provided through a simpler mechanism.
+
+Snappy apps and Ubuntu Core itself can be upgraded atomically and rolled back
+if needed. Apps are also strictly confined and sandboxed to safeguard your
+data and system.
 
 ## Parts
 
