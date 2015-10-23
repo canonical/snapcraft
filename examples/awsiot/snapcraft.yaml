@@ -21,10 +21,9 @@ parts:
         after:
           - awscli
     pythonmqtt:
-        plugin: python3-project
+        plugin: python3
         requirements: mqttdependencies
     mqttclient:
         plugin: copy
-        source: .
         files:
             mqttclient.py: bin/mqttclient.py
