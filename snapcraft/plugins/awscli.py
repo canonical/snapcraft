@@ -77,3 +77,8 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
         env.extend(['AWS_ACCESS_KEY_ID=%s' % self.options.accesskeyid,
             'AWS_SECRET_ACCESS_KEY=%s' % self.options.secretaccesskey])
         return env
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        fileset.append('-usr/lib/python3/dist-packages/easy-install.pth')
+        return fileset

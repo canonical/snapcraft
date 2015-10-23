@@ -167,11 +167,11 @@ class PluginHandler:
         self.mark_done('build')
         return True
 
-    def _migratable_fileset_for(self, stage):
+    def migratable_fileset_for(self, stage):
         plugin_fileset = self.code.snap_fileset()
         fileset = getattr(self.code.options, stage, ['*']) or ['*']
         fileset.extend(plugin_fileset)
-        return migratable_filesets(fileset, self.installdir)
+        return _migratable_filesets(fileset, self.installdir)
 
     def _organize(self):
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
@@ -201,7 +201,7 @@ class PluginHandler:
 
         self.notify_stage("Staging")
         self._organize()
-        snap_files, snap_dirs = self._migratable_fileset_for('stage')
+        snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         try:
             _migrate_files(snap_files, snap_dirs, self.installdir,
@@ -221,7 +221,7 @@ class PluginHandler:
         self.makedirs()
 
         self.notify_stage("Snapping")
-        snap_files, snap_dirs = self._migratable_fileset_for('snap')
+        snap_files, snap_dirs = self.migratable_fileset_for('snap')
 
         try:
             _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
@@ -294,7 +294,7 @@ def load_plugin(part_name, plugin_name, properties={}):
     return part
 
 
-def migratable_filesets(fileset, srcdir):
+def _migratable_filesets(fileset, srcdir):
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
