@@ -81,4 +81,7 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-usr/lib/python3/dist-packages/easy-install.pth')
+        fileset.append('-usr/lib/python3.4/__pycache__/')
+        fileset.append('-usr/lib/python3.4/encodings/__pycache__/')
+        fileset.append('-usr/lib/python3.4/plat*/__pycache__/')
         return fileset

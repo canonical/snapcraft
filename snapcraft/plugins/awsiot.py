@@ -57,46 +57,62 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.aws = ['python3', os.path.join(self.installdir, 'usr', 'bin', 'aws')]
+        self.aws = ['python3', os.path.join(self.stagedir, 'usr', 'bin', 'aws'), 'iot', '--endpoint', self.AWSCERTURL]
         
     def pull(self):
         return True
 
+    def run_to_file(self, cmds, filename):
+        output = self.run_output(cmds, cwd=self.builddir)
+        with open(filename, 'w') as f:
+            f.write(output)
+
     def build(self):
+        certsdir = os.path.join(self.builddir, 'certs')
         # Make the certs directory if it does not exist
-        if not os.path.exists('certs'):
-            os.makedirs('certs')
+        os.makedirs(certsdir, exist_ok=True)
+
         # What should we do with certificates?
         if self.options.generatekeys:
             # generate new keys
-            check_call('aws iot --endpoint %s create-keys-and-certificate --set-as-active > certs/certs.json' % self.AWSCERTURL, shell=True)
+            self.run_to_file(self.aws + ['create-keys-and-certificate', '--set-as-active'],
+                             os.path.join(certsdir, 'certs.json'))
             #separate into different files
-            with open('certs/certs.json') as data_file:    
+            with open(os.path.join(certsdir, 'certs.json')) as data_file:    
                 self.data = json.load(data_file)
-            text_file = open("certs/cert.pem", "w")
-            text_file.write(self.data["certificatePem"])
-            text_file.close()
-            text_file = open("certs/privateKey.pem", "w")
-            text_file.write(self.data["keyPair"]["PrivateKey"])
-            text_file.close()
-            text_file = open("certs/publicKey.pem", "w")
-            text_file.write(self.data["keyPair"]["PublicKey"])
-            text_file.close()            
+
+            with open(os.path.join(certsdir, 'cert.pem'), 'w') as text_file:
+                text_file.write(self.data['certificatePem'])
+            with open(os.path.join(certsdir, 'privateKey.pem'), 'w') as text_file:
+                text_file.write(self.data['keyPair']['PrivateKey'])
+            with open(os.path.join(certsdir, 'publicKey.pem'), 'w') as text_file:
+                text_file.write(self.data['keyPair']['PublicKey'])
         else:
             # generate private key
-            check_output('openssl genrsa -out certs/privateKey.pem 2048',shell=True)
-            check_output('openssl req -new -key certs/privateKey.pem -out certs/cert.csr',shell=True)	
+            csr = os.path.join(certsdir, 'cert.csr')
+            if not self.run(['openssl', 'genrsa', '-out', os.path.join(certdir, 'privateKey.pem'), '2048']) or not \
+                self.run(['openssl', 'req', '-new', '-key', os.path.join(certdir, 'privateKey.pem'), '-out', csr]):
+                return False
+
             # generate new keys based on a csr
             #TODO: test the rest of the methods because it always gives an invalid CSR request
-            check_output('aws iot --endpoint {0} create-certificate-from-csr --certificate-signing-request certs/cert.csr --set-as-active > certresponse.txt'.format(self.AWSCERTURL), shell=True)
-            with open('certresponse.txt') as data_file:    
+            certresp = os.path.join(self.builddir, 'certresponse.txt')
+            self.run_to_file(self.aws + ['create-certificate-from-csr', '--certificate-signing-request', csr, '--set-as-active'],
+                             certresp)
+            with open(certresp) as data_file:    
                 self.data = json.load(data_file)
-            check_call('aws iot --endpoint {0} describe-certificate --certificate-id {1} --output text --query certificateDescription.certificatePem > certs/cert.pem'.format(self.AWSCERTURL,self.data["arn"].split(":cert/")[1]), shell=True)
-            check_output('rm certresponse.txt', shell=True)
+
+            self.run_to_file(self.aws + ['describe-certificate', '--certificate-id', self.data['arn'].split(':cert/')[1], '--output', 'text', '--query', 'certificateDescription.certificatePem'],
+                             os.path.join(certdir, 'cert.pem'))
+
+        # Extra check, but good to ensure
+        if self.data is None:
+            return False
+
         #Get the root certificate
         self.filename = urllib.request.urlretrieve(
             'https://www.symantec.com/content/en/us/enterprise/verisign/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem',
-            filename='certs/rootCA.pem')
+            filename=os.path.join(certsdir, 'rootCA.pem'))
 
         # attach policy to certificate
         if self.options.policydocument is not '':
@@ -110,24 +126,33 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
                   '}\n'
                  )  
             self.options.policydocument = "policydocument"
-            text_file = open(self.options.policydocument, "w")
-            text_file.write(self.pd)
-            text_file.close()
+            with open(self.options.policydocument, "w") as text_file:
+                text_file.write(self.pd)
 
-        try:
-                print("If the policy name already exists then creating it will fail. You can ignore this error.") 
-                check_output('aws iot --endpoint {0} create-policy --policy-name {1} --policy-document file://{2} > arnresponse.txt'.format(self.AWSCERTURL,self.options.policyname,self.options.policydocument), shell=True)
-        except CalledProcessError as e:
-                check_output('aws iot --endpoint {0} get-policy --policy-name {1} > arnresponse.txt'.format(self.AWSCERTURL,self.options.policyname), shell=True)
-        with open('arnresponse.txt') as data_file:    
+        arnresp = os.path.join(self.builddir, 'arnresponse.txt')
+        if not self.run_to_file(self.aws + ['create-policy', '--policy-name', self.options.policyname, '--policy-document', 'file://' + self.options.policydocument],
+                                 arnresp):
+            print("If the policy name already exists then creating it will fail. You can ignore this error.") 
+            if not self.run_to_file(self.aws + ['get-policy', '--policy-name', self.options.policyname], arnresp):
+                return False
+
+        with open('arnresponse.txt') as data_file:
                 self.data = json.load(data_file)
-        self.run(['aws','iot','-­‐endpoint­‐url',self.AWSCERTURL,'attach-­principal-­policy','-­‐principal-­arn',self.data["policyArn"],'--policy-name',self.options.policyname])	
-        check_output('rm arnresponse.txt', shell=True)
 
-        check_output('aws iot --endpoint {0} create-thing --thing-name {1}'.format(self.AWSCERTURL,self.options.thing), shell=True)
+        if not self.run(self.aws + ['attach-principal-policy','-‐principal-arn', self.data["policyArn"], '--policy-name', self.options.policyname]):
+            return False
+
+        if not self.run(self.aws + ['create-thing', '--thing-name', self.options.thing]):
+            return False
+
         print("Created Thing: %s" % self.options.thing)
         return True
 
     def run(self, cmd, **kwargs):
         return True
 
+    def stage_fileset(self):
+        fileset = super().stage_fileset()
+        fileset.append('-certresponse.txt')
+        fileset.append('-arnresponse.txt')
+        return fileset
