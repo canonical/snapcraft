@@ -106,10 +106,9 @@ class BasePlugin:
         Override or inherit from this method if you need to implement or
         enhance with custom pull logic.
         """
-        if not getattr(self.options, 'source', None):
-            return
-        return snapcraft.sources.get(
-            self.sourcedir, self.builddir, self.options)
+        if getattr(self.options, 'source', None):
+            snapcraft.sources.get(
+                self.sourcedir, self.builddir, self.options)
 
     def build(self):
         """Build the source code retrieved from the pull phase.
