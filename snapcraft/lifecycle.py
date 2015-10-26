@@ -99,8 +99,8 @@ class PluginHandler:
 
     def makedirs(self):
         dirs = [
-            self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.code.stagedir, self.code.snapdir, self.code.ubuntudir
+            self.sourcedir, self.builddir, self.installdir, self.stagedir,
+            self.snapdir, self.ubuntudir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
