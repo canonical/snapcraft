@@ -55,6 +55,12 @@ def main():
     parser.set_defaults(func=snapcraft.cmds.run)
 
     parser = subparsers.add_parser(
+        'list-plugins',
+        help='list the available plugins that handle different types '
+        'of a part')
+    parser.set_defaults(func=snapcraft.cmds.list_plugins)
+
+    parser = subparsers.add_parser(
         'clean',
         help='clean up the environment (to start from scratch)')
     parser.set_defaults(func=snapcraft.cmds.clean)

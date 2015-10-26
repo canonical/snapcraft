@@ -237,6 +237,16 @@ def run(args):
             qemu.kill()
 
 
+def list_plugins(args=None):
+    import pkgutil
+    import snapcraft.plugins
+
+    for importer, modname, is_package in pkgutil.iter_modules(
+            snapcraft.plugins.__path__):
+        if not is_package:
+            print(modname.replace('_', '-'))
+
+
 def clean(args):
     config = _load_config()
 
