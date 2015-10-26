@@ -45,10 +45,8 @@ class Python3Plugin(snapcraft.BasePlugin):
             root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        if not super().pull():
-            return False
-
-        return self._pip()
+        super().pull()
+        self._pip()
 
     def _pip(self):
         setup = 'setup.py'
@@ -59,7 +57,7 @@ class Python3Plugin(snapcraft.BasePlugin):
             requirements = os.path.join(os.getcwd(), self.options.requirements)
 
         if not os.path.exists(setup) and not self.options.requirements:
-            return True
+            return
 
         easy_install = os.path.join(
             self.installdir, 'usr', 'bin', 'easy_install3')
@@ -72,21 +70,17 @@ class Python3Plugin(snapcraft.BasePlugin):
                 os.path.join(prefix, 'lib', 'python3', 'dist-packages'),
                 site_packages_dir)
 
-        if not self.run(['python3', easy_install, '--prefix', prefix, 'pip']):
-            return False
+        self.run(['python3', easy_install, '--prefix', prefix, 'pip'])
 
         pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
         pip_install = ['python3', pip3, 'install', '--target',
                        site_packages_dir]
 
-        if self.options.requirements and not self.run(
-                pip_install + ['--requirement', requirements]):
-            return False
+        if self.options.requirements:
+            self.run(pip_install + ['--requirement', requirements])
 
-        if os.path.exists(setup) and not self.run(pip_install + ['.', ]):
-            return False
-
-        return True
+        if os.path.exists(setup):
+            self.run(pip_install + ['.', ])
 
     def build(self):
         # If setuptools is used, it tries to create files in the
@@ -95,11 +89,11 @@ class Python3Plugin(snapcraft.BasePlugin):
         # used.
 
         if not os.path.exists(os.path.join(self.builddir, 'setup.py')):
-            return True
+            return
 
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         setuptemp = self.copy_setup()
-        return self.run(
+        self.run(
             ['python3', setuptemp.name, 'install', '--install-layout=deb',
              '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
 

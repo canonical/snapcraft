@@ -73,7 +73,7 @@ class Bazaar(Base):
             cmd = ['bzr', 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        return snapcraft.common.run(cmd, cwd=os.getcwd())
+        snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Git(Base):
@@ -102,7 +102,7 @@ class Git(Base):
             cmd = ['git', 'clone'] + branch_opts + \
                   [self.source, self.source_dir]
 
-        return snapcraft.common.run(cmd, cwd=os.getcwd())
+        snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Mercurial(Base):
@@ -129,7 +129,7 @@ class Mercurial(Base):
                 ref = ['-u', self.source_tag or self.source_branch]
             cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
 
-        return snapcraft.common.run(cmd, cwd=os.getcwd())
+        snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Tar(Base):
@@ -146,18 +146,17 @@ class Tar(Base):
 
     def pull(self):
         if not snapcraft.common.isurl(self.source):
-            return True
+            return
 
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
-            return False
+            raise EnvironmentError('unexpected http status code when '
+                                   'downloading %r'.format(req.status_code))
 
         file = os.path.join(self.source_dir, os.path.basename(self.source))
         with open(file, 'wb') as f:
             for chunk in req.iter_content(1024):
                 f.write(chunk)
-
-        return True
 
     def provision(self, dst, clean_target=True):
         # TODO add unit tests.
@@ -172,7 +171,7 @@ class Tar(Base):
             shutil.rmtree(dst)
             os.makedirs(dst)
 
-        return self._extract(tarball, dst)
+        self._extract(tarball, dst)
 
     def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
@@ -208,13 +207,11 @@ class Tar(Base):
 
             tar.extractall(members=filter_members(tar), path=dst)
 
-        return True
-
 
 class Local(Base):
 
     def pull(self):
-        return True
+        pass
 
     def provision(self, dst):
         path = os.path.abspath(self.source)
@@ -226,8 +223,6 @@ class Local(Base):
             os.remove(dst)
         os.symlink(path, dst)
 
-        return True
-
 
 def get(sourcedir, builddir, options):
     source_type = getattr(options, 'source_type', None)
@@ -237,9 +232,8 @@ def get(sourcedir, builddir, options):
     handler_class = _get_source_handler(source_type, options.source)
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
-    if not handler.pull():
-        return False
-    return handler.provision(builddir)
+    handler.pull()
+    handler.provision(builddir)
 
 
 _source_handler = {
@@ -270,8 +264,8 @@ def _get_source_type_from_uri(source):
     elif _tar_type_regex.match(source):
         source_type = 'tar'
     elif snapcraft.common.isurl(source):
-        raise ValueError('No handler to manage source')
+        raise ValueError('no handler to manage source')
     elif not os.path.isdir(source):
-        raise ValueError('Local source is not a directory')
+        raise ValueError('local source is not a directory')
 
     return source_type

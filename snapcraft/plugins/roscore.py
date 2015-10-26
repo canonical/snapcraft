@@ -66,7 +66,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             f.write('exec {}/bin/rosmaster\n'.format(ros_dir))
 
         os.chmod(service_wrapper, 0o755)
-        return True
 
     def snap_fileset(self):
         rospath = os.path.join('opt', 'ros', self.options.rosversion)

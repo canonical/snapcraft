@@ -17,7 +17,6 @@
 import glob
 import logging
 import os
-import sys
 
 import snapcraft
 import snapcraft.common
@@ -35,16 +34,13 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
     def build(self):
         super().build()
-        if not self.run(['ant']):
-            return False
+        self.run(['ant'])
         files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         if not files:
-            logger.error('Could not find any built jar files for part %s',
-                         self.name)
-            sys.exit(1)
+            raise RuntimeError('could not find any built jar files for part')
         jardir = os.path.join(self.installdir, 'jar')
-        return self.run(['mkdir', '-p', jardir]) and \
-            self.run(['cp', '-a'] + files + [jardir])
+        self.run(['mkdir', '-p', jardir])
+        self.run(['cp', '-a'] + files + [jardir])
 
     def env(self, root):
         env = super().env(root)

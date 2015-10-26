@@ -38,7 +38,7 @@ class TarContentPlugin(snapcraft.BasePlugin):
         self.tar = snapcraft.sources.Tar(self.options.source, self.builddir)
 
     def pull(self):
-        return self.tar.pull()
+        self.tar.pull()
 
     def build(self):
-        return self.tar.provision(self.installdir)
+        self.tar.provision(self.installdir)

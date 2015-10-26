@@ -65,16 +65,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._deb_packages = []
 
     def pull(self):
-        if not super().pull():
-            return False
-
-        try:
-            self._setup_deb_packages()
-        except snapcraft.repo.PackageNotFoundError as e:
-            logger.error(e.message)
-            return False
-
-        return True
+        super().pull()
+        self._setup_deb_packages()
 
     def env(self, root):
         return [
@@ -186,40 +178,33 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             f.write('exec {}\n'.format(' '.join(commandlist)))
             f.flush()
 
-            return self.run(['/bin/bash', f.name], cwd=cwd)
+            self.run(['/bin/bash', f.name], cwd=cwd)
 
     def build(self):
         # Fixup ROS Cmake files that have hardcoded paths in them
-        if not self.run([
+        self.run([
             'find', self.rosdir, '-name', '*.cmake',
             '-exec', 'sed', '-i', '-e',
             r's|\(\W\)/usr/lib/|\1{0}/usr/lib/|g'.format(self.installdir),
             '{}', ';'
-        ]):
-            return False
+        ])
 
         self._find_package_deps()
-
-        if not self._build_packages_deps():
-            return False
+        self._build_packages_deps()
 
         # the hacks
         findcmd = ['find', self.installdir, '-name', '*.cmake', '-delete']
-        if not self.run(findcmd):
-            return False
+        self.run(findcmd)
 
-        if not self.run(
+        self.run(
             ['rm', '-f',
              'opt/ros/' + self.options.rosversion + '/.catkin',
              'opt/ros/' + self.options.rosversion + '/.rosinstall',
              'opt/ros/' + self.options.rosversion + '/setup.sh',
              'opt/ros/' + self.options.rosversion + '/_setup_util.py'],
-                cwd=self.installdir):
-            return False
+            cwd=self.installdir)
 
         os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
-
-        return True
 
     def _build_packages_deps(self):
         # Ugly dependency resolution, just loop through until we can
@@ -233,17 +218,13 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             for pkg in self.packages - built:
                 if len(self.package_local_deps[pkg] - built) > 0:
                     continue
-
-                if not self._handle_package(pkg):
-                    return False
+                self._handle_package(pkg)
 
                 built.add(pkg)
                 built_pkg = True
 
         if not built_pkg:
-            return False
-
-        return True
+            raise RuntimeError('some packages failed to build')
 
     def _handle_package(self, pkg):
         catkincmd = ['catkin_make_isolated']
@@ -278,7 +259,4 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 os.path.join(self.installdir, 'usr', 'bin', 'g++'))
         ])
 
-        if not self._rosrun(catkincmd):
-            return False
-
-        return True
+        self._rosrun(catkincmd)

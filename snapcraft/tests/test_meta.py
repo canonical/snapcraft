@@ -334,7 +334,11 @@ class WrapExeTestCase(tests.TestCase):
     def test_wrap_exe_must_write_wrapper(self):
         snapdir = common.get_snapdir()
         os.mkdir(snapdir)
+
         relative_exe_path = 'test_relexepath'
+        with open(os.path.join(snapdir, relative_exe_path), 'w'):
+            pass
+
         relative_wrapper_path = meta._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
 

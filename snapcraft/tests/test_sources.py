@@ -59,7 +59,7 @@ class TestTar(tests.TestCase):
             *server.server_address, file_name=tar_file_name)
         tar_source = snapcraft.sources.Tar(source, dest_dir)
 
-        self.assertTrue(tar_source.pull())
+        tar_source.pull()
 
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake tarball file', tar_file.read())
@@ -314,7 +314,7 @@ class TestLocal(SourceTestCase):
 
     def test_pull(self):
         local = snapcraft.sources.Local('.', 'source_dir')
-        self.assertTrue(local.pull())
+        local.pull()
 
     def test_provision(self):
         local = snapcraft.sources.Local('.', 'source_dir')
