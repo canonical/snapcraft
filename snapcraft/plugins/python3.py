@@ -14,6 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+The python3 plugin can be used for python 3 projects where you would
+want to do:
+
+    - import python modules with a requirements.txt
+    - build a python project that has a setup.py
+    - install sources straight from pip
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - requirements:
+      (string)
+      path to a requirements.txt file
+"""
+
 import os
 import tempfile
 

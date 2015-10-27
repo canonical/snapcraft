@@ -14,6 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+The maven plugin is useful for building projects that use the maven build
+system which is commonly used for Java projects.
+
+The plugin requires a pom.xml in the root of the source tree.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - maven-options:
+      (list of strings)
+      flags to pass to the build using the maven semantics for parameters.
+"""
+
 import glob
 import logging
 import os
