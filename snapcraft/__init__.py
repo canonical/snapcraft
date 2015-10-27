@@ -84,7 +84,7 @@ be used in any part irrespective of the plugin, these are
     - organize:
       (yaml subsection)
       A dictionary exposing replacements, the key is the internal filename
-      whilst the value the exposed filename, filesets will refer to the
+      whilst the value is the exposed filename, filesets will refer to the
       exposed named applied after organization is applied.
       This can be used to avoid conflicts by renaming files or using a
       different layout from what came out of the build, e.g.;
