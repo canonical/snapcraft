@@ -18,11 +18,11 @@
 The cmake plugin is useful for building projects that are cmake based. These
 are projects that have a CMakeLists.txt that drives the build.
 
-This plugin uses the common plugin keywords as well as those for sources.
+This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
-This plugin uses the following plugin specific keywords:
+Additionally, this plugin uses the following plugin specific keywords:
 
     - configflags:
       (list of strings)
