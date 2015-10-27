@@ -14,6 +14,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+'''
+A part that uses common source options can have these keyword entries:
+
+    - source:
+      (string)
+      A path to some source tree to build. It can be either remote or local,
+      and either a directory tree or a tarball.
+    - source-type:
+      (string)
+      In some cases the source is not enough to identify the version control
+      system or compression algorithim. This hints the system into what to
+      do, the valid values are:
+
+                   - bzr
+                   - mercurial
+                   - hg
+                   - git
+                   - tar
+
+    - source-branch:
+      (string)
+      A specific branch from the source tree. This will result in an error
+      if used with a bazaar source type.
+    - source-tag:
+      (string)
+      A specific tag from the source tree.
+'''
+
+
 import logging
 import os
 import os.path
@@ -25,7 +54,6 @@ import re
 import snapcraft.common
 
 
-logger = logging.getLogger(__name__)
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
@@ -225,6 +253,12 @@ class Local(Base):
 
 
 def get(sourcedir, builddir, options):
+    """Populate sourcedir and builddir from parameters defined in options.
+
+    :param str sourcedir: The source directory to use.
+    :param str builddir: The build directory to use.
+    :param options: source options.
+    """
     source_type = getattr(options, 'source_type', None)
     source_tag = getattr(options, 'source_tag', None)
     source_branch = getattr(options, 'source_branch', None)

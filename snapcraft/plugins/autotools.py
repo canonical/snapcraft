@@ -14,6 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+The autotools plugin is useful for building projects that have the usual
+./configure && make && make install instruction set.
+
+The plugin tries to build trying to use ./configure first, it is not there
+it will run autogen and if autogen is not there it will run autoreconf.
+
+This plugin uses the common plugin keywords as well as those for sources.
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+This plugin uses the following plugin specific keywords:
+
+    - configflags:
+      (list of strings)
+      configure flags to pass to the build such as those shown by running
+      './configure --help'
+"""
+
 import os
 from snapcraft.plugins.make import MakePlugin
 

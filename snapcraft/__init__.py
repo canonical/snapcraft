@@ -15,15 +15,104 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import logging
 import os
 
 import snapcraft.common
 import snapcraft.sources
 import snapcraft.repo
 
+__doc__ = """
+Plugins drive the build process which are defined and expressed as parts,
+each part can use an individual plugin that understands how to build
+certain sources.
 
-logger = logging.getLogger(__name__)
+These plugins have a lifecycle that consists of the following phases:
+
+    - pull
+    - build
+    - stage
+    - snap (DEPRECATED, to be renamed strip)
+    - assemble (DEPRECATED, to be renamed snap)
+
+# Lifecycle
+
+## Pull
+The first is that each part is pulled. This step will download
+content, e.g. checkout a git repository or download a binary component
+like the Java SDK. Snapcraft will create a `parts/` directory with
+sub-directories like `parts/part-name/src` for each part that contains
+the downloaded content.
+
+## Build
+The next step is that each part is built in its `parts/part-name/build`
+directory and installs itself into `parts/part-name/install`.
+
+## Stage
+After the build of each part the parts are combined into a single
+directory tree that is called the "staging area". It can be found
+under the `./stage` directory.
+
+This is the area where all parts can share assets such as libraries to link
+against.
+
+## Snap
+The snap step moves the data into a `./snap` directory. It contains only
+the content that will be put into the final snap package, unlike the staging
+area which may include some development files not destined for your package.
+
+The Snappy metadata information about your project will also now be placed
+in `./snap/meta`.
+
+This `./snap` directory is useful for inspecting what is going into your
+snap and to make any final post-processing on snapcraft's output.
+
+## Assemble
+The final step builds a snap package out of the `snap` directory.
+
+# Common keywords
+
+There are common builtin keywords provided to a snapcraft plugin which can
+be used in any part irrespective of the plugin, these are
+
+    - after:
+      (list of strings)
+      Specifies any parts that should be built before this part is.  This
+      is mostly useful when a part needs a library or build tool built by
+      another part.
+      If the part defined in after is not defined locally, the part will be
+      searched for in the wiki (https://wiki.ubuntu.com/Snappy/Wiki)
+    - stage-packages:
+      (list of strings)
+      A list of Ubuntu packages to use that would support the part creation.
+    - build-packages:
+      (list of strings)
+      A list of Ubuntu packages to be installed on the host to aid in
+      building the part but not going to be in the final package.
+    - filesets:
+      (yaml subsection)
+      A dictionary with filesets, the key being a recognizable user defined
+      string and its value a list of strings of files to be included or
+      excluded. Globbing is achieved with * for either inclusions or
+      exclusion. Exclusions are denoted by a -.
+      Globbing is computed from the private sections of the part.
+    - organize:
+      (yaml subsection)
+      A dictionary exposing replacements, the key is the internal name
+      whilst the value the exposed name, filesets will refer to the
+      exposed named applied after organization is applied.
+    - stage:
+      (list of strings)
+      A list of files from a part’s installation to expose in stage. Rules
+      applying to the list here are the same as those of filesets.
+      Referencing of fileset keys is done with a $ prefixing the fileset
+      key, which will expand with the value of such key.
+    - snap:
+      (list of strings)
+      A list of files from a part’s installation to expose in snap. Rules
+      applying to the list here are the same as those of filesets.
+      Referencing of fileset keys is done with a $ prefixing the fileset
+      key, which will expand with the value of such key.
+"""
 
 
 class BasePlugin:
@@ -35,8 +124,8 @@ class BasePlugin:
         optionally the 'requires' keyword with a list of required
         'properties'.
 
-        By default the the properties will be that of a standard VCS, override
-        in custom implementations if required.
+        By default the the properties will be that of a standard VCS,
+        override in custom implementations if required.
         """
         return {
             '$schema': 'http://json-schema.org/draft-04/schema#',
@@ -113,8 +202,8 @@ class BasePlugin:
     def build(self):
         """Build the source code retrieved from the pull phase.
 
-        The base implementation does nothing by default. Override this method
-        if you need to process the source code to make it runnable.
+        The base implementation does nothing by default. Override this
+        method if you need to process the source code to make it runnable.
         """
         pass
 
@@ -122,7 +211,8 @@ class BasePlugin:
         """Return a list of files to include or exclude in the resulting snap
 
         The staging phase of a plugin's lifecycle may populate many things
-        into the staging directory in order to succeed in building a project.
+        into the staging directory in order to succeed in building a
+        project.
         During the stripping phase and in order to have a clean snap, the
         plugin can provide additional logic for stripping build components
         from the final snap and alleviate the part author from doing so for
