@@ -23,8 +23,8 @@ These plugins have a lifecycle that consists of the following steps:
     - pull
     - build
     - stage
-    - snap (DEPRECATED, to be renamed strip)
-    - assemble (DEPRECATED, to be renamed snap)
+    - snap
+    - assemble
 
 # Lifecycle
 
