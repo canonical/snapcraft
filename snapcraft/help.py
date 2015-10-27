@@ -55,7 +55,7 @@ def _topic_help(module_name, devel):
     if devel:
         help(_TOPICS[module_name])
     else:
-        print(getattr(_TOPICS[module_name], '__doc__'))
+        print(_TOPICS[module_name].__doc__)
 
 
 def _module_help(module_name, devel):
