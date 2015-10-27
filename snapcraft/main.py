@@ -19,6 +19,8 @@ import argparse
 import sys
 
 import snapcraft.cmds
+
+from snapcraft import help
 from snapcraft import log
 
 
@@ -64,6 +66,15 @@ def main():
         'clean',
         help='clean up the environment (to start from scratch)')
     parser.set_defaults(func=snapcraft.cmds.clean)
+
+    parser = subparsers.add_parser(
+        'help',
+        usage=help.topic.__doc__,
+        help='obtain help for plugins and specific topics')
+    parser.set_defaults(func=help.topic)
+    parser.add_argument('topic', help='plugin name or topic to get help from')
+    parser.add_argument('--devel', action='store_true',
+                        help='show the development help')
 
     parser = subparsers.add_parser('pull', help='get sources',
                                    parents=[cmd_parser])

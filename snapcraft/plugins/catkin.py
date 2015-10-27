@@ -14,6 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The catkin plugin is useful for building ROS parts.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - catkin-packages:
+      (list of strings)
+      List of catkin packages to build.
+"""
+
 import lxml.etree
 import os
 import tempfile

@@ -14,6 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The go plugin can be used for go projects using `go get`.
+
+This plugin uses the common plugin keywords, for more information check the
+'plugins' topic.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - source:
+      (string)
+      A path to some source tree to build in the form of something `go get`
+      understands.
+"""
+
 import os
 import snapcraft
 
