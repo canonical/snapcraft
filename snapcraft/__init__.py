@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Plugins drive the build process which are defined and expressed as parts,
-each part can use an individual plugin that understands how to build
-certain sources.
+Plugins drive the build process for a part. Each part can use an individual
+plugin that understands how to work with the declared sources.
 
 These plugins have a lifecycle that consists of the following steps:
 
