@@ -63,7 +63,7 @@ def _module_help(module_name, devel):
         module = importlib.import_module(
             'snapcraft.plugins.{}'.format(module_name))
     except ImportError:
-        logger.error('The plugin does not exists. Use one of the following:')
+        logger.error('The plugin does not exist. Use one of the following:')
         cmds.list_plugins()
 
     if module.__doc__ and devel:

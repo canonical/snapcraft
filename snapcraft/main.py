@@ -70,7 +70,7 @@ def main():
     parser = subparsers.add_parser(
         'help',
         usage=help.topic.__doc__,
-        help='obtain help for plugins and specific topis')
+        help='obtain help for plugins and specific topics')
     parser.set_defaults(func=help.topic)
     parser.add_argument('topic', help='plugin name or topic to get help from')
     parser.add_argument('--devel', action='store_true',
