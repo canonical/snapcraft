@@ -33,7 +33,7 @@ _TOPICS = {
 
 
 def topic(args=None):
-    '''Get help on additional topics or plugin usage.
+    """Get help on additional topics or plugin usage.
     snapcraft help topics    To get the list of topics
     snapcraft help <plugin>  To get help for a specific plugin
     snapcraft help <topic>   To get help on a speficic topic
@@ -41,7 +41,7 @@ def topic(args=None):
 To see the list of available plugins run
 
     snapcraft list-plugins
-'''
+"""
     if args.topic == 'topics':
         for key in _TOPICS:
             print(key)
