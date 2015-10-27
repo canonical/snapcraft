@@ -16,7 +16,6 @@
 
 import importlib
 import logging
-import sys
 
 import snapcraft
 from snapcraft import sources
