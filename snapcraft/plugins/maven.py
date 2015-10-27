@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The maven plugin is useful for building parts that use the maven.
+"""The plugin is useful for building parts that use maven.
 
 The maven build system is commonly used to build Java projects.
 The plugin requires a pom.xml in the root of the source tree.
