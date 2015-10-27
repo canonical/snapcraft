@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-The cmake plugin is useful for building projects that are cmake based. These
-are projects that have a CMakeLists.txt that drives the build.
+"""The cmake plugin is useful for building cmake based parts.
 
+These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
 
 This plugin uses the common plugin keywords as well as those for "sources".

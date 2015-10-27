@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Plugins drive the build process for a part. Each part can use an individual
-plugin that understands how to work with the declared sources.
+"""Plugins drive the build process for a part.
+Each part can use an individual plugin that understands how to work with
+the declared sources.
 
 These plugins have a lifecycle that consists of the following steps:
 

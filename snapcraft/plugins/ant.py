@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-The ant plugin is useful for building projects that use the ant build
-system which is commonly used for Java projects.
+"""The ant plugin is useful for ant based parts.
+
+The ant build system is commonly used to build Java projects.
 
 The plugin requires a build.xml in the root of the source tree.
 

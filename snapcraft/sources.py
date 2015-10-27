@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''
+"""Common keywords for plugins that use common source options.
+
 A part that uses common source options can have these keyword entries:
 
     - source:
@@ -40,7 +41,7 @@ A part that uses common source options can have these keyword entries:
     - source-tag:
       (string)
       A specific tag from the source tree.
-'''
+"""
 
 
 import logging

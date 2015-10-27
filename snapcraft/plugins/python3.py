@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
+"""The python3 plugin can be used for python 3 based parts.
+
 The python3 plugin can be used for python 3 projects where you would
 want to do:
 

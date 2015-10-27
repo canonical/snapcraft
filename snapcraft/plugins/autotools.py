@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-The autotools plugin is useful for building projects that have the usual
-./configure && make && make install instruction set.
+"""The autotools plugin is used for autotools based parts.
+
+Autotools based projects are the ones that have the usual
+`./configure && make && make install` instruction set.
 
 The plugin tries to build using ./configure first, if it is not there
 it will run ./autogen and if autogen is not there it will run autoreconf.

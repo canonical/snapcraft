@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-The scons plugin is useful for building projects that are scons based. These
-are projects that have a SConstruct that drives the build.
+"""The scons plugin is useful for building parts that build with scons.
+
+These are projects that have a SConstruct that drives the build.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the

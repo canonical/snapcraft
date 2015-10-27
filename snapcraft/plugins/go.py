@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-The go plugin can be used for go projects using `go get`
+"""The go plugin can be used for go projects using `go get`.
 
 This plugin uses the common plugin keywords, for more information check the
 'plugins' topic.
