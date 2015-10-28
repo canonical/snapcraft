@@ -63,17 +63,6 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
                                self.options.secretaccesskey]):
             return False
 
-        # TODO remove hack when two python parts can run at the same time.
-        for root, dirs, files in os.walk(self.installdir):
-            for name in files:
-                if name.endswith('.pyc'):
-                    # don't print, instead os.remove
-                    os.remove(os.path.join(root, name))
-        for pip_bin in ('pip', 'pip3', 'pip3.4'):
-            pip_path = os.path.join(self.installdir, 'usr', 'bin', pip_bin)
-            if os.path.exists(pip_path):
-                os.remove(pip_path)
-
         return True
 
     def env(self, root):

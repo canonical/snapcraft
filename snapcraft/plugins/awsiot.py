@@ -76,6 +76,65 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
         with open(filename, 'w') as f:
             f.write(output)
 
+    def _keys_from_aws(self, certsdir):
+        certsjson = None
+
+        # generate new keys
+        self.run_to_file(self.aws + ['create-keys-and-certificate',
+                                     '--set-as-active'],
+                         os.path.join(certsdir, 'certs.json'))
+        # separate into different files
+        with open(os.path.join(certsdir, 'certs.json')) as data_file:
+            certsjson = json.load(data_file)
+
+        with open(os.path.join(certsdir, 'cert.pem'), 'w') as text_file:
+            text_file.write(self.data['certificatePem'])
+        with open(os.path.join(certsdir, 'privateKey.pem'), 'w') \
+                as text_file:
+            text_file.write(self.data['keyPair']['PrivateKey'])
+        with open(os.path.join(certsdir, 'publicKey.pem'), 'w') \
+                as text_file:
+            text_file.write(self.data['keyPair']['PublicKey'])
+
+        return certsjson
+
+    def _keys_from_local(self, certsdir):
+        certsjson = None
+
+        # generate private key
+        csr = os.path.join(certsdir, 'cert.csr')
+        if not self.run(['openssl', 'genrsa',
+                         '-out', os.path.join(certsdir, 'privateKey.pem'),
+                         '2048']) or not \
+                self.run(['openssl', 'req', '-new',
+                          '-key', os.path.join(certsdir, 'privateKey.pem'),
+                          '-out', csr]):
+            return False
+
+        # generate new keys based on a csr
+        # TODO: test the rest of the methods because it always gives
+        # an invalid CSR request
+        certresp = os.path.join(self.builddir, 'certresponse.txt')
+        self.run_to_file(self.aws + ['create-certificate-from-csr',
+                                     '--certificate-signing-request', csr,
+                                     '--set-as-active'],
+                         certresp)
+        with open(certresp) as data_file:
+            certsjson = json.load(data_file)
+
+        self.run_to_file(self.aws + ['describe-certificate',
+                                     '--certificate-id',
+                                     self.data['arn'].split(':cert/')[1],
+                                     '--output',
+                                     'text',
+                                     '--query',
+                                     '{}Description.{}Pem'.format(
+                                        'certificate')
+                                     ],
+                         os.path.join(certsdir, 'cert.pem'))
+
+        return certsjson
+
     def build(self):
         certsdir = os.path.join(self.builddir, 'certs')
         # Make the certs directory if it does not exist
@@ -83,54 +142,9 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
 
         # What should we do with certificates?
         if self.options.generatekeys:
-            # generate new keys
-            self.run_to_file(self.aws + ['create-keys-and-certificate',
-                                         '--set-as-active'],
-                             os.path.join(certsdir, 'certs.json'))
-            # separate into different files
-            with open(os.path.join(certsdir, 'certs.json')) as data_file:
-                self.data = json.load(data_file)
-
-            with open(os.path.join(certsdir, 'cert.pem'), 'w') as text_file:
-                text_file.write(self.data['certificatePem'])
-            with open(os.path.join(certsdir, 'privateKey.pem'), 'w') \
-                    as text_file:
-                text_file.write(self.data['keyPair']['PrivateKey'])
-            with open(os.path.join(certsdir, 'publicKey.pem'), 'w') \
-                    as text_file:
-                text_file.write(self.data['keyPair']['PublicKey'])
+            self.data = self._keys_from_aws(certsdir)
         else:
-            # generate private key
-            csr = os.path.join(certsdir, 'cert.csr')
-            if not self.run(['openssl', 'genrsa',
-                             '-out', os.path.join(certsdir, 'privateKey.pem'),
-                             '2048']) or not \
-                    self.run(['openssl', 'req', '-new',
-                              '-key', os.path.join(certsdir, 'privateKey.pem'),
-                              '-out', csr]):
-                return False
-
-            # generate new keys based on a csr
-            # TODO: test the rest of the methods because it always gives
-            # an invalid CSR request
-            certresp = os.path.join(self.builddir, 'certresponse.txt')
-            self.run_to_file(self.aws + ['create-certificate-from-csr',
-                                         '--certificate-signing-request', csr,
-                                         '--set-as-active'],
-                             certresp)
-            with open(certresp) as data_file:
-                self.data = json.load(data_file)
-
-            self.run_to_file(self.aws + ['describe-certificate',
-                                         '--certificate-id',
-                                         self.data['arn'].split(':cert/')[1],
-                                         '--output',
-                                         'text',
-                                         '--query',
-                                         '{}Description.{}Pem'.format(
-                                            'certificate')
-                                         ],
-                             os.path.join(certsdir, 'cert.pem'))
+            self.data = self._keys_from_local(certsdir)
 
         # Extra check, but good to ensure
         if self.data is None:
