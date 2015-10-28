@@ -27,8 +27,8 @@ from snapcraft import log
 try:
     _version = pkg_resources.require('snapcraft')[0].version
 except pkg_resources.DistributionNotFound:
-    _version = '0devel'
-_VERSION = '%(prog)s ({}). Run \'%(prog)s help\' to get started.'.format(
+    _version = 'devel'
+_VERSION = '%(prog)s ({}). Run "%(prog)s help" to get started.'.format(
         _version)
 
 
