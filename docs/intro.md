@@ -75,7 +75,9 @@ the content that will be put into the final snap package, unlike the staging
 area which may include some development files not destined for your package.
 
 The Snappy metadata information about your project will also now be placed in
-`./snap/meta`.
+`./snap/meta`. Snapcraft takes care of generating all the meta-data Snappy
+expects. For a breakdown of what this is, have a look at our [Snappy developer
+reference](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
 
 This `./snap` directory is useful for inspecting what is going into your snap
 and to make any final post-processing on snapcraft's output.
