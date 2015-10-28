@@ -307,5 +307,9 @@ features used in these examples, check out
 If you should have any more questions, ask us on
 
  * `#snappy` on `irc.freenode.net` or
- * the [snappy-app-devel](https://lists.ubuntu.com/mailman/listinfo/snappy-app-devel)
-   mailing list
+ * the 
+   [snappy-app-devel](https://lists.ubuntu.com/mailman/listinfo/snappy-app-devel)
+   mailing list.
+   We recommend you subscribe to this mailing list where discussions around 
+   snap apps take place, this will keep you up to date with new capabilities 
+   for your snappy app, and best practices from fellow developers.
