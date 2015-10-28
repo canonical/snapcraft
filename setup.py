@@ -23,7 +23,7 @@ from setuptools.command.test import test
 
 
 setup(name="snapcraft",
-      version="0",
+      version='0.4',
       description="Easily craft snaps",
       author_email="snappy-devel@lists.ubuntu.com",
       url="https://launchpad.net/snapcraft",
