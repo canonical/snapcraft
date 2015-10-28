@@ -1,3 +1,9 @@
+id: snapcraft/normal/list-plugins
+command:
+    OUTPUT=$(${SNAPCRAFT} list-plugins)
+    test "$OUTPUT" = "$(echo -e "ant\nautotools\ncatkin\ncmake\ncopy\ngo\njdk\nmake\nmaven\npython2\npython3\nqml\nroscore\nscons\ntar-content\n")"
+flags: simple has-leftovers
+
 id: snapcraft/normal/no-yaml
 command:
     set -x
@@ -63,11 +69,21 @@ command:
     test ! -e ./snap/dir
 flags: simple has-leftovers
 
+id: snapcraft/normal/assemble-inexistent-build-package
+command:
+    set -x
+    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
+    echo "build-packages:" >> snapcraft.yaml
+    echo "  - inexistent-package" >> snapcraft.yaml
+    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
+    echo $OUTPUT | grep "Could not find all the .*build-packages.* required in snapcraft\.yaml"
+flags: simple has-leftovers
+
 id: snapcraft/normal/assemble-no-plugin
 command:
     set -x
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    sed -e '/.*plugin: make-project$/d' -i snapcraft.yaml
+    sed -e '/ *plugin: make$/d' -i snapcraft.yaml
     OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep -q 'Issues while validating snapcraft.yaml: the "plugin" keyword is missing for the "make-project" part.'
@@ -133,6 +149,13 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
     ${SNAPCRAFT} stage
     test "$(./stage/bin/test)" = "Hello world"
+flags: simple has-leftovers
+
+id: snapcraft/normal/simple-maven
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-maven .
+    ${SNAPCRAFT} build
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-scons

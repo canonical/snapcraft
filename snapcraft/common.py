@@ -46,7 +46,7 @@ def run(cmd, **kwargs):
         f.write('\n')
         f.write('exec $*')
         f.flush()
-        return subprocess.call(['/bin/sh', f.name] + cmd, **kwargs) == 0
+        subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
 
 
 def run_output(cmd, **kwargs):

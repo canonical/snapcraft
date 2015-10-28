@@ -14,6 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The scons plugin is useful for building parts that build with scons.
+
+These are projects that have a SConstruct that drives the build.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - scons-options:
+      (list of strings)
+      flags to pass to the build using the scons semantics for parameters.
+"""
+
 import os
 
 import snapcraft
@@ -40,12 +55,8 @@ class SconsPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.build_packages.append('scons')
 
-    def pull(self):
-        return self.handle_source_options()
-
     def build(self):
         env = os.environ.copy()
         env['DESTDIR'] = self.installdir
-        return (self.run(['scons', ] + self.options.scons_options) and
-                self.run(['scons', 'install'] +
-                         self.options.scons_options, env=env))
+        self.run(['scons', ] + self.options.scons_options)
+        self.run(['scons', 'install'] + self.options.scons_options, env=env)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -15,25 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import subprocess
+import fixtures
 
-from setuptools import setup
-from setuptools.command.test import test
+from unittest import mock
+
+from snapcraft import help
+from snapcraft import tests
 
 
-setup(name="snapcraft",
-      version='0.4',
-      description="Easily craft snaps",
-      author_email="snappy-devel@lists.ubuntu.com",
-      url="https://launchpad.net/snapcraft",
-      packages=['snapcraft',
-                'snapcraft.plugins'],
-      package_data={'snapcraft': ['manifest.txt']},
-      scripts=['bin/snapcraft'],
-      data_files=[
-          ('share/snapcraft/schema',
-              ['schema/' + x for x in os.listdir('schema')]),
-      ],
-      test_suite='snapcraft.tests',
-      )
+class CommonTestCase(tests.TestCase):
+
+    @mock.patch('snapcraft.cmds.list_plugins')
+    def test_topic_and_plugin_not_found_lists_plugins(self, mock_list):
+        fake_logger = fixtures.FakeLogger()
+        self.useFixture(fake_logger)
+
+        class Args:
+            topic = 'does-not-exist'
+            devel = False
+
+        help.topic(Args())
+        self.assertTrue(mock_list.called)
+        self.assertEqual(mock_list.call_count, 1)

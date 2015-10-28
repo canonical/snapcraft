@@ -16,10 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import pkg_resources
 import sys
 
 import snapcraft.cmds
+
+from snapcraft import help
 from snapcraft import log
+
+try:
+    _version = pkg_resources.require('snapcraft')[0].version
+except pkg_resources.DistributionNotFound:
+    _version = 'devel'
+_VERSION = '%(prog)s ({}). Run "%(prog)s help" to get started.'.format(
+    _version)
 
 
 def main():
@@ -36,6 +46,9 @@ def main():
     cmd_parser = argparse.ArgumentParser(add_help=False,
                                          parents=[force_parser])
     cmd_parser.add_argument('part', nargs='*')
+
+    root_parser.add_argument('--version', action='version',
+                             version=_VERSION)
 
     # Command parsers
 
@@ -55,9 +68,24 @@ def main():
     parser.set_defaults(func=snapcraft.cmds.run)
 
     parser = subparsers.add_parser(
+        'list-plugins',
+        help='list the available plugins that handle different types '
+        'of a part')
+    parser.set_defaults(func=snapcraft.cmds.list_plugins)
+
+    parser = subparsers.add_parser(
         'clean',
         help='clean up the environment (to start from scratch)')
     parser.set_defaults(func=snapcraft.cmds.clean)
+
+    parser = subparsers.add_parser(
+        'help',
+        usage=help.topic.__doc__,
+        help='obtain help for plugins and specific topics')
+    parser.set_defaults(func=help.topic)
+    parser.add_argument('topic', help='plugin name or topic to get help from')
+    parser.add_argument('--devel', action='store_true',
+                        help='show the development help')
 
     parser = subparsers.add_parser('pull', help='get sources',
                                    parents=[cmd_parser])

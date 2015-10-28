@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os.path
 from unittest.mock import Mock
 
@@ -34,7 +33,7 @@ class TestCopyPlugin(TestCase):
         self.dst_prefix = "parts/copy/install/"
         os.makedirs(self.dst_prefix)
 
-    def test_copy_plugin_any_missing_src_warns_and_errors(self):
+    def test_copy_plugin_any_missing_src_raises_exception(self):
         # ensure that a bad file causes a warning and fails the build even
         # if there is a good file last
         self.mock_options.files = {
@@ -44,12 +43,11 @@ class TestCopyPlugin(TestCase):
         open("zzz", "w").close()
         c = CopyPlugin("copy", self.mock_options)
 
-        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(fake_logger)
+        with self.assertRaises(EnvironmentError) as raised:
+            c.build()
 
-        res = c.build()
-        self.assertFalse(res)
-        self.assertEqual("WARNING: file 'src' missing\n", fake_logger.output)
+        self.assertEqual(raised.exception.__str__(),
+                         'file "src" missing')
 
     def test_copy_plugin_copies(self):
         self.useFixture(fixtures.FakeLogger())
@@ -60,7 +58,7 @@ class TestCopyPlugin(TestCase):
         open("src", "w").close()
 
         c = CopyPlugin("copy", self.mock_options)
-        self.assertTrue(c.build())
+        c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dst")))
 
     def test_copy_plugin_creates_prefixes(self):
@@ -72,6 +70,6 @@ class TestCopyPlugin(TestCase):
         open("src", "w").close()
 
         c = CopyPlugin("copy", self.mock_options)
-        self.assertTrue(c.build())
+        c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
                                                     "dir/dst")))

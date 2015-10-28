@@ -14,6 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The python2 plugin can be used for python 2 based parts.
+
+The python2 plugin can be used for python 2 projects where you would
+want to do:
+
+    - import python modules with a requirements.txt
+    - build a python project that has a setup.py
+    - install sources straight from pip
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - requirements:
+      (string)
+      path to a requirements.txt file
+"""
+
 import os
 import tempfile
 
@@ -54,10 +74,8 @@ class Python2Plugin(snapcraft.BasePlugin):
             root, 'usr', 'lib', self.python_version, 'dist-packages')]
 
     def pull(self):
-        if self.options.source and not self.handle_source_options():
-            return False
-
-        return self._pip()
+        super().pull()
+        self._pip()
 
     def _pip(self):
         setup = 'setup.py'
@@ -69,7 +87,7 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         if not os.path.exists(setup) and not \
                 (self.options.requirements or self.options.pip_packages):
-            return True
+            return
 
         easy_install = os.path.join(
             self.installdir, 'usr', 'bin', 'easy_install')
@@ -83,25 +101,20 @@ class Python2Plugin(snapcraft.BasePlugin):
                              'dist-packages'),
                 site_packages_dir)
 
-        if not self.run(['python2', easy_install, '--prefix', prefix, 'pip']):
-            return False
+        self.run(['python2', easy_install, '--prefix', prefix, 'pip'])
 
         pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
         pip_install = ['python2', pip2, 'install', '--target',
                        site_packages_dir]
 
-        if self.options.requirements and not self.run(
-                pip_install + ['--requirement', requirements]):
-            return False
+        if self.options.requirements:
+            self.run(pip_install + ['--requirement', requirements])
 
-        if self.options.pip_packages and not self.run(
-                pip_install + ['--upgrade'] + self.options.pip_packages):
-            return False
+        if self.options.pip_packages:
+            self.run(pip_install + ['--upgrade'] + self.options.pip_packages):
 
-        if os.path.exists(setup) and not self.run(pip_install + ['.', ]):
-            return False
-
-        return True
+        if os.path.exists(setup):
+            self.run(pip_install + ['.', ])
 
     def build(self):
         # If setuptools is used, it tries to create files in the
@@ -110,11 +123,11 @@ class Python2Plugin(snapcraft.BasePlugin):
         # used.
 
         if not os.path.exists(os.path.join(self.builddir, 'setup.py')):
-            return True
+            return
 
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         setuptemp = self.copy_setup()
-        return self.run(
+        self.run(
             ['python2', setuptemp.name, 'install', '--install-layout=deb',
              '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
 

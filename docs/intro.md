@@ -1,18 +1,8 @@
 # Intro
 
-Snapcraft allows easy crafting of packages for Snappy Ubuntu. It makes it
-easy to incorporate components from different sources and build technologies or
-solutions.
-
-# Snappy
-
-Snappy Ubuntu Core is a new rendition of Ubuntu with transactional updates - a
-minimal server image with the same libraries as today's Ubuntu, but
-applications are provided through a simpler mechanism.
-
-Snappy apps and Ubuntu Core itself can be upgraded atomically and rolled back
-if needed. Apps are also strictly confined and sandboxed to safeguard your
-data and system.
+Snapcraft is a build and packaging tool which helps you package your software
+as a snap. It makes it easy to incorporate components from different sources 
+and build technologies or solutions.
 
 # Key concepts
 
@@ -24,6 +14,16 @@ changes to the system underneath their app.
 
 Snapcraft makes bundling these dependencies easy by allowing you to
 specify them as "parts" in the `snapcraft.yaml` file.
+
+# Snappy
+
+Snappy Ubuntu Core is a new rendition of Ubuntu with transactional updates - a
+minimal server image with the same libraries as today's Ubuntu, but
+applications are provided through a simpler mechanism.
+
+Snappy apps and Ubuntu Core itself can be upgraded atomically and rolled back
+if needed. Apps are also strictly confined and sandboxed to safeguard your
+data and system.
 
 ## Parts
 
@@ -63,9 +63,9 @@ directory tree that is called the "staging area". It can be found
 under the `./stage` directory.
 
 This `./stage` directory is useful for building outside code that isn't in the
-`snapcraft.yaml` recipe against the snap contents. For example, you might build a
-local project against the libraries in `./stage` by running
-`snapcraft shell make`. Though in general, you are encouraged to add even local
+`snapcraft.yaml` recipe against the snap contents. For example, you might 
+build a local project against the libraries in `./stage` by running `snapcraft 
+shell make`. Though in general, you are encouraged to add even local
 projects to snapcraft.yaml with a local `source:` path.
 
 ### Snap
@@ -75,15 +75,18 @@ the content that will be put into the final snap package, unlike the staging
 area which may include some development files not destined for your package.
 
 The Snappy metadata information about your project will also now be placed in
-`./snap/meta`.
+`./snap/meta`. Snapcraft takes care of generating all the meta-data Snappy
+expects. For a breakdown of what this is, have a look at our [Snappy developer
+reference](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
 
 This `./snap` directory is useful for inspecting what is going into your snap
 and to make any final post-processing on snapcraft's output.
 
 ### Assemble
 
-The final step builds a snap package out of the `snap` directory. This `.snap` file
-can be uploaded to the Ubuntu Store and published directly to Snappy users.
+The final step builds a snap package out of the `snap` directory. This `.snap` 
+file can be uploaded to the Ubuntu Store and published directly to Snappy 
+users.
 
 # Next
 

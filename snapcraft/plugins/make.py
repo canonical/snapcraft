@@ -14,6 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The make plugin is useful for building make based parts.
+
+Make based projects are projects that have a Makefile that drives the
+build.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+"""
+
 import snapcraft
 
 
@@ -23,9 +33,6 @@ class MakePlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.build_packages.append('make')
 
-    def pull(self):
-        return self.handle_source_options()
-
     def build(self):
-        return self.run(['make']) and \
-            self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+        self.run(['make'])
+        self.run(['make', 'install', 'DESTDIR=' + self.installdir])

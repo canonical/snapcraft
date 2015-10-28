@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import apt
 import filecmp
 import glob
 import logging
@@ -25,9 +26,9 @@ import sys
 import tempfile
 import time
 
-import snapcraft.plugin
 import snapcraft.yaml
 from snapcraft import common
+from snapcraft import lifecycle
 from snapcraft import meta
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ def init(args):
     if args.part:
         yaml += 'parts:\n'
     for part_name in args.part:
-        part = snapcraft.plugin.load_plugin(part_name, part_name)
+        part = lifecycle.load_plugin(part_name, part_name)
         yaml += '    ' + part.name + ':\n'
         for opt in part.config.get('options', []):
             if part.config['options'][opt].get('required', False):
@@ -236,6 +237,16 @@ def run(args):
             qemu.kill()
 
 
+def list_plugins(args=None):
+    import pkgutil
+    import snapcraft.plugins
+
+    for importer, modname, is_package in pkgutil.iter_modules(
+            snapcraft.plugins.__path__):
+        if not is_package:
+            print(modname.replace('_', '-'))
+
+
 def clean(args):
     config = _load_config()
 
@@ -331,8 +342,10 @@ def cmd(args):
             common.env = config.build_env_for_part(part)
             force = forceAll or cmd == forceCommand
 
-            if not getattr(part, cmd)(force=force):
-                logger.error('Failed doing %s for %s!', cmd, part.name)
+            try:
+                getattr(part, cmd)(force=force)
+            except Exception as e:
+                logger.error('Failed doing %s for %s: %s', cmd, part.name, e)
                 sys.exit(1)
 
 
@@ -348,21 +361,18 @@ def _check_call(args, **kwargs):
 
 def _install_build_packages(packages):
     new_packages = []
-    for check_pkg in packages:
-        if subprocess.call(['dpkg-query', '-s', check_pkg],
-                           stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL) != 0:
-            new_packages.append(check_pkg)
-    if new_packages:
-        logger.info('Installing required packages on the host system')
+    for pkg in packages:
         try:
-            _check_call(
-                ['sudo', 'apt-get', '-y', 'install'] + new_packages,
-                stdout=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+            if not apt.Cache()[pkg].installed:
+                new_packages.append(pkg)
+        except KeyError:
             logger.error('Could not find all the "build-packages" required '
                          'in snapcraft.yaml')
             sys.exit(1)
+    if new_packages:
+        logger.info('Installing required packages on the host system')
+        _check_call(['sudo', 'apt-get', '-o', 'Dpkg::Progress-Fancy=1',
+                     '-y', 'install'] + new_packages)
 
 
 def _load_config():
@@ -392,3 +402,5 @@ def _load_config():
         logger.error('Issue detected while analyzing '
                      'snapcraft.yaml: {}'.format(e.message))
         sys.exit(1)
+    except lifecycle.PluginError as e:
+        logger.error('Issue while loading plugin: {}'.format(e))

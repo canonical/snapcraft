@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import logging
 import os
 import tempfile
@@ -78,6 +79,27 @@ class TestCommands(tests.TestCase):
             '  1\n'
             '  a/2\n',
             fake_logger.output)
+
+    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_list_plugins(self, mock_stdout):
+        expected_list = '''ant
+autotools
+catkin
+cmake
+copy
+go
+jdk
+make
+maven
+python2
+python3
+qml
+roscore
+scons
+tar-content
+'''
+        cmds.list_plugins()
+        self.assertEqual(mock_stdout.getvalue(), expected_list)
 
 
 class CleanTestCase(tests.TestCase):

@@ -14,6 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Common keywords for plugins that use common source options.
+
+A part that uses common source options can have these keyword entries:
+
+    - source:
+      (string)
+      A path to some source tree to build. It can be either remote or local,
+      and either a directory tree or a tarball.
+    - source-type:
+      (string)
+      In some cases the source is not enough to identify the version control
+      system or compression algorithim. This hints the system into what to
+      do, the valid values are:
+
+                   - bzr
+                   - mercurial
+                   - hg
+                   - git
+                   - tar
+
+    - source-branch:
+      (string)
+      A specific branch from the source tree. This will result in an error
+      if used with a bazaar source type.
+    - source-tag:
+      (string)
+      A specific tag from the source tree.
+"""
+
+
 import logging
 import os
 import os.path
@@ -25,7 +55,6 @@ import re
 import snapcraft.common
 
 
-logger = logging.getLogger(__name__)
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
@@ -73,7 +102,7 @@ class Bazaar(Base):
             cmd = ['bzr', 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        return snapcraft.common.run(cmd, cwd=os.getcwd())
+        snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Git(Base):
@@ -102,7 +131,7 @@ class Git(Base):
             cmd = ['git', 'clone'] + branch_opts + \
                   [self.source, self.source_dir]
 
-        return snapcraft.common.run(cmd, cwd=os.getcwd())
+        snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Mercurial(Base):
@@ -129,7 +158,7 @@ class Mercurial(Base):
                 ref = ['-u', self.source_tag or self.source_branch]
             cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
 
-        return snapcraft.common.run(cmd, cwd=os.getcwd())
+        snapcraft.common.run(cmd, cwd=os.getcwd())
 
 
 class Tar(Base):
@@ -146,18 +175,17 @@ class Tar(Base):
 
     def pull(self):
         if not snapcraft.common.isurl(self.source):
-            return True
+            return
 
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
-            return False
+            raise EnvironmentError('unexpected http status code when '
+                                   'downloading %r'.format(req.status_code))
 
         file = os.path.join(self.source_dir, os.path.basename(self.source))
         with open(file, 'wb') as f:
             for chunk in req.iter_content(1024):
                 f.write(chunk)
-
-        return True
 
     def provision(self, dst, clean_target=True):
         # TODO add unit tests.
@@ -172,7 +200,7 @@ class Tar(Base):
             shutil.rmtree(dst)
             os.makedirs(dst)
 
-        return self._extract(tarball, dst)
+        self._extract(tarball, dst)
 
     def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
@@ -208,13 +236,11 @@ class Tar(Base):
 
             tar.extractall(members=filter_members(tar), path=dst)
 
-        return True
-
 
 class Local(Base):
 
     def pull(self):
-        return True
+        pass
 
     def provision(self, dst):
         path = os.path.abspath(self.source)
@@ -226,4 +252,55 @@ class Local(Base):
             os.remove(dst)
         os.symlink(path, dst)
 
-        return True
+
+def get(sourcedir, builddir, options):
+    """Populate sourcedir and builddir from parameters defined in options.
+
+    :param str sourcedir: The source directory to use.
+    :param str builddir: The build directory to use.
+    :param options: source options.
+    """
+    source_type = getattr(options, 'source_type', None)
+    source_tag = getattr(options, 'source_tag', None)
+    source_branch = getattr(options, 'source_branch', None)
+
+    handler_class = _get_source_handler(source_type, options.source)
+    handler = handler_class(options.source, sourcedir, source_tag,
+                            source_branch)
+    handler.pull()
+    handler.provision(builddir)
+
+
+_source_handler = {
+    'bzr': Bazaar,
+    'git': Git,
+    'hg': Mercurial,
+    'mercurial': Mercurial,
+    'tar': Tar,
+}
+
+
+def _get_source_handler(source_type, source):
+    if not source_type:
+        source_type = _get_source_type_from_uri(source)
+
+    return _source_handler.get(source_type, Local)
+
+
+_tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
+
+
+def _get_source_type_from_uri(source):
+    source_type = ''
+    if source.startswith("bzr:") or source.startswith("lp:"):
+        source_type = 'bzr'
+    elif source.startswith("git:"):
+        source_type = 'git'
+    elif _tar_type_regex.match(source):
+        source_type = 'tar'
+    elif snapcraft.common.isurl(source):
+        raise ValueError('no handler to manage source')
+    elif not os.path.isdir(source):
+        raise ValueError('local source is not a directory')
+
+    return source_type

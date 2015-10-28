@@ -16,5 +16,5 @@ services:
 
 parts:
     make-project:
-      plugin: make-project
+      plugin: make
       source: .

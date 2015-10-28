@@ -14,6 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The cmake plugin is useful for building cmake based parts.
+
+These are projects that have a CMakeLists.txt that drives the build.
+The plugin requires a CMakeLists.txt in the root of the source tree.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - configflags:
+      (list of strings)
+      configure flags to pass to the build using the common cmake semantics.
+"""
+
 import snapcraft.plugins.make
 
 
@@ -39,5 +55,6 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.build_packages.append('cmake')
 
     def build(self):
-        return self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
-                        self.options.configflags) and super().build()
+        self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
+                 self.options.configflags)
+        super().build()

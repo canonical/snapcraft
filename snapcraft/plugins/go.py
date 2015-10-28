@@ -14,6 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The go plugin can be used for go projects using `go get`.
+
+This plugin uses the common plugin keywords, for more information check the
+'plugins' topic.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - source:
+      (string)
+      A path to some source tree to build in the form of something `go get`
+      understands.
+"""
+
 import os
 import snapcraft
 
@@ -51,16 +64,14 @@ class GoPlugin(snapcraft.BasePlugin):
     def pull(self):
         # use -d to only download (build will happen later)
         # use -t to also get the test-deps
-        return self.run(['go', 'get', '-t', '-d', self.fullname])
+        self._run(['go', 'get', '-t', '-d', self.fullname])
 
     def build(self):
-        if not self.run(['go', 'build', self.fullname]):
-            return False
-        if not self.run(['go', 'install', self.fullname]):
-            return False
-        return self.run(['cp', '-a', os.path.join(self.builddir, 'bin'),
-                        self.installdir])
+        self._run(['go', 'build', self.fullname])
+        self._run(['go', 'install', self.fullname])
+        self._run(['cp', '-a', os.path.join(self.builddir, 'bin'),
+                  self.installdir])
 
-    def run(self, cmd, **kwargs):
+    def _run(self, cmd, **kwargs):
         cmd = ['env', 'GOPATH=' + self.builddir] + cmd
-        return super().run(cmd, **kwargs)
+        return self.run(cmd, **kwargs)

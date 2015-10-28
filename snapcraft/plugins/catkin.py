@@ -14,12 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The catkin plugin is useful for building ROS parts.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - catkin-packages:
+      (list of strings)
+      List of catkin packages to build.
+"""
+
 import lxml.etree
 import os
 import tempfile
 import logging
 
 import snapcraft
+import snapcraft.repo
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +75,11 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self.dependencies = ['ros-core']
         self.package_deps_found = False
         self.package_local_deps = {}
+        self._deb_packages = []
+
+    def pull(self):
+        super().pull()
+        self._setup_deb_packages()
 
     def env(self, root):
         return [
@@ -124,19 +143,18 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     self.package_local_deps[pkg].add(dep)
                     continue
 
-                # If we're already getting this through a stage package,
+                # If we're already getting this through a deb package,
                 # we don't need it
-                if self.options.stage_packages and (
-                        dep in self.options.stage_packages or
-                        dep.replace('_', '-') in self.options.stage_packages):
+                if (dep in self._deb_packages or
+                        dep.replace('_', '-') in self._deb_packages):
                     continue
 
                 # Get the ROS package for it
-                self.stage_packages.append(
+                self._deb_packages.append(
                     'ros-'+self.options.rosversion+'-'+dep.replace('_', '-'))
 
                 if dep == 'roscpp':
-                    self.stage_packages.append('g++')
+                    self._deb_packages.append('g++')
 
     def _find_package_deps(self):
         if self.package_deps_found:
@@ -158,13 +176,14 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         self.package_deps_found = True
 
-    def setup_stage_packages(self):
-        if not self.handle_source_options():
-            return False
-
+    def _setup_deb_packages(self):
         self._find_package_deps()
 
-        return super().setup_stage_packages()
+        if self._deb_packages:
+            ubuntu = snapcraft.repo.Ubuntu(
+                self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
+            ubuntu.get(self._deb_packages)
+            ubuntu.unpack(self.installdir)
 
     def _rosrun(self, commandlist, cwd=None):
         with tempfile.NamedTemporaryFile(mode='w') as f:
@@ -172,40 +191,33 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             f.write('exec {}\n'.format(' '.join(commandlist)))
             f.flush()
 
-            return self.run(['/bin/bash', f.name], cwd=cwd)
+            self.run(['/bin/bash', f.name], cwd=cwd)
 
     def build(self):
         # Fixup ROS Cmake files that have hardcoded paths in them
-        if not self.run([
+        self.run([
             'find', self.rosdir, '-name', '*.cmake',
             '-exec', 'sed', '-i', '-e',
             r's|\(\W\)/usr/lib/|\1{0}/usr/lib/|g'.format(self.installdir),
             '{}', ';'
-        ]):
-            return False
+        ])
 
         self._find_package_deps()
-
-        if not self._build_packages_deps():
-            return False
+        self._build_packages_deps()
 
         # the hacks
         findcmd = ['find', self.installdir, '-name', '*.cmake', '-delete']
-        if not self.run(findcmd):
-            return False
+        self.run(findcmd)
 
-        if not self.run(
+        self.run(
             ['rm', '-f',
              'opt/ros/' + self.options.rosversion + '/.catkin',
              'opt/ros/' + self.options.rosversion + '/.rosinstall',
              'opt/ros/' + self.options.rosversion + '/setup.sh',
              'opt/ros/' + self.options.rosversion + '/_setup_util.py'],
-                cwd=self.installdir):
-            return False
+            cwd=self.installdir)
 
         os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
-
-        return True
 
     def _build_packages_deps(self):
         # Ugly dependency resolution, just loop through until we can
@@ -219,17 +231,13 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             for pkg in self.packages - built:
                 if len(self.package_local_deps[pkg] - built) > 0:
                     continue
-
-                if not self._handle_package(pkg):
-                    return False
+                self._handle_package(pkg)
 
                 built.add(pkg)
                 built_pkg = True
 
         if not built_pkg:
-            return False
-
-        return True
+            raise RuntimeError('some packages failed to build')
 
     def _handle_package(self, pkg):
         catkincmd = ['catkin_make_isolated']
@@ -264,7 +272,4 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 os.path.join(self.installdir, 'usr', 'bin', 'g++'))
         ])
 
-        if not self._rosrun(catkincmd):
-            return False
-
-        return True
+        self._rosrun(catkincmd)

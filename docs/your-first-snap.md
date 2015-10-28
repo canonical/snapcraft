@@ -275,8 +275,8 @@ your resulting `snapcraft.yaml` should look very similar to:
       golang-static-http:
         plugin: go
         source: git://github.com/mikix/golang-static-http
-      fswebcam:
-        plugin: ubuntu
+        stage-packages:
+         - fswebcam
       glue:
         plugin: copy
         files:
@@ -300,10 +300,29 @@ a few examples for reference or to get inspired, have a look at the
     cd snapcraft/examples
 
 In `examples/` you can find a diverse set of examples which should help you
-get started on your own projects.
+get started on your own projects. To get a good overview of the snapcraft 
+features used in these examples, check out 
+[this article](snapcraft-advanced-features.md).
 
 If you should have any more questions, ask us on
 
  * `#snappy` on `irc.freenode.net` or
- * the [snappy-app-devel](https://lists.ubuntu.com/mailman/listinfo/snappy-app-devel)
-   mailing list
+ * the 
+   [snappy-app-devel](https://lists.ubuntu.com/mailman/listinfo/snappy-app-devel)
+   mailing list.
+   We recommend you subscribe to this mailing list where discussions around 
+   snap apps take place, this will keep you up to date with new capabilities 
+   for your snappy app, and best practices from fellow developers.
+
+### Publish your app to snappy users
+
+We'll be happy to help you on the mailing list to build a snappy package of 
+anything that you are interested in. Choose a good name for it, and you can
+very easily share it in 
+[ubuntu myapps](https://myapps.developer.ubuntu.com/dev/click-apps/?format=snap)
+where you go to share it with other snappy users.
+
+This is the same underlying hub that we use for Ubuntu phone apps, but 
+snappy is a new iteration of that system. It only takes minutes from time of 
+upload to being available to end users. The goal is to deliver your app 
+directly to users instantly — you push a new version, they get it.

@@ -25,7 +25,6 @@ import shutil
 
 import snapcraft
 from snapcraft import common
-from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
@@ -64,15 +63,9 @@ class PluginHandler:
 
         try:
             self._load_code(plugin_name, properties)
-            # only set to valid if it loads without PluginError
-            self.valid = True
-        except PluginError as e:
-            logger.error(str(e))
-            return
         except jsonschema.ValidationError as e:
-            logger.error('Issues while loading properties for '
-                         '{}: {}'.format(part_name, e.message))
-            return
+            raise PluginError('properties failed to load for {}: {}'.format(
+                part_name, e.message))
 
     def _load_code(self, plugin_name, properties):
         module_name = plugin_name.replace('-', '_')
@@ -92,7 +85,7 @@ class PluginHandler:
             with contextlib.suppress(ImportError):
                 module = _load_local(module_name)
             if not module:
-                raise PluginError('Unknown plugin: {}'.format(plugin_name))
+                raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
         options = _make_options(properties, plugin.schema())
@@ -111,9 +104,6 @@ class PluginHandler:
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
-
-    def is_valid(self):
-        return self.valid
 
     def notify_stage(self, stage, hint=''):
         logger.info('%s %s %s', stage, self.name, hint)
@@ -137,35 +127,29 @@ class PluginHandler:
         with open(self.statefile, 'w+') as f:
             f.write(stage)
 
+    def _setup_stage_packages(self):
+        if self.code.stage_packages:
+            ubuntu = snapcraft.repo.Ubuntu(
+                self.code.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+            ubuntu.get(self.code.stage_packages)
+            ubuntu.unpack(self.code.installdir)
+
     def pull(self, force=False):
         if not self.should_stage_run('pull', force):
-            return True
+            return
         self.makedirs()
-
         self.notify_stage("Pulling")
-
-        try:
-            self.code.setup_stage_packages()
-        except repo.PackageNotFoundError as e:
-            logger.error(e.message)
-            return False
-
-        if not self.code.pull():
-            return False
-
+        self._setup_stage_packages()
+        self.code.pull()
         self.mark_done('pull')
-        return True
 
     def build(self, force=False):
         if not self.should_stage_run('build', force):
-            return True
+            return
         self.makedirs()
         self.notify_stage("Building")
-        if not self.code.build():
-            return False
-
+        self.code.build()
         self.mark_done('build')
-        return True
 
     def migratable_fileset_for(self, stage):
         plugin_fileset = self.code.snap_fileset()
@@ -287,11 +271,7 @@ def _load_local(module_name):
 
 
 def load_plugin(part_name, plugin_name, properties={}):
-    part = PluginHandler(plugin_name, part_name, properties)
-    if not part.is_valid():
-        logger.error('Could not load part %s', plugin_name)
-        sys.exit(1)
-    return part
+    return PluginHandler(plugin_name, part_name, properties)
 
 
 def _migratable_filesets(fileset, srcdir):

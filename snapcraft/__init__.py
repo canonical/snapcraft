@@ -14,32 +14,123 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Plugins drive the build process for a part.
+Each part can use an individual plugin that understands how to work with
+the declared sources.
+
+These plugins have a lifecycle that consists of the following steps:
+
+    - pull
+    - build
+    - stage
+    - snap
+    - assemble
+
+# Lifecycle
+
+## Pull
+This is the first step. This is where content is downloaded, e.g. checkout a
+git repository or download a binary component like the Java SDK. Snapcraft
+will place the downloaded content for each part in that part's
+`parts/<part-name>/src` directory.
+
+## Build
+This is the step that follows pull. Each part is built in its
+`parts/part-name/build` directory and installs itself into
+`parts/part-name/install`.
+
+## Stage
+After the build step of each part, the parts are combined into a single
+directory tree that is called the "staging area". It can be found
+under the `./stage` directory.
+
+This is the area where all parts can share assets such as libraries to link
+against.
+
+## Snap
+The snap step moves the data into a `./snap` directory. It contains only
+the content that will be put into the final snap package, unlike the staging
+area which may include some development files not destined for your package.
+
+The Snappy metadata information about your project will also now be placed
+in `./snap/meta`.
+
+This `./snap` directory is useful for inspecting what is going into your
+snap and to make any final post-processing on snapcraft's output.
+
+## Assemble
+The final step builds a snap package out of the `snap` directory.
+
+# Common keywords
+
+There are common builtin keywords provided to a snapcraft plugin which can
+be used in any part irrespective of the plugin, these are
+
+    - after:
+      (list of strings)
+      Specifies any parts that should be built before this part is.  This
+      is mostly useful when a part needs a library or build tool built by
+      another part.
+      If a part listed in `after` is not defined locally, it will be
+      searched for in the wiki (https://wiki.ubuntu.com/Snappy/Wiki)
+    - stage-packages:
+      (list of strings)
+      A list of Ubuntu packages to use that are needed to support the part
+      creation.
+    - build-packages:
+      (list of strings)
+      A list of Ubuntu packages to be installed on the host to aid in
+      building the part but not going into the final snap.
+    - organize:
+      (yaml subsection)
+      A dictionary exposing replacements, the key is the internal filename
+      whilst the value is the exposed filename, filesets will refer to the
+      exposed named applied after organization is applied.
+      This can be used to avoid conflicts by renaming files or using a
+      different layout from what came out of the build, e.g.;
+      `/usr/local/share/icon.png` -> `/usr/share/icon.png`.
+    - filesets:
+      (yaml subsection)
+      A dictionary with filesets, the key being a recognizable user defined
+      string and its value a list of filenames to be included or
+      excluded. Globbing is achieved with * for either inclusions or
+      exclusion. Exclusions are denoted by an initial `-`.
+      Globbing is computed from the part's install directory in
+      `parts/<part-name>/install`.
+    - stage:
+      (list of strings)
+      A list of files from a part’s installation to expose in `stage`.
+      Rules applying to the list here are the same as those of filesets.
+      Referencing of fileset keys is done with a $ prefixing the fileset
+      key, which will expand with the value of such key.
+    - snap:
+      (list of strings)
+      A list of files from a part’s installation to expose in `snap`.
+      Rules applying to the list here are the same as those of filesets.
+      Referencing of fileset keys is done with a $ prefixing the fileset
+      key, which will expand with the value of such key.
+"""
+
 import contextlib
-import logging
 import os
-import re
 
 import snapcraft.common
 import snapcraft.sources
 import snapcraft.repo
 
 
-logger = logging.getLogger(__name__)
-
-
 class BasePlugin:
 
     @classmethod
     def schema(cls):
-        '''
-        Returns a json-schema for the plugin's properties as a dictionary.
+        """Return a json-schema for the plugin's properties as a dictionary.
         Of importance to plugin authors is the 'properties' keyword and
         optionally the 'requires' keyword with a list of required
         'properties'.
 
-        By default the the properties will be that of a standard VCS, override
-        in custom implementations if required.
-        '''
+        By default the properties will be that of a standard VCS,
+        override in custom implementations if required.
+        """
         return {
             '$schema': 'http://json-schema.org/draft-04/schema#',
             'type': 'object',
@@ -67,6 +158,7 @@ class BasePlugin:
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
+        """Define additional sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
     def __init__(self, name, options):
@@ -92,19 +184,63 @@ class BasePlugin:
 
     # The API
     def pull(self):
-        return True
+        """Pull the source code and/or internal prereqs to build the part.
+
+        By default, the base implementation for pull will use the following
+        part properties to retrieve source code:
+
+        - source
+        - source-branch
+        - source-tag
+        - source-type
+
+        If source is empty or does not exist, the phase will be skipped.
+
+        Override or inherit from this method if you need to implement or
+        enhance with custom pull logic.
+        """
+        if getattr(self.options, 'source', None):
+            snapcraft.sources.get(
+                self.sourcedir, self.builddir, self.options)
 
     def build(self):
-        return True
+        """Build the source code retrieved from the pull phase.
+
+        The base implementation does nothing by default. Override this
+        method if you need to process the source code to make it runnable.
+        """
+        pass
 
     def snap_fileset(self):
-        """Returns one iteratables of globs specific to the plugin:
+        """Return a list of files to include or exclude in the resulting snap
+
+        The staging phase of a plugin's lifecycle may populate many things
+        into the staging directory in order to succeed in building a
+        project.
+        During the stripping phase and in order to have a clean snap, the
+        plugin can provide additional logic for stripping build components
+        from the final snap and alleviate the part author from doing so for
+        repetetive filesets.
+
+        These are the rules to honor when creating such list:
+
             - includes can be just listed
             - excludes must be preceded by -
-           For example: (['bin', 'lib', '-include'])"""
+
+        For example::
+            (['bin', 'lib', '-include'])
+        """
         return ([])
 
     def env(self, root):
+        """Return a list with the execution environment for building.
+
+        Plugins often need special environment variables exported to the
+        system for some builds to take place. This is a list of strings
+        of the form key=value. The parameter root is the path to this part.
+
+        :param str root: The root for the part
+        """
         return []
 
     # Helpers
@@ -113,7 +249,7 @@ class BasePlugin:
             cwd = self.builddir
         if True:
             print(' '.join(cmd))
-        self.makedirs(cwd)
+        os.makedirs(cwd, exist_ok=True)
         return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
 
     def run_output(self, cmd, cwd=None, **kwargs):
@@ -121,96 +257,5 @@ class BasePlugin:
             cwd = self.builddir
         if True:
             print(' '.join(cmd))
-        self.makedirs(cwd)
+        os.makedirs(cwd, exist_ok=True)
         return snapcraft.common.run_output(cmd, cwd=cwd, **kwargs)
-
-    def isurl(self, url):
-        return snapcraft.common.isurl(url)
-
-    def get_source(self, source, source_type=None, source_tag=None,
-                   source_branch=None):
-        try:
-            handler_class = _get_source_handler(source_type, source)
-        except ValueError as e:
-            logger.error('Unrecognized source %r for part %r: %s.', source,
-                         self.name, e)
-            snapcraft.common.fatal()
-
-        try:
-            handler = handler_class(source, self.sourcedir, source_tag,
-                                    source_branch)
-        except snapcraft.sources.IncompatibleOptionsError as e:
-            logger.error(
-                'Issues while setting up sources for part \'%s\': %s.',
-                self.name,
-                e.message)
-            snapcraft.common.fatal()
-        if not handler.pull():
-            return False
-        return handler.provision(self.builddir)
-
-    def handle_source_options(self):
-        stype = getattr(self.options, 'source_type', None)
-        stag = getattr(self.options, 'source_tag', None)
-        sbranch = getattr(self.options, 'source_branch', None)
-        return self.get_source(self.options.source,
-                               source_type=stype,
-                               source_tag=stag,
-                               source_branch=sbranch)
-
-    def makedirs(self, d):
-        os.makedirs(d, exist_ok=True)
-
-    def setup_stage_packages(self):
-        if self.stage_packages:
-            ubuntu = snapcraft.repo.Ubuntu(self.ubuntudir,
-                                           sources=self.PLUGIN_STAGE_SOURCES)
-            ubuntu.get(self.stage_packages)
-            ubuntu.unpack(self.installdir)
-            self._fixup(self.installdir)
-
-    def _fixup(self, root):
-        if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xml2-config')):
-            self.run(
-                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                    format(root),
-                 os.path.join(root, 'usr', 'bin', 'xml2-config')])
-        if os.path.isfile(os.path.join(root, 'usr', 'bin', 'xslt-config')):
-            self.run(
-                ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                    format(root),
-                 os.path.join(root, 'usr', 'bin', 'xslt-config')])
-
-
-def _get_source_handler(source_type, source):
-    if not source_type:
-        source_type = _get_source_type_from_uri(source)
-
-    if source_type == 'bzr':
-        handler = snapcraft.sources.Bazaar
-    elif source_type == 'git':
-        handler = snapcraft.sources.Git
-    elif source_type == 'mercurial' or source_type == 'hg':
-        handler = snapcraft.sources.Mercurial
-    elif source_type == 'tar':
-        handler = snapcraft.sources.Tar
-    else:
-        handler = snapcraft.sources.Local
-
-    return handler
-
-
-def _get_source_type_from_uri(source):
-    source_type = ''
-    if source.startswith("bzr:") or source.startswith("lp:"):
-        source_type = 'bzr'
-    elif source.startswith("git:"):
-        source_type = 'git'
-    elif re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$').match(source):
-        source_type = 'tar'
-    elif snapcraft.common.isurl(source):
-        raise ValueError('No handler to manage source')
-    elif not os.path.isdir(source):
-        raise ValueError('Local source is not a directory')
-
-    return source_type
