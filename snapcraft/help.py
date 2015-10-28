@@ -61,13 +61,12 @@ def _module_help(module_name, devel):
     try:
         module = importlib.import_module(
             'snapcraft.plugins.{}'.format(module_name))
+        if module.__doc__ and devel:
+            help(module)
+        elif module.__doc__:
+            print(module.__doc__)
+        else:
+            print('The plugin has no documentation')
     except ImportError:
         logger.error('The plugin does not exist. Use one of the following:')
         cmds.list_plugins()
-
-    if module.__doc__ and devel:
-        help(module)
-    elif module.__doc__:
-        print(module.__doc__)
-    else:
-        print('The plugin has no documentation')
