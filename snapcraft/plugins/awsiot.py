@@ -18,9 +18,7 @@ import os
 import snapcraft
 import urllib.request
 import os.path
-from subprocess import check_call, check_output, CalledProcessError
 import json
-from pprint import pprint
 
 
 class AWSIoTPlugin(snapcraft.BasePlugin):
@@ -105,10 +103,10 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
             # generate private key
             csr = os.path.join(certsdir, 'cert.csr')
             if not self.run(['openssl', 'genrsa',
-                             '-out', os.path.join(certdir, 'privateKey.pem'),
+                             '-out', os.path.join(certsdir, 'privateKey.pem'),
                              '2048']) or not \
                     self.run(['openssl', 'req', '-new',
-                              '-key', os.path.join(certdir, 'privateKey.pem'),
+                              '-key', os.path.join(certsdir, 'privateKey.pem'),
                               '-out', csr]):
                 return False
 
@@ -132,7 +130,7 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
                                          '{}Description.{}Pem'.format(
                                             'certificate')
                                          ],
-                             os.path.join(certdir, 'cert.pem'))
+                             os.path.join(certsdir, 'cert.pem'))
 
         # Extra check, but good to ensure
         if self.data is None:
