@@ -16,12 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import pkg_resources
 import sys
 
 import snapcraft.cmds
 
 from snapcraft import help
 from snapcraft import log
+
+try:
+    _version = pkg_resources.require('snapcraft')[0].version
+except pkg_resources.DistributionNotFound:
+    _version = '0devel'
+_VERSION = '%(prog)s ({}). Run \'%(prog)s help\' to get started.'.format(
+        _version)
 
 
 def main():
@@ -38,6 +46,9 @@ def main():
     cmd_parser = argparse.ArgumentParser(add_help=False,
                                          parents=[force_parser])
     cmd_parser.add_argument('part', nargs='*')
+
+    root_parser.add_argument('--version', action='version',
+                             version=_VERSION)
 
     # Command parsers
 
