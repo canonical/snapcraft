@@ -19,6 +19,7 @@ import snapcraft
 import urllib.request
 import os.path
 import json
+import subprocess
 
 
 class AWSIoTPlugin(snapcraft.BasePlugin):
@@ -103,17 +104,14 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
 
         # generate private key
         csr = os.path.join(certsdir, 'cert.csr')
-        if not self.run(['openssl', 'genrsa',
-                         '-out', os.path.join(certsdir, 'privateKey.pem'),
-                         '2048']) or not \
-                self.run(['openssl', 'req', '-new',
-                          '-key', os.path.join(certsdir, 'privateKey.pem'),
-                          '-out', csr]):
-            return False
+        self.run(['openssl', 'genrsa',
+                  '-out', os.path.join(certsdir, 'privateKey.pem'),
+                  '2048'])
+        self.run(['openssl', 'req', '-new',
+                  '-key', os.path.join(certsdir, 'privateKey.pem'),
+                  '-out', csr])
 
         # generate new keys based on a csr
-        # TODO: test the rest of the methods because it always gives
-        # an invalid CSR request
         certresp = os.path.join(self.builddir, 'certresponse.txt')
         self.run_to_file(self.aws + ['create-certificate-from-csr',
                                      '--certificate-signing-request', csr,
@@ -148,7 +146,7 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
 
         # Extra check, but good to ensure
         if self.data is None:
-            return False
+            return
 
         # Get the root certificate
         self.filename = urllib.request.urlretrieve(
@@ -172,41 +170,36 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
                 text_file.write(self.pd)
 
         arnresp = os.path.join(self.builddir, 'arnresponse.txt')
-        if not self.run_to_file(self.aws + ['create-policy',
-                                            '--policy-name',
-                                            self.options.policyname,
-                                            '--policy-document',
-                                            'file://' +
-                                            self.options.policydocument],
-                                arnresp):
+        try:
+            self.run_to_file(self.aws + ['create-policy',
+                                         '--policy-name',
+                                         self.options.policyname,
+                                         '--policy-document',
+                                         'file://' +
+                                         self.options.policydocument],
+                             arnresp)
+        except subprocess.CalledProcessError:
             print("If the policy name already exists ' \
                   'then creating it will fail. You can ignore this error.")
-            if not self.run_to_file(self.aws + ['get-policy',
-                                                '--policy-name',
-                                                self.options.policyname],
-                                    arnresp):
-                return False
+            self.run_to_file(self.aws + ['get-policy',
+                                         '--policy-name',
+                                         self.options.policyname],
+                             arnresp)
 
         with open('arnresponse.txt') as data_file:
                 self.data = json.load(data_file)
 
-        if not self.run(self.aws + ['attach-principal-policy',
-                                    '-‐principal-arn',
-                                    self.data["policyArn"],
-                                    '--policy-name',
-                                    self.options.policyname]):
-            return False
+        self.run(self.aws + ['attach-principal-policy',
+                             '-‐principal-arn',
+                             self.data["policyArn"],
+                             '--policy-name',
+                             self.options.policyname])
 
-        if not self.run(self.aws + ['create-thing',
-                                    '--thing-name',
-                                    self.options.thing]):
-            return False
+        self.run(self.aws + ['create-thing',
+                             '--thing-name',
+                             self.options.thing])
 
         print("Created Thing: %s" % self.options.thing)
-        return True
-
-    def run(self, cmd, **kwargs):
-        return True
 
     def stage_fileset(self):
         fileset = super().stage_fileset()

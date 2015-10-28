@@ -47,23 +47,17 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
         super().__init__(name, options)
 
     def build(self):
-        if not super().build():
-            return False
+        super().build()
 
         aws = ['python3', os.path.join(self.installdir, 'usr', 'bin', 'aws')]
 
-        if not self.run(aws + ['configure',
-                        'set', 'region', self.options.region]):
-            return False
-        if not self.run(aws + ['configure',
-                        'set', 'aws_access_key_id', self.options.accesskeyid]):
-            return False
-        if not self.run(aws + ['configure',
+        self.run(aws + ['configure',
+                        'set', 'region', self.options.region])
+        self.run(aws + ['configure',
+                        'set', 'aws_access_key_id', self.options.accesskeyid])
+        self.run(aws + ['configure',
                         'set', 'aws_secret_access_key',
-                               self.options.secretaccesskey]):
-            return False
-
-        return True
+                        self.options.secretaccesskey])
 
     def env(self, root):
         env = super().env(root)

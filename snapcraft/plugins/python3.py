@@ -110,7 +110,7 @@ class Python3Plugin(snapcraft.BasePlugin):
             self.run(pip_install + ['--requirement', requirements])
 
         if self.options.pip_packages:
-            self.run(pip_install + ['--upgrade'] + self.options.pip_packages):
+            self.run(pip_install + ['--upgrade'] + self.options.pip_packages)
 
         if os.path.exists(setup):
             self.run(pip_install + ['.', ])
