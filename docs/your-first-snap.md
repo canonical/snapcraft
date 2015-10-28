@@ -300,7 +300,9 @@ a few examples for reference or to get inspired, have a look at the
     cd snapcraft/examples
 
 In `examples/` you can find a diverse set of examples which should help you
-get started on your own projects.
+get started on your own projects. To get a good overview of the snapcraft 
+features used in these examples, check out 
+[this article](snapcraft-advanced-features.md).
 
 If you should have any more questions, ask us on
 
