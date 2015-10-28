@@ -275,8 +275,8 @@ your resulting `snapcraft.yaml` should look very similar to:
       golang-static-http:
         plugin: go
         source: git://github.com/mikix/golang-static-http
-      fswebcam:
-        plugin: ubuntu
+        stage-packages:
+         - fswebcam
       glue:
         plugin: copy
         files:
