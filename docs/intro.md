@@ -63,9 +63,9 @@ directory tree that is called the "staging area". It can be found
 under the `./stage` directory.
 
 This `./stage` directory is useful for building outside code that isn't in the
-`snapcraft.yaml` recipe against the snap contents. For example, you might build a
-local project against the libraries in `./stage` by running
-`snapcraft shell make`. Though in general, you are encouraged to add even local
+`snapcraft.yaml` recipe against the snap contents. For example, you might 
+build a local project against the libraries in `./stage` by running `snapcraft 
+shell make`. Though in general, you are encouraged to add even local
 projects to snapcraft.yaml with a local `source:` path.
 
 ### Snap
@@ -82,8 +82,9 @@ and to make any final post-processing on snapcraft's output.
 
 ### Assemble
 
-The final step builds a snap package out of the `snap` directory. This `.snap` file
-can be uploaded to the Ubuntu Store and published directly to Snappy users.
+The final step builds a snap package out of the `snap` directory. This `.snap` 
+file can be uploaded to the Ubuntu Store and published directly to Snappy 
+users.
 
 # Next
 
