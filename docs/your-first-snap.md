@@ -313,3 +313,16 @@ If you should have any more questions, ask us on
    We recommend you subscribe to this mailing list where discussions around 
    snap apps take place, this will keep you up to date with new capabilities 
    for your snappy app, and best practices from fellow developers.
+
+### Publish your app to snappy users
+
+We'll be happy to help you on the mailing list to build a snappy package of 
+anything that you are interested in. Choose a good name for it, and here's 
+where you go to share it with other snappy users:
+
+  https://myapps.developer.ubuntu.com/dev/click-apps/?format=snap
+
+This is the same underlying hub that we use for Ubuntu phone apps, but 
+snappy is a new iteration of that system. It only take sminutes from time of 
+upload to being available to end users. The goal is to deliver your app 
+directly to users instantly — you push a new version, they get it.
