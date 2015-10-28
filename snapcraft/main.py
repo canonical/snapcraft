@@ -29,7 +29,7 @@ try:
 except pkg_resources.DistributionNotFound:
     _version = 'devel'
 _VERSION = '%(prog)s ({}). Run "%(prog)s help" to get started.'.format(
-        _version)
+    _version)
 
 
 def main():
