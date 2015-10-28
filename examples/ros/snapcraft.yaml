@@ -7,9 +7,9 @@ description: A really small ROS example
 
 binaries:
   listener:
-    exec: opt/ros/indigo/beginner_tutorials/listener
+    exec: opt/ros/indigo/beginner_tutorials/lib/beginner_tutorials/listener
   talker:
-    exec: opt/ros/indigo/beginner_tutorials/talker
+    exec: opt/ros/indigo/beginner_tutorials/lib/beginner_tutorials/talker
 
 services:
   rosmaster:
