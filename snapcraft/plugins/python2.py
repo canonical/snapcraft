@@ -67,7 +67,8 @@ class Python2Plugin(snapcraft.BasePlugin):
         if self.options.requirements:
             requirements = os.path.join(os.getcwd(), self.options.requirements)
 
-        if not os.path.exists(setup) and not (self.options.requirements or self.options.pip_packages):
+        if not os.path.exists(setup) and not \
+                (self.options.requirements or self.options.pip_packages):
             return True
 
         easy_install = os.path.join(

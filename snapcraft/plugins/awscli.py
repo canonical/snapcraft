@@ -18,6 +18,7 @@ import os
 import os.path
 import snapcraft.plugins.python3
 
+
 class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
 
     @classmethod
@@ -27,11 +28,11 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
             'type': 'string',
             'default': ''
         }
-        schema['properties']['secretaccesskey'] =  {
+        schema['properties']['secretaccesskey'] = {
             'type': 'string',
             'default': ''
         }
-        schema['properties']['region'] =  {
+        schema['properties']['region'] = {
             'type': 'string',
             'default': 'us-east-1'
         }
@@ -43,7 +44,6 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
     def __init__(self, name, options):
         options.source = "https://github.com/aws/aws-cli.git"
         options.source_type = 'git'
-        #options.pip_packages = ['py2exe', 'awscli']
         super().__init__(name, options)
 
     def build(self):
@@ -52,19 +52,23 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
 
         aws = ['python3', os.path.join(self.installdir, 'usr', 'bin', 'aws')]
 
-        if not self.run(aws + ['configure','set','region',self.options.region]):
+        if not self.run(aws + ['configure',
+                        'set', 'region', self.options.region]):
             return False
-        if not self.run(aws + ['configure','set','aws_access_key_id',self.options.accesskeyid]):
+        if not self.run(aws + ['configure',
+                        'set', 'aws_access_key_id', self.options.accesskeyid]):
             return False
-        if not self.run(aws + ['configure','set','aws_secret_access_key',self.options.secretaccesskey]):
+        if not self.run(aws + ['configure',
+                        'set', 'aws_secret_access_key',
+                               self.options.secretaccesskey]):
             return False
 
-        #TODO remove hack when two python parts can run at the same time.
+        # TODO remove hack when two python parts can run at the same time.
         for root, dirs, files in os.walk(self.installdir):
             for name in files:
-              if name.endswith('.pyc'):
-                  # don't print, instead os.remove
-                  os.remove(os.path.join(root,name))
+                if name.endswith('.pyc'):
+                    # don't print, instead os.remove
+                    os.remove(os.path.join(root, name))
         for pip_bin in ('pip', 'pip3', 'pip3.4'):
             pip_path = os.path.join(self.installdir, 'usr', 'bin', pip_bin)
             if os.path.exists(pip_path):
@@ -75,7 +79,7 @@ class AWSCLIPlugin(snapcraft.plugins.python3.Python3Plugin):
     def env(self, root):
         env = super().env(root)
         env.extend(['AWS_ACCESS_KEY_ID=%s' % self.options.accesskeyid,
-            'AWS_SECRET_ACCESS_KEY=%s' % self.options.secretaccesskey])
+                    'AWS_SECRET_ACCESS_KEY=%s' % self.options.secretaccesskey])
         return env
 
     def snap_fileset(self):
