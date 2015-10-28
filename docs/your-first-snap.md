@@ -323,6 +323,6 @@ very easily share it in
 where you go to share it with other snappy users.
 
 This is the same underlying hub that we use for Ubuntu phone apps, but 
-snappy is a new iteration of that system. It only take sminutes from time of 
+snappy is a new iteration of that system. It only takes minutes from time of 
 upload to being available to end users. The goal is to deliver your app 
 directly to users instantly — you push a new version, they get it.
