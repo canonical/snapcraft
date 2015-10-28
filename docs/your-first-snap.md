@@ -317,10 +317,10 @@ If you should have any more questions, ask us on
 ### Publish your app to snappy users
 
 We'll be happy to help you on the mailing list to build a snappy package of 
-anything that you are interested in. Choose a good name for it, and here's 
-where you go to share it with other snappy users:
-
-  https://myapps.developer.ubuntu.com/dev/click-apps/?format=snap
+anything that you are interested in. Choose a good name for it, and you can
+very easily share it in 
+[ubuntu myapps](https://myapps.developer.ubuntu.com/dev/click-apps/?format=snap)
+where you go to share it with other snappy users.
 
 This is the same underlying hub that we use for Ubuntu phone apps, but 
 snappy is a new iteration of that system. It only take sminutes from time of 
