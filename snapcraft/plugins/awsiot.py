@@ -99,8 +99,6 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
             f.write(output)
 
     def _keys_from_aws(self, certsdir):
-        certsjson = None
-
         # generate new keys
         self.run_to_file(self.aws + ['create-keys-and-certificate',
                                      '--set-as-active'],
