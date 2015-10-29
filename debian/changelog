@@ -1,8 +1,30 @@
-snapcraft (0.4) UNRELEASED; urgency=medium
+snapcraft (0.4) xenial; urgency=medium
 
-  * 
+  * Core:
+    - Install build packages if package is removed but not purged
+      (LP: #1507814)
+    - Don't crash on help for unexisting plugin (LP: #1510954)
+    - Don't follow links when checking for suid/guid for unpacked
+      debian package contents (LP: #1511161)
+    - Raise exceptions for plugin errors (LP: #1481122)
+    - Exit cleanly with an error when using the source keyword with a local
+      file (LP: #1499424)
+    - Add version flags to cli (LP: #1501222)
+    - Search the wiki for a part if the 'plugin' keyword is missing
+      (LP: #1506205)
+    - Developer documentation for the plugin base class added (LP: #1507075)
+    - Add subcommand to list plugins (LP: #1510160)
+    - Add subcommand for help (LP: #1510683)
+  * Plugins:
+    - autotools: use autoreconf if needed (LP: #1507648)
+    - maven: support maven flags (LP: #1502031)
+    - catkin: new plugin for building ros projects (LP: #1506201)
+  * Packaging:
+    - Run tests on package build (LP: #1506096)
+    - debian/control: python3-fixtures and python3-testscenarios build deps
+      (LP: #1507573)
 
- -- Daniel Holbach <daniel.holbach@ubuntu.com>  Wed, 14 Oct 2015 13:31:11 +0200
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 29 Oct 2015 12:52:04 -0300
 
 snapcraft (0.3) wily; urgency=medium
 
