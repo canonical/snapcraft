@@ -14,6 +14,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""This plugin brings in the AWS command line interface and configures it.
+
+The AWS command line can be used for a variety of things including accessing
+s3 or setting up ec2 services. It also is used for setting IoT things. This
+plugin takes configuration values for your AWS keys, downloads and installs
+the client into your snap, and configures it with those keys.
+
+Settings for this plugin include:
+
+    - accesskeyid:
+      (string)
+      AWS Access Key to use
+    - secreetaccesskey:
+      (string)
+      AWS Secret Key
+    - region
+      (string)
+      Region of EC2 to use, defaults to us-east-1
+
+It is important to not that the key will be stored in the snap itself and
+could be harvested with appropriate tools.
+"""
+
 import os
 import os.path
 import snapcraft.plugins.python3
