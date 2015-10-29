@@ -268,9 +268,9 @@ def _fix_xml_tools(root):
 
 
 def _fix_filemode(path):
-    mode = stat.S_IMODE(os.stat(path).st_mode)
+    mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
     if mode & 0o4000 or mode & 0o2000:
-        logger.debug('Removing suid/guid from {}'.format(path))
+        logger.warning('Removing suid/guid from {}'.format(path))
         os.chmod(path, mode & 0o1777)
 
 
