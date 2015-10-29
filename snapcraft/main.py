@@ -24,12 +24,28 @@ import snapcraft.cmds
 from snapcraft import help
 from snapcraft import log
 
-try:
-    _version = pkg_resources.require('snapcraft')[0].version
-except pkg_resources.DistributionNotFound:
-    _version = 'devel'
-_VERSION = '%(prog)s ({}). Run "%(prog)s help" to get started.'.format(
-    _version)
+
+class _VersionAction(argparse.Action):
+
+    def __init__(self, option_strings, version=None, dest=argparse.SUPPRESS,
+                 default=argparse.SUPPRESS, nargs=0, help=None):
+        super(_VersionAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        version_string = '{prog} ({ver}).\nRun "{prog} help" to get started.'
+
+        try:
+            version = pkg_resources.require('snapcraft')[0].version
+        except pkg_resources.DistributionNotFound:
+            version = 'devel'
+
+        print(version_string.format(prog=parser.prog.split()[0], ver=version))
+        parser.exit()
 
 
 def main():
@@ -47,8 +63,8 @@ def main():
                                          parents=[force_parser])
     cmd_parser.add_argument('part', nargs='*')
 
-    root_parser.add_argument('--version', action='version',
-                             version=_VERSION)
+    root_parser.add_argument('-v', '--version', action=_VersionAction,
+                             help="show the program's version number and exit")
 
     # Command parsers
 
@@ -78,15 +94,6 @@ def main():
         help='clean up the environment (to start from scratch)')
     parser.set_defaults(func=snapcraft.cmds.clean)
 
-    parser = subparsers.add_parser(
-        'help',
-        usage=help.topic.__doc__,
-        help='obtain help for plugins and specific topics')
-    parser.set_defaults(func=help.topic)
-    parser.add_argument('topic', help='plugin name or topic to get help from')
-    parser.add_argument('--devel', action='store_true',
-                        help='show the development help')
-
     parser = subparsers.add_parser('pull', help='get sources',
                                    parents=[cmd_parser])
     parser.set_defaults(func=snapcraft.cmds.cmd)
@@ -111,6 +118,20 @@ def main():
         help='make snap package', parents=[force_parser],
         aliases=['all'])
     parser.set_defaults(func=snapcraft.cmds.assemble)
+
+    parser = subparsers.add_parser(
+        'version', help="show the program's version number and exit")
+    parser.add_argument('foo', action=_VersionAction, nargs='?',
+                        help=argparse.SUPPRESS)
+
+    parser = subparsers.add_parser(
+        'help',
+        usage=help.topic.__doc__,
+        help='obtain help for plugins and specific topics')
+    parser.set_defaults(func=help.topic)
+    parser.add_argument('topic', help='plugin name or topic to get help from')
+    parser.add_argument('--devel', action='store_true',
+                        help='show the development help')
 
     # Now run parser
 
