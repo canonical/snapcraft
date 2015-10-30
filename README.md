@@ -17,4 +17,4 @@ transactional system.
 
 See the [intro](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md)
 for details about the concepts behind
-snapcraft. There is also a [tutorial](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md).
+snapcraft. There is also a [tutorial](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md). If you're interested in developing Snapcraft you should look at the [hacking guide](https://github.com/ubuntu-core/snapcraft/blob/master/HACKING.md).
