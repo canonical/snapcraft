@@ -15,7 +15,6 @@ env:
   matrix:
   - TEST_SUITE=unit
   - TEST_SUITE=plainbox
-  - TEST_SUITE="plainbox examples"
 
 install:
   # PPA for plainbox.
