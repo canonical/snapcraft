@@ -27,4 +27,4 @@ script:
   - ./runtests.sh $TEST_SUITE
 after_success:
   - pip install coveralls
-  - coveralls
+  - COVERALLS_REPO_TOKEN=$COVERALLS_TOKEN coveralls
