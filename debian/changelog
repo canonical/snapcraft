@@ -1,3 +1,9 @@
+snapcraft (0.5) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Daniel Holbach <daniel.holbach@ubuntu.com>  Fri, 30 Oct 2015 09:09:02 +0100
+
 snapcraft (0.4) xenial; urgency=medium
 
   * Core:
