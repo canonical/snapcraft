@@ -31,7 +31,7 @@ You can install the daily build PPA by running:
 
 We'd love the help!
 
-- Submit merge requests against lp:snapcraft
+- Submit pull requests against [snapcraft](https://github.com/ubuntu-core/snapcraft/pulls)
 - Our mailing list is snappy-devel@lists.ubuntu.com
 - We can also be found on the #snappy IRC channel on Freenode
 
