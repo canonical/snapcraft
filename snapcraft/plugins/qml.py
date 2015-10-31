@@ -58,9 +58,6 @@ class QmlPlugin(snapcraft.BasePlugin):
             "qml-module-qtsysteminfo",
             "qml-module-qttest",
             "qml-module-qtwebkit",
-            "qml-module-ubuntu-connectivity",
-            "qml-module-ubuntu-onlineaccounts",
-            "qml-module-ubuntu-onlineaccounts-client",
         ])
 
     def snap_fileset(self):
