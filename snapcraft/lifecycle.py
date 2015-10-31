@@ -130,7 +130,9 @@ class PluginHandler:
     def _setup_stage_packages(self):
         if self.code.stage_packages:
             ubuntu = snapcraft.repo.Ubuntu(
-                self.code.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+                self.code.ubuntudir,
+                self.code.stage_series,
+                sources=self.code.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.code.stage_packages)
             ubuntu.unpack(self.code.installdir)
 
@@ -228,6 +230,7 @@ def _builtin_options():
         'snap': [],
         'stage': [],
         'stage-packages': [],
+        'stage-series': 'vivid',
         'build-packages': [],
         'organize': {}
     }

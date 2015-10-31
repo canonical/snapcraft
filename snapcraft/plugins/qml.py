@@ -62,6 +62,7 @@ class QmlPlugin(snapcraft.BasePlugin):
             "qml-module-ubuntu-onlineaccounts",
             "qml-module-ubuntu-onlineaccounts-client",
         ])
+        self.stage_series = 'vivid'
 
     def snap_fileset(self):
         return ['*',

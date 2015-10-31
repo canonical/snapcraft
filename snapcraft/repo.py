@@ -19,7 +19,6 @@ import glob
 import itertools
 import logging
 import os
-import platform
 import string
 import shutil
 import stat
@@ -69,7 +68,8 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
+    def __init__(self, rootdir, series,
+                 recommends=False, sources=_DEFAULT_SOURCES):
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.recommends = recommends
@@ -80,7 +80,7 @@ class Ubuntu:
             sources = _get_local_sources_list()
             local = True
         self.apt_cache, self.apt_progress = _setup_apt_cache(
-            rootdir, sources, local)
+            rootdir, sources, series, local)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -195,13 +195,12 @@ def _format_sources_list(sources, arch, release='vivid'):
     })
 
 
-def _setup_apt_cache(rootdir, sources, local=False):
+def _setup_apt_cache(rootdir, sources, series, local=False):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
     if not local:
         arch = snapcraft.common.get_arch()
-        series = platform.linux_distribution()[2]
         sources = _format_sources_list(sources, arch, series)
 
     with open(srcfile, 'w') as f:
