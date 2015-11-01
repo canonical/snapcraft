@@ -23,8 +23,8 @@ def setup_dirs():
     and support running out of a development snapshot
     """
     from snapcraft import common
-    topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+    topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
     # only change the default if we are running from a checkout
-    if os.path.exists(os.path.join(topdir, "setup.py")):
+    if os.path.exists(os.path.join(topdir, 'setup.py')):
         common.set_plugindir(os.path.join(topdir, 'plugins'))
         common.set_schemadir(os.path.join(topdir, 'schema'))

@@ -138,7 +138,7 @@ class PluginHandler:
         if not self.should_stage_run('pull', force):
             return
         self.makedirs()
-        self.notify_stage("Pulling")
+        self.notify_stage('Pulling')
         self._setup_stage_packages()
         self.code.pull()
         self.mark_done('pull')
@@ -147,7 +147,7 @@ class PluginHandler:
         if not self.should_stage_run('build', force):
             return
         self.makedirs()
-        self.notify_stage("Building")
+        self.notify_stage('Building')
         self.code.build()
         self.mark_done('build')
 
@@ -183,7 +183,7 @@ class PluginHandler:
         if not self.code:
             return True
 
-        self.notify_stage("Staging")
+        self.notify_stage('Staging')
         self._organize()
         snap_files, snap_dirs = self._migratable_fileset_for('stage')
 
@@ -204,7 +204,7 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        self.notify_stage("Snapping")
+        self.notify_stage('Snapping')
         snap_files, snap_dirs = self._migratable_fileset_for('snap')
 
         try:
@@ -370,4 +370,4 @@ def _generate_exclude_set(directory, excludes):
 def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
-            raise PluginError("path '{}' must be relative".format(d))
+            raise PluginError('path "{}" must be relative'.format(d))

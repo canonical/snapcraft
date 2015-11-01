@@ -202,14 +202,14 @@ class PluginTestCase(snapcraft.tests.TestCase):
             snapcraft.lifecycle._get_file_list(['rel', '/abs/include'])
 
         self.assertEqual(
-            "path '/abs/include' must be relative", str(raised.exception))
+            'path "/abs/include" must be relative', str(raised.exception))
 
     def test_filesets_exlcudes_without_relative_paths(self):
         with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
             snapcraft.lifecycle._get_file_list(['rel', '-/abs/exclude'])
 
         self.assertEqual(
-            "path '/abs/exclude' must be relative", str(raised.exception))
+            'path "/abs/exclude" must be relative', str(raised.exception))
 
 
 class PluginMakedirsTestCase(snapcraft.tests.TestCase):

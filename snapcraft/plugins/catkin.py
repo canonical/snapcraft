@@ -128,7 +128,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         try:
             tree = lxml.etree.parse(f)
         except lxml.etree.ParseError:
-            logger.warning("Unable to read packages.xml file for '{}'".format(
+            logger.warning('Unable to read packages.xml file for "{}"'.format(
                 pkg))
             return
 
@@ -171,7 +171,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 with open(filename, 'r') as f:
                     self._deps_from_packagesxml(f, pkg)
             except os.FileNotFound:
-                logger.warning("Unable to find packages.xml for '" + pkg + "'")
+                logger.warning('Unable to find packages.xml for "' + pkg + '"')
                 pass
 
         self.package_deps_found = True
