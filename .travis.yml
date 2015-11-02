@@ -22,7 +22,7 @@ install:
   # PPA for snappy.
   - sudo apt-add-repository -y ppa:snappy-dev/tools-proposed
   - sudo apt-get update -qq
-  - sudo apt-get install -qq build-essential dpkg-dev plainbox pyflakes python3-apt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pep8 python3-requests python3-testscenarios python3-yaml ubuntu-snappy-cli
+  - sudo apt-get install -qq build-essential dpkg-dev plainbox pyflakes python3-apt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pep8 python3-requests python3-testscenarios python3-yaml ubuntu-snappy-cli python3-lxml
 script:
   - ./runtests.sh $TEST_SUITE
 after_success:
