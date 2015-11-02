@@ -165,7 +165,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                files, dirs = snapcraft.lifecycle.migratable_filesets(
+                files, dirs = snapcraft.lifecycle._migratable_filesets(
                     filesets[key]['fileset'], srcdir)
                 snapcraft.lifecycle._migrate_files(files, dirs, srcdir, dstdir)
 

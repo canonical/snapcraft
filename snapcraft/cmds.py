@@ -273,10 +273,7 @@ def _check_for_collisions(parts):
     parts_files = {}
     for part in parts:
         # Gather our own files up
-        fileset = getattr(part.code.options, 'stage', ['*']) or ['*']
-        part_files, _ = lifecycle.migratable_filesets(
-            fileset,
-            part.installdir)
+        part_files, _ = part.migratable_fileset_for('stage')
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
