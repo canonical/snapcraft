@@ -48,7 +48,7 @@ _config = None
 
 
 def init(args):
-    if os.path.exists("snapcraft.yaml"):
+    if os.path.exists('snapcraft.yaml'):
         logger.error('snapcraft.yaml already exists!')
         sys.exit(1)
     yaml = _TEMPLATE_YAML
@@ -85,7 +85,7 @@ def snap(args):
     cmd(args)
 
     # This check is to support manual assembly.
-    if not os.path.exists(os.path.join(common.get_snapdir(), "meta")):
+    if not os.path.exists(os.path.join(common.get_snapdir(), 'meta')):
         arches = [snapcraft.common.get_arch(), ]
 
         config = _load_config()
@@ -134,9 +134,9 @@ def _find_latest_private_key():
         candidates.append(ssh_key)
     # Sort the keys by modification time, pick the most recent key
     candidates.sort(key=lambda f: os.stat(f).st_mtime, reverse=True)
-    logger.debug("Available ssh public keys: %r", candidates)
+    logger.debug('Available ssh public keys: %r', candidates)
     if not candidates:
-        raise LookupError("Unable to find any private ssh key")
+        raise LookupError('Unable to find any private ssh key')
     return candidates[0]
 
 
@@ -152,24 +152,24 @@ def run(args):
     try:
         ssh_key = _find_latest_private_key()
     except LookupError:
-        logger.error("You need to have an SSH key to use this command")
-        logger.error("Please generate one with ssh-keygen(1)")
+        logger.error('You need to have an SSH key to use this command')
+        logger.error('Please generate one with ssh-keygen(1)')
         return 1
     else:
-        logger.info("Using the following ssh key: %s", ssh_key)
+        logger.info('Using the following ssh key: %s', ssh_key)
 
     # Find available *.snap files to copy into the test VM
     snap_dir = os.path.join(os.getcwd())
     # copy the snap with the largest version number into the test VM
-    snaps = glob.glob(snap_dir + "/*.snap")
+    snaps = glob.glob(snap_dir + '/*.snap')
     snaps.sort()
     if not snaps:
-        logger.error("There are no .snap files ready")
-        logger.error("Perhaps you forgot to run 'snapcraft assemble'")
+        logger.error('There are no .snap files ready')
+        logger.error('Perhaps you forgot to run "snapcraft assemble"')
         return 1
 
-    qemudir = os.path.join(os.getcwd(), "image")
-    qemu_img = os.path.join(qemudir, "15.04.img")
+    qemudir = os.path.join(os.getcwd(), 'image')
+    qemu_img = os.path.join(qemudir, '15.04.img')
     if not os.path.exists(qemu_img):
         os.makedirs(qemudir, exist_ok=True)
         logger.info(
@@ -189,48 +189,48 @@ def run(args):
         # $ export SNAPCRAFT_RUN_QEMU_ARGS=\
         #       "-usb -device usb-host,hostbus=1,hostaddr=10"
         # $ snapcraft run
-        qemu_args = os.getenv("SNAPCRAFT_RUN_QEMU_ARGS")
+        qemu_args = os.getenv('SNAPCRAFT_RUN_QEMU_ARGS')
         if qemu_args is not None:
             qemu_args = shlex.split(qemu_args)
         else:
             qemu_args = []
         qemu = subprocess.Popen(
-            ["kvm", "-m", "768", "-nographic", "-snapshot", "-redir",
-             "tcp:8022::22", qemu_img] + qemu_args, stdin=subprocess.PIPE)
+            ['kvm', '-m', '768', '-nographic', '-snapshot', '-redir',
+             'tcp:8022::22', qemu_img] + qemu_args, stdin=subprocess.PIPE)
         n = tempfile.NamedTemporaryFile()
         ssh_opts = [
             # We want to login with the specified ssh identity (key)
             '-i', ssh_key,
             # We don't want strict host checking because it's a new VM with a
             # random key each time.
-            "-oStrictHostKeyChecking=no",
+            '-oStrictHostKeyChecking=no',
             # We don't want to pollute the known_hosts file with new entries
             # all the time so let's use a temporary file for that
-            "-oUserKnownHostsFile=%s" % n.name,
+            '-oUserKnownHostsFile=%s' % n.name,
             # Don't try keyboard interactive authentication, we're expecting to
             # login via the key and if that doesn't work then everything else
             # will fail anyway.
-            "-oKbdInteractiveAuthentication=no",
+            '-oKbdInteractiveAuthentication=no',
         ]
         while True:
             ret_code = _call(
-                ["ssh"] + ssh_opts +
-                ["ubuntu@localhost", "-p", "8022", "true"])
+                ['ssh'] + ssh_opts +
+                ['ubuntu@localhost', '-p', '8022', 'true'])
             if ret_code == 0:
                 break
-            print("Waiting for device")
+            print('Waiting for device')
             time.sleep(1)
         # copy the most recent snap into the test VM
         _check_call(
-            ["scp"] + ssh_opts + [
-                "-P", "8022", snaps[-1], "ubuntu@localhost:~/"])
+            ['scp'] + ssh_opts + [
+                '-P', '8022', snaps[-1], 'ubuntu@localhost:~/'])
         # install the snap
         _check_call(
-            ["ssh"] + ssh_opts +
-            ["ubuntu@localhost", "-p", "8022", "sudo snappy install  *.snap"])
+            ['ssh'] + ssh_opts +
+            ['ubuntu@localhost', '-p', '8022', 'sudo snappy install  *.snap'])
         # "login"
         _check_call(
-            ["ssh"] + ssh_opts + ["-p", "8022", "ubuntu@localhost"],
+            ['ssh'] + ssh_opts + ['-p', '8022', 'ubuntu@localhost'],
             preexec_fn=os.setsid)
     finally:
         if qemu:
@@ -393,7 +393,7 @@ def _load_config():
             'init\''.format(e.file))
         sys.exit(1)
     except snapcraft.yaml.SnapcraftSchemaError as e:
-        msg = "Issues while validating snapcraft.yaml: {}".format(e.message)
+        msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
         logger.error(msg)
         sys.exit(1)
     except snapcraft.yaml.PluginNotDefinedError as e:

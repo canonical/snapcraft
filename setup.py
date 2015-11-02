@@ -22,11 +22,11 @@ from setuptools import setup
 from setuptools.command.test import test
 
 
-setup(name="snapcraft",
+setup(name='snapcraft',
       version='0.4',
-      description="Easily craft snaps",
-      author_email="snappy-devel@lists.ubuntu.com",
-      url="https://launchpad.net/snapcraft",
+      description='Easily craft snaps',
+      author_email='snappy-devel@lists.ubuntu.com',
+      url='https://launchpad.net/snapcraft',
       packages=['snapcraft',
                 'snapcraft.plugins'],
       package_data={'snapcraft': ['manifest.txt']},
@@ -36,4 +36,4 @@ setup(name="snapcraft",
               ['schema/' + x for x in os.listdir('schema')]),
       ],
       test_suite='snapcraft.tests',
-      )
+)

@@ -94,7 +94,7 @@ class Bazaar(Base):
         tag_opts = []
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
-        if os.path.exists(os.path.join(self.source_dir, ".bzr")):
+        if os.path.exists(os.path.join(self.source_dir, '.bzr')):
             cmd = ['bzr', 'pull'] + tag_opts + \
                   [self.source, '-d', self.source_dir]
         else:
@@ -116,7 +116,7 @@ class Git(Base):
                 'a git source')
 
     def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, ".git")):
+        if os.path.exists(os.path.join(self.source_dir, '.git')):
             refspec = 'HEAD'
             if self.source_branch:
                 refspec = 'refs/heads/' + self.source_branch
@@ -145,7 +145,7 @@ class Mercurial(Base):
                 'mercurial source')
 
     def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, ".hg")):
+        if os.path.exists(os.path.join(self.source_dir, '.hg')):
             ref = []
             if self.source_tag:
                 ref = ['-r', self.source_tag]
@@ -215,7 +215,7 @@ class Tar(Base):
                 # consider "d/ab" and "d/abc" to have common prefix "d/ab";
                 # check all members either start with common dir
                 for m in members:
-                    if not (m.name.startswith(common + "/") or
+                    if not (m.name.startswith(common + '/') or
                             m.isdir() and m.name == common):
                         # commonprefix() didn't return a dir name; go up one
                         # level
@@ -225,9 +225,9 @@ class Tar(Base):
                 for m in members:
                     if m.name == common:
                         continue
-                    if m.name.startswith(common + "/"):
-                        m.name = m.name[len(common + "/"):]
-                    # strip leading "/", "./" or "../" as many times as needed
+                    if m.name.startswith(common + '/'):
+                        m.name = m.name[len(common + '/'):]
+                    # strip leading '/', './' or '../' as many times as needed
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
@@ -292,9 +292,9 @@ _tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
 
 def _get_source_type_from_uri(source):
     source_type = ''
-    if source.startswith("bzr:") or source.startswith("lp:"):
+    if source.startswith('bzr:') or source.startswith('lp:'):
         source_type = 'bzr'
-    elif source.startswith("git:") or source.startswith("git@"):
+    elif source.startswith('git:') or source.startswith('git@'):
         source_type = 'git'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
