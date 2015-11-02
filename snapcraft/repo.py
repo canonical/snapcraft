@@ -51,7 +51,8 @@ class PackageNotFoundError(Exception):
 
     @property
     def message(self):
-        return 'The Ubuntu package \'%s\' was not found' % self.package_name
+        return 'The Ubuntu package "{}" was not found'.format(
+            self.package_name)
 
     def __init__(self, package_name):
         self.package_name = package_name
@@ -61,7 +62,7 @@ class UnpackError(Exception):
 
     @property
     def message(self):
-        return 'Error while provisioning \'%s\'' % self.package_name
+        return 'Error while provisioning "{}"'.format(self.package_name)
 
     def __init__(self, package_name):
         self.package_name = package_name
