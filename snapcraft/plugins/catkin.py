@@ -128,7 +128,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         try:
             tree = lxml.etree.parse(f)
         except lxml.etree.ParseError:
-            logger.warning('Unable to read packages.xml file for "{}"'.format(
+            logger.warning('Unable to read "package.xml" file for "{}"'.format(
                 pkg))
             return
 
@@ -173,7 +173,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             except IOError as e:
                 if e.errno is os.errno.ENOENT:
                     logger.warning(
-                        'Unable to find packages.xml for "{}"'.format(pkg))
+                        'Unable to find "package.xml" for "{}"'.format(pkg))
                 else:
                     raise e
 
