@@ -101,8 +101,8 @@ class Config:
 
         self._wiki = snapcraft.wiki.Wiki()
 
-        for part_name in self.data.get("parts", []):
-            properties = self.data["parts"][part_name] or {}
+        for part_name in self.data.get('parts', []):
+            properties = self.data['parts'][part_name] or {}
 
             plugin_name = properties.pop('plugin', None)
             # TODO search the wiki
@@ -127,7 +127,7 @@ class Config:
                     'deprecated. Using {0} instead of {0}-project'.format(
                         plugin_name))
 
-            if "after" in properties:
+            if 'after' in properties:
                 after_requests[part_name] = properties.pop('after')
 
             properties['stage'] = _expand_filesets_for('stage', properties)

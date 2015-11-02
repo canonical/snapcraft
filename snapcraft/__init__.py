@@ -172,15 +172,15 @@ class BasePlugin:
             self.build_packages = options.build_packages
 
         self.options = options
-        self.partdir = os.path.join(os.getcwd(), "parts", self.name)
-        self.sourcedir = os.path.join(os.getcwd(), "parts", self.name, "src")
-        self.builddir = os.path.join(os.getcwd(), "parts", self.name, "build")
-        self.ubuntudir = os.path.join(os.getcwd(), "parts", self.name,
+        self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+        self.sourcedir = os.path.join(os.getcwd(), 'parts', self.name, 'src')
+        self.builddir = os.path.join(os.getcwd(), 'parts', self.name, 'build')
+        self.ubuntudir = os.path.join(os.getcwd(), 'parts', self.name,
                                       'ubuntu')
-        self.installdir = os.path.join(os.getcwd(), "parts", self.name,
-                                       "install")
-        self.stagedir = os.path.join(os.getcwd(), "stage")
-        self.snapdir = os.path.join(os.getcwd(), "snap")
+        self.installdir = os.path.join(os.getcwd(), 'parts', self.name,
+                                       'install')
+        self.stagedir = os.path.join(os.getcwd(), 'stage')
+        self.snapdir = os.path.join(os.getcwd(), 'snap')
 
     # The API
     def pull(self):
