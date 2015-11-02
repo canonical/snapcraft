@@ -38,7 +38,7 @@ import snapcraft.repo
 logger = logging.getLogger(__name__)
 
 
-class CatkinPlugin (snapcraft.BasePlugin):
+class CatkinPlugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_SOURCES = '''
 deb http://packages.ros.org/ros/ubuntu/ trusty main
@@ -170,9 +170,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     self.builddir, 'src', pkg, 'package.xml')
                 with open(filename, 'r') as f:
                     self._deps_from_packagesxml(f, pkg)
-            except os.FileNotFound:
-                logger.warning('Unable to find packages.xml for "' + pkg + '"')
-                pass
+            except IOError as e:
+                if e.errno is os.errno.ENOENT:
+                    logger.warning(
+                        'Unable to find packages.xml for "{}"'.format(pkg))
+                else:
+                    raise e
 
         self.package_deps_found = True
 
