@@ -167,7 +167,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             try:
                 filename = os.path.join(
-                    self.builddir, 'src', pkg, 'package.xml')
+                    self.builddir, pkg, 'package.xml')
                 with open(filename, 'r') as f:
                     self._deps_from_packagesxml(f, pkg)
             except IOError as e:

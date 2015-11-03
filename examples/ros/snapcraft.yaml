@@ -21,7 +21,7 @@ parts:
     plugin: roscore
   catkin-tutorials:
     plugin: catkin
-    source: .
+    source: src
     catkin-packages:
       - beginner_tutorials
 
