@@ -180,7 +180,7 @@ class Tar(Base):
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
             raise EnvironmentError('unexpected http status code when '
-                                   'downloading %r'.format(req.status_code))
+                                   'downloading {}'.format(req.status_code))
 
         file = os.path.join(self.source_dir, os.path.basename(self.source))
         with open(file, 'wb') as f:
