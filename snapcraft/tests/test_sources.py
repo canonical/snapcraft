@@ -41,7 +41,8 @@ class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 class TestTar(tests.TestCase):
 
-    def test_pull_tarball_must_download_to_sourcedir(self):
+    @unittest.mock.patch('snapcraft.sources.Tar.provision')
+    def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
         os.environ['no_proxy'] = '127.0.0.1'
         server = http.server.HTTPServer(
             ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
@@ -61,6 +62,7 @@ class TestTar(tests.TestCase):
 
         tar_source.pull()
 
+        mock_prov.assert_called_once_with(dest_dir)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake tarball file', tar_file.read())
 
@@ -115,13 +117,6 @@ class TestBazaar(SourceTestCase):
         self.mock_run.assert_called_once_with(
             ['bzr', 'pull', '-r', 'tag:tag', 'lp:my-source', '-d',
              'source_dir'])
-
-    def test_provision(self):
-        bzr = snapcraft.sources.Bazaar('lp:my-source', 'source_dir')
-        bzr.provision('dst')
-
-        self.mock_run.assert_called_once_with(
-            ['cp', '-Trfa', 'source_dir', 'dst'])
 
     def test_init_with_source_branch_raises_exception(self):
         with self.assertRaises(
@@ -193,13 +188,6 @@ class TestGit(SourceTestCase):
             ['git', '-C', 'source_dir', 'pull', 'git://my-source',
              'refs/heads/my-branch'])
 
-    def test_provision(self):
-        bzr = snapcraft.sources.Git('git://my-source', 'source_dir')
-        bzr.provision('dst')
-
-        self.mock_run.assert_called_once_with(
-            ['cp', '-Trfa', 'source_dir', 'dst'])
-
     def test_init_with_source_branch_and_tag_raises_exception(self):
         with self.assertRaises(
                 snapcraft.sources.IncompatibleOptionsError) as raised:
@@ -267,13 +255,6 @@ class TestMercurial(SourceTestCase):
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', '-b', 'my-branch', 'hg://my-source'])
 
-    def test_provision(self):
-        bzr = snapcraft.sources.Mercurial('hg://my-source', 'source_dir')
-        bzr.provision('dst')
-
-        self.mock_run.assert_called_once_with(
-            ['cp', '-Trfa', 'source_dir', 'dst'])
-
     def test_init_with_source_branch_and_tag_raises_exception(self):
         with self.assertRaises(
                 snapcraft.sources.IncompatibleOptionsError) as raised:
@@ -315,23 +296,19 @@ class TestLocal(SourceTestCase):
         local = snapcraft.sources.Local('.', 'source_dir')
         local.pull()
 
-    def test_provision(self):
-        local = snapcraft.sources.Local('.', 'source_dir')
-        local.provision('dst')
-
-        self.mock_rmdir.assert_called_once_with('dst')
+        self.mock_rmdir.assert_called_once_with('source_dir')
         self.mock_symlink.assert_called_once_with(
-            '/home/ubuntu/sources/snap/source', 'dst')
+            '/home/ubuntu/sources/snap/source', 'source_dir')
 
-    def test_provision_when_target_is_file(self):
+    def test_pull_when_target_is_file(self):
         self.mock_isdir.return_value = False
 
-        local = snapcraft.sources.Local('.', 'source_dir')
-        local.provision('dst')
+        local = snapcraft.sources.Local('.', 'source_file')
+        local.pull()
 
-        self.mock_remove.assert_called_once_with('dst')
+        self.mock_remove.assert_called_once_with('source_file')
         self.mock_symlink.assert_called_once_with(
-            '/home/ubuntu/sources/snap/source', 'dst')
+            '/home/ubuntu/sources/snap/source', 'source_file')
 
 
 class TestUri(tests.TestCase):

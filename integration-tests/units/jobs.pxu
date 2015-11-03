@@ -94,10 +94,9 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-source .
     ${SNAPCRAFT} build
-    test -e stamp-all
-    test "$(readlink parts/make-project/build)" = "$(pwd)"
+    test -e parts/make-project/build/stamp-all
     ${SNAPCRAFT} stage
-    test -e stamp-install
+    test -e parts/make-project/build/stamp-install
 flags: simple has-leftovers
 
 id: snapcraft/normal/local-plugin

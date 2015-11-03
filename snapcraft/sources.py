@@ -52,6 +52,7 @@ import shutil
 import tarfile
 import re
 import subprocess
+import tempfile
 
 import snapcraft.common
 
@@ -73,12 +74,6 @@ class Base:
         self.source_dir = source_dir
         self.source_tag = source_tag
         self.source_branch = source_branch
-
-    def pull(self):
-        raise NotImplementedError('this is just a base class')
-
-    def provision(self, dst):
-        return subprocess.check_call(['cp', '-Trfa', self.source_dir, dst])
 
 
 class Bazaar(Base):
@@ -174,9 +169,11 @@ class Tar(Base):
                 'can\'t specify a source-branch for a tar source')
 
     def pull(self):
-        if not snapcraft.common.isurl(self.source):
-            return
+        if snapcraft.common.isurl(self.source):
+            self._download()
+        self.provision(self.source_dir)
 
+    def _download(self):
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
             raise EnvironmentError('unexpected http status code when '
@@ -197,8 +194,11 @@ class Tar(Base):
             tarball = os.path.abspath(self.source)
 
         if clean_target:
+            tmp_tarball = tempfile.NamedTemporaryFile().name
+            shutil.move(tarball, tmp_tarball)
             shutil.rmtree(dst)
             os.makedirs(dst)
+            shutil.move(tmp_tarball, tarball)
 
         self._extract(tarball, dst)
 
@@ -240,17 +240,14 @@ class Tar(Base):
 class Local(Base):
 
     def pull(self):
-        pass
-
-    def provision(self, dst):
         path = os.path.abspath(self.source)
-        if os.path.islink(dst):
-            os.remove(dst)
-        elif os.path.isdir(dst):
-            os.rmdir(dst)
+        if os.path.islink(self.source_dir):
+            os.remove(self.source_dir)
+        elif os.path.isdir(self.source_dir):
+            os.rmdir(self.source_dir)
         else:
-            os.remove(dst)
-        os.symlink(path, dst)
+            os.remove(self.source_dir)
+        os.symlink(path, self.source_dir)
 
 
 def get(sourcedir, builddir, options):
@@ -268,7 +265,6 @@ def get(sourcedir, builddir, options):
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
     handler.pull()
-    handler.provision(builddir)
 
 
 _source_handler = {
