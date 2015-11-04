@@ -145,7 +145,7 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
                                      'text',
                                      '--query',
                                      '{}Description.{}Pem'.format(
-                                        'certificate')
+                                         'certificate')
                                      ],
                          os.path.join(certsdir, 'cert.pem'))
 
