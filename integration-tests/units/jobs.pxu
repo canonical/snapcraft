@@ -401,3 +401,17 @@ command:
     ${SNAPCRAFT} shell xml2-config --cflags | grep -q `pwd`
     ${SNAPCRAFT} shell xslt-config --cflags | grep -q `pwd`
 flags: simple has-leftovers
+
+id: snapcraft/circle/tree-dependencies
+command:
+    set -ex
+    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/tree .
+    ${SNAPCRAFT} pull
+flags: simple has-leftovers
+
+id: snapcraft/circle/circle-dependencies
+command:
+    set -ex
+    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/circle .
+    ! ${SNAPCRAFT} pull
+flags: simple has-leftovers
