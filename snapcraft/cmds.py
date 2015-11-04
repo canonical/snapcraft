@@ -375,6 +375,7 @@ def _install_build_packages(packages):
     if new_packages:
         logger.info('Installing required packages on the host system')
         _check_call(['sudo', 'apt-get', '-o', 'Dpkg::Progress-Fancy=1',
+                     '--no-install-recommends',
                      '-y', 'install'] + new_packages)
 
 
