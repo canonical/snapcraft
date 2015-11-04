@@ -79,7 +79,6 @@ class TestCommands(tests.TestCase):
     def test_list_plugins(self, mock_stdout):
         expected_list = '''ant
 autotools
-awscli
 awsiot
 catkin
 cmake
