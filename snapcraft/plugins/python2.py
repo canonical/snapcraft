@@ -70,8 +70,8 @@ class Python2Plugin(snapcraft.BasePlugin):
         ])
 
     def env(self, root):
-        return ["PYTHONPATH=%s" % os.path.join(
-            root, 'usr', 'lib', self.python_version, 'dist-packages')]
+        return ["PYTHONPATH={}".format(os.path.join(
+            root, 'usr', 'lib', self.python_version, 'dist-packages'))]
 
     def pull(self):
         super().pull()

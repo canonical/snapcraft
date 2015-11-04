@@ -70,7 +70,7 @@ class SourceTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = unittest.mock.patch('snapcraft.common.run')
+        patcher = unittest.mock.patch('subprocess.check_call')
         self.mock_run = patcher.start()
         self.mock_run.return_value = True
         self.addCleanup(patcher.stop)
@@ -94,7 +94,7 @@ class TestBazaar(SourceTestCase):
 
         self.mock_rmdir.assert_called_once_with('source_dir')
         self.mock_run.assert_called_once_with(
-            ['bzr', 'branch', 'lp:my-source', 'source_dir'], cwd=os.getcwd())
+            ['bzr', 'branch', 'lp:my-source', 'source_dir'])
 
     def test_pull_tag(self):
         bzr = snapcraft.sources.Bazaar(
@@ -103,7 +103,7 @@ class TestBazaar(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'branch', '-r', 'tag:tag', 'lp:my-source',
-             'source_dir'], cwd=os.getcwd())
+             'source_dir'])
 
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
@@ -114,14 +114,14 @@ class TestBazaar(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'pull', '-r', 'tag:tag', 'lp:my-source', '-d',
-             'source_dir'], cwd=os.getcwd())
+             'source_dir'])
 
     def test_provision(self):
         bzr = snapcraft.sources.Bazaar('lp:my-source', 'source_dir')
         bzr.provision('dst')
 
         self.mock_run.assert_called_once_with(
-            ['cp', '-Trfa', 'source_dir', 'dst'], cwd=os.getcwd())
+            ['cp', '-Trfa', 'source_dir', 'dst'])
 
     def test_init_with_source_branch_raises_exception(self):
         with self.assertRaises(
@@ -141,7 +141,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', 'git://my-source', 'source_dir'], cwd=os.getcwd())
+            ['git', 'clone', 'git://my-source', 'source_dir'])
 
     def test_pull_branch(self):
         git = snapcraft.sources.Git('git://my-source', 'source_dir',
@@ -150,7 +150,7 @@ class TestGit(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['git', 'clone', '--branch', 'my-branch', 'git://my-source',
-             'source_dir'], cwd=os.getcwd())
+             'source_dir'])
 
     def test_pull_tag(self):
         git = snapcraft.sources.Git('git://my-source', 'source_dir',
@@ -159,7 +159,7 @@ class TestGit(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['git', 'clone', '--branch', 'tag', 'git://my-source',
-             'source_dir'], cwd=os.getcwd())
+             'source_dir'])
 
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
@@ -169,7 +169,7 @@ class TestGit(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['git', '-C', 'source_dir', 'pull', 'git://my-source',
-             'HEAD'], cwd=os.getcwd())
+             'HEAD'])
 
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
@@ -180,7 +180,7 @@ class TestGit(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['git', '-C', 'source_dir', 'pull', 'git://my-source',
-             'refs/tags/tag'], cwd=os.getcwd())
+             'refs/tags/tag'])
 
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
@@ -191,14 +191,14 @@ class TestGit(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['git', '-C', 'source_dir', 'pull', 'git://my-source',
-             'refs/heads/my-branch'], cwd=os.getcwd())
+             'refs/heads/my-branch'])
 
     def test_provision(self):
         bzr = snapcraft.sources.Git('git://my-source', 'source_dir')
         bzr.provision('dst')
 
         self.mock_run.assert_called_once_with(
-            ['cp', '-Trfa', 'source_dir', 'dst'], cwd=os.getcwd())
+            ['cp', '-Trfa', 'source_dir', 'dst'])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         with self.assertRaises(
@@ -218,7 +218,7 @@ class TestMercurial(SourceTestCase):
         hg.pull()
 
         self.mock_run.assert_called_once_with(
-            ['hg', 'clone', 'hg://my-source', 'source_dir'], cwd=os.getcwd())
+            ['hg', 'clone', 'hg://my-source', 'source_dir'])
 
     def test_pull_branch(self):
         hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir',
@@ -227,7 +227,7 @@ class TestMercurial(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', '-u', 'my-branch', 'hg://my-source',
-             'source_dir'], cwd=os.getcwd())
+             'source_dir'])
 
     def test_pull_tag(self):
         hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir',
@@ -236,7 +236,7 @@ class TestMercurial(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', '-u', 'tag', 'hg://my-source',
-             'source_dir'], cwd=os.getcwd())
+             'source_dir'])
 
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
@@ -245,7 +245,7 @@ class TestMercurial(SourceTestCase):
         hg.pull()
 
         self.mock_run.assert_called_once_with(
-            ['hg', 'pull', 'hg://my-source'], cwd=os.getcwd())
+            ['hg', 'pull', 'hg://my-source'])
 
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
@@ -255,7 +255,7 @@ class TestMercurial(SourceTestCase):
         hg.pull()
 
         self.mock_run.assert_called_once_with(
-            ['hg', 'pull', '-r', 'tag', 'hg://my-source'], cwd=os.getcwd())
+            ['hg', 'pull', '-r', 'tag', 'hg://my-source'])
 
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
@@ -265,15 +265,14 @@ class TestMercurial(SourceTestCase):
         hg.pull()
 
         self.mock_run.assert_called_once_with(
-            ['hg', 'pull', '-b', 'my-branch', 'hg://my-source'],
-            cwd=os.getcwd())
+            ['hg', 'pull', '-b', 'my-branch', 'hg://my-source'])
 
     def test_provision(self):
         bzr = snapcraft.sources.Mercurial('hg://my-source', 'source_dir')
         bzr.provision('dst')
 
         self.mock_run.assert_called_once_with(
-            ['cp', '-Trfa', 'source_dir', 'dst'], cwd=os.getcwd())
+            ['cp', '-Trfa', 'source_dir', 'dst'])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         with self.assertRaises(

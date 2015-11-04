@@ -51,6 +51,7 @@ import requests
 import shutil
 import tarfile
 import re
+import subprocess
 
 import snapcraft.common
 
@@ -77,8 +78,7 @@ class Base:
         raise NotImplementedError('this is just a base class')
 
     def provision(self, dst):
-        return snapcraft.common.run(['cp', '-Trfa', self.source_dir, dst],
-                                    cwd=os.getcwd())
+        return subprocess.check_call(['cp', '-Trfa', self.source_dir, dst])
 
 
 class Bazaar(Base):
@@ -102,7 +102,7 @@ class Bazaar(Base):
             cmd = ['bzr', 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        snapcraft.common.run(cmd, cwd=os.getcwd())
+        subprocess.check_call(cmd)
 
 
 class Git(Base):
@@ -131,7 +131,7 @@ class Git(Base):
             cmd = ['git', 'clone'] + branch_opts + \
                   [self.source, self.source_dir]
 
-        snapcraft.common.run(cmd, cwd=os.getcwd())
+        subprocess.check_call(cmd)
 
 
 class Mercurial(Base):
@@ -158,7 +158,7 @@ class Mercurial(Base):
                 ref = ['-u', self.source_tag or self.source_branch]
             cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
 
-        snapcraft.common.run(cmd, cwd=os.getcwd())
+        subprocess.check_call(cmd)
 
 
 class Tar(Base):
@@ -180,7 +180,7 @@ class Tar(Base):
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
             raise EnvironmentError('unexpected http status code when '
-                                   'downloading %r'.format(req.status_code))
+                                   'downloading {}'.format(req.status_code))
 
         file = os.path.join(self.source_dir, os.path.basename(self.source))
         with open(file, 'wb') as f:

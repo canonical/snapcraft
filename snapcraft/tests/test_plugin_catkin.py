@@ -45,7 +45,7 @@ class CatkinTestCase(tests.TestCase):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         plugin._find_package_deps()
 
-        self.assertEqual('Unable to find packages.xml for "my_package"\n',
+        self.assertEqual('Unable to find "package.xml" for "my_package"\n',
                          fake_logger.output)
 
     @mock.patch('snapcraft.plugins.catkin.open', create=True)
