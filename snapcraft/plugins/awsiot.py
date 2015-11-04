@@ -83,9 +83,8 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self.aws = ['python3',
-                    os.path.join(self.stagedir, 'usr', 'bin', 'aws'),
-                    'iot']
+        self.build_packages.append('awscli')
+        self.aws = ['aws', 'iot']
 
         if (options.endpoint):
             self.aws.extend(['--endpoint', options.endpoint])
