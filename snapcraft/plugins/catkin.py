@@ -31,6 +31,7 @@ import lxml.etree
 import os
 import tempfile
 import logging
+import shutil
 
 import snapcraft
 import snapcraft.repo
@@ -197,6 +198,17 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             self.run(['/bin/bash', f.name], cwd=cwd)
 
     def build(self):
+        if os.path.exists(os.path.join(self.sourcedir, 'src')):
+            super().build()
+        else:
+            if os.path.exists(self.builddir):
+                shutil.rmtree(self.builddir)
+            dst = os.path.join(self.builddir, 'src')
+            shutil.copytree(
+                self.sourcedir, dst,
+                ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
+                if d is self.sourcedir else [])
+
         # Fixup ROS Cmake files that have hardcoded paths in them
         self.run([
             'find', self.rosdir, '-name', '*.cmake',
