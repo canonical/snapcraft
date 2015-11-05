@@ -30,6 +30,9 @@ Additionally, this plugin uses the following plugin specific keywords:
       configure flags to pass to the build using the common cmake semantics.
 """
 
+import os
+import shutil
+
 import snapcraft.plugins.make
 
 
@@ -55,6 +58,8 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.build_packages.append('cmake')
 
     def build(self):
-        self.run(['cmake', '.', '-DCMAKE_INSTALL_PREFIX='] +
+        if os.path.exists(self.builddir):
+            shutil.rmtree(self.builddir)
+        self.run(['cmake', self.sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
                  self.options.configflags)
-        super().build()
+        self.run(['make', 'install', 'DESTDIR=' + self.installdir])

@@ -21,7 +21,7 @@ import sys
 import coverage
 
 # make running from bzr snapshot easy
-topdir = os.path.abspath(os.path.join(__file__, "..", ".."))
+topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
 if os.path.exists(os.path.join(topdir, 'setup.py')):
     sys.path = [topdir] + sys.path
 
@@ -30,7 +30,7 @@ import snapcraft.main
 import snapcraft.dirs
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     cov = coverage.coverage(
         data_file=os.path.join(topdir, '.coverage'), data_suffix=True,
         branch=True, source=['snapcraft'])

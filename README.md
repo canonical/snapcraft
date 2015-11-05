@@ -1,3 +1,5 @@
+[![Build Status][travis-image]][travis-url] [![Coverage Status][coveralls-image]][coveralls-url]
+
 # Snapcraft
 
 Snapcraft is a delightful packaging tool
@@ -18,3 +20,9 @@ transactional system.
 See the [intro](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md)
 for details about the concepts behind
 snapcraft. There is also a [tutorial](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md). If you're interested in developing Snapcraft you should look at the [hacking guide](https://github.com/ubuntu-core/snapcraft/blob/master/HACKING.md).
+
+[travis-image]: https://travis-ci.org/ubuntu-core/snapcraft.svg?branch=master
+[travis-url]: https://travis-ci.org/ubuntu-core/snapcraft
+
+[coveralls-image]: https://coveralls.io/repos/ubuntu-core/snapcraft/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/ubuntu-core/snapcraft?branch=master

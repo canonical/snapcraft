@@ -59,5 +59,5 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
             jars = [os.path.join(root, 'jar',
                     os.path.basename(x)) for x in jars]
             env.extend(
-                ['CLASSPATH=%s:$CLASSPATH' % ':'.join(jars)])
+                ['CLASSPATH={}:$CLASSPATH'.format(':'.join(jars))])
         return env

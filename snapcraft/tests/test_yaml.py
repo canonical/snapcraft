@@ -43,7 +43,7 @@ class TestYaml(TestCase):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
         os.chdir(tempdirObj.name)
-        with open("snapcraft.yaml", "w") as fp:
+        with open('snapcraft.yaml', 'w') as fp:
             fp.write(content)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')

@@ -61,8 +61,8 @@ class Python2Plugin(snapcraft.BasePlugin):
         ])
 
     def env(self, root):
-        return ["PYTHONPATH=%s" % os.path.join(
-            root, 'usr', 'lib', self.python_version, 'dist-packages')]
+        return ["PYTHONPATH={}".format(os.path.join(
+            root, 'usr', 'lib', self.python_version, 'dist-packages'))]
 
     def pull(self):
         super().pull()
@@ -101,9 +101,10 @@ class Python2Plugin(snapcraft.BasePlugin):
             self.run(pip_install + ['--requirement', requirements])
 
         if os.path.exists(setup):
-            self.run(pip_install + ['.', ])
+            self.run(pip_install + ['.', ], cwd=self.sourcedir)
 
     def build(self):
+        super().build()
         # If setuptools is used, it tries to create files in the
         # dist-packages dir and import from there, so it needs to exist
         # and be in the PYTHONPATH. It's harmless if setuptools isn't
