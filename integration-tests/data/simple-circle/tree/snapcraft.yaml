@@ -17,62 +17,62 @@ parts:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: root
+        after: [root]
     b:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: root
+        after: [root]
     c:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: root
+        after: [root]
     aa:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: a
+        after: [a]
     ab:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: a
+        after: [a]
     ac:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: a
+        after: [a]
     ba:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: b
+        after: [b]
     bb:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: b
+        after: [b]
     bc:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: b
+        after: [b]
     ca:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: c
+        after: [c]
     cb:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: c
+        after: [c]
     cc:
         plugin: copy
         files:
             icon.svg: icon.svg
-        after: c
+        after: [c]
     x:
         plugin: copy
         files:
