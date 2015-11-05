@@ -130,6 +130,9 @@ class Config:
             if 'after' in properties:
                 afterprop = properties.pop('after')
                 if isinstance(afterprop, str):
+                    logger.warning(
+                        'DEPRECATED: after on {} should be a list of strings '
+                        'not a string itself.'.format(plugin_name))
                     after_requests[part_name] = [afterprop]
                 else:
                     after_requests[part_name] = afterprop
