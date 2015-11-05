@@ -395,6 +395,7 @@ def _add_required_schema(plugin_schema):
         'items': {
             'type': 'string'
         },
+        'default': []
     }
     schema['properties']['stage-packages'] = {
         'type': 'array',
@@ -403,6 +404,7 @@ def _add_required_schema(plugin_schema):
         'items': {
             'type': 'string'
         },
+        'default': []
     }
     schema['properties']['build-packages'] = {
         'type': 'array',
@@ -415,9 +417,11 @@ def _add_required_schema(plugin_schema):
     }
     schema['properties']['organize'] = {
         'type': 'object',
+        'default': {}
     }
     schema['properties']['filesets'] = {
         'type': 'object',
+        'default': {}
     }
     schema['properties']['stage'] = {
         'type': 'array',
@@ -426,6 +430,7 @@ def _add_required_schema(plugin_schema):
         'items': {
             'type': 'string'
         },
+        'default': []
     }
     schema['properties']['snap'] = {
         'type': 'array',
@@ -434,6 +439,7 @@ def _add_required_schema(plugin_schema):
         'items': {
             'type': 'string'
         },
+        'default': []
     }
 
     return schema
