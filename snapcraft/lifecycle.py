@@ -88,7 +88,9 @@ class PluginHandler:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
-        options = _make_options(properties, plugin.schema())
+        schema = plugin.schema()
+        schema = _add_required_schema(schema)
+        options = _make_options(properties, schema)
         self.code = plugin(self.name, options)
 
     def __str__(self):
@@ -371,3 +373,67 @@ def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
             raise PluginError('path "{}" must be relative'.format(d))
+
+
+def _add_required_schema(plugin_schema):
+    if plugin_schema:
+        schema = plugin_schema
+        if 'properties' not in schema:
+            schema['properties'] = {}
+    else:
+        schema = {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+            }
+        }
+
+    schema['properties']['after'] = {
+        'type': 'array',
+        'minitems': 1,
+        'uniqueItems': True,
+        'items': {
+            'type': 'string'
+        },
+    }
+    schema['properties']['stage-packages'] = {
+        'type': 'array',
+        'minitems': 1,
+        'uniqueItems': True,
+        'items': {
+            'type': 'string'
+        },
+    }
+    schema['properties']['build-packages'] = {
+        'type': 'array',
+        'minitems': 1,
+        'uniqueItems': True,
+        'items': {
+            'type': 'string'
+        },
+        'default': []
+    }
+    schema['properties']['organize'] = {
+        'type': 'object',
+    }
+    schema['properties']['filesets'] = {
+        'type': 'object',
+    }
+    schema['properties']['stage'] = {
+        'type': 'array',
+        'minitems': 1,
+        'uniqueItems': True,
+        'items': {
+            'type': 'string'
+        },
+    }
+    schema['properties']['snap'] = {
+        'type': 'array',
+        'minitems': 1,
+        'uniqueItems': True,
+        'items': {
+            'type': 'string'
+        },
+    }
+
+    return schema
