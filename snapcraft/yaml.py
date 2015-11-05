@@ -129,6 +129,8 @@ class Config:
 
             if 'after' in properties:
                 after_requests[part_name] = properties.pop('after')
+                if isinstance(after_requests[part_name], str):
+                    after_requests[part_name] = [after_requests[part_name]]
 
             properties['stage'] = _expand_filesets_for('stage', properties)
             properties['snap'] = _expand_filesets_for('snap', properties)
@@ -149,7 +151,7 @@ class Config:
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
-                    if dep in self.all_parts[i].name:
+                    if dep == self.all_parts[i].name:
                         part.deps.append(self.all_parts[i])
                         found = True
                         break
