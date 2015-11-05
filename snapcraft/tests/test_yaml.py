@@ -94,38 +94,6 @@ parts:
             'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
 
     @unittest.mock.patch('snapcraft.lifecycle.load_plugin')
-    def test_config_with_string_after(self, mock_load):
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-vendor: me <me@me.com>
-summary: test
-description: test
-icon: my-icon.png
-
-parts:
-  part1:
-    after: part2
-    plugin: go
-    stage-packages: [fswebcam]
-  part2:
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-
-        def load_effect(*args, **kwargs):
-            mock_part = unittest.mock.Mock()
-            mock_part.code.build_packages = []
-            mock_part.deps = []
-            mock_part.name = args[0]
-
-            return mock_part
-
-        mock_load.side_effect = load_effect
-
-        conf = snapcraft.yaml.Config()
-        self.assertEqual(conf.all_parts[1].deps[0].name, 'part2')
-
-    @unittest.mock.patch('snapcraft.lifecycle.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
     def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test

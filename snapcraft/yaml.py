@@ -128,14 +128,7 @@ class Config:
                         plugin_name))
 
             if 'after' in properties:
-                afterprop = properties.pop('after')
-                if isinstance(afterprop, str):
-                    logger.warning(
-                        'DEPRECATED: after on {} should be a list of strings '
-                        'not a string itself.'.format(plugin_name))
-                    after_requests[part_name] = [afterprop]
-                else:
-                    after_requests[part_name] = afterprop
+                after_requests[part_name] = properties.pop('after')
 
             properties['stage'] = _expand_filesets_for('stage', properties)
             properties['snap'] = _expand_filesets_for('snap', properties)
