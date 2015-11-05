@@ -128,9 +128,11 @@ class Config:
                         plugin_name))
 
             if 'after' in properties:
-                after_requests[part_name] = properties.pop('after')
-                if isinstance(after_requests[part_name], str):
-                    after_requests[part_name] = [after_requests[part_name]]
+                afterprop = properties.pop('after')
+                if isinstance(afterprop, str):
+                    after_requests[part_name] = [afterprop]
+                else:
+                    after_requests[part_name] = afterprop
 
             properties['stage'] = _expand_filesets_for('stage', properties)
             properties['snap'] = _expand_filesets_for('snap', properties)
