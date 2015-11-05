@@ -1,6 +1,9 @@
 name: dep-tree
 summary: A tree of things to make sure work
-description: These don't really make sense for tests
+description: |
+    A snapcraft.yaml that has a relatively complex tree of
+    dependencies that can stress test the depedency resolution
+    code in Snapcraft.
 version: 1.0
 vendor: deps@tree.com
 icon: icon.svg
