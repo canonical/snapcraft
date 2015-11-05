@@ -229,7 +229,7 @@ def run(args):
             ['ssh'] + ssh_opts +
             ['ubuntu@localhost', '-p', '8022', 'sudo snappy install  *.snap'])
         # "login"
-        _check_call(
+        _call(
             ['ssh'] + ssh_opts + ['-p', '8022', 'ubuntu@localhost'],
             preexec_fn=os.setsid)
     finally:
