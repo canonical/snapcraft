@@ -1,8 +1,10 @@
 name: test-package
 version: 0.1
 vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
-summary: one line summary
-description: a longer description
+summary: A test of the copy plugin
+description: |
+    Copies a file and a directory src and srcdir respectively into
+    our final output. The test verifies they're there.
 icon: icon.png
 
 parts:
@@ -10,3 +12,4 @@ parts:
     plugin: copy
     files:
       src: dst
+      srcdir: dstdir
