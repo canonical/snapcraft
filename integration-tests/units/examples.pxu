@@ -7,15 +7,6 @@ command:
   cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
   rm -rf ${PLAINBOX_SESSION_SHARE}/*
 
-id: snapcraft/examples/godd
-plugin: shell
-command:
-  set -e
-  example=${PLAINBOX_PROVIDER_DATA}/examples/godd
-  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
-  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
-  rm -rf ${PLAINBOX_SESSION_SHARE}/*
-
 id: snapcraft/examples/gopaste
 plugin: shell
 command:
@@ -47,7 +38,7 @@ id: snapcraft/examples/py2project
 plugin: shell
 command:
   set -e
-  example=${PLAINBOX_PROVIDER_DATA}/examples/py2project
+  example=${PLAINBOX_PROVIDER_DATA}/examples/py2-project
   cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
   cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
   rm -rf ${PLAINBOX_SESSION_SHARE}/*
@@ -56,7 +47,17 @@ id: snapcraft/examples/py3project
 plugin: shell
 command:
   set -e
-  example=${PLAINBOX_PROVIDER_DATA}/examples/py3project
+  example=${PLAINBOX_PROVIDER_DATA}/examples/py3-project
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/qmldemo
+plugin: shell
+command:
+  set -e
+  test ! "$(lsb_release -cs)" = "trusty"  || exit 0
+  example=${PLAINBOX_PROVIDER_DATA}/examples/qmldemo
   cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
   cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
   rm -rf ${PLAINBOX_SESSION_SHARE}/*
