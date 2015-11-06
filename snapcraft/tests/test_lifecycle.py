@@ -26,6 +26,7 @@ from unittest.mock import (
 
 import snapcraft.lifecycle
 import snapcraft.tests
+from snapcraft import dirs
 
 
 def get_test_plugin(name='copy', part_name='mock-part', properties=None):
@@ -35,6 +36,10 @@ def get_test_plugin(name='copy', part_name='mock-part', properties=None):
 
 
 class PluginTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        dirs.setup_dirs()
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -213,6 +218,10 @@ class PluginTestCase(snapcraft.tests.TestCase):
 
 
 class PluginMakedirsTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        dirs.setup_dirs()
 
     scenarios = [
         ('existing_dirs', {'make_dirs': True}),
