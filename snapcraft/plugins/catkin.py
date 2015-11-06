@@ -205,7 +205,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 shutil.rmtree(self.builddir)
             dst = os.path.join(self.builddir, 'src')
             shutil.copytree(
-                self.sourcedir, dst,
+                self.sourcedir, dst, symlinks=True,
                 ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
                 if d is self.sourcedir else [])
 

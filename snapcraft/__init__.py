@@ -213,7 +213,7 @@ class BasePlugin:
         if os.path.exists(self.builddir):
             shutil.rmtree(self.builddir)
         shutil.copytree(
-            self.sourcedir, self.builddir,
+            self.sourcedir, self.builddir, symlinks=True,
             ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
             if d is self.sourcedir else [])
 
