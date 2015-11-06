@@ -24,6 +24,7 @@ from unittest.mock import (
     patch,
 )
 
+import snapcraft.common as common
 import snapcraft.lifecycle
 import snapcraft.tests
 
@@ -35,6 +36,11 @@ def get_test_plugin(name='copy', part_name='mock-part', properties=None):
 
 
 class PluginTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -184,6 +190,19 @@ class PluginTestCase(snapcraft.tests.TestCase):
 
                 self.assertEqual(expected, result)
 
+    @patch('snapcraft.lifecycle._load_local')
+    @patch('snapcraft.lifecycle._get_plugin')
+    def test_schema_not_found(self, plugin_mock, local_load_mock):
+        mock_plugin = Mock()
+        mock_plugin.schema.return_value = {}
+        plugin_mock.return_value = mock_plugin
+        local_load_mock.return_value = "not None"
+
+        common.set_schemadir(os.path.join('', 'foo'))
+
+        with self.assertRaises(FileNotFoundError):
+            snapcraft.lifecycle.PluginHandler('mock', 'mock-part', {})
+
     @patch('importlib.import_module')
     @patch('snapcraft.lifecycle._load_local')
     @patch('snapcraft.lifecycle._get_plugin')
@@ -213,6 +232,11 @@ class PluginTestCase(snapcraft.tests.TestCase):
 
 
 class PluginMakedirsTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
 
     scenarios = [
         ('existing_dirs', {'make_dirs': True}),

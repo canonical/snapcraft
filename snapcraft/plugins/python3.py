@@ -113,9 +113,11 @@ class Python3Plugin(snapcraft.BasePlugin):
             self.run(pip_install + ['--upgrade'] + self.options.pip_packages)
 
         if os.path.exists(setup):
-            self.run(pip_install + ['.', ])
+            self.run(pip_install + ['.', ], cwd=self.sourcedir)
 
     def build(self):
+        super().build()
+
         # If setuptools is used, it tries to create files in the
         # dist-packages dir and import from there, so it needs to exist
         # and be in the PYTHONPATH. It's harmless if setuptools isn't

@@ -76,6 +76,7 @@ class Ubuntu:
         self.recommends = recommends
         sources = sources or _DEFAULT_SOURCES
         local = False
+
         if 'SNAPCRAFT_LOCAL_SOURCES' in os.environ:
             print('using local sources')
             sources = _get_local_sources_list()
@@ -207,6 +208,9 @@ def _setup_apt_cache(rootdir, sources, local=False):
 
     with open(srcfile, 'w') as f:
         f.write(sources)
+
+    # Do not install recommends
+    apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
     # Make sure we always use the system GPG configuration, even with
     # apt.Cache(rootdir).

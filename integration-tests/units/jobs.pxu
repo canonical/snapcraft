@@ -94,10 +94,9 @@ command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/local-source .
     ${SNAPCRAFT} build
-    test -e stamp-all
-    test "$(readlink parts/make-project/build)" = "$(pwd)"
+    test -e parts/make-project/build/stamp-all
     ${SNAPCRAFT} stage
-    test -e stamp-install
+    test -e parts/make-project/build/stamp-install
 flags: simple has-leftovers
 
 id: snapcraft/normal/local-plugin
@@ -400,4 +399,18 @@ command:
     ${SNAPCRAFT} shell pkg-config --cflags glib-2.0 | grep -q `pwd`
     ${SNAPCRAFT} shell xml2-config --cflags | grep -q `pwd`
     ${SNAPCRAFT} shell xslt-config --cflags | grep -q `pwd`
+flags: simple has-leftovers
+
+id: snapcraft/circle/tree-dependencies
+command:
+    set -ex
+    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/tree .
+    ${SNAPCRAFT} pull
+flags: simple has-leftovers
+
+id: snapcraft/circle/circle-dependencies
+command:
+    set -ex
+    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/circle .
+    ! ${SNAPCRAFT} pull
 flags: simple has-leftovers

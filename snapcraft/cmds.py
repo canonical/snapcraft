@@ -229,7 +229,7 @@ def run(args):
             ['ssh'] + ssh_opts +
             ['ubuntu@localhost', '-p', '8022', 'sudo snappy install  *.snap'])
         # "login"
-        _check_call(
+        _call(
             ['ssh'] + ssh_opts + ['-p', '8022', 'ubuntu@localhost'],
             preexec_fn=os.setsid)
     finally:
@@ -372,6 +372,7 @@ def _install_build_packages(packages):
     if new_packages:
         logger.info('Installing required packages on the host system')
         _check_call(['sudo', 'apt-get', '-o', 'Dpkg::Progress-Fancy=1',
+                     '--no-install-recommends',
                      '-y', 'install'] + new_packages)
 
 

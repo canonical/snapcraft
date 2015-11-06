@@ -113,6 +113,7 @@ be used in any part irrespective of the plugin, these are
 
 import contextlib
 import os
+import shutil
 
 import snapcraft.common
 import snapcraft.sources
@@ -206,10 +207,15 @@ class BasePlugin:
     def build(self):
         """Build the source code retrieved from the pull phase.
 
-        The base implementation does nothing by default. Override this
-        method if you need to process the source code to make it runnable.
+        The base implementation only copies sourcedir to builddir. Override
+        this method if you need to process the source code to make it runnable.
         """
-        pass
+        if os.path.exists(self.builddir):
+            shutil.rmtree(self.builddir)
+        shutil.copytree(
+            self.sourcedir, self.builddir, symlinks=True,
+            ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
+            if d is self.sourcedir else [])
 
     def snap_fileset(self):
         """Return a list of files to include or exclude in the resulting snap

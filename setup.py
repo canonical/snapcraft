@@ -16,28 +16,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 from setuptools import setup
-from setuptools.command.test import test
 
 
-setup(name='snapcraft',
-      version='0.5',
-      description='Easily craft snaps from multiple sources',
-      author_email='snappy-devel@lists.ubuntu.com',
-      url='https://github.com/ubuntu-core/snapcraft',
-      packages=['snapcraft',
-                'snapcraft.plugins'],
-      package_data={'snapcraft': ['manifest.txt']},
-      scripts=['bin/snapcraft'],
-      data_files=[
-          ('share/snapcraft/schema',
-              ['schema/' + x for x in os.listdir('schema')]),
-      ],
-      test_suite='snapcraft.tests',
-      license='GPL v3',
-      classifiers=(
+setup(
+    name='snapcraft',
+    version='0.5',
+    description='Easily craft snaps from multiple sources',
+    author_email='snappy-devel@lists.ubuntu.com',
+    url='https://github.com/ubuntu-core/snapcraft',
+    packages=['snapcraft',
+              'snapcraft.plugins'],
+    package_data={'snapcraft': ['manifest.txt']},
+    scripts=['bin/snapcraft'],
+    data_files=[
+        ('share/snapcraft/schema',
+            ['schema/' + x for x in os.listdir('schema')]),
+    ],
+    test_suite='snapcraft.tests',
+    license='GPL v3',
+    classifiers=(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',

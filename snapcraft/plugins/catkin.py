@@ -31,6 +31,7 @@ import lxml.etree
 import os
 import tempfile
 import logging
+import shutil
 
 import snapcraft
 import snapcraft.repo
@@ -125,12 +126,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                             'opt', 'ros', self.options.rosversion)
 
     def _deps_from_packagesxml(self, f, pkg):
-        try:
-            tree = lxml.etree.parse(f)
-        except lxml.etree.ParseError:
-            logger.warning('Unable to read "package.xml" file for "{}"'.format(
-                pkg))
-            return
+        tree = lxml.etree.parse(f)
 
         for deptype in ('buildtool_depend', 'build_depend', 'run_depend'):
             for xmldep in tree.xpath('/package/' + deptype):
@@ -160,20 +156,27 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         if self.package_deps_found:
             return
 
+        # catkin expects packages to be in 'src' but most repos
+        # keep there catkin-packages in plain sight without a
+        # 'src' directory as the top level.
+        if os.path.exists(os.path.join(self.sourcedir, 'src')):
+            basedir = os.path.join(self.sourcedir, 'src')
+        else:
+            basedir = os.path.join(self.sourcedir)
+
         # Look for a package definition and pull deps if there are any
         for pkg in self.packages:
             if pkg not in self.package_local_deps:
                 self.package_local_deps[pkg] = set()
 
+            filename = os.path.join(basedir, pkg, 'package.xml')
             try:
-                filename = os.path.join(
-                    self.builddir, 'src', pkg, 'package.xml')
                 with open(filename, 'r') as f:
                     self._deps_from_packagesxml(f, pkg)
             except IOError as e:
                 if e.errno is os.errno.ENOENT:
-                    logger.warning(
-                        'Unable to find "package.xml" for "{}"'.format(pkg))
+                    raise FileNotFoundError(
+                        'unable to find "package.xml" for "{}"'.format(pkg))
                 else:
                     raise e
 
@@ -197,6 +200,17 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             self.run(['/bin/bash', f.name], cwd=cwd)
 
     def build(self):
+        if os.path.exists(os.path.join(self.sourcedir, 'src')):
+            super().build()
+        else:
+            if os.path.exists(self.builddir):
+                shutil.rmtree(self.builddir)
+            dst = os.path.join(self.builddir, 'src')
+            shutil.copytree(
+                self.sourcedir, dst, symlinks=True,
+                ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
+                if d is self.sourcedir else [])
+
         # Fixup ROS Cmake files that have hardcoded paths in them
         self.run([
             'find', self.rosdir, '-name', '*.cmake',

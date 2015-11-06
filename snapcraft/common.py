@@ -23,6 +23,7 @@ import tempfile
 import urllib
 
 
+SNAPCRAFT_FILES = ['snapcraft.yaml', 'parts', 'stage', 'snap']
 COMMAND_ORDER = ['pull', 'build', 'stage', 'snap']
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
