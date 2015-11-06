@@ -265,3 +265,39 @@ class PluginMakedirsTestCase(snapcraft.tests.TestCase):
         p.makedirs()
         for d in dirs:
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
+
+
+class CleanTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
+
+    @patch('shutil.rmtree')
+    @patch('os.path.exists')
+    def test_clean_part_that_exists(self, mock_exists, mock_rmtree):
+        mock_exists.return_value = True
+
+        part_name = 'test_part'
+        p = get_test_plugin(part_name=part_name)
+        p.clean()
+
+        partdir = os.path.join(
+            os.path.abspath(os.curdir), 'parts', part_name)
+        mock_exists.assert_called_once_with(partdir)
+        mock_rmtree.assert_called_once_with(partdir)
+
+    @patch('shutil.rmtree')
+    @patch('os.path.exists')
+    def test_clean_part_already_clean(self, mock_exists, mock_rmtree):
+        mock_exists.return_value = False
+
+        part_name = 'test_part'
+        p = get_test_plugin(part_name=part_name)
+        p.clean()
+
+        partdir = os.path.join(
+            os.path.abspath(os.curdir), 'parts', part_name)
+        mock_exists.assert_called_once_with(partdir)
+        self.assertFalse(mock_rmtree.called)
