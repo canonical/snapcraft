@@ -50,7 +50,8 @@ class PackageNotFoundError(Exception):
 
     @property
     def message(self):
-        return 'The Ubuntu package \'%s\' was not found' % self.package_name
+        return 'The Ubuntu package "{}" was not found'.format(
+            self.package_name)
 
     def __init__(self, package_name):
         self.package_name = package_name
@@ -60,7 +61,7 @@ class UnpackError(Exception):
 
     @property
     def message(self):
-        return 'Error while provisioning \'%s\'' % self.package_name
+        return 'Error while provisioning "{}"'.format(self.package_name)
 
     def __init__(self, package_name):
         self.package_name = package_name
@@ -75,6 +76,7 @@ class Ubuntu:
         self.recommends = recommends
         sources = sources or _DEFAULT_SOURCES
         local = False
+
         if 'SNAPCRAFT_LOCAL_SOURCES' in os.environ:
             print('using local sources')
             sources = _get_local_sources_list()
@@ -205,6 +207,9 @@ def _setup_apt_cache(rootdir, sources, series, local=False):
 
     with open(srcfile, 'w') as f:
         f.write(sources)
+
+    # Do not install recommends
+    apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
     # Make sure we always use the system GPG configuration, even with
     # apt.Cache(rootdir).

@@ -115,6 +115,45 @@ properties:
             uniqueItems: true
             items:
               type: string
+          after:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          stage-packages:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          build-packages:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          organize:
+            type: object
+          filesets:
+            type: object
+          stage:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: ['*']
+          snap:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: ['*']
         # required:
         # - plugin
         # - source

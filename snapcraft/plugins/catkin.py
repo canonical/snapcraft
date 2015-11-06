@@ -31,6 +31,7 @@ import lxml.etree
 import os
 import tempfile
 import logging
+import shutil
 
 import snapcraft
 import snapcraft.repo
@@ -38,7 +39,7 @@ import snapcraft.repo
 logger = logging.getLogger(__name__)
 
 
-class CatkinPlugin (snapcraft.BasePlugin):
+class CatkinPlugin(snapcraft.BasePlugin):
 
     _PLUGIN_STAGE_SOURCES = '''
 deb http://packages.ros.org/ros/ubuntu/ trusty main
@@ -128,7 +129,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         try:
             tree = lxml.etree.parse(f)
         except lxml.etree.ParseError:
-            logger.warning("Unable to read packages.xml file for '{}'".format(
+            logger.warning('Unable to read "package.xml" file for "{}"'.format(
                 pkg))
             return
 
@@ -170,9 +171,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     self.builddir, 'src', pkg, 'package.xml')
                 with open(filename, 'r') as f:
                     self._deps_from_packagesxml(f, pkg)
-            except os.FileNotFound:
-                logger.warning("Unable to find packages.xml for '" + pkg + "'")
-                pass
+            except IOError as e:
+                if e.errno is os.errno.ENOENT:
+                    logger.warning(
+                        'Unable to find "package.xml" for "{}"'.format(pkg))
+                else:
+                    raise e
 
         self.package_deps_found = True
 
@@ -194,6 +198,17 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             self.run(['/bin/bash', f.name], cwd=cwd)
 
     def build(self):
+        if os.path.exists(os.path.join(self.sourcedir, 'src')):
+            super().build()
+        else:
+            if os.path.exists(self.builddir):
+                shutil.rmtree(self.builddir)
+            dst = os.path.join(self.builddir, 'src')
+            shutil.copytree(
+                self.sourcedir, dst,
+                ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
+                if d is self.sourcedir else [])
+
         # Fixup ROS Cmake files that have hardcoded paths in them
         self.run([
             'find', self.rosdir, '-name', '*.cmake',
