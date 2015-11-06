@@ -190,6 +190,19 @@ class PluginTestCase(snapcraft.tests.TestCase):
 
                 self.assertEqual(expected, result)
 
+    @patch('snapcraft.lifecycle._load_local')
+    @patch('snapcraft.lifecycle._get_plugin')
+    def test_schema_not_found(self, plugin_mock, local_load_mock):
+        mock_plugin = Mock()
+        mock_plugin.schema.return_value = {}
+        plugin_mock.return_value = mock_plugin
+        local_load_mock.return_value = "not None"
+
+        common.set_schemadir(os.path.join('', 'foo'))
+
+        with self.assertRaises(FileNotFoundError):
+            snapcraft.lifecycle.PluginHandler('mock', 'mock-part', {})
+
     @patch('importlib.import_module')
     @patch('snapcraft.lifecycle._load_local')
     @patch('snapcraft.lifecycle._get_plugin')
