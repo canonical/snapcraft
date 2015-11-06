@@ -1,0 +1,15 @@
+name: test-package
+version: 0.1
+vendor: Jonathan Cave <jonathan.cave@canonical.com>
+summary: one line summary
+description: a longer description
+icon: icon.png
+
+parts:
+    nm-tools:
+        plugin: nil
+        stage-packages:
+            - network-manager
+        snap:
+            - usr/bin/nmcli
+            - usr/lib/*/libnm*
