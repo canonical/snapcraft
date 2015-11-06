@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 import shutil
+import yaml
 
 import snapcraft
 from snapcraft import common
@@ -222,38 +223,49 @@ class PluginHandler:
         return self.code.env(root)
 
 
-def _builtin_options():
-    return {
-        'filesets': {},
-        'snap': [],
-        'stage': [],
-        'stage-packages': [],
-        'build-packages': [],
-        'organize': {}
-    }
-
-
 def _make_options(properties, schema):
+    jsonschema.validate(properties, schema)
+
     class Options():
         pass
     options = Options()
 
-    # Built in options are already validated
-    builtin_options = _builtin_options()
-    for key in builtin_options:
-        value = properties.pop(key, builtin_options[key])
-        setattr(options, key.replace('-', '_'), value)
+    # Look at the system level props
+    _populate_options(options, properties,
+                      _system_schema_part_props())
 
-    jsonschema.validate(properties, schema)
+    # Look at the plugin level props
+    _populate_options(options, properties, schema)
 
+    return options
+
+
+def _system_schema_part_props():
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(),
+                                               'snapcraft.yaml'))
+
+    try:
+        with open(schema_file) as fp:
+            schema = yaml.load(fp)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            'snapcraft validation file is missing from installation path')
+
+    props = {'properties': {}}
+    partpattern = schema['properties']['parts']['patternProperties']
+    for pattern in partpattern:
+        props['properties'].update(partpattern[pattern]['properties'])
+
+    return props
+
+
+def _populate_options(options, properties, schema):
     schema_properties = schema.get('properties', {})
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
         attr_value = properties.get(key, default_value)
         setattr(options, attr_name, attr_value)
-
-    return options
 
 
 def _get_plugin(module):
