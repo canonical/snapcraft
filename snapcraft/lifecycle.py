@@ -222,27 +222,10 @@ class PluginHandler:
         return self.code.env(root)
 
 
-def _builtin_options():
-    return {
-        'filesets': {},
-        'snap': [],
-        'stage': [],
-        'stage-packages': [],
-        'build-packages': [],
-        'organize': {}
-    }
-
-
 def _make_options(properties, schema):
     class Options():
         pass
     options = Options()
-
-    # Built in options are already validated
-    builtin_options = _builtin_options()
-    for key in builtin_options:
-        value = properties.pop(key, builtin_options[key])
-        setattr(options, key.replace('-', '_'), value)
 
     jsonschema.validate(properties, schema)
 

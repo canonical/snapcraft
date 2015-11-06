@@ -149,7 +149,7 @@ class Config:
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
-                    if dep in self.all_parts[i].name:
+                    if dep == self.all_parts[i].name:
                         part.deps.append(self.all_parts[i])
                         found = True
                         break

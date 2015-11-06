@@ -1,0 +1,95 @@
+name: dep-tree
+summary: A tree of things to make sure work
+description: |
+    A snapcraft.yaml that has a relatively complex tree of
+    dependencies that can stress test the depedency resolution
+    code in Snapcraft.
+version: 1.0
+vendor: deps@tree.com
+icon: icon.svg
+
+parts:
+    root:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+    a:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [root]
+    b:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [root]
+    c:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [root]
+    aa:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [a]
+    ab:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [a]
+    ac:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [a]
+    ba:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [b]
+    bb:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [b]
+    bc:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [b]
+    ca:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [c]
+    cb:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [c]
+    cc:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [c]
+    x:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [aa, ba, ca]
+    y:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [ab, bb, cb]
+    z:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [ac, bc, cc]
+    last:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [x, y, z]
