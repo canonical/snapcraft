@@ -204,6 +204,9 @@ def _setup_apt_cache(rootdir, sources, local=False):
     if not local:
         arch = snapcraft.common.get_arch()
         series = platform.linux_distribution()[2]
+        if 'SNAPCRAFT_SOURCES_RELEASE' in os.environ:
+            series = os.environ['SNAPCRAFT_SOURCES_RELEASE']
+            print('Using release: {}'.format(series))
         sources = _format_sources_list(sources, arch, series)
 
     with open(srcfile, 'w') as f:
