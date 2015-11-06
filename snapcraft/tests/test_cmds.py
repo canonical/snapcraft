@@ -32,6 +32,11 @@ from snapcraft import (
 
 class TestCommands(tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
+
     def test_check_for_collisions(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
