@@ -32,6 +32,9 @@ Additionally, this plugin uses the following plugin specific keywords:
     - requirements:
       (string)
       path to a requirements.txt file
+    - python-packages:
+      (list)
+      A list of dependencies to get from PyPi
 """
 
 import os
@@ -48,7 +51,7 @@ class Python3Plugin(snapcraft.BasePlugin):
         schema['properties']['requirements'] = {
             'type': 'string',
         }
-        schema['properties']['pip-packages'] = {
+        schema['properties']['python-packages'] = {
             'type': 'array',
             'minitems': 1,
             'uniqueItems': True,
@@ -86,7 +89,7 @@ class Python3Plugin(snapcraft.BasePlugin):
             requirements = os.path.join(os.getcwd(), self.options.requirements)
 
         if not os.path.exists(setup) and not \
-                (self.options.requirements or self.options.pip_packages):
+                (self.options.requirements or self.options.python_packages):
             return
 
         easy_install = os.path.join(
@@ -109,8 +112,9 @@ class Python3Plugin(snapcraft.BasePlugin):
         if self.options.requirements:
             self.run(pip_install + ['--requirement', requirements])
 
-        if self.options.pip_packages:
-            self.run(pip_install + ['--upgrade'] + self.options.pip_packages)
+        if self.options.python_packages:
+            self.run(pip_install + ['--upgrade'] +
+                     self.options.python_packages)
 
         if os.path.exists(setup):
             self.run(pip_install + ['.', ], cwd=self.sourcedir)
