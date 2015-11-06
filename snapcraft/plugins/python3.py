@@ -32,6 +32,9 @@ Additionally, this plugin uses the following plugin specific keywords:
     - requirements:
       (string)
       path to a requirements.txt file
+    - python-packages:
+      (list)
+      A list of dependencies to get from PyPi
 """
 
 import os
@@ -47,6 +50,15 @@ class Python3Plugin(snapcraft.BasePlugin):
         schema = super().schema()
         schema['properties']['requirements'] = {
             'type': 'string',
+        }
+        schema['properties']['python-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
         }
         schema.pop('required')
 
@@ -76,7 +88,8 @@ class Python3Plugin(snapcraft.BasePlugin):
         if self.options.requirements:
             requirements = os.path.join(os.getcwd(), self.options.requirements)
 
-        if not os.path.exists(setup) and not self.options.requirements:
+        if not os.path.exists(setup) and not \
+                (self.options.requirements or self.options.python_packages):
             return
 
         easy_install = os.path.join(
@@ -98,6 +111,10 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         if self.options.requirements:
             self.run(pip_install + ['--requirement', requirements])
+
+        if self.options.python_packages:
+            self.run(pip_install + ['--upgrade'] +
+                     self.options.python_packages)
 
         if os.path.exists(setup):
             self.run(pip_install + ['.', ], cwd=self.sourcedir)
@@ -143,3 +160,19 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         setupout.flush()
         return setupout
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        fileset.append('-usr/bin/pip*')
+        fileset.append('-usr/lib/python*/dist-packages/easy-install.pth')
+        fileset.append('-usr/lib/python*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
+        return fileset
