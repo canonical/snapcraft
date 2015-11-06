@@ -214,6 +214,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-copy .
     ${SNAPCRAFT} stage
     test "$(cat ./stage/dst)" = "I got copied"
+    test "$(cat ./stage/dstdir/srcdirfile.txt)" = "A file in the source directory"
 flags: simple has-leftovers
 
 id: snapcraft/normal/conflicts
