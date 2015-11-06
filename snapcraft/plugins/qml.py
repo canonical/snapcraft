@@ -59,6 +59,7 @@ class QmlPlugin(snapcraft.BasePlugin):
             'qml-module-qttest',
             'qml-module-qtwebkit',
         ])
+        self.stage_series = 'vivid'
 
     def snap_fileset(self):
         return ['*',

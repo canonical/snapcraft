@@ -115,6 +115,9 @@ properties:
             uniqueItems: true
             items:
               type: string
+          stage-series:
+            type: string
+            description: Ubuntu series to pull staged packages from
           after:
             type: array
             minitems: 1

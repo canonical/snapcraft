@@ -77,6 +77,10 @@ be used in any part irrespective of the plugin, these are
       (list of strings)
       A list of Ubuntu packages to use that are needed to support the part
       creation.
+    - stage-series:
+      (string)
+      The Ubuntu series to pull stage-packages from. Defaults to match the
+      host system.
     - build-packages:
       (list of strings)
       A list of Ubuntu packages to be installed on the host to aid in
@@ -113,6 +117,7 @@ be used in any part irrespective of the plugin, these are
 
 import contextlib
 import os
+import platform
 import shutil
 
 import snapcraft.common
@@ -166,9 +171,13 @@ class BasePlugin:
         self.name = name
         self.build_packages = []
         self.stage_packages = []
+        # Default is same as host
+        self.stage_series = platform.linux_distribution()[2]
 
         with contextlib.suppress(AttributeError):
             self.stage_packages = options.stage_packages
+        with contextlib.suppress(AttributeError):
+            self.stage_series = options.stage_series
         with contextlib.suppress(AttributeError):
             self.build_packages = options.build_packages
 
