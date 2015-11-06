@@ -43,10 +43,12 @@ class CatkinTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         plugin = catkin.CatkinPlugin('test-part', self.properties)
-        plugin._find_package_deps()
 
-        self.assertEqual('Unable to find "package.xml" for "my_package"\n',
-                         fake_logger.output)
+        with self.assertRaises(FileNotFoundError) as raised:
+            plugin._find_package_deps()
+
+        self.assertEqual(raised.exception.args[0],
+                         'unable to find "package.xml" for "my_package"')
 
     @mock.patch('snapcraft.plugins.catkin.open', create=True)
     def test_exception_raised_when_package_definition_cannot_be_read(
@@ -58,6 +60,6 @@ class CatkinTestCase(tests.TestCase):
 
         self.assertEqual(raised.exception.errno, os.errno.EACCES)
         xml_to_open = os.path.join(
-            os.path.abspath(os.curdir), 'parts', 'test-part', 'build', 'src',
+            os.path.abspath(os.curdir), 'parts', 'test-part', 'src',
             'my_package', 'package.xml')
         mock_open.assert_called_once_with(xml_to_open, 'r')
