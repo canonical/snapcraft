@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 import shutil
+import yaml
 
 import snapcraft
 from snapcraft import common
@@ -223,20 +224,48 @@ class PluginHandler:
 
 
 def _make_options(properties, schema):
+    jsonschema.validate(properties, schema)
+
     class Options():
         pass
     options = Options()
 
-    jsonschema.validate(properties, schema)
+    # Look at the system level props
+    _populate_options(options, properties,
+                      _system_schema_part_props())
 
+    # Look at the plugin level props
+    _populate_options(options, properties, schema)
+
+    return options
+
+
+def _system_schema_part_props():
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(),
+                                               'snapcraft.yaml'))
+
+    try:
+        with open(schema_file) as fp:
+            schema = yaml.load(fp)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            'snapcraft validation file is missing from installation path')
+
+    props = {'properties': {}}
+    partpattern = schema['properties']['parts']['patternProperties']
+    for pattern in partpattern:
+        props['properties'].update(partpattern[pattern]['properties'])
+
+    return props
+
+
+def _populate_options(options, properties, schema):
     schema_properties = schema.get('properties', {})
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
         attr_value = properties.get(key, default_value)
         setattr(options, attr_name, attr_value)
-
-    return options
 
 
 def _get_plugin(module):
