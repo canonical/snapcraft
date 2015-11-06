@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The nil plugin is useful for parts with entirely optional properties.
+"""The nil plugin is useful for parts with entirely built in properties.
 
 The nil plugin allows parts that do nothing. As a result parts can be defined
 that, for example, have no source, but can still make use of all the properties
