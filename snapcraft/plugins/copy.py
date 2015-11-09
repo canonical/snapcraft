@@ -42,7 +42,14 @@ class CopyPlugin(snapcraft.BasePlugin):
         for src in sorted(self.options.files):
             dst = self.options.files[src]
             if not os.path.lexists(src):
-                raise EnvironmentError('file "{}" missing'.format(src))
+                # If it doesn't exist, check if it is a glob
+                filelst = glob.glob(os.path.join(self.sourcedir, src))
+                if True in map(os.path.lexists, filelst):
+                    # Ensure the destination is a directory
+                    if dst[-1] is not '/':
+                        dst += '/'
+                else:
+                    raise EnvironmentError('file "{}" missing'.format(src))
 
             # Expand directories to include part info
             dst = os.path.join(self.installdir, dst)
