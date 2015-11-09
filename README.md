@@ -17,6 +17,8 @@ final tree very easy.
 Snapcraft allows easy crafting of snap packages for the Ubuntu Core
 transactional system.
 
+[![Snapcraft Overview][overview-image]]
+
 See the [intro](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md)
 for details about the concepts behind
 snapcraft. There is also a [tutorial](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md). If you're interested in developing Snapcraft you should look at the [hacking guide](https://github.com/ubuntu-core/snapcraft/blob/master/HACKING.md).
@@ -26,3 +28,5 @@ snapcraft. There is also a [tutorial](https://github.com/ubuntu-core/snapcraft/b
 
 [coveralls-image]: https://coveralls.io/repos/ubuntu-core/snapcraft/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/ubuntu-core/snapcraft?branch=master
+
+[overview-image]: docs/snapcraft%20overview.svg
