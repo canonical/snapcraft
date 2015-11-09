@@ -31,7 +31,7 @@ import snapcraft.tests
 
 def get_test_plugin(name='copy', part_name='mock-part', properties=None):
     if properties is None:
-        properties = {'files': {'1': '1'}}
+        properties = {'files': {'1': '1'}, 'source': '.'}
     return snapcraft.lifecycle.PluginHandler(name, part_name, properties)
 
 

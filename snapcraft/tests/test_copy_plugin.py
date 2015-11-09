@@ -29,9 +29,12 @@ class TestCopyPlugin(TestCase):
         super().setUp()
         self.mock_options = Mock()
         self.mock_options.files = {}
+        self.mock_options.source = '.'
         # setup the expected target dir in our tempdir
         self.dst_prefix = 'parts/copy/install/'
         os.makedirs(self.dst_prefix)
+        self.src_prefix = 'parts/copy/src/'
+        os.makedirs(self.src_prefix)
 
     def test_copy_plugin_any_missing_src_raises_exception(self):
         # ensure that a bad file causes a warning and fails the build even
@@ -55,7 +58,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src': 'dst',
         }
-        open('src', 'w').close()
+        open(self.src_prefix + 'src', 'w').close()
 
         c = CopyPlugin('copy', self.mock_options)
         c.build()
@@ -67,7 +70,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src': 'dir/dst',
         }
-        open('src', 'w').close()
+        open(self.src_prefix + 'src', 'w').close()
 
         c = CopyPlugin('copy', self.mock_options)
         c.build()
