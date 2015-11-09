@@ -16,6 +16,7 @@
 
 import logging
 import os
+import glob
 
 import snapcraft
 
@@ -27,23 +28,28 @@ class CopyPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
-        return {
-            'properties': {
-                'files': {
-                    'type': 'object',
-                },
-            },
-            'required': [
-                'files',
-            ]
-        }
+        schema = super().schema()
+        schema['properties']['files'] = {
+                'type': 'object',
+            }
+        schema['required'].append('files')
+        return schema
 
     def build(self):
+        # Sources handling first
+        super().build()
+
         for src in sorted(self.options.files):
             dst = self.options.files[src]
             if not os.path.lexists(src):
                 raise EnvironmentError('file "{}" missing'.format(src))
+
+            # Expand directories to include part info
             dst = os.path.join(self.installdir, dst)
+            src = os.path.join(self.sourcedir, src)
+
+            # Ensure we have a destination to copy to
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            self.run(['cp', '--preserve=all', '-R', src, dst],
-                     cwd=os.getcwd())
+
+            # DO IT! DO IT NOW!
+            self.run(['cp', '--preserve=all', '-R', src, dst])
