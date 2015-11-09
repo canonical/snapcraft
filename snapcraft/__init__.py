@@ -115,9 +115,8 @@ import contextlib
 import os
 import shutil
 
-import snapcraft.common
-import snapcraft.sources
-import snapcraft.repo
+from snapcraft import common
+from snapcraft import sources
 
 
 class BasePlugin:
@@ -173,15 +172,10 @@ class BasePlugin:
             self.build_packages = options.build_packages
 
         self.options = options
-        self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
-        self.sourcedir = os.path.join(os.getcwd(), 'parts', self.name, 'src')
-        self.builddir = os.path.join(os.getcwd(), 'parts', self.name, 'build')
-        self.ubuntudir = os.path.join(os.getcwd(), 'parts', self.name,
-                                      'ubuntu')
-        self.installdir = os.path.join(os.getcwd(), 'parts', self.name,
-                                       'install')
-        self.stagedir = os.path.join(os.getcwd(), 'stage')
-        self.snapdir = os.path.join(os.getcwd(), 'snap')
+        self.partdir = os.path.join(common.get_partsdir(), self.name)
+        self.sourcedir = os.path.join(self.partdir, 'src')
+        self.builddir = os.path.join(self.partdir, 'build')
+        self.installdir = os.path.join(self.partdir, 'install')
 
     # The API
     def pull(self):
@@ -201,8 +195,7 @@ class BasePlugin:
         enhance with custom pull logic.
         """
         if getattr(self.options, 'source', None):
-            snapcraft.sources.get(
-                self.sourcedir, self.builddir, self.options)
+            sources.get(self.sourcedir, self.builddir, self.options)
 
     def build(self):
         """Build the source code retrieved from the pull phase.
@@ -214,7 +207,7 @@ class BasePlugin:
             shutil.rmtree(self.builddir)
         shutil.copytree(
             self.sourcedir, self.builddir, symlinks=True,
-            ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
+            ignore=lambda d, s: common.SNAPCRAFT_FILES
             if d is self.sourcedir else [])
 
     def snap_fileset(self):
@@ -256,7 +249,7 @@ class BasePlugin:
         if True:
             print(' '.join(cmd))
         os.makedirs(cwd, exist_ok=True)
-        return snapcraft.common.run(cmd, cwd=cwd, **kwargs)
+        return common.run(cmd, cwd=cwd, **kwargs)
 
     def run_output(self, cmd, cwd=None, **kwargs):
         if cwd is None:
@@ -264,4 +257,4 @@ class BasePlugin:
         if True:
             print(' '.join(cmd))
         os.makedirs(cwd, exist_ok=True)
-        return snapcraft.common.run_output(cmd, cwd=cwd, **kwargs)
+        return common.run_output(cmd, cwd=cwd, **kwargs)

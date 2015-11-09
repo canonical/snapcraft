@@ -34,7 +34,7 @@ import logging
 import shutil
 
 import snapcraft
-import snapcraft.repo
+from snapcraft import repo
 
 logger = logging.getLogger(__name__)
 
@@ -185,9 +185,10 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     def _setup_deb_packages(self):
         self._find_package_deps()
 
+        ubuntudir = os.path.join(self.partdir, 'ubuntu')
+        os.makedirs(ubuntudir, exist_ok=True)
         if self._deb_packages:
-            ubuntu = snapcraft.repo.Ubuntu(
-                self.ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
+            ubuntu = repo.Ubuntu(ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self._deb_packages)
             ubuntu.unpack(self.installdir)
 

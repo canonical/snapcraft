@@ -250,22 +250,29 @@ def list_plugins(args=None):
 def clean(args):
     config = _load_config()
 
+    part_names = {part.name for part in config.all_parts}
+    for part_name in args.parts:
+        if part_name not in part_names:
+            logger.error('The part named {!r} is not defined in '
+                         '\'snapcraft.yaml\''.format(part_name))
+            sys.exit(1)
+
     for part in config.all_parts:
-        logger.info('Cleaning up for part %r', part.name)
-        if os.path.exists(part.partdir):
-            shutil.rmtree(part.partdir)
+        if not args.parts or part.name in args.parts:
+            part.clean()
 
     # parts dir does not contain only generated code.
     if (os.path.exists(common.get_partsdir()) and
             not os.listdir(common.get_partsdir())):
         os.rmdir(common.get_partsdir())
 
-    logger.info('Cleaning up staging area')
-    if os.path.exists(common.get_stagedir()):
+    clean_stage = not args.parts or part_names == set(args.parts)
+    if clean_stage and os.path.exists(common.get_stagedir()):
+        logger.info('Cleaning up staging area')
         shutil.rmtree(common.get_stagedir())
 
-    logger.info('Cleaning up snapping area')
     if os.path.exists(common.get_snapdir()):
+        logger.info('Cleaning up snapping area')
         shutil.rmtree(common.get_snapdir())
 
 

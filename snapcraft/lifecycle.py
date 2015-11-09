@@ -26,6 +26,7 @@ import yaml
 
 import snapcraft
 from snapcraft import common
+from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,18 @@ class PluginHandler:
     def name(self):
         return self._name
 
+    @property
+    def sourcedir(self):
+        return self.code.sourcedir
+
+    @property
+    def builddir(self):
+        return self.code.builddir
+
+    @property
+    def installdir(self):
+        return self.code.installdir
+
     def __init__(self, plugin_name, part_name, properties):
         self.valid = False
         self.code = None
@@ -53,11 +66,7 @@ class PluginHandler:
         self.deps = []
 
         parts_dir = common.get_partsdir()
-        self.partdir = os.path.join(parts_dir, part_name)
-        self.sourcedir = os.path.join(parts_dir, part_name, 'src')
-        self.builddir = os.path.join(parts_dir, part_name, 'build')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
-        self.installdir = os.path.join(parts_dir, part_name, 'install')
         self.stagedir = os.path.join(os.getcwd(), 'stage')
         self.snapdir = os.path.join(os.getcwd(), 'snap')
         self.statefile = os.path.join(parts_dir, part_name, 'state')
@@ -100,8 +109,8 @@ class PluginHandler:
 
     def makedirs(self):
         dirs = [
-            self.sourcedir, self.builddir, self.installdir, self.stagedir,
-            self.snapdir, self.ubuntudir
+            self.code.sourcedir, self.code.builddir, self.code.installdir,
+            self.stagedir, self.snapdir, self.ubuntudir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -130,8 +139,8 @@ class PluginHandler:
 
     def _setup_stage_packages(self):
         if self.code.stage_packages:
-            ubuntu = snapcraft.repo.Ubuntu(
-                self.code.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+            ubuntu = repo.Ubuntu(
+                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.code.stage_packages)
             ubuntu.unpack(self.code.installdir)
 
@@ -156,21 +165,21 @@ class PluginHandler:
         plugin_fileset = self.code.snap_fileset()
         fileset = getattr(self.code.options, stage, ['*']) or ['*']
         fileset.extend(plugin_fileset)
-        return _migratable_filesets(fileset, self.installdir)
+        return _migratable_filesets(fileset, self.code.installdir)
 
     def _organize(self):
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
 
         for key in organize_fileset:
-            src = os.path.join(self.installdir, key)
-            dst = os.path.join(self.installdir, organize_fileset[key])
+            src = os.path.join(self.code.installdir, key)
+            dst = os.path.join(self.code.installdir, organize_fileset[key])
 
             os.makedirs(os.path.dirname(dst), exist_ok=True)
 
             if os.path.exists(dst):
                 logger.warning(
                     'Stepping over existing file for organization %r',
-                    os.path.relpath(dst, self.installdir))
+                    os.path.relpath(dst, self.code.installdir))
                 if os.path.isdir(dst):
                     shutil.rmtree(dst)
                 else:
@@ -189,7 +198,7 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         try:
-            _migrate_files(snap_files, snap_dirs, self.installdir,
+            _migrate_files(snap_files, snap_dirs, self.code.installdir,
                            self.stagedir)
         except FileNotFoundError as e:
             logger.error('Could not find file %s defined in stage',
@@ -221,6 +230,11 @@ class PluginHandler:
 
     def env(self, root):
         return self.code.env(root)
+
+    def clean(self):
+        logger.info('Cleaning up for part "{}"'.format(self.name))
+        if os.path.exists(self.code.partdir):
+            shutil.rmtree(self.code.partdir)
 
 
 def _make_options(properties, schema):
