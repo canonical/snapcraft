@@ -9,19 +9,20 @@ many pieces. It can drive a very wide range of build and packaging systems,
 so that you can simply list all the upstream projects you want and have
 them built and installed together as a single tree.
 
+![Snapcraft Overview][overview-image]
+
 For example, say you want to make a product that includes PyPI packages,
 Node.js packages from NPM, Java, and a bunch of daemons written in C and
 C++ that are built with autotools, snapcraft would make assembling the
 final tree very easy.
 
 Snapcraft allows easy crafting of snap packages for the Ubuntu Core
-transactional system.
+transactional system (Snappy).
 
-![Snapcraft Overview][overview-image]
+## More Information
 
-See the [intro](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md)
-for details about the concepts behind
-snapcraft. There is also a [tutorial](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md). If you're interested in developing Snapcraft you should look at the [hacking guide](https://github.com/ubuntu-core/snapcraft/blob/master/HACKING.md).
+* [Introduction](docs/intro.md) to all the details about the concepts behind snapcraft.
+* [Hacking guide](HACKING.md) to contribute if you're interested in developing Snapcraft.
 
 [travis-image]: https://travis-ci.org/ubuntu-core/snapcraft.svg?branch=master
 [travis-url]: https://travis-ci.org/ubuntu-core/snapcraft
