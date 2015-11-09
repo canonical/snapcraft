@@ -76,3 +76,24 @@ class TestCopyPlugin(TestCase):
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
                                                     'dir/dst')))
+
+    def test_copy_plugin_glob(self):
+        self.useFixture(fixtures.FakeLogger())
+
+        self.mock_options.files = {
+            '*.txt': '.',
+        }
+
+        for filename in ('file-a.txt', 'file-b.txt', 'file-c.notxt'):
+            with open(self.src_prefix + filename, 'w') as datafile:
+                datafile.write('data')
+
+        c = CopyPlugin('copy', self.mock_options)
+        c.build()
+
+        self.assertTrue(os.path.exists(
+            os.path.join(self.dst_prefix, 'file-a.txt')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.dst_prefix, 'file-b.txt')))
+        self.assertFalse(os.path.exists(
+            os.path.join(self.dst_prefix, 'file-c.notxt')))
