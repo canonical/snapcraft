@@ -17,7 +17,7 @@ final tree very easy.
 Snapcraft allows easy crafting of snap packages for the Ubuntu Core
 transactional system.
 
-[![Snapcraft Overview][overview-image]]
+![Snapcraft Overview][overview-image]
 
 See the [intro](https://github.com/ubuntu-core/snapcraft/blob/master/docs/intro.md)
 for details about the concepts behind
