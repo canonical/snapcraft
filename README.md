@@ -16,8 +16,8 @@ Node.js packages from NPM, Java, and a bunch of daemons written in C and
 C++ that are built with autotools, snapcraft would make assembling the
 final tree very easy.
 
-Snapcraft allows easy crafting of snap packages for the Ubuntu Core
-transactional system (Snappy).
+Snapcraft allows easy crafting of snap packages for the [snappy Ubuntu Core
+transactional update system](http://ubuntu.com/snappy).
 
 ## More Information
 
