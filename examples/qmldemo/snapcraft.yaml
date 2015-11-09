@@ -18,5 +18,6 @@ parts:
     plugin: qml
   qmldemo:
     plugin: copy
+    source: .
     files:
       demo.qml: demo.qml

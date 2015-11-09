@@ -11,46 +11,55 @@ icon: icon.svg
 parts:
     a:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [last]
     b:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [a]
     c:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [b]
     d:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [c]
     e:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [d]
     f:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [e]
     g:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [f]
     h:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [g]
     last:
         plugin: copy
+        source: .
         files:
             icon.svg: icon.svg
         after: [h]

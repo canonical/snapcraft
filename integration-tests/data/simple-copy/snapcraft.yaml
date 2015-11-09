@@ -10,6 +10,7 @@ icon: icon.png
 parts:
   copy-example:
     plugin: copy
+    source: .
     files:
       src: dst
       srcdir: dstdir
