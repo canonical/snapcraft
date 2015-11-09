@@ -247,19 +247,23 @@ class Config:
         env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
         return env
 
-    def build_env_for_part(self, part):
-        # Grab build env of all part's dependencies
+    def build_env_for_part(self, part, root_part=True):
+        """Return a build env of all the part's dependencies."""
 
         env = []
+        stagedir = snapcraft.common.get_stagedir()
+        for dep_part in part.deps:
+            env += dep_part.env(stagedir)
+            env += self.build_env_for_part(dep_part, root_part=False)
 
-        for dep in part.deps:
-            root = dep.installdir
-            env += dep.env(root)
-            env += self.build_env_for_part(dep)
-
-        env += part.env(part.installdir)
-        env += self.runtime_env(part.installdir)
-        env += self.build_env(part.installdir)
+        if root_part:
+            env += part.env(part.installdir)
+            env += self.runtime_env(part.installdir)
+            env += self.build_env(part.installdir)
+        else:
+            env += part.env(stagedir)
+            env += self.runtime_env(stagedir)
+            env += self.build_env(stagedir)
 
         return env
 
