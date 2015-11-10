@@ -59,6 +59,13 @@ class GoPlugin(snapcraft.BasePlugin):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
         return [
             'GOPATH={}/go'.format(root),
+            'CGO_LDFLAGS=$CGO_LDFLAGS"' + ' '.join([
+                '-L{0}/lib',
+                '-L{0}/usr/lib',
+                '-L{0}/lib/{1}',
+                '-L{0}/usr/lib/{1}',
+                '$LDFLAGS'
+            ]).format(root, snapcraft.common.get_arch_triplet()) + '"',
         ]
 
     def pull(self):

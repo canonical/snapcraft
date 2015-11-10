@@ -1,3 +1,12 @@
+id: snapcraft/examples/godd
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/godd
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
 id: snapcraft/examples/downloader-with-wiki-parts
 plugin: shell
 command:
