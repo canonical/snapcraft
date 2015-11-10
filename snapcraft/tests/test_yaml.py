@@ -542,6 +542,17 @@ class TestValidation(TestCase):
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 
+    def test_invalid_part_name_plugin_raises_exception(self):
+        self.data['parts']['plugins'] = {'type': 'go'}
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_message = 'Additional properties are not allowed ' \
+                           '(\'plugins\' was unexpected)'
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
+
 
 class TestFilesets(TestCase):
 
