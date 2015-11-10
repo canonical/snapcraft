@@ -29,11 +29,11 @@ class TestCopyPlugin(TestCase):
         super().setUp()
         self.mock_options = Mock()
         self.mock_options.files = {}
-        self.mock_options.source = '.'
         # setup the expected target dir in our tempdir
-        self.dst_prefix = 'parts/copy/install/'
+        parts_prefix = os.path.join('parts', 'copy')
+        self.dst_prefix = os.path.join(parts_prefix, 'install')
         os.makedirs(self.dst_prefix)
-        self.src_prefix = 'parts/copy/src/'
+        self.src_prefix = os.path.join(parts_prefix, 'src')
         os.makedirs(self.src_prefix)
 
     def test_copy_plugin_any_missing_src_raises_exception(self):
@@ -58,7 +58,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src': 'dst',
         }
-        open(self.src_prefix + 'src', 'w').close()
+        open(os.path.join(self.src_prefix, 'src'), 'w').close()
 
         c = CopyPlugin('copy', self.mock_options)
         c.build()
@@ -70,12 +70,12 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src': 'dir/dst',
         }
-        open(self.src_prefix + 'src', 'w').close()
+        open(os.path.join(self.src_prefix, 'src'), 'w').close()
 
         c = CopyPlugin('copy', self.mock_options)
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
-                                                    'dir/dst')))
+                                                    'dir', 'dst')))
 
     def test_copy_plugin_glob(self):
         self.useFixture(fixtures.FakeLogger())
@@ -85,7 +85,8 @@ class TestCopyPlugin(TestCase):
         }
 
         for filename in ('file-a.txt', 'file-b.txt', 'file-c.notxt'):
-            with open(self.src_prefix + filename, 'w') as datafile:
+            with open(os.path.join(self.src_prefix, filename), 'w') as \
+                    datafile:
                 datafile.write('data')
 
         c = CopyPlugin('copy', self.mock_options)
