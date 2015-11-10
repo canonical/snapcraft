@@ -1,0 +1,22 @@
+name: godd
+version: 1.0
+vendor: Michael Vogt <mvo@ubuntu.com>
+binaries:
+  godd:
+    exec: ./bin/godd
+summary: Simple dd like tool
+description: |
+ Written in go with support for device auto-detection via libgudev, you would
+ need to use hw-assign to access devices.
+icon: icon.png
+
+parts:
+  godd:
+    plugin: go
+    source: git://github.com/mvo5/godd
+    stage-packages: [libgudev-1.0-dev]
+    snap:
+     - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
+     - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
+     - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
+     - bin/godd*
