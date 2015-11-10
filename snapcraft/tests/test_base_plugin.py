@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import tempfile
 import unittest.mock
 
 import snapcraft
@@ -55,6 +56,49 @@ class TestBasePlugin(tests.TestCase):
 
         self.assertEqual(raised.exception.__str__(),
                          'local source is not a directory')
+
+    def test_build_with_subdir_copies_subdir(self):
+        class Options:
+            source_subdir = 'src'
+
+        plugin = snapcraft.BasePlugin('test-part', Options())
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+        subdir = os.path.join(plugin.sourcedir, plugin.options.source_subdir)
+        os.mkdir(subdir)
+        open(os.path.join(subdir, 'file'), 'w').close()
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.builddir = tmpdir.name
+
+        plugin.build()
+
+        self.assertTrue(os.path.exists(os.path.join(plugin.builddir, 'file')))
+
+    def test_build_without_subdir_copies_sourcedir(self):
+        class Options:
+            pass
+
+        plugin = snapcraft.BasePlugin('test-part', Options())
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+        subdir = os.path.join(plugin.sourcedir, 'src')
+        os.mkdir(subdir)
+        open(os.path.join(subdir, 'file'), 'w').close()
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.builddir = tmpdir.name
+
+        plugin.build()
+
+        self.assertTrue(os.path.exists(
+            os.path.join(plugin.builddir, 'src', 'file')))
 
 
 class GetSourceWithBranches(tests.TestCase):

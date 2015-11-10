@@ -60,6 +60,14 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
     def build(self):
         if os.path.exists(self.builddir):
             shutil.rmtree(self.builddir)
-        self.run(['cmake', self.sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
+        os.mkdir(self.builddir)
+
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
+        self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
                  self.options.configflags)
         self.run(['make', 'install', 'DESTDIR=' + self.installdir])

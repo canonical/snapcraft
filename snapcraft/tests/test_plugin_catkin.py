@@ -17,6 +17,7 @@
 import fixtures
 import os
 import os.path
+import tempfile
 
 from unittest import mock
 
@@ -63,3 +64,48 @@ class CatkinTestCase(tests.TestCase):
             os.path.abspath(os.curdir), 'parts', 'test-part', 'src',
             'my_package', 'package.xml')
         mock_open.assert_called_once_with(xml_to_open, 'r')
+
+    def test_build_with_subdir_without_src_copies_subdir_into_src(self):
+        class Options:
+            catkin_packages = []
+            source_subdir = 'src_subdir'
+
+        plugin = catkin.CatkinPlugin('test-part', Options())
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+        subdir = os.path.join(plugin.sourcedir, plugin.options.source_subdir)
+        os.mkdir(subdir)
+        open(os.path.join(subdir, 'file'), 'w').close()
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.builddir = tmpdir.name
+
+        plugin._provision_builddir()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(plugin.builddir, 'src', 'file')))
+
+    def test_build_without_subdir_or_src_copies_sourcedir_into_src(self):
+        class Options:
+            catkin_packages = []
+
+        plugin = catkin.CatkinPlugin('test-part', Options())
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+        subdir = os.path.join(plugin.sourcedir, 'src_subdir')
+        os.mkdir(subdir)
+        open(os.path.join(subdir, 'file'), 'w').close()
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.builddir = tmpdir.name
+
+        plugin._provision_builddir()
+
+        self.assertTrue(os.path.exists(
+            os.path.join(plugin.builddir, 'src', 'src_subdir', 'file')))
