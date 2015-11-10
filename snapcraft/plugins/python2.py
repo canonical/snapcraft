@@ -107,8 +107,12 @@ class Python2Plugin(snapcraft.BasePlugin):
         self.run(['python2', easy_install, '--prefix', prefix, 'pip'])
 
         pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
-        pip_install = ['python2', pip2, 'install', '--target',
-                       site_packages_dir]
+        pip_install = ['python2', pip2, 'install',
+                       '--global-option=build_ext',
+                       '--global-option=-I{}'.format(os.path.join(
+                           self.installdir, 'usr', 'include', '{}'.format(
+                               self.python_version))),
+                       '--target', site_packages_dir]
 
         if self.options.requirements:
             self.run(pip_install + ['--requirement', requirements])
@@ -133,8 +137,13 @@ class Python2Plugin(snapcraft.BasePlugin):
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         setuptemp = self.copy_setup()
         self.run(
-            ['python2', setuptemp.name, 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
+            ['python2', setuptemp.name,
+             'build_ext', '-I{}'.format(os.path.join(
+                 self.installdir, 'usr', 'include', '{}'.format(
+                     self.python_version))),
+             'install', '--install-layout=deb',
+             '--prefix={}/usr'.format(self.installdir),
+             ], cwd=self.builddir)
 
     @property
     def dist_packages_dir(self):
@@ -144,7 +153,7 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     @property
     def python_version(self):
-        return self.run_output(['pyversions', '-i'])
+        return self.run_output(['pyversions', '-d'])
 
     # Takes the setup.py file and puts a couple little gems on the
     # front to make things work better.
