@@ -30,8 +30,8 @@ class CopyPlugin(snapcraft.BasePlugin):
     def schema(cls):
         schema = super().schema()
         schema['properties']['files'] = {
-                'type': 'object',
-            }
+            'type': 'object',
+        }
         schema['required'].append('files')
         return schema
 
