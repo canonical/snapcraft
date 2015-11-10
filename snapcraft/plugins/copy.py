@@ -32,6 +32,8 @@ class CopyPlugin(snapcraft.BasePlugin):
         schema['properties']['files'] = {
             'type': 'object',
         }
+        if 'required' not in schema:
+            schema['required'] = []
         schema['required'].append('files')
         return schema
 

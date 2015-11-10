@@ -137,6 +137,7 @@ class BasePlugin:
             'properties': {
                 'source': {
                     'type': 'string',
+                    'default': '.',
                 },
                 'source-type': {
                     'type': 'string',
@@ -151,9 +152,6 @@ class BasePlugin:
                     'default': '',
                 },
             },
-            'required': [
-                'source',
-            ]
         }
 
     @property

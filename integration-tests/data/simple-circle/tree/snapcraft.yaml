@@ -11,102 +11,85 @@ icon: icon.svg
 parts:
     root:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
     a:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [root]
     b:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [root]
     c:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [root]
     aa:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [a]
     ab:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [a]
     ac:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [a]
     ba:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [b]
     bb:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [b]
     bc:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [b]
     ca:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [c]
     cb:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [c]
     cc:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [c]
     x:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [aa, ba, ca]
     y:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [ab, bb, cb]
     z:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [ac, bc, cc]
     last:
         plugin: copy
-        source: .
         files:
             icon.svg: icon.svg
         after: [x, y, z]

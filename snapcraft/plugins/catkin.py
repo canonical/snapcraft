@@ -66,6 +66,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             'default': [],
         }
 
+        if 'required' not in schema:
+            schema['required'] = []
         schema['required'].append('catkin-packages')
 
         return schema

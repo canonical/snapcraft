@@ -60,7 +60,6 @@ class Python2Plugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
-        schema.pop('required')
 
         return schema
 

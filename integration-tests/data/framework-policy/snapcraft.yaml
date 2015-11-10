@@ -9,7 +9,6 @@ framework-policy: dir
 parts:
     framework-project:
       plugin: copy
-      source: .
       files:
         one: one
 
