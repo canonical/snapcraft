@@ -31,9 +31,7 @@ parts:
       - -usr/share/doc
   glue:
     plugin: copy
-    source: .
     files:
       webcam-webui: bin/webcam-webui
   config:
     plugin: python3-project
-    source: .
