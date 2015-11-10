@@ -17,6 +17,7 @@
 import logging
 import os
 import glob
+import shutil
 
 import snapcraft
 
@@ -41,24 +42,28 @@ class CopyPlugin(snapcraft.BasePlugin):
         # Sources handling first
         super().build()
 
-        for src in sorted(self.options.files):
-            dst = self.options.files[src]
-            if not os.path.lexists(src):
-                # If it doesn't exist, check if it is a glob
-                filelst = glob.glob(os.path.join(self.sourcedir, src))
-                if True in map(os.path.lexists, filelst):
-                    # Ensure the destination is a directory
-                    if dst[-1] is not '/':
-                        dst += '/'
-                else:
-                    raise EnvironmentError('file "{}" missing'.format(src))
+        for srcname in sorted(self.options.files):
+            dst = self.options.files[srcname]
 
             # Expand directories to include part info
             dst = os.path.join(self.installdir, dst)
-            src = os.path.join(self.sourcedir, src)
+            src = os.path.join(self.sourcedir, srcname)
 
-            # Ensure we have a destination to copy to
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            if not os.path.lexists(src):
+                # If it doesn't exist, check if it is a glob
+                filelst = glob.glob(src)
+                if True not in map(os.path.lexists, filelst):
+                    raise EnvironmentError('file "{}" missing'.format(srcname))
 
-            # DO IT! DO IT NOW!
-            self.run(['cp', '--preserve=all', '-R', src, dst])
+                # Ensure we have a directory to copy to
+                os.makedirs(dst, exist_ok=True)
+
+                for filename in filelst:
+                    shutil.copy2(filename, dst)
+            elif os.path.isdir(src):
+                shutil.copytree(src, dst)
+            else:
+                # Ensure we have a destination to copy to
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+                shutil.copy2(src, dst)
