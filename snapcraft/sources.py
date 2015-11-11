@@ -41,6 +41,10 @@ A part that uses common source options can have these keyword entries:
     - source-tag:
       (string)
       A specific tag from the source tree.
+    - source-subdir:
+      (string)
+      A source directory within a repository or tarfile to enter and build
+      from.
 """
 
 

@@ -150,6 +150,10 @@ class BasePlugin:
                     'type:': 'string',
                     'default': '',
                 },
+                'source-subdir': {
+                    'type': 'string',
+                    'default': None,
+                }
             },
             'required': [
                 'source',
@@ -205,8 +209,15 @@ class BasePlugin:
         """
         if os.path.exists(self.builddir):
             shutil.rmtree(self.builddir)
+
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
         shutil.copytree(
-            self.sourcedir, self.builddir, symlinks=True,
+            sourcedir, self.builddir, symlinks=True,
             ignore=lambda d, s: common.SNAPCRAFT_FILES
             if d is self.sourcedir else [])
 

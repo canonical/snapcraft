@@ -156,13 +156,19 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         if self.package_deps_found:
             return
 
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
         # catkin expects packages to be in 'src' but most repos
         # keep there catkin-packages in plain sight without a
         # 'src' directory as the top level.
-        if os.path.exists(os.path.join(self.sourcedir, 'src')):
-            basedir = os.path.join(self.sourcedir, 'src')
+        if os.path.exists(os.path.join(sourcedir, 'src')):
+            basedir = os.path.join(sourcedir, 'src')
         else:
-            basedir = os.path.join(self.sourcedir)
+            basedir = sourcedir
 
         # Look for a package definition and pull deps if there are any
         for pkg in self.packages:
@@ -200,17 +206,27 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             self.run(['/bin/bash', f.name], cwd=cwd)
 
+    def _provision_builddir(self):
+        if os.path.exists(self.builddir):
+            shutil.rmtree(self.builddir)
+        dst = os.path.join(self.builddir, 'src')
+
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
+        shutil.copytree(
+            sourcedir, dst, symlinks=True,
+            ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
+            if d is self.sourcedir else [])
+
     def build(self):
         if os.path.exists(os.path.join(self.sourcedir, 'src')):
             super().build()
         else:
-            if os.path.exists(self.builddir):
-                shutil.rmtree(self.builddir)
-            dst = os.path.join(self.builddir, 'src')
-            shutil.copytree(
-                self.sourcedir, dst, symlinks=True,
-                ignore=lambda d, s: snapcraft.common.SNAPCRAFT_FILES
-                if d is self.sourcedir else [])
+            self._provision_builddir()
 
         # Fixup ROS Cmake files that have hardcoded paths in them
         self.run([
