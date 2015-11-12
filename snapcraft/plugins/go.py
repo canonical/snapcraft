@@ -50,15 +50,22 @@ class GoPlugin(snapcraft.BasePlugin):
         super().__init__(name, options)
         self.build_packages.append('golang-go')
 
-        if self.options.source.startswith("lp:"):
-            self.fullname = self.options.source.split(":~")[1]
+        if self.options.source.startswith('lp:'):
+            self.fullname = self.options.source.split(':~')[1]
         else:
-            self.fullname = self.options.source.split("://")[1]
+            self.fullname = self.options.source.split('://')[1]
 
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
         return [
-            "GOPATH={}/go".format(root),
+            'GOPATH={}/go'.format(root),
+            'CGO_LDFLAGS=$CGO_LDFLAGS"' + ' '.join([
+                '-L{0}/lib',
+                '-L{0}/usr/lib',
+                '-L{0}/lib/{1}',
+                '-L{0}/usr/lib/{1}',
+                '$LDFLAGS'
+            ]).format(root, snapcraft.common.get_arch_triplet()) + '"',
         ]
 
     def pull(self):

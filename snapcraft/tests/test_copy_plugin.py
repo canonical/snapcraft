@@ -30,18 +30,18 @@ class TestCopyPlugin(TestCase):
         self.mock_options = Mock()
         self.mock_options.files = {}
         # setup the expected target dir in our tempdir
-        self.dst_prefix = "parts/copy/install/"
+        self.dst_prefix = 'parts/copy/install/'
         os.makedirs(self.dst_prefix)
 
     def test_copy_plugin_any_missing_src_raises_exception(self):
         # ensure that a bad file causes a warning and fails the build even
         # if there is a good file last
         self.mock_options.files = {
-            "src": "dst",
-            "zzz": "zzz",
+            'src': 'dst',
+            'zzz': 'zzz',
         }
-        open("zzz", "w").close()
-        c = CopyPlugin("copy", self.mock_options)
+        open('zzz', 'w').close()
+        c = CopyPlugin('copy', self.mock_options)
 
         with self.assertRaises(EnvironmentError) as raised:
             c.build()
@@ -53,23 +53,23 @@ class TestCopyPlugin(TestCase):
         self.useFixture(fixtures.FakeLogger())
 
         self.mock_options.files = {
-            "src": "dst",
+            'src': 'dst',
         }
-        open("src", "w").close()
+        open('src', 'w').close()
 
-        c = CopyPlugin("copy", self.mock_options)
+        c = CopyPlugin('copy', self.mock_options)
         c.build()
-        self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, "dst")))
+        self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'dst')))
 
     def test_copy_plugin_creates_prefixes(self):
         self.useFixture(fixtures.FakeLogger())
 
         self.mock_options.files = {
-            "src": "dir/dst",
+            'src': 'dir/dst',
         }
-        open("src", "w").close()
+        open('src', 'w').close()
 
-        c = CopyPlugin("copy", self.mock_options)
+        c = CopyPlugin('copy', self.mock_options)
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
-                                                    "dir/dst")))
+                                                    'dir/dst')))

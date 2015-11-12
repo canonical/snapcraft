@@ -1,0 +1,56 @@
+name: real-circle
+summary: A big bad circle
+description: |
+    A snapcraft.yaml that lists a set of parts that are
+    in a circular dependency chain. Snapcraft should NOT
+    accept this snapcraft.yaml.
+version: 1.0
+vendor: round@circle.square.com
+icon: icon.svg
+
+parts:
+    a:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [last]
+    b:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [a]
+    c:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [b]
+    d:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [c]
+    e:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [d]
+    f:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [e]
+    g:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [f]
+    h:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [g]
+    last:
+        plugin: copy
+        files:
+            icon.svg: icon.svg
+        after: [h]

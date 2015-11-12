@@ -24,6 +24,7 @@ from unittest.mock import (
     patch,
 )
 
+import snapcraft.common as common
 import snapcraft.lifecycle
 import snapcraft.tests
 
@@ -35,6 +36,11 @@ def get_test_plugin(name='copy', part_name='mock-part', properties=None):
 
 
 class PluginTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -165,7 +171,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                files, dirs = snapcraft.lifecycle.migratable_filesets(
+                files, dirs = snapcraft.lifecycle._migratable_filesets(
                     filesets[key]['fileset'], srcdir)
                 snapcraft.lifecycle._migrate_files(files, dirs, srcdir, dstdir)
 
@@ -183,6 +189,19 @@ class PluginTestCase(snapcraft.tests.TestCase):
                 result.sort()
 
                 self.assertEqual(expected, result)
+
+    @patch('snapcraft.lifecycle._load_local')
+    @patch('snapcraft.lifecycle._get_plugin')
+    def test_schema_not_found(self, plugin_mock, local_load_mock):
+        mock_plugin = Mock()
+        mock_plugin.schema.return_value = {}
+        plugin_mock.return_value = mock_plugin
+        local_load_mock.return_value = "not None"
+
+        common.set_schemadir(os.path.join('', 'foo'))
+
+        with self.assertRaises(FileNotFoundError):
+            snapcraft.lifecycle.PluginHandler('mock', 'mock-part', {})
 
     @patch('importlib.import_module')
     @patch('snapcraft.lifecycle._load_local')
@@ -202,17 +221,22 @@ class PluginTestCase(snapcraft.tests.TestCase):
             snapcraft.lifecycle._get_file_list(['rel', '/abs/include'])
 
         self.assertEqual(
-            "path '/abs/include' must be relative", str(raised.exception))
+            'path "/abs/include" must be relative', str(raised.exception))
 
     def test_filesets_exlcudes_without_relative_paths(self):
         with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
             snapcraft.lifecycle._get_file_list(['rel', '-/abs/exclude'])
 
         self.assertEqual(
-            "path '/abs/exclude' must be relative", str(raised.exception))
+            'path "/abs/exclude" must be relative', str(raised.exception))
 
 
 class PluginMakedirsTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
 
     scenarios = [
         ('existing_dirs', {'make_dirs': True}),
@@ -241,3 +265,39 @@ class PluginMakedirsTestCase(snapcraft.tests.TestCase):
         p.makedirs()
         for d in dirs:
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
+
+
+class CleanTestCase(snapcraft.tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
+
+    @patch('shutil.rmtree')
+    @patch('os.path.exists')
+    def test_clean_part_that_exists(self, mock_exists, mock_rmtree):
+        mock_exists.return_value = True
+
+        part_name = 'test_part'
+        p = get_test_plugin(part_name=part_name)
+        p.clean()
+
+        partdir = os.path.join(
+            os.path.abspath(os.curdir), 'parts', part_name)
+        mock_exists.assert_called_once_with(partdir)
+        mock_rmtree.assert_called_once_with(partdir)
+
+    @patch('shutil.rmtree')
+    @patch('os.path.exists')
+    def test_clean_part_already_clean(self, mock_exists, mock_rmtree):
+        mock_exists.return_value = False
+
+        part_name = 'test_part'
+        p = get_test_plugin(part_name=part_name)
+        p.clean()
+
+        partdir = os.path.join(
+            os.path.abspath(os.curdir), 'parts', part_name)
+        mock_exists.assert_called_once_with(partdir)
+        self.assertFalse(mock_rmtree.called)

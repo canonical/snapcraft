@@ -5,7 +5,9 @@ binaries:
   godd:
     exec: ./bin/godd
 summary: Simple dd like tool
-description: Written in go with support for device auto-detection via libgudev, you would need to use hw-assign to access devices.
+description: |
+ Written in go with support for device auto-detection via libgudev, you would
+ need to use hw-assign to access devices.
 icon: icon.png
 
 parts:

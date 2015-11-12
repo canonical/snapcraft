@@ -47,10 +47,9 @@ run_unit_tests(){
 
     # These three checks could easily be done with flake8 in one shot if
     # we had python3-flake8 provide flake8
-    # Ignore 501 (line-too-long)
-    pep8 $SRC_PATHS
+    python3 -m pep8 $SRC_PATHS
 
-    pyflakes3 $SRC_PATHS
+    python3 -m pyflakes $SRC_PATHS
 
     # mccabe in 'warning' mode as we have high complexity
     mccabe_list=
