@@ -52,7 +52,8 @@ class CopyPlugin(snapcraft.BasePlugin):
             if not os.path.lexists(src):
                 # If it doesn't exist, check if it is a glob
                 filelst = glob.glob(src)
-                if True not in map(os.path.lexists, filelst):
+                if not all(os.path.lexists(i) for i in filelst) or \
+                        len(filelst) is 0:
                     raise EnvironmentError('file "{}" missing'.format(srcname))
 
                 # Ensure we have a directory to copy to
