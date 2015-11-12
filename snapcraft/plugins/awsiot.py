@@ -55,10 +55,8 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
-        return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'properties': {
+        schema = super().schema()
+        schema['properties'].extend({
                 'generatekeys': {
                     'type': 'boolean',
                     'default': True
@@ -77,9 +75,13 @@ class AWSIoTPlugin(snapcraft.BasePlugin):
                 'endpoint': {
                     'type': 'string',
                 },
-            },
-            'required': ['thing']
-        }
+            })
+
+        if 'required' not in schema:
+            schema['required'] = []
+        schema['required'].append('thing')
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)

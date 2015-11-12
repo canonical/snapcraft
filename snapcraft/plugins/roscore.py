@@ -30,16 +30,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     @classmethod
     def schema(cls):
-        return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'properties': {
-                'rosversion': {
-                    'type': 'string',
-                    'default': 'indigo'
-                },
+        schema = super().schema()
+        schema['properties']['rosversion'] = {
+                'type': 'string',
+                'default': 'indigo'
             }
-        }
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)

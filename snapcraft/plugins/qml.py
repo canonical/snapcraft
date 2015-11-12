@@ -21,10 +21,6 @@ import snapcraft.common
 
 class QmlPlugin(snapcraft.BasePlugin):
 
-    @classmethod
-    def schema(cls):
-        return {}
-
     def __init__(self, name, options):
         super().__init__(name, options)
         self.stage_packages.extend([
