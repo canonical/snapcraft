@@ -105,9 +105,6 @@ properties:
           plugin:
             type: string
             description: plugin name
-          source:
-            type: string
-            description: path to the sources
           stage-packages:
             type: array
             description: Ubuntu packages used to support the part.
