@@ -39,15 +39,18 @@ class CopyPlugin(snapcraft.BasePlugin):
         return schema
 
     def build(self):
-        # Sources handling first
-        super().build()
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir is not None:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
 
         for srcname in sorted(self.options.files):
             dst = self.options.files[srcname]
 
             # Expand directories to include part info
             dst = os.path.join(self.installdir, dst)
-            src = os.path.join(self.sourcedir, srcname)
+            src = os.path.join(sourcedir, srcname)
 
             if not os.path.lexists(src):
                 # If it doesn't exist, check if it is a glob

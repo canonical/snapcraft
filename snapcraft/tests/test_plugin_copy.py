@@ -29,6 +29,8 @@ class TestCopyPlugin(TestCase):
         super().setUp()
         self.mock_options = Mock()
         self.mock_options.files = {}
+        self.mock_options.source = '.'
+        self.mock_options.source_subdir = None
         # setup the expected target dir in our tempdir
         parts_prefix = os.path.join('parts', 'copy')
         self.dst_prefix = os.path.join(parts_prefix, 'install')

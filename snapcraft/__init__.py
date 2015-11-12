@@ -196,8 +196,7 @@ class BasePlugin:
         Override or inherit from this method if you need to implement or
         enhance with custom pull logic.
         """
-        if getattr(self.options, 'source', None):
-            sources.get(self.sourcedir, self.builddir, self.options)
+        sources.get(self.sourcedir, self.builddir, self.options)
 
     def build(self):
         """Build the source code retrieved from the pull phase.
