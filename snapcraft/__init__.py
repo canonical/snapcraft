@@ -116,7 +116,6 @@ import os
 import shutil
 
 from snapcraft import common
-from snapcraft import sources
 
 
 class BasePlugin:
@@ -160,22 +159,12 @@ class BasePlugin:
 
     # The API
     def pull(self):
-        """Pull the source code and/or internal prereqs to build the part.
-
-        By default, the base implementation for pull will use the following
-        part properties to retrieve source code:
-
-        - source
-        - source-branch
-        - source-tag
-        - source-type
-
-        If source is empty or does not exist, the phase will be skipped.
+        """Pull any code and/or internal prereqs to build the part.
 
         Override or inherit from this method if you need to implement or
         enhance with custom pull logic.
         """
-        sources.get(self.sourcedir, self.builddir, self.options)
+        pass
 
     def build(self):
         """Build the source code retrieved from the pull phase.
