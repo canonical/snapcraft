@@ -22,6 +22,15 @@ This plugin uses the common plugin keywords, for more information check the
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - go-packages:
+      (list of strings)
+      Go packages to fetch, these must be a "main" package. Dependencies
+      are pulled in automatically by `go get`.
+      Packages that are not "main" will not cause an error, but would
+      not be useful either.
 """
 
 import os
@@ -31,6 +40,24 @@ import snapcraft
 
 
 class GoPlugin(snapcraft.BasePlugin):
+
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['go-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
+        if 'required' in schema:
+            del schema['required']
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
@@ -60,6 +87,7 @@ class GoPlugin(snapcraft.BasePlugin):
         os.makedirs(self._gopath_src, exist_ok=True)
         if self.options.source is not None:
             self._local_pull()
+        self._remote_pull()
 
     def _local_pull(self):
         go_package = os.path.basename(os.path.abspath(self.options.source))
@@ -69,10 +97,15 @@ class GoPlugin(snapcraft.BasePlugin):
         os.symlink(self.sourcedir, local_path)
         self._run(['go', 'get', '-t', '-d', './{}/...'.format(go_package)])
 
+    def _remote_pull(self):
+        for go_package in self.options.go_packages:
+            self._run(['go', 'get', '-t', '-d', go_package])
+
     def build(self):
         super().build()
         if self.options.source is not None:
             self._local_build()
+        self._remote_build()
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
@@ -84,6 +117,10 @@ class GoPlugin(snapcraft.BasePlugin):
     def _local_build(self):
         go_package = os.path.basename(os.path.abspath(self.options.source))
         self._run(['go', 'install', './{}/...'.format(go_package)])
+
+    def _remote_build(self):
+        for go_package in self.options.go_packages:
+            self._run(['go', 'install', go_package])
 
     def _run(self, cmd, **kwargs):
         cmd = ['env', 'GOPATH={}'.format(self._gopath)] + cmd
