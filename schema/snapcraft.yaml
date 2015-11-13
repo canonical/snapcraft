@@ -137,6 +137,21 @@ properties:
             type: object
           filesets:
             type: object
+          source:
+            type: string
+            default: .
+          source-type:
+            type: string
+            default: ''
+          source-branch:
+            type: string
+            default: ''
+          source-tag:
+            type: string
+            default: ''
+          source-subdir:
+            type: string
+            default:
           stage:
             type: array
             minitems: 1

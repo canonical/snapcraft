@@ -134,28 +134,7 @@ class BasePlugin:
         return {
             '$schema': 'http://json-schema.org/draft-04/schema#',
             'type': 'object',
-            'properties': {
-                'source': {
-                    'type': 'string',
-                    'default': '.',
-                },
-                'source-type': {
-                    'type': 'string',
-                    'default': '',
-                },
-                'source-branch': {
-                    'type': 'string',
-                    'default': '',
-                },
-                'source-tag': {
-                    'type:': 'string',
-                    'default': '',
-                },
-                'source-subdir': {
-                    'type': 'string',
-                    'default': None,
-                }
-            },
+            'properties': {}
         }
 
     @property
