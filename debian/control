@@ -19,8 +19,8 @@ Build-Depends: bzr,
                ubuntu-snappy-cli,
                wget,
                xz-utils
-Homepage: https://launchpad.net/snapcraft
-Vcs-Bzr: lp:snapcraft
+Homepage: https://github.com/ubuntu-core/snapcraft
+Vcs-Git: https://github.com/ubuntu-core/snapcraft
 Standards-Version: 3.9.6
 
 Package: snapcraft
