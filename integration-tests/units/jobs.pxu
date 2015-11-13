@@ -220,6 +220,14 @@ command:
     ${SNAPCRAFT} clean
 flags: simple has-leftovers
 
+id: snapcraft/normal/simple-go
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-go .
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/$(basename $(pwd)))" = "Hello snapcrafter"
+flags: simple has-leftovers
+
 id: snapcraft/normal/simple-cmake
 command:
     set -ex
