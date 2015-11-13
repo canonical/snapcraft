@@ -92,6 +92,7 @@ go
 jdk
 make
 maven
+nil
 python2
 python3
 qml
