@@ -35,7 +35,6 @@ Additionally, this plugin uses the following plugin specific keywords:
 """
 
 import os
-import tempfile
 
 import snapcraft
 
