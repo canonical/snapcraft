@@ -88,6 +88,7 @@ awsiot
 catkin
 cmake
 copy
+debs
 go
 jdk
 make
