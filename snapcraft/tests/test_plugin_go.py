@@ -38,6 +38,7 @@ class GoPluginTestCase(tests.TestCase):
     def test_environment(self):
         class Options:
             source = 'http://github.com/testplug'
+            go_packages = []
 
         plugin = go.GoPlugin('test', Options())
         self.assertEqual(plugin.env('myroot'), [
@@ -49,6 +50,7 @@ class GoPluginTestCase(tests.TestCase):
     def test_pull_local_sources(self):
         class Options:
             source = 'dir'
+            go_packages = []
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -66,9 +68,30 @@ class GoPluginTestCase(tests.TestCase):
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertFalse(os.path.exists(plugin._gopath_bin))
 
-    def test_pull_with_no_local_sources(self):
+    def test_pull_remote_sources(self):
         class Options:
             source = None
+            go_packages = ['github.com/gotools/vet']
+
+        plugin = go.GoPlugin('test-part', Options())
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
+                       'go', 'get', '-t', '-d', plugin.options.go_packages[0]],
+                      cwd=plugin._gopath_src)])
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+        self.assertTrue(os.path.exists(plugin._gopath_src))
+        self.assertFalse(os.path.exists(plugin._gopath_bin))
+
+    def test_pull_with_no_local_or_remote_sources(self):
+        class Options:
+            source = None
+            go_packages = []
 
         plugin = go.GoPlugin('test-part', Options())
         plugin.pull()
@@ -82,6 +105,7 @@ class GoPluginTestCase(tests.TestCase):
     def test_build_with_local_sources(self):
         class Options:
             source = 'dir'
+            go_packages = []
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -108,9 +132,43 @@ class GoPluginTestCase(tests.TestCase):
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertTrue(os.path.exists(plugin._gopath_bin))
 
-    def test_build_with_no_local_sources(self):
+    def test_build_with_remote_sources(self):
         class Options:
             source = None
+            go_packages = ['github.com/gotools/vet']
+
+        plugin = go.GoPlugin('test-part', Options())
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        os.makedirs(plugin._gopath_bin)
+        os.makedirs(plugin.builddir)
+        # fake some binaries
+        open(os.path.join(plugin._gopath_bin, 'vet'), 'w').close()
+
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
+                       'go', 'get', '-t', '-d', plugin.options.go_packages[0]],
+                      cwd=plugin._gopath_src),
+            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
+                       'go', 'install', plugin.options.go_packages[0]],
+                      cwd=plugin._gopath_src),
+        ])
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+        self.assertTrue(os.path.exists(plugin._gopath_src))
+        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        vet_binary = os.path.join(plugin.installdir, 'bin', 'vet')
+        self.assertTrue(os.path.exists(vet_binary))
+
+    def test_build_with_no_local_or_remote_sources(self):
+        class Options:
+            source = None
+            go_packages = []
 
         plugin = go.GoPlugin('test-part', Options())
 
