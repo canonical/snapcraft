@@ -371,8 +371,9 @@ class WrapExeTestCase(tests.TestCase):
         relative_exe_path = 'test_relexepath'
         shebang_path = os.path.join(
             partsdir, 'testsnap', 'install', 'snap_exe')
+        exe_contents = '#!{}\n'.format(shebang_path)
         with open(os.path.join(snapdir, relative_exe_path), 'w') as exe:
-            exe.write('#!{}\n'.format(shebang_path))
+            exe.write(exe_contents)
 
         relative_wrapper_path = meta._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
@@ -386,6 +387,10 @@ class WrapExeTestCase(tests.TestCase):
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
+        with open(os.path.join(snapdir, relative_exe_path), 'r') as exe:
+            # The shebang wasn't changed, since we don't know what the
+            # path will be on the installed system.
+            self.assertEqual(exe_contents, exe.read())
 
     def test_non_snap_shebangs_ignored(self):
         """Shebangs not pointing to the snap's install dir are ignored.
@@ -397,8 +402,9 @@ class WrapExeTestCase(tests.TestCase):
         os.mkdir(snapdir)
 
         relative_exe_path = 'test_relexepath'
+        exe_contents = '#!/bin/bash\necho hello\n'
         with open(os.path.join(snapdir, relative_exe_path), 'w') as exe:
-            exe.write('#!/bin/bash\necho hello\n')
+            exe.write(exe_contents)
 
         relative_wrapper_path = meta._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
@@ -410,3 +416,5 @@ class WrapExeTestCase(tests.TestCase):
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
+        with open(os.path.join(snapdir, relative_exe_path), 'r') as exe:
+            self.assertEqual(exe_contents, exe.read())
