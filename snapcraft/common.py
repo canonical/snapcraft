@@ -23,7 +23,8 @@ import tempfile
 import urllib
 
 
-COMMAND_ORDER = ["pull", "build", "stage", "snap"]
+SNAPCRAFT_FILES = ['snapcraft.yaml', 'parts', 'stage', 'snap']
+COMMAND_ORDER = ['pull', 'build', 'stage', 'snap']
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
@@ -39,7 +40,7 @@ def assemble_env():
 
 
 def run(cmd, **kwargs):
-    assert isinstance(cmd, list), "run command must be a list"
+    assert isinstance(cmd, list), 'run command must be a list'
     # FIXME: This is gross to keep writing this, even when env is the same
     with tempfile.NamedTemporaryFile(mode='w+') as f:
         f.write(assemble_env())
@@ -50,7 +51,7 @@ def run(cmd, **kwargs):
 
 
 def run_output(cmd, **kwargs):
-    assert isinstance(cmd, list), "run command must be a list"
+    assert isinstance(cmd, list), 'run command must be a list'
     # FIXME: This is gross to keep writing this, even when env is the same
     with tempfile.NamedTemporaryFile(mode='w+') as f:
         f.write(assemble_env())
@@ -113,4 +114,4 @@ def get_schemadir():
 
 
 def isurl(url):
-    return urllib.parse.urlparse(url).scheme != ""
+    return urllib.parse.urlparse(url).scheme != ''

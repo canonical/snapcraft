@@ -8,9 +8,6 @@ summary: A python sha3 implementation
 description: A python2 project using snapcraft
 icon: icon.png
 
-build-packages:
-  - libpython2.7-dev
-
 parts:
   spongeshaker:
     plugin: python2

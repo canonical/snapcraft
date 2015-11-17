@@ -10,12 +10,12 @@ of what is possible and generally relevant.
 Our showcase can be found in the actual source of `snapcraft` itself. Check
 it out by simply running:
 
-	bzr branch lp:snapcraft
+	git clone https://github.com/ubuntu-core/snapcraft
 	cd snapcraft/examples
 
 Inspecting the source locally will make easier to build the examples and
 play around with them. (You can
-[view them online](https://bazaar.launchpad.net/~snappy-dev/snapcraft/core/files/head:/examples/)
+[view them online](https://github.com/ubuntu-core/snapcraft/tree/master/examples)
 as well.)
 
 ### Playing around with the examples

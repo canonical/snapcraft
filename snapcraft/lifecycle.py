@@ -22,9 +22,11 @@ import logging
 import os
 import sys
 import shutil
+import yaml
 
 import snapcraft
 from snapcraft import common
+from snapcraft import repo
 
 
 logger = logging.getLogger(__name__)
@@ -44,6 +46,18 @@ class PluginHandler:
     def name(self):
         return self._name
 
+    @property
+    def sourcedir(self):
+        return self.code.sourcedir
+
+    @property
+    def builddir(self):
+        return self.code.builddir
+
+    @property
+    def installdir(self):
+        return self.code.installdir
+
     def __init__(self, plugin_name, part_name, properties):
         self.valid = False
         self.code = None
@@ -52,11 +66,7 @@ class PluginHandler:
         self.deps = []
 
         parts_dir = common.get_partsdir()
-        self.partdir = os.path.join(parts_dir, part_name)
-        self.sourcedir = os.path.join(parts_dir, part_name, 'src')
-        self.builddir = os.path.join(parts_dir, part_name, 'build')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
-        self.installdir = os.path.join(parts_dir, part_name, 'install')
         self.stagedir = os.path.join(os.getcwd(), 'stage')
         self.snapdir = os.path.join(os.getcwd(), 'snap')
         self.statefile = os.path.join(parts_dir, part_name, 'state')
@@ -99,8 +109,8 @@ class PluginHandler:
 
     def makedirs(self):
         dirs = [
-            self.sourcedir, self.builddir, self.installdir, self.stagedir,
-            self.snapdir, self.ubuntudir
+            self.code.sourcedir, self.code.builddir, self.code.installdir,
+            self.stagedir, self.snapdir, self.ubuntudir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -129,8 +139,8 @@ class PluginHandler:
 
     def _setup_stage_packages(self):
         if self.code.stage_packages:
-            ubuntu = snapcraft.repo.Ubuntu(
-                self.code.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+            ubuntu = repo.Ubuntu(
+                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
             ubuntu.get(self.code.stage_packages)
             ubuntu.unpack(self.code.installdir)
 
@@ -138,7 +148,7 @@ class PluginHandler:
         if not self.should_stage_run('pull', force):
             return
         self.makedirs()
-        self.notify_stage("Pulling")
+        self.notify_stage('Pulling')
         self._setup_stage_packages()
         self.code.pull()
         self.mark_done('pull')
@@ -147,29 +157,29 @@ class PluginHandler:
         if not self.should_stage_run('build', force):
             return
         self.makedirs()
-        self.notify_stage("Building")
+        self.notify_stage('Building')
         self.code.build()
         self.mark_done('build')
 
-    def _migratable_fileset_for(self, stage):
+    def migratable_fileset_for(self, stage):
         plugin_fileset = self.code.snap_fileset()
         fileset = getattr(self.code.options, stage, ['*']) or ['*']
         fileset.extend(plugin_fileset)
-        return migratable_filesets(fileset, self.installdir)
+        return _migratable_filesets(fileset, self.code.installdir)
 
     def _organize(self):
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
 
         for key in organize_fileset:
-            src = os.path.join(self.installdir, key)
-            dst = os.path.join(self.installdir, organize_fileset[key])
+            src = os.path.join(self.code.installdir, key)
+            dst = os.path.join(self.code.installdir, organize_fileset[key])
 
             os.makedirs(os.path.dirname(dst), exist_ok=True)
 
             if os.path.exists(dst):
                 logger.warning(
                     'Stepping over existing file for organization %r',
-                    os.path.relpath(dst, self.installdir))
+                    os.path.relpath(dst, self.code.installdir))
                 if os.path.isdir(dst):
                     shutil.rmtree(dst)
                 else:
@@ -183,12 +193,12 @@ class PluginHandler:
         if not self.code:
             return True
 
-        self.notify_stage("Staging")
+        self.notify_stage('Staging')
         self._organize()
-        snap_files, snap_dirs = self._migratable_fileset_for('stage')
+        snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         try:
-            _migrate_files(snap_files, snap_dirs, self.installdir,
+            _migrate_files(snap_files, snap_dirs, self.code.installdir,
                            self.stagedir)
         except FileNotFoundError as e:
             logger.error('Could not find file %s defined in stage',
@@ -204,8 +214,8 @@ class PluginHandler:
             return True
         self.makedirs()
 
-        self.notify_stage("Snapping")
-        snap_files, snap_dirs = self._migratable_fileset_for('snap')
+        self.notify_stage('Snapping')
+        snap_files, snap_dirs = self.migratable_fileset_for('snap')
 
         try:
             _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
@@ -221,39 +231,55 @@ class PluginHandler:
     def env(self, root):
         return self.code.env(root)
 
-
-def _builtin_options():
-    return {
-        'filesets': {},
-        'snap': [],
-        'stage': [],
-        'stage-packages': [],
-        'build-packages': [],
-        'organize': {}
-    }
+    def clean(self):
+        logger.info('Cleaning up for part "{}"'.format(self.name))
+        if os.path.exists(self.code.partdir):
+            shutil.rmtree(self.code.partdir)
 
 
 def _make_options(properties, schema):
+    jsonschema.validate(properties, schema)
+
     class Options():
         pass
     options = Options()
 
-    # Built in options are already validated
-    builtin_options = _builtin_options()
-    for key in builtin_options:
-        value = properties.pop(key, builtin_options[key])
-        setattr(options, key.replace('-', '_'), value)
+    # Look at the system level props
+    _populate_options(options, properties,
+                      _system_schema_part_props())
 
-    jsonschema.validate(properties, schema)
+    # Look at the plugin level props
+    _populate_options(options, properties, schema)
 
+    return options
+
+
+def _system_schema_part_props():
+    schema_file = os.path.abspath(os.path.join(common.get_schemadir(),
+                                               'snapcraft.yaml'))
+
+    try:
+        with open(schema_file) as fp:
+            schema = yaml.load(fp)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            'snapcraft validation file is missing from installation path')
+
+    props = {'properties': {}}
+    partpattern = schema['properties']['parts']['patternProperties']
+    for pattern in partpattern:
+        props['properties'].update(partpattern[pattern]['properties'])
+
+    return props
+
+
+def _populate_options(options, properties, schema):
     schema_properties = schema.get('properties', {})
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
         attr_value = properties.get(key, default_value)
         setattr(options, attr_name, attr_value)
-
-    return options
 
 
 def _get_plugin(module):
@@ -274,7 +300,7 @@ def load_plugin(part_name, plugin_name, properties={}):
     return PluginHandler(plugin_name, part_name, properties)
 
 
-def migratable_filesets(fileset, srcdir):
+def _migratable_filesets(fileset, srcdir):
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
@@ -370,4 +396,4 @@ def _generate_exclude_set(directory, excludes):
 def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
-            raise PluginError("path '{}' must be relative".format(d))
+            raise PluginError('path "{}" must be relative'.format(d))

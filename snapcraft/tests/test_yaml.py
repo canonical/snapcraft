@@ -43,7 +43,7 @@ class TestYaml(TestCase):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
         os.chdir(tempdirObj.name)
-        with open("snapcraft.yaml", "w") as fp:
+        with open('snapcraft.yaml', 'w') as fp:
             fp.write(content)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
@@ -539,6 +539,17 @@ class TestValidation(TestCase):
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
         expected_message = '\'my-icon.png\' is not a \'icon-path\''
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
+
+    def test_invalid_part_name_plugin_raises_exception(self):
+        self.data['parts']['plugins'] = {'type': 'go'}
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_message = 'Additional properties are not allowed ' \
+                           '(\'plugins\' was unexpected)'
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 

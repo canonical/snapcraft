@@ -12,4 +12,5 @@ icon: icon.png
 parts:
   gopaste:
     plugin: go
-    source: git://github.com/wisnij/gopaste/gopasted
+    source: https://github.com/wisnij/gopaste.git
+    source-type: git

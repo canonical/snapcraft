@@ -45,5 +45,5 @@ class CopyPlugin(snapcraft.BasePlugin):
                 raise EnvironmentError('file "{}" missing'.format(src))
             dst = os.path.join(self.installdir, dst)
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            self.run(["cp", "--preserve=all", "-R", src, dst],
+            self.run(['cp', '--preserve=all', '-R', src, dst],
                      cwd=os.getcwd())

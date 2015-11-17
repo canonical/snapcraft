@@ -41,6 +41,10 @@ A part that uses common source options can have these keyword entries:
     - source-tag:
       (string)
       A specific tag from the source tree.
+    - source-subdir:
+      (string)
+      A source directory within a repository or tarfile to enter and build
+      from.
 """
 
 
@@ -51,6 +55,8 @@ import requests
 import shutil
 import tarfile
 import re
+import subprocess
+import tempfile
 
 import snapcraft.common
 
@@ -73,13 +79,6 @@ class Base:
         self.source_tag = source_tag
         self.source_branch = source_branch
 
-    def pull(self):
-        raise NotImplementedError('this is just a base class')
-
-    def provision(self, dst):
-        return snapcraft.common.run(['cp', '-Trfa', self.source_dir, dst],
-                                    cwd=os.getcwd())
-
 
 class Bazaar(Base):
 
@@ -94,7 +93,7 @@ class Bazaar(Base):
         tag_opts = []
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
-        if os.path.exists(os.path.join(self.source_dir, ".bzr")):
+        if os.path.exists(os.path.join(self.source_dir, '.bzr')):
             cmd = ['bzr', 'pull'] + tag_opts + \
                   [self.source, '-d', self.source_dir]
         else:
@@ -102,7 +101,7 @@ class Bazaar(Base):
             cmd = ['bzr', 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        snapcraft.common.run(cmd, cwd=os.getcwd())
+        subprocess.check_call(cmd)
 
 
 class Git(Base):
@@ -116,7 +115,7 @@ class Git(Base):
                 'a git source')
 
     def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, ".git")):
+        if os.path.exists(os.path.join(self.source_dir, '.git')):
             refspec = 'HEAD'
             if self.source_branch:
                 refspec = 'refs/heads/' + self.source_branch
@@ -131,7 +130,7 @@ class Git(Base):
             cmd = ['git', 'clone'] + branch_opts + \
                   [self.source, self.source_dir]
 
-        snapcraft.common.run(cmd, cwd=os.getcwd())
+        subprocess.check_call(cmd)
 
 
 class Mercurial(Base):
@@ -145,7 +144,7 @@ class Mercurial(Base):
                 'mercurial source')
 
     def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, ".hg")):
+        if os.path.exists(os.path.join(self.source_dir, '.hg')):
             ref = []
             if self.source_tag:
                 ref = ['-r', self.source_tag]
@@ -158,7 +157,7 @@ class Mercurial(Base):
                 ref = ['-u', self.source_tag or self.source_branch]
             cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
 
-        snapcraft.common.run(cmd, cwd=os.getcwd())
+        subprocess.check_call(cmd)
 
 
 class Tar(Base):
@@ -174,13 +173,15 @@ class Tar(Base):
                 'can\'t specify a source-branch for a tar source')
 
     def pull(self):
-        if not snapcraft.common.isurl(self.source):
-            return
+        if snapcraft.common.isurl(self.source):
+            self._download()
+        self.provision(self.source_dir)
 
+    def _download(self):
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
             raise EnvironmentError('unexpected http status code when '
-                                   'downloading %r'.format(req.status_code))
+                                   'downloading {}'.format(req.status_code))
 
         file = os.path.join(self.source_dir, os.path.basename(self.source))
         with open(file, 'wb') as f:
@@ -197,8 +198,11 @@ class Tar(Base):
             tarball = os.path.abspath(self.source)
 
         if clean_target:
+            tmp_tarball = tempfile.NamedTemporaryFile().name
+            shutil.move(tarball, tmp_tarball)
             shutil.rmtree(dst)
             os.makedirs(dst)
+            shutil.move(tmp_tarball, tarball)
 
         self._extract(tarball, dst)
 
@@ -215,7 +219,7 @@ class Tar(Base):
                 # consider "d/ab" and "d/abc" to have common prefix "d/ab";
                 # check all members either start with common dir
                 for m in members:
-                    if not (m.name.startswith(common + "/") or
+                    if not (m.name.startswith(common + '/') or
                             m.isdir() and m.name == common):
                         # commonprefix() didn't return a dir name; go up one
                         # level
@@ -225,9 +229,9 @@ class Tar(Base):
                 for m in members:
                     if m.name == common:
                         continue
-                    if m.name.startswith(common + "/"):
-                        m.name = m.name[len(common + "/"):]
-                    # strip leading "/", "./" or "../" as many times as needed
+                    if m.name.startswith(common + '/'):
+                        m.name = m.name[len(common + '/'):]
+                    # strip leading '/', './' or '../' as many times as needed
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
@@ -240,17 +244,14 @@ class Tar(Base):
 class Local(Base):
 
     def pull(self):
-        pass
-
-    def provision(self, dst):
         path = os.path.abspath(self.source)
-        if os.path.islink(dst):
-            os.remove(dst)
-        elif os.path.isdir(dst):
-            os.rmdir(dst)
+        if os.path.islink(self.source_dir):
+            os.remove(self.source_dir)
+        elif os.path.isdir(self.source_dir):
+            os.rmdir(self.source_dir)
         else:
-            os.remove(dst)
-        os.symlink(path, dst)
+            os.remove(self.source_dir)
+        os.symlink(path, self.source_dir)
 
 
 def get(sourcedir, builddir, options):
@@ -268,7 +269,6 @@ def get(sourcedir, builddir, options):
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
     handler.pull()
-    handler.provision(builddir)
 
 
 _source_handler = {
@@ -292,9 +292,9 @@ _tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
 
 def _get_source_type_from_uri(source):
     source_type = ''
-    if source.startswith("bzr:") or source.startswith("lp:"):
+    if source.startswith('bzr:') or source.startswith('lp:'):
         source_type = 'bzr'
-    elif source.startswith("git:"):
+    elif source.startswith('git:') or source.startswith('git@'):
         source_type = 'git'
     elif _tar_type_regex.match(source):
         source_type = 'tar'

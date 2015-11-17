@@ -1,10 +1,99 @@
-id: snapcraft/examples/build
+id: snapcraft/examples/godd
 plugin: shell
 command:
-    set -e
-    for example in ${PLAINBOX_PROVIDER_DATA}/examples/*
-    do
-      cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
-      cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
-      rm -rf ${PLAINBOX_SESSION_SHARE}/*
-    done
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/godd
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/downloader-with-wiki-parts
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/downloader-with-wiki-parts
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/gopaste
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/gopaste
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/java-hello-world
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/java-hello-world
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/libpipeline
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/libpipeline
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/py2project
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/py2-project
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/py3project
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/py3-project
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/qmldemo
+plugin: shell
+command:
+  set -e
+  test ! "$(lsb_release -cs)" = "trusty"  || exit 0
+  example=${PLAINBOX_PROVIDER_DATA}/examples/qmldemo
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/ros
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/ros
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/tomcat-maven-webapp
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/tomcat-maven-webapp
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/webcam-webui
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/webcam-webui
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*

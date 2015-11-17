@@ -3,7 +3,7 @@ Tests: runtests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          build-essential,
-         pep8,
+         python3-pep8,
          plainbox,
          pyflakes,
          python3-fixtures,

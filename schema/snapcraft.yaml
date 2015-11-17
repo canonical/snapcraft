@@ -99,15 +99,12 @@ properties:
     minProperties: 1
     additionalProperties: false
     patternProperties:
-      ^[a-z0-9][a-z0-9+-]*$:
+      ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
         type: object
         properties:
           plugin:
             type: string
             description: plugin name
-          source:
-            type: string
-            description: path to the sources
           stage-packages:
             type: array
             description: Ubuntu packages used to support the part.
@@ -115,9 +112,45 @@ properties:
             uniqueItems: true
             items:
               type: string
-        # required:
-        # - plugin
-        # - source
+          after:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          stage-packages:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          build-packages:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          organize:
+            type: object
+          filesets:
+            type: object
+          stage:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: ['*']
+          snap:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: ['*']
 required:
   - name
   - version

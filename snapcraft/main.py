@@ -93,6 +93,8 @@ def main():
         'clean',
         help='clean up the environment (to start from scratch)')
     parser.set_defaults(func=snapcraft.cmds.clean)
+    parser.add_argument('parts', nargs='*', metavar='PART',
+                        help='specific part to clean')
 
     parser = subparsers.add_parser('pull', help='get sources',
                                    parents=[cmd_parser])

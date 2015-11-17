@@ -11,8 +11,9 @@ config: usr/bin/config.py
 
 parts:
   cam:
-    plugin: go-project
-    source: git://github.com/mikix/golang-static-http
+    plugin: go
+    go-packages:
+        - github.com/mikix/golang-static-http
     stage-packages:
       - fswebcam
     filesets:

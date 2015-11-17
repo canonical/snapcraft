@@ -35,10 +35,10 @@ In additon, this plugin uses the following plugin specific keywords:
 """
 
 import os
-from snapcraft.plugins.make import MakePlugin
+import snapcraft
 
 
-class AutotoolsPlugin(MakePlugin):
+class AutotoolsPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
@@ -62,15 +62,15 @@ class AutotoolsPlugin(MakePlugin):
             'automake',
             'autopoint',
             'libtool',
+            'make',
         ])
 
     def build(self):
+        super().build()
         if not os.path.exists(os.path.join(self.builddir, "configure")):
             if os.path.exists(os.path.join(self.builddir, "autogen.sh")):
-                self.run(['env', 'NOCONFIGURE=1', './autogen.sh'],
-                         cwd=self.builddir)
+                self.run(['env', 'NOCONFIGURE=1', './autogen.sh'])
             else:
-                self.run(['autoreconf', '-i'], cwd=self.builddir)
-        self.run(['./configure', '--prefix='] +
-                 self.options.configflags)
-        super().build()
+                self.run(['autoreconf', '-i'])
+        self.run(['./configure', '--prefix='] + self.options.configflags)
+        self.run(['make', 'install', 'DESTDIR=' + self.installdir])

@@ -101,8 +101,8 @@ class Config:
 
         self._wiki = snapcraft.wiki.Wiki()
 
-        for part_name in self.data.get("parts", []):
-            properties = self.data["parts"][part_name] or {}
+        for part_name in self.data.get('parts', []):
+            properties = self.data['parts'][part_name] or {}
 
             plugin_name = properties.pop('plugin', None)
             # TODO search the wiki
@@ -127,7 +127,7 @@ class Config:
                     'deprecated. Using {0} instead of {0}-project'.format(
                         plugin_name))
 
-            if "after" in properties:
+            if 'after' in properties:
                 after_requests[part_name] = properties.pop('after')
 
             properties['stage'] = _expand_filesets_for('stage', properties)
@@ -149,7 +149,7 @@ class Config:
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
-                    if dep in self.all_parts[i].name:
+                    if dep == self.all_parts[i].name:
                         part.deps.append(self.all_parts[i])
                         found = True
                         break
@@ -247,19 +247,23 @@ class Config:
         env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
         return env
 
-    def build_env_for_part(self, part):
-        # Grab build env of all part's dependencies
+    def build_env_for_part(self, part, root_part=True):
+        """Return a build env of all the part's dependencies."""
 
         env = []
+        stagedir = snapcraft.common.get_stagedir()
+        for dep_part in part.deps:
+            env += dep_part.env(stagedir)
+            env += self.build_env_for_part(dep_part, root_part=False)
 
-        for dep in part.deps:
-            root = dep.installdir
-            env += dep.env(root)
-            env += self.build_env_for_part(dep)
-
-        env += part.env(part.installdir)
-        env += self.runtime_env(part.installdir)
-        env += self.build_env(part.installdir)
+        if root_part:
+            env += part.env(part.installdir)
+            env += self.runtime_env(part.installdir)
+            env += self.build_env(part.installdir)
+        else:
+            env += part.env(stagedir)
+            env += self.runtime_env(stagedir)
+            env += self.build_env(stagedir)
 
         return env
 
