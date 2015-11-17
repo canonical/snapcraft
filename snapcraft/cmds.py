@@ -101,7 +101,27 @@ def assemble(args):
     # With all the data in snapcraft.yaml, maybe it's not a good idea to call
     # snap(args) and just do a snappy build if assemble was explicitly called.
     snap(args)
-    common.run(['snappy', 'build', common.get_snapdir()])
+
+    ticker = '/-\\|'
+    i = 0
+    with subprocess.Popen(['snappy', 'build', common.get_snapdir()],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,) as proc:
+        ret = None
+        if os.isatty(sys.stdout.fileno()):
+            ret = proc.poll()
+            while ret is None:
+                print('\033[1m\rSnapping\033[0m {}'.format(ticker[i]), end='')
+                i = (i+1) % len(ticker)
+                time.sleep(.2)
+                ret = proc.poll()
+        else:
+            print('Snapping ...')
+            ret = proc.wait()
+        if ret == 0:
+            print()
+        print(proc.stdout.read().decode('utf-8'))
+        sys.exit(ret)
 
 
 def _find_latest_private_key():
