@@ -23,4 +23,3 @@ parts:
       file2: share/file2
       dir1: new/dir1
       dir2: new/dir2
-    source: .

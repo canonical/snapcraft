@@ -27,6 +27,7 @@ import yaml
 import snapcraft
 from snapcraft import common
 from snapcraft import repo
+from snapcraft import sources
 
 
 logger = logging.getLogger(__name__)
@@ -144,12 +145,16 @@ class PluginHandler:
             ubuntu.get(self.code.stage_packages)
             ubuntu.unpack(self.code.installdir)
 
+    def _setup_source_dir(self):
+        sources.get(self.code.sourcedir, self.code.builddir, self.code.options)
+
     def pull(self, force=False):
         if not self.should_stage_run('pull', force):
             return
         self.makedirs()
         self.notify_stage('Pulling')
         self._setup_stage_packages()
+        self._setup_source_dir()
         self.code.pull()
         self.mark_done('pull')
 

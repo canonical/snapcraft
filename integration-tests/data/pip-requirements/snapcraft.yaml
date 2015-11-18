@@ -7,8 +7,8 @@ icon: icon.svg
 
 parts:
   python2:
-    plugin: python2-project
+    plugin: python2
     requirements: requirements.txt
   python3:
-    plugin: python3-project
+    plugin: python3
     requirements: requirements.txt

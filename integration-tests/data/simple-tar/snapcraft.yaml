@@ -31,6 +31,6 @@ parts:
     plugin: tar-content
     source: readonly-files.tar.gz
   project:
-    plugin: make-project
+    plugin: make
     source: project.tar.xz
     source-type: tar

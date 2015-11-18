@@ -16,6 +16,8 @@
 
 import logging
 import os
+import glob
+import shutil
 
 import snapcraft
 
@@ -27,23 +29,45 @@ class CopyPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
-        return {
-            'properties': {
-                'files': {
-                    'type': 'object',
-                },
-            },
-            'required': [
-                'files',
-            ]
+        schema = super().schema()
+        schema['properties']['files'] = {
+            'type': 'object',
         }
+        if 'required' not in schema:
+            schema['required'] = []
+        schema['required'].append('files')
+        return schema
 
     def build(self):
-        for src in sorted(self.options.files):
-            dst = self.options.files[src]
-            if not os.path.lexists(src):
-                raise EnvironmentError('file "{}" missing'.format(src))
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir is not None:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
+        for srcname in sorted(self.options.files):
+            dst = self.options.files[srcname]
+
+            # Expand directories to include part info
             dst = os.path.join(self.installdir, dst)
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            self.run(['cp', '--preserve=all', '-R', src, dst],
-                     cwd=os.getcwd())
+            src = os.path.join(sourcedir, srcname)
+
+            if not os.path.lexists(src):
+                # If it doesn't exist, check if it is a glob
+                filelst = glob.glob(src)
+                if not all(os.path.lexists(i) for i in filelst) or \
+                        len(filelst) is 0:
+                    raise EnvironmentError('file "{}" missing'.format(srcname))
+
+                # Ensure we have a directory to copy to
+                os.makedirs(dst, exist_ok=True)
+
+                for filename in filelst:
+                    shutil.copy2(filename, dst)
+            elif os.path.isdir(src):
+                shutil.copytree(src, dst)
+            else:
+                # Ensure we have a destination to copy to
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+                shutil.copy2(src, dst)
