@@ -64,16 +64,6 @@ class NodePlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
-        schema['properties'][''] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string'
-            },
-            'default': [],
-        }
-
         if 'required' in schema:
             del schema['required']
 
@@ -94,13 +84,8 @@ class NodePlugin(snapcraft.BasePlugin):
         self._nodejs_tar.provision(self.installdir)
         for pkg in self.options.node_packages:
             self.run(['npm', 'install', '-g', pkg])
-        if os.path.exists('package.json'):
+        if os.path.exists(os.path.join(self.builddir, 'package.json')):
             self.run(['npm', 'install', '-g'])
-
-    def env(self, root):
-        env = super().env(root)
-        env.append('PATH=$PATH:{}/'.format(os.path.join(root, 'bin')))
-        return env
 
 
 def _get_nodejs_base():
