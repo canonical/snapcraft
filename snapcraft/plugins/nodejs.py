@@ -22,6 +22,12 @@ also sets up binaries defined in `package.json` into the `PATH`.
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin specific keywords:
+
+    - node-packages:
+      (list)
+      A list of dependencies to fetch using npm.
 """
 
 import logging
@@ -44,6 +50,35 @@ _NODEJS_ARCHES = {
 
 class NodePlugin(snapcraft.BasePlugin):
 
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+
+        schema['properties']['node-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
+        }
+
+        schema['properties'][''] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
+        }
+
+        if 'required' in schema:
+            del schema['required']
+
+        return schema
+
     def __init__(self, name, options):
         super().__init__(name, options)
         self._nodejs_tar = sources.Tar(_get_nodejs_release(),
@@ -57,7 +92,10 @@ class NodePlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         self._nodejs_tar.provision(self.installdir)
-        self.run(['npm', 'install', '-g'])
+        for pkg in self.options.node_packages:
+            self.run(['npm', 'install', '-g', pkg])
+        if os.path.exists('package.json'):
+            self.run(['npm', 'install', '-g'])
 
     def env(self, root):
         env = super().env(root)
