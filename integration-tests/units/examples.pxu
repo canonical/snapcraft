@@ -97,3 +97,21 @@ command:
   cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
   cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
   rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/webchat
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/webchat
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*
+
+id: snapcraft/examples/shout
+plugin: shell
+command:
+  set -e
+  example=${PLAINBOX_PROVIDER_DATA}/examples/shout
+  cp -rT ${example//:} ${PLAINBOX_SESSION_SHARE}
+  cd ${PLAINBOX_SESSION_SHARE} && ${SNAPCRAFT}
+  rm -rf ${PLAINBOX_SESSION_SHARE}/*

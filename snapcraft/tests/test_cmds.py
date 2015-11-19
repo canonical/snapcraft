@@ -164,6 +164,7 @@ jdk
 make
 maven
 nil
+nodejs
 python2
 python3
 qml
