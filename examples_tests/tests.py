@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     testbed_ip = 'localhost'
+    testbed_port = '8022'
 
     scenarios = [
         ('py3-project', {
@@ -54,12 +55,14 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             ['sudo', 'ubuntu-device-flash', '--verbose',
              'core', 'rolling', '--channel', 'edge',
              '--output', cls.image_path, '--developer-mode'])
-        logger.info('Running the snappy image in kvm.')
+        logger.info('Running the snappy image in a virtual machine.')
         system = subprocess.check_output(['uname', '-m']).strip().decode('utf8')
-        cls.vm_process = subprocess.Popen(
-            ['qemu-system-' + system, '-m', '512', '-nographic',
-             '-monitor', 'none', '-serial', 'none',
-             cls.image_path])
+        qemu_command = ('qemu-system-' + system +
+            ' -m 512 -nographic -net user -net nic,model=virtio' +
+            ' -drive file=' + cls.image_path +
+            ',if=virtio -redir tcp:{}::22'.format(cls.testbed_port) +
+            ' -monitor none -serial none')
+        cls.vm_process = subprocess.Popen(qemu_command, shell=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -71,6 +74,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         self._wait_for_ssh()
 
     def _wait_for_ssh(self):
+        logger.info('Waiting for ssh to be enable in the testbed...')
         timeout = 300
         sleep = 10
         while (timeout > 0):
@@ -79,13 +83,14 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                 break
             except subprocess.CalledProcessError:
                 if timeout <= 0:
+                    logger.error('Timed out waiting for ssh in the testbed.')
                     raise
                 else:
                     time.sleep(sleep)
                 timeout -= sleep
 
     def run_command_through_ssh(self, command):
-        ssh_command = ['ssh', 'ubuntu@' + self.testbed_ip]
+        ssh_command = ['ssh', 'ubuntu@' + self.testbed_ip, '-p', self.testbed_port]
         ssh_command.extend(self._get_ssh_options())
         ssh_command.extend(command)
         return subprocess.check_output(ssh_command).decode("utf-8")
@@ -103,7 +108,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         subprocess.check_call(snapcraft, cwd=project_dir)
 
     def copy_snap_to_testbed(self, snap_path):
-        scp_command = ['scp']
+        scp_command = ['scp', '-P', self.testbed_port]
         scp_command.extend(self._get_ssh_options())
         scp_command.extend([snap_path, 'ubuntu@localhost:/home/ubuntu'])
         subprocess.check_call(scp_command)
