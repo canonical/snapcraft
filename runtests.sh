@@ -118,7 +118,7 @@ if [ ! -z "$RUN_UNIT" ]; then
     run_unit_tests
 fi
 
-if [ ! -z "$RUN_EXAMPLES"]; then
+if [ ! -z "$RUN_EXAMPLES" ]; then
     run_examples
 fi
 
