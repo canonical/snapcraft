@@ -70,7 +70,7 @@ class GoPlugin(snapcraft.BasePlugin):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
         env = [
             'GOPATH={}/go'.format(root),
-            'CGO_LDFLAGS=$CGO_LDFLAGS"' + ' '.join([
+            'CGO_LDFLAGS="$CGO_LDFLAGS ' + ' '.join([
                 '-L{0}/lib',
                 '-L{0}/usr/lib',
                 '-L{0}/lib/{1}',
