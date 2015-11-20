@@ -34,6 +34,18 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
     testbed_port = '8022'
 
     scenarios = [
+        ('downloader-with-wiki-parts', {
+            'dir': 'downloader-with-wiki-parts',
+            'snap': 'downloader_1.0_amd64.snap'
+         }),
+        ('godd', {
+            'dir': 'godd',
+            'snap': 'godd_1.0_amd64.snap'
+         }),
+        ('gopaste', {
+            'dir': 'gopaste',
+            'snap': 'gopaste_1.0_amd64.snap'
+         }),
         ('py3-project', {
             'dir': 'libpipeline',
             'snap': 'pipelinetest_1.0_amd64.snap',
@@ -42,7 +54,6 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                  'running ls | grep c\n'
                  'custom libpipeline called\n'
                  'include\n')],
-            'external_tests_commands': [],
          }),
     ]
 
@@ -121,11 +132,13 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         self.build_snap(example_dir)
         self.copy_snap_to_testbed(os.path.join(example_dir, self.snap))
         self.install_snap(self.snap)
-        for command, expected_result in self.internal_tests_commands:
-            with self.subTest(command):
-                output = self.run_command_through_ssh(command.split(' '))
-                self.assertEqual(output, expected_result)
-        for command, expected_result in self.external_tests_commands:
-            with self.subTest(command):
-                output = subprocess.check_output(command.split(' '))
-                self.assertEqual(output, expected_result)
+        if getattr(self, 'internal_tests_commads', None):
+            for command, expected_result in self.internal_tests_commands:
+                with self.subTest(command):
+                    output = self.run_command_through_ssh(command.split(' '))
+                    self.assertEqual(output, expected_result)
+        if getattr(self, 'external_tests_commands', None):
+            for command, expected_result in self.external_tests_commands:
+                with self.subTest(command):
+                    output = subprocess.check_output(command.split(' '))
+                    self.assertEqual(output, expected_result)

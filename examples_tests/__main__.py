@@ -20,4 +20,4 @@ import unittest
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    unittest.main('examples_tests.tests')
+    unittest.main('examples_tests.tests', verbosity=2)
