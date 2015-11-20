@@ -55,7 +55,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
              'core', 'rolling', '--channel', 'edge',
              '--output', cls.image_path, '--developer-mode'])
         logger.info('Running the snappy image in kvm.')
-        system = subprocess.check_output(['uname', 'm']).strip().decode('utf8')
+        system = subprocess.check_output(['uname', '-m']).strip().decode('utf8')
         cls.vm_process = subprocess.Popen(
             ['qemu-system-' + system, '-m', '512', '-nographic',
              '-monitor', 'none', '-serial', 'stdio',
