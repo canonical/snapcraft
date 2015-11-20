@@ -70,10 +70,10 @@ run_unit_tests(){
 
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage erase
-        python3-coverage run --branch --source snapcraft -m unittest
+        python3-coverage run --branch --source snapcraft -m unittest discover -s snapcraft
         mv .coverage .coverage.unit
     else
-        python3 -m unittest
+        python3 -m unittest discover -s snapcraft
     fi
 }
 
