@@ -24,6 +24,7 @@ parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
         export RUN_UNIT="true"
         export RUN_PLAINBOX="true"
+        export RUN_EXAMPLES="true"
         export PLAINBOX_TEST_PLANS="normal"
     else
         if [ "$1" == "unit" ] ; then
@@ -35,6 +36,8 @@ parseargs(){
             else
                 export PLAINBOX_TEST_PLANS="normal"
             fi
+        elif [ "$1" == "examples" ] ; then
+            export RUN_EXAMPLES="true"
         else
             echo "Not recognized option, should be one of all, unit or plainbox"
             exit 1
@@ -74,6 +77,16 @@ run_unit_tests(){
     fi
 }
 
+run_examples(){
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage erase
+        python3-coverage run --branch --source snapcraft -m examples_tests
+        mv .coverage .coverage.examples
+    else
+        python3 -m exmaples_tests
+    fi
+}
+
 run_plainbox(){
     # well, well, what can we do
     if ! which plainbox >/dev/null; then
@@ -103,6 +116,10 @@ parseargs "$@"
 
 if [ ! -z "$RUN_UNIT" ]; then
     run_unit_tests
+fi
+
+if [ ! -z "$RUN_EXAMPLES"]; then
+    run_examples
 fi
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ] && [ ! -z "$RUN_PLAINBOX" ] ; then
