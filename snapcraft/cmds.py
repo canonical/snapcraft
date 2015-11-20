@@ -118,9 +118,11 @@ def assemble(args):
         else:
             print('Snapping ...')
             ret = proc.wait()
+        print()
         if ret == 0:
-            print()
-        print(proc.stdout.read().decode('utf-8'))
+            print(proc.stdout.read().decode('utf-8'))
+        else:
+            print(proc.stderr.read().decode('utf-8'), file=sys.stderr)
         sys.exit(ret)
 
 
