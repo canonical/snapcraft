@@ -76,9 +76,11 @@ longer text.''')
         self.assertEqual(raised.exception.code, 0, 'Wrong exit code returned.')
 
         # we do a contains since review tools are something we don't control
-        output = mock_stdout.getvalue()
-        self.assertTrue('Snapping' in output)
-        self.assertTrue('test-package_1_all.snap' in output)
+        output_stdout = mock_stdout.getvalue()
+        output_stderr = mock_stderr.getvalue()
+        self.assertEqual(output_stderr, '', 'There should be no stderr')
+        self.assertTrue('Snapping' in output_stdout)
+        self.assertTrue('test-package_1_all.snap' in output_stdout)
 
     @mock.patch('snapcraft.cmds.snap')
     @mock.patch('sys.stdout', new_callable=_IO)
@@ -104,9 +106,12 @@ longer text.''')
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
 
         # we do a contains since review tools are something we don't control
-        output = mock_stdout.getvalue()
-        self.assertTrue('Snapping' in output)
-        self.assertFalse('test-package_1_all.snap' in output)
+        output_stdout = mock_stdout.getvalue()
+        output_stderr = mock_stderr.getvalue()
+        self.assertTrue('can not parse package.yaml: missing required fields'
+                        in output_stderr)
+        self.assertTrue('Snapping' in output_stdout)
+        self.assertFalse('test-package_1_all.snap' in output_stdout)
 
     def test_check_for_collisions(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
