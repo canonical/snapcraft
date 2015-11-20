@@ -30,12 +30,88 @@ from snapcraft import (
 )
 
 
+class _IO(io.StringIO):
+
+    def fileno(self):
+        return 1
+
+
 class TestCommands(tests.TestCase):
 
     def setUp(self):
         super().setUp()
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
+
+    @mock.patch('snapcraft.cmds.snap')
+    @mock.patch('sys.stdout', new_callable=_IO)
+    @mock.patch('sys.stderr', new_callable=_IO)
+    def test_assemble_snap(self, mock_stderr, mock_stdout, mock_snap):
+        meta_dir = os.path.join('snap', 'meta')
+        metadata = os.path.join(meta_dir, 'package.yaml')
+        readme_md = os.path.join(meta_dir, 'readme.md')
+
+        os.makedirs(meta_dir)
+        with open(metadata, 'w') as f:
+            f.write('''name: test-package
+version: 1
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+binaries:
+  - name: binary1
+''')
+        with open(readme_md, 'w') as f:
+            f.write('''description
+longer text.''')
+
+        class Args:
+            cmd = ''
+
+        with self.assertRaises(SystemExit) as raised:
+            cmds.assemble(Args())
+
+        self.assertEqual(raised.exception.code, 0, 'Wrong exit code returned.')
+
+        # we do a contains since review tools are something we don't control
+        output_stdout = mock_stdout.getvalue()
+        output_stderr = mock_stderr.getvalue()
+        self.assertEqual(output_stderr, '', 'There should be no stderr')
+        self.assertTrue('Snapping' in output_stdout)
+        self.assertTrue('test-package_1_all.snap' in output_stdout)
+
+    @mock.patch('snapcraft.cmds.snap')
+    @mock.patch('sys.stdout', new_callable=_IO)
+    @mock.patch('sys.stderr', new_callable=_IO)
+    def test_assemble_snap_fails_on_bad_snap_layout(
+            self, mock_stderr, mock_stdout, mock_snap):
+        meta_dir = os.path.join('snap', 'meta')
+        metadata = os.path.join(meta_dir, 'package.yaml')
+        readme_md = os.path.join(meta_dir, 'readme.md')
+
+        os.makedirs(meta_dir)
+        with open(metadata, 'w') as f:
+            f.write('')
+        with open(readme_md, 'w') as f:
+            f.write('')
+
+        class Args:
+            cmd = ''
+
+        with self.assertRaises(SystemExit) as raised:
+            cmds.assemble(Args())
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+
+        # we do a contains since review tools are something we don't control
+        output_stdout = mock_stdout.getvalue()
+        output_stderr = mock_stderr.getvalue()
+        self.assertTrue('can not parse package.yaml: missing required fields'
+                        in output_stderr)
+        self.assertTrue('Snapping' in output_stdout)
+        self.assertFalse('test-package_1_all.snap' in output_stdout)
 
     def test_check_for_collisions(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -84,7 +160,6 @@ class TestCommands(tests.TestCase):
     def test_list_plugins(self, mock_stdout):
         expected_list = '''ant
 autotools
-awsiot
 catkin
 cmake
 copy
@@ -92,6 +167,8 @@ go
 jdk
 make
 maven
+nil
+nodejs
 python2
 python3
 qml
@@ -101,6 +178,32 @@ tar-content
 '''
         cmds.list_plugins()
         self.assertEqual(mock_stdout.getvalue(), expected_list)
+
+    def test_load_config_with_invalid_plugin_exits_with_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        open('my-icon.png', 'w').close()
+        with open('snapcraft.yaml', 'w') as f:
+            f.write('''name: test-package
+version: 1
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+parts:
+  part1:
+    plugin: does-not-exist
+''')
+
+        with self.assertRaises(SystemExit) as raised:
+            cmds._load_config()
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        self.assertEqual(
+            'Issue while loading plugin: unknown plugin: does-not-exist\n',
+            fake_logger.output)
 
 
 class CleanTestCase(tests.TestCase):

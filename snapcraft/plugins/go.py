@@ -19,15 +19,23 @@
 This plugin uses the common plugin keywords, for more information check the
 'plugins' topic.
 
-Additionally, this plugin uses the following plugin specific keywords:
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
 
-    - source:
-      (string)
-      A path to some source tree to build in the form of something `go get`
-      understands.
+Additionally, this plugin uses the following plugin-specific keywords:
+
+    - go-packages:
+      (list of strings)
+      Go packages to fetch, these must be a "main" package. Dependencies
+      are pulled in automatically by `go get`.
+      Packages that are not "main" will not cause an error, but would
+      not be useful either.
 """
 
 import os
+import shutil
+
 import snapcraft
 
 
@@ -35,29 +43,32 @@ class GoPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
-        return {
-            'properties': {
-                'source': {
-                    'type': 'string',
-                },
+        schema = super().schema()
+        schema['properties']['go-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
             },
-            'required': [
-                'source',
-            ]
+            'default': [],
         }
+
+        if 'required' in schema:
+            del schema['required']
+
+        return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('golang-go')
-
-        if self.options.source.startswith('lp:'):
-            self.fullname = self.options.source.split(':~')[1]
-        else:
-            self.fullname = self.options.source.split('://')[1]
+        self._gopath = os.path.join(self.partdir, 'go')
+        self._gopath_src = os.path.join(self._gopath, 'src')
+        self._gopath_bin = os.path.join(self._gopath, 'bin')
 
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
-        return [
+        env = [
             'GOPATH={}/go'.format(root),
             'CGO_LDFLAGS=$CGO_LDFLAGS"' + ' '.join([
                 '-L{0}/lib',
@@ -67,18 +78,50 @@ class GoPlugin(snapcraft.BasePlugin):
                 '$LDFLAGS'
             ]).format(root, snapcraft.common.get_arch_triplet()) + '"',
         ]
+        return env
 
     def pull(self):
         # use -d to only download (build will happen later)
         # use -t to also get the test-deps
-        self._run(['go', 'get', '-t', '-d', self.fullname])
+        super().pull()
+        os.makedirs(self._gopath_src, exist_ok=True)
+        if self.options.source is not None:
+            self._local_pull()
+        self._remote_pull()
+
+    def _local_pull(self):
+        go_package = os.path.basename(os.path.abspath(self.options.source))
+        local_path = os.path.join(self._gopath_src, go_package)
+        if os.path.islink(local_path):
+            os.unlink(local_path)
+        os.symlink(self.sourcedir, local_path)
+        self._run(['go', 'get', '-t', '-d', './{}/...'.format(go_package)])
+
+    def _remote_pull(self):
+        for go_package in self.options.go_packages:
+            self._run(['go', 'get', '-t', '-d', go_package])
 
     def build(self):
-        self._run(['go', 'build', self.fullname])
-        self._run(['go', 'install', self.fullname])
-        self._run(['cp', '-a', os.path.join(self.builddir, 'bin'),
-                  self.installdir])
+        super().build()
+        if self.options.source is not None:
+            self._local_build()
+        self._remote_build()
+
+        install_bin_path = os.path.join(self.installdir, 'bin')
+        os.makedirs(install_bin_path, exist_ok=True)
+        os.makedirs(self._gopath_bin, exist_ok=True)
+        for binary in os.listdir(os.path.join(self._gopath_bin)):
+            binary_path = os.path.join(self._gopath_bin, binary)
+            shutil.copy2(binary_path, install_bin_path)
+
+    def _local_build(self):
+        go_package = os.path.basename(os.path.abspath(self.options.source))
+        self._run(['go', 'install', './{}/...'.format(go_package)])
+
+    def _remote_build(self):
+        for go_package in self.options.go_packages:
+            self._run(['go', 'install', go_package])
 
     def _run(self, cmd, **kwargs):
-        cmd = ['env', 'GOPATH=' + self.builddir] + cmd
-        return self.run(cmd, **kwargs)
+        cmd = ['env', 'GOPATH={}'.format(self._gopath)] + cmd
+        return self.run(cmd, cwd=self._gopath_src, **kwargs)

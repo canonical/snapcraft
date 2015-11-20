@@ -1,0 +1,10 @@
+name: test-package
+version: 0.1
+vendor: Jonathan Cave <jonathan.cave@canonical.com>
+summary: Create the empty snap
+description: Create an empty snap with nothing to pull
+icon: icon.png
+
+parts:
+    nil-part:
+        plugin: nil

@@ -1,7 +1,7 @@
 id: snapcraft/normal/list-plugins
 command:
     OUTPUT=$(${SNAPCRAFT} list-plugins)
-    test "$OUTPUT" = "$(echo -e "ant\nautotools\nawsiot\ncatkin\ncmake\ncopy\ngo\njdk\nmake\nmaven\npython2\npython3\nqml\nroscore\nscons\ntar-content\n")"
+    test "$OUTPUT" = "$(echo -e "ant\nautotools\ncatkin\ncmake\ncopy\ngo\njdk\nmake\nmaven\nnil\nnodejs\npython2\npython3\nqml\nroscore\nscons\ntar-content\n")"
 flags: simple has-leftovers
 
 id: snapcraft/normal/no-yaml
@@ -107,6 +107,26 @@ command:
     test -e stage/build-stamp
 flags: simple has-leftovers
 
+id: snapcraft/normal/simple-nil
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-nil .
+    ${SNAPCRAFT} snap
+    # only should be meta data dir in snap
+    test "$(ls -A snap)" == "meta"
+flags: simple has-leftovers
+
+id: snapcraft/normal/nil-plugin-pkgfilter
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/nil-plugin-pkgfilter .
+    ${SNAPCRAFT} stage
+    test -e stage/usr/bin/nmcli
+    ${SNAPCRAFT} snap
+    test -e snap/usr/bin/nmcli
+    test ! -e snap/usr/bin/nmtui
+flags: simple has-leftovers
+
 id: snapcraft/normal/simple-tar
 command:
     set -ex
@@ -198,6 +218,14 @@ command:
     # Clean a second time doesn't fail.
     # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1497371
     ${SNAPCRAFT} clean
+flags: simple has-leftovers
+
+id: snapcraft/normal/simple-go
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-go .
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/$(basename $(pwd)))" = "Hello snapcrafter"
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-cmake
