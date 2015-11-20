@@ -58,7 +58,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         system = subprocess.check_output(['uname', '-m']).strip().decode('utf8')
         cls.vm_process = subprocess.Popen(
             ['qemu-system-' + system, '-m', '512', '-nographic',
-             '-monitor', 'none', '-serial', 'stdio',
+             '-monitor', 'none', '-serial', 'none',
              cls.image_path])
 
     @classmethod
