@@ -1,7 +1,7 @@
 id: snapcraft/normal/list-plugins
 command:
     OUTPUT=$(${SNAPCRAFT} list-plugins)
-    test "$OUTPUT" = "$(echo -e "ant\nautotools\nawsiot\ncatkin\ncmake\ncopy\ngo\njdk\nmake\nmaven\nnil\nnodejs\npython2\npython3\nqml\nroscore\nscons\ntar-content\n")"
+    test "$OUTPUT" = "$(echo -e "ant\nautotools\ncatkin\ncmake\ncopy\ngo\njdk\nmake\nmaven\nnil\nnodejs\npython2\npython3\nqml\nroscore\nscons\ntar-content\n")"
 flags: simple has-leftovers
 
 id: snapcraft/normal/no-yaml
