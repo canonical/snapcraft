@@ -44,7 +44,7 @@ class GoPluginTestCase(tests.TestCase):
         plugin = go.GoPlugin('test', Options())
         self.assertEqual(plugin.env('myroot'), [
             'GOPATH=myroot/go',
-            'CGO_LDFLAGS=$CGO_LDFLAGS"-Lmyroot/lib -Lmyroot/usr/lib '
+            'CGO_LDFLAGS="$CGO_LDFLAGS -Lmyroot/lib -Lmyroot/usr/lib '
             '-Lmyroot/lib/{0} '
             '-Lmyroot/usr/lib/{0} $LDFLAGS"'.format(
                 common.get_arch_triplet())])
