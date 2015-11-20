@@ -46,7 +46,11 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             'dir': 'gopaste',
             'snap': 'gopaste_1.0_amd64.snap'
          }),
-        ('py3-project', {
+        ('java-hello-world', {
+            'dir': 'java-hello-world',
+            'snap': 'java-hello-world_0_amd64.snap'
+         }),
+        ('libpipeline', {
             'dir': 'libpipeline',
             'snap': 'pipelinetest_1.0_amd64.snap',
             'internal_tests_commands': [
@@ -54,6 +58,38 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                  'running ls | grep c\n'
                  'custom libpipeline called\n'
                  'include\n')],
+         }),
+        ('py2-project', {
+            'dir': 'py2-project',
+            'snap': 'spongeshaker_0_amd64.snap'
+         }),
+        ('py3-project', {
+            'dir': 'py3-project',
+            'snap': 'spongeshake_0_amd64.snap'
+         }),
+        ('qmldemo', {
+            'dir': 'qmldemo',
+            'snap': 'qmldemo_1_amd64.snap'
+         }),
+        ('ros', {
+            'dir': 'ros',
+            'snap': 'ros-example_1.0_amd64.snap'
+         }),
+        ('shout', {
+            'dir': 'shout',
+            'snap': 'shout_0.52.0_amd64.snap'
+         }),
+        ('tomcat-maven-webapp', {
+            'dir': 'tomcat-maven-webapp',
+            'snap': 'tomacat-webapp-demo_1.0_amd64.snap'
+         }),
+        ('webcam-webui', {
+            'dir': 'webcam-webui',
+            'snap': 'webcam-webui_1_amd64.snap'
+         }),
+        ('webchat', {
+            'dir': 'webchat',
+            'snap': 'webchat_0.0.1_amd64.snap'
          }),
     ]
 
