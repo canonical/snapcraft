@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     testbed_ip = 'localhost'
-    testbed_port = '8022'
 
     scenarios = [
         ('py3-project', {
@@ -56,10 +55,10 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
              'core', 'rolling', '--channel', 'edge',
              '--output', cls.image_path, '--developer-mode'])
         logger.info('Running the snappy image in kvm.')
+        system = supbrocess.check_output(['uname', 'm']).strip().decode('utf8')
         cls.vm_process = subprocess.Popen(
-            ['kvm', '-m', '512', '-nographic',
-             '-redir', ':{}::22'.format(cls.testbed_port),
-             '-monitor', 'none', '-serial', 'none',
+            ['qemu-system-' + system, '-m', '512', '-nographic',
+             '-monitor', 'none', '-serial', 'stdio',
              cls.image_path])
 
     @classmethod
@@ -86,9 +85,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                 timeout -= sleep
 
     def run_command_through_ssh(self, command):
-        ssh_command = [
-            'ssh', 'ubuntu@' + self.testbed_ip, '-p', self.testbed_port,
-        ]
+        ssh_command = ['ssh', 'ubuntu@' + self.testbed_ip]
         ssh_command.extend(self._get_ssh_options())
         ssh_command.extend(command)
         return subprocess.check_output(ssh_command).decode("utf-8")
@@ -106,7 +103,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         subprocess.check_call(snapcraft, cwd=project_dir)
 
     def copy_snap_to_testbed(self, snap_path):
-        scp_command = ['scp', '-P', '8022']
+        scp_command = ['scp']
         scp_command.extend(self._get_ssh_options())
         scp_command.extend([snap_path, 'ubuntu@localhost:/home/ubuntu'])
         subprocess.check_call(scp_command)
