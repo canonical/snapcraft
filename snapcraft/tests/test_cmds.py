@@ -160,7 +160,6 @@ longer text.''')
     def test_list_plugins(self, mock_stdout):
         expected_list = '''ant
 autotools
-awsiot
 catkin
 cmake
 copy
