@@ -434,3 +434,4 @@ def _load_config():
         sys.exit(1)
     except lifecycle.PluginError as e:
         logger.error('Issue while loading plugin: {}'.format(e))
+        sys.exit(1)

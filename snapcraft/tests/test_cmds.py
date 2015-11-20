@@ -179,6 +179,32 @@ tar-content
         cmds.list_plugins()
         self.assertEqual(mock_stdout.getvalue(), expected_list)
 
+    def test_load_config_with_invalid_plugin_exits_with_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        open('my-icon.png', 'w').close()
+        with open('snapcraft.yaml', 'w') as f:
+            f.write('''name: test-package
+version: 1
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+
+parts:
+  part1:
+    plugin: does-not-exist
+''')
+
+        with self.assertRaises(SystemExit) as raised:
+            cmds._load_config()
+
+        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        self.assertEqual(
+            'Issue while loading plugin: unknown plugin: does-not-exist\n',
+            fake_logger.output)
+
 
 class CleanTestCase(tests.TestCase):
 
