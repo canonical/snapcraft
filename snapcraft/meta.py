@@ -228,12 +228,12 @@ def _wrap_exe(relexepath):
             common.run(['/bin/sh', tempf.name], cwd=snap_dir)
             wrapexec = relexepath
     else:
-        with open(exepath, 'r') as exefile:
+        with open(exepath, 'rb') as exefile:
             # If the file has a she-bang, the path might be pointing to
             # the local 'parts' dir. Extract it so that _write_wrap_exe
             # will have a chance to rewrite it.
-            if exefile.read(2) == '#!':
-                shebang = exefile.readline().strip()
+            if exefile.read(2) == b'#!':
+                shebang = exefile.readline().strip().decode('utf-8')
             else:
                 shebang = None
 

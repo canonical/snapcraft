@@ -418,3 +418,32 @@ class WrapExeTestCase(tests.TestCase):
         self.assertEqual(expected, wrapper_contents)
         with open(os.path.join(snapdir, relative_exe_path), 'r') as exe:
             self.assertEqual(exe_contents, exe.read())
+
+    def test_non_shebang_binaries_ignored(self):
+        """Native binaries are ignored.
+
+        If the executable is a native binary, and thus not have a
+        shebang, it's ignored.
+        """
+        snapdir = common.get_snapdir()
+        os.mkdir(snapdir)
+
+        relative_exe_path = 'test_relexepath'
+        # Choose a content which can't be decoded with utf-8, to make
+        # sure no decoding errors happen.
+        exe_contents = b'\xf0\xf1'
+        with open(os.path.join(snapdir, relative_exe_path), 'wb') as exe:
+            exe.write(exe_contents)
+
+        relative_wrapper_path = meta._wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+
+        expected = ('#!/bin/sh\n'
+                    '\n\n'
+                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+        with open(wrapper_path) as wrapper_file:
+            wrapper_contents = wrapper_file.read()
+
+        self.assertEqual(expected, wrapper_contents)
+        with open(os.path.join(snapdir, relative_exe_path), 'rb') as exe:
+            self.assertEqual(exe_contents, exe.read())
