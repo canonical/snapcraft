@@ -28,6 +28,11 @@ import testscenarios
 logger = logging.getLogger(__name__)
 
 
+def _get_ubuntu_version():
+    return subprocess.check_output(
+        ['lsb_release', '-cs']).decode('utf8').strip()
+
+
 class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     testbed_ip = 'localhost'
@@ -36,23 +41,28 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
     scenarios = [
         ('downloader-with-wiki-parts', {
             'dir': 'downloader-with-wiki-parts',
-            'snap': 'downloader_1.0_amd64.snap'
+            'name': 'downloader',
+            'version': '1.0',
          }),
         ('godd', {
             'dir': 'godd',
-            'snap': 'godd_1.0_amd64.snap'
+            'name': 'godd',
+            'version': '1.0',
          }),
         ('gopaste', {
             'dir': 'gopaste',
-            'snap': 'gopaste_1.0_amd64.snap'
+            'name': 'gopaste',
+            'version': '1.0',
          }),
         ('java-hello-world', {
             'dir': 'java-hello-world',
-            'snap': 'java-hello-world_0_amd64.snap'
+            'name': 'java-hello-world',
+            'version': '0',
          }),
         ('libpipeline', {
             'dir': 'libpipeline',
-            'snap': 'pipelinetest_1.0_amd64.snap',
+            'name': 'pipelinetest',
+            'version': '1.0',
             'internal_tests_commands': [
                 ('/apps/bin/pipelinetest.pipelinetest',
                  'running ls | grep c\n'
@@ -61,35 +71,43 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
          }),
         ('py2-project', {
             'dir': 'py2-project',
-            'snap': 'spongeshaker_0_amd64.snap'
+            'name': 'spongeshaker',
+            'version': '0',
          }),
         ('py3-project', {
             'dir': 'py3-project',
-            'snap': 'spongeshake_0_amd64.snap'
+            'name': 'spongeshaker',
+            'version': '0',
          }),
         ('qmldemo', {
             'dir': 'qmldemo',
-            'snap': 'qmldemo_1_amd64.snap'
+            'name': 'qmldemo',
+            'version': '1',
          }),
         ('ros', {
             'dir': 'ros',
-            'snap': 'ros-example_1.0_amd64.snap'
+            'name': 'ros-example',
+            'version': '1.0',
          }),
         ('shout', {
             'dir': 'shout',
-            'snap': 'shout_0.52.0_amd64.snap'
+            'name': 'shout',
+            'version': '0.52.0',
          }),
         ('tomcat-maven-webapp', {
             'dir': 'tomcat-maven-webapp',
-            'snap': 'tomacat-webapp-demo_1.0_amd64.snap'
+            'name': 'tomcat-webapp-demo',
+            'version': '1.0',
          }),
         ('webcam-webui', {
             'dir': 'webcam-webui',
-            'snap': 'webcam-webui_1_amd64.snap'
+            'name': 'webcam-webui',
+            'version': '1',
          }),
         ('webchat', {
             'dir': 'webchat',
-            'snap': 'webchat_0.0.1_amd64.snap'
+            'name': 'webchat',
+            'version': '0.0.1',
          }),
     ]
 
@@ -160,14 +178,28 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         scp_command.extend([snap_path, 'ubuntu@localhost:/home/ubuntu'])
         subprocess.check_call(scp_command)
 
-    def install_snap(self, snap_file):
-        self.run_command_through_ssh(['sudo', 'snappy', 'install', snap_file])
+    def delete_snap_from_testbed(self, snap_file_name):
+        self.run_command_through_ssh(
+            ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
+
+    def install_snap(self, snap_file_name):
+        self.run_command_through_ssh(
+            ['sudo', 'snappy', 'install', snap_file_name])
+
+    def remove_snap(self, snap_name):
+        self.run_command_through_ssh(['sudo', 'snappy', 'remove', snap_name])
 
     def test_example(self):
+        if self.name == 'qmldemo' and _get_ubuntu_version() == 'trusty':
+            self.skipTest('qmldemo is not supported on trusty.')
+
         example_dir = os.path.join('examples', self.dir)
         self.build_snap(example_dir)
-        self.copy_snap_to_testbed(os.path.join(example_dir, self.snap))
-        self.install_snap(self.snap)
+        snap = '{}_{}_amd64.snap'.format(self.name, self.version)
+        self.copy_snap_to_testbed(os.path.join(example_dir, snap))
+        self.addCleanup(self.delete_snap_from_testbed, snap)
+        self.install_snap(snap)
+        self.addCleanup(self.remove_snap, self.name)
         if getattr(self, 'internal_tests_commads', None):
             for command, expected_result in self.internal_tests_commands:
                 with self.subTest(command):
