@@ -172,10 +172,10 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         subprocess.check_call([snapcraft, 'clean'], cwd=project_dir)
         subprocess.check_call(snapcraft, cwd=project_dir)
 
-    def copy_snap_to_testbed(self, snap_path):
+    def copy_snap_to_testbed(self, snap_local_path):
         scp_command = ['scp', '-P', self.testbed_port]
         scp_command.extend(self._get_ssh_options())
-        scp_command.extend([snap_path, 'ubuntu@localhost:/home/ubuntu'])
+        scp_command.extend([snap_local_path, 'ubuntu@localhost:/home/ubuntu'])
         subprocess.check_call(scp_command)
 
     def delete_snap_from_testbed(self, snap_file_name):
@@ -195,10 +195,10 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
         example_dir = os.path.join('examples', self.dir)
         self.build_snap(example_dir)
-        snap = '{}_{}_amd64.snap'.format(self.name, self.version)
-        self.copy_snap_to_testbed(os.path.join(example_dir, snap))
-        self.addCleanup(self.delete_snap_from_testbed, snap)
-        self.install_snap(snap)
+        snap_file_name = '{}_{}_amd64.snap'.format(self.name, self.version)
+        self.copy_snap_to_testbed(os.path.join(example_dir, snap_file_name))
+        self.addCleanup(self.delete_snap_from_testbed, snap_file_name)
+        self.install_snap(snap_file_name)
         self.addCleanup(self.remove_snap, self.name)
         if getattr(self, 'internal_tests_commads', None):
             for command, expected_result in self.internal_tests_commands:
