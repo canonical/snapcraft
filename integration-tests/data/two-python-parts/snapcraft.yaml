@@ -1,0 +1,16 @@
+name: two-python-parts
+version: 1
+vendor: Vendor <email@example.com>
+summary: Use two python parts.
+description: |
+  This snap tests the usage of two python parts.
+  It is a regression tests for https://bugs.launchpad.net/snapcraft/+bug/1502105
+icon: icon.png
+
+parts:
+  py1:
+    plugin: python3
+    source: py1
+  py2:
+    plugin: python3
+    source: py2

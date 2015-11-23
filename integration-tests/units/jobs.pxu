@@ -443,3 +443,11 @@ command:
     cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/circle .
     ! ${SNAPCRAFT} pull
 flags: simple has-leftovers
+
+id: snapcraft/normal/two-python-parts
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/two-python-parts .
+    ${SNAPCRAFT} stage
+    test -f ./stage/usr/bin/py1.py
+    test -f ./stage/usr/bin/py2.py
