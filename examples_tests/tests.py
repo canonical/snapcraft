@@ -118,7 +118,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         logger.info('Creating a snappy image to run the tests.')
         subprocess.check_call(
             ['sudo', 'ubuntu-device-flash', '--verbose',
-             'core', 'rolling', '--channel', 'edge',
+             'core', '15.04', '--channel', 'stable',
              '--output', cls.image_path, '--developer-mode'])
         logger.info('Running the snappy image in a virtual machine.')
         system = subprocess.check_output(['uname', '-m']).strip().decode('utf8')
