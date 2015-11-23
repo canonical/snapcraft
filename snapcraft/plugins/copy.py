@@ -16,6 +16,8 @@
 
 import logging
 import os
+import glob
+import shutil
 
 import snapcraft
 
@@ -39,11 +41,22 @@ class CopyPlugin(snapcraft.BasePlugin):
         }
 
     def build(self):
-        for src in sorted(self.options.files):
-            dst = self.options.files[src]
-            if not os.path.lexists(src):
-                raise EnvironmentError('file "{}" missing'.format(src))
-            dst = os.path.join(self.installdir, dst)
+        files = self.options.files
+        globs = {f: files[f] for f in files if glob.has_magic(f)}
+        filepaths = {f: files[f] for f in files if not glob.has_magic(f)}
+
+        for src in globs:
+            globbed = glob.glob(src)
+            if not globbed:
+                raise EnvironmentError('no matches for {!r}'.format(src))
+            for g in globbed:
+                filepaths.update({g: globs[src]})
+
+        for src in sorted(filepaths):
+            dst = os.path.join(self.installdir, filepaths[src])
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            self.run(['cp', '--preserve=all', '-R', src, dst],
-                     cwd=os.getcwd())
+
+            if os.path.isdir(src):
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)

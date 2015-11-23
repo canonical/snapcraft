@@ -17,8 +17,6 @@
 import os.path
 from unittest.mock import Mock
 
-import fixtures
-
 from snapcraft.plugins.copy import CopyPlugin
 from snapcraft.tests import TestCase
 
@@ -47,11 +45,22 @@ class TestCopyPlugin(TestCase):
             c.build()
 
         self.assertEqual(raised.exception.__str__(),
-                         'file "src" missing')
+                         "[Errno 2] No such file or directory: 'src'")
+
+    def test_copy_glob_does_not_match_anything(self):
+        # ensure that a bad file causes a warning and fails the build even
+        # if there is a good file last
+        self.mock_options.files = {
+            'src*': 'dst',
+        }
+        c = CopyPlugin('copy', self.mock_options)
+
+        with self.assertRaises(EnvironmentError) as raised:
+            c.build()
+
+        self.assertEqual(raised.exception.__str__(), "no matches for 'src*'")
 
     def test_copy_plugin_copies(self):
-        self.useFixture(fixtures.FakeLogger())
-
         self.mock_options.files = {
             'src': 'dst',
         }
@@ -62,8 +71,6 @@ class TestCopyPlugin(TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'dst')))
 
     def test_copy_plugin_creates_prefixes(self):
-        self.useFixture(fixtures.FakeLogger())
-
         self.mock_options.files = {
             'src': 'dir/dst',
         }
@@ -73,3 +80,35 @@ class TestCopyPlugin(TestCase):
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
                                                     'dir/dst')))
+
+    def test_copy_directories(self):
+        self.mock_options.files = {
+            'dirs1': 'dir/dst',
+        }
+        os.mkdir('dirs1')
+        file = os.path.join('dirs1', 'f')
+        open(file, 'w').close()
+
+        c = CopyPlugin('copy', self.mock_options)
+        c.build()
+        self.assertTrue(
+            os.path.exists(os.path.join(self.dst_prefix, 'dir', 'dst', 'f')))
+
+    def test_copy_plugin_glob(self):
+        self.mock_options.files = {
+            '*.txt': '.',
+        }
+
+        for filename in ('file-a.txt', 'file-b.txt', 'file-c.notxt'):
+            with open(filename, 'w') as datafile:
+                datafile.write(filename)
+
+        c = CopyPlugin('copy', self.mock_options)
+        c.build()
+
+        self.assertTrue(os.path.exists(
+            os.path.join(self.dst_prefix, 'file-a.txt')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.dst_prefix, 'file-b.txt')))
+        self.assertFalse(os.path.exists(
+            os.path.join(self.dst_prefix, 'file-c.notxt')))
