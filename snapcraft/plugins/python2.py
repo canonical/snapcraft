@@ -38,7 +38,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import tempfile
 
 import snapcraft
 
@@ -131,13 +130,13 @@ class Python2Plugin(snapcraft.BasePlugin):
         # and be in the PYTHONPATH. It's harmless if setuptools isn't
         # used.
 
-        if not os.path.exists(os.path.join(self.builddir, 'setup.py')):
+        setup_file = os.path.join(self.builddir, 'setup.py')
+        if not os.path.exists(setup_file):
             return
 
         os.makedirs(self.dist_packages_dir, exist_ok=True)
-        setuptemp = self.copy_setup()
         self.run(
-            ['python2', setuptemp.name,
+            ['python2', setup_file,
              'build_ext', '-I{}'.format(os.path.join(
                  self.installdir, 'usr', 'include', '{}'.format(
                      self.python_version))),
@@ -154,21 +153,6 @@ class Python2Plugin(snapcraft.BasePlugin):
     @property
     def python_version(self):
         return self.run_output(['pyversions', '-d'])
-
-    # Takes the setup.py file and puts a couple little gems on the
-    # front to make things work better.
-    def copy_setup(self):
-        setupout = tempfile.NamedTemporaryFile(dir=self.builddir, mode='w+')
-
-        setupout.write('import sys\n')
-        setupout.write('sys.executable = "usr/bin/python2"\n\n')
-
-        with open(os.path.join(self.builddir, 'setup.py'), 'r') as f:
-            for line in f:
-                setupout.write(line)
-
-        setupout.flush()
-        return setupout
 
     def snap_fileset(self):
         fileset = super().snap_fileset()

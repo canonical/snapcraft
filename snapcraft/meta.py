@@ -174,7 +174,7 @@ def _replace_cmd(execparts, cmd):
         return ' '.join([shlex.quote(x) for x in newparts])
 
 
-def _write_wrap_exe(wrapexec, wrappath, args=[], cwd=None):
+def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=[], cwd=None):
     args = ' '.join(args) + ' $*' if args else '$*'
     cwd = 'cd {}'.format(cwd) if cwd else ''
 
@@ -182,10 +182,19 @@ def _write_wrap_exe(wrapexec, wrappath, args=[], cwd=None):
     assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
     replace_path = r'{}/.*/install'.format(common.get_partsdir())
     assembled_env = re.sub(replace_path, '$SNAP_APP_PATH', assembled_env)
+    executable = '"{}"'.format(wrapexec)
+    if shebang is not None:
+        new_shebang = re.sub(replace_path, '$SNAP_APP_PATH', shebang)
+        if new_shebang != shebang:
+            # If the shebang was pointing to and executable within the
+            # local 'parts' dir, have the wrapper script execute it
+            # directly, since we can't use $SNAP_APP_PATH in the shebang
+            # itself.
+            executable = '"{}" "{}"'.format(new_shebang, wrapexec)
     script = ('#!/bin/sh\n' +
               '{}\n'.format(assembled_env) +
               '{}\n'.format(cwd) +
-              'exec "{}" {}\n'.format(wrapexec, args))
+              'exec {} {}\n'.format(executable, args))
 
     with open(wrappath, 'w+') as f:
         f.write(script)
@@ -218,8 +227,17 @@ def _wrap_exe(relexepath):
             tempf.flush()
             common.run(['/bin/sh', tempf.name], cwd=snap_dir)
             wrapexec = relexepath
+    else:
+        with open(exepath, 'rb') as exefile:
+            # If the file has a she-bang, the path might be pointing to
+            # the local 'parts' dir. Extract it so that _write_wrap_exe
+            # will have a chance to rewrite it.
+            if exefile.read(2) == b'#!':
+                shebang = exefile.readline().strip().decode('utf-8')
+            else:
+                shebang = None
 
-    _write_wrap_exe(wrapexec, wrappath)
+    _write_wrap_exe(wrapexec, wrappath, shebang=shebang)
 
     return os.path.relpath(wrappath, snap_dir)
 
