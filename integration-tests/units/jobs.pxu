@@ -451,3 +451,4 @@ command:
     ${SNAPCRAFT} stage
     test -f ./stage/usr/bin/py1.py
     test -f ./stage/usr/bin/py2.py
+flags: simple has-leftovers
