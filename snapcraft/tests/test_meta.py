@@ -357,10 +357,10 @@ class WrapExeTestCase(tests.TestCase):
 
         If the exe has a shebang that points to the snap's install dir,
         the wrapper script will execute it directly rather than relying
-        the shebang.
+        on the shebang.
 
-        The shebang needs to be and absolute path, and we don't know
-        where in which directory the snap will be installed. Executing
+        The shebang needs to be an absolute path, and we don't know
+        in which directory the snap will be installed. Executing
         it in the wrapper script allows us to use the $SNAP_APP_PATH
         environment variable.
         """
