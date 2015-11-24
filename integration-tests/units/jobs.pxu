@@ -417,7 +417,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/pip-requirements-file .
     ${SNAPCRAFT} pull
     test -f parts/python2/install/usr/lib/python2.7/argparse.py
-    test -f parts/python3/install/usr/lib/python3.4/argparse.py
+    test -f parts/python3/install/usr/lib/python3*/argparse.py
 flags: simple has-leftovers
 
 id: snapcraft/normal/pip-requirements-list
@@ -427,8 +427,8 @@ command:
     ${SNAPCRAFT} pull
     test -f parts/python2/install/usr/lib/python2.7/argparse.py
     test -d parts/python2/install/usr/lib/python2.7/dist-packages/jsonschema
-    test -f parts/python3/install/usr/lib/python3.4/argparse.py
-    test -d parts/python3/install/usr/lib/python3.4/dist-packages/jsonschema
+    test -f parts/python3/install/usr/lib/python3*/argparse.py
+    test -d parts/python3/install/usr/lib/python3/dist-packages/jsonschema
 flags: simple has-leftovers
 
 id: snapcraft/normal/build-tool-paths
