@@ -411,13 +411,24 @@ command:
     test -e parts/mercurial/src/second
 flags: simple has-leftovers
 
-id: snapcraft/normal/pip-requirements
+id: snapcraft/normal/pip-requirements-file
 command:
     set -ex
-    cp -rT $PLAINBOX_PROVIDER_DATA/pip-requirements .
+    cp -rT $PLAINBOX_PROVIDER_DATA/pip-requirements-file .
     ${SNAPCRAFT} pull
     test -f parts/python2/install/usr/lib/python2.7/argparse.py
     test -f parts/python3/install/usr/lib/python3.4/argparse.py
+flags: simple has-leftovers
+
+id: snapcraft/normal/pip-requirements-list
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/pip-requirements-list .
+    ${SNAPCRAFT} pull
+    test -f parts/python2/install/usr/lib/python2.7/argparse.py
+    test -d parts/python2/install/usr/lib/python3/dist-packages/jsonschema
+    test -f parts/python3/install/usr/lib/python3.4/argparse.py
+    test -d parts/python3/install/usr/lib/python3/dist-packages/jsonschema
 flags: simple has-leftovers
 
 id: snapcraft/normal/build-tool-paths
