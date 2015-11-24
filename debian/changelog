@@ -1,8 +1,62 @@
-snapcraft (0.5) UNRELEASED; urgency=medium
+snapcraft (0.5) xenial; urgency=medium
 
-  * 
+  [ Sujeevan Vijayakumaran ]
+  * Added 'git@' to the automatic identification of the source.
+  * Updated HACKING: replaced Launchpad with GitHub.
 
- -- Daniel Holbach <daniel.holbach@ubuntu.com>  Fri, 30 Oct 2015 09:09:02 +0100
+  [ Bjorn Tillenius ]
+  * Rewrite the shebang and execute it in the wrapper script.
+    (Fixes LP: #1507357 and LP: #1516404)
+
+  [ Leo Arias ]
+  * Replaced the usage of % with .format. (LP: #1477638)
+  * Fixed the id of the circle tests.
+  * Replaced the double quotes by single quotes on strings. (LP: #1476467)
+  * Added the instructions to run the tests in travis.
+  * Split the suite in two: unit and plainbox.
+
+  [ Sergio Schvezov ]
+  * Don't wrap the vcs commands in the env.
+  * Making source management common to all types.
+  * Updating setup.py's metadata.
+  * Do not install recommends for build or stage pkgs. (LP: #1500375)
+  * Silence the init unit test and verify stdout.
+  * Making the examples individual tests.
+  * Inherit directly from the BasePlugin for autotools.
+  * Clean for parts and remove dup from lifecycle and plugin.
+  * Validate that 'plugins' is not used as a part name.
+  * Support the source-subdir keyword for parts.
+  * Adding a ticker to `snappy build`. (LP: #1502410)
+  * Exiting with error when a plugin cannot be loaded.
+  * catkin plugin: Get deps from the part's sourcedir, fail if needed.
+  * go plugin:
+    - Use CGO_LDFLAGS when building. (LP: #1513935)
+    - Support local sources. (LP: #1515132, LP: #1516228 and LP: #1499240)
+    - Implement a go-packages plugin property
+  * nodejs plugin:
+    - Initial implementation. (LP: #1518403)
+    - Support node-packages.
+  * copy plugin: Support globs. (LP: #1478054)
+  * catkin plugin:
+    - Typo s/packages.xml/package.xml/
+    - Catch the correct exception for missing catkin pkg
+
+  [ Ted Gould ]
+  * Adding a simple tree test to look at the dependency resolution
+  * Add schema for the core properties of the system that are independent of a part
+  * copy-plugin: test for directories. (LP: #1478052)
+  * python plugins: 
+    - Support pip-packages. (LP: #1502132)
+    - fix conflicts with pyc files. (LP: #1502105)
+
+  [ Paul Larson ]
+  * Don't throw exception on snapcraft run exit status. (LP: #1499242)
+  * Minor fixes to setup.py
+
+  [ Jonathan Cave ]
+  * Add nil plugin. (LP: #1518404)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Tue, 24 Nov 2015 13:29:19 -0300
 
 snapcraft (0.4) xenial; urgency=medium
 
