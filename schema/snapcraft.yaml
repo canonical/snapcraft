@@ -63,7 +63,7 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
-      "^[A-Za-z0-9:-_]*$":
+      "^[A-Za-z0-9:_-]*$":
         type: object
         required:
           - start
@@ -82,7 +82,7 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
-      "^[A-Za-z0-9:-_]*$":
+      "^[A-Za-z0-9:_-]*$":
         type: object
         required:
           - exec
