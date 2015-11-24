@@ -464,7 +464,6 @@ class TestValidation(TestCase):
     def test_invalid_binary_names(self):
         invalid_names = {
             'qwe#rty': {'exec': '1'},
-            'qwe_rty': {'exec': '1'},
             'que rty': {'exec': '1'},
             'que  rty': {'exec': '1'},
         }
@@ -486,8 +485,7 @@ class TestValidation(TestCase):
     def test_invalid_service_names(self):
         invalid_names = {
             'qwe#rty': {'start': '1'},
-            'qwe_rty': {'start': '1'},
-            'que_rty': {'start': '1'},
+            'que rty': {'start': '1'},
             'quer  ty': {'start': '1'},
         }
 
