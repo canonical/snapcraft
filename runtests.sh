@@ -80,10 +80,11 @@ run_unit_tests(){
 run_examples(){
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage erase
-        python3-coverage run --branch --source snapcraft -m examples_tests
+        python3-coverage run --branch --source snapcraft -m examples_tests "$@"
         mv .coverage .coverage.examples
     else
-        python3 -m exmaples_tests
+        echo "$@"
+        python3 -m examples_tests "$@"
     fi
 }
 
@@ -119,7 +120,12 @@ if [ ! -z "$RUN_UNIT" ]; then
 fi
 
 if [ ! -z "$RUN_EXAMPLES" ]; then
-    run_examples
+    if [ "$1" == "examples" ] ; then
+        # shift to remove the test suite name and be able to pass the rest
+        # to the examples suite.
+        shift
+    fi
+    run_examples "$@"
 fi
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ] && [ ! -z "$RUN_PLAINBOX" ] ; then
