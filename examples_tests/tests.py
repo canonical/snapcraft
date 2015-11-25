@@ -174,7 +174,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                 ',if=virtio -redir tcp:{}::22'.format(cls.testbed_port) +
                 ' -monitor none -serial none')
             cls.vm_process = subprocess.Popen(qemu_command, shell=True)
-            _wait_for_ssh(cls.testebed_ip, cls.testbed_port)
+            _wait_for_ssh(cls.testbed_ip, cls.testbed_port)
 
     @classmethod
     def tearDownClass(cls):
@@ -184,7 +184,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     def run_command_through_ssh(self, command):
         return _run_command_through_ssh(
-            command, self.testebed_ip, self.testbed_port)
+            command, self.testbed_ip, self.testbed_port)
 
     def build_snap(self, project_dir):
         snapcraft = os.path.join(os.getcwd(), 'bin/snapcraft')
