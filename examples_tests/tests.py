@@ -33,6 +33,27 @@ def _get_ubuntu_version():
         ['lsb_release', '-cs']).decode('utf8').strip()
 
 
+def _start_snappy_testbed(dir, ssh_port):
+    logger.info('Creating a snappy image to run the tests.')
+
+    image_path = os.path.join(dir, 'snappy.img')
+    subprocess.check_call(
+        ['sudo', 'ubuntu-device-flash', '--verbose',
+         'core', '15.04', '--channel', 'stable',
+         '--output', image_path, '--developer-mode'])
+    logger.info('Running the snappy image in a virtual machine.')
+    system = subprocess.check_output(
+        ['uname', '-m']).strip().decode('utf8')
+    qemu_command = (
+        'qemu-system-' + system +
+        ' -enable-kvm' +
+        ' -m 512 -nographic -net user -net nic,model=virtio' +
+        ' -drive file=' + image_path +
+        ',if=virtio -redir tcp:{}::22'.format(ssh_port) +
+        ' -monitor none -serial none')
+    return subprocess.Popen(qemu_command, shell=True)
+
+
 def _wait_for_ssh(ip, port):
     logger.info('Waiting for ssh to be enable in the testbed...')
     timeout = 300
@@ -154,34 +175,18 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
     @classmethod
     def setUpClass(cls):
         cls.temp_dir = tempfile.mkdtemp()
-        global config
         if not config.get('skip-install', False):
             ip = config.get('ip', None)
             if ip is None:
-                logger.info('Creating a snappy image to run the tests.')
                 cls.testbed_ip = 'localhost'
-                cls.testbed_port = config.get('port', '8022')
-
-                cls.image_path = os.path.join(cls.temp_dir, 'snappy.img')
-                subprocess.check_call(
-                    ['sudo', 'ubuntu-device-flash', '--verbose',
-                     'core', '15.04', '--channel', 'stable',
-                     '--output', cls.image_path, '--developer-mode'])
-                logger.info('Running the snappy image in a virtual machine.')
-                system = subprocess.check_output(
-                    ['uname', '-m']).strip().decode('utf8')
-                qemu_command = (
-                    'qemu-system-' + system +
-                    ' -enable-kvm' +
-                    ' -m 512 -nographic -net user -net nic,model=virtio' +
-                    ' -drive file=' + cls.image_path +
-                    ',if=virtio -redir tcp:{}::22'.format(cls.testbed_port) +
-                    ' -monitor none -serial none')
-                cls.vm_process = subprocess.Popen(qemu_command, shell=True)
-                _wait_for_ssh(cls.testbed_ip, cls.testbed_port)
+                cls.testbed_port = '8022'
+                cls.vm_process = _start_snappy_testbed(
+                    cls.temp_dir, cls.testbed_port)
             else:
                 cls.testbed_ip = ip
                 cls.testbed_port = config.get('port', '22')
+
+            _wait_for_ssh(cls.testbed_ip, cls.testbed_port)
 
     @classmethod
     def tearDownClass(cls):
@@ -191,7 +196,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     def run_command_through_ssh(self, command):
         return _run_command_through_ssh(
-            command, self.testbed_ip, self.testbed_port)
+            self.testbed_ip, self.testbed_port, command)
 
     def build_snap(self, project_dir):
         snapcraft = os.path.join(os.getcwd(), 'bin/snapcraft')
@@ -222,12 +227,13 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         # Build snap will raise an exception in case of error.
         self.build_snap(example_dir)
 
-        global config
+        import pdb; pdb.set_trace()
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(self.name, self.version)
             self.copy_snap_to_testbed(
                 os.path.join(example_dir, snap_file_name))
             self.addCleanup(self.delete_snap_from_testbed, snap_file_name)
+            # Install snap will raise an exception in case of error.
             self.install_snap(snap_file_name)
             self.addCleanup(self.remove_snap, self.name)
 
@@ -237,6 +243,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                         output = self.run_command_through_ssh(
                             command.split(' '))
                         self.assertEqual(output, expected_result)
+
             if getattr(self, 'external_tests_commands', None):
                 for command, expected_result in self.external_tests_commands:
                     with self.subTest(command):
