@@ -15,7 +15,7 @@ env:
   matrix:
   - TEST_SUITE=unit
   - TEST_SUITE=plainbox
-  - TEST_SUITE=examples
+  - TEST_SUITE="examples --skip-install"
 
 install:
   # PPA for plainbox.
@@ -24,9 +24,7 @@ install:
   - sudo apt-add-repository -y ppa:snappy-dev/tools-proposed
   - sudo apt-get update -qq
   - sudo apt-get install -qq build-essential dpkg-dev plainbox pyflakes python3-apt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pep8 python3-requests python3-testscenarios python3-yaml ubuntu-snappy-cli python3-lxml
-  - test $TEST_SUITE != "examples" || sudo apt-get install -qq qemu-system ubuntu-device-flash
 script:
-  - test $TEST_SUITE != "examples" || ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
   - ./runtests.sh $TEST_SUITE
 after_success:
   - pip install coveralls
