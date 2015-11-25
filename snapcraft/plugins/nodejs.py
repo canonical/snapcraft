@@ -43,6 +43,7 @@ _NODEJS_BASE = 'node-v{version}-linux-{arch}'
 _NODEJS_VERSION = '4.2.2'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
+    'i686': 'x86',
     'x86_64': 'x64',
     'armv7l': 'armv7l',
 }
