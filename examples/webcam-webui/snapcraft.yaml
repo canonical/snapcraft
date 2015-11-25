@@ -35,5 +35,5 @@ parts:
     files:
       webcam-webui: bin/webcam-webui
   config:
-    plugin: python3-project
+    plugin: python3
     source: .
