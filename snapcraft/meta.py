@@ -206,6 +206,7 @@ def _wrap_exe(relexepath):
     snap_dir = common.get_snapdir()
     exepath = os.path.join(snap_dir, relexepath)
     wrappath = exepath + '.wrapper'
+    shebang = None
 
     # TODO talk to original author if the exception to be captured here is
     # FileNotFoundError, the original code was a general catch all
@@ -234,8 +235,6 @@ def _wrap_exe(relexepath):
             # will have a chance to rewrite it.
             if exefile.read(2) == b'#!':
                 shebang = exefile.readline().strip().decode('utf-8')
-            else:
-                shebang = None
 
     _write_wrap_exe(wrapexec, wrappath, shebang=shebang)
 
