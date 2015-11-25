@@ -67,7 +67,7 @@ def _get_ssh_options():
 
 
 def _copy_file_through_ssh(ip, port, user, local_file_path, remote_file_path):
-    scp_command = ['scp', '-P', self.testbed_port]
+    scp_command = ['scp', '-P', port]
     scp_command.extend(_get_ssh_options())
     scp_command.extend([
         local_file_path, '{}@{}:{}'.format(user, ip, remote_file_path)])
@@ -216,6 +216,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         # Build snap will raise an exception in case of error.
         self.build_snap(example_dir)
 
+        global config
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(self.name, self.version)
             self.copy_snap_to_testbed(
