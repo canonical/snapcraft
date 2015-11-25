@@ -69,7 +69,6 @@ def main():
     # Command parsers
 
     parser = subparsers.add_parser('init', help='start a project')
-    parser.add_argument('part', nargs='*', help='part to add to new project')
     parser.set_defaults(func=snapcraft.cmds.init)
 
     parser = subparsers.add_parser('shell', help='enter staging environment')
