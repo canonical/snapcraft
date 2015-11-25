@@ -227,7 +227,6 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         # Build snap will raise an exception in case of error.
         self.build_snap(example_dir)
 
-        import pdb; pdb.set_trace()
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(self.name, self.version)
             self.copy_snap_to_testbed(
