@@ -19,6 +19,7 @@ import os
 from unittest import mock
 
 from snapcraft.plugins import go
+from snapcraft import common
 from snapcraft import tests
 
 
@@ -44,8 +45,9 @@ class GoPluginTestCase(tests.TestCase):
         self.assertEqual(plugin.env('myroot'), [
             'GOPATH=myroot/go',
             'CGO_LDFLAGS=$CGO_LDFLAGS"-Lmyroot/lib -Lmyroot/usr/lib '
-            '-Lmyroot/lib/x86_64-linux-gnu '
-            '-Lmyroot/usr/lib/x86_64-linux-gnu $LDFLAGS"'])
+            '-Lmyroot/lib/{0} '
+            '-Lmyroot/usr/lib/{0} $LDFLAGS"'.format(
+                common.get_arch_triplet())])
 
     def test_pull_local_sources(self):
         class Options:
