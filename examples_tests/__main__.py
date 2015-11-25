@@ -33,7 +33,7 @@ def main():
         action='store_true')
     parser.add_argument(
         '--ip',
-        help=('IP of the testbed.If no IP is passed, a virtual machine will '
+        help=('IP of the testbed. If no IP is passed, a virtual machine will '
               'be created for the test.'))
     parser.add_argument(
         '--port',
