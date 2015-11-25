@@ -104,22 +104,22 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             'dir': 'downloader-with-wiki-parts',
             'name': 'downloader',
             'version': '1.0',
-         }),
+            }),
         ('godd', {
             'dir': 'godd',
             'name': 'godd',
             'version': '1.0',
-         }),
+            }),
         ('gopaste', {
             'dir': 'gopaste',
             'name': 'gopaste',
             'version': '1.0',
-         }),
+            }),
         ('java-hello-world', {
             'dir': 'java-hello-world',
             'name': 'java-hello-world',
             'version': '0',
-         }),
+            }),
         ('libpipeline', {
             'dir': 'libpipeline',
             'name': 'pipelinetest',
@@ -129,47 +129,47 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                  'running ls | grep c\n'
                  'custom libpipeline called\n'
                  'include\n')],
-         }),
+            }),
         ('py2-project', {
             'dir': 'py2-project',
             'name': 'spongeshaker',
             'version': '0',
-         }),
+            }),
         ('py3-project', {
             'dir': 'py3-project',
             'name': 'spongeshaker',
             'version': '0',
-         }),
+            }),
         ('qmldemo', {
             'dir': 'qmldemo',
             'name': 'qmldemo',
             'version': '1',
-         }),
+            }),
         ('ros', {
             'dir': 'ros',
             'name': 'ros-example',
             'version': '1.0',
-         }),
+            }),
         ('shout', {
             'dir': 'shout',
             'name': 'shout',
             'version': '0.52.0',
-         }),
+            }),
         ('tomcat-maven-webapp', {
             'dir': 'tomcat-maven-webapp',
             'name': 'tomcat-webapp-demo',
             'version': '1.0',
-         }),
+            }),
         ('webcam-webui', {
             'dir': 'webcam-webui',
             'name': 'webcam-webui',
             'version': '1',
-         }),
+            }),
         ('webchat', {
             'dir': 'webchat',
             'name': 'webchat',
             'version': '0.0.1',
-         }),
+            }),
     ]
 
     @classmethod
