@@ -20,7 +20,6 @@ import shutil
 import subprocess
 import tempfile
 import time
-import unittest
 
 import testscenarios
 
@@ -162,12 +161,13 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             cls.image_path = os.path.join(cls.temp_dir, 'snappy.img')
             subprocess.check_call(
                 ['sudo', 'ubuntu-device-flash', '--verbose',
-                'core', '15.04', '--channel', 'stable',
-                '--output', cls.image_path, '--developer-mode'])
+                 'core', '15.04', '--channel', 'stable',
+                 '--output', cls.image_path, '--developer-mode'])
             logger.info('Running the snappy image in a virtual machine.')
             system = subprocess.check_output(
                 ['uname', '-m']).strip().decode('utf8')
-            qemu_command = ('qemu-system-' + system +
+            qemu_command = (
+                'qemu-system-' + system +
                 ' -enable-kvm' +
                 ' -m 512 -nographic -net user -net nic,model=virtio' +
                 ' -drive file=' + cls.image_path +
@@ -217,7 +217,8 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(self.name, self.version)
-            self.copy_snap_to_testbed(os.path.join(example_dir, snap_file_name))
+            self.copy_snap_to_testbed(
+                os.path.join(example_dir, snap_file_name))
             self.addCleanup(self.delete_snap_from_testbed, snap_file_name)
             self.install_snap(snap_file_name)
             self.addCleanup(self.remove_snap, self.name)

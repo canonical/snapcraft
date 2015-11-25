@@ -46,7 +46,7 @@ parseargs(){
 }
 
 run_unit_tests(){
-    SRC_PATHS="bin snapcraft snapcraft/tests"
+    SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
 
     # These three checks could easily be done with flake8 in one shot if
     # we had python3-flake8 provide flake8
