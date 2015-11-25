@@ -31,9 +31,20 @@ def main():
         help=('skip the tests that install the example snaps into a snappy '
               'virtual machine'),
         action='store_true')
+    parser.add_argument(
+        '--ip',
+        help=('IP of the testbed.If no IP is passed, a virtual machine will '
+              'be created for the test.'))
+    parser.add_argument(
+        '--port',
+        help=('SSH port of the testbed. Defaults to use port 22'))
     args = parser.parse_args()
     if args.skip_install:
         tests.config['skip-install'] = True
+    if args.ip:
+        tests.config['ip'] = args.ip
+    if args.port:
+        tests.config['port'] = args.port
 
     # Strip all the command line arguments, so unittest does not handle them
     # again.

@@ -76,8 +76,6 @@ def _copy_file_through_ssh(ip, port, user, local_file_path, remote_file_path):
 
 class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
-    testbed_ip = 'localhost'
-    testbed_port = '8022'
     vm_process = None
 
     scenarios = [
@@ -158,24 +156,32 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         cls.temp_dir = tempfile.mkdtemp()
         global config
         if not config.get('skip-install', False):
-            logger.info('Creating a snappy image to run the tests.')
-            cls.image_path = os.path.join(cls.temp_dir, 'snappy.img')
-            subprocess.check_call(
-                ['sudo', 'ubuntu-device-flash', '--verbose',
-                 'core', '15.04', '--channel', 'stable',
-                 '--output', cls.image_path, '--developer-mode'])
-            logger.info('Running the snappy image in a virtual machine.')
-            system = subprocess.check_output(
-                ['uname', '-m']).strip().decode('utf8')
-            qemu_command = (
-                'qemu-system-' + system +
-                ' -enable-kvm' +
-                ' -m 512 -nographic -net user -net nic,model=virtio' +
-                ' -drive file=' + cls.image_path +
-                ',if=virtio -redir tcp:{}::22'.format(cls.testbed_port) +
-                ' -monitor none -serial none')
-            cls.vm_process = subprocess.Popen(qemu_command, shell=True)
-            _wait_for_ssh(cls.testbed_ip, cls.testbed_port)
+            ip = config.get('ip', None)
+            if ip is None:
+                logger.info('Creating a snappy image to run the tests.')
+                cls.testbed_ip = 'localhost'
+                cls.testbed_port = config.get('port', '8022')
+
+                cls.image_path = os.path.join(cls.temp_dir, 'snappy.img')
+                subprocess.check_call(
+                    ['sudo', 'ubuntu-device-flash', '--verbose',
+                     'core', '15.04', '--channel', 'stable',
+                     '--output', cls.image_path, '--developer-mode'])
+                logger.info('Running the snappy image in a virtual machine.')
+                system = subprocess.check_output(
+                    ['uname', '-m']).strip().decode('utf8')
+                qemu_command = (
+                    'qemu-system-' + system +
+                    ' -enable-kvm' +
+                    ' -m 512 -nographic -net user -net nic,model=virtio' +
+                    ' -drive file=' + cls.image_path +
+                    ',if=virtio -redir tcp:{}::22'.format(cls.testbed_port) +
+                    ' -monitor none -serial none')
+                cls.vm_process = subprocess.Popen(qemu_command, shell=True)
+                _wait_for_ssh(cls.testbed_ip, cls.testbed_port)
+            else:
+                cls.testbed_ip = ip
+                cls.testbed_port = config.get('port', '22')
 
     @classmethod
     def tearDownClass(cls):
