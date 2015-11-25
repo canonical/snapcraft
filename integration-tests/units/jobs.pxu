@@ -159,7 +159,7 @@ command:
     test -f ./snap/usr/bin/config.py
     test -f ./snap/usr/bin/python3
     test -f ./snap/meta/hooks/config
-    grep -q 'exec "usr/bin/config.py" $*' ./snap/meta/hooks/config
+    grep -q 'exec "$SNAP_APP_PATH/usr/bin/python3" "$SNAP_APP_PATH/usr/bin/config.py" $*' ./snap/meta/hooks/config
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make

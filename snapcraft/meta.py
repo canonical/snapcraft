@@ -85,15 +85,13 @@ def _write_readme_md(meta_dir, config_data):
 
 def _setup_config_hook(meta_dir, config):
     hooks_dir = os.path.join(meta_dir, 'hooks')
+    config_hook_path = os.path.join(hooks_dir, 'config')
 
     os.makedirs(hooks_dir)
 
     execparts = shlex.split(config)
-    args = execparts[1:] if len(execparts) > 1 else []
-
-    config_hook_path = os.path.join(hooks_dir, 'config')
-    _write_wrap_exe(execparts[0], config_hook_path, args=args,
-                    cwd='$SNAP_APP_PATH')
+    execwrap = _wrap_exe(execparts[0], args=execparts[1:])
+    os.rename(os.path.join(common.get_snapdir(), execwrap), config_hook_path)
 
 
 def _copy(meta_dir, relpath, new_relpath=None):
@@ -174,7 +172,7 @@ def _replace_cmd(execparts, cmd):
         return ' '.join([shlex.quote(x) for x in newparts])
 
 
-def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=[], cwd=None):
+def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
     args = ' '.join(args) + ' $*' if args else '$*'
     cwd = 'cd {}'.format(cwd) if cwd else ''
 
@@ -202,7 +200,7 @@ def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=[], cwd=None):
     os.chmod(wrappath, 0o755)
 
 
-def _wrap_exe(relexepath):
+def _wrap_exe(relexepath, args=None):
     snap_dir = common.get_snapdir()
     exepath = os.path.join(snap_dir, relexepath)
     wrappath = exepath + '.wrapper'
@@ -236,7 +234,7 @@ def _wrap_exe(relexepath):
             if exefile.read(2) == b'#!':
                 shebang = exefile.readline().strip().decode('utf-8')
 
-    _write_wrap_exe(wrapexec, wrappath, shebang=shebang)
+    _write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=args)
 
     return os.path.relpath(wrappath, snap_dir)
 
