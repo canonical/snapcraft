@@ -39,7 +39,8 @@ def _wait_for_ssh(ip, port):
     sleep = 10
     while (timeout > 0):
         try:
-            _run_command_through_ssh(['echo', 'testing ssh'])
+            _run_command_through_ssh(
+                ip, port, ['echo', 'testing ssh'])
             break
         except subprocess.CalledProcessError:
             if timeout <= 0:
