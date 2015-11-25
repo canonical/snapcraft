@@ -6,6 +6,7 @@ description: Exposes your webcam over a web UI
 icon: icon.png
 services:
   webcam-webui:
+    description: "Exposes your webcam over a web UI"
     start: bin/webcam-webui
 config: usr/bin/config.py
 
@@ -35,5 +36,5 @@ parts:
     files:
       webcam-webui: bin/webcam-webui
   config:
-    plugin: python3-project
+    plugin: python3
     source: .
