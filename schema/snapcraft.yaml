@@ -21,6 +21,13 @@ properties:
     type: string
     description: name of the snap package
     pattern: "^[a-z0-9][a-z0-9+-]*$"
+  architectures:
+    type: array
+    description: architectures to override with
+    minItems: 1
+    uniqueItems: true
+    items:
+      - type: string
   version:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string

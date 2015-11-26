@@ -75,16 +75,17 @@ def shell(args):
 def snap(args):
     cmd(args)
 
-    # This check is to support manual assembly.
-    if not os.path.exists(os.path.join(common.get_snapdir(), 'meta')):
+    config = _load_config()
+    # TODO move all this to meta.create
+    if 'architectures' in config.data:
+        arches = config.data['architectures']
+    else:
         arches = [snapcraft.common.get_arch(), ]
 
-        config = _load_config()
+    # FIXME this should be done in a more contained manner
+    common.env = config.snap_env()
 
-        # FIXME this should be done in a more contained manner
-        common.env = config.snap_env()
-
-        meta.create(config.data, arches)
+    meta.create(config.data, arches)
 
 
 def assemble(args):
