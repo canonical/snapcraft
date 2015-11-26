@@ -49,12 +49,12 @@ def _start_snappy_testbed(directory, ssh_port):
     return subprocess.Popen(qemu_command, shell=True)
 
 
-def _wait_for_ssh(ip, port, timeout, sleep):
+def _wait_for_ssh(ip, port, user, timeout, sleep):
     logger.info('Waiting for ssh to be enable in the testbed...')
     while (timeout > 0):
         try:
             _run_command_through_ssh(
-                ip, port, ['echo', 'testing ssh'])
+                ip, port, user, ['echo', 'testing ssh'])
             break
         except subprocess.CalledProcessError:
             if timeout <= 0:
@@ -65,8 +65,8 @@ def _wait_for_ssh(ip, port, timeout, sleep):
                 timeout -= sleep
 
 
-def _run_command_through_ssh(ip, port, command):
-    ssh_command = ['ssh', 'ubuntu@' + ip, '-p', port]
+def _run_command_through_ssh(ip, port, user, command):
+    ssh_command = ['ssh', '-l', user, '-p', port, ip]
     ssh_command.extend(_get_ssh_options())
     ssh_command.extend(command)
     return subprocess.check_output(ssh_command).decode("utf-8")
@@ -180,7 +180,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                 cls.testbed_port = config.get('port', '22')
 
             _wait_for_ssh(
-                cls.testbed_ip, cls.testbed_port,
+                cls.testbed_ip, cls.testbed_port, 'ubuntu',
                 timeout=300, sleep=10)
 
     @classmethod
@@ -191,7 +191,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     def run_command_through_ssh(self, command):
         return _run_command_through_ssh(
-            self.testbed_ip, self.testbed_port, command)
+            self.testbed_ip, self.testbed_port, 'ubuntu', command)
 
     def build_snap(self, project_dir):
         snapcraft = os.path.join(os.getcwd(), 'bin/snapcraft')
