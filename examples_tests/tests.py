@@ -206,7 +206,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
 
     def delete_snap_from_testbed(self, snap_file_name):
         self.run_command_through_ssh(
-            ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
+            ['rm', os.path.join('/home/ubuntu', snap_file_name)])
 
     def install_snap(self, snap_file_name):
         self.run_command_through_ssh(
