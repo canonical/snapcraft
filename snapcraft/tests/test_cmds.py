@@ -43,6 +43,44 @@ class TestCommands(tests.TestCase):
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
 
+    @mock.patch('snapcraft.yaml.Config.snap_env')
+    @mock.patch('snapcraft.cmds.cmd')
+    @mock.patch('snapcraft.meta.create')
+    def test_snap_with_architectures_in_yaml(
+            self, mock_create, mock_cmd, mock_snap_env):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        open('my-icon.png', 'w').close()
+        with open('snapcraft.yaml', 'w') as f:
+            f.write('''name: test-package
+version: 1
+vendor: me <me@me.com>
+summary: test
+description: test
+icon: my-icon.png
+architectures: [all]
+
+parts:
+  part1:
+    plugin: nil
+''')
+
+        class Args:
+            pass
+
+        cmds.snap(Args())
+        mock_create.assert_called_once_with({
+            'name': 'test-package',
+            'architectures': ['all'],
+            'version': 1,
+            'parts': {'part1': {'stage': [], 'snap': []}},
+            'description': 'test',
+            'vendor': 'me <me@me.com>',
+            'summary': 'test',
+            'icon': 'my-icon.png'},
+            ['all'])
+
     @mock.patch('snapcraft.cmds.snap')
     @mock.patch('sys.stdout', new_callable=_IO)
     @mock.patch('sys.stderr', new_callable=_IO)
