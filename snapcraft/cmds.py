@@ -51,16 +51,7 @@ def init(args):
     if os.path.exists('snapcraft.yaml'):
         logger.error('snapcraft.yaml already exists!')
         sys.exit(1)
-    yaml = _TEMPLATE_YAML
-    if args.part:
-        yaml += 'parts:\n'
-    for part_name in args.part:
-        part = lifecycle.load_plugin(part_name, part_name)
-        yaml += '    ' + part.name + ':\n'
-        for opt in part.config.get('options', []):
-            if part.config['options'][opt].get('required', False):
-                yaml += '        ' + opt + ':\n'
-    yaml = yaml.strip()
+    yaml = _TEMPLATE_YAML.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
     logger.info('Wrote the following as snapcraft.yaml.')
