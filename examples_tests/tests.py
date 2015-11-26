@@ -23,6 +23,7 @@ import tempfile
 import time
 
 import testscenarios
+from snapcraft import ssh
 
 
 logger = logging.getLogger(__name__)
@@ -76,7 +77,7 @@ def _get_ssh_options():
     return [
         '-o', 'UserKnownHostsFile=/dev/null',
         '-o', 'StrictHostKeyChecking=no',
-        '-i', os.path.join(os.getenv('HOME'), '.ssh', 'id_rsa')
+        '-i', ssh.get_latest_private_key()
     ]
 
 
