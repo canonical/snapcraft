@@ -143,6 +143,10 @@ class Create(tests.TestCase):
         self.mock_makedirs = patcher_makedirs.start()
         self.addCleanup(patcher_makedirs.stop)
 
+        patcher_rename = patch('os.rename')
+        self.mock_rename = patcher_rename.start()
+        self.addCleanup(patcher_rename.stop)
+
         patcher_copyfile = patch('shutil.copyfile')
         self.mock_copyfile = patcher_copyfile.start()
         self.addCleanup(patcher_copyfile.stop)
@@ -175,8 +179,8 @@ class Create(tests.TestCase):
             }
         }
 
-        self.meta_dir = os.path.join(os.path.abspath(os.curdir),
-                                     'snap', 'meta')
+        self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
+        self.meta_dir = os.path.join(self.snap_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
 
         self.expected_open_calls = [
@@ -265,19 +269,22 @@ class Create(tests.TestCase):
             call(self.hooks_dir),
         ])
 
+        self.mock_rename.assert_has_calls([
+            call(os.path.join(self.snap_dir, 'bin', 'config.wrapper'),
+                 os.path.join(self.hooks_dir, 'config')),
+        ])
+
         mock_the_open.assert_has_calls(self.expected_open_calls)
         mock_wrap_exe.assert_has_calls([
             call(
                 '$SNAP_APP_PATH/bin/bash',
-                os.path.join(os.path.abspath(os.curdir),
-                             'snap/bin/bash.wrapper'),
-                shebang=None,
+                os.path.join(self.snap_dir, 'bin', 'bash.wrapper'),
+                args=None, shebang=None
             ),
             call(
-                'bin/config',
-                os.path.join(self.hooks_dir, 'config'),
-                args=[],
-                cwd='$SNAP_APP_PATH',
+                '$SNAP_APP_PATH/bin/config',
+                os.path.join(self.snap_dir, 'bin', 'config.wrapper'),
+                args=[], shebang=None,
             ),
         ])
         self.mock_copyfile.assert_has_calls([
@@ -302,19 +309,23 @@ class Create(tests.TestCase):
             call(self.hooks_dir),
         ])
 
+        self.mock_rename.assert_has_calls([
+            call(os.path.join(self.snap_dir, 'python3.wrapper'),
+                 os.path.join(self.hooks_dir, 'config')),
+        ])
+
         mock_the_open.assert_has_calls(self.expected_open_calls)
         mock_wrap_exe.assert_has_calls([
             call(
                 '$SNAP_APP_PATH/bin/bash',
                 os.path.join(os.path.abspath(os.curdir),
                              'snap/bin/bash.wrapper'),
-                shebang=None,
+                args=None, shebang=None,
             ),
             call(
-                'python3',
-                os.path.join(self.hooks_dir, 'config'),
-                args=['my.py', '--config'],
-                cwd='$SNAP_APP_PATH',
+                '$SNAP_APP_PATH/python3',
+                os.path.join(self.snap_dir, 'python3.wrapper'),
+                args=['my.py', '--config'], shebang=None,
             ),
         ])
 
