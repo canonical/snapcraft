@@ -49,10 +49,8 @@ def _start_snappy_testbed(directory, ssh_port):
     return subprocess.Popen(qemu_command, shell=True)
 
 
-def _wait_for_ssh(ip, port):
+def _wait_for_ssh(ip, port, timeout, sleep):
     logger.info('Waiting for ssh to be enable in the testbed...')
-    timeout = 300
-    sleep = 10
     while (timeout > 0):
         try:
             _run_command_through_ssh(
@@ -181,7 +179,9 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                 cls.testbed_ip = ip
                 cls.testbed_port = config.get('port', '22')
 
-            _wait_for_ssh(cls.testbed_ip, cls.testbed_port)
+            _wait_for_ssh(
+                cls.testbed_ip, cls.testbed_port,
+                timeout=300, sleep=10)
 
     @classmethod
     def tearDownClass(cls):
