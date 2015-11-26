@@ -134,12 +134,6 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             'name': 'spongeshaker',
             'version': '0',
             }),
-        ('qmldemo', {
-            'dir': 'qmldemo',
-            'name': 'qmldemo',
-            'version': '1',
-            'required_snaps': ['mir.mvp-demo'],
-            }),
         ('ros', {
             'dir': 'ros',
             'name': 'ros-example',
@@ -218,10 +212,6 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         self.run_command_through_ssh(['sudo', 'snappy', 'remove', snap_name])
 
     def test_example(self):
-        if (self.name == 'qmldemo' and
-                platform.linux_distribution()[2] == 'trusty'):
-            self.skipTest('qmldemo is not supported on trusty.')
-
         example_dir = os.path.join('examples', self.dir)
         # Build snap will raise an exception in case of error.
         self.build_snap(example_dir)
