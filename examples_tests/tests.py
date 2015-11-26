@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 config = {}
 
 
-def _start_snappy_testbed(dir, ssh_port):
+def _start_snappy_testbed(directory, ssh_port):
     logger.info('Creating a snappy image to run the tests.')
 
-    image_path = os.path.join(dir, 'snappy.img')
+    image_path = os.path.join(directory, 'snappy.img')
     subprocess.check_call(
         ['sudo', 'ubuntu-device-flash', '--verbose',
          'core', '15.04', '--channel', 'stable',
