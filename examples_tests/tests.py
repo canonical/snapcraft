@@ -38,10 +38,8 @@ def _start_snappy_testbed(directory, ssh_port):
          'core', '15.04', '--channel', 'stable',
          '--output', image_path, '--developer-mode'])
     logger.info('Running the snappy image in a virtual machine.')
-    system = subprocess.check_output(
-        ['uname', '-m']).strip().decode('utf8')
     qemu_command = (
-        'qemu-system-' + system +
+        'qemu-system-' + platform.machine() +
         ' -enable-kvm' +
         ' -m 512 -nographic -net user -net nic,model=virtio' +
         ' -drive file=' + image_path +
