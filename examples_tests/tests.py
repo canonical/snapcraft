@@ -138,6 +138,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             'dir': 'qmldemo',
             'name': 'qmldemo',
             'version': '1',
+            'required_snaps': ['mir.mvp-demo'],
             }),
         ('ros', {
             'dir': 'ros',
@@ -225,6 +226,11 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         self.build_snap(example_dir)
 
         if not config.get('skip-install', False):
+            if getattr(self, 'required-snaps', None):
+                for snap in self.required_snaps:
+                    self.install_snap(snap)
+                    self.addCleanup(self.remove_snap, snap)
+
             snap_file_name = '{}_{}_amd64.snap'.format(self.name, self.version)
             self.copy_snap_to_testbed(
                 os.path.join(example_dir, snap_file_name))
