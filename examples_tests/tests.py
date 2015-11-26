@@ -16,6 +16,7 @@
 
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import tempfile
@@ -26,11 +27,6 @@ import testscenarios
 
 logger = logging.getLogger(__name__)
 config = {}
-
-
-def _get_ubuntu_version():
-    return subprocess.check_output(
-        ['lsb_release', '-cs']).decode('utf8').strip()
 
 
 def _start_snappy_testbed(dir, ssh_port):
@@ -220,7 +216,8 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         self.run_command_through_ssh(['sudo', 'snappy', 'remove', snap_name])
 
     def test_example(self):
-        if self.name == 'qmldemo' and _get_ubuntu_version() == 'trusty':
+        if (self.name == 'qmldemo' and
+                platform.linux_distribution()[2] == 'trusty'):
             self.skipTest('qmldemo is not supported on trusty.')
 
         example_dir = os.path.join('examples', self.dir)
