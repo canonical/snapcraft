@@ -46,7 +46,7 @@ def _start_snappy_testbed(directory, ssh_port):
         ' -drive file={}' +
         ',if=virtio -redir tcp:{}::22' +
         ' -monitor none -serial none').format(
-            platform.machine(), image_path, ssh_port)
+        platform.machine(), image_path, ssh_port)
     return subprocess.Popen(qemu_command, shell=True)
 
 
