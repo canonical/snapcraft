@@ -210,8 +210,9 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             ['rm', os.path.join('/home/ubuntu', snap_file_name)])
 
     def install_snap(self, snap_file_name):
-        self.run_command_through_ssh(
-            ['sudo', 'snappy', 'install', snap_file_name])
+        self.run_command_through_ssh([
+            'sudo', 'snappy', 'install', '--allow-unauthenticated',
+            snap_file_name])
 
     def remove_snap(self, snap_name):
         self.run_command_through_ssh(['sudo', 'snappy', 'remove', snap_name])
