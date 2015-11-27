@@ -80,12 +80,10 @@ run_unit_tests(){
 run_examples(){
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage erase
-        python3-coverage run --branch --source=snapcraft,examples_tests -m examples_tests "$@"
-        mv .coverage .coverage.examples
-    else
-        echo "$@"
-        python3 -m examples_tests "$@"
+        export SNAPCRAFT=snapcraft-coverage
     fi
+
+    python3 -m examples_tests "$@"
 }
 
 run_plainbox(){

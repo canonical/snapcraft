@@ -190,7 +190,10 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             self.testbed_ip, self.testbed_port, 'ubuntu', command)
 
     def build_snap(self, project_dir):
-        snapcraft = os.path.join(os.getcwd(), 'bin/snapcraft')
+        # To measure coverage, a wrapper for the snapcraft binary might be set
+        # in the environment variable.
+        snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
+        snapcraft = os.path.join(os.getcwd(), 'bin', snapcraft_bin)
         subprocess.check_call([snapcraft, 'clean'], cwd=project_dir)
         subprocess.check_call(snapcraft, cwd=project_dir)
 
