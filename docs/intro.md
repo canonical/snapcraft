@@ -1,7 +1,7 @@
 # Intro
 
 Snapcraft is a build and packaging tool which helps you package your software
-as a snap. It makes it easy to incorporate components from different sources 
+as a snap. It makes it easy to incorporate components from different sources
 and build technologies or solutions.
 
 # Key concepts
@@ -63,8 +63,8 @@ directory tree that is called the "staging area". It can be found
 under the `./stage` directory.
 
 This `./stage` directory is useful for building outside code that isn't in the
-`snapcraft.yaml` recipe against the snap contents. For example, you might 
-build a local project against the libraries in `./stage` by running `snapcraft 
+`snapcraft.yaml` recipe against the snap contents. For example, you might
+build a local project against the libraries in `./stage` by running `snapcraft
 shell make`. Though in general, you are encouraged to add even local
 projects to snapcraft.yaml with a local `source:` path.
 
@@ -84,12 +84,11 @@ and to make any final post-processing on snapcraft's output.
 
 ### Assemble
 
-The final step builds a snap package out of the `snap` directory. This `.snap` 
-file can be uploaded to the Ubuntu Store and published directly to Snappy 
+The final step builds a snap package out of the `snap` directory. This `.snap`
+file can be uploaded to the Ubuntu Store and published directly to Snappy
 users.
 
 # Next
 
 After introducing the key concept of snapcraft it is probably a good
-time to look at [the tutorial](your-first-snap.md) to create your first snap
-with snapcraft.
+time [get set up](get-started.md) to create your first snap with snapcraft.
