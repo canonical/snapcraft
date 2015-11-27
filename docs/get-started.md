@@ -34,10 +34,10 @@ production environment however, we recommend using an Ubuntu LTS-based host.
 
 This is the most important selection of tools you will get after installation:
 
-	snappy build		    - make snap packages out of a file hierarchy
+	snappy build        - make snap packages out of a file hierarchy
 	snappy-remote 	    - run snappy operations on remote snappy target by IP
-	snapcraft 		      - the snap build tool for all snaps
-	ubuntu-device-flash	- image creation tool for snappy ubuntu
+	snapcraft           - the snap build tool for all snaps
+	ubuntu-device-flash - image creation tool for snappy ubuntu
 
 # Next
 
