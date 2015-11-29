@@ -17,6 +17,7 @@
 import logging
 import os
 import platform
+import re
 import shutil
 import subprocess
 import tempfile
@@ -215,6 +216,13 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         self.run_command_through_ssh(['sudo', 'snappy', 'remove', snap_name])
 
     def test_example(self):
+        filter_ = config.get('filter', False)
+        if filter_:
+            if not re.match(filter_, self.dir):
+                self.skipTest(
+                    '{} does not match the filter {}'.format(
+                        self.dir, filter_))
+
         example_dir = os.path.join('examples', self.dir)
         # Build snap will raise an exception in case of error.
         self.build_snap(example_dir)
