@@ -27,9 +27,12 @@ import tempfile
 import time
 
 import snapcraft.yaml
-from snapcraft import common
-from snapcraft import lifecycle
-from snapcraft import meta
+from snapcraft import (
+    common,
+    lifecycle,
+    meta,
+    ssh
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,42 +121,6 @@ def assemble(args):
         sys.exit(ret)
 
 
-def _find_latest_private_key():
-    """
-    Find the latest private key in ~/.ssh.
-
-    :returns:
-        Path of the most-recently-modified private SSH key
-    :raises LookupError:
-        If no such key was found.
-
-    This function tries to mimic the logic found in ``ubuntu-device-flash``. It
-    will look for the most recently modified private key in the users' SSH
-    configuration directory.
-    """
-    candidates = []
-    ssh_dir = os.path.expanduser('~/.ssh/')
-    for filename in os.listdir(ssh_dir):
-        # Skip public keys, we want the private key
-        if filename.endswith('.pub'):
-            continue
-        ssh_key = os.path.join(ssh_dir, filename)
-        # Skip non-files
-        if not os.path.isfile(ssh_key):
-            continue
-        # Ensure that it is a real ssh key
-        with open(ssh_key, 'rb') as stream:
-            if stream.readline() != b'-----BEGIN RSA PRIVATE KEY-----\n':
-                continue
-        candidates.append(ssh_key)
-    # Sort the keys by modification time, pick the most recent key
-    candidates.sort(key=lambda f: os.stat(f).st_mtime, reverse=True)
-    logger.debug('Available ssh public keys: %r', candidates)
-    if not candidates:
-        raise LookupError('Unable to find any private ssh key')
-    return candidates[0]
-
-
 def run(args):
     # We are mostly making sure we are operating from the correct location. In
     # the future this could do more by using target attribute in snapcraft.yaml
@@ -164,7 +131,7 @@ def run(args):
     # configured.
     # See: https://bugs.launchpad.net/snapcraft/+bug/1486659
     try:
-        ssh_key = _find_latest_private_key()
+        ssh_key = ssh.get_latest_private_key()
     except LookupError:
         logger.error('You need to have an SSH key to use this command')
         logger.error('Please generate one with ssh-keygen(1)')

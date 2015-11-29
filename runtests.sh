@@ -24,6 +24,7 @@ parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
         export RUN_UNIT="true"
         export RUN_PLAINBOX="true"
+        export RUN_EXAMPLES="true"
         export PLAINBOX_TEST_PLANS="normal"
     else
         if [ "$1" == "unit" ] ; then
@@ -35,6 +36,8 @@ parseargs(){
             else
                 export PLAINBOX_TEST_PLANS="normal"
             fi
+        elif [ "$1" == "examples" ] ; then
+            export RUN_EXAMPLES="true"
         else
             echo "Not recognized option, should be one of all, unit or plainbox"
             exit 1
@@ -43,7 +46,7 @@ parseargs(){
 }
 
 run_unit_tests(){
-    SRC_PATHS="bin snapcraft snapcraft/tests"
+    SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
 
     # These three checks could easily be done with flake8 in one shot if
     # we had python3-flake8 provide flake8
@@ -67,11 +70,20 @@ run_unit_tests(){
 
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage erase
-        python3-coverage run --branch --source snapcraft -m unittest
+        python3-coverage run --branch --source snapcraft -m unittest discover -s snapcraft -t .
         mv .coverage .coverage.unit
     else
-        python3 -m unittest
+        python3 -m unittest discover -s snapcraft -t .
     fi
+}
+
+run_examples(){
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage erase
+        export SNAPCRAFT=snapcraft-coverage
+    fi
+
+    python3 -m examples_tests "$@"
 }
 
 run_plainbox(){
@@ -103,6 +115,15 @@ parseargs "$@"
 
 if [ ! -z "$RUN_UNIT" ]; then
     run_unit_tests
+fi
+
+if [ ! -z "$RUN_EXAMPLES" ]; then
+    if [ "$1" == "examples" ] ; then
+        # shift to remove the test suite name and be able to pass the rest
+        # to the examples suite.
+        shift
+    fi
+    run_examples "$@"
 fi
 
 if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ] && [ ! -z "$RUN_PLAINBOX" ] ; then

@@ -2,8 +2,3 @@ unit: test plan
 id: normal
 _name: Tests for Snapcraft
 include: snapcraft/normal/.*
-
-unit: test plan
-id: examples
-name: Test for building Snapcraft examples
-include: snapcraft/examples/.*
