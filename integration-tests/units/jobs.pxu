@@ -15,7 +15,7 @@ flags: simple has-leftovers
 id: snapcraft/normal/no-yaml-run
 command:
     set -x
-    OUTPUT=$(${SNAPCRAFT} run 2>&1)
+    OUTPUT=$(${SNAPCRAFT} pull 2>&1)
     test $? = 1 || exit 1
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 flags: simple has-leftovers
