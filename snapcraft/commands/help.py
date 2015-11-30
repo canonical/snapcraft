@@ -14,16 +14,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+snapcraft help
+
+Obtain help for plugins and specific topics.
+
+Usage:
+  help [options] topics
+  help [options] TOPIC
+  help [options] PLUGIN
+
+Options:
+  -h --help             show this help message and exit.
+  -d --devel            show the development help.
+
+To see the list of available plugins run
+
+    snapcraft list-plugins
+"""
+
 import importlib
 import logging
+import sys
 
+# Non-Standard Library modules
+from docopt import docopt
+
+# Snapcraft modules
 import snapcraft
 from snapcraft import sources
-from snapcraft import cmds
-
 
 logger = logging.getLogger(__name__)
-
 
 _TOPICS = {
     'sources': sources,
@@ -31,23 +52,18 @@ _TOPICS = {
 }
 
 
-def topic(args=None):
-    """Get help on additional topics or plugin usage.
-    snapcraft help topics    To get the list of topics
-    snapcraft help <plugin>  To get help for a specific plugin
-    snapcraft help <topic>   To get help on a speficic topic
+def main(argv=None):
+    args = docopt(__doc__, argv=argv)
 
-To see the list of available plugins run
+    topic = args['TOPIC'] or args['PLUGIN']
 
-    snapcraft list-plugins
-"""
-    if args.topic == 'topics':
+    if args['topics']:
         for key in _TOPICS:
             print(key)
-    elif args.topic in _TOPICS:
-        _topic_help(args.topic, args.devel)
+    elif topic in _TOPICS:
+        _topic_help(topic, args['--devel'])
     else:
-        _module_help(args.topic, args.devel)
+        _module_help(topic, args['--devel'])
 
 
 def _topic_help(module_name, devel):
@@ -68,5 +84,6 @@ def _module_help(module_name, devel):
         else:
             print('The plugin has no documentation')
     except ImportError:
-        logger.error('The plugin does not exist. Use one of the following:')
-        cmds.list_plugins()
+        logger.error('The plugin does not exist. Run `snapcraft list-plugins` '
+                     'to see the available plugins.')
+        sys.exit(1)
