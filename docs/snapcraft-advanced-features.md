@@ -186,3 +186,18 @@ Here `godd` further defines the list of files to be placed in the app
 during the `snap` phase. As you can see above, globs (using asterisks as
 wildcard characters) are a good way of handling complexities within the
 directory structure.
+
+### node.js
+
+Snapping node.js apps has never been this easy. Take a look at the `shout`
+example and see how short and sweet it is. To bundle node packages, you simply
+do something like:
+
+	parts:
+	  shout:
+	    plugin: nodejs
+	    node-packages:
+	      - shout
+
+`node-packages` simply lists which packages (including their dependencies) to
+add to the snap.
