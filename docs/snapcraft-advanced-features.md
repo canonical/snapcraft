@@ -211,7 +211,7 @@ In the `webcam-webui` example you can see the following part called `cam`:
 	      - -usr/share/doc
 
 In the `stage` definition you can see how named filesets are re-used
-(`$fswebcam` and `go$-server`).
+(`$fswebcam` and `$go-server`).
 
 Another feature used in the `snap` definition is an exclude (`-usr/share/doc`
 in this case), meaning that files in these directories will not be installed.
