@@ -187,6 +187,36 @@ during the `snap` phase. As you can see above, globs (using asterisks as
 wildcard characters) are a good way of handling complexities within the
 directory structure.
 
+In the `webcam-webui` example you can see the following part called `cam`:
+
+	  cam:
+	    plugin: go
+	    go-packages:
+	        - github.com/mikix/golang-static-http
+	    stage-packages:
+	      - fswebcam
+	    filesets:
+	      fswebcam:
+	        - usr/bin/fswebcam
+	        - lib
+	        - usr/lib
+	      go-server:
+	        - bin/golang-*
+	    stage:
+	      - $fswebcam
+	      - $go-server
+	    snap:
+	      - $fswebcam
+	      - $go-server
+	      - -usr/share/doc
+
+In the `stage` definition you can see how named filesets are re-used
+(`$fswebcam` and `go$-server`).
+
+Another feature used in the `snap` definition is an exclude (`-usr/share/doc`
+in this case), meaning that files in these directories will not be installed.
+
+
 ### node.js
 
 Snapping node.js apps has never been this easy. Take a look at the `shout`
