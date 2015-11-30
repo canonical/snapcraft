@@ -15,12 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""snapcraft commands."""
+"""
+snapcraft list-plugins
 
-import importlib
+List the available plugins that handle different types of part.
+
+Usage:
+  list-plugins [options]
+
+Options:
+  -h --help             show this help message and exit.
+"""
+
+import pkgutil
+
+from docopt import docopt
+
+import snapcraft.plugins
 
 
-def load(command):
-    """Import and return 'command'."""
-    return importlib.import_module(
-        'snapcraft.commands.{}'.format(command).replace('-', '_'))
+def main(argv=None):
+    argv = argv if argv else []
+    docopt(__doc__, argv=argv)
+
+    for importer, modname, is_package in pkgutil.iter_modules(
+            snapcraft.plugins.__path__):
+        print(modname.replace('_', '-'))

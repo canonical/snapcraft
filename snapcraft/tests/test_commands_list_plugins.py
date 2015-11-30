@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -15,12 +14,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""snapcraft commands."""
+import io
+from unittest import mock
 
-import importlib
+from snapcraft import tests
+from snapcraft.commands import list_plugins
 
 
-def load(command):
-    """Import and return 'command'."""
-    return importlib.import_module(
-        'snapcraft.commands.{}'.format(command).replace('-', '_'))
+class ListPluginsCommandTestCase(tests.TestCase):
+
+    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_list_plugins(self, mock_stdout):
+        expected_list = '''ant
+autotools
+catkin
+cmake
+copy
+go
+jdk
+make
+maven
+nil
+nodejs
+python2
+python3
+qml
+roscore
+scons
+tar-content
+'''
+        list_plugins.main()
+        self.assertEqual(mock_stdout.getvalue(), expected_list)
