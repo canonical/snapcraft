@@ -27,7 +27,6 @@ import time
 import snapcraft.yaml
 from snapcraft import (
     common,
-    lifecycle,
     meta,
 )
 
@@ -44,9 +43,6 @@ icon: # A path to an icon for the package
 '''
 
 
-_config = None
-
-
 def init(args):
     if os.path.exists('snapcraft.yaml'):
         logger.error('snapcraft.yaml already exists!')
@@ -61,7 +57,7 @@ def init(args):
 
 
 def shell(args):
-    config = _load_config()
+    config = snapcraft.yaml.load_config()
     common.env = config.stage_env()
     userCommand = args.userCommand
     if not userCommand:
@@ -75,7 +71,7 @@ def shell(args):
 def snap(args):
     cmd(args)
 
-    config = _load_config()
+    config = snapcraft.yaml.load_config()
     # TODO move all this to meta.create
     if 'architectures' in config.data:
         arches = config.data['architectures']
@@ -116,35 +112,6 @@ def assemble(args):
         else:
             print(proc.stderr.read().decode('utf-8'), file=sys.stderr)
         sys.exit(ret)
-
-
-def clean(args):
-    config = _load_config()
-
-    part_names = {part.name for part in config.all_parts}
-    for part_name in args.parts:
-        if part_name not in part_names:
-            logger.error('The part named {!r} is not defined in '
-                         '\'snapcraft.yaml\''.format(part_name))
-            sys.exit(1)
-
-    for part in config.all_parts:
-        if not args.parts or part.name in args.parts:
-            part.clean()
-
-    # parts dir does not contain only generated code.
-    if (os.path.exists(common.get_partsdir()) and
-            not os.listdir(common.get_partsdir())):
-        os.rmdir(common.get_partsdir())
-
-    clean_stage = not args.parts or part_names == set(args.parts)
-    if clean_stage and os.path.exists(common.get_stagedir()):
-        logger.info('Cleaning up staging area')
-        shutil.rmtree(common.get_stagedir())
-
-    if os.path.exists(common.get_snapdir()):
-        logger.info('Cleaning up snapping area')
-        shutil.rmtree(common.get_snapdir())
 
 
 def _check_for_collisions(parts):
@@ -194,7 +161,7 @@ def cmd(args):
         forceCommand = cmds[0]
         cmds = common.COMMAND_ORDER[0:common.COMMAND_ORDER.index(cmds[0]) + 1]
 
-    config = _load_config()
+    config = snapcraft.yaml.load_config()
     _install_build_packages(config.build_tools)
 
     # clean the snap dir before Snapping
@@ -252,35 +219,3 @@ def _install_build_packages(packages):
         _check_call(['sudo', 'apt-get', '-o', 'Dpkg::Progress-Fancy=1',
                      '--no-install-recommends',
                      '-y', 'install'] + new_packages)
-
-
-def _load_config():
-    global _config
-    if _config:
-        return _config
-
-    try:
-        _config = snapcraft.yaml.Config()
-        return _config
-    except snapcraft.yaml.SnapcraftYamlFileError as e:
-        logger.error(
-            'Could not find {}.  Are you sure you are in the right '
-            'directory?\nTo start a new project, use \'snapcraft '
-            'init\''.format(e.file))
-        sys.exit(1)
-    except snapcraft.yaml.SnapcraftSchemaError as e:
-        msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
-        logger.error(msg)
-        sys.exit(1)
-    except snapcraft.yaml.PluginNotDefinedError as e:
-        logger.error(
-            'Issues while validating snapcraft.yaml: the "plugin" keyword is '
-            'missing for the "{}" part.'.format(e.part))
-        sys.exit(1)
-    except snapcraft.yaml.SnapcraftLogicError as e:
-        logger.error('Issue detected while analyzing '
-                     'snapcraft.yaml: {}'.format(e.message))
-        sys.exit(1)
-    except lifecycle.PluginError as e:
-        logger.error('Issue while loading plugin: {}'.format(e))
-        sys.exit(1)

@@ -16,16 +16,22 @@
 
 import codecs
 import contextlib
-import jsonschema
 import logging
 import os
 import os.path
+import sys
+
+# Non-Standard Library modules
+import jsonschema
 import yaml
 
+# Snapcraft modules
 import snapcraft.lifecycle
 import snapcraft.wiki
 from snapcraft import common
 
+
+_config = None
 
 logger = logging.getLogger(__name__)
 
@@ -345,3 +351,35 @@ def _expand_filesets_for(stage, properties):
             new_stage_set.append(item)
 
     return new_stage_set
+
+
+def load_config():
+    global _config
+    if _config:
+        return _config
+
+    try:
+        _config = Config()
+        return _config
+    except SnapcraftYamlFileError as e:
+        logger.error(
+            'Could not find {}.  Are you sure you are in the right '
+            'directory?\nTo start a new project, use \'snapcraft '
+            'init\''.format(e.file))
+        sys.exit(1)
+    except SnapcraftSchemaError as e:
+        msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
+        logger.error(msg)
+        sys.exit(1)
+    except PluginNotDefinedError as e:
+        logger.error(
+            'Issues while validating snapcraft.yaml: the "plugin" keyword is '
+            'missing for the "{}" part.'.format(e.part))
+        sys.exit(1)
+    except SnapcraftLogicError as e:
+        logger.error('Issue detected while analyzing '
+                     'snapcraft.yaml: {}'.format(e.message))
+        sys.exit(1)
+    except snapcraft.lifecycle.PluginError as e:
+        logger.error('Issue while loading plugin: {}'.format(e))
+        sys.exit(1)
