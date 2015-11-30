@@ -16,16 +16,22 @@
 
 import codecs
 import contextlib
-import jsonschema
 import logging
 import os
 import os.path
+import sys
+
+import jsonschema
 import yaml
 
-import snapcraft.lifecycle
-import snapcraft.wiki
-from snapcraft import common
+from snapcraft import (
+    common,
+    lifecycle,
+    wiki,
+)
 
+
+_config = None
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +106,7 @@ class Config:
 
         self.build_tools = self.data.get('build-packages', [])
 
-        self._wiki = snapcraft.wiki.Wiki()
+        self._wiki = wiki.Wiki()
 
         for part_name in self.data.get('parts', []):
             properties = self.data['parts'][part_name] or {}
@@ -189,7 +195,7 @@ class Config:
         return sorted_parts
 
     def load_plugin(self, part_name, plugin_name, properties):
-        part = snapcraft.lifecycle.load_plugin(
+        part = lifecycle.load_plugin(
             part_name, plugin_name, properties)
 
         self.build_tools += part.code.build_packages
@@ -209,7 +215,7 @@ class Config:
             '{0}/lib/{1}',
             '{0}/usr/lib/{1}',
             '$LD_LIBRARY_PATH'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         return env
 
     def build_env(self, root):
@@ -220,21 +226,21 @@ class Config:
             '-I{0}/include/{1}',
             '-I{0}/usr/include/{1}',
             '$CFLAGS'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         env.append('CPPFLAGS="' + ' '.join([
             '-I{0}/include',
             '-I{0}/usr/include',
             '-I{0}/include/{1}',
             '-I{0}/usr/include/{1}',
             '$CPPFLAGS'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         env.append('LDFLAGS="' + ' '.join([
             '-L{0}/lib',
             '-L{0}/usr/lib',
             '-L{0}/lib/{1}',
             '-L{0}/usr/lib/{1}',
             '$LDFLAGS'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(root))
         env.append('PKG_CONFIG_PATH=' + ':'.join([
             '{0}/usr/lib/pkgconfig',
@@ -244,7 +250,7 @@ class Config:
             '{0}/usr/local/lib/{1}/pkgconfig',
             '{0}/usr/local/share/pkgconfig',
             '$PKG_CONFIG_PATH'
-        ]).format(root, snapcraft.common.get_arch_triplet()))
+        ]).format(root, common.get_arch_triplet()))
         env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
         return env
 
@@ -252,7 +258,7 @@ class Config:
         """Return a build env of all the part's dependencies."""
 
         env = []
-        stagedir = snapcraft.common.get_stagedir()
+        stagedir = common.get_stagedir()
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
@@ -345,3 +351,35 @@ def _expand_filesets_for(stage, properties):
             new_stage_set.append(item)
 
     return new_stage_set
+
+
+def load_config():
+    global _config
+    if _config:
+        return _config
+
+    try:
+        _config = Config()
+        return _config
+    except SnapcraftYamlFileError as e:
+        logger.error(
+            'Could not find {}.  Are you sure you are in the right '
+            'directory?\nTo start a new project, use \'snapcraft '
+            'init\''.format(e.file))
+        sys.exit(1)
+    except SnapcraftSchemaError as e:
+        msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
+        logger.error(msg)
+        sys.exit(1)
+    except PluginNotDefinedError as e:
+        logger.error(
+            'Issues while validating snapcraft.yaml: the "plugin" keyword is '
+            'missing for the "{}" part.'.format(e.part))
+        sys.exit(1)
+    except SnapcraftLogicError as e:
+        logger.error('Issue detected while analyzing '
+                     'snapcraft.yaml: {}'.format(e.message))
+        sys.exit(1)
+    except lifecycle.PluginError as e:
+        logger.error('Issue while loading plugin: {}'.format(e))
+        sys.exit(1)
