@@ -17,7 +17,8 @@
 import argparse
 import logging
 import sys
-import unittest
+
+from testtools import run
 
 from examples_tests import tests
 
@@ -49,7 +50,7 @@ def main():
     # Strip all the command line arguments, so unittest does not handle them
     # again.
     argv = [sys.argv[0]]
-    unittest.main('examples_tests.tests', verbosity=2, argv=argv)
+    run.TestProgram('examples_tests.tests', verbosity=2, argv=argv)
 
 
 if __name__ == '__main__':
