@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import codecs
 import contextlib
 import jsonschema
 import logging
@@ -308,10 +309,19 @@ def _validate_snapcraft_yaml(snapcraft_yaml):
 
 def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
     try:
-        with open(yaml_file) as fp:
-            return yaml.load(fp)
+        with open(yaml_file, 'rb') as fp:
+            bs = fp.read(2)
     except FileNotFoundError:
         raise SnapcraftYamlFileError(yaml_file)
+
+    if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
+        encoding = 'utf-16'
+    else:
+        encoding = 'utf-8'
+
+    try:
+        with open(yaml_file, encoding=encoding) as fp:
+            return yaml.load(fp)
     except yaml.scanner.ScannerError as e:
         raise SnapcraftSchemaError(
             '{} on line {} of {}'.format(

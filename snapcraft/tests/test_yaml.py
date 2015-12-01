@@ -39,11 +39,11 @@ class TestYaml(TestCase):
         mock_wrap_exe.return_value = True
         self.addCleanup(patcher.stop)
 
-    def make_snapcraft_yaml(self, content):
+    def make_snapcraft_yaml(self, content, encoding='ascii'):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
         os.chdir(tempdirObj.name)
-        with open('snapcraft.yaml', 'w') as fp:
+        with open('snapcraft.yaml', 'w', encoding=encoding) as fp:
             fp.write(content)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
@@ -68,6 +68,34 @@ parts:
         })
 
         self.assertFalse(mock_get_part.called)
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
+    def test_config_loads_with_different_encodings(
+            self, mock_get_part, mock_loadPlugin):
+        content = """name: test
+version: "1"
+vendor: me <me@me.com>
+summary: test
+description: ñoño test
+icon: my-icon.png
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+"""
+        for enc in ['utf-8', 'utf-8-sig', 'utf-16']:
+            with self.subTest(key=enc):
+                self.make_snapcraft_yaml(content, encoding=enc)
+                snapcraft.yaml.Config()
+
+                mock_loadPlugin.assert_called_with('part1', 'go', {
+                    'stage-packages': ['fswebcam'],
+                    'stage': [], 'snap': [],
+                })
+
+                self.assertFalse(mock_get_part.called)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.compose')
