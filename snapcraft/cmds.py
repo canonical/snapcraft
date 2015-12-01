@@ -33,29 +33,6 @@ from snapcraft import (
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = r'''name: # the name of the snap
-version: # the version of the snap
-# The vendor for the snap (replace 'Vendor <email@example.com>')
-vendor: Vendor <email@example.com>
-summary: # 79 char long summary
-description: # A longer description for the snap
-icon: # A path to an icon for the package
-'''
-
-
-def init(args):
-    if os.path.exists('snapcraft.yaml'):
-        logger.error('snapcraft.yaml already exists!')
-        sys.exit(1)
-    yaml = _TEMPLATE_YAML.strip()
-    with open('snapcraft.yaml', mode='w+') as f:
-        f.write(yaml)
-    logger.info('Wrote the following as snapcraft.yaml.')
-    print()
-    print(yaml)
-    sys.exit(0)
-
-
 def shell(args):
     config = snapcraft.yaml.load_config()
     common.env = config.stage_env()
