@@ -4,7 +4,9 @@ vendor: Michael Terry <mterry@ubuntu.com>
 services:
   gopaste:
     description: "gopaste"
-    start: bin/gopasted
+    start: bin/gopaste
+    caps:
+      - network-service
 summary: Simple pasting tool
 description: Runs a service that allows you to paste to and share.
 icon: icon.png
@@ -14,3 +16,11 @@ parts:
     plugin: go
     source: https://github.com/wisnij/gopaste.git
     source-type: git
+  assets:
+    plugin: copy
+    files:
+      parts/gopaste/src/static: static
+      parts/gopaste/src/web.template: web.template
+      gopaste: bin/gopaste
+    after:
+      - gopaste
