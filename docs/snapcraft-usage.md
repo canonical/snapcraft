@@ -55,4 +55,4 @@ speed up things:
 Run this inside your project and an Ubuntu Core VM will be booted, your last
 successful .snap build will be uploaded to it and you will be connected to it
 via SSH automatically. Type `Ctrl-D` at end of testing your uploaded app and
-your back to your previous working directory.
+you are back to your previous working directory.
