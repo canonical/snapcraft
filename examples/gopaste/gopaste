@@ -7,4 +7,4 @@ cp $SNAP_APP_PATH/web.template .
 cp -r $SNAP_APP_PATH/static .
 export HOME=$SNAP_APP_DATA_PATH
 
-exec $SNAP_APP_PATH/bin/gopasted
+exec $SNAP_APP_PATH/bin/gopasted -port 8080 -external-host snappy
