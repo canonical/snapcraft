@@ -298,6 +298,9 @@ get started on your own projects. To get a good overview of the snapcraft
 features used in these examples, check out
 [this article](snapcraft-advanced-features.md).
 
+Be sure to check out the notes about [snapcraft usage](snapcraft-usage.md) as
+well.
+
 If you should have any more questions, ask us on
 
  * `#snappy` on `irc.freenode.net` or
