@@ -31,8 +31,6 @@ from snapcraft import (
 )
 
 
-_config = None
-
 logger = logging.getLogger(__name__)
 
 
@@ -99,6 +97,7 @@ class Config:
     def __init__(self):
         self.build_tools = []
         self.all_parts = []
+        self._part_names = []
         after_requests = {}
 
         self.data = _snapcraft_yaml_load()
@@ -109,6 +108,7 @@ class Config:
         self._wiki = wiki.Wiki()
 
         for part_name in self.data.get('parts', []):
+            self._part_names.append(part_name)
             properties = self.data['parts'][part_name] or {}
 
             plugin_name = properties.pop('plugin', None)
@@ -193,6 +193,13 @@ class Config:
             self.all_parts.remove(top_part)
 
         return sorted_parts
+
+    def validate_parts(self, part_names):
+        for part_name in part_names:
+            if part_name not in self._part_names:
+                raise EnvironmentError(
+                    'The part named {!r} is not defined in '
+                    '\'snapcraft.yaml\''.format(part_name))
 
     def load_plugin(self, part_name, plugin_name, properties):
         part = lifecycle.load_plugin(
@@ -354,13 +361,8 @@ def _expand_filesets_for(stage, properties):
 
 
 def load_config():
-    global _config
-    if _config:
-        return _config
-
     try:
-        _config = Config()
-        return _config
+        return Config()
     except SnapcraftYamlFileError as e:
         logger.error(
             'Could not find {}.  Are you sure you are in the right '
