@@ -1,3 +1,25 @@
+snapcraft (0.6) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * Start a suite for examples tests.
+
+  [ Sergio Schvezov ]
+  * nodejs plugin: support 32 bit node
+  * go plugin: remove hardcoded arch triplet from test
+  * Don't filter out easy install's .pth and wrap config (LP: #1519724)
+  * Remove the `parts` arg from `init` (LP: #1516775)
+  * Support architectures override (LP: #1520248)
+  * Detect encoding of snapcraft.yaml before parsing (LP: #1518150)
+
+  [ Daniel Holbach ]
+  * Document how to insall and setup snapcraft.
+  * Update documentation to include node.js example
+  * Document filesets and excludes
+  * Make the webcam example click-review happy.
+  * Initialize shebang variable when wrapping execs (LP: #1519702)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Mon, 30 Nov 2015 16:31:47 -0300
+
 snapcraft (0.5) xenial; urgency=medium
 
   [ Sujeevan Vijayakumaran ]
