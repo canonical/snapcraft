@@ -15,17 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
+"""snapcraft commands."""
 
-# make running from bzr snapshot easy
-topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
-if os.path.exists(os.path.join(topdir, 'setup.py')):
-    sys.path = [topdir] + sys.path
+import importlib
 
 
-if __name__ == '__main__':
-    import snapcraft.main
-    import snapcraft.dirs
-    snapcraft.dirs.setup_dirs()
-    snapcraft.main.main()
+def load(command):
+    """Import and return 'command'."""
+    return importlib.import_module('snapcraft.commands.{}'.format(command))
