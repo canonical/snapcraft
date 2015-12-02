@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import tempfile
+
 import fixtures
 import testscenarios
 
@@ -33,3 +36,14 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         # value when a test ends.
         self.addCleanup(common.set_plugindir, common.get_plugindir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
+        self.addCleanup(common.set_schemadir, common.get_schemadir())
+        self.addCleanup(common.reset_env)
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', '..', 'schema'))
+
+    def make_snapcraft_yaml(self, content, encoding='utf-8'):
+        tempdir_obj = tempfile.TemporaryDirectory()
+        self.addCleanup(tempdir_obj.cleanup)
+        os.chdir(tempdir_obj.name)
+        with open('snapcraft.yaml', 'w', encoding=encoding) as fp:
+            fp.write(content)
