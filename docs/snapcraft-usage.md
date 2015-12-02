@@ -35,8 +35,8 @@ prompts.
 After installing a summary of installed snaps will be presented, on vanilla
 x86-64 bit system it would look a lot like this:
 
-	Name          Date       Version      Developer 
-	ubuntu-core   2015-09-17 5            ubuntu    
+	Name          Date       Version      Developer
+	ubuntu-core   2015-09-17 5            ubuntu
 	downloader    2015-10-01 ICIEPfXHQOaC sideload  
 	generic-amd64 2015-10-01 1.4          canonical
 
@@ -44,15 +44,3 @@ Take notice of the sideload word in the downloader snap, this indicates that
 the snap did not come signed from the store, if an app is sideloaded, it
 also fakes the version to allow easy iteration without the need to change the
 metadata.
-
-## Using `snapcraft run`
-
-Instead of sideloading your app manually, you can use the following to
-speed up things:
-
-	$ snapcraft run
-
-Run this inside your project and an Ubuntu Core VM will be booted, your last
-successful .snap build will be uploaded to it and you will be connected to it
-via SSH automatically. Type `Ctrl-D` at end of testing your uploaded app and
-you are back to your previous working directory.
