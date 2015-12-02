@@ -25,12 +25,11 @@ topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
 if os.path.exists(os.path.join(topdir, 'setup.py')):
     sys.path = [topdir] + sys.path
 
-# now import
-import snapcraft.main
-import snapcraft.dirs
-
 
 if __name__ == '__main__':
+    import snapcraft.main
+    import snapcraft.dirs
+
     cov = coverage.coverage(
         data_file=os.path.join(topdir, '.coverage'), data_suffix=True,
         branch=True, source=['snapcraft'])
