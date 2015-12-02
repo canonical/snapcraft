@@ -78,10 +78,6 @@ def main():
         help='optional command to run inside staging environment')
     parser.set_defaults(func=snapcraft.cmds.shell)
 
-    parser = subparsers.add_parser('run', help='run snap in kvm',
-                                   add_help=False)
-    parser.set_defaults(func=snapcraft.cmds.run)
-
     parser = subparsers.add_parser(
         'list-plugins',
         help='list the available plugins that handle different types '

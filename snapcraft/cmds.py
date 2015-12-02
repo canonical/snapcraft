@@ -16,14 +16,12 @@
 
 import apt
 import filecmp
-import glob
 import logging
 import os
 import shlex
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 
 import snapcraft.yaml
@@ -31,7 +29,6 @@ from snapcraft import (
     common,
     lifecycle,
     meta,
-    ssh
 )
 
 logger = logging.getLogger(__name__)
@@ -119,103 +116,6 @@ def assemble(args):
         else:
             print(proc.stderr.read().decode('utf-8'), file=sys.stderr)
         sys.exit(ret)
-
-
-def run(args):
-    # We are mostly making sure we are operating from the correct location. In
-    # the future this could do more by using target attribute in snapcraft.yaml
-    # to create the correct target image.
-    _load_config()
-    # Find the ssh key that ubuntu-device-flash would use so that we can use it
-    # ourselves as well. This may not be the default key that the user has
-    # configured.
-    # See: https://bugs.launchpad.net/snapcraft/+bug/1486659
-    try:
-        ssh_key = ssh.get_latest_private_key()
-    except LookupError:
-        logger.error('You need to have an SSH key to use this command')
-        logger.error('Please generate one with ssh-keygen(1)')
-        return 1
-    else:
-        logger.info('Using the following ssh key: %s', ssh_key)
-
-    # Find available *.snap files to copy into the test VM
-    snap_dir = os.path.join(os.getcwd())
-    # copy the snap with the largest version number into the test VM
-    snaps = glob.glob(snap_dir + '/*.snap')
-    snaps.sort()
-    if not snaps:
-        logger.error('There are no .snap files ready')
-        logger.error('Perhaps you forgot to run "snapcraft assemble"')
-        return 1
-
-    qemudir = os.path.join(os.getcwd(), 'image')
-    qemu_img = os.path.join(qemudir, '15.04.img')
-    if not os.path.exists(qemu_img):
-        os.makedirs(qemudir, exist_ok=True)
-        logger.info(
-            'Setting up virtual snappy environment, root access required')
-        common.run([
-            'sudo', 'ubuntu-device-flash', 'core', '15.04', '--developer-mode',
-            '--enable-ssh', '-o', os.path.relpath(qemu_img, qemudir)],
-            cwd=qemudir)
-    qemu = None
-    try:
-        # Allow the developer to provide additional arguments to qemu.  This
-        # can be used, for example, to pass through USB devices from the host.
-        # This can enable a lot of hardware-specific use cases directly inside
-        # the snapcraft run workflow.
-        #
-        # For example:
-        # $ export SNAPCRAFT_RUN_QEMU_ARGS=\
-        #       "-usb -device usb-host,hostbus=1,hostaddr=10"
-        # $ snapcraft run
-        qemu_args = os.getenv('SNAPCRAFT_RUN_QEMU_ARGS')
-        if qemu_args is not None:
-            qemu_args = shlex.split(qemu_args)
-        else:
-            qemu_args = []
-        qemu = subprocess.Popen(
-            ['kvm', '-m', '768', '-nographic', '-snapshot', '-redir',
-             'tcp:8022::22', qemu_img] + qemu_args, stdin=subprocess.PIPE)
-        n = tempfile.NamedTemporaryFile()
-        ssh_opts = [
-            # We want to login with the specified ssh identity (key)
-            '-i', ssh_key,
-            # We don't want strict host checking because it's a new VM with a
-            # random key each time.
-            '-oStrictHostKeyChecking=no',
-            # We don't want to pollute the known_hosts file with new entries
-            # all the time so let's use a temporary file for that
-            '-oUserKnownHostsFile={}'.format(n.name),
-            # Don't try keyboard interactive authentication, we're expecting to
-            # login via the key and if that doesn't work then everything else
-            # will fail anyway.
-            '-oKbdInteractiveAuthentication=no',
-        ]
-        while True:
-            ret_code = _call(
-                ['ssh'] + ssh_opts +
-                ['ubuntu@localhost', '-p', '8022', 'true'])
-            if ret_code == 0:
-                break
-            print('Waiting for device')
-            time.sleep(1)
-        # copy the most recent snap into the test VM
-        _check_call(
-            ['scp'] + ssh_opts + [
-                '-P', '8022', snaps[-1], 'ubuntu@localhost:~/'])
-        # install the snap
-        _check_call(
-            ['ssh'] + ssh_opts +
-            ['ubuntu@localhost', '-p', '8022', 'sudo snappy install  *.snap'])
-        # "login"
-        _call(
-            ['ssh'] + ssh_opts + ['-p', '8022', 'ubuntu@localhost'],
-            preexec_fn=os.setsid)
-    finally:
-        if qemu:
-            qemu.kill()
 
 
 def list_plugins(args=None):
