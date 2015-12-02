@@ -194,29 +194,6 @@ longer text.''')
             '  a/2\n',
             fake_logger.output)
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_list_plugins(self, mock_stdout):
-        expected_list = '''ant
-autotools
-catkin
-cmake
-copy
-go
-jdk
-make
-maven
-nil
-nodejs
-python2
-python3
-qml
-roscore
-scons
-tar-content
-'''
-        cmds.list_plugins()
-        self.assertEqual(mock_stdout.getvalue(), expected_list)
-
     def test_load_config_with_invalid_plugin_exits_with_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
