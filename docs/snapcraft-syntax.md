@@ -26,7 +26,7 @@ contain.
    A set of keys representing service names with values as defined by the
    [Snappy packaging spec](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
  * `binaries` (yaml subsection)  
-   A set of keys representing service names with values as defined by the
+   A set of keys representing binary names with values as defined by the
    [Snappy packaging spec](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
  * `icon` (string)  
    Path to the icon that will be used for the snap
