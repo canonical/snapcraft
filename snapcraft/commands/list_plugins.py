@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -14,25 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
+"""
+snapcraft list-plugins
 
-from unittest import mock
+List the available plugins that handle different types of part.
 
-from snapcraft import help
-from snapcraft import tests
+Usage:
+  list-plugins [options]
+
+Options:
+  -h --help             show this help message and exit.
+"""
+
+import pkgutil
+
+from docopt import docopt
+
+import snapcraft.plugins
 
 
-class CommonTestCase(tests.TestCase):
+def main(argv=None):
+    argv = argv if argv else []
+    docopt(__doc__, argv=argv)
 
-    @mock.patch('snapcraft.cmds.list_plugins')
-    def test_topic_and_plugin_not_found_lists_plugins(self, mock_list):
-        fake_logger = fixtures.FakeLogger()
-        self.useFixture(fake_logger)
-
-        class Args:
-            topic = 'does-not-exist'
-            devel = False
-
-        help.topic(Args())
-        self.assertTrue(mock_list.called)
-        self.assertEqual(mock_list.call_count, 1)
+    for importer, modname, is_package in pkgutil.iter_modules(
+            snapcraft.plugins.__path__):
+        print(modname.replace('_', '-'))
