@@ -17,14 +17,16 @@
 import contextlib
 import glob
 import importlib
-import jsonschema
 import logging
 import os
 import sys
 import shutil
+
+import jsonschema
 import yaml
 
 import snapcraft
+import snapcraft.yaml
 from snapcraft import common
 from snapcraft import repo
 
@@ -34,6 +36,27 @@ logger = logging.getLogger(__name__)
 
 def _local_plugindir():
     return os.path.abspath(os.path.join('parts', 'plugins'))
+
+
+def execute(step, part_names=None):
+    # TODO: add a docstring once strip is implemented.
+    config = snapcraft.yaml.load_config()
+    repo.install_build_packages(config.build_tools)
+
+    if part_names:
+        config.validate_parts(part_names)
+        parts = {p for p in config.all_parts if p.name in part_names}
+    else:
+        parts = config.all_parts
+
+    # TODO: cycle through the steps until we reach the desired step. Since
+    # pull is the first one, and the only one supported in this drop, it
+    # doesn't make sense to cycle through them... yet.
+    for part in parts:
+        common.env = config.build_env_for_part(part)
+        # pull() for a part is always called, the plugin will decide
+        # if it is run or not.
+        part.pull()
 
 
 class PluginError(Exception):
