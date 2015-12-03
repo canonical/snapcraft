@@ -19,18 +19,22 @@ import tempfile
 import unittest.mock
 
 import snapcraft
-from snapcraft import sources
-from snapcraft import tests
+from snapcraft import (
+    common,
+    sources,
+    tests
+)
 
 
 class MockOptions:
 
-    def __init__(self, source, source_type=None, source_branch=None,
-                 source_tag=None):
+    def __init__(self, source=None, source_type=None, source_branch=None,
+                 source_tag=None, source_subdir=None):
         self.source = source
         self.source_type = source_type
         self.source_branch = source_branch
         self.source_tag = source_tag
+        self.source_subdir = source_subdir
 
 
 class TestBasePlugin(tests.TestCase):
@@ -58,10 +62,8 @@ class TestBasePlugin(tests.TestCase):
                          'local source is not a directory')
 
     def test_build_with_subdir_copies_subdir(self):
-        class Options:
-            source_subdir = 'src'
-
-        plugin = snapcraft.BasePlugin('test-part', Options())
+        options = MockOptions(source_subdir='src')
+        plugin = snapcraft.BasePlugin('test-part', options)
 
         tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
@@ -79,10 +81,7 @@ class TestBasePlugin(tests.TestCase):
         self.assertTrue(os.path.exists(os.path.join(plugin.builddir, 'file')))
 
     def test_build_without_subdir_copies_sourcedir(self):
-        class Options:
-            pass
-
-        plugin = snapcraft.BasePlugin('test-part', Options())
+        plugin = snapcraft.BasePlugin('test-part', options=None)
 
         tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
@@ -166,7 +165,7 @@ class GetSourceTestCase(tests.TestCase):
 class BuildTestCase(tests.TestCase):
 
     def test_do_not_follow_links(self):
-        options = MockOptions('.', None, None, None)
+        options = MockOptions(source='.')
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
         os.makedirs(plugin.partdir)
@@ -199,3 +198,22 @@ class BuildTestCase(tests.TestCase):
 
         self.assertTrue(os.path.isdir(build_dir_path))
         self.assertTrue(os.path.islink(build_symlinkdir_path))
+
+    def test_build_ignores_snapcraft_files_in_source_dir(self):
+        plugin = snapcraft.BasePlugin('test-part', options=None)
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+        for file_ in common.SNAPCRAFT_FILES:
+            open(os.path.join(plugin.sourcedir, file_), 'w').close()
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.builddir = tmpdir.name
+
+        plugin.build()
+
+        for file_ in common.SNAPCRAFT_FILES:
+            self.assertFalse(
+                os.path.exists(os.path.join(plugin.builddir, file_)))
