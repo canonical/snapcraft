@@ -49,14 +49,11 @@ def execute(step, part_names=None):
     else:
         parts = config.all_parts
 
-    # TODO: cycle through the steps until we reach the desired step. Since
-    # pull is the first one, and the only one supported in this drop, it
-    # doesn't make sense to cycle through them... yet.
-    for part in parts:
-        common.env = config.build_env_for_part(part)
-        # pull() for a part is always called, the plugin will decide
-        # if it is run or not.
-        part.pull()
+    step_index = common.COMMAND_ORDER.index(step) + 1
+    for step in common.COMMAND_ORDER[0:step_index]:
+        for part in parts:
+            common.env = config.build_env_for_part(part)
+            getattr(part, step)()
 
 
 class PluginError(Exception):
