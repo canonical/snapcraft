@@ -102,7 +102,7 @@ class Config:
         self.build_tools = []
         self.all_parts = []
         self._part_names = []
-        after_requests = {}
+        self.after_requests = {}
 
         self.data = _snapcraft_yaml_load()
         _validate_snapcraft_yaml(self.data)
@@ -139,7 +139,7 @@ class Config:
                         plugin_name))
 
             if 'after' in properties:
-                after_requests[part_name] = properties.pop('after')
+                self.after_requests[part_name] = properties.pop('after')
 
             properties['stage'] = _expand_filesets_for('stage', properties)
             properties['snap'] = _expand_filesets_for('snap', properties)
@@ -149,14 +149,14 @@ class Config:
 
             self.load_plugin(part_name, plugin_name, properties)
 
-        self._compute_part_dependencies(after_requests)
+        self._compute_part_dependencies()
         self.all_parts = self._sort_parts()
 
-    def _compute_part_dependencies(self, after_requests):
+    def _compute_part_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''
 
         for part in self.all_parts:
-            dep_names = after_requests.get(part.name, [])
+            dep_names = self.after_requests.get(part.name, [])
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
@@ -171,6 +171,7 @@ class Config:
                         plugin_name = wiki_part.pop('plugin')
                         part.deps.append(self.load_plugin(
                             dep, plugin_name, wiki_part))
+                        self._part_names.append(dep)
                 if not found:
                     raise SnapcraftLogicError(
                         'part name missing {}'.format(dep))
@@ -197,6 +198,10 @@ class Config:
             self.all_parts.remove(top_part)
 
         return sorted_parts
+
+    def part_prereqs(self, part_name):
+        """Returns a set with all of part_names' prerequisites."""
+        return set(self.after_requests.get(part_name, []))
 
     def validate_parts(self, part_names):
         for part_name in part_names:

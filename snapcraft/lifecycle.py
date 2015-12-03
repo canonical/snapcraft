@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import filecmp
 import glob
 import importlib
 import logging
@@ -48,10 +49,27 @@ def execute(step, part_names=None):
         parts = {p for p in config.all_parts if p.name in part_names}
     else:
         parts = config.all_parts
+        part_names = config.part_names
 
     step_index = common.COMMAND_ORDER.index(step) + 1
     for step in common.COMMAND_ORDER[0:step_index]:
+        if step == 'stage':
+            _check_for_collisions(config.all_parts)
         for part in parts:
+            prereqs = config.part_prereqs(part.name)
+            if prereqs and not prereqs.issubset(part_names):
+                raise RuntimeError(
+                    'Requested {!r} of {!r} but there are unsatisfied '
+                    'prerequisites: {!r}'.format(
+                        step, part.name, ' '.join(prereqs)))
+            elif prereqs:
+                # prerequisites need to build all the way to the staging
+                # step to be able to share the common assets that make them
+                # a dependency.
+                logger.info(
+                    '{!r} has prerequisites that need to be staged: {}'.format(
+                        part.name, ' '.join(prereqs)))
+                execute('stage', prereqs)
             common.env = config.build_env_for_part(part)
             getattr(part, step)()
 
@@ -417,3 +435,36 @@ def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
             raise PluginError('path "{}" must be relative'.format(d))
+
+
+def _check_for_collisions(parts):
+    """Raises an EnvironmentError if conflicts are found between two parts."""
+    parts_files = {}
+    for part in parts:
+        # Gather our own files up
+        part_files, _ = part.migratable_fileset_for('stage')
+
+        # Scan previous parts for collisions
+        for other_part_name in parts_files:
+            common = part_files & parts_files[other_part_name]['files']
+            conflict_files = []
+            for f in common:
+                this = os.path.join(part.installdir, f)
+                other = os.path.join(
+                    parts_files[other_part_name]['installdir'],
+                    f)
+                if os.path.islink(this) and os.path.islink(other):
+                    continue
+                if not filecmp.cmp(this, other, shallow=False):
+                    conflict_files.append(f)
+
+            if conflict_files:
+                raise EnvironmentError(
+                    'Parts {!r} and {!r} have the following file paths in '
+                    'common which have different contents:\n{}'.format(
+                        other_part_name, part.name,
+                        '\n'.join(sorted(conflict_files))))
+
+        # And add our files to the list
+        parts_files[part.name] = {'files': part_files,
+                                  'installdir': part.installdir}
