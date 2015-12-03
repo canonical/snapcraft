@@ -115,3 +115,8 @@ def get_schemadir():
 
 def isurl(url):
     return urllib.parse.urlparse(url).scheme != ''
+
+
+def reset_env():
+    global env
+    env = []
