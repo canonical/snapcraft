@@ -16,16 +16,13 @@
 
 import logging
 import os
-import tempfile
 
 import fixtures
 
 import snapcraft.yaml
 
 from snapcraft import (
-    cmds,
     common,
-    lifecycle,
     tests
 )
 
@@ -36,49 +33,6 @@ class TestCommands(tests.TestCase):
         super().setUp()
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
-
-    def test_check_for_collisions(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        tmpdirObject = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdirObject.cleanup)
-        tmpdir = tmpdirObject.name
-
-        part1 = lifecycle.load_plugin('part1', 'jdk', {'source': '.'})
-        part1.code.installdir = tmpdir + '/install1'
-        os.makedirs(part1.installdir + '/a')
-        open(part1.installdir + '/a/1', mode='w').close()
-
-        part2 = lifecycle.load_plugin('part2', 'jdk', {'source': '.'})
-        part2.code.installdir = tmpdir + '/install2'
-        os.makedirs(part2.installdir + '/a')
-        with open(part2.installdir + '/1', mode='w') as f:
-            f.write('1')
-        open(part2.installdir + '/2', mode='w').close()
-        with open(part2.installdir + '/a/2', mode='w') as f:
-            f.write('a/2')
-
-        part3 = lifecycle.load_plugin('part3', 'jdk', {'source': '.'})
-        part3.code.installdir = tmpdir + '/install3'
-        os.makedirs(part3.installdir + '/a')
-        os.makedirs(part3.installdir + '/b')
-        with open(part3.installdir + '/1', mode='w') as f:
-            f.write('2')
-        with open(part2.installdir + '/2', mode='w') as f:
-            f.write('1')
-        open(part3.installdir + '/a/2', mode='w').close()
-
-        self.assertTrue(cmds._check_for_collisions([part1, part2]))
-        self.assertEqual('', fake_logger.output)
-
-        self.assertFalse(cmds._check_for_collisions([part1, part2, part3]))
-        self.assertEqual(
-            'Error: parts part2 and part3 have the following file paths in '
-            'common which have different contents:\n'
-            '  1\n'
-            '  a/2\n',
-            fake_logger.output)
 
     def test_load_config_with_invalid_plugin_exits_with_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
