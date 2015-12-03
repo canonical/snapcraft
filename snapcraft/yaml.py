@@ -94,6 +94,10 @@ class PluginNotDefinedError(Exception):
 
 class Config:
 
+    @property
+    def part_names(self):
+        return self._part_names
+
     def __init__(self):
         self.build_tools = []
         self.all_parts = []
