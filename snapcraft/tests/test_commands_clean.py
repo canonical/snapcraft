@@ -14,168 +14,106 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-from unittest import mock
+import os
 
-import fixtures
-
-from snapcraft import common
-from snapcraft import tests
+from snapcraft import (
+    common,
+    tests,
+)
 from snapcraft.commands import clean
 
 
 class CleanCommandTestCase(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
+    yaml_template = """name: clean-test
+version: 1.0
+vendor: To Be Removed <vendor@example.com>
+summary: test clean
+description: if the clean is succesful the state file will be updated
+icon: icon.png
 
-        patcher = mock.patch('shutil.rmtree')
-        self.mock_rmtree = patcher.start()
-        self.addCleanup(patcher.stop)
+parts:
+{parts}"""
 
-        patcher = mock.patch('os.path.exists')
-        self.mock_exists = patcher.start()
-        self.addCleanup(patcher.stop)
+    yaml_part = """  clean{:d}:
+    plugin: nil
+    source: ."""
 
-        patcher = mock.patch('os.listdir')
-        self.mock_listdir = patcher.start()
-        self.mock_listdir.return_value = []
-        self.addCleanup(patcher.stop)
+    def make_snapcraft_yaml(self, n=1, create=True):
+        parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
+        super().make_snapcraft_yaml(self.yaml_template.format(parts=parts))
+        open('icon.png', 'w').close()
 
-        patcher = mock.patch('os.rmdir')
-        self.mock_rmdir = patcher.start()
-        self.addCleanup(patcher.stop)
+        parts = []
+        for i in range(n):
+            part_dir = os.path.join(common.get_partsdir(), 'clean{}'.format(i))
+            state_file = os.path.join(part_dir, 'state')
+            parts.append({
+                'part_dir': part_dir,
+                'state_file': state_file,
+            })
+            if create:
+                os.makedirs(part_dir)
+                open(state_file, 'w').close()
 
-        self.clean_calls = []
+        if create:
+            os.makedirs(common.get_stagedir())
+            os.makedirs(common.get_snapdir())
 
-        class FakePart:
-
-            def __init__(self, name, partdir):
-                self.name = name
-                self.partdir = partdir
-
-            def names(self):
-                return [self.name, ]
-
-            def clean(s):
-                self.clean_calls.append(s.name)
-
-        class FakeConfig:
-            all_parts = [
-                FakePart('part1', 'partdir1'),
-                FakePart('part2', 'partdir2'),
-                FakePart('part3', 'partdir3'),
-            ]
-
-        self.fake_config = FakeConfig()
-
-        patcher = mock.patch('snapcraft.yaml.load_config')
-        self.mock_load_config = patcher.start()
-        self.mock_load_config.return_value = self.fake_config
-        self.addCleanup(patcher.stop)
+        return parts
 
     def test_clean_all(self):
+        self.make_snapcraft_yaml(n=3)
+
         clean.main()
 
-        self.mock_exists.assert_has_calls([
-            mock.call(common.get_partsdir()),
-            mock.call().__bool__(),
-            mock.call(common.get_stagedir()),
-            mock.call().__bool__(),
-            mock.call(common.get_snapdir()),
-            mock.call().__bool__(),
-        ])
-
-        self.mock_rmtree.assert_has_calls([
-            mock.call(common.get_stagedir()),
-            mock.call(common.get_snapdir()),
-        ])
-
-        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
-        self.assertEqual(self.clean_calls, ['part1', 'part2', 'part3'])
+        self.assertFalse(os.path.exists(common.get_partsdir()))
+        self.assertFalse(os.path.exists(common.get_stagedir()))
+        self.assertFalse(os.path.exists(common.get_snapdir()))
 
     def test_clean_all_when_all_parts_specified(self):
-        clean.main(['part1', 'part2', 'part3'])
+        self.make_snapcraft_yaml(n=3)
 
-        self.mock_exists.assert_has_calls([
-            mock.call(common.get_partsdir()),
-            mock.call().__bool__(),
-            mock.call(common.get_stagedir()),
-            mock.call().__bool__(),
-            mock.call(common.get_snapdir()),
-            mock.call().__bool__(),
-        ])
+        clean.main(['clean0', 'clean1', 'clean2'])
 
-        self.mock_rmtree.assert_has_calls([
-            mock.call(common.get_stagedir()),
-            mock.call(common.get_snapdir()),
-        ])
-
-        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
-        self.assertEqual(self.clean_calls, ['part1', 'part2', 'part3'])
+        self.assertFalse(os.path.exists(common.get_partsdir()))
+        self.assertFalse(os.path.exists(common.get_stagedir()))
+        self.assertFalse(os.path.exists(common.get_snapdir()))
 
     def test_partial_clean(self):
-        clean.main(['part1', ])
+        parts = self.make_snapcraft_yaml(n=3)
 
-        self.mock_exists.assert_has_calls([
-            mock.call(common.get_partsdir()),
-            mock.call().__bool__(),
-            mock.call(common.get_snapdir()),
-            mock.call().__bool__(),
-        ])
+        clean.main(['clean0', 'clean2', ])
 
-        self.mock_rmtree.assert_has_calls([
-            mock.call(common.get_snapdir()),
-        ])
+        for i in [0, 2]:
+            self.assertFalse(
+                os.path.exists(parts[i]['part_dir']),
+                'Expected for {!r} to be wiped'.format(parts[i]['part_dir']))
+            self.assertFalse(
+                os.path.exists(parts[i]['state_file']),
+                'Expected for {!r} to be wiped'.format(parts[i]['state_file']))
 
-        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
-        self.assertEqual(self.clean_calls, ['part1'])
+        self.assertTrue(os.path.exists(parts[1]['part_dir']),
+                        'Expected a part directory for the clean1 part')
+        self.assertTrue(os.path.exists(parts[1]['state_file']),
+                        'Expected a state file for the clean1 part')
+
+        self.assertTrue(os.path.exists(common.get_partsdir()))
+        self.assertTrue(os.path.exists(common.get_stagedir()))
+        self.assertFalse(os.path.exists(common.get_snapdir()))
 
     def test_everything_is_clean(self):
-        self.mock_exists.return_value = False
-        self.mock_listdir.side_effect = FileNotFoundError()
+        """Don't crash if everything is already clean."""
+        self.make_snapcraft_yaml(n=3, create=False)
 
         clean.main()
-
-        self.mock_exists.assert_has_calls([
-            mock.call(common.get_partsdir()),
-            mock.call(common.get_stagedir()),
-            mock.call(common.get_snapdir()),
-        ])
-
-        self.assertFalse(self.mock_rmdir.called)
-        self.assertFalse(self.mock_rmtree.called)
-        self.assertEqual(self.clean_calls, ['part1', 'part2', 'part3'])
-
-    def test_no_parts_defined(self):
-        self.fake_config.all_parts = []
-
-        self.mock_load_config.return_value = self.fake_config
-
-        clean.main()
-
-        self.mock_exists.assert_has_calls([
-            mock.call(common.get_stagedir()),
-            mock.call().__bool__(),
-            mock.call(common.get_snapdir()),
-            mock.call().__bool__(),
-        ])
-
-        self.mock_rmtree.assert_has_calls([
-            mock.call(common.get_stagedir()),
-            mock.call(common.get_snapdir()),
-        ])
-
-        self.mock_rmdir.assert_called_once_with(common.get_partsdir())
 
     def test_part_to_remove_not_defined_exits_with_error(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
+        self.make_snapcraft_yaml(n=3)
 
-        with self.assertRaises(SystemExit) as raised:
-            clean.main(['does-not-exist'])
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        with self.assertRaises(EnvironmentError) as raised:
+            clean.main(['no-clean', ])
+
         self.assertEqual(
-            "The part named 'does-not-exist' is not defined in "
-            "'snapcraft.yaml'\n",
-            fake_logger.output)
+            raised.exception.__str__(),
+            "The part named 'no-clean' is not defined in 'snapcraft.yaml'")
