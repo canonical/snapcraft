@@ -30,7 +30,6 @@ Options:
 import os
 import logging
 import shutil
-import sys
 
 from docopt import docopt
 
@@ -46,12 +45,8 @@ def main(argv=None):
 
     config = snapcraft.yaml.load_config()
 
-    part_names = {part.name for part in config.all_parts}
-    for part_name in args['PART']:
-        if part_name not in part_names:
-            logger.error('The part named {!r} is not defined in '
-                         '\'snapcraft.yaml\''.format(part_name))
-            sys.exit(1)
+    if args['PART']:
+        config.validate_parts(args['PART'])
 
     for part in config.all_parts:
         if not args['PART'] or part.name in args['PART']:
@@ -62,7 +57,9 @@ def main(argv=None):
             not os.listdir(common.get_partsdir())):
         os.rmdir(common.get_partsdir())
 
-    clean_stage = not args['PART'] or part_names == set(args['PART'])
+    parts_match = set(config.part_names) == set(args['PART'])
+    # Only clean stage if all the parts were cleaned up.
+    clean_stage = not args['PART'] or parts_match
     if clean_stage and os.path.exists(common.get_stagedir()):
         logger.info('Cleaning up staging area')
         shutil.rmtree(common.get_stagedir())
