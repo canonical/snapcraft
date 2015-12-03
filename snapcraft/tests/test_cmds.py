@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import io
 import logging
 import os
 import tempfile
@@ -29,12 +28,6 @@ from snapcraft import (
     lifecycle,
     tests
 )
-
-
-class _IO(io.StringIO):
-
-    def fileno(self):
-        return 1
 
 
 class TestCommands(tests.TestCase):
