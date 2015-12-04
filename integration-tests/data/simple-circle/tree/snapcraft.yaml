@@ -5,7 +5,6 @@ description: |
     dependencies that can stress test the depedency resolution
     code in Snapcraft.
 version: 1.0
-vendor: deps@tree.com
 icon: icon.svg
 
 parts:

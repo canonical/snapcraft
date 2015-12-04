@@ -1,6 +1,5 @@
 name: test-package
 version: 0.1
-vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: test a simple scons project
 description: a longer description
 icon: icon.png

@@ -1,6 +1,5 @@
 name: pip-requirements-list
 version: 1
-vendor: PIP Tests <pip@pippy.pi>
 summary: Test a list of requirements
 description: |
   The python plugins can specify their requirements

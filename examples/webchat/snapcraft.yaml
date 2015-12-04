@@ -1,6 +1,5 @@
 name: webchat
 version: 0.0.1
-vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: A simple nodejs based webchat
 description: This example is not really production quality
 icon: icon.png
