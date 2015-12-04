@@ -41,6 +41,7 @@ class ComposeTestCase(tests.TestCase):
             'version': '1.0',
             'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
+            'architectures': ['armhf', 'amd64']
         }
 
     def test_plain_no_binaries_or_services(self):
@@ -110,7 +111,6 @@ class ComposeTestCase(tests.TestCase):
 
         y = meta._compose_package_yaml('meta', self.config_data,
                                        ['armhf', 'amd64'])
-
         expected = {
             'name': 'my-package',
             'version': '1.0',
@@ -262,7 +262,7 @@ class Create(tests.TestCase):
     @patch('snapcraft.meta._write_wrap_exe')
     @patch('snapcraft.meta.open', create=True)
     def test_create_meta(self, mock_the_open, mock_wrap_exe):
-        meta.create(self.config_data, ['amd64'])
+        meta.create(self.config_data)
 
         self.mock_makedirs.assert_has_calls([
             call(self.meta_dir, exist_ok=True),
@@ -302,7 +302,7 @@ class Create(tests.TestCase):
                                             mock_wrap_exe):
         self.config_data['config'] = 'python3 my.py --config'
 
-        meta.create(self.config_data, ['amd64'])
+        meta.create(self.config_data)
 
         self.mock_makedirs.assert_has_calls([
             call(self.meta_dir, exist_ok=True),
@@ -334,7 +334,7 @@ class Create(tests.TestCase):
     def test_create_meta_without_config(self, mock_the_open, mock_wrap_exe):
         del self.config_data['config']
 
-        meta.create(self.config_data, ['amd64'])
+        meta.create(self.config_data)
 
         self.mock_makedirs.assert_called_once_with(self.meta_dir,
                                                    exist_ok=True)
