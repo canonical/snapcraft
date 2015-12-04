@@ -160,5 +160,4 @@ required:
   - version
   - summary
   - description
-  - icon
   - parts
