@@ -31,12 +31,12 @@ logger = logging.getLogger(__name__)
 _MANDATORY_PACKAGE_KEYS = [
     'name',
     'version',
-    'icon',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
     'frameworks',
     'type',
+    'icon',
 ]
 
 
@@ -57,7 +57,8 @@ def create(config_data):
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
-    config_data['icon'] = _copy(meta_dir, config_data['icon'])
+    if 'icon' in config_data:
+        config_data['icon'] = _copy(meta_dir, config_data['icon'])
 
     if 'framework-policy' in config_data:
         _copy(meta_dir, config_data['framework-policy'], 'framework-policy')

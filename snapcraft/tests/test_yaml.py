@@ -361,7 +361,6 @@ class TestValidation(TestCase):
             'version': '1.0-snapcraft1~ppa1',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
-            'icon': 'my-icon.png',
             'parts': {
                 'part1': {
                     'plugin': 'project',
@@ -526,15 +525,10 @@ class TestValidation(TestCase):
                             'installation path')
         self.assertEqual(raised.exception.message, expected_message)
 
-    def test_icon_missing(self):
+    def test_icon_missing_is_valid_yaml(self):
         self.mock_path_exists.return_value = False
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
-
-        expected_message = '\'my-icon.png\' is not a \'icon-path\''
-        self.assertEqual(raised.exception.message, expected_message,
-                         msg=self.data)
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
     def test_invalid_part_name_plugin_raises_exception(self):
         self.data['parts']['plugins'] = {'type': 'go'}
