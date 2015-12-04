@@ -1,6 +1,5 @@
 name: pypi-config
 version: 1
-vendor: Vendor <email@example.com>
 summary: Create a snappy config hook using setup.py
 description: |
  The object is to setup a snappy config hook to setup configuration based

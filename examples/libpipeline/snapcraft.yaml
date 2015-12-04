@@ -1,6 +1,5 @@
 name: pipelinetest
 version: 1.0
-vendor: Mike Terry <mterry@ubuntu.com>
 binaries:
   pipelinetest:
     exec: ./bin/pipelinetest

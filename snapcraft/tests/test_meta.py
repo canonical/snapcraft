@@ -39,7 +39,6 @@ class ComposeTestCase(tests.TestCase):
         self.config_data = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64']
         }
@@ -51,7 +50,6 @@ class ComposeTestCase(tests.TestCase):
         expected = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
         }
@@ -64,7 +62,6 @@ class ComposeTestCase(tests.TestCase):
         expected = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
         }
 
@@ -114,7 +111,6 @@ class ComposeTestCase(tests.TestCase):
         expected = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
             'frameworks': ['mir', ],
@@ -163,7 +159,6 @@ class Create(tests.TestCase):
         self.config_data = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'description': 'my description',
             'summary': 'my summary',
             'icon': 'my-icon.png',
@@ -234,15 +229,6 @@ class Create(tests.TestCase):
             call().__enter__().write(':'),
             call().__enter__().write(' '),
             call().__enter__().write('my-package'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('vendor'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('Sergio'),
-            call().__enter__().write(' '),
-            call().__enter__().write('Schvezov'),
-            call().__enter__().write(' '),
-            call().__enter__().write('<sergio.schvezov@canonical.com>'),
             call().__enter__().write('\n'),
             call().__enter__().write('version'),
             call().__enter__().write(':'),
