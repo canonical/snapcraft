@@ -1,6 +1,5 @@
 name: test-package
 version: 0.1
-vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: Use organized filesets
 description: organize the filesets before staging them
 icon: icon.png

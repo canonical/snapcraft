@@ -1,6 +1,5 @@
 name: test-package
 version: 0.1
-vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: A simple go project.
 description: |
   Proves that it is possible to build a snap using local go sources.

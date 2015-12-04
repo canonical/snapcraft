@@ -1,6 +1,5 @@
 name: spongeshaker
 version: 0
-vendor: Michael Vogt <michael.vogt@ubuntu.com>
 binaries:
   sha3sum:
     exec: bin/sha3sum

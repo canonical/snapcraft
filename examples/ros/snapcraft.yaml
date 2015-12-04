@@ -1,6 +1,5 @@
 name: ros-example
 version: 1.0
-vendor: Number Five <number-five@is-alive.com>
 summary: A robot example
 icon: icon.svg
 description: A really small ROS example

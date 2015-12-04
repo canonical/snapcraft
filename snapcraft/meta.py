@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 _MANDATORY_PACKAGE_KEYS = [
     'name',
     'version',
-    'vendor',
     'icon',
 ]
 
