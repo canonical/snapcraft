@@ -1,6 +1,5 @@
 name: java-hello-world
 version: 0
-vendor: Michael Terry <mterry@ubuntu.com>
 binaries:
  hello:
    exec: bin/wrapper

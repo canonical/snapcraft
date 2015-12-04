@@ -1,6 +1,5 @@
 name: wiki-test
 version: 0
-vendor: Someone <vendor@vendor.com>
 summary: Test using a wiki part to complete the local part
 description:
  As the plugin keyword is not defined and the curl part exists on the

@@ -51,7 +51,6 @@ class TestYaml(TestCase):
     def test_config_loads_plugins(self, mock_get_part, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -75,7 +74,6 @@ parts:
             self, mock_get_part, mock_loadPlugin):
         content = """name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: ñoño test
 icon: my-icon.png
@@ -102,7 +100,6 @@ parts:
     def test_config_loads_part_from_wiki(self, mock_compose, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -126,7 +123,6 @@ parts:
     def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -180,7 +176,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -209,7 +204,6 @@ parts:
 
         self.make_snapcraft_yaml("""
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: nothing
 icon: my-icon.png
@@ -232,7 +226,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: 1
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: nothing
 icon: my-icon.png
@@ -255,7 +248,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: myapp@me_1.0
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: nothing
 icon: my-icon.png
@@ -279,7 +271,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 icon: my-icon.png
 
@@ -302,8 +293,7 @@ parts:
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-\tvendor: me <me@me.com>
-summary: test
+\tsummary: test
 icon: my-icon.png
 
 parts:
@@ -324,7 +314,6 @@ parts:
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -370,7 +359,6 @@ class TestValidation(TestCase):
         self.data = {
             'name': 'my-package-1',
             'version': '1.0-snapcraft1~ppa1',
-            'vendor': 'Me <me@me.com>',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
             'icon': 'my-icon.png',

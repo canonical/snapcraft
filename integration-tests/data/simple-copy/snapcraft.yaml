@@ -1,6 +1,5 @@
 name: test-package
 version: 0.1
-vendor: Sergio Schvezov <sergio.schvezov@canonical.com>
 summary: A test of the copy plugin
 description: |
     Copies a file and a directory src and srcdir respectively into

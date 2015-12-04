@@ -5,7 +5,6 @@ description: |
     in a circular dependency chain. Snapcraft should NOT
     accept this snapcraft.yaml.
 version: 1.0
-vendor: round@circle.square.com
 icon: icon.svg
 
 parts:
