@@ -15,10 +15,10 @@ contain.
  * `vendor` (string)  
    Vendor in email format as defined in RFC 5322.
  * `summary` (string)  
-   A 78 character long summary for the snap
+   A 78 character long summary for the snap.
  * `description` (string)  
    The description for the snap, this can and is expected to be a longer
-   explanation for the snap
+   explanation for the snap.
  * `config` (string)  
    Path to the runnable in snap that will be used as the Snappy config
    interface.
@@ -29,11 +29,11 @@ contain.
    A set of keys representing binary names with values as defined by the
    [Snappy packaging spec](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
  * `icon` (string)  
-   Path to the icon that will be used for the snap
+   Path to the icon that will be used for the snap.
  * `license` (yaml subsection)  
-   License the snap will carry
+   License the snap will carry.
    * `text` (string)  
-     The license text for the snap itself
+     The license text for the snap itself.
    * `accept-required` (boolean)  
      If true, license acceptance is required for the package to be activated.
      A good example for this one is the Sun JRE/JDK being bundled in a snap.
