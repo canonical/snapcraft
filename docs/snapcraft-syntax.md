@@ -45,10 +45,10 @@ contain.
    not relevant (to aid copy-and-pasting).
    * `plugin` (string)  
      Specifies the plugin name that will manage this part. Snapcraft will pass
-     it all the other user-specified part options. If plugin is not defined,
-     [the wiki](https://wiki.ubuntu.com/Snappy/Parts) will be searched for the
-     part, the local values defined in the part will be used to compose the
-     final part.
+     to it all the other user-specified part options. If plugin is not
+     defined, [the wiki](https://wiki.ubuntu.com/Snappy/Parts) will be
+     searched for the part, the local values defined in the part will be used
+     to compose the final part.
    * `after` (list of strings)  
      Specifies any parts that should be built before this part is. This is
      mostly useful when a part needs a library or build tool built by another
