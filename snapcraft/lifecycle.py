@@ -28,8 +28,12 @@ import yaml
 
 import snapcraft
 import snapcraft.yaml
-from snapcraft import common
-from snapcraft import repo
+
+from snapcraft import (
+    common,
+    meta,
+    repo,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -72,6 +76,9 @@ def execute(step, part_names=None):
                 execute('stage', prereqs)
             common.env = config.build_env_for_part(part)
             getattr(part, step)()
+
+        if step == 'strip' and part_names == config.part_names:
+            meta.create(config.data)
 
 
 class PluginError(Exception):
@@ -231,12 +238,12 @@ class PluginHandler:
 
         return True
 
-    def snap(self, force=False):
-        if not self.should_stage_run('snap', force):
+    def strip(self, force=False):
+        if not self.should_stage_run('strip', force):
             return
         self.makedirs()
 
-        self.notify_stage('Snapping')
+        self.notify_stage('Stripping')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
 
         try:
@@ -246,7 +253,7 @@ class PluginHandler:
                              os.path.relpath(e.filename, os.path.curdir))
                 return False
 
-        self.mark_done('snap')
+        self.mark_done('strip')
 
         return True
 

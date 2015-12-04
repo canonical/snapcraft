@@ -20,6 +20,7 @@ import re
 import shlex
 import shutil
 import tempfile
+
 import yaml
 
 from snapcraft import common
@@ -40,7 +41,7 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
-def create(config_data, arches=None):
+def create(config_data):
     '''
     Create  the meta directory and provision it with package.yaml and readme.md
     in the snap dir using information from config_data and arches.
@@ -48,7 +49,11 @@ def create(config_data, arches=None):
 
     Returns meta_dir.
     '''
-    # TODO keys for using apparmor, setting an icon missing.
+
+    if 'architectures' in config_data:
+        arches = config_data['architectures']
+    else:
+        arches = [common.get_arch(), ]
 
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
