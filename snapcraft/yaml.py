@@ -34,18 +34,6 @@ from snapcraft import (
 logger = logging.getLogger(__name__)
 
 
-_DEPRECATION_LIST = [
-    'ant-project',
-    'autotools-project',
-    'cmake-project',
-    'go-project',
-    'make-project',
-    'maven-project',
-    'python2-project',
-    'python3-project',
-]
-
-
 @jsonschema.FormatChecker.cls_checks('file-path')
 @jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_file_exists(instance):
@@ -116,11 +104,7 @@ class Config:
             properties = self.data['parts'][part_name] or {}
 
             plugin_name = properties.pop('plugin', None)
-            # TODO search the wiki
-            if not plugin_name and 'type' in properties:
-                plugin_name = properties.pop('type')
-                logger.warning('DEPRECATED: Use "plugin" instead of "type"')
-            elif not plugin_name:
+            if not plugin_name:
                 logger.info(
                     'Searching the wiki to compose part "{}"'.format(
                         part_name))
@@ -130,13 +114,6 @@ class Config:
 
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
-
-            if plugin_name in _DEPRECATION_LIST:
-                plugin_name = plugin_name.rsplit('-project')[0]
-                logger.warning(
-                    'DEPRECATED: plugin names ending in -project are '
-                    'deprecated. Using {0} instead of {0}-project'.format(
-                        plugin_name))
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
