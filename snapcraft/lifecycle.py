@@ -85,14 +85,6 @@ class PluginHandler:
         return self._name
 
     @property
-    def sourcedir(self):
-        return self.code.sourcedir
-
-    @property
-    def builddir(self):
-        return self.code.builddir
-
-    @property
     def installdir(self):
         return self.code.installdir
 
@@ -138,12 +130,6 @@ class PluginHandler:
         plugin = _get_plugin(module)
         options = _make_options(properties, plugin.schema())
         self.code = plugin(self.name, options)
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return self.name
 
     def makedirs(self):
         dirs = [
@@ -226,10 +212,8 @@ class PluginHandler:
 
     def stage(self, force=False):
         if not self.should_stage_run('stage', force):
-            return True
+            return
         self.makedirs()
-        if not self.code:
-            return True
 
         self.notify_stage('Staging')
         self._organize()
@@ -249,7 +233,7 @@ class PluginHandler:
 
     def snap(self, force=False):
         if not self.should_stage_run('snap', force):
-            return True
+            return
         self.makedirs()
 
         self.notify_stage('Snapping')
