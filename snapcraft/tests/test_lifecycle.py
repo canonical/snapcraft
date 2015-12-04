@@ -17,24 +17,26 @@
 import logging
 import os
 import tempfile
-
-import fixtures
 from unittest.mock import (
     Mock,
     patch,
 )
 
+import fixtures
+
 import snapcraft.common as common
-import snapcraft.lifecycle
-import snapcraft.tests
+from snapcraft import (
+    lifecycle,
+    tests,
+)
 
 
 def get_test_plugin(name='copy', part_name='mock-part'):
     properties = {'files': {'1': '1'}}
-    return snapcraft.lifecycle.PluginHandler(name, part_name, properties)
+    return lifecycle.PluginHandler(name, part_name, properties)
 
 
-class PluginTestCase(snapcraft.tests.TestCase):
+class PluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -45,7 +47,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
+        with self.assertRaises(lifecycle.PluginError) as raised:
             get_test_plugin('test_unexisting_name')
 
         self.assertEqual(raised.exception.__str__(),
@@ -61,7 +63,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
             r'\\a',
         ]
 
-        include, exclude = snapcraft.lifecycle._get_file_list(stage_set)
+        include, exclude = lifecycle._get_file_list(stage_set)
 
         self.assertEqual(include, ['opt/something', 'usr/bin',
                                    '-everything', r'\a'])
@@ -73,7 +75,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
             'usr/bin',
         ]
 
-        include, exclude = snapcraft.lifecycle._get_file_list(stage_set)
+        include, exclude = lifecycle._get_file_list(stage_set)
 
         self.assertEqual(include, ['opt/something', 'usr/bin'])
         self.assertEqual(exclude, [])
@@ -84,7 +86,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
             '-usr/lib/*.a',
         ]
 
-        include, exclude = snapcraft.lifecycle._get_file_list(stage_set)
+        include, exclude = lifecycle._get_file_list(stage_set)
 
         self.assertEqual(include, ['*'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
@@ -170,9 +172,9 @@ class PluginTestCase(snapcraft.tests.TestCase):
                 dstdir = tmpdir + '/stage'
                 os.makedirs(dstdir)
 
-                files, dirs = snapcraft.lifecycle._migratable_filesets(
+                files, dirs = lifecycle._migratable_filesets(
                     filesets[key]['fileset'], srcdir)
-                snapcraft.lifecycle._migrate_files(files, dirs, srcdir, dstdir)
+                lifecycle._migrate_files(files, dirs, srcdir, dstdir)
 
                 expected = []
                 for item in filesets[key]['result']:
@@ -200,7 +202,7 @@ class PluginTestCase(snapcraft.tests.TestCase):
         common.set_schemadir(os.path.join('', 'foo'))
 
         with self.assertRaises(FileNotFoundError):
-            snapcraft.lifecycle.PluginHandler('mock', 'mock-part', {})
+            lifecycle.PluginHandler('mock', 'mock-part', {})
 
     @patch('importlib.import_module')
     @patch('snapcraft.lifecycle._load_local')
@@ -211,26 +213,26 @@ class PluginTestCase(snapcraft.tests.TestCase):
         mock_plugin.schema.return_value = {}
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
-        snapcraft.lifecycle.PluginHandler('mock', 'mock-part', {})
+        lifecycle.PluginHandler('mock', 'mock-part', {})
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock')
 
     def test_filesets_includes_without_relative_paths(self):
-        with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
-            snapcraft.lifecycle._get_file_list(['rel', '/abs/include'])
+        with self.assertRaises(lifecycle.PluginError) as raised:
+            lifecycle._get_file_list(['rel', '/abs/include'])
 
         self.assertEqual(
             'path "/abs/include" must be relative', str(raised.exception))
 
     def test_filesets_exlcudes_without_relative_paths(self):
-        with self.assertRaises(snapcraft.lifecycle.PluginError) as raised:
-            snapcraft.lifecycle._get_file_list(['rel', '-/abs/exclude'])
+        with self.assertRaises(lifecycle.PluginError) as raised:
+            lifecycle._get_file_list(['rel', '-/abs/exclude'])
 
         self.assertEqual(
             'path "/abs/exclude" must be relative', str(raised.exception))
 
 
-class PluginMakedirsTestCase(snapcraft.tests.TestCase):
+class PluginMakedirsTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -266,7 +268,7 @@ class PluginMakedirsTestCase(snapcraft.tests.TestCase):
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
 
 
-class CleanTestCase(snapcraft.tests.TestCase):
+class CleanTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -300,3 +302,116 @@ class CleanTestCase(snapcraft.tests.TestCase):
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
         self.assertFalse(mock_rmtree.called)
+
+
+class CollisionTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        tmpdirObject = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdirObject.cleanup)
+        tmpdir = tmpdirObject.name
+
+        part1 = lifecycle.load_plugin('part1', 'nil', {})
+        part1.code.installdir = tmpdir + '/install1'
+        os.makedirs(part1.installdir + '/a')
+        open(part1.installdir + '/a/1', mode='w').close()
+
+        part2 = lifecycle.load_plugin('part2', 'nil', {})
+        part2.code.installdir = tmpdir + '/install2'
+        os.makedirs(part2.installdir + '/a')
+        with open(part2.installdir + '/1', mode='w') as f:
+            f.write('1')
+        open(part2.installdir + '/2', mode='w').close()
+        with open(part2.installdir + '/a/2', mode='w') as f:
+            f.write('a/2')
+
+        part3 = lifecycle.load_plugin('part3', 'nil', {})
+        part3.code.installdir = tmpdir + '/install3'
+        os.makedirs(part3.installdir + '/a')
+        os.makedirs(part3.installdir + '/b')
+        with open(part3.installdir + '/1', mode='w') as f:
+            f.write('2')
+        with open(part2.installdir + '/2', mode='w') as f:
+            f.write('1')
+        open(part3.installdir + '/a/2', mode='w').close()
+
+        self.part1 = part1
+        self.part2 = part2
+        self.part3 = part3
+
+    def test_no_collisions(self):
+        """No exception is expected as there are no collisions."""
+        lifecycle._check_for_collisions([self.part1, self.part2])
+
+    def test_collisions_between_two_parts(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            lifecycle._check_for_collisions(
+                [self.part1, self.part2, self.part3])
+
+        self.assertEqual(
+            raised.exception.__str__(),
+            "Parts 'part2' and 'part3' have the following file paths in "
+            "common which have different contents:\n1\na/2")
+
+
+class ExecutionTestCases(tests.TestCase):
+
+    def test_exception_when_dependency_is_required(self):
+        self.make_snapcraft_yaml("""name: after
+version: 0
+vendor: To Be Removed <vendor@example.com>
+summary: test stage
+description: if the build is succesful the state file will be updated
+icon: icon.png
+
+parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after:
+      - part1
+""")
+        open('icon.png', 'w').close()
+
+        with self.assertRaises(RuntimeError) as raised:
+            lifecycle.execute('pull', part_names=['part2'])
+
+        self.assertEqual(
+            raised.exception.__str__(),
+            "Requested 'pull' of 'part2' but there are unsatisfied "
+            "prerequisites: 'part1'")
+
+    def test_dependency_recursed_correctly(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: after
+version: 0
+vendor: To Be Removed <vendor@example.com>
+summary: test stage
+description: if the build is succesful the state file will be updated
+icon: icon.png
+
+parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after:
+      - part1
+""")
+        open('icon.png', 'w').close()
+
+        lifecycle.execute('pull')
+
+        self.assertEqual(
+            'Pulling part1 \n'
+            '\'part2\' has prerequisites that need to be staged: part1\n'
+            'Skipping pull part1  (already ran)\n'
+            'Building part1 \n'
+            'Staging part1 \n'
+            'Pulling part2 \n',
+            fake_logger.output)
