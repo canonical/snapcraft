@@ -54,8 +54,8 @@ contain.
      mostly useful when a part needs a library or build tool built by another
      part. If the part defined in after is not defined locally, the part will
      be searched for in [the wiki](https://wiki.ubuntu.com/Snappy/Parts).
-     *If a part is supposed to run after another, the prerequisite part should
-     have been staged before the part can start its lifecycle.*
+     *If a part is supposed to run after another, the prerequisite part will
+     be staged before the dependent part starts its lifecycle.*
    * `stage-packages` (list of strings)  
      A list of Ubuntu packages to use that would support the part creation.
    * `filesets` (yaml subsection)  
