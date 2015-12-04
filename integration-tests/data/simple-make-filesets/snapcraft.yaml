@@ -7,7 +7,7 @@ icon: icon.png
 
 parts:
   make-project:
-    plugin: make-project
+    plugin: make
     filesets:
       files:
         - share/file1

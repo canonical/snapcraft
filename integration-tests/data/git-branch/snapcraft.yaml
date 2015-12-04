@@ -7,7 +7,7 @@ icon: icon.png
 
 parts:
     git:
-        plugin: make-project
+        plugin: make
         source: .
         source-type: git
         source-branch: second
