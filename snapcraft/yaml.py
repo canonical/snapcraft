@@ -129,6 +129,9 @@ class Config:
         self._compute_part_dependencies()
         self.all_parts = self._sort_parts()
 
+        if 'architectures' not in self.data:
+            self.data['architectures'] = [common.get_arch(), ]
+
     def _compute_part_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''
 
