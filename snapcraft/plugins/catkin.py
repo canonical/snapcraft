@@ -243,10 +243,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._find_package_deps()
         self._build_packages_deps()
 
-        # FIXME: Removing this here since it'll clash with the one from
-        # roscore. Remove this line once the roscore plugin is gone.
-        os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
-
         # Fix the shebang in _setup_util.py to be portable
         with open('{}/opt/ros/{}/_setup_util.py'.format(
                   self.installdir, self.options.rosversion), 'r+') as f:
