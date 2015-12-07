@@ -49,11 +49,6 @@ def create(config_data):
     Returns meta_dir.
     '''
 
-    if 'architectures' in config_data:
-        arches = config_data['architectures']
-    else:
-        arches = [common.get_arch(), ]
-
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
@@ -63,7 +58,7 @@ def create(config_data):
     if 'framework-policy' in config_data:
         _copy(meta_dir, config_data['framework-policy'], 'framework-policy')
 
-    _write_package_yaml(meta_dir, config_data, arches)
+    _write_package_yaml(meta_dir, config_data, config_data['architectures'])
     _write_readme_md(meta_dir, config_data)
 
     if 'config' in config_data:

@@ -57,12 +57,13 @@ class ComposeTestCase(tests.TestCase):
         self.assertEqual(y, expected)
 
     def test_plain_no_binaries_or_services_or_arches(self):
-        y = meta._compose_package_yaml('meta', self.config_data, None)
+        y = meta._compose_package_yaml('meta', self.config_data, ['amd64'])
 
         expected = {
             'name': 'my-package',
             'version': '1.0',
             'icon': 'my-icon.png',
+            'architectures': ['amd64']
         }
 
         self.assertEqual(y, expected)
@@ -163,6 +164,7 @@ class Create(tests.TestCase):
             'summary': 'my summary',
             'icon': 'my-icon.png',
             'config': 'bin/config',
+            'architectures': ['amd64'],
             'binaries': {
                 'bash': {
                     'exec': 'bin/bash',
@@ -314,17 +316,6 @@ class Create(tests.TestCase):
                 args=['my.py', '--config'], shebang=None,
             ),
         ])
-
-    @patch('snapcraft.meta._write_wrap_exe')
-    @patch('snapcraft.meta.open', create=True)
-    def test_create_meta_without_config(self, mock_the_open, mock_wrap_exe):
-        del self.config_data['config']
-
-        meta.create(self.config_data)
-
-        self.mock_makedirs.assert_called_once_with(self.meta_dir,
-                                                   exist_ok=True)
-        mock_the_open.assert_has_calls(self.expected_open_calls)
 
 
 # TODO this needs more tests.
