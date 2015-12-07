@@ -1,4 +1,3 @@
-# %Tag(FULLTEXT)%
 cmake_minimum_required(VERSION 2.8.3)
 project(beginner_tutorials)
 
@@ -25,7 +24,6 @@ add_executable(listener src/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})
 
 ## Build service client and server
-# %Tag(SRVCLIENT)%
 add_executable(add_two_ints_server src/add_two_ints_server.cpp)
 target_link_libraries(add_two_ints_server ${catkin_LIBRARIES})
 add_dependencies(add_two_ints_server beginner_tutorials_gencpp)
@@ -34,6 +32,9 @@ add_executable(add_two_ints_client src/add_two_ints_client.cpp)
 target_link_libraries(add_two_ints_client ${catkin_LIBRARIES})
 add_dependencies(add_two_ints_client beginner_tutorials_gencpp)
 
-# %EndTag(SRVCLIENT)%
-
-# %EndTag(FULLTEXT)%
+## Mark executables for installation
+install(TARGETS talker listener add_two_ints_server add_two_ints_client
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

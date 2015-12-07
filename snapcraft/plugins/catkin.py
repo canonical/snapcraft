@@ -32,6 +32,7 @@ import os
 import tempfile
 import logging
 import shutil
+import re
 
 import snapcraft
 from snapcraft import repo
@@ -91,7 +92,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                     'lib',
                     self.python_version,
                     'dist-packages')),
-            'DESTDIR={0}'.format(self.installdir),
             # ROS needs it but doesn't set it :-/
             'CPPFLAGS="-std=c++11 $CPPFLAGS -I{0} -I{1}"'.format(
                 os.path.join(root, 'usr', 'include', 'c++', self.gcc_version),
@@ -105,6 +105,10 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 root,
                 self.options.rosversion),
             'ROS_MASTER_URI=http://localhost:11311',
+
+            # Various ROS tools (e.g. rospack) keep a cache, and they determine
+            # where the cache goes using $ROS_HOME.
+            'ROS_HOME=$SNAP_APP_USER_DATA_PATH/.ros',
             '_CATKIN_SETUP_DIR={}'.format(os.path.join(
                 root, 'opt', 'ros', self.options.rosversion)),
             'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
@@ -239,19 +243,18 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._find_package_deps()
         self._build_packages_deps()
 
-        # the hacks
-        findcmd = ['find', self.installdir, '-name', '*.cmake', '-delete']
-        self.run(findcmd)
-
-        self.run(
-            ['rm', '-f',
-             'opt/ros/' + self.options.rosversion + '/.catkin',
-             'opt/ros/' + self.options.rosversion + '/.rosinstall',
-             'opt/ros/' + self.options.rosversion + '/setup.sh',
-             'opt/ros/' + self.options.rosversion + '/_setup_util.py'],
-            cwd=self.installdir)
-
+        # FIXME: Removing this here since it'll clash with the one from
+        # roscore. Remove this line once the roscore plugin is gone.
         os.remove(os.path.join(self.installdir, 'usr/bin/xml2-config'))
+
+        # Fix the shebang in _setup_util.py to be portable
+        with open('{}/opt/ros/{}/_setup_util.py'.format(
+                  self.installdir, self.options.rosversion), 'r+') as f:
+            pattern = re.compile(r'#!.*python')
+            replaced = pattern.sub(r'#!/usr/bin/env python', f.read())
+            f.seek(0)
+            f.truncate()
+            f.write(replaced)
 
     def _build_packages_deps(self):
         # Ugly dependency resolution, just loop through until we can
@@ -276,26 +279,32 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     def _handle_package(self, pkg):
         catkincmd = ['catkin_make_isolated']
 
+        # Install the package
+        catkincmd.append('--install')
+
+        # Specify the package to be built
         catkincmd.append('--pkg')
         catkincmd.append(pkg)
 
-        # Define the location
+        # Don't clutter the real ROS workspace-- use the Snapcraft build
+        # directory
         catkincmd.extend(['--directory', self.builddir])
+
+        # Specify that the package should be installed along with the rest of
+        # the ROS distro.
+        catkincmd.extend(['--install-space', self.rosdir])
 
         # Start the CMake Commands
         catkincmd.append('--cmake-args')
 
-        # CMake directories
-        catkincmd.append('-DCATKIN_DEVEL_PREFIX={}'.format(self.rosdir))
-        catkincmd.append('-DCMAKE_INSTALL_PREFIX={}'.format(self.installdir))
-
-        # Dep CMake files
+        # Make sure all ROS dependencies can be found, even without the
+        # workspace setup
         for dep in self.dependencies:
             catkincmd.append('-D{0}_DIR={1}'.format(
                 dep.replace('-', '_'),
                 os.path.join(self.rosdir, 'share', dep, 'cmake')))
 
-        # Compiler fun
+        # Make sure we're using the compilers included in this .snap
         catkincmd.extend([
             '-DCMAKE_C_FLAGS="$CFLAGS"',
             '-DCMAKE_CXX_FLAGS="$CPPFLAGS"',
