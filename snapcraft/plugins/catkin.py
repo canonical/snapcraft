@@ -27,12 +27,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
       List of catkin packages to build.
 """
 
-import lxml.etree
 import os
 import tempfile
 import logging
 import shutil
 import re
+import subprocess
 
 import snapcraft
 from snapcraft import repo
@@ -53,7 +53,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['rosversion'] = {
+        schema['properties']['rosdistro'] = {
             'type': 'string',
             'default': 'indigo'
         }
@@ -73,15 +73,33 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def __init__(self, name, options):
         super().__init__(name, options)
+
         self.packages = set(options.catkin_packages)
-        self.dependencies = ['ros-core']
         self.package_deps_found = False
         self.package_local_deps = {}
         self._deb_packages = []
+        self.dependencies = []
 
-    def pull(self):
-        super().pull()
-        self._setup_deb_packages()
+        source_subdir = self.options.source_subdir
+        if not source_subdir:
+            source_subdir = 'src'
+
+        self._ros_package_path = os.path.join(self.sourcedir, source_subdir)
+
+        # Ensure the `source` key is set to the root of a Catkin workspace,
+        # where the Catkin source space can be remapped via the source-subdir
+        # key. We're this strict because `source` CANNOT be set to the Catkin
+        # source space (likewise source_subdir cannot be set to the root of a
+        # Catkin workspace), as it will result in a circular symlink upon
+        # pull() which will break rosdep.
+        if os.path.abspath(self.sourcedir) == os.path.abspath(
+                self._ros_package_path):
+            raise RuntimeError(
+                'source-subdir cannot be the root of the Catkin workspace')
+
+        self._rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
+                               os.path.join(self.partdir, 'rosdep'),
+                               self.PLUGIN_STAGE_SOURCES)
 
     def env(self, root):
         return [
@@ -103,18 +121,30 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                              self.gcc_version)),
             'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{0}/opt/ros/{1}/lib'.format(
                 root,
-                self.options.rosversion),
+                self.options.rosdistro),
             'ROS_MASTER_URI=http://localhost:11311',
 
             # Various ROS tools (e.g. rospack) keep a cache, and they determine
             # where the cache goes using $ROS_HOME.
             'ROS_HOME=$SNAP_APP_USER_DATA_PATH/.ros',
             '_CATKIN_SETUP_DIR={}'.format(os.path.join(
-                root, 'opt', 'ros', self.options.rosversion)),
+                root, 'opt', 'ros', self.options.rosdistro)),
             'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
                 os.path.join(
-                    root, 'opt', 'ros', self.options.rosversion, 'setup.sh'))
+                    root, 'opt', 'ros', self.options.rosdistro, 'setup.sh'))
         ]
+
+    def pull(self):
+        super().pull()
+
+        # Make sure the package path exists before continuing
+        if not os.path.exists(self._ros_package_path):
+            raise FileNotFoundError(
+                'Unable to find package path: "{}"'.format(
+                    self._ros_package_path))
+
+        self._rosdep.setup()
+        self._setup_deb_packages()
 
     @property
     def python_version(self):
@@ -127,79 +157,61 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     @property
     def rosdir(self):
         return os.path.join(self.installdir,
-                            'opt', 'ros', self.options.rosversion)
+                            'opt', 'ros', self.options.rosdistro)
 
-    def _deps_from_packagesxml(self, f, pkg):
-        tree = lxml.etree.parse(f)
-
-        for deptype in ('buildtool_depend', 'build_depend', 'run_depend'):
-            for xmldep in tree.xpath('/package/' + deptype):
-                dep = xmldep.text
-
-                self.dependencies.append(dep)
-
-                # Make sure we're not providing the dep ourselves
-                if dep in self.packages:
-                    self.package_local_deps[pkg].add(dep)
-                    continue
-
-                # If we're already getting this through a deb package,
-                # we don't need it
-                if (dep in self._deb_packages or
-                        dep.replace('_', '-') in self._deb_packages):
-                    continue
-
-                # Get the ROS package for it
-                self._deb_packages.append(
-                    'ros-'+self.options.rosversion+'-'+dep.replace('_', '-'))
-
-                if dep == 'roscpp':
-                    self._deb_packages.append('g++')
-
-    def _find_package_deps(self):
+    def _find_dependencies(self):
         if self.package_deps_found:
             return
 
-        source_subdir = getattr(self.options, 'source_subdir', None)
-        if source_subdir:
-            sourcedir = os.path.join(self.sourcedir, source_subdir)
-        else:
-            sourcedir = self.sourcedir
-
-        # catkin expects packages to be in 'src' but most repos
-        # keep there catkin-packages in plain sight without a
-        # 'src' directory as the top level.
-        if os.path.exists(os.path.join(sourcedir, 'src')):
-            basedir = os.path.join(sourcedir, 'src')
-        else:
-            basedir = sourcedir
-
-        # Look for a package definition and pull deps if there are any
-        for pkg in self.packages:
-            if pkg not in self.package_local_deps:
-                self.package_local_deps[pkg] = set()
-
-            filename = os.path.join(basedir, pkg, 'package.xml')
-            try:
-                with open(filename, 'r') as f:
-                    self._deps_from_packagesxml(f, pkg)
-            except IOError as e:
-                if e.errno is os.errno.ENOENT:
-                    raise FileNotFoundError(
-                        'unable to find "package.xml" for "{}"'.format(pkg))
-                else:
-                    raise e
+        for package in self.packages:
+            self._find_package_dependencies(package)
 
         self.package_deps_found = True
 
-    def _setup_deb_packages(self):
-        self._find_package_deps()
+    def _find_package_dependencies(self, package):
+        if package not in self.package_local_deps:
+            self.package_local_deps[package] = set()
 
-        ubuntudir = os.path.join(self.partdir, 'ubuntu')
-        os.makedirs(ubuntudir, exist_ok=True)
+        # Query rosdep for the list of dependencies for this package
+        dependencies = self._rosdep.get_dependencies(package)
+
+        for dependency in dependencies:
+            if dependency in self.packages:
+                self.package_local_deps[package].add(dependency)
+            else:
+                self._resolve_system_dependency(dependency)
+
+    def _resolve_system_dependency(self, dependency):
+        system_dependency = self._rosdep.resolve_dependency(
+            dependency)
+
+        if not system_dependency:
+            raise RuntimeError(
+                'Package "{}" isn\'t a valid system dependency. '
+                'Did you forget to add it to catkin-packages? If '
+                'not, add the Ubuntu package containing it to '
+                'stage-packages until you can get it into the '
+                'rosdep database.'.format(dependency))
+
+        self._deb_packages.append(system_dependency)
+
+        # TODO: Not sure why this isn't pulled in by roscpp. Can it
+        # be compiled by clang, etc.? If so, perhaps this should be
+        # left up to the developer.
+        if dependency == 'roscpp':
+            self._deb_packages.append('g++')
+
+    def _setup_deb_packages(self):
+        self._find_dependencies()
+
         if self._deb_packages:
+            logger.info('Preparing to fetch package dependencies...')
+            ubuntudir = os.path.join(self.partdir, 'ubuntu')
+            os.makedirs(ubuntudir, exist_ok=True)
             ubuntu = repo.Ubuntu(ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
+            logger.info('Fetching package dependencies...')
             ubuntu.get(self._deb_packages)
+            logger.info('Installing package dependencies...')
             ubuntu.unpack(self.installdir)
 
     def _rosrun(self, commandlist, cwd=None):
@@ -240,12 +252,11 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             '{}', ';'
         ])
 
-        self._find_package_deps()
+        self._find_dependencies()
         self._build_packages_deps()
 
         # Fix the shebang in _setup_util.py to be portable
-        with open('{}/opt/ros/{}/_setup_util.py'.format(
-                  self.installdir, self.options.rosversion), 'r+') as f:
+        with open(os.path.join(self.rosdir, '_setup_util.py'), 'r+') as f:
             pattern = re.compile(r'#!.*python')
             replaced = pattern.sub(r'#!/usr/bin/env python', f.read())
             f.seek(0)
@@ -273,6 +284,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             raise RuntimeError('some packages failed to build')
 
     def _handle_package(self, pkg):
+        logger.info('Installing Catkin package: {}...'.format(pkg))
+
         catkincmd = ['catkin_make_isolated']
 
         # Install the package
@@ -312,3 +325,108 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         ])
 
         self._rosrun(catkincmd)
+
+
+class _Rosdep:
+    def __init__(self, ros_distro, ros_package_path, rosdep_path,
+                 ubuntu_sources):
+        self._ros_distro = ros_distro
+        self._ros_package_path = ros_package_path
+        self._ubuntu_sources = ubuntu_sources
+        self._rosdep_path = rosdep_path
+        self._rosdep_install_path = os.path.join(self._rosdep_path, 'install')
+        self._rosdep_sources_path = os.path.join(self._rosdep_path,
+                                                 'sources.list.d')
+        self._rosdep_cache_path = os.path.join(self._rosdep_path, 'cache')
+
+    def setup(self):
+        os.makedirs(self._rosdep_install_path, exist_ok=True)
+        os.makedirs(self._rosdep_sources_path, exist_ok=True)
+        os.makedirs(self._rosdep_cache_path, exist_ok=True)
+
+        logger.info('Preparing to fetch rosdep...')
+
+        # Prepare to download Ubuntu .deb packages from the ROS repositories.
+        # We need to do this here because the package dependencies are not
+        # necessarily known at pull-time-- we need to interrogate the Catkin
+        # packages first. Then we pull them down ourselves.
+        ubuntu = repo.Ubuntu(self._rosdep_path, sources=self._ubuntu_sources)
+
+        # rosdep is used for analyzing the dependencies specified within each
+        # project's package.xml. But it introduces a complication, in that it's
+        # not a dependency of the project, and we don't want to bloat the .snap
+        # more than necessary. So we'll unpack it somewhere else, and use it
+        # from there.
+        logger.info('Fetching rosdep...')
+        ubuntu.get(['python-rosdep'])
+        ubuntu.unpack(self._rosdep_install_path)
+
+        logger.info('Initializing rosdep database...')
+        try:
+            self._run(['init'])
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                'Error initializing rosdep database: {}'.format(e.output))
+
+        logger.info('Updating rosdep database...')
+        try:
+            self._run(['update'])
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                'Error updating rosdep database: {}'.format(e.output))
+
+    def get_dependencies(self, package_name):
+        try:
+            output = self._run(['keys', package_name]).strip()
+            if output:
+                return output.split('\n')
+            else:
+                return []
+        except subprocess.CalledProcessError:
+            raise FileNotFoundError(
+                'Unable to find Catkin package "{}"'.format(package_name))
+
+    def resolve_dependency(self, dependency_name):
+        try:
+            output = self._run(['resolve', dependency_name, '--rosdistro',
+                                self._ros_distro])
+        except subprocess.CalledProcessError:
+            return None
+
+        # `rosdep resolve` returns output like:
+        # #apt
+        # ros-indigo-package
+        #
+        # We're obviously only interested in the second line.
+        resolved = output.split('\n')
+
+        if len(resolved) < 2:
+            raise RuntimeError(
+                'Unexpected rosdep resolve output:\n{}'.format(output))
+
+        return resolved[1]
+
+    def _run(self, arguments):
+        env = os.environ.copy()
+
+        # We want to make sure we use our own rosdep (which is python)
+        env['PATH'] = os.path.join(self._rosdep_install_path, 'usr', 'bin')
+        env['PYTHONPATH'] = os.path.join(self._rosdep_install_path, 'usr',
+                                         'lib', 'python2.7', 'dist-packages')
+
+        # By default, rosdep uses /etc/ros/rosdep to hold its sources list. We
+        # don't want that here since we don't want to touch the host machine
+        # (not to mention it would require sudo), so we can redirect it via
+        # this environment variable
+        env['ROSDEP_SOURCE_PATH'] = self._rosdep_sources_path
+
+        # By default, rosdep saves its cache in $HOME/.ros, which we shouldn't
+        # access here, so we'll redirect it with this environment variable.
+        env['ROS_HOME'] = self._rosdep_cache_path
+
+        # This environment variable tells rosdep which directory to recursively
+        # search for packages.
+        env['ROS_PACKAGE_PATH'] = self._ros_package_path
+
+        return subprocess.check_output(['rosdep'] + arguments,
+                                       env=env).decode('utf8').strip()
