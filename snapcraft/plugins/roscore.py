@@ -73,6 +73,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             os.path.join('bin', self.name + '-rosmaster-service'),
             os.path.join(rospath, 'bin', '*'),
             os.path.join(rospath, 'lib', '*'),
+            '-' + os.path.join('usr', 'bin', 'xml2-config'),
             '-' + os.path.join(rospath, 'share', '*', 'cmake', '*'),
             '-' + os.path.join(rospath, 'include'),
             '-' + os.path.join(rospath, '.catkin'),
