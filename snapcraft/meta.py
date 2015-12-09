@@ -178,7 +178,8 @@ def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
 
     snap_dir = common.get_snapdir()
     assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
-    replace_path = r'{}/.*/install'.format(common.get_partsdir())
+    replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
+        common.get_partsdir())
     assembled_env = re.sub(replace_path, '$SNAP_APP_PATH', assembled_env)
     executable = '"{}"'.format(wrapexec)
     if shebang is not None:
