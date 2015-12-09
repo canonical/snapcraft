@@ -344,7 +344,12 @@ class Create(tests.TestCase):
 # TODO this needs more tests.
 class WrapExeTestCase(tests.TestCase):
 
-    def test_wrap_exe_must_write_wrapper(self):
+    @patch('snapcraft.common.assemble_env')
+    def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
+        mock_assemble_env.return_value = """\
+PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
+""".format(common.get_partsdir())
+
         snapdir = common.get_snapdir()
         os.mkdir(snapdir)
 
@@ -356,6 +361,7 @@ class WrapExeTestCase(tests.TestCase):
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
+                    'PATH=$SNAP_APP_PATH/usr/bin:$SNAP_APP_PATH/bin\n'
                     '\n\n'
                     'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
