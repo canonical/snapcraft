@@ -44,6 +44,23 @@ def _local_plugindir():
 
 
 def execute(step, part_names=None):
+    """Exectute until step in the lifecycle.
+
+    Lifecycle execution will happen for each step iterating over all
+    the available parts, if part_names is specified, only those parts
+    will run.
+
+    If one of the parts to execute has an after keyword, execution is
+    forced until the stage step for such part. If part_names was provided
+    and after is not in this set, an exception will be raised.
+
+    :param str step: A valid step in the lifecycle: pull, build, strip or snap.
+    :raises RuntimeError: If a prerequesite of the part needs to be staged
+                          and such part is not in the list of parts to iterate
+                          over.
+    :returns: A dict with the snap name, version and architectures.
+    """
+
     # TODO: add a docstring once strip is implemented.
     config = snapcraft.yaml.load_config()
     repo.install_build_packages(config.build_tools)
@@ -79,6 +96,10 @@ def execute(step, part_names=None):
 
         if step == 'strip' and part_names == config.part_names:
             meta.create(config.data)
+
+    return {'name': config.data['name'],
+            'version': config.data['version'],
+            'arch': config.data['architectures']}
 
 
 class PluginError(Exception):
