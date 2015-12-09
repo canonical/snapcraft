@@ -12,8 +12,6 @@ contain.
    The name of the resulting snap.
  * `version` (string)  
    The version of the resulting snap.
- * `vendor` (string)  
-   Vendor in email format as defined in RFC 5322.
  * `summary` (string)  
    A 78 character long summary for the snap.
  * `description` (string)  
