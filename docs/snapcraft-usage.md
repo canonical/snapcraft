@@ -37,7 +37,7 @@ x86-64 bit system it would look a lot like this:
 
 	Name          Date       Version      Developer
 	ubuntu-core   2015-09-17 5            ubuntu
-	downloader    2015-10-01 ICIEPfXHQOaC sideload  
+	downloader    2015-10-01 ICIEPfXHQOaC sideload
 	generic-amd64 2015-10-01 1.4          canonical
 
 Take notice of the sideload word in the downloader snap, this indicates that
