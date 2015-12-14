@@ -22,13 +22,14 @@ import unittest.mock
 
 import fixtures
 
-import snapcraft.common
 import snapcraft.yaml
-from snapcraft import dirs
-from snapcraft.tests import TestCase
+from snapcraft import (
+    dirs,
+    tests,
+)
 
 
-class TestYaml(TestCase):
+class TestYaml(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -118,7 +119,7 @@ parts:
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
 
-    @unittest.mock.patch('snapcraft.lifecycle.load_plugin')
+    @unittest.mock.patch('snapcraft.pluginhandler.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
     def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test
@@ -345,7 +346,7 @@ parts:
         })
 
 
-class TestValidation(TestCase):
+class TestValidation(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -542,7 +543,7 @@ class TestValidation(TestCase):
                          msg=self.data)
 
 
-class TestFilesets(TestCase):
+class TestFilesets(tests.TestCase):
 
     def setUp(self):
         super().setUp()

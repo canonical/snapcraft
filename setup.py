@@ -22,11 +22,12 @@ from setuptools import setup
 
 setup(
     name='snapcraft',
-    version='0.5',
+    version='2.0',
     description='Easily craft snaps from multiple sources',
     author_email='snappy-devel@lists.ubuntu.com',
     url='https://github.com/ubuntu-core/snapcraft',
     packages=['snapcraft',
+              'snapcraft.commands',
               'snapcraft.plugins'],
     package_data={'snapcraft': ['manifest.txt']},
     scripts=['bin/snapcraft'],
@@ -45,7 +46,7 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Build Tools',
         'Topic :: System :: Software Distribution',
     ),
