@@ -1,5 +1,4 @@
-Tests: runtests
-       runexamples
+Tests: integrationtests examplestests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          build-essential,
