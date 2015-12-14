@@ -26,7 +26,7 @@ import yaml
 
 from snapcraft import (
     common,
-    lifecycle,
+    pluginhandler,
     wiki,
 )
 
@@ -191,7 +191,7 @@ class Config:
                     '\'snapcraft.yaml\''.format(part_name))
 
     def load_plugin(self, part_name, plugin_name, properties):
-        part = lifecycle.load_plugin(
+        part = pluginhandler.load_plugin(
             part_name, plugin_name, properties)
 
         self.build_tools += part.code.build_packages
@@ -371,6 +371,6 @@ def load_config():
         logger.error('Issue detected while analyzing '
                      'snapcraft.yaml: {}'.format(e.message))
         sys.exit(1)
-    except lifecycle.PluginError as e:
+    except pluginhandler.PluginError as e:
         logger.error('Issue while loading plugin: {}'.format(e))
         sys.exit(1)

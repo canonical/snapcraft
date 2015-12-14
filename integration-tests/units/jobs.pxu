@@ -20,21 +20,11 @@ command:
     echo $OUTPUT | grep "Could not find snapcraft\.yaml\."
 flags: simple has-leftovers
 
-id: snapcraft/normal/assemble-meta-externally
-command:
-    set -ex
-    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    # Test that as long as we have meta/ from *somewhere*, assemble doesn't
-    # care where (and you don't need snappy-metadata to find it)
-    touch copy-meta # instructs Makefile to copy snappy/ itself
-    ${SNAPCRAFT} assemble
-flags: simple has-leftovers
-
 id: snapcraft/normal/assemble-meta
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    ${SNAPCRAFT} assemble
+    ${SNAPCRAFT} snap
     test -e "assemble_1.0_$(dpkg-architecture -qDEB_BUILD_ARCH).snap"
     sed -i "s/@MULTIARCH@/$(dpkg-architecture -qDEB_BUILD_MULTIARCH)/g" binary1.after
     diff -u binary1.after snap/binary1.wrapper
@@ -51,18 +41,11 @@ command:
     fi
 flags: simple has-leftovers
 
-id: snapcraft/normal/complete-part-with-wiki
-command:
-    set -ex
-    cp -rT $PLAINBOX_PROVIDER_DATA/wiki .
-    ${SNAPCRAFT} pull
-flags: simple has-leftovers
-
 id: snapcraft/normal/assemble-meta-with-policy
 command:
     set -ex
     cp -rT $PLAINBOX_PROVIDER_DATA/framework-policy .
-    ${SNAPCRAFT} assemble
+    ${SNAPCRAFT} snap
     test -e ./snap/meta/framework-policy/a
     test -e ./snap/meta/framework-policy/b
     test -e ./snap/one
@@ -75,18 +58,8 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
     echo "build-packages:" >> snapcraft.yaml
     echo "  - inexistent-package" >> snapcraft.yaml
-    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
-    echo $OUTPUT | grep "Could not find all the .*build-packages.* required in snapcraft\.yaml"
-flags: simple has-leftovers
-
-id: snapcraft/normal/assemble-no-plugin
-command:
-    set -x
-    cp -rT $PLAINBOX_PROVIDER_DATA/assemble .
-    sed -e '/ *plugin: make$/d' -i snapcraft.yaml
-    OUTPUT=$(${SNAPCRAFT} assemble 2>&1)
-    test $? = 1 || exit 1
-    echo $OUTPUT | grep -q 'Issues while validating snapcraft.yaml: the "plugin" keyword is missing for the "make-project" part.'
+    OUTPUT=$(${SNAPCRAFT} snap 2>&1)
+    echo "$OUTPUT" | grep 'Could not find all the "build-packages" required in snapcraft.yaml'
 flags: simple has-leftovers
 
 id: snapcraft/normal/local-source
@@ -116,17 +89,6 @@ command:
     test "$(ls -A snap)" == "meta"
 flags: simple has-leftovers
 
-id: snapcraft/normal/nil-plugin-pkgfilter
-command:
-    set -ex
-    cp -rT $PLAINBOX_PROVIDER_DATA/nil-plugin-pkgfilter .
-    ${SNAPCRAFT} stage
-    test -e stage/usr/bin/nmcli
-    ${SNAPCRAFT} snap
-    test -e snap/usr/bin/nmcli
-    test ! -e snap/usr/bin/nmtui
-flags: simple has-leftovers
-
 id: snapcraft/normal/simple-tar
 command:
     set -ex
@@ -146,20 +108,7 @@ command:
     test -e stage/readonly_file
     test "$(./stage/bin/test)" = "tarproject"
     # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1500728
-    ${SNAPCRAFT} pull --force
-flags: simple has-leftovers
-
-id: snapcraft/normal/pypi-config
-command:
-    set -ex
-    cp -rT $PLAINBOX_PROVIDER_DATA/pypi-config .
-    ${SNAPCRAFT} snap
-    test -f ./stage/usr/bin/config.py
-    test -f ./stage/usr/bin/python3
-    test -f ./snap/usr/bin/config.py
-    test -f ./snap/usr/bin/python3
-    test -f ./snap/meta/hooks/config
-    grep -q 'exec "$SNAP_APP_PATH/usr/bin/python3" "$SNAP_APP_PATH/usr/bin/config.py" $*' ./snap/meta/hooks/config
+    ${SNAPCRAFT} pull
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-make
@@ -251,7 +200,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/conflicts .
     OUTPUT=$(${SNAPCRAFT} stage 2>&1)
     test $? = 1 || exit 1
-    echo $OUTPUT | grep "Error: parts p1 and p2 have the following file paths in common which have different contents: bin/test" # squished output by bash
+    echo $OUTPUT | grep "Parts 'p1' and 'p2' have the following file paths in common which have different contents: bin/test"
 flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies
@@ -260,9 +209,6 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/dependencies .
     ${SNAPCRAFT} stage
     test -x stage/bin/p3
-    test "$(${SNAPCRAFT} shell p3)" = 'p1
-    p1
-    p2'
 flags: simple has-leftovers
 
 id: snapcraft/normal/dependencies-circular
@@ -411,6 +357,51 @@ command:
     test -e parts/mercurial/src/second
 flags: simple has-leftovers
 
+id: snapcraft/normal/circle-tree
+command:
+    set -ex
+    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/tree .
+    ${SNAPCRAFT} pull
+flags: simple has-leftovers
+
+id: snapcraft/normal/circle-dependencies
+command:
+    set -ex
+    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/circle .
+    ! ${SNAPCRAFT} pull
+flags: simple has-leftovers
+
+id: snapcraft/normal/complete-part-with-wiki
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/wiki .
+    ${SNAPCRAFT} pull
+flags: simple has-leftovers
+
+id: snapcraft/normal/nil-plugin-pkgfilter
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/nil-plugin-pkgfilter .
+    ${SNAPCRAFT} stage
+    test -e stage/usr/bin/nmcli
+    ${SNAPCRAFT} snap
+    test -e snap/usr/bin/nmcli
+    test ! -e snap/usr/bin/nmtui
+flags: simple has-leftovers
+
+id: snapcraft/normal/pypi-config
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/pypi-config .
+    ${SNAPCRAFT} snap
+    test -f ./stage/usr/bin/config.py
+    test -f ./stage/usr/bin/python3
+    test -f ./snap/usr/bin/config.py
+    test -f ./snap/usr/bin/python3
+    test -f ./snap/meta/hooks/config
+    grep -q 'exec "$SNAP_APP_PATH/usr/bin/python3" "$SNAP_APP_PATH/usr/bin/config.py" $*' ./snap/meta/hooks/config
+flags: simple has-leftovers
+
 id: snapcraft/normal/pip-requirements-file
 command:
     set -ex
@@ -429,28 +420,4 @@ command:
     test -d parts/python2/install/usr/lib/python2.7/dist-packages/jsonschema
     test -f parts/python3/install/usr/lib/python3*/argparse.py
     test -d parts/python3/install/usr/lib/python3/dist-packages/jsonschema
-flags: simple has-leftovers
-
-id: snapcraft/normal/build-tool-paths
-command:
-    set -ex
-    cp -rT $PLAINBOX_PROVIDER_DATA/build-tools .
-    ${SNAPCRAFT} stage
-    ${SNAPCRAFT} shell pkg-config --cflags glib-2.0 | grep -q `pwd`
-    ${SNAPCRAFT} shell xml2-config --cflags | grep -q `pwd`
-    ${SNAPCRAFT} shell xslt-config --cflags | grep -q `pwd`
-flags: simple has-leftovers
-
-id: snapcraft/normal/circle-tree
-command:
-    set -ex
-    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/tree .
-    ${SNAPCRAFT} pull
-flags: simple has-leftovers
-
-id: snapcraft/normal/circle-dependencies
-command:
-    set -ex
-    cp -rTL $PLAINBOX_PROVIDER_DATA/simple-circle/circle .
-    ! ${SNAPCRAFT} pull
 flags: simple has-leftovers
