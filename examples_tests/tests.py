@@ -196,7 +196,7 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
         snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
         snapcraft = os.path.join(os.getcwd(), 'bin', snapcraft_bin)
         subprocess.check_call([snapcraft, 'clean'], cwd=project_dir)
-        subprocess.check_call(snapcraft, cwd=project_dir)
+        subprocess.check_call([snapcraft, 'snap'], cwd=project_dir)
 
     def copy_snap_to_testbed(self, snap_local_path):
         _copy_file_through_ssh(
