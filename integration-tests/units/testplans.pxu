@@ -1,4 +1,0 @@
-unit: test plan
-id: normal
-_name: Tests for Snapcraft
-include: snapcraft/normal/.*
