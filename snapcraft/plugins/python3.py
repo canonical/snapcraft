@@ -97,10 +97,13 @@ class Python3Plugin(snapcraft.BasePlugin):
         site_packages_dir = os.path.join(
             prefix, 'lib', self.python_version, 'site-packages')
 
+        # If site-packages doesn't exist, make sure it points to the
+        # python3 dist-packages (this is a relative link so that it's still
+        # valid when the .snap is installed). Note that all python3 versions
+        # share the same dist-packages (e.g. in python3, not python3.4).
         if not os.path.exists(site_packages_dir):
-            os.symlink(
-                os.path.join(prefix, 'lib', 'python3', 'dist-packages'),
-                site_packages_dir)
+            os.symlink(os.path.join('..', 'python3', 'dist-packages'),
+                       site_packages_dir)
 
         self.run(['python3', easy_install, '--prefix', prefix, 'pip'])
 
