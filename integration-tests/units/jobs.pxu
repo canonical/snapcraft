@@ -168,6 +168,7 @@ command:
     cp -rT $PLAINBOX_PROVIDER_DATA/simple-make .
     ${SNAPCRAFT} stage
     test "$(./stage/bin/test)" = "Hello world"
+    ./stage/bin/test
 flags: simple has-leftovers
 
 id: snapcraft/normal/simple-maven
