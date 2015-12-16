@@ -97,11 +97,11 @@ class Python2Plugin(snapcraft.BasePlugin):
         site_packages_dir = os.path.join(
             prefix, 'lib', self.python_version, 'site-packages')
 
+        # If site-packages doesn't exist, make sure it points to the
+        # dist-packages in the same directory (this is a relative link so that
+        # it's still valid when the .snap is installed).
         if not os.path.exists(site_packages_dir):
-            os.symlink(
-                os.path.join(prefix, 'lib', self.python_version,
-                             'dist-packages'),
-                site_packages_dir)
+            os.symlink('dist-packages', site_packages_dir)
 
         self.run(['python2', easy_install, '--prefix', prefix, 'pip'])
 
