@@ -18,8 +18,8 @@ contain.
    The description for the snap, this can and is expected to be a longer
    explanation for the snap.
  * `config` (string)  
-   Path to the runnable in snap that will be used as the Snappy config
-   interface.
+   Path to the runnable in snap that will be used as the [Snappy config
+   interface](https://developer.ubuntu.com/snappy/guides/config-command/).
  * `services` (yaml subsection)  
    A set of keys representing service names with values as defined by the
    [Snappy packaging spec](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
