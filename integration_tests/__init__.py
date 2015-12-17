@@ -55,3 +55,13 @@ class TestCase(testtools.TestCase):
         shutil.copytree(
             os.path.join(self.snaps_dir, project_dir), tmp_project_dir)
         return tmp_project_dir
+
+    def get_output_ignoring_non_zero_exit(self, binary, cwd):
+        # Executing the binaries exists > 0 on trusty.
+        # TODO investigate more to understand the cause.
+        try:
+            output = subprocess.check_output(
+                binary, universal_newlines=True, cwd=cwd)
+        except subprocess.CalledProcessError as exception:
+            output = exception.output
+        return output
