@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 import integration_tests
 
@@ -26,7 +25,6 @@ class SconsPluginTestCase(integration_tests.TestCase):
         project_dir = 'simple-scons'
         self.run_snapcraft('stage', project_dir)
 
-        binary_output = subprocess.check_output(
-            os.path.join('stage', 'opt', 'bin', 'main'),
-            cwd=project_dir, universal_newlines=True)
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'opt', 'bin', 'main'), cwd=project_dir)
         self.assertEqual('Hello world\n', binary_output)
