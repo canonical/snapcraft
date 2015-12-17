@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 from testtools.matchers import (
     DirExists,
@@ -31,9 +30,9 @@ class MakePluginTestCase(integration_tests.TestCase):
         project_dir = 'simple-make'
         self.run_snapcraft('stage', project_dir)
 
-        binary_output = subprocess.check_output(
+        binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join('stage', 'bin', 'test'),
-            universal_newlines=True, cwd=project_dir)
+            cwd=project_dir)
         self.assertEqual('Hello world\n', binary_output)
 
     def test_clean_make_plugin(self):

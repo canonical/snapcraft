@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 import integration_tests
 
@@ -26,7 +25,6 @@ class CmakePluginTestCase(integration_tests.TestCase):
         project_dir = 'simple-cmake'
         self.run_snapcraft('stage', project_dir)
 
-        binary_output = subprocess.check_output(
-            os.path.join('stage', 'bin', 'simple-cmake'),
-            universal_newlines=True, cwd=project_dir)
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'simple-cmake'), cwd=project_dir)
         self.assertEqual("It's a CMake world\n", binary_output)

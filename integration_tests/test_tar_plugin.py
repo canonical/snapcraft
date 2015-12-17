@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 from testtools.matchers import (
     DirExists,
@@ -56,9 +55,8 @@ class TarPluginTestCase(integration_tests.TestCase):
                 os.path.join(project_dir, 'stage', expected_dir),
                 DirExists())
 
-        binary_output = subprocess.check_output(
-            os.path.join('stage', 'bin', 'test'),
-            cwd=project_dir, universal_newlines=True)
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'test'), cwd=project_dir)
         self.assertEqual('tarproject\n', binary_output)
 
         # Regression test for
