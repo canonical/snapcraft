@@ -3,7 +3,6 @@ Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          build-essential,
          python3-pep8,
-         plainbox,
          pyflakes,
          python3-fixtures,
          python3-mccabe,
