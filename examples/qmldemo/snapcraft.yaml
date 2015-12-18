@@ -1,6 +1,5 @@
 name: qmldemo
 version: 1
-vendor: Ted Gould <ted@canonical.com>
 frameworks:
   - mir
 binaries:

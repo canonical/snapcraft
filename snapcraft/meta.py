@@ -20,6 +20,7 @@ import re
 import shlex
 import shutil
 import tempfile
+
 import yaml
 
 from snapcraft import common
@@ -30,17 +31,16 @@ logger = logging.getLogger(__name__)
 _MANDATORY_PACKAGE_KEYS = [
     'name',
     'version',
-    'vendor',
-    'icon',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
     'frameworks',
     'type',
+    'icon',
 ]
 
 
-def create(config_data, arches=None):
+def create(config_data):
     '''
     Create  the meta directory and provision it with package.yaml and readme.md
     in the snap dir using information from config_data and arches.
@@ -48,17 +48,17 @@ def create(config_data, arches=None):
 
     Returns meta_dir.
     '''
-    # TODO keys for using apparmor, setting an icon missing.
 
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
-    config_data['icon'] = _copy(meta_dir, config_data['icon'])
+    if 'icon' in config_data:
+        config_data['icon'] = _copy(meta_dir, config_data['icon'])
 
     if 'framework-policy' in config_data:
         _copy(meta_dir, config_data['framework-policy'], 'framework-policy')
 
-    _write_package_yaml(meta_dir, config_data, arches)
+    _write_package_yaml(meta_dir, config_data, config_data['architectures'])
     _write_readme_md(meta_dir, config_data)
 
     if 'config' in config_data:

@@ -1,6 +1,5 @@
 name: webcam-webui
 version: 1
-vendor: Vendor <email@example.com>
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
 icon: icon.png

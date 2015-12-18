@@ -22,13 +22,14 @@ import unittest.mock
 
 import fixtures
 
-import snapcraft.common
 import snapcraft.yaml
-from snapcraft import dirs
-from snapcraft.tests import TestCase
+from snapcraft import (
+    dirs,
+    tests,
+)
 
 
-class TestYaml(TestCase):
+class TestYaml(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -51,7 +52,6 @@ class TestYaml(TestCase):
     def test_config_loads_plugins(self, mock_get_part, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -75,7 +75,6 @@ parts:
             self, mock_get_part, mock_loadPlugin):
         content = """name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: ñoño test
 icon: my-icon.png
@@ -102,7 +101,6 @@ parts:
     def test_config_loads_part_from_wiki(self, mock_compose, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -121,12 +119,11 @@ parts:
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
 
-    @unittest.mock.patch('snapcraft.lifecycle.load_plugin')
+    @unittest.mock.patch('snapcraft.pluginhandler.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
     def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -180,7 +177,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -209,7 +205,6 @@ parts:
 
         self.make_snapcraft_yaml("""
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: nothing
 icon: my-icon.png
@@ -232,7 +227,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: 1
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: nothing
 icon: my-icon.png
@@ -255,7 +249,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: myapp@me_1.0
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: nothing
 icon: my-icon.png
@@ -273,35 +266,12 @@ parts:
             '\'myapp@me_1.0\' does not match \'^[a-z0-9][a-z0-9+-]*$\'')
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    def test_deprecation_for_type(self, mock_loadPlugin):
-        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: myapp
-version: "1"
-vendor: me <me@me.com>
-summary: test
-description: nothing
-icon: my-icon.png
-
-parts:
-  part1:
-    type: go
-    stage-packages: [fswebcam]
-""")
-        config = snapcraft.yaml.Config()
-        self.assertEqual(fake_logger.output,
-                         'DEPRECATED: Use "plugin" instead of "type"\n')
-        self.assertFalse('type' in config.data)
-
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 icon: my-icon.png
 
@@ -324,8 +294,7 @@ parts:
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-\tvendor: me <me@me.com>
-summary: test
+\tsummary: test
 icon: my-icon.png
 
 parts:
@@ -346,7 +315,6 @@ parts:
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
@@ -378,7 +346,7 @@ parts:
         })
 
 
-class TestValidation(TestCase):
+class TestValidation(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -392,10 +360,8 @@ class TestValidation(TestCase):
         self.data = {
             'name': 'my-package-1',
             'version': '1.0-snapcraft1~ppa1',
-            'vendor': 'Me <me@me.com>',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
-            'icon': 'my-icon.png',
             'parts': {
                 'part1': {
                     'plugin': 'project',
@@ -560,15 +526,10 @@ class TestValidation(TestCase):
                             'installation path')
         self.assertEqual(raised.exception.message, expected_message)
 
-    def test_icon_missing(self):
+    def test_icon_missing_is_valid_yaml(self):
         self.mock_path_exists.return_value = False
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
-
-        expected_message = '\'my-icon.png\' is not a \'icon-path\''
-        self.assertEqual(raised.exception.message, expected_message,
-                         msg=self.data)
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
     def test_invalid_part_name_plugin_raises_exception(self):
         self.data['parts']['plugins'] = {'type': 'go'}
@@ -582,7 +543,7 @@ class TestValidation(TestCase):
                          msg=self.data)
 
 
-class TestFilesets(TestCase):
+class TestFilesets(tests.TestCase):
 
     def setUp(self):
         super().setUp()

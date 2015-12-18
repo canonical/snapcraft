@@ -24,7 +24,7 @@ import urllib
 
 
 SNAPCRAFT_FILES = ['snapcraft.yaml', 'parts', 'stage', 'snap']
-COMMAND_ORDER = ['pull', 'build', 'stage', 'snap']
+COMMAND_ORDER = ['pull', 'build', 'stage', 'strip']
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
@@ -115,3 +115,8 @@ def get_schemadir():
 
 def isurl(url):
     return urllib.parse.urlparse(url).scheme != ''
+
+
+def reset_env():
+    global env
+    env = []

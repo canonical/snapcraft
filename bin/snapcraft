@@ -23,11 +23,9 @@ topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
 if os.path.exists(os.path.join(topdir, 'setup.py')):
     sys.path = [topdir] + sys.path
 
-# now import
-import snapcraft.main
-import snapcraft.dirs
-
 
 if __name__ == '__main__':
+    import snapcraft.main
+    import snapcraft.dirs
     snapcraft.dirs.setup_dirs()
     snapcraft.main.main()

@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
 import glob
 import itertools
 import logging
@@ -26,10 +25,12 @@ import stat
 import subprocess
 import urllib
 import urllib.request
+import sys
 
+import apt
 from xml.etree import ElementTree
 
-import snapcraft.common
+from snapcraft import common
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,25 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
 deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
+
+
+def install_build_packages(packages):
+    new_packages = []
+    for pkg in packages:
+        try:
+            if not apt.Cache()[pkg].installed:
+                new_packages.append(pkg)
+        except KeyError:
+            logger.error('Could not find all the "build-packages" required '
+                         'in snapcraft.yaml')
+            sys.exit(1)
+    if new_packages:
+        logger.info(
+            'Installing build dependencies: %s', ' '.join(new_packages))
+        subprocess.check_call(['sudo', 'apt-get', '-o',
+                               'Dpkg::Progress-Fancy=1',
+                               '--no-install-recommends',
+                               '-y', 'install'] + new_packages)
 
 
 class PackageNotFoundError(Exception):
@@ -202,9 +222,8 @@ def _setup_apt_cache(rootdir, sources, local=False):
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
     if not local:
-        arch = snapcraft.common.get_arch()
         series = platform.linux_distribution()[2]
-        sources = _format_sources_list(sources, arch, series)
+        sources = _format_sources_list(sources, common.get_arch(), series)
 
     with open(srcfile, 'w') as f:
         f.write(sources)
@@ -261,13 +280,13 @@ def _fix_contents(debdir):
 def _fix_xml_tools(root):
     xml2_config_path = os.path.join(root, 'usr', 'bin', 'xml2-config')
     if os.path.isfile(xml2_config_path):
-        snapcraft.common.run(
+        common.run(
             ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
                 format(root), xml2_config_path])
 
     xslt_config_path = os.path.join(root, 'usr', 'bin', 'xslt-config')
     if os.path.isfile(xslt_config_path):
-        snapcraft.common.run(
+        common.run(
             ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
                 format(root), xslt_config_path])
 
@@ -285,7 +304,7 @@ _skip_list = None
 def _skip_link(target):
     global _skip_list
     if not _skip_list:
-        output = snapcraft.common.run_output(['dpkg', '-L', 'libc6']).split()
+        output = common.run_output(['dpkg', '-L', 'libc6']).split()
         _skip_list = [i for i in output if 'lib' in i]
 
     return target in _skip_list
