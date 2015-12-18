@@ -16,30 +16,22 @@
 
 import codecs
 import contextlib
-import jsonschema
 import logging
 import os
 import os.path
+import sys
+
+import jsonschema
 import yaml
 
-import snapcraft.lifecycle
-import snapcraft.wiki
-from snapcraft import common
+from snapcraft import (
+    common,
+    pluginhandler,
+    wiki,
+)
 
 
 logger = logging.getLogger(__name__)
-
-
-_DEPRECATION_LIST = [
-    'ant-project',
-    'autotools-project',
-    'cmake-project',
-    'go-project',
-    'make-project',
-    'maven-project',
-    'python2-project',
-    'python3-project',
-]
 
 
 @jsonschema.FormatChecker.cls_checks('file-path')
@@ -90,27 +82,29 @@ class PluginNotDefinedError(Exception):
 
 class Config:
 
+    @property
+    def part_names(self):
+        return self._part_names
+
     def __init__(self):
         self.build_tools = []
         self.all_parts = []
-        after_requests = {}
+        self._part_names = []
+        self.after_requests = {}
 
         self.data = _snapcraft_yaml_load()
         _validate_snapcraft_yaml(self.data)
 
         self.build_tools = self.data.get('build-packages', [])
 
-        self._wiki = snapcraft.wiki.Wiki()
+        self._wiki = wiki.Wiki()
 
         for part_name in self.data.get('parts', []):
+            self._part_names.append(part_name)
             properties = self.data['parts'][part_name] or {}
 
             plugin_name = properties.pop('plugin', None)
-            # TODO search the wiki
-            if not plugin_name and 'type' in properties:
-                plugin_name = properties.pop('type')
-                logger.warning('DEPRECATED: Use "plugin" instead of "type"')
-            elif not plugin_name:
+            if not plugin_name:
                 logger.info(
                     'Searching the wiki to compose part "{}"'.format(
                         part_name))
@@ -121,15 +115,8 @@ class Config:
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
 
-            if plugin_name in _DEPRECATION_LIST:
-                plugin_name = plugin_name.rsplit('-project')[0]
-                logger.warning(
-                    'DEPRECATED: plugin names ending in -project are '
-                    'deprecated. Using {0} instead of {0}-project'.format(
-                        plugin_name))
-
             if 'after' in properties:
-                after_requests[part_name] = properties.pop('after')
+                self.after_requests[part_name] = properties.pop('after')
 
             properties['stage'] = _expand_filesets_for('stage', properties)
             properties['snap'] = _expand_filesets_for('snap', properties)
@@ -139,14 +126,17 @@ class Config:
 
             self.load_plugin(part_name, plugin_name, properties)
 
-        self._compute_part_dependencies(after_requests)
+        self._compute_part_dependencies()
         self.all_parts = self._sort_parts()
 
-    def _compute_part_dependencies(self, after_requests):
+        if 'architectures' not in self.data:
+            self.data['architectures'] = [common.get_arch(), ]
+
+    def _compute_part_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''
 
         for part in self.all_parts:
-            dep_names = after_requests.get(part.name, [])
+            dep_names = self.after_requests.get(part.name, [])
             for dep in dep_names:
                 found = False
                 for i in range(len(self.all_parts)):
@@ -161,6 +151,7 @@ class Config:
                         plugin_name = wiki_part.pop('plugin')
                         part.deps.append(self.load_plugin(
                             dep, plugin_name, wiki_part))
+                        self._part_names.append(dep)
                 if not found:
                     raise SnapcraftLogicError(
                         'part name missing {}'.format(dep))
@@ -188,8 +179,19 @@ class Config:
 
         return sorted_parts
 
+    def part_prereqs(self, part_name):
+        """Returns a set with all of part_names' prerequisites."""
+        return set(self.after_requests.get(part_name, []))
+
+    def validate_parts(self, part_names):
+        for part_name in part_names:
+            if part_name not in self._part_names:
+                raise EnvironmentError(
+                    'The part named {!r} is not defined in '
+                    '\'snapcraft.yaml\''.format(part_name))
+
     def load_plugin(self, part_name, plugin_name, properties):
-        part = snapcraft.lifecycle.load_plugin(
+        part = pluginhandler.load_plugin(
             part_name, plugin_name, properties)
 
         self.build_tools += part.code.build_packages
@@ -209,7 +211,7 @@ class Config:
             '{0}/lib/{1}',
             '{0}/usr/lib/{1}',
             '$LD_LIBRARY_PATH'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         return env
 
     def build_env(self, root):
@@ -220,21 +222,21 @@ class Config:
             '-I{0}/include/{1}',
             '-I{0}/usr/include/{1}',
             '$CFLAGS'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         env.append('CPPFLAGS="' + ' '.join([
             '-I{0}/include',
             '-I{0}/usr/include',
             '-I{0}/include/{1}',
             '-I{0}/usr/include/{1}',
             '$CPPFLAGS'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         env.append('LDFLAGS="' + ' '.join([
             '-L{0}/lib',
             '-L{0}/usr/lib',
             '-L{0}/lib/{1}',
             '-L{0}/usr/lib/{1}',
             '$LDFLAGS'
-        ]).format(root, snapcraft.common.get_arch_triplet()) + '"')
+        ]).format(root, common.get_arch_triplet()) + '"')
         env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(root))
         env.append('PKG_CONFIG_PATH=' + ':'.join([
             '{0}/usr/lib/pkgconfig',
@@ -244,7 +246,7 @@ class Config:
             '{0}/usr/local/lib/{1}/pkgconfig',
             '{0}/usr/local/share/pkgconfig',
             '$PKG_CONFIG_PATH'
-        ]).format(root, snapcraft.common.get_arch_triplet()))
+        ]).format(root, common.get_arch_triplet()))
         env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
         return env
 
@@ -252,7 +254,7 @@ class Config:
         """Return a build env of all the part's dependencies."""
 
         env = []
-        stagedir = snapcraft.common.get_stagedir()
+        stagedir = common.get_stagedir()
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
@@ -345,3 +347,30 @@ def _expand_filesets_for(stage, properties):
             new_stage_set.append(item)
 
     return new_stage_set
+
+
+def load_config():
+    try:
+        return Config()
+    except SnapcraftYamlFileError as e:
+        logger.error(
+            'Could not find {}.  Are you sure you are in the right '
+            'directory?\nTo start a new project, use \'snapcraft '
+            'init\''.format(e.file))
+        sys.exit(1)
+    except SnapcraftSchemaError as e:
+        msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
+        logger.error(msg)
+        sys.exit(1)
+    except PluginNotDefinedError as e:
+        logger.error(
+            'Issues while validating snapcraft.yaml: the "plugin" keyword is '
+            'missing for the "{}" part.'.format(e.part))
+        sys.exit(1)
+    except SnapcraftLogicError as e:
+        logger.error('Issue detected while analyzing '
+                     'snapcraft.yaml: {}'.format(e.message))
+        sys.exit(1)
+    except pluginhandler.PluginError as e:
+        logger.error('Issue while loading plugin: {}'.format(e))
+        sys.exit(1)

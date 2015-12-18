@@ -1,0 +1,11 @@
+name: test-package
+version: 0.1
+summary: one line summary
+description: a longer description
+icon: icon.png
+
+parts:
+    bzr:
+        plugin: make
+        source: .
+        source-type: bzr

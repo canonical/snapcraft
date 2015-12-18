@@ -33,9 +33,6 @@ properties:
     # type: string
     description: package version
     pattern: "^[a-zA-Z0-9.+~-]*$"
-  vendor:
-    type: string
-    format: email
   icon:
     type: string
     description: path to a 512x512 icon representing the package.
@@ -161,8 +158,6 @@ properties:
 required:
   - name
   - version
-  - vendor
   - summary
   - description
-  - icon
   - parts

@@ -39,8 +39,8 @@ class ComposeTestCase(tests.TestCase):
         self.config_data = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
+            'architectures': ['armhf', 'amd64']
         }
 
     def test_plain_no_binaries_or_services(self):
@@ -50,7 +50,6 @@ class ComposeTestCase(tests.TestCase):
         expected = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
         }
@@ -58,13 +57,13 @@ class ComposeTestCase(tests.TestCase):
         self.assertEqual(y, expected)
 
     def test_plain_no_binaries_or_services_or_arches(self):
-        y = meta._compose_package_yaml('meta', self.config_data, None)
+        y = meta._compose_package_yaml('meta', self.config_data, ['amd64'])
 
         expected = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
+            'architectures': ['amd64']
         }
 
         self.assertEqual(y, expected)
@@ -110,11 +109,9 @@ class ComposeTestCase(tests.TestCase):
 
         y = meta._compose_package_yaml('meta', self.config_data,
                                        ['armhf', 'amd64'])
-
         expected = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'icon': 'my-icon.png',
             'architectures': ['armhf', 'amd64'],
             'frameworks': ['mir', ],
@@ -163,11 +160,11 @@ class Create(tests.TestCase):
         self.config_data = {
             'name': 'my-package',
             'version': '1.0',
-            'vendor': 'Sergio Schvezov <sergio.schvezov@canonical.com>',
             'description': 'my description',
             'summary': 'my summary',
             'icon': 'my-icon.png',
             'config': 'bin/config',
+            'architectures': ['amd64'],
             'binaries': {
                 'bash': {
                     'exec': 'bin/bash',
@@ -235,15 +232,6 @@ class Create(tests.TestCase):
             call().__enter__().write(' '),
             call().__enter__().write('my-package'),
             call().__enter__().write('\n'),
-            call().__enter__().write('vendor'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('Sergio'),
-            call().__enter__().write(' '),
-            call().__enter__().write('Schvezov'),
-            call().__enter__().write(' '),
-            call().__enter__().write('<sergio.schvezov@canonical.com>'),
-            call().__enter__().write('\n'),
             call().__enter__().write('version'),
             call().__enter__().write(':'),
             call().__enter__().write(" '"),
@@ -262,7 +250,7 @@ class Create(tests.TestCase):
     @patch('snapcraft.meta._write_wrap_exe')
     @patch('snapcraft.meta.open', create=True)
     def test_create_meta(self, mock_the_open, mock_wrap_exe):
-        meta.create(self.config_data, ['amd64'])
+        meta.create(self.config_data)
 
         self.mock_makedirs.assert_has_calls([
             call(self.meta_dir, exist_ok=True),
@@ -302,7 +290,7 @@ class Create(tests.TestCase):
                                             mock_wrap_exe):
         self.config_data['config'] = 'python3 my.py --config'
 
-        meta.create(self.config_data, ['amd64'])
+        meta.create(self.config_data)
 
         self.mock_makedirs.assert_has_calls([
             call(self.meta_dir, exist_ok=True),
@@ -328,17 +316,6 @@ class Create(tests.TestCase):
                 args=['my.py', '--config'], shebang=None,
             ),
         ])
-
-    @patch('snapcraft.meta._write_wrap_exe')
-    @patch('snapcraft.meta.open', create=True)
-    def test_create_meta_without_config(self, mock_the_open, mock_wrap_exe):
-        del self.config_data['config']
-
-        meta.create(self.config_data, ['amd64'])
-
-        self.mock_makedirs.assert_called_once_with(self.meta_dir,
-                                                   exist_ok=True)
-        mock_the_open.assert_has_calls(self.expected_open_calls)
 
 
 # TODO this needs more tests.

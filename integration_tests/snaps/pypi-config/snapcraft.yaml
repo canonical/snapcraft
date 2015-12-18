@@ -1,0 +1,15 @@
+name: pypi-config
+version: 1
+summary: Create a snappy config hook using setup.py
+description: |
+ The object is to setup a snappy config hook to setup configuration based
+ on python code.
+
+ This package will download its dependencies from pypi.
+icon: icon.png
+config: usr/bin/config.py
+
+parts:
+  config:
+    plugin: python3
+    source: .
