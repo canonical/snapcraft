@@ -33,7 +33,7 @@ parseargs(){
         elif [ "$1" == "examples" ] ; then
             export RUN_EXAMPLES="true"
         else
-            echo "Not recognized option, should be one of all, unit or plainbox"
+            echo "Not recognized option, should be one of all, unit, integration or examples"
             exit 1
         fi
     fi
