@@ -23,19 +23,13 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
         export RUN_UNIT="true"
-        export RUN_PLAINBOX="true"
+        export RUN_INTEGRATION="true"
         export RUN_EXAMPLES="true"
-        export PLAINBOX_TEST_PLANS="normal"
     else
         if [ "$1" == "unit" ] ; then
             export RUN_UNIT="true"
-        elif [ "$1" == "plainbox" ] ; then
-            export RUN_PLAINBOX="true"
-            if [ "$#" -gt 1 ]; then
-                export PLAINBOX_TEST_PLANS="$2"
-            else
-                export PLAINBOX_TEST_PLANS="normal"
-            fi
+        elif [ "$1" == "integration" ] ; then
+            export RUN_INTEGRATION="true"
         elif [ "$1" == "examples" ] ; then
             export RUN_EXAMPLES="true"
         else
@@ -77,6 +71,15 @@ run_unit_tests(){
     fi
 }
 
+run_integration(){
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage erase
+        export SNAPCRAFT=snapcraft-coverage
+    fi
+
+    python3 -m unittest discover -s integration_tests
+}
+
 run_examples(){
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage erase
@@ -86,35 +89,14 @@ run_examples(){
     python3 -m examples_tests "$@"
 }
 
-run_plainbox(){
-    # well, well, what can we do
-    if ! which plainbox >/dev/null; then
-        cat <<EOF
-
-WARNING: no plainbox binary can be found
-Please see the README for details how to install the plainbox package
-for running the integration tests.
-
-EOF
-        exit 1
-    fi
-
-    if which python3-coverage >/dev/null 2>&1; then
-        python3-coverage erase
-        export PROJECT_PATH=$(pwd)
-        export SNAPCRAFT=snapcraft-coverage
-    fi
-
-    # Go to the plainbox provider of snapcraft tests
-    pushd integration-tests
-    ./runtests.sh $PLAINBOX_TEST_PLANS
-    popd
-}
-
 parseargs "$@"
 
 if [ ! -z "$RUN_UNIT" ]; then
     run_unit_tests
+fi
+
+if [ ! -z "$RUN_INTEGRATION" ]; then
+    run_integration
 fi
 
 if [ ! -z "$RUN_EXAMPLES" ]; then
@@ -124,10 +106,6 @@ if [ ! -z "$RUN_EXAMPLES" ]; then
         shift
     fi
     run_examples "$@"
-fi
-
-if [ -z "$SNAPCRAFT_TESTS_SKIP_PLAINBOX" ] && [ ! -z "$RUN_PLAINBOX" ] ; then
-    run_plainbox
 fi
 
 if which python3-coverage >/dev/null 2>&1; then
