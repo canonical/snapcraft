@@ -68,9 +68,12 @@ build a local project against the libraries in `./stage` by running `snapcraft
 shell make`. Though in general, you are encouraged to add even local
 projects to snapcraft.yaml with a local `source:` path.
 
-### Snap
+For rapid iteration one can run `snappy try` against this directory to have it
+mounted in a `snappy` capable system.
 
-The snap step moves the data into a `./snap` directory. It contains only
+### Strip
+
+The strip step moves the data into a `./snap` directory. It contains only
 the content that will be put into the final snap package, unlike the staging
 area which may include some development files not destined for your package.
 
@@ -82,11 +85,18 @@ reference](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
 This `./snap` directory is useful for inspecting what is going into your snap
 and to make any final post-processing on snapcraft's output.
 
-### Assemble
+For rapid iteration one can run `snappy try` against this directory to have it
+mounted in a `snappy` capable system.
+
+### Snap
 
 The final step builds a snap package out of the `snap` directory. This `.snap`
 file can be uploaded to the Ubuntu Store and published directly to Snappy
 users.
+
+This command can also be used with a directory argument for projects that
+are not following the snapcraft lifecycle but which follow the internal
+snap format.
 
 # Next
 

@@ -20,18 +20,18 @@ as well.)
 
 ### Playing around with the examples
 
-If you just checked out the `snapcraft` source and inspect the examples, you
+If you just cloned the `snapcraft` source and inspect the examples, you
 can start off your explorations by reading the accompanying `snapcraft.yaml`
 file and running:
 
-	../../bin/snapcraft
+	../../bin/snapcraft snap
 
 This will inform you of all the steps taken during the creation of the snap.
 
 ## Defining your parts
 
 Once you have noted down all the general information about your snap
-(like description, vendor information and everything else), naming
+(like description, summary information and everything else), naming
 the individual parts will define the stucture of your `snapcraft.yaml` file.
 Think of parts as individual components of your snap: Where do you pull them
 from? How are they built?
@@ -69,9 +69,9 @@ directories.
 
 ### Mixing and matching plugins
 
-An interesting example is `py2-project` because it defines only one part
-(`spongeshaker`), but uses two different plugins (`python2` and `make`) to
-assemble and build the snap:
+An interesting example is `py2-project` because it defines two parts
+`spongeshaker` using the `python2` plugin, and `make-project` using the
+`make` plugin.
 
 	parts:
   	  spongeshaker:
@@ -119,7 +119,7 @@ keyword:
 
 In the case of the `libpipeline` example above, the part named `pipelinetest`
 will be built after `libpipeline`. Especially if you need specific
-functionality during a build or as part of checks during the `snap` phase,
+functionality during a build or as part of checks during the `stage` phase,
 this will be handy.
 
 ### Re-using parts
@@ -171,8 +171,8 @@ thoughts on services and their security, visit the
 
 ### Limiting the number of installed files
 
-To check the list of files included in your snap, you can use `dpkg -c` on
-the resulting `.snap` file. If you find that certain files should not be
+To check the list of files included in your snap, you can use `unsquashfs -l`
+on the resulting `.snap` file. If you find that certain files should not be
 shipped to the user (download size being just one factor), you can
 explicitly tell `snapcraft` which files to snap:
 
