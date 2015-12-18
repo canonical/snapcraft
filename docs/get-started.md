@@ -10,6 +10,10 @@ technology, we recommend to use the latest classic Ubuntu Long-Term Support
 those not using an Ubuntu machine (and you should), you can use a VM
 (VirtualBox, VMware, Vagrant) to execute your Ubuntu development host.
 
+This version of snapcraft only works on Ubuntu 16.04 (Xenial Xerus), for
+previous versions of snapcraft, refer to the
+[1.x documentation](https://github.com/ubuntu-core/snapcraft/blob/1.x/docs/get-started.md).
+
 Once your Ubuntu host system is up and running, you can then enable the
 snappy-tools PPA to get the latest tools to develop for Snappy. A PPA is a
 Personal Package Archive that developers can subscribe to install and get
@@ -34,10 +38,9 @@ production environment however, we recommend using an Ubuntu LTS-based host.
 
 This is the most important selection of tools you will get after installation:
 
-	snappy build        - make snap packages out of a file hierarchy
+	snappy try          - try snaps from a .snap, the [stage] or [snap] dir
 	snappy-remote 	    - run snappy operations on remote snappy target by IP
 	snapcraft           - the snap build tool for all snaps
-	ubuntu-device-flash - image creation tool for snappy ubuntu
 
 # Next
 
