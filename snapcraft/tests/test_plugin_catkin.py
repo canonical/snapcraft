@@ -16,8 +16,8 @@
 
 import os
 import os.path
-import tempfile
 import subprocess
+import builtins
 
 from unittest import mock
 
@@ -25,8 +25,23 @@ from snapcraft import tests
 from snapcraft.plugins import catkin
 
 
-class _IOError(IOError):
-    errno = os.errno.EACCES
+class _CompareLists():
+    def __init__(self, test, expected):
+        self.test = test
+        self.expected = expected
+
+    def __eq__(self, packages):
+        self.test.assertEqual(len(packages), len(self.expected),
+                              'Expected {} packages to be installed, '
+                              'got {}'.format(len(self.expected),
+                                              len(packages)))
+
+        for expectation in self.expected:
+            self.test.assertTrue(expectation in packages,
+                                 'Expected "{}" to be installed'
+                                 .format(expectation))
+
+        return True
 
 
 class CatkinPluginTestCase(tests.TestCase):
@@ -37,6 +52,7 @@ class CatkinPluginTestCase(tests.TestCase):
         class props:
             rosdistro = 'indigo'
             catkin_packages = ['my_package']
+            source_space = 'src'
             source_subdir = None
 
         self.properties = props()
@@ -45,69 +61,128 @@ class CatkinPluginTestCase(tests.TestCase):
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.plugins.catkin._Rosdep')
-        self.rosdep_mock = patcher.start()
+        patcher = mock.patch(
+            'snapcraft.plugins.catkin._find_system_dependencies')
+        self.dependencies_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def verify_rosdep_setup(self, plugin):
-        self.rosdep_mock.assert_has_calls([
-            mock.call(self.properties.rosdistro,
-                      os.path.join(plugin.sourcedir, 'src'),
-                      os.path.join(plugin.partdir, 'rosdep'),
-                      plugin.PLUGIN_STAGE_SOURCES),
-            mock.call().setup()])
+    def test_schema(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check rosdistro property
+        properties = schema['properties']
+        self.assertTrue('rosdistro' in properties,
+                        'Expected "rosdistro" to be included in properties')
+
+        rosdistro = properties['rosdistro']
+        self.assertTrue('type' in rosdistro,
+                        'Expected "type" to be included in "rosdistro"')
+        self.assertTrue('default' in rosdistro,
+                        'Expected "default" to be included in "rosdistro"')
+
+        rosdistro_type = rosdistro['type']
+        self.assertEqual(rosdistro_type, 'string',
+                         'Expected "rosdistro" "type" to be "string", but it '
+                         'was "{}"'.format(rosdistro_type))
+
+        rosdistro_default = rosdistro['default']
+        self.assertEqual(rosdistro_default, 'indigo',
+                         'Expected "rosdistro" "default" to be "indigo", but '
+                         'it was "{}"'.format(rosdistro_default))
+
+        # Check catkin-packages property
+        self.assertTrue('catkin-packages' in properties,
+                        'Expected "catkin-packages" to be included in '
+                        'properties')
+
+        catkin_packages = properties['catkin-packages']
+        self.assertTrue('type' in catkin_packages,
+                        'Expected "type" to be included in "catkin-packages"')
+        self.assertTrue('default' in catkin_packages,
+                        'Expected "default" to be included in '
+                        '"catkin-packages"')
+        self.assertTrue('minitems' in catkin_packages,
+                        'Expected "minitems" to be included in '
+                        '"catkin-packages"')
+        self.assertTrue('uniqueItems' in catkin_packages,
+                        'Expected "uniqueItems" to be included in '
+                        '"catkin-packages"')
+        self.assertTrue('items' in catkin_packages,
+                        'Expected "items" to be included in "catkin-packages"')
+
+        catkin_packages_type = catkin_packages['type']
+        self.assertEqual(catkin_packages_type, 'array',
+                         'Expected "catkin-packages" "type" to be "aray", but '
+                         'it was "{}"'.format(catkin_packages_type))
+
+        catkin_packages_default = catkin_packages['default']
+        self.assertEqual(catkin_packages_default, [],
+                         'Expected "catkin-packages" "default" to be [], but '
+                         'it was {}'.format(catkin_packages_default))
+
+        catkin_packages_minitems = catkin_packages['minitems']
+        self.assertEqual(catkin_packages_minitems, 1,
+                         'Expected "catkin-packages" "minitems" to be 1, but '
+                         'it was {}'.format(catkin_packages_minitems))
+
+        self.assertTrue(catkin_packages['uniqueItems'])
+
+        catkin_packages_items = catkin_packages['items']
+        self.assertTrue('type' in catkin_packages_items,
+                        'Expected "type" to be included in "catkin-packages" '
+                        '"items"')
+
+        catkin_packages_items_type = catkin_packages_items['type']
+        self.assertEqual(catkin_packages_items_type, 'string',
+                         'Expected "catkin-packages" "item" "type" to be '
+                         '"string", but it was "{}"'
+                         .format(catkin_packages_items_type))
+
+        # Check source-space property
+        self.assertTrue('source-space' in properties,
+                        'Expected "source-space" to be included in properties')
+
+        source_space = properties['source-space']
+        self.assertTrue('type' in rosdistro,
+                        'Expected "type" to be included in "source-space"')
+        self.assertTrue('default' in rosdistro,
+                        'Expected "default" to be included in "source-space"')
+
+        source_space_type = source_space['type']
+        self.assertEqual(source_space_type, 'string',
+                         'Expected "source-space" "type" to be "string", but '
+                         'it was "{}"'.format(source_space_type))
+
+        source_space_default = source_space['default']
+        self.assertEqual(source_space_default, 'src',
+                         'Expected "source-space" "default" to be "src", but '
+                         'it was "{}"'.format(source_space_default))
+
+        # Check required
+        self.assertTrue('catkin-packages' in schema['required'],
+                        'Expected "catkin-packages" to be included in '
+                        '"required"')
 
     def test_pull_debian_dependencies(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
-        # Fake rosdep to setup the following dependecy/resolver tree:
-        # my_package:
-        #   - catkin = ros-indigo-catkin
-        #   - roscpp = ros-indigo-roscpp
-        #   - mylib = mylib-dev
-        def get(package_name):
-            if package_name == 'my_package':
-                return ['catkin', 'roscpp', 'mylib']
-
-            return mock.DEFAULT
-
-        def resolve(dependency_name):
-            return {
-                'catkin': 'ros-indigo-catkin',
-                'roscpp': 'ros-indigo-roscpp',
-                'mylib': 'mylib-dev',
-            }.get(dependency_name)
-
-        self.rosdep_mock.return_value.get_dependencies.side_effect = get
-        self.rosdep_mock.return_value.resolve_dependency.side_effect = resolve
+        self.dependencies_mock.return_value = ['foo', 'bar', 'baz']
 
         plugin.pull()
 
-        # Verify that rosdep was setup
-        self.verify_rosdep_setup(plugin)
-
-        # Verify that rosdep was called to obtain dependencies
-        self.rosdep_mock.return_value.get_dependencies.assert_called_with(
-            'my_package')
-
-        # Verify that rosdep was called to resolve dependencies into Ubuntu
-        # packages.
-        self.assertEqual(
-            self.rosdep_mock.return_value.resolve_dependency.call_count, 3)
-        self.rosdep_mock.return_value.resolve_dependency.assert_has_calls([
-            mock.call('catkin'),
-            mock.call('roscpp'),
-            mock.call('mylib')], any_order=True)
+        # Verify that dependencies were found as expected
+        self.dependencies_mock.assert_called_once_with(
+            {'my_package'}, self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
 
         # Verify that the dependencies were installed
-        self.ubuntu_mock.assert_has_calls([
-            mock.call().get([
-                'ros-indigo-catkin',
-                'ros-indigo-roscpp',
-                'g++',  # This should be installed as a side effect of roscpp
-                'mylib-dev']),
-            mock.call().unpack(plugin.installdir)])
+        self.ubuntu_mock.return_value.get.assert_called_with(
+            _CompareLists(self, ['foo', 'bar', 'baz']))
+        self.ubuntu_mock.return_value.unpack.assert_called_with(
+            plugin.installdir)
 
     def test_pull_local_dependencies(self):
         self.properties.catkin_packages.append('package_2')
@@ -115,71 +190,21 @@ class CatkinPluginTestCase(tests.TestCase):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
-        # Fake rosdep to setup the following dependecy/resolver tree:
-        # my_package:
-        #   - package_2 = local dependency
-        #
-        # package_2:
-        #   - No dependencies
-        def get(package_name):
-            if package_name == 'my_package':
-                return ['package_2']
-
-            return ''
-
-        self.rosdep_mock.return_value.get_dependencies.side_effect = get
+        # No system dependencies (only local)
+        self.dependencies_mock.return_value = []
 
         plugin.pull()
 
-        # Verify that rosdep was setup
-        self.verify_rosdep_setup(plugin)
-
-        # Verify that rosdep was called to obtain dependencies
-        self.assertEqual(
-            self.rosdep_mock.return_value.get_dependencies.call_count, 2)
-        self.rosdep_mock.return_value.get_dependencies.assert_has_calls([
-            mock.call('my_package'),
-            mock.call('package_2')], any_order=True)
-
-        # Verify that rosdep was NOT called to resolve dependencies
-        self.rosdep_mock.return_value.resolve_dependency.assert_not_called()
-
-        # Verify that the dependency tree is what we expect
-        self.assertEqual(plugin.package_local_deps, {
-            'my_package': {'package_2'},
-            'package_2': set(),
-        })
+        # Verify that dependencies were found as expected
+        self.dependencies_mock.assert_called_once_with(
+            {'my_package', 'package_2'}, self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
 
         # Verify that no .deb packages were installed
         self.assertTrue(mock.call().unpack(plugin.installdir) not in
                         self.ubuntu_mock.mock_calls)
-
-    def test_pull_missing_local_dependency(self):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
-        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-
-        # Fake rosdep to setup the following dependecy/resolver tree:
-        # my_package:
-        #   - package_2 = local dependency
-        #                 (which isn't included in the catkin_packages)
-        def get(package_name):
-            if package_name == 'my_package':
-                return ['package_2']
-
-            return ''
-
-        self.rosdep_mock.return_value.get_dependencies.side_effect = get
-        self.rosdep_mock.return_value.resolve_dependency.return_value = None
-
-        with self.assertRaises(RuntimeError) as raised:
-            plugin.pull()
-
-        self.assertEqual(str(raised.exception),
-                         'Package "package_2" isn\'t a valid system '
-                         'dependency. Did you forget to add it to '
-                         'catkin-packages? If not, add the Ubuntu package '
-                         'containing it to stage-packages until you can get '
-                         'it into the rosdep database.')
 
     def test_valid_catkin_workspace_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
@@ -194,8 +219,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
     def test_invalid_catkin_workspace_no_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
-        # it does not contain a `src` folder and `source-subdir` wasn't
-        # specified, this should fail.
+        # it does not contain a `src` folder and `source-space` is 'src', this
+        # should fail.
         with self.assertRaises(FileNotFoundError) as raised:
             plugin = catkin.CatkinPlugin('test-part', self.properties)
             plugin.pull()
@@ -205,26 +230,26 @@ class CatkinPluginTestCase(tests.TestCase):
             'Unable to find package path: "{}"'.format(os.path.join(
                 plugin.sourcedir, 'src')))
 
-    def test_valid_catkin_workspace_subdir(self):
-        self.properties.source_subdir = 'foo'
+    def test_valid_catkin_workspace_source_space(self):
+        self.properties.source_space = 'foo'
 
         # sourcedir is expected to be the root of the Catkin workspace.
         # Normally this would mean it contained a `src` directory, but it can
-        # be remapped via the `source-subdir` key.
+        # be remapped via the `source-space` key.
         try:
             plugin = catkin.CatkinPlugin('test-part', self.properties)
             os.makedirs(os.path.join(plugin.sourcedir,
-                        self.properties.source_subdir))
+                        self.properties.source_space))
             plugin.pull()
         except FileNotFoundError:
             self.fail('Unexpectedly raised an exception when the Catkin '
                       'src was remapped in a valid manner')
 
-    def test_invalid_catkin_workspace_invalid_subdir(self):
-        self.properties.source_subdir = 'foo'
+    def test_invalid_catkin_workspace_invalid_source_space(self):
+        self.properties.source_space = 'foo'
 
         # sourcedir is expected to be the root of the Catkin workspace. Since
-        # it does not contain a `src` folder and source_subdir wasn't
+        # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
         with self.assertRaises(FileNotFoundError) as raised:
             plugin = catkin.CatkinPlugin('test-part', self.properties)
@@ -233,40 +258,34 @@ class CatkinPluginTestCase(tests.TestCase):
         self.assertEqual(
             str(raised.exception),
             'Unable to find package path: "{}"'.format(os.path.join(
-                plugin.sourcedir, self.properties.source_subdir)))
+                plugin.sourcedir, self.properties.source_space)))
 
-    def test_invalid_catkin_workspace_subdir_same_as_source(self):
-        self.properties.source_subdir = '.'
+    def test_invalid_catkin_workspace_source_space_same_as_source(self):
+        self.properties.source_space = '.'
 
         # sourcedir is expected to be the root of the Catkin workspace. Since
-        # source_subdir was specified to be the same as the root, this should
+        # source_space was specified to be the same as the root, this should
         # fail.
         with self.assertRaises(RuntimeError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties)
-            plugin.pull()
+            catkin.CatkinPlugin('test-part', self.properties).pull()
 
         self.assertEqual(str(raised.exception),
-                         'source-subdir cannot be the root of the Catkin '
+                         'source-space cannot be the root of the Catkin '
                          'workspace')
 
-    @mock.patch.object(catkin.CatkinPlugin, '_rosrun')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
-    def test_build(self, run_mock, rosrun_mock):
+    @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build(self, finish_build_mock, prepare_build_mock,
+                   run_output_mock, bashrun_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-        os.makedirs(plugin.rosdir)
-
-        # Place _setup_util.py with a bad shebang so we can verify we fixed it
-        with open(os.path.join(plugin.rosdir, '_setup_util.py'), 'w') as f:
-            f.write('#!/foo/bar/baz/python')
-
-        # Pretend 'my_package' has no dependencies
-        def get(package_name):
-            return ''
-
-        self.rosdep_mock.return_value.get_dependencies.side_effect = get
 
         plugin.build()
+
+        prepare_build_mock.assert_called_once_with()
 
         # Matching like this for order independence (otherwise it would be
         # quite fragile)
@@ -278,57 +297,305 @@ class CatkinPluginTestCase(tests.TestCase):
                     '--install' in command and
                     '--pkg my_package' in command and
                     '--directory {}'.format(plugin.builddir) in command and
-                    '--install-space {}'.format(plugin.rosdir) in command)
+                    '--install-space {}'.format(plugin.rosdir) in command and
+                    '--source-space {}'.format(os.path.join(
+                        plugin.builddir,
+                        plugin.options.source_space)) in command)
 
-        rosrun_mock.assert_called_once_with(check_build_command())
+        bashrun_mock.assert_called_with(check_build_command())
 
-        with open('{}/opt/ros/{}/_setup_util.py'.format(
-                plugin.installdir, plugin.options.rosdistro), 'r') as f:
+        self.dependencies_mock.assert_not_called(
+            'Dependencies should have been discovered in the pull() step')
+
+        finish_build_mock.assert_called_once_with()
+
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build_multiple(self, finish_build_mock, prepare_build_mock,
+                            run_output_mock, bashrun_mock, run_mock):
+        self.properties.catkin_packages.append('package_2')
+
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        plugin.build()
+
+        class check_pkg_arguments():
+            def __init__(self, test):
+                self.test = test
+
+            def __eq__(self, args):
+                index = args.index('--pkg')
+                packages = args[index+1:index+3]
+                if not 'my_package' in packages:
+                    self.test.fail('Expected "my_package" to be installed '
+                                   'within the same command as "package_2"')
+
+                if not 'package_2' in packages:
+                    self.test.fail('Expected "package_2" to be installed '
+                                   'within the same command as "my_package"')
+
+                return True
+
+        bashrun_mock.assert_called_with(check_pkg_arguments(self))
+
+        self.dependencies_mock.assert_not_called(
+            'Dependencies should have been discovered in the pull() step')
+
+        finish_build_mock.assert_called_once_with()
+
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    def test_build_runs_in_bash(self, run_output_mock, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['/bin/bash', mock.ANY], cwd=mock.ANY)
+        ])
+
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build_encompasses_source_space(self, finish_mock, prepare_mock):
+        self.properties.catkin_packages = []
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        plugin.build()
+
+        self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'src')))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build_encompasses_remapped_source_space(self, finish_mock,
+                                                     prepare_mock):
+        self.properties.catkin_packages = []
+        self.properties.source_space = 'foo'
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'foo'))
+
+        plugin.build()
+
+        self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build_accounts_for_source_subdir(self, finish_mock, prepare_mock):
+        self.properties.catkin_packages = []
+        self.properties.source_subdir = 'workspace'
+        self.properties.source_space = 'foo'
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'workspace', 'foo'))
+
+        plugin.build()
+
+        self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
+
+    @mock.patch('sys.stdout')
+    def test_prepare_build(self, stdout_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.rosdir, 'test'))
+
+        # Place a few .cmake files with incorrect paths, and some files that
+        # shouldn't be touched.
+        with open(os.path.join(plugin.rosdir, 'foo.cmake'), 'w') as f:
+            f.write(';/usr/lib/foo')
+
+        with open(os.path.join(plugin.rosdir, 'bar'), 'w') as f:
+            f.write(';/usr/lib/bar')
+
+        with open(os.path.join(plugin.rosdir, 'test', 'baz.cmake'), 'w') as f:
+            f.write(';/usr/lib/baz')
+
+        with open(os.path.join(plugin.rosdir, 'test', 'qux.cmake'), 'w') as f:
+            f.write('/usr/lib/qux')
+
+        plugin._prepare_build()
+
+        with open(os.path.join(plugin.rosdir, 'foo.cmake'), 'r') as f:
+            self.assertEqual(f.read(), ';{}/usr/lib/foo'.format(
+                plugin.installdir))
+
+        with open(os.path.join(plugin.rosdir, 'bar'), 'r') as f:
+            self.assertEqual(f.read(), ';/usr/lib/bar',
+                             'Expected "bar" to be unchanged')
+
+        with open(os.path.join(plugin.rosdir, 'test', 'baz.cmake'), 'r') as f:
+            self.assertEqual(f.read(), ';{}/usr/lib/baz'.format(
+                plugin.installdir))
+
+        with open(os.path.join(plugin.rosdir, 'test', 'qux.cmake'), 'r') as f:
+            self.assertEqual(f.read(), '/usr/lib/qux',
+                             'Expected "qux" to be unchanged')
+
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    def test_finish_build(self, run_output_mock, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(plugin.rosdir)
+
+        # Place _setup_util.py with a bad shebang
+        with open(os.path.join(plugin.rosdir, '_setup_util.py'), 'w') as f:
+            f.write('#!/foo/bar/baz/python')
+
+        plugin._finish_build()
+
+        # Verify that _setup_util.py had its shebang rewritten correctly
+        with open('{}/_setup_util.py'.format(
+                plugin.rosdir), 'r') as f:
             self.assertEqual(f.read(), '#!/usr/bin/env python',
                              'The shebang was not replaced as expected')
 
-    def test_build_with_subdir_without_src_copies_subdir_into_src(self):
-        self.properties.catkin_packages = []
-        self.properties.source_subdir = 'src_subdir'
+        self.dependencies_mock.assert_not_called(
+            'Dependencies should have been discovered in the pull() step')
 
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    def test_finish_build_file_missing(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(plugin.rosdir)
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.sourcedir = tmpdir.name
-        subdir = os.path.join(plugin.sourcedir, plugin.options.source_subdir)
-        os.mkdir(subdir)
-        open(os.path.join(subdir, 'file'), 'w').close()
+        try:
+            plugin._finish_build()
+        except FileNotFoundError:
+            self.fail('Unexpectedly raised an exception when files were '
+                      'missing')
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.builddir = tmpdir.name
-
-        plugin._provision_builddir()
-
-        self.assertTrue(
-            os.path.exists(os.path.join(plugin.builddir, 'src', 'file')))
-
-    def test_build_without_subdir_or_src_copies_sourcedir_into_src(self):
-        self.properties.catkin_packages = []
-
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    def test_finish_build_raise_errors(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(plugin.rosdir)
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.sourcedir = tmpdir.name
-        subdir = os.path.join(plugin.sourcedir, 'src_subdir')
-        os.mkdir(subdir)
-        open(os.path.join(subdir, 'file'), 'w').close()
+        with open(os.path.join(plugin.rosdir, '_setup_util.py'), 'w') as f:
+            f.write('#!/foo/bar/baz/python')
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.builddir = tmpdir.name
+        with mock.patch.object(builtins, 'open',
+                               side_effect=RuntimeError('foo')):
+            with self.assertRaises(RuntimeError) as raised:
+                plugin._finish_build()
 
-        plugin._provision_builddir()
+        self.assertEqual(raised.exception.args[0], 'foo')
 
-        self.assertTrue(os.path.exists(
-            os.path.join(plugin.builddir, 'src', 'src_subdir', 'file')))
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
+    def test_run_environment(self, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        environment = plugin.env('/foo')
+
+        self.assertTrue('PYTHONPATH={}'.format(os.path.join(
+            '/foo', 'usr', 'lib', 'bar', 'dist-packages')
+            in environment))
+
+        self.assertTrue('ROS_MASTER_URI=http://localhost:11311' in environment)
+
+        self.assertTrue('ROS_HOME=$SNAP_APP_USER_DATA_PATH/ros' in environment)
+
+        self.assertTrue('_CATKIN_SETUP_DIR={}'.format(os.path.join(
+            '/foo', 'opt', 'ros', self.properties.rosdistro)) in environment)
+
+        self.assertTrue('. {}'.format('/foo', 'opt', 'ros', 'setup.sh') in
+                        '\n'.join(environment),
+                        'Expected ROS\'s setup.sh to be sourced')
+
+
+class FindSystemDependenciesTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.plugins.catkin._Rosdep')
+        self.rosdep_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
+                            sources):
+        self.rosdep_mock.assert_has_calls([
+            mock.call(rosdistro, package_path, rosdep_path, sources),
+            mock.call().setup()])
+
+    def test_find_system_dependencies_system_only(self):
+        mockInstance = self.rosdep_mock.return_value
+        mockInstance.get_dependencies.return_value = ['bar']
+        mockInstance.resolve_dependency.return_value = 'baz'
+
+        self.assertEqual(['baz'], catkin._find_system_dependencies(
+            {'foo'}, 'indigo', '/test/path1', '/test/path2', []))
+
+        # Verify that rosdep was setup as expected
+        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
+
+        mockInstance.get_dependencies.assert_called_once_with('foo')
+        mockInstance.resolve_dependency.assert_called_once_with('bar')
+
+    def test_find_system_dependencies_local_only(self):
+        mockInstance = self.rosdep_mock.return_value
+        mockInstance.get_dependencies.return_value = ['bar']
+
+        self.assertEqual([], catkin._find_system_dependencies(
+            {'foo', 'bar'}, 'indigo', '/test/path1', '/test/path2', []))
+
+        # Verify that rosdep was setup as expected
+        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
+
+        mockInstance.get_dependencies.assert_has_calls([mock.call('foo'),
+                                                        mock.call('bar')],
+                                                       any_order=True)
+        mockInstance.resolve_dependency.assert_not_called()
+
+    def test_find_system_dependencies_mixed(self):
+        mockInstance = self.rosdep_mock.return_value
+        mockInstance.get_dependencies.return_value = ['bar', 'baz']
+        mockInstance.resolve_dependency.return_value = 'qux'
+
+        self.assertEqual(['qux'], catkin._find_system_dependencies(
+            {'foo', 'bar'}, 'indigo', '/test/path1', '/test/path2', []))
+
+        # Verify that rosdep was setup as expected
+        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
+
+        mockInstance.get_dependencies.assert_has_calls([mock.call('foo'),
+                                                        mock.call('bar')],
+                                                       any_order=True)
+        mockInstance.resolve_dependency.assert_called_once_with('baz')
+
+    def test_find_system_dependencies_missing_local_dependency(self):
+        mockInstance = self.rosdep_mock.return_value
+
+        # Setup a dependency on a non-existing package, and it doesn't resolve
+        # to a system dependency.'
+        mockInstance.get_dependencies.return_value = ['bar']
+        mockInstance.resolve_dependency.return_value = None
+
+        with self.assertRaises(RuntimeError) as raised:
+            catkin._find_system_dependencies({'foo'}, 'indigo', '/test/path1',
+                                             '/test/path2', [])
+
+        self.assertEqual(raised.exception.args[0],
+                         'Package "bar" isn\'t a valid system dependency. Did '
+                         'you forget to add it to catkin-packages? If not, '
+                         'add the Ubuntu package containing it to '
+                         'stage-packages until you can get it into the rosdep '
+                         'database.')
+
+    def test_find_system_dependencies_roscpp_includes_gplusplus(self):
+        mockInstance = self.rosdep_mock.return_value
+        mockInstance.get_dependencies.return_value = ['roscpp']
+        mockInstance.resolve_dependency.return_value = 'baz'
+
+        self.assertEqual(_CompareLists(self, ['baz', 'g++']),
+                         catkin._find_system_dependencies({'foo'}, 'indigo',
+                                                          '/test/path1',
+                                                          '/test/path2', []))
+
+        # Verify that rosdep was setup as expected
+        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
+
+        mockInstance.get_dependencies.assert_called_once_with('foo')
+        mockInstance.resolve_dependency.assert_called_once_with('roscpp')
 
 
 class RosdepTestCase(tests.TestCase):
@@ -369,10 +636,21 @@ class RosdepTestCase(tests.TestCase):
             mock.call(['rosdep', 'update'], env=mock.ANY)
         ])
 
+    def test_setup_can_run_multiple_times(self):
+        self.rosdep.setup()
+
+        # Make sure running setup() again doesn't have problems with the old
+        # environment
+        try:
+            self.rosdep.setup()
+        except FileExistsError:
+            self.fail('Unexpectedly raised an exception when running setup() '
+                      'multiple times')
+
     def test_setup_initialization_failure(self):
         def run(args, **kwargs):
             if args == ['rosdep', 'init']:
-                raise subprocess.CalledProcessError(1, 'foo', 'bar')
+                raise subprocess.CalledProcessError(1, 'foo', b'bar')
 
             return mock.DEFAULT
 
@@ -382,12 +660,12 @@ class RosdepTestCase(tests.TestCase):
             self.rosdep.setup()
 
         self.assertEqual(str(raised.exception),
-                         'Error initializing rosdep database: bar')
+                         'Error initializing rosdep database:\nbar')
 
     def test_setup_update_failure(self):
         def run(args, **kwargs):
             if args == ['rosdep', 'update']:
-                raise subprocess.CalledProcessError(1, 'foo', 'bar')
+                raise subprocess.CalledProcessError(1, 'foo', b'bar')
 
             return mock.DEFAULT
 
@@ -397,7 +675,7 @@ class RosdepTestCase(tests.TestCase):
             self.rosdep.setup()
 
         self.assertEqual(str(raised.exception),
-                         'Error updating rosdep database: bar')
+                         'Error updating rosdep database:\nbar')
 
     def test_get_dependencies(self):
         self.check_output_mock.return_value = b'foo\nbar\nbaz'
