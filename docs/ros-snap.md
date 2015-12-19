@@ -352,7 +352,7 @@ out:
 And you should see the talker and listener communicating like before. As usual,
 ctrl+c will stop it. Note also that, since ROS is running in a confined
 environment, its log isn't in `$HOME/.ros` as usual, but in
-`$HOME/apps/ros-talker-and-listener.sideload/1.0/.ros`.
+`$HOME/apps/ros-talker-and-listener.sideload/1.0/ros`.
 
 [1]: http://www.ros.org/
 [2]: get-started.md
