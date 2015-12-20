@@ -51,6 +51,9 @@ class TestYaml(TestCase):
         self.assertEqual(self.w.get_part('part-in-wiki'), {
             'plugin': 'go', 'source': 'http://somesource'})
         self.assertEqual(self.w.get_part('part-not-in-wiki'), None)
+    
+    def test_get_part_type(self):
+        self.assertNotEqual(self.w.get_part('part-in-wiki'), {'source-type': 'type'})
 
     def test_compose_part_with_properties_from_the_wiki(self):
         properties = self.w.compose(
