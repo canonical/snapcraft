@@ -29,15 +29,89 @@ class _IOError(IOError):
     errno = os.errno.EACCES
 
 
-class CatkinTestCase(tests.TestCase):
+class CatkinPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
 
         class props:
+            rosversion = 'foo'
             catkin_packages = ['my_package']
 
         self.properties = props()
+
+        patcher = mock.patch('snapcraft.repo.Ubuntu')
+        self.ubuntu_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_pull_debian_dependencies(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+
+        # Create ROS package directory
+        os.mkdir(os.path.join(plugin.sourcedir, "my_package"))
+
+        # Now create my_package's package.xml:
+        with open(os.path.join(plugin.sourcedir, "my_package",
+                               "package.xml"), 'w') as f:
+            f.write("""<?xml version="1.0"?>
+                      <package>
+                        <buildtool_depend>buildtool_depend</buildtool_depend>
+                        <build_depend>build_depend</build_depend>
+                        <run_depend>run_depend</run_depend>
+                      </package>""")
+
+        plugin.pull()
+
+        self.ubuntu_mock.assert_has_calls([
+            mock.call().get([
+                'ros-foo-buildtool-depend',
+                'ros-foo-build-depend',
+                'ros-foo-run-depend']),
+            mock.call().unpack(plugin.installdir)])
+
+    def test_pull_local_dependencies(self):
+        self.properties.catkin_packages.append('package_2')
+
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        plugin.sourcedir = tmpdir.name
+
+        # Create ROS package directory for both packages
+        os.mkdir(os.path.join(plugin.sourcedir, "my_package"))
+        os.mkdir(os.path.join(plugin.sourcedir, "package_2"))
+
+        # Now create my_package's package.xml, specifying that is depends upon
+        # package_2:
+        with open(os.path.join(plugin.sourcedir, "my_package",
+                               "package.xml"), 'w') as f:
+            f.write("""<?xml version="1.0"?>
+                      <package>
+                        <build_depend>package_2</build_depend>
+                      </package>""")
+
+        # Finally, create package_2's package.xml, specifying that is has no
+        # dependencies:
+        with open(os.path.join(plugin.sourcedir, "package_2",
+                               "package.xml"), 'w') as f:
+            f.write("""<?xml version="1.0"?>
+                      <package>
+                      </package>""")
+
+        plugin.pull()
+
+        self.assertTrue('my_package' in plugin.package_local_deps,
+                        'Expected "my_package" to be in the dependencies')
+        self.assertEqual(plugin.package_local_deps['my_package'],
+                         {'package_2'},
+                         'Expected "my_package" to depend upon "package_2"')
+        self.assertFalse(self.ubuntu_mock.called,
+                         "Ubuntu packages were unexpectedly pulled down")
 
     def test_log_warning_when_unable_to_find_a_catkin_package(self):
         fake_logger = fixtures.FakeLogger()
