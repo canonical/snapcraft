@@ -161,7 +161,8 @@ brevity):
 </package>
 ```
 
-Also make sure the `CMakeLists.txt` is setup correctly. Again, it's important to remember the install rules:
+Also make sure the `CMakeLists.txt` is setup correctly. Again, it's important to
+remember the install rules:
 
 ```cmake
 cmake_minimum_required(VERSION 2.8.3)
@@ -264,6 +265,8 @@ let's create that file in the workspace root, containing the following:
 ```yaml
 name: ros-talker-and-listener
 version: 1.0
+vendor: Example <example@example.com>
+icon: icon.svg
 summary: ROS Example
 description: Contains talker/listener ROS packages and a .launch file.
 
@@ -282,7 +285,12 @@ parts:
       - ros-indigo-ros-core
 ```
 
-Most of this file should look familiar to you if you've met the prerequisites,
+If you have a real `icon.svg` you'd like to use that's fine, though you can
+create one with:
+
+    $ echo "<svg />" >> icon.svg
+
+Most of that file should look familiar to you if you've met the prerequisites,
 but let's focus on a few specific pieces.
 
 ```yaml
