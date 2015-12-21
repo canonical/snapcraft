@@ -207,6 +207,10 @@ if __name__ == '__main__':
     listener()
 ```
 
+Make sure this script is executable:
+
+    $ chmod +x scripts/listener_node
+
 Note that the listener subscribes to the `babble` topic, but the talker
 publishes on `chatter`. We need to make sure we account for that in
 `talk_and_listen.launch`:
@@ -250,7 +254,7 @@ You should see them communicating, looking something like this:
 ### Put it all in a .snap
 
 Let's get back to our stated objective, which was to create a .snap containing
-these pieces and their dependencies. As mentioned, thee easiest way to create a
+these pieces and their dependencies. As mentioned, the easiest way to create a
 .snap with complex dependencies is to use Snapcraft. Snapcraft contains a plugin
 especially for Catkin, which makes creating a ROS .snap particularly easy.
 
@@ -264,7 +268,7 @@ summary: ROS Example
 description: Contains talker/listener ROS packages and a .launch file.
 
 binaries:
-  launch_project:
+  launch-project:
     exec: roslaunch listener talk_and_listen.launch
 
 parts:
@@ -284,7 +288,7 @@ but let's focus on a few specific pieces.
 ```yaml
 # ...
 binaries:
-  launch_project:
+  launch-project:
     exec: roslaunch listener talk_and_listen.launch
 # ...
 ```
@@ -292,7 +296,7 @@ binaries:
 Even though the `talker` and `listener` packages will be installed, they'll be
 within a confined ROS installation, so the user won't be able to simply call
 `rosrun` or `roslaunch`. Instead, you have control over how your .snap is used,
-and here we specify that we only want a single binary, called "launch_project",
+and here we specify that we only want a single binary, called "launch-project",
 which results in the `roslaunch` call you see. If this seems confusing now, it
 will make more sense when we actually use it.
 
@@ -310,12 +314,12 @@ parts:
 # ...
 ```
 
-This is specifying that the .snap is made up of a single part, which utilizes
-the Catkin plugin. It states that the workspace is in the same path as the
-`snapcraft.yaml`, and it specifies which ROS packages should be included in the
-.snap (`talker` and `listener`). Finally, and this is important, it specifies
-that the Ubuntu package containing `roscore` (ros-indigo-ros-core) should be
-installed into the .snap.
+This is specifying that the .snap is made up of a single part, called "foo,"
+which utilizes the Catkin plugin. It states that the workspace is in the same
+path as the `snapcraft.yaml`, and it specifies which ROS packages should be
+included in the .snap (`talker` and `listener`). Finally, and this is important,
+it specifies that the Ubuntu package containing `roscore` (ros-indigo-ros-core)
+should be installed into the .snap.
 
 That last point is worth discussing. Currently, since .snaps cannot depend upon
 each other, any .snap that uses roscore must distribute roscore within it. We're
@@ -323,9 +327,9 @@ working on some new features that will enable sharing roscore between snaps, but
 until then there are some limitations to keep in mind:
 
 - `roscore` must be bundled into each .snap that requires it.
-- Port negotiation for `roscore` has not been completed, which means that only a
-  single .snap that runs `roscore` can be installed at a time or they will
-  fight for the same port.
+- Snappy's port negotiation feature is still a work-in-progress, which means
+  that only a single .snap that runs `roscore` can be installed at a time or
+  they will fight for the same port.
 
 Now that we understand the `snapcraft.yaml`, let's create the .snap!
 
@@ -344,10 +348,10 @@ it at the same time via `snappy-remote`, for example:
       ros-talker-and-listener_1.0_amd64.snap
 
 Now on the Ubuntu Core machine, take a look in `/apps/bin/`, and you'll see the
-binary you requested, called `ros-talker-and-listener.launch_project`. Test it
+binary you requested, called `ros-talker-and-listener.launch-project`. Test it
 out:
 
-    $ ros-talker-and-listener.launch_project
+    $ ros-talker-and-listener.launch-project
 
 And you should see the talker and listener communicating like before. As usual,
 ctrl+c will stop it. Note also that, since ROS is running in a confined
