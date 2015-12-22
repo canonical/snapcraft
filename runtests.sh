@@ -45,12 +45,7 @@ parseargs(){
 
 run_static_tests(){
     SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
-
-    # These three checks could easily be done with flake8 in one shot if
-    # we had python3-flake8 provide flake8
-    python3 -m pep8 $SRC_PATHS
-
-    python3 -m pyflakes $SRC_PATHS
+    python3 /usr/bin/flake8 $SRC_PATHS
 
     # mccabe in 'warning' mode as we have high complexity
     mccabe_list=
