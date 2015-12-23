@@ -217,16 +217,30 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._finish_build()
 
     def _prepare_build(self):
-        # Fix ROS CMake files so they're pointing into the install directory
+        # Each Catkin package distributes .cmake files so they can be found via
+        # find_package(). However, the Ubuntu packages pulled down as
+        # dependencies contain .cmake files pointing to system paths (e.g.
+        # /usr/lib, /usr/include, etc.). They need to be rewritten to point to
+        # the install directory.
+        def rewrite_paths(match):
+            paths = match.group(1).strip().split(';')
+            for i, path in enumerate(paths):
+                # Rewrite this path if it's an absolute path and not already
+                # within the install directory.
+                if (os.path.isabs(path) and
+                        not path.startswith(self.installdir)):
+                    paths[i] = self.installdir + path
+
+            return '"' + ';'.join(paths) + '"'
+
+        # Looking for any path-like string
+        pattern = re.compile(r'"(.*?/.*?)"')
         for root, directories, files in os.walk(self.rosdir):
             for fileName in files:
-                if fileName.endswith('.cmake'):
+                if fileName.endswith('Config.cmake'):
                     with open(os.path.join(root, fileName), 'r+') as f:
-                        pattern = re.compile(r'(\W)/usr/lib')
-                        replacementPattern = r'\1{}/usr/lib'.format(
-                            self.installdir)
                         original = f.read()
-                        replaced = pattern.sub(replacementPattern, original)
+                        replaced = pattern.sub(rewrite_paths, original)
                         if replaced != original:
                             f.seek(0)
                             f.truncate()
