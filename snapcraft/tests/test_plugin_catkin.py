@@ -396,42 +396,50 @@ class CatkinPluginTestCase(tests.TestCase):
 
         self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
 
-    @mock.patch('sys.stdout')
-    def test_prepare_build(self, stdout_mock):
+    def test_prepare_build(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         os.makedirs(os.path.join(plugin.rosdir, 'test'))
 
         # Place a few .cmake files with incorrect paths, and some files that
-        # shouldn't be touched.
-        with open(os.path.join(plugin.rosdir, 'foo.cmake'), 'w') as f:
-            f.write(';/usr/lib/foo')
+        # shouldn't be changed.
+        files = [
+            {
+                'path': 'fooConfig.cmake',
+                'contents': '"/usr/lib/foo"',
+                'expected': '"{}/usr/lib/foo"'.format(plugin.installdir),
+            },
+            {
+                'path': 'bar.cmake',
+                'contents': '"/usr/lib/bar"',
+                'expected': '"/usr/lib/bar"',
+            },
+            {
+                'path': 'test/bazConfig.cmake',
+                'contents': '"/test/baz;/usr/lib/baz"',
+                'expected': '"{0}/test/baz;{0}/usr/lib/baz"'.format(
+                    plugin.installdir),
+            },
+            {
+                'path': 'test/quxConfig.cmake',
+                'contents': 'qux',
+                'expected': 'qux',
+            },
+            {
+                'path': 'test/installedConfig.cmake',
+                'contents': '"{}/foo"'.format(plugin.installdir),
+                'expected': '"{}/foo"'.format(plugin.installdir),
+            }
+        ]
 
-        with open(os.path.join(plugin.rosdir, 'bar'), 'w') as f:
-            f.write(';/usr/lib/bar')
-
-        with open(os.path.join(plugin.rosdir, 'test', 'baz.cmake'), 'w') as f:
-            f.write(';/usr/lib/baz')
-
-        with open(os.path.join(plugin.rosdir, 'test', 'qux.cmake'), 'w') as f:
-            f.write('/usr/lib/qux')
+        for fileInfo in files:
+            with open(os.path.join(plugin.rosdir, fileInfo['path']), 'w') as f:
+                f.write(fileInfo['contents'])
 
         plugin._prepare_build()
 
-        with open(os.path.join(plugin.rosdir, 'foo.cmake'), 'r') as f:
-            self.assertEqual(f.read(), ';{}/usr/lib/foo'.format(
-                plugin.installdir))
-
-        with open(os.path.join(plugin.rosdir, 'bar'), 'r') as f:
-            self.assertEqual(f.read(), ';/usr/lib/bar',
-                             'Expected "bar" to be unchanged')
-
-        with open(os.path.join(plugin.rosdir, 'test', 'baz.cmake'), 'r') as f:
-            self.assertEqual(f.read(), ';{}/usr/lib/baz'.format(
-                plugin.installdir))
-
-        with open(os.path.join(plugin.rosdir, 'test', 'qux.cmake'), 'r') as f:
-            self.assertEqual(f.read(), '/usr/lib/qux',
-                             'Expected "qux" to be unchanged')
+        for fileInfo in files:
+            with open(os.path.join(plugin.rosdir, fileInfo['path']), 'r') as f:
+                self.assertEqual(f.read(), fileInfo['expected'])
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
