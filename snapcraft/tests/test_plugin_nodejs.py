@@ -44,6 +44,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+            node_folder = '.'
 
         plugin = nodejs.NodePlugin('test-part', Options())
 
@@ -58,10 +59,34 @@ class NodePluginTestCase(tests.TestCase):
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().pull()])
 
+    def test_build_local_sources_and_node_folder(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_folder = 'subdir'
+
+        plugin = nodejs.NodePlugin('test-part', Options())
+
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(os.path.join(plugin.sourcedir, plugin.options.node_folder))
+        open(os.path.join(plugin.sourcedir, plugin.options.node_folder,
+                          'package.json'), 'w').close()
+
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
+        self.tar_mock.assert_has_calls([
+            mock.call(
+                nodejs._get_nodejs_release(),
+                path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
+            mock.call().provision(plugin.installdir)])
+
     def test_build_local_sources(self):
         class Options:
             source = '.'
             node_packages = []
+            node_folder = '.'
 
         plugin = nodejs.NodePlugin('test-part', Options())
 
@@ -82,6 +107,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = ['my-pkg']
+            node_folder = '.'
 
         plugin = nodejs.NodePlugin('test-part', Options())
 
@@ -107,6 +133,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = []
+            node_folder = '.'
 
         with self.assertRaises(EnvironmentError) as raised:
             nodejs.NodePlugin('test-part', Options())
