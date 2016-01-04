@@ -28,6 +28,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - node-packages:
       (list)
       A list of dependencies to fetch using npm.
+    - node-folder:
+      (string)
+      A relative path to the folder containing the package.json to use with
+      npm install
 """
 
 import logging
@@ -65,6 +69,11 @@ class NodePlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
+        schema['properties']['node-folder'] = {
+            'type': 'string',
+            'default': '.',
+        }
+
         if 'required' in schema:
             del schema['required']
 
@@ -85,8 +94,11 @@ class NodePlugin(snapcraft.BasePlugin):
         self._nodejs_tar.provision(self.installdir)
         for pkg in self.options.node_packages:
             self.run(['npm', 'install', '-g', pkg])
-        if os.path.exists(os.path.join(self.builddir, 'package.json')):
-            self.run(['npm', 'install', '-g'])
+        if os.path.exists(os.path.join(self.builddir,
+                                       self.options.node_folder,
+                                       'package.json')):
+            self.run(['npm', 'install', '-g',
+                     os.path.join(self.builddir, self.options.node_folder)])
 
 
 def _get_nodejs_base():
