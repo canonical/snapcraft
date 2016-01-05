@@ -330,11 +330,11 @@ class CatkinPluginTestCase(tests.TestCase):
             def __eq__(self, args):
                 index = args.index('--pkg')
                 packages = args[index+1:index+3]
-                if not 'my_package' in packages:
+                if 'my_package' not in packages:
                     self.test.fail('Expected "my_package" to be installed '
                                    'within the same command as "package_2"')
 
-                if not 'package_2' in packages:
+                if 'package_2' not in packages:
                     self.test.fail('Expected "package_2" to be installed '
                                    'within the same command as "my_package"')
 
