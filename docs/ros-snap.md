@@ -333,7 +333,7 @@ until then there are some limitations to keep in mind:
 
 Now that we understand the `snapcraft.yaml`, let's create the .snap!
 
-    $ snapcraft
+    $ snapcraft snap
 
 This will take some time to pull down the dependencies etc., but in the end
 you'll have a .snap.

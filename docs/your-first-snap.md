@@ -71,23 +71,15 @@ project, and initialize it:
     $ snapcraft init
 
 then open the created snapcraft.yaml and edit the templated values for `name`,
-`version`, `vendor`, `summary` and `description`. You can make it look like
+`version`, `summary` and `description`. You can make it look like
 this:
 
     name: webcam-webui
     version: 1
-    vendor: You <you@example.com>
     summary: Webcam web UI
     description: Exposes your webcam over a web UI
-    icon: icon.png
 
-and copy over an icon to `icon.png` or change the path accordingly (if you
-change the path just make sure it is part of your project directory and that
-the path is relative to be able to share your snapcrafting):
-
-    $ cp /usr/share/icons/hicolor/64/mimetypes/text-x-apport.png ./icon.png
-
-If you run `snapcraft` now, it will complain about not having any `parts`.
+If you run `snapcraft snap` now, it will complain about not having any `parts`.
 
 We will look more into this metadata in a bit, but first let's look at adding
 some `parts`.
@@ -144,7 +136,7 @@ package.
 
 Now let's stage our recipe again (and force it to go through the lifecycle).
 
-    $ snapcraft stage --force
+    $ snapcraft stage
 
 You'll also see Snapcraft downloading and unpacking all the Ubuntu packages
 into your snap. If you look at `./stage`, you'll see a lot more files now:
@@ -278,7 +270,7 @@ your resulting `snapcraft.yaml` should look very similar to:
 
 and tell Snapcraft to actually make the snap package:
 
-    $ snapcraft
+    $ snapcraft snap
 
 You should now have a `webcam-webui_1_amd64.snap` file sitting in your
 directory (assuming you are running on amd64). Congratulations!

@@ -8,16 +8,13 @@ lifecycle by running:
 	$ snapcraft pull
 	$ snapcraft build
 	$ snapcraft stage
+	$ snapcraft strip
 	$ snapcraft snap
-	$ snapcraft assemble
 
 That sequence of commands basically went through the lifecycle of all the
 defined parts. To quickly inspect the parts a Snapcraft project has, open
 the `snapcraft.yaml` file of the corresponding example and look at the keys
 inside the parts entry.
-
-*Tip:* the snapcraft command without further subcommands will run the whole
-sequence. To force the full run again, use `--force`.
 
 
 ## Sideloading your snap
