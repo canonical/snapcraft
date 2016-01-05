@@ -304,7 +304,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
         bashrun_mock.assert_called_with(check_build_command())
 
-        self.dependencies_mock.assert_not_called(
+        self.assertFalse(
+            self.dependencies_mock.called,
             'Dependencies should have been discovered in the pull() step')
 
         finish_build_mock.assert_called_once_with()
@@ -342,7 +343,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
         bashrun_mock.assert_called_with(check_pkg_arguments(self))
 
-        self.dependencies_mock.assert_not_called(
+        self.assertFalse(
+            self.dependencies_mock.called,
             'Dependencies should have been discovered in the pull() step')
 
         finish_build_mock.assert_called_once_with()
@@ -459,7 +461,8 @@ class CatkinPluginTestCase(tests.TestCase):
             self.assertEqual(f.read(), '#!/usr/bin/env python',
                              'The shebang was not replaced as expected')
 
-        self.dependencies_mock.assert_not_called(
+        self.assertFalse(
+            self.dependencies_mock.called,
             'Dependencies should have been discovered in the pull() step')
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
