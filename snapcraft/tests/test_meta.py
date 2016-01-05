@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -64,6 +64,23 @@ class ComposeTestCase(tests.TestCase):
             'version': '1.0',
             'icon': 'my-icon.png',
             'architectures': ['amd64']
+        }
+
+        self.assertEqual(y, expected)
+
+    def test_license_information(self):
+        self.config_data['license-agreement'] = 'explicit'
+        self.config_data['license-version'] = '1.0'
+
+        y = meta._compose_package_yaml('meta', self.config_data, ['amd64'])
+
+        expected = {
+            'name': 'my-package',
+            'version': '1.0',
+            'icon': 'my-icon.png',
+            'architectures': ['amd64'],
+            'license-version': '1.0',
+            'explicit-license-agreement': 'yes',
         }
 
         self.assertEqual(y, expected)
@@ -316,6 +333,25 @@ class Create(tests.TestCase):
                 args=['my.py', '--config'], shebang=None,
             ),
         ])
+
+    @patch('snapcraft.meta._write_wrap_exe')
+    @patch('snapcraft.meta.open', create=True)
+    def test_create_meta_with_license(self, mock_the_open, mock_wrap_exe):
+        self.config_data.pop('config')
+        self.config_data['license'] = 'LICENSE'
+
+        meta.create(self.config_data)
+
+        self.mock_makedirs.assert_has_calls([
+            call(self.meta_dir, exist_ok=True),
+            call(self.hooks_dir),
+        ])
+
+        self.mock_rename.assert_not_called()
+        mock_the_open.assert_has_calls(self.expected_open_calls)
+
+        self.mock_copyfile.assert_any_call(
+            'LICENSE', os.path.join(self.hooks_dir, 'license'))
 
 
 # TODO this needs more tests.
