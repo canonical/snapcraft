@@ -16,12 +16,12 @@
 
 import logging
 import os
-import tempfile
 import unittest
 import unittest.mock
 
 import fixtures
 
+import snapcraft.common
 import snapcraft.yaml
 from snapcraft import (
     dirs,
@@ -40,13 +40,6 @@ class TestYaml(tests.TestCase):
         mock_wrap_exe.return_value = True
         self.addCleanup(patcher.stop)
 
-    def make_snapcraft_yaml(self, content, encoding='ascii'):
-        tempdirObj = tempfile.TemporaryDirectory()
-        self.addCleanup(tempdirObj.cleanup)
-        os.chdir(tempdirObj.name)
-        with open('snapcraft.yaml', 'w', encoding=encoding) as fp:
-            fp.write(content)
-
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
     def test_config_loads_plugins(self, mock_get_part, mock_loadPlugin):
@@ -54,7 +47,6 @@ class TestYaml(tests.TestCase):
 version: "1"
 summary: test
 description: test
-icon: my-icon.png
 
 parts:
   part1:
@@ -77,7 +69,6 @@ parts:
 version: "1"
 summary: test
 description: ñoño test
-icon: my-icon.png
 
 parts:
   part1:
@@ -103,7 +94,6 @@ parts:
 version: "1"
 summary: test
 description: test
-icon: my-icon.png
 
 parts:
   part1:
@@ -126,7 +116,6 @@ parts:
 version: "1"
 summary: test
 description: test
-icon: my-icon.png
 
 parts:
   part1:
@@ -179,7 +168,6 @@ parts:
 version: "1"
 summary: test
 description: test
-icon: my-icon.png
 
 parts:
   p1:
@@ -207,7 +195,6 @@ parts:
 version: "1"
 summary: test
 description: nothing
-icon: my-icon.png
 
 parts:
   part1:
@@ -229,7 +216,6 @@ parts:
 version: "1"
 summary: test
 description: nothing
-icon: my-icon.png
 
 parts:
   part1:
@@ -251,7 +237,6 @@ parts:
 version: "1"
 summary: test
 description: nothing
-icon: my-icon.png
 
 parts:
   part1:
@@ -273,7 +258,6 @@ parts:
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
-icon: my-icon.png
 
 parts:
   part1:
@@ -295,7 +279,6 @@ parts:
         self.make_snapcraft_yaml("""name: test
 version: "1"
 \tsummary: test
-icon: my-icon.png
 
 parts:
   part1:
@@ -317,7 +300,6 @@ parts:
 version: "1"
 summary: test
 description: test
-icon: my-icon.png
 
 parts:
   part1:
@@ -344,6 +326,77 @@ parts:
             'stage-packages': ['fswebcam'],
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
+
+
+class TestYamlEnvironment(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        dirs.setup_dirs()
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+
+    def test_config_runtime_environment(self):
+        config = snapcraft.yaml.Config()
+        environment = config.runtime_env('foo')
+        self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
+
+        # Ensure that LD_LIBRARY_PATH is present and it contains only the
+        # basics.
+        paths = []
+        for variable in environment:
+            if 'LD_LIBRARY_PATH' in variable:
+                these_paths = variable.split('=')[1].strip()
+                paths.extend(these_paths.replace('"', '').split(':'))
+
+        self.assertTrue(len(paths) > 0,
+                        'Expected LD_LIBRARY_PATH to be in environment')
+
+        arch = snapcraft.common.get_arch_triplet()
+        for expected in ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
+                         'foo/usr/lib/{}'.format(arch)]:
+            self.assertTrue(expected in paths,
+                            'Expected LD_LIBRARY_PATH to include "{}"'.format(
+                                expected))
+
+    def test_config_runtime_environment_ld(self):
+        # Place a few ld.so.conf files in supported locations. We expect the
+        # contents of these to make it into the LD_LIBRARY_PATH.
+        os.makedirs('foo/usr/lib/my_arch/mesa/')
+        with open('foo/usr/lib/my_arch/mesa/ld.so.conf', 'w') as f:
+            f.write('/mesa')
+
+        os.makedirs('foo/usr/lib/my_arch/mesa-egl/')
+        with open('foo/usr/lib/my_arch/mesa-egl/ld.so.conf', 'w') as f:
+            f.write('# Standalone comment\n')
+            f.write('/mesa-egl')
+
+        config = snapcraft.yaml.Config()
+        environment = config.runtime_env('foo')
+
+        # Ensure that the LD_LIBRARY_PATH includes all the above paths
+        paths = []
+        for variable in environment:
+            if 'LD_LIBRARY_PATH' in variable:
+                these_paths = variable.split('=')[1].strip()
+                paths.extend(these_paths.replace('"', '').split(':'))
+
+        self.assertTrue(len(paths) > 0,
+                        'Expected LD_LIBRARY_PATH to be in environment')
+
+        for expected in ['foo/mesa', 'foo/mesa-egl']:
+            self.assertTrue(expected in paths,
+                            'Expected LD_LIBRARY_PATH to include "{}"'.format(
+                                expected))
 
 
 class TestValidation(tests.TestCase):

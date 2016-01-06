@@ -26,6 +26,7 @@ import yaml
 
 from snapcraft import (
     common,
+    libraries,
     pluginhandler,
     wiki,
 )
@@ -205,6 +206,8 @@ class Config:
             '{0}/usr/bin',
             '$PATH'
         ]).format(root) + '"')
+
+        # Add the default LD_LIBRARY_PATH
         env.append('LD_LIBRARY_PATH="' + ':'.join([
             '{0}/lib',
             '{0}/usr/lib',
@@ -212,6 +215,13 @@ class Config:
             '{0}/usr/lib/{1}',
             '$LD_LIBRARY_PATH'
         ]).format(root, common.get_arch_triplet()) + '"')
+
+        # Add more specific LD_LIBRARY_PATH if necessary
+        ld_library_paths = libraries.determine_ld_library_path(root)
+        if ld_library_paths:
+            env.append('LD_LIBRARY_PATH="' + ':'.join(ld_library_paths) +
+                       ':$LD_LIBRARY_PATH"')
+
         return env
 
     def build_env(self, root):
