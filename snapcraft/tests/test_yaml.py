@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -539,6 +539,44 @@ class TestValidation(tests.TestCase):
 
         expected_message = 'Additional properties are not allowed ' \
                            '(\'plugins\' was unexpected)'
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
+
+    def test_license_hook(self):
+        self.data['license'] = 'LICENSE'
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_full_license_use(self):
+        self.data['license'] = 'LICENSE'
+        self.data['license-agreement'] = 'explicit'
+        self.data['license-version'] = '1.0'
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_license_with_license_version(self):
+        self.data['license'] = 'LICENSE'
+        self.data['license-version'] = '1.0'
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_license_agreement_without_license_raises_exception(self):
+        self.data['license-agreement'] = 'explicit'
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_message = "'license' is a dependency of 'license-agreement'"
+        self.assertEqual(raised.exception.message, expected_message,
+                         msg=self.data)
+
+    def test_license_version_without_license_raises_exception(self):
+        self.data['license-version'] = '1.1'
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        expected_message = "'license' is a dependency of 'license-version'"
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 
