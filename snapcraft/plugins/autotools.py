@@ -35,6 +35,8 @@ In additon, this plugin uses the following plugin-specific keywords:
 """
 
 import os
+import stat
+
 import snapcraft
 
 
@@ -68,7 +70,15 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         if not os.path.exists(os.path.join(self.builddir, "configure")):
-            if os.path.exists(os.path.join(self.builddir, "autogen.sh")):
+            autogen_path = os.path.join(self.builddir, "autogen.sh")
+            if os.path.exists(autogen_path):
+                # Make sure it's executable
+                if not os.access(autogen_path, os.X_OK):
+                    os.chmod(autogen_path,
+                             stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+                             stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
+                             stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+
                 self.run(['env', 'NOCONFIGURE=1', './autogen.sh'])
             else:
                 self.run(['autoreconf', '-i'])
