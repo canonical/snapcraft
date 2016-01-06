@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -37,6 +37,12 @@ _OPTIONAL_PACKAGE_KEYS = [
     'frameworks',
     'type',
     'icon',
+    'license-version',
+]
+
+_OPTIONAL_HOOKS = [
+    'config',
+    'license',
 ]
 
 
@@ -61,8 +67,7 @@ def create(config_data):
     _write_package_yaml(meta_dir, config_data, config_data['architectures'])
     _write_readme_md(meta_dir, config_data)
 
-    if 'config' in config_data:
-        _setup_config_hook(meta_dir, config_data['config'])
+    _setup_hooks(meta_dir, config_data)
 
     return meta_dir
 
@@ -83,15 +88,30 @@ def _write_readme_md(meta_dir, config_data):
         f.write(readme_md)
 
 
-def _setup_config_hook(meta_dir, config):
-    hooks_dir = os.path.join(meta_dir, 'hooks')
-    config_hook_path = os.path.join(hooks_dir, 'config')
+def _setup_hooks(meta_dir, config_data):
+    if any(key in config_data for key in _OPTIONAL_HOOKS):
+        hooks_dir = os.path.join(meta_dir, 'hooks')
+        os.makedirs(hooks_dir)
 
-    os.makedirs(hooks_dir)
+    if 'config' in config_data:
+        _setup_config_hook(hooks_dir, config_data['config'])
+
+    if 'license' in config_data:
+        _setup_license_hook(hooks_dir, config_data['license'])
+
+
+def _setup_config_hook(hooks_dir, config):
+    config_hook_path = os.path.join(hooks_dir, 'config')
 
     execparts = shlex.split(config)
     execwrap = _wrap_exe(execparts[0], args=execparts[1:])
     os.rename(os.path.join(common.get_snapdir(), execwrap), config_hook_path)
+
+
+def _setup_license_hook(hooks_dir, license):
+    license_hook_path = os.path.join(hooks_dir, 'license')
+
+    shutil.copyfile(license, license_hook_path)
 
 
 def _copy(meta_dir, relpath, new_relpath=None):
@@ -150,6 +170,9 @@ def _compose_package_yaml(meta_dir, config_data, arches):
         services = _wrap_services(services)
         package_yaml['services'] = \
             _copy_security_profiles(meta_dir, _repack_names(services))
+
+    if config_data.get('license-agreement', '') == 'explicit':
+        package_yaml['explicit-license-agreement'] = 'yes'
 
     return package_yaml
 
