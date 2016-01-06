@@ -1,10 +1,7 @@
 sudo: required
-dist: trusty
-language: python
-python:
-  - 3.4
-virtualenv:
-  system_site_packages: true
+language: generic
+services:
+  - docker
 env:
   global:
   # Encrypted Coveralls token. The secret token for your repository can be found at the
@@ -17,13 +14,12 @@ env:
   - TEST_SUITE=integration
   - TEST_SUITE="examples --skip-install"
 
+before_install:
+  - docker pull ubuntu:xenial
 install:
-  # PPA for plainbox.
-  - sudo apt-add-repository -y ppa:hardware-certification/public
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq build-essential squashfs-tools dpkg-dev plainbox pyflakes python3-apt python3-docopt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pep8 python3-requests python3-testscenarios python3-testtools python3-yaml python3-lxml
+  - docker run ubuntu:xenial /bin/sh -c "apt-get install -qq build-essential dpkg-dev pyflakes python3-apt python3-docopt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pip python3-pep8 python3-requests python3-testscenarios python3-testtools python3-yaml python3-lxml squashfs-tools"
 script:
-  - ./runtests.sh $TEST_SUITE
+  - docker run ubuntu:xenial /bin/sh -c "cd /root/snapcraft; ./runtests.sh $TEST_SUITE"
 after_success:
-  - pip install coveralls
-  - COVERALLS_REPO_TOKEN=$COVERALLS_TOKEN coveralls
+  - docker run ubuntu:xenial /bin/sh -c "pip install coveralls"
+  - docker run ubuntu:xenial /bin/sh -c "cd /root/snapcraft; COVERALLS_REPO_TOKEN=$COVERALLS_TOKEN coveralls"
