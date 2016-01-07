@@ -1,0 +1,16 @@
+name: opencv-example
+version: 1.0
+vendor: me <me@me.com>
+summary: Use OpenCV and OpenGL
+description: A simple OpenCV example
+icon: icon.svg
+
+binaries:
+  example:
+    exec: bin/example
+
+parts:
+  example:
+    plugin: cmake
+    source: src
+    stage-packages: [libopencv-dev]

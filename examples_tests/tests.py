@@ -125,6 +125,11 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
                  'custom libpipeline called\n'
                  'include\n')],
             }),
+        ('opencv', {
+            'dir': 'opencv',
+            'name': 'opencv-example',
+            'version': '1.0',
+            }),
         ('py2-project', {
             'dir': 'py2-project',
             'name': 'spongeshaker',
