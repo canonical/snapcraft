@@ -3,11 +3,12 @@ version: 1
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
 icon: icon.png
-services:
-  webcam-webui:
-    description: "Exposes your webcam over a web UI"
-    start: bin/webcam-webui
 config: usr/bin/config.py
+
+apps:
+  webcam-webui:
+    command: bin/webcam-webui
+    daemon: simple
 
 parts:
   cam:
