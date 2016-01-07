@@ -20,7 +20,7 @@ set -ex
 apt-get update -qq
 apt-get install -qq build-essential dpkg-dev language-pack-en-base pyflakes python3-apt python3-docopt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pip python3-pep8 python3-requests python3-testscenarios python3-testtools python3-yaml python3-lxml squashfs-tools
 
-./runtests.sh $@
+./runtests.sh $TEST_SUITE
 
 python3 -m pip install coveralls
 
