@@ -27,7 +27,6 @@ class CleanCommandTestCase(tests.TestCase):
 
     yaml_template = """name: clean-test
 version: 1.0
-vendor: To Be Removed <vendor@example.com>
 summary: test clean
 description: if the clean is succesful the state file will be updated
 icon: icon.png

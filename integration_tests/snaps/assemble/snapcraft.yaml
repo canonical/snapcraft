@@ -3,15 +3,16 @@ version: 1.0
 summary: one line summary
 description: a longer description
 icon: icon.png
-binaries:
+
+apps:
   assemble-bin:
-    exec: binary1
+    command: binary1
   binary2:
-    exec: subdir/binary2
-services:
+    command: subdir/binary2
   assemble-service:
-    start: service-start
-    stop: service-stop with args
+    command: service-start
+    stop-command: service-stop with args
+    daemon: simple
 
 parts:
     make-project:

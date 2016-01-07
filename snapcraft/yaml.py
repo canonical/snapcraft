@@ -36,9 +36,15 @@ logger = logging.getLogger(__name__)
 
 
 @jsonschema.FormatChecker.cls_checks('file-path')
-@jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_file_exists(instance):
     return os.path.exists(instance)
+
+
+@jsonschema.FormatChecker.cls_checks('icon-path')
+def _validate_icon(instance):
+    normalized_icon = instance.lower()
+    ext = normalized_icon.endswith('.png') or normalized_icon.endswith('.svg')
+    return os.path.exists(instance) and ext
 
 
 class SnapcraftYamlFileError(Exception):

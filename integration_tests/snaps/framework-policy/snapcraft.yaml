@@ -10,4 +10,3 @@ parts:
       plugin: copy
       files:
         one: one
-

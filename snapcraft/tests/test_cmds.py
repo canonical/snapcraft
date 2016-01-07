@@ -42,7 +42,6 @@ class TestCommands(tests.TestCase):
         with open('snapcraft.yaml', 'w') as f:
             f.write('''name: test-package
 version: 1
-vendor: me <me@me.com>
 summary: test
 description: test
 icon: my-icon.png
