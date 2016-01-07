@@ -17,4 +17,4 @@ env:
 before_install:
   - docker pull ubuntu:xenial
 script:
-  - docker run -t -i -v $(pwd):/root ubuntu:xenial /bin/sh -c "ls && ./.travis-docker.sh"
+  - docker run -t -i -v $(pwd):/root ubuntu:xenial /bin/sh -c "cd /root; ./.travis-docker.sh"
