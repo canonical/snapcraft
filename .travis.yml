@@ -17,4 +17,4 @@ env:
 before_install:
   - docker pull ubuntu:xenial
 script:
-  - docker run -e TEST_SUITE=$(TEST_SUITE) COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) -t -i -v $(pwd):/root ubuntu:xenial /bin/sh -c "cd /root; ./.travis-docker.sh"
+  - docker run -e TEST_SUITE=$(TEST_SUITE) -e COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) -t -i -v $(pwd):/root ubuntu:xenial /bin/sh -c "cd /root; ./.travis-docker.sh"
