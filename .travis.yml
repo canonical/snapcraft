@@ -16,12 +16,5 @@ env:
 
 before_install:
   - docker pull ubuntu:xenial
-install:
-  - docker run -t -i -v $(pwd):/root ubuntu:xenial /bin/bash
-  - ls /root
-  - docker run ubuntu:xenial /bin/sh -c "apt-get update -qq; apt-get install -qq build-essential dpkg-dev pyflakes python3-apt python3-docopt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pip python3-pep8 python3-requests python3-testscenarios python3-testtools python3-yaml python3-lxml squashfs-tools"
 script:
-  - docker run ubuntu:xenial /bin/sh -c "cd /root/snapcraft; ./runtests.sh $TEST_SUITE"
-after_success:
-  - docker run ubuntu:xenial /bin/sh -c "pip install coveralls"
-  - docker run ubuntu:xenial /bin/sh -c "cd /root/snapcraft; COVERALLS_REPO_TOKEN=$COVERALLS_TOKEN coveralls"
+  - docker run -t -i -v $(pwd):/root ubuntu:xenial /bin/sh -c "cd /root/snapcraft; ./.travis-docker.sh"
