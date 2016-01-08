@@ -419,8 +419,16 @@ class _Rosdep:
 
     def resolve_dependency(self, dependency_name):
         try:
+            # rosdep needs three pieces of information here:
+            #
+            # 1) The dependency we're trying to lookup.
+            # 2) The rosdistro being used.
+            # 3) The version of Ubuntu being used. We're currently using only
+            #    the Trusty ROS sources, so we're telling rosdep to resolve
+            #    dependencies using Trusty (even if we're running on something
+            #    else).
             output = self._run(['resolve', dependency_name, '--rosdistro',
-                                self._ros_distro])
+                                self._ros_distro, '--os', 'ubuntu:trusty'])
         except subprocess.CalledProcessError:
             return None
 
