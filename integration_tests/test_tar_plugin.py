@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,7 +40,8 @@ class TarPluginTestCase(integration_tests.TestCase):
             'notop',
             'parent',
             'slash',
-            'readonly_file'
+            'readonly_file',
+            os.path.join('destdir1', 'destdir2', 'top-simple')
         ]
         for expected_file in expected_files:
             self.assertThat(
@@ -49,6 +50,8 @@ class TarPluginTestCase(integration_tests.TestCase):
         expected_dirs = [
             'dir-simple',
             'notopdir',
+            'destdir1',
+            os.path.join('destdir1', 'destdir2')
         ]
         for expected_dir in expected_dirs:
             self.assertThat(
