@@ -715,7 +715,8 @@ class RosdepTestCase(tests.TestCase):
         self.assertEqual(self.rosdep.resolve_dependency('foo'), 'mylib-dev')
 
         self.check_output_mock.assert_called_with(
-            ['rosdep', 'resolve', 'foo', '--rosdistro', 'ros_distro'],
+            ['rosdep', 'resolve', 'foo', '--rosdistro', 'ros_distro', '--os',
+             'ubuntu:trusty'],
             env=mock.ANY)
 
     def test_resolve_invalid_dependency(self):
