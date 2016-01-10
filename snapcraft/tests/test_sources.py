@@ -338,4 +338,3 @@ class TestUri(tests.TestCase):
             with self.subTest(key=source):
                 self.assertEqual(
                     snapcraft.sources._get_source_type_from_uri(source), 'git')
-
