@@ -32,7 +32,6 @@ class SnapCommandTestCase(tests.TestCase):
 
     yaml_template = """name: snap-test
 version: 1.0
-vendor: To Be Removed <vendor@example.com>
 summary: test strip
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']

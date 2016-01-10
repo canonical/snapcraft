@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,7 +23,10 @@ import tempfile
 
 import yaml
 
-from snapcraft import common
+from snapcraft import (
+    common,
+    meta_legacy,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,73 +34,67 @@ logger = logging.getLogger(__name__)
 _MANDATORY_PACKAGE_KEYS = [
     'name',
     'version',
+    'description',
+    'summary',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
-    'frameworks',
+    'architectures',
     'type',
-    'icon',
+    'license-agreement',
     'license-version',
 ]
 
 _OPTIONAL_HOOKS = [
     'config',
-    'license',
 ]
 
 
 def create(config_data):
-    '''
-    Create  the meta directory and provision it with package.yaml and readme.md
-    in the snap dir using information from config_data and arches.
-    If provided arches, is a list of arches.
+    """Create snap.yaml and necessary package hooks.
+    Create  the meta directory and provision it with snap.yaml and hooks
+    in the snap dir using information from config_data.
 
-    Returns meta_dir.
-    '''
-
+    :param dict config_data: project values defined in snapcraft.yaml.
+    :return: meta_dir.
+    """
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
-    if 'icon' in config_data:
-        config_data['icon'] = _copy(meta_dir, config_data['icon'])
+    snap_yaml = _write_snap_yaml(meta_dir, config_data)
+    _setup_assets(meta_dir, config_data)
 
-    if 'framework-policy' in config_data:
-        _copy(meta_dir, config_data['framework-policy'], 'framework-policy')
-
-    _write_package_yaml(meta_dir, config_data, config_data['architectures'])
-    _write_readme_md(meta_dir, config_data)
-
-    _setup_hooks(meta_dir, config_data)
+    meta_legacy.create(meta_dir, snap_yaml)
 
     return meta_dir
 
 
-def _write_package_yaml(meta_dir, config_data, arches):
-    package_yaml_path = os.path.join(meta_dir, 'package.yaml')
-    package_yaml = _compose_package_yaml(meta_dir, config_data, arches)
+def _write_snap_yaml(meta_dir, config_data):
+    package_snap_path = os.path.join(meta_dir, 'snap.yaml')
+    snap_yaml = _compose_snap_yaml(meta_dir, config_data)
 
-    with open(package_yaml_path, 'w') as f:
-        yaml.dump(package_yaml, stream=f, default_flow_style=False)
+    with open(package_snap_path, 'w') as f:
+        yaml.dump(snap_yaml, stream=f, default_flow_style=False)
 
-
-def _write_readme_md(meta_dir, config_data):
-    readme_md_path = os.path.join(meta_dir, 'readme.md')
-    readme_md = _compose_readme(config_data)
-
-    with open(readme_md_path, 'w') as f:
-        f.write(readme_md)
+    return snap_yaml
 
 
-def _setup_hooks(meta_dir, config_data):
+def _setup_assets(meta_dir, config_data):
     if any(key in config_data for key in _OPTIONAL_HOOKS):
         hooks_dir = os.path.join(meta_dir, 'hooks')
-        os.makedirs(hooks_dir)
+        os.makedirs(hooks_dir, exist_ok=True)
 
     if 'config' in config_data:
         _setup_config_hook(hooks_dir, config_data['config'])
 
     if 'license' in config_data:
-        _setup_license_hook(hooks_dir, config_data['license'])
+        license_path = os.path.join(meta_dir, 'license.txt')
+        shutil.copyfile(config_data['license'], license_path)
+
+    if 'icon' in config_data:
+        icon_ext = config_data['icon'].split(os.path.extsep)[1]
+        icon_path = os.path.join(meta_dir, 'icon.{}'.format(icon_ext))
+        shutil.copyfile(config_data['icon'], icon_path)
 
 
 def _setup_config_hook(hooks_dir, config):
@@ -108,91 +105,52 @@ def _setup_config_hook(hooks_dir, config):
     os.rename(os.path.join(common.get_snapdir(), execwrap), config_hook_path)
 
 
-def _setup_license_hook(hooks_dir, license):
-    license_hook_path = os.path.join(hooks_dir, 'license')
+def _compose_snap_yaml(meta_dir, config_data):
+    """Creates a new dictionary from config_data to obtain snap.yaml.
 
-    shutil.copyfile(license, license_hook_path)
+    Missing key exceptions will be raised if config_data does not contain all
+    the _MANDATORY_PACKAGE_KEYS, config_data can be validated against the
+    snapcraft schema.
+
+    Keys that are in _OPTIONAL_PACKAGE_KEYS are ignored if not there.
+    """
+    snap_yaml = {}
+
+    for key_name in _MANDATORY_PACKAGE_KEYS:
+        snap_yaml[key_name] = config_data[key_name]
+
+    for key_name in _OPTIONAL_PACKAGE_KEYS:
+        if key_name in config_data:
+            snap_yaml[key_name] = config_data[key_name]
+
+    if 'apps' in config_data:
+        apps = config_data['apps']
+        apps = _wrap_apps(apps)
+        snap_yaml['apps'] = \
+            _copy_security_profiles(meta_dir, apps)
+
+    return snap_yaml
 
 
 def _copy(meta_dir, relpath, new_relpath=None):
     new_base = new_relpath or os.path.basename(relpath)
-    new_relpath = os.path.join(meta_dir, new_base)
+    target_path = os.path.join(meta_dir, new_base)
 
-    if os.path.isdir(relpath):
-        shutil.copytree(relpath, new_relpath)
-    else:
-        shutil.copyfile(relpath, new_relpath)
+    shutil.copyfile(relpath, target_path)
 
     return os.path.join('meta', os.path.basename(relpath))
 
 
-def _copy_security_profiles(meta_dir, runnables):
-    for runnable in runnables:
-        for entry in ('security-policy', 'security-override'):
-            if entry in runnable:
-                runnable[entry]['apparmor'] = \
-                    _copy(meta_dir, runnable[entry]['apparmor'])
-                runnable[entry]['seccomp'] = \
-                    _copy(meta_dir, runnable[entry]['seccomp'])
+def _copy_security_profiles(meta_dir, apps):
+    # TODO: remove once capabilities are implemented.
+    for app in apps:
+        if 'security-policy' in apps[app]:
+            apps[app]['security-policy']['apparmor'] = \
+                _copy(meta_dir, apps[app]['security-policy']['apparmor'])
+            apps[app]['security-policy']['seccomp'] = \
+                _copy(meta_dir, apps[app]['security-policy']['seccomp'])
 
-    return runnables
-
-
-def _compose_package_yaml(meta_dir, config_data, arches):
-    '''
-    Creates a dictionary that can be used to yaml.dump a package.yaml using
-    config_data.
-    If provided arches, is a list of arches.
-
-    Missing key exceptions will be raised if config_data does not hold
-    MANDATORY_KEYS, config_data can be validated against the snapcraft schema.
-    '''
-    package_yaml = {}
-
-    for key_name in _MANDATORY_PACKAGE_KEYS:
-        package_yaml[key_name] = config_data[key_name]
-
-    for key_name in _OPTIONAL_PACKAGE_KEYS:
-        if key_name in config_data:
-            package_yaml[key_name] = config_data[key_name]
-
-    if arches:
-        package_yaml['architectures'] = arches
-
-    if 'binaries' in config_data:
-        binaries = config_data['binaries']
-        binaries = _wrap_binaries(binaries)
-        package_yaml['binaries'] = \
-            _copy_security_profiles(meta_dir, _repack_names(binaries))
-
-    if 'services' in config_data:
-        services = config_data['services']
-        services = _wrap_services(services)
-        package_yaml['services'] = \
-            _copy_security_profiles(meta_dir, _repack_names(services))
-
-    if config_data.get('license-agreement', '') == 'explicit':
-        package_yaml['explicit-license-agreement'] = 'yes'
-
-    return package_yaml
-
-
-def _repack_names(names):
-    repack = []
-    for name in names:
-        names[name].update({'name': name})
-        repack.append(names[name])
-    return repack
-
-
-def _compose_readme(config_data):
-    s = '{config[summary]}\n{config[description]}\n'
-    return s.format(config=config_data)
-
-
-def _replace_cmd(execparts, cmd):
-        newparts = [cmd] + execparts[1:]
-        return ' '.join([shlex.quote(x) for x in newparts])
+    return apps
 
 
 def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
@@ -230,17 +188,13 @@ def _wrap_exe(relexepath, args=None):
     wrappath = exepath + '.wrapper'
     shebang = None
 
-    # TODO talk to original author if the exception to be captured here is
-    # FileNotFoundError, the original code was a general catch all
-    try:
+    if os.path.exists(wrappath):
         os.remove(wrappath)
-    except FileNotFoundError:
-        pass
 
     wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
     if not os.path.exists(exepath) and '/' not in relexepath:
         # If it doesn't exist it might be in the path
-        logger.debug('Checking to see if "{}" is in the $PATH'.format(
+        logger.debug('Checking to see if {!r} is in the $PATH'.format(
             relexepath))
         with tempfile.NamedTemporaryFile('w+') as tempf:
             script = ('#!/bin/sh\n' +
@@ -263,26 +217,10 @@ def _wrap_exe(relexepath, args=None):
     return os.path.relpath(wrappath, snap_dir)
 
 
-def _wrap_binaries(binaries):
-    for name in binaries:
-        execparts = shlex.split(binaries[name]['exec'])
-        execwrap = _wrap_exe(execparts[0])
-        binaries[name]['exec'] = _replace_cmd(execparts, execwrap)
+def _wrap_apps(apps):
+    for app in apps:
+        for k in [k for k in ('command', 'stop-command') if k in apps[app]]:
+            execparts = shlex.split(apps[app][k])
+            apps[app][k] = _wrap_exe(execparts[0], args=execparts[1:])
 
-    return binaries
-
-
-def _wrap_services(services):
-    for name in services:
-        startpath = services[name].get('start')
-        if startpath:
-            startparts = shlex.split(startpath)
-            startwrap = _wrap_exe(startparts[0])
-            services[name]['start'] = _replace_cmd(startparts, startwrap)
-        stoppath = services[name].get('stop')
-        if stoppath:
-            stopparts = shlex.split(stoppath)
-            stopwrap = _wrap_exe(stopparts[0])
-            services[name]['stop'] = _replace_cmd(stopparts, stopwrap)
-
-    return services
+    return apps

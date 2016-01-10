@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import logging
 import os
 import unittest
@@ -471,13 +472,11 @@ class TestValidation(tests.TestCase):
         self.data['type'] = 'app'
         snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        self.data['type'] = 'framework'
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
-
     def test_invalid_types(self):
         invalid_types = [
             'apps',
             'kernel',
+            'framework',
             'platform',
             'oem',
             'os',
@@ -493,33 +492,38 @@ class TestValidation(tests.TestCase):
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
                 expected_message = ('\'{}\' is not one of ' +
-                                    '[\'app\', \'framework\']').format(t)
+                                    '[\'app\']').format(t)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
-    def test_valid_services(self):
-        self.data['services'] = {
-            'service1': {'start': 'binary1 start'},
+    def test_valid_app_daemons(self):
+        self.data['apps'] = {
+            'service1': {'command': 'binary1 start', 'daemon': 'simple'},
             'service2': {
-                'start': 'binary2',
-                'stop': 'binary2 --stop',
+                'command': 'binary2',
+                'stop-command': 'binary2 --stop',
+                'daemon': 'simple'
             },
+            'service3': {
+                'command': 'binary3',
+                'daemon': 'forking',
+            }
         }
 
         snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-    def test_invalid_binary_names(self):
+    def test_invalid_app_names(self):
         invalid_names = {
-            'qwe#rty': {'exec': '1'},
-            'qwe_rty': {'exec': '1'},
-            'que rty': {'exec': '1'},
-            'que  rty': {'exec': '1'},
+            'qwe#rty': {'command': '1'},
+            'qwe_rty': {'command': '1'},
+            'que rty': {'command': '1'},
+            'que  rty': {'command': '1'},
         }
 
         for t in invalid_names:
             data = self.data.copy()
             with self.subTest(key=t):
-                data['binaries'] = {t: invalid_names[t]}
+                data['apps'] = {t: invalid_names[t]}
 
                 with self.assertRaises(
                         snapcraft.yaml.SnapcraftSchemaError) as raised:
@@ -530,35 +534,13 @@ class TestValidation(tests.TestCase):
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
-    def test_invalid_service_names(self):
-        invalid_names = {
-            'qwe#rty': {'start': '1'},
-            'qwe_rty': {'start': '1'},
-            'que_rty': {'start': '1'},
-            'quer  ty': {'start': '1'},
-        }
-
-        for t in invalid_names:
-            data = self.data.copy()
-            with self.subTest(key=t):
-                data['services'] = {t: invalid_names[t]}
-
-                with self.assertRaises(
-                        snapcraft.yaml.SnapcraftSchemaError) as raised:
-                    snapcraft.yaml._validate_snapcraft_yaml(data)
-
-                expected_message = ('Additional properties are not allowed '
-                                    '(\'{}\' was unexpected)').format(t)
-                self.assertEqual(raised.exception.message, expected_message,
-                                 msg=data)
-
-    def test_services_required_properties(self):
-        self.data['services'] = {'service1': {}}
+    def test_apps_required_properties(self):
+        self.data['apps'] = {'service1': {}}
 
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        expected_message = '\'start\' is a required property'
+        expected_message = '\'command\' is a required property'
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 
@@ -632,6 +614,88 @@ class TestValidation(tests.TestCase):
         expected_message = "'license' is a dependency of 'license-version'"
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
+
+    def test_valid_security_policy_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-policy': {
+                    'seccomp': 'file.seccomp',
+                    'apparmor': 'file.apparmor',
+                },
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_security_override_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-override': {
+                    'read-paths': ['path1', 'path2'],
+                    'write-paths': ['path1', 'path2'],
+                    'abstractions': ['abstraction1', 'abstraction2'],
+                    'syscalls': ['open', 'close'],
+                },
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_security_template_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-template': 'unconfined',
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_caps_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'caps': ['cap1', 'cap2'],
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_invalid_security_override_combinations(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-override': {
+                    'read-paths': ['path1', 'path2'],
+                    'write-paths': ['path1', 'path2'],
+                    'abstractions': ['abstraction1', 'abstraction2'],
+                    'syscalls': ['open', 'close'],
+                },
+                'caps': ['cap1', 'cap2'],
+                'security-policy': {
+                    'seccomp': 'file.seccomp',
+                    'apparmor': 'file.apparmor',
+                },
+                'security-template': 'undefined',
+            },
+        }
+
+        with self.subTest(key='all'):
+            with self.assertRaises(Exception) as r:
+                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+            self.assertTrue('is not allowed' in str(r.exception))
+
+        for sec in ['security-override', 'security-template', 'caps']:
+            data = copy.deepcopy(self.data)
+            del data['apps']['app1'][sec]
+            with self.subTest(key=sec):
+                with self.assertRaises(Exception) as r:
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
+
+                self.assertTrue('is not allowed' in str(r.exception))
 
 
 class TestFilesets(tests.TestCase):

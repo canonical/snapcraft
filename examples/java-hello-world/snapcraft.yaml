@@ -1,11 +1,12 @@
 name: java-hello-world
 version: 0
-binaries:
- hello:
-   exec: bin/wrapper
 summary: A java example
 description: this is not much more than an example
 icon: icon.png
+
+apps:
+ hello:
+   command: bin/wrapper
 
 parts:
     local:

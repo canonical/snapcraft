@@ -3,9 +3,9 @@ version: 1.0
 summary: Use OpenCV and OpenGL
 description: A simple OpenCV example
 
-binaries:
+apps:
   example:
-    exec: bin/example
+    command: bin/example
 
 parts:
   example:

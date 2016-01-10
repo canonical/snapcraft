@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,17 @@ import testscenarios
 
 from snapcraft import common
 from snapcraft.tests import fixture_setup
+
+
+class MockOptions:
+
+    def __init__(self, source=None, source_type=None, source_branch=None,
+                 source_tag=None, source_subdir=None):
+        self.source = source
+        self.source_type = source_type
+        self.source_branch = source_branch
+        self.source_tag = source_tag
+        self.source_subdir = source_subdir
 
 
 class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):

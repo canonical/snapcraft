@@ -1,7 +1,7 @@
 $schema: http://json-schema.org/draft-04/schema#
 
 definitions:
-  security:
+  security-policy:
     type: object
     required:
       - apparmor
@@ -13,10 +13,58 @@ definitions:
       seccomp:
         type: string
         format: file-path
+  security-override:
+      type: object
+      properties:
+        read-paths:
+          type: array
+          description: a list of additional paths that the app can read.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+        write-paths:
+          type: array
+          description: a list of additional paths that the app can write.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+        abstractions:
+          type: array
+          description: a list of additional AppArmor abstractions for the app.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+        syscalls:
+          type: array
+          description: a list of additional syscalls the app can use.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+  security-caps:
+    type: array
+    description: Security caps.
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: string
+  security-template:
+      type: string
+      description: alternate security template to use instead of default.
 
 title: snapcraft schema
 type: object
 properties:
+  build-packages:
+    type: array
+    description: top level build packages.
+    minItems: 1
+    uniqueItems: true
+    items:
+      - type: string
   name:
     type: string
     description: name of the snap package
@@ -49,7 +97,6 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
-      - framework
   frameworks:
     type: array
     minItems: 1
@@ -65,49 +112,54 @@ properties:
     enum:
       - explicit
   license-version:
-    description: license version (used to re-trigger an agreement action). 
+    description: license version (used to re-trigger an agreement action).
   config:
     type: string
     description: path to a configure hook to expose configuration for the package
-  framework-policy:
-    type: string
-    description: framework policies to add to the package
-    format: file-path
-  services:
+  apps:
     type: object
     additionalProperties: false
     patternProperties:
       "^[A-Za-z0-9:-]*$":
         type: object
         required:
-          - start
+          - command
+        dependencies:
+          stop-command: ["daemon"]
+        additionalProperties: false
+        not:
+          anyOf:
+            - required:
+                - security-policy
+                - security-override
+                - security-template
+                - caps
+            - required: [security-policy, security-override]
+            - required: [security-policy, security-template]
+            - required: [security-policy, caps]
         properties:
-          start:
-            type: string
-            description: command executed to start the service
-          stop:
-            type: string
-            description: command executed to stop the service
-          security-policy:
-            $ref: "#definitions/security"
-          security-override:
-            $ref: "#definitions/security"
-  binaries:
-    type: object
-    additionalProperties: false
-    patternProperties:
-      "^[A-Za-z0-9:-]*$":
-        type: object
-        required:
-          - exec
-        properties:
-          exec:
+          command:
             type: string
             description: command executed to run the binary
+          stop-command:
+            type: string
+            description: command executed to stop a service
+          stop-timeout:
+            description: timeout in seconds
+          daemon:
+            type: string
+            description: signals that the app is a service.
+            enum:
+              - simple
+              - forking
           security-policy:
-            $ref: "#definitions/security"
+            $ref: "#definitions/security-policy"
           security-override:
-            $ref: "#definitions/security"
+            $ref: "#definitions/security-override"
+          security-template:
+            $ref: "#definitions/security-template"
+          caps:
+            $ref: "#definitions/security-caps"
   parts:
     type: object
     minProperties: 1
@@ -174,3 +226,4 @@ required:
 dependencies:
   license-agreement: ["license"]
   license-version: ["license"]
+additionalProperties: false

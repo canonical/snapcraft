@@ -31,7 +31,6 @@ class StripCommandTestCase(tests.TestCase):
 
     yaml_template = """name: strip-test
 version: 1.0
-vendor: To Be Removed <vendor@example.com>
 summary: test strip
 description: if the strip is succesful the state file will be updated
 icon: icon.png

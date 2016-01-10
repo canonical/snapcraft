@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,21 +26,10 @@ from snapcraft import (
 )
 
 
-class MockOptions:
-
-    def __init__(self, source=None, source_type=None, source_branch=None,
-                 source_tag=None, source_subdir=None):
-        self.source = source
-        self.source_type = source_type
-        self.source_branch = source_branch
-        self.source_tag = source_tag
-        self.source_subdir = source_subdir
-
-
 class TestBasePlugin(tests.TestCase):
 
     def test_get_source_with_unrecognized_source_must_raise_exception(self):
-        options = MockOptions('unrecognized://test_source')
+        options = tests.MockOptions('unrecognized://test_source')
         plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(ValueError) as raised:
             plugin.pull()
@@ -50,7 +39,7 @@ class TestBasePlugin(tests.TestCase):
 
     @unittest.mock.patch('os.path.isdir')
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
-        options = MockOptions('file')
+        options = tests.MockOptions('file')
         mock_isdir.return_value = False
         plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(ValueError) as raised:
@@ -62,7 +51,7 @@ class TestBasePlugin(tests.TestCase):
                          'local source is not a directory')
 
     def test_build_with_subdir_copies_subdir(self):
-        options = MockOptions(source_subdir='src')
+        options = tests.MockOptions(source_subdir='src')
         plugin = snapcraft.BasePlugin('test-part', options)
 
         tmpdir = tempfile.TemporaryDirectory()
@@ -116,8 +105,8 @@ class GetSourceWithBranches(tests.TestCase):
     ]
 
     def test_get_source_with_branch_and_tag_must_raise_error(self):
-        options = MockOptions('lp:source', self.source_type,
-                              self.source_branch, self.source_tag)
+        options = tests.MockOptions('lp:source', self.source_type,
+                                    self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
             plugin.pull()
@@ -149,8 +138,8 @@ class GetSourceTestCase(tests.TestCase):
     ]
 
     def test_get_source_with_branch_must_raise_error(self):
-        options = MockOptions('lp:this', self.source_type, self.source_branch,
-                              self.source_tag)
+        options = tests.MockOptions('lp:this', self.source_type,
+                                    self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
@@ -165,7 +154,7 @@ class GetSourceTestCase(tests.TestCase):
 class BuildTestCase(tests.TestCase):
 
     def test_do_not_follow_links(self):
-        options = MockOptions(source='.')
+        options = tests.MockOptions(source='.')
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
         os.makedirs(plugin.partdir)

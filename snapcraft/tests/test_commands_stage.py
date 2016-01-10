@@ -31,7 +31,6 @@ class StageCommandTestCase(tests.TestCase):
 
     yaml_template = """name: stage-test
 version: 1.0
-vendor: To Be Removed <vendor@example.com>
 summary: test stage
 description: if the build is succesful the state file will be updated
 icon: icon.png

@@ -15,10 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from unittest.mock import (
-    call,
-    patch,
-)
+from unittest.mock import patch
+
+import yaml
 
 from snapcraft import (
     common,
@@ -27,331 +26,159 @@ from snapcraft import (
 )
 
 
-class ComposeTestCase(tests.TestCase):
+class CreateTest(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = patch('snapcraft.meta._wrap_exe')
-        mock_wrap_exe = patcher.start()
-        mock_wrap_exe.return_value = 'binary.wrapped'
+
+        patcher = patch('snapcraft.meta_legacy.create')
+        patcher.start()
         self.addCleanup(patcher.stop)
 
         self.config_data = {
-            'name': 'my-package',
-            'version': '1.0',
-            'icon': 'my-icon.png',
-            'architectures': ['armhf', 'amd64']
-        }
-
-    def test_plain_no_binaries_or_services(self):
-        y = meta._compose_package_yaml('meta', self.config_data,
-                                       ['armhf', 'amd64'])
-
-        expected = {
-            'name': 'my-package',
-            'version': '1.0',
-            'icon': 'my-icon.png',
-            'architectures': ['armhf', 'amd64'],
-        }
-
-        self.assertEqual(y, expected)
-
-    def test_plain_no_binaries_or_services_or_arches(self):
-        y = meta._compose_package_yaml('meta', self.config_data, ['amd64'])
-
-        expected = {
-            'name': 'my-package',
-            'version': '1.0',
-            'icon': 'my-icon.png',
-            'architectures': ['amd64']
-        }
-
-        self.assertEqual(y, expected)
-
-    def test_license_information(self):
-        self.config_data['license-agreement'] = 'explicit'
-        self.config_data['license-version'] = '1.0'
-
-        y = meta._compose_package_yaml('meta', self.config_data, ['amd64'])
-
-        expected = {
-            'name': 'my-package',
-            'version': '1.0',
-            'icon': 'my-icon.png',
             'architectures': ['amd64'],
-            'license-version': '1.0',
-            'explicit-license-agreement': 'yes',
-        }
-
-        self.assertEqual(y, expected)
-
-    def test_with_binaries(self):
-        self.config_data['binaries'] = {
-            'binary1': {'exec': 'binary1.sh go'},
-            'binary2': {'exec': 'binary2.sh'},
-        }
-
-        y = meta._compose_package_yaml('meta', self.config_data,
-                                       ['armhf', 'amd64'])
-
-        self.assertEqual(len(y['binaries']), 2)
-        for b in y['binaries']:
-            if b['name'] is 'binary1':
-                self.assertEqual(b['exec'], 'binary.wrapped go')
-            else:
-                self.assertEqual(b['exec'], 'binary.wrapped')
-
-    def test_with_services(self):
-        self.config_data['services'] = {
-            'service1': {'start': 'binary1'},
-            'service2': {
-                'start': 'binary2 --start',
-                'stop': 'binary2 --stop',
-            },
-        }
-
-        y = meta._compose_package_yaml('meta', self.config_data,
-                                       ['armhf', 'amd64'])
-
-        self.assertEqual(len(y['services']), 2)
-        for b in y['services']:
-            if b['name'] is 'service1':
-                self.assertEqual(b['start'], 'binary.wrapped')
-            else:
-                self.assertEqual(b['start'], 'binary.wrapped --start')
-                self.assertEqual(b['stop'], 'binary.wrapped --stop')
-
-    def test_plain_no_binaries_or_services_with_optionals(self):
-        self.config_data['frameworks'] = ['mir', ]
-
-        y = meta._compose_package_yaml('meta', self.config_data,
-                                       ['armhf', 'amd64'])
-        expected = {
-            'name': 'my-package',
-            'version': '1.0',
-            'icon': 'my-icon.png',
-            'architectures': ['armhf', 'amd64'],
-            'frameworks': ['mir', ],
-        }
-
-        self.assertEqual(y, expected)
-
-    def test_compose_readme(self):
-        self.config_data['summary'] = 'one line summary'
-        self.config_data['description'] = \
-            'the description\nwhich can be longer'
-
-        readme_text = '''one line summary
-the description
-which can be longer
-'''
-
-        self.assertEqual(meta._compose_readme(self.config_data), readme_text)
-
-
-class Create(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        patcher_makedirs = patch('os.makedirs')
-        self.mock_makedirs = patcher_makedirs.start()
-        self.addCleanup(patcher_makedirs.stop)
-
-        patcher_rename = patch('os.rename')
-        self.mock_rename = patcher_rename.start()
-        self.addCleanup(patcher_rename.stop)
-
-        patcher_copyfile = patch('shutil.copyfile')
-        self.mock_copyfile = patcher_copyfile.start()
-        self.addCleanup(patcher_copyfile.stop)
-
-        patcher_move = patch('shutil.move')
-        self.mock_move = patcher_move.start()
-        self.addCleanup(patcher_move.stop)
-
-        patcher_exists = patch('os.path.exists')
-        self.mock_exists = patcher_exists.start()
-        self.mock_exists.return_value = True
-        self.addCleanup(patcher_exists.stop)
-
-        self.config_data = {
             'name': 'my-package',
             'version': '1.0',
             'description': 'my description',
             'summary': 'my summary',
-            'icon': 'my-icon.png',
-            'config': 'bin/config',
-            'architectures': ['amd64'],
-            'binaries': {
-                'bash': {
-                    'exec': 'bin/bash',
-                    'security-policy': {
-                        'apparmor': 'file.apparmor',
-                        'seccomp': 'file.seccomp',
-                    },
-                }
-            }
         }
 
         self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
         self.meta_dir = os.path.join(self.snap_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
+        self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
-        self.expected_open_calls = [
-            call(os.path.join(self.meta_dir, 'package.yaml'), 'w'),
-            call().__enter__(),
-            call().__enter__().write('architectures'),
-            call().__enter__().write(':'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('-'),
-            call().__enter__().write(' '),
-            call().__enter__().write('amd64'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('binaries'),
-            call().__enter__().write(':'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('-'),
-            call().__enter__().write(' '),
-            call().__enter__().write('exec'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('bin/bash.wrapper'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('  '),
-            call().__enter__().write('name'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('bash'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('  '),
-            call().__enter__().write('security-policy'),
-            call().__enter__().write(':'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('    '),
-            call().__enter__().write('apparmor'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('meta/file.apparmor'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('    '),
-            call().__enter__().write('seccomp'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('meta/file.seccomp'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('icon'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('meta/my-icon.png'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('name'),
-            call().__enter__().write(':'),
-            call().__enter__().write(' '),
-            call().__enter__().write('my-package'),
-            call().__enter__().write('\n'),
-            call().__enter__().write('version'),
-            call().__enter__().write(':'),
-            call().__enter__().write(" '"),
-            call().__enter__().write('1.0'),
-            call().__enter__().write("'"),
-            call().__enter__().write('\n'),
-            call().__enter__().flush(),
-            call().__enter__().flush(),
-            call().__exit__(None, None, None),
-            call(os.path.join(self.meta_dir, 'readme.md'), 'w'),
-            call().__enter__(),
-            call().__enter__().write('my summary\nmy description\n'),
-            call().__exit__(None, None, None),
-        ]
-
-    @patch('snapcraft.meta._write_wrap_exe')
-    @patch('snapcraft.meta.open', create=True)
-    def test_create_meta(self, mock_the_open, mock_wrap_exe):
+    def test_create_meta(self):
         meta.create(self.config_data)
 
-        self.mock_makedirs.assert_has_calls([
-            call(self.meta_dir, exist_ok=True),
-            call(self.hooks_dir),
-        ])
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
 
-        self.mock_rename.assert_has_calls([
-            call(os.path.join(self.snap_dir, 'bin', 'config.wrapper'),
-                 os.path.join(self.hooks_dir, 'config')),
-        ])
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
 
-        mock_the_open.assert_has_calls(self.expected_open_calls)
-        mock_wrap_exe.assert_has_calls([
-            call(
-                '$SNAP_APP_PATH/bin/bash',
-                os.path.join(self.snap_dir, 'bin', 'bash.wrapper'),
-                args=None, shebang=None
-            ),
-            call(
-                '$SNAP_APP_PATH/bin/config',
-                os.path.join(self.snap_dir, 'bin', 'config.wrapper'),
-                args=[], shebang=None,
-            ),
-        ])
-        self.mock_copyfile.assert_has_calls([
-            call('my-icon.png', os.path.join(self.meta_dir,
-                 'my-icon.png')),
-            call('file.apparmor', os.path.join(self.meta_dir,
-                 'file.apparmor')),
-            call('file.seccomp', os.path.join(self.meta_dir,
-                 'file.seccomp')),
-        ])
+        expected = {'architectures': ['amd64'],
+                    'description': 'my description',
+                    'summary': 'my summary',
+                    'name': 'my-package',
+                    'version': '1.0'}
 
-    @patch('snapcraft.meta._write_wrap_exe')
-    @patch('snapcraft.meta.open', create=True)
-    def test_create_meta_with_vararg_config(self, mock_the_open,
-                                            mock_wrap_exe):
-        self.config_data['config'] = 'python3 my.py --config'
+        self.assertEqual(y, expected)
 
-        meta.create(self.config_data)
-
-        self.mock_makedirs.assert_has_calls([
-            call(self.meta_dir, exist_ok=True),
-            call(self.hooks_dir),
-        ])
-
-        self.mock_rename.assert_has_calls([
-            call(os.path.join(self.snap_dir, 'python3.wrapper'),
-                 os.path.join(self.hooks_dir, 'config')),
-        ])
-
-        mock_the_open.assert_has_calls(self.expected_open_calls)
-        mock_wrap_exe.assert_has_calls([
-            call(
-                '$SNAP_APP_PATH/bin/bash',
-                os.path.join(os.path.abspath(os.curdir),
-                             'snap/bin/bash.wrapper'),
-                args=None, shebang=None,
-            ),
-            call(
-                '$SNAP_APP_PATH/python3',
-                os.path.join(self.snap_dir, 'python3.wrapper'),
-                args=['my.py', '--config'], shebang=None,
-            ),
-        ])
-
-    @patch('snapcraft.meta._write_wrap_exe')
-    @patch('snapcraft.meta.open', create=True)
-    def test_create_meta_with_license(self, mock_the_open, mock_wrap_exe):
-        self.config_data.pop('config')
+    def test_create_meta_with_license(self):
+        open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
         self.config_data['license'] = 'LICENSE'
 
         meta.create(self.config_data)
 
-        self.mock_makedirs.assert_has_calls([
-            call(self.meta_dir, exist_ok=True),
-            call(self.hooks_dir),
-        ])
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'license.txt')),
+            'license.txt was not setup correctly')
 
-        self.mock_rename.assert_not_called()
-        mock_the_open.assert_has_calls(self.expected_open_calls)
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
 
-        self.mock_copyfile.assert_any_call(
-            'LICENSE', os.path.join(self.hooks_dir, 'license'))
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertFalse('license' in y,
+                         'license found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_icon(self):
+        open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
+        self.config_data['icon'] = 'my-icon.png'
+
+        meta.create(self.config_data)
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_config(self):
+        os.makedirs(self.snap_dir)
+        open(os.path.join(self.snap_dir, 'config.sh'), 'w').close()
+        self.config_data['config'] = 'config.sh'
+
+        meta.create(self.config_data)
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.hooks_dir, 'config')),
+            'the config was not setup correctly')
+
+    def test_create_meta_with_config_with_args(self):
+        os.makedirs(self.snap_dir)
+        open(os.path.join(self.snap_dir, 'config.sh'), 'w').close()
+        self.config_data['config'] = 'config.sh something'
+
+        meta.create(self.config_data)
+
+        config_hook = os.path.join(self.hooks_dir, 'config')
+        self.assertTrue(
+            os.path.exists(config_hook), 'the config was not setup correctly')
+
+        with open(config_hook) as f:
+            config_wrapper = f.readlines()
+
+        expected_wrapper = [
+            '#!/bin/sh\n', '\n', '\n',
+            'exec "$SNAP_APP_PATH/config.sh" something $*\n']
+        self.assertEqual(config_wrapper, expected_wrapper)
+
+    def test_create_meta_with_app_with_security_policy(self):
+        os.makedirs(self.snap_dir)
+        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
+        open(os.path.join(os.curdir, 'stub-sec'), 'w').close()
+        self.config_data['apps'] = {
+            'app1': {
+                'command': 'app1.sh',
+                'security-policy': {
+                    'apparmor': 'stub-sec',
+                    'seccomp': 'stub-sec',
+                },
+            },
+        }
+
+        meta.create(self.config_data)
+
+        app1_wrapper_path = os.path.join(self.snap_dir, 'app1.sh.wrapper')
+        self.assertTrue(
+            os.path.exists(app1_wrapper_path),
+            'the wrapper for app1 was not setup correctly')
+
+        sec_path = os.path.join(self.meta_dir, 'stub-sec')
+        self.assertTrue(
+            os.path.exists(sec_path),
+            'the security-policies for app1 were not setup correctly')
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+
+        expected = {'architectures': ['amd64'],
+                    'apps': {
+                        'app1': {
+                            'command': 'app1.sh.wrapper',
+                            'security-policy': {
+                                'apparmor': 'meta/stub-sec',
+                                'seccomp': 'meta/stub-sec',
+                            },
+                        },
+                    },
+                    'description': 'my description',
+                    'summary': 'my summary',
+                    'name': 'my-package',
+                    'version': '1.0'}
+
+        self.assertEqual(y, expected)
 
 
 # TODO this needs more tests.
@@ -477,3 +304,21 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertEqual(expected, wrapper_contents)
         with open(os.path.join(snapdir, relative_exe_path), 'rb') as exe:
             self.assertEqual(exe_contents, exe.read())
+
+    @patch('snapcraft.common.run')
+    def test_exe_is_in_path(self, run_mock):
+        snapdir = common.get_snapdir()
+        app_path = os.path.join(snapdir, 'bin', 'app1')
+        os.makedirs(os.path.dirname(app_path))
+        open(app_path, 'w').close()
+
+        relative_wrapper_path = meta._wrap_exe('app1')
+        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+
+        expected = ('#!/bin/sh\n'
+                    '\n\n'
+                    'exec "app1" $*\n')
+        with open(wrapper_path) as wrapper_file:
+            wrapper_contents = wrapper_file.read()
+
+        self.assertEqual(expected, wrapper_contents)

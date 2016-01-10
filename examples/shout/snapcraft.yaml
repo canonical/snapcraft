@@ -4,17 +4,13 @@ summary: A self hosted web IRC client
 description: This example is not really production quality
 icon: icon.png
 
-services:
+apps:
   server:
-    start: bin/shout.sh
-    description: shout irc service
+    command: bin/shout --home $SNAP_APP_DATA_PATH
+    daemon: simple
 
 parts:
   shout:
     plugin: nodejs
     node-packages:
       - shout
-  wrapper:
-    plugin: copy
-    files:
-      shout.sh: bin/shout.sh

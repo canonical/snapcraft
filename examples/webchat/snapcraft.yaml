@@ -4,10 +4,10 @@ summary: A simple nodejs based webchat
 description: This example is not really production quality
 icon: icon.png
 
-services:
-  server:
-    start: bin/webchat-for-a-snap
-    description: webchat service
+apps:
+  webchat:
+    command: bin/webchat-for-a-snap
+    daemon: simple
 
 parts:
   webchat:

@@ -29,7 +29,6 @@ class ExecutionTestCases(tests.TestCase):
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""name: after
 version: 0
-vendor: To Be Removed <vendor@example.com>
 summary: test stage
 description: if the build is succesful the state file will be updated
 icon: icon.png
@@ -58,7 +57,6 @@ parts:
 
         self.make_snapcraft_yaml("""name: after
 version: 0
-vendor: To Be Removed <vendor@example.com>
 summary: test stage
 description: if the build is succesful the state file will be updated
 icon: icon.png

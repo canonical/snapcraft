@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -325,3 +325,22 @@ class TestUri(tests.TestCase):
             with self.subTest(key=source):
                 self.assertEqual(
                     snapcraft.sources._get_source_type_from_uri(source), 'tar')
+
+    @unittest.mock.patch('snapcraft.sources.Git.pull')
+    def test_get_git_source_from_uri(self, mock_pull):
+        sources = [
+            'git://github.com:ubuntu-core/snapcraft.git',
+            'git@github.com:ubuntu-core/snapcraft.git'
+        ]
+
+        for source in sources:
+            with self.subTest(key=source):
+
+                options = tests.MockOptions(source=source, source_type='git')
+                snapcraft.sources.get(
+                    sourcedir='dummy',
+                    builddir='dummy',
+                    options=options)
+
+                mock_pull.assert_called_once_with()
+                mock_pull.reset_mock()
