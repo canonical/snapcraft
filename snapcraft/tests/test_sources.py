@@ -325,3 +325,16 @@ class TestUri(tests.TestCase):
             with self.subTest(key=source):
                 self.assertEqual(
                     snapcraft.sources._get_source_type_from_uri(source), 'tar')
+
+    def test_get_git_source_from_uri(self):
+        sources = [
+            'git://github.com/ubuntu-core/snapcraft.git',
+            'git@github.com:ubuntu-core/snappy.git',
+            'git://github.com/ubuntu-core/snappy-cloud-image.git',
+            'git@github.com:ubuntu-core/jenkins-ubuntu.git'
+        ]
+
+        for source in sources:
+            with self.subTest(key=source):
+                self.assertEqual(
+                    snapcraft.sources._get_source_type_from_uri(source), 'git')
