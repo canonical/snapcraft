@@ -1,14 +1,15 @@
 name: gopaste
 version: 1.0
-services:
-  gopaste:
-    description: "gopaste"
-    start: bin/gopaste
-    caps:
-      - network-service
 summary: Simple pasting tool
 description: Runs a service that allows you to paste to and share.
 icon: icon.png
+
+apps:
+  gopaste:
+    command: bin/gopaste
+    daemon: simple
+    caps:
+      - network-service
 
 parts:
   gopaste:

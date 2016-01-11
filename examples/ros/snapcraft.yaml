@@ -4,16 +4,14 @@ summary: A robot example
 icon: icon.svg
 description: A really small ROS example
 
-binaries:
-  listener:
-    exec: rosrun beginner_tutorials listener
-  talker:
-    exec: rosrun beginner_tutorials talker
-
-services:
+apps:
   rosmaster:
-    start: bin/roscore-rosmaster-service
-    description: ROS Master Service
+    command: bin/roscore-rosmaster-service
+    daemon: simple
+  listener:
+    command: rosrun beginner_tutorials listener
+  talker:
+    command: rosrun beginner_tutorials talker
 
 parts:
   roscore:
