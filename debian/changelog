@@ -1,3 +1,35 @@
+snapcraft (1.0) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Wrapping exe should not be over match to replace (LP: #1523912)
+
+  [ Alexander Sack ]
+  * Use archive.apache.org URL to ensure we refer to a stable URL that does not disappear on latest release
+
+  [ Daniel Holbach ]
+  * Add doc about the syntax of snapcraft.yaml
+
+  [ Kyle Fazzari ]
+  * Add support for mesa libraries. (LP: #1531620)
+  * Add a tutorial for turning a ROS project into a .snap.
+  * Autotools plugin:
+    - Set autogen.sh executable. (LP: #1530995)
+  * Catkin plugin:
+    - Add support for ROS tools (e.g. roslaunch and rosrun).
+    - Use rosdep for dependency resolution.
+    - Refactor build.
+    - Improve cmake path rewrite.
+    - Ensure rosdep resolves dependencies using Trusty. (LP: #1532241)
+  * Python2 plugin:
+    - Make site-packages link relative. (LP: #1523384)
+  * Python3 plugin:
+    - Make site-packages link relative. (LP: #1523384)
+
+  [ Renat Galimov ]
+  * Close not called on the qml plugin (LP: #1531994)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Thu, 7 Jan 2016 09:09:21 -0400
+
 snapcraft (0.6) xenial; urgency=medium
 
   [ Leo Arias ]
@@ -67,7 +99,7 @@ snapcraft (0.5) xenial; urgency=medium
   * Adding a simple tree test to look at the dependency resolution
   * Add schema for the core properties of the system that are independent of a part
   * copy-plugin: test for directories. (LP: #1478052)
-  * python plugins: 
+  * python plugins:
     - Support pip-packages. (LP: #1502132)
     - fix conflicts with pyc files. (LP: #1502105)
 
@@ -159,24 +191,24 @@ snapcraft (0.2) wily; urgency=medium
     - Fix build (LP: #1494825),
   * Plugin fixes:
     - Add demo.qml back to the snapcraft.yaml for the QML Demo (LP: #1491301),
-    - stage package libgudev-1.0-0, which makes the godd snap actually 
+    - stage package libgudev-1.0-0, which makes the godd snap actually
       work (LP: #1498347),
     - Wrap setup.py calls to configure the shebang writer (LP: #1486680),
     - Update tomcat upstream URL, fixes example again (LP: #1491303),
     - Add libgudev-1.0-dev as build-tools for godd example,
-      Ensure C library configuration tools don't use system 
+      Ensure C library configuration tools don't use system
       paths (LP: #1496789),
   * Snapcraft cli:
-    - On clean, check the contents of the parts dir only if it 
+    - On clean, check the contents of the parts dir only if it
       exists. (LP: #1497371)
     - Load the config before trying to run (LP: #1498140),
     - Notify user why the password is being requested (LP: #1481499),
     - Fix numerous issues in snapcraft run (LP: #1486659),
   * Snapcraft stage-packages:
-    - Enable ports for architectures that are not amd64 or 
+    - Enable ports for architectures that are not amd64 or
       i386 (LP: #1498157),
     - Improving stage-package handling (LP: #1497453, LP: #1497582)
-    - Fetch all packages in a single download run with proper 
+    - Fetch all packages in a single download run with proper
       progress (LP: #1498333),
   * Snapcraft wiki queries excessive (LP: #1496381),
   * Snapcraft internals:
