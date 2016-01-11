@@ -17,6 +17,13 @@ definitions:
 title: snapcraft schema
 type: object
 properties:
+  build-packages:
+    type: array
+    description: top level build packages.
+    minItems: 1
+    uniqueItems: true
+    items:
+      - type: string
   name:
     type: string
     description: name of the snap package
@@ -49,7 +56,6 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
-      - framework
   frameworks:
     type: array
     minItems: 1
@@ -65,49 +71,47 @@ properties:
     enum:
       - explicit
   license-version:
-    description: license version (used to re-trigger an agreement action). 
+    description: license version (used to re-trigger an agreement action).
   config:
     type: string
     description: path to a configure hook to expose configuration for the package
-  framework-policy:
-    type: string
-    description: framework policies to add to the package
-    format: file-path
-  services:
+  apps:
     type: object
     additionalProperties: false
     patternProperties:
       "^[A-Za-z0-9:-]*$":
         type: object
         required:
-          - start
+          - command
+        dependencies:
+          stop-command: ["daemon"]
+        additionalProperties: false
         properties:
-          start:
-            type: string
-            description: command executed to start the service
-          stop:
-            type: string
-            description: command executed to stop the service
-          security-policy:
-            $ref: "#definitions/security"
-          security-override:
-            $ref: "#definitions/security"
-  binaries:
-    type: object
-    additionalProperties: false
-    patternProperties:
-      "^[A-Za-z0-9:-]*$":
-        type: object
-        required:
-          - exec
-        properties:
-          exec:
+          command:
             type: string
             description: command executed to run the binary
+          stop-command:
+            type: string
+            description: command executed to stop a service
+          stop-timeout:
+            description: timeout in seconds
+          daemon:
+            type: string
+            description: signals that the app is a service.
+            enum:
+              - simple
+              - forking
           security-policy:
             $ref: "#definitions/security"
           security-override:
             $ref: "#definitions/security"
+          caps:
+            type: array
+            description: Security caps.
+            minItems: 1
+            uniqueItems: true
+            items:
+              type: string
   parts:
     type: object
     minProperties: 1
@@ -174,3 +178,4 @@ required:
 dependencies:
   license-agreement: ["license"]
   license-version: ["license"]
+additionalProperties: false

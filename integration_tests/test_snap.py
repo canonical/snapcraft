@@ -97,20 +97,6 @@ class SnapTestCase(integration_tests.TestCase):
             'snapcraft.yaml\n')
         self.assertEqual(expected, exception.output)
 
-    def test_framework_policy(self):
-        project_dir = 'framework-policy'
-        self.run_snapcraft('snap', project_dir)
-        os.chdir(project_dir)
-
-        self.assertThat(
-            os.path.join('snap', 'meta', 'framework-policy', 'a'),
-            FileExists())
-        self.assertThat(
-            os.path.join('snap', 'meta', 'framework-policy', 'b'),
-            FileExists())
-        self.assertThat(os.path.join('snap', 'one'), FileExists())
-        self.assertThat(os.path.join('snap', 'dir'), Not(DirExists()))
-
     def test_snap_with_exposed_files(self):
         project_dir = 'nil-plugin-pkgfilter'
         self.run_snapcraft('stage', project_dir)

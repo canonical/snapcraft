@@ -31,9 +31,9 @@ class LicenseTestCase(integration_tests.TestCase):
         project_dir = 'license'
         self.run_snapcraft('strip', project_dir)
 
-        hooks_dir = os.path.join(project_dir, 'snap', 'meta', 'hooks')
-        self.assertThat(hooks_dir, DirExists())
-        license_hook = os.path.join(hooks_dir, 'license')
-        self.assertThat(license_hook, FileExists())
-        self.assertThat(license_hook, FileContains(
+        meta_dir = os.path.join(project_dir, 'snap', 'meta')
+        self.assertThat(meta_dir, DirExists())
+        license_asset = os.path.join(meta_dir, 'license.txt')
+        self.assertThat(license_asset, FileExists())
+        self.assertThat(license_asset, FileContains(
             'This is a license.\n'))
