@@ -23,8 +23,8 @@ These plugins have a lifecycle that consists of the following steps:
     - pull
     - build
     - stage
+    - strip
     - snap
-    - assemble
 
 # Lifecycle
 
@@ -47,8 +47,8 @@ under the `./stage` directory.
 This is the area where all parts can share assets such as libraries to link
 against.
 
-## Snap
-The snap step moves the data into a `./snap` directory. It contains only
+## Strip
+The strip step moves the data into a `./snap` directory. It contains only
 the content that will be put into the final snap package, unlike the staging
 area which may include some development files not destined for your package.
 
@@ -58,7 +58,7 @@ in `./snap/meta`.
 This `./snap` directory is useful for inspecting what is going into your
 snap and to make any final post-processing on snapcraft's output.
 
-## Assemble
+## Snap
 The final step builds a snap package out of the `snap` directory.
 
 # Common keywords
