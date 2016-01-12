@@ -1,7 +1,7 @@
 $schema: http://json-schema.org/draft-04/schema#
 
 definitions:
-  security:
+  security-policy:
     type: object
     required:
       - apparmor
@@ -13,6 +13,47 @@ definitions:
       seccomp:
         type: string
         format: file-path
+  security-override:
+      type: object
+      properties:
+        read-paths:
+          type: array
+          description: a list of additional paths that the app can read.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+        write-paths:
+          type: array
+          description: a list of additional paths that the app can write.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+        abstractions:
+          type: array
+          description: a list of additional AppArmor abstractions for the app.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+        syscalls:
+          type: array
+          description: a list of additional syscalls the app can use.
+          minItems: 1
+          uniqueItems: true
+          items:
+              type: string
+  security-caps:
+    type: array
+    description: Security caps.
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: string
+  security-template:
+      type: string
+      description: alternate security template to use instead of default.
 
 title: snapcraft schema
 type: object
@@ -86,6 +127,16 @@ properties:
         dependencies:
           stop-command: ["daemon"]
         additionalProperties: false
+        not:
+          anyOf:
+            - required:
+                - security-policy
+                - security-override
+                - security-template
+                - caps
+            - required: [security-policy, security-override]
+            - required: [security-policy, security-template]
+            - required: [security-policy, caps]
         properties:
           command:
             type: string
@@ -102,16 +153,13 @@ properties:
               - simple
               - forking
           security-policy:
-            $ref: "#definitions/security"
+            $ref: "#definitions/security-policy"
           security-override:
-            $ref: "#definitions/security"
+            $ref: "#definitions/security-override"
+          security-template:
+            $ref: "#definitions/security-template"
           caps:
-            type: array
-            description: Security caps.
-            minItems: 1
-            uniqueItems: true
-            items:
-              type: string
+            $ref: "#definitions/security-caps"
   parts:
     type: object
     minProperties: 1

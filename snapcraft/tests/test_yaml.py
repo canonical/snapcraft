@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import logging
 import os
 import unittest
@@ -613,6 +614,88 @@ class TestValidation(tests.TestCase):
         expected_message = "'license' is a dependency of 'license-version'"
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
+
+    def test_valid_security_policy_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-policy': {
+                    'seccomp': 'file.seccomp',
+                    'apparmor': 'file.apparmor',
+                },
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_security_override_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-override': {
+                    'read-paths': ['path1', 'path2'],
+                    'write-paths': ['path1', 'path2'],
+                    'abstractions': ['abstraction1', 'abstraction2'],
+                    'syscalls': ['open', 'close'],
+                },
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_security_template_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-template': 'unconfined',
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_caps_for_apps(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'caps': ['cap1', 'cap2'],
+            },
+        }
+
+        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_invalid_security_override_combinations(self):
+        self.data['apps'] = {
+            'app1': {
+                'command': 'binary',
+                'security-override': {
+                    'read-paths': ['path1', 'path2'],
+                    'write-paths': ['path1', 'path2'],
+                    'abstractions': ['abstraction1', 'abstraction2'],
+                    'syscalls': ['open', 'close'],
+                },
+                'caps': ['cap1', 'cap2'],
+                'security-policy': {
+                    'seccomp': 'file.seccomp',
+                    'apparmor': 'file.apparmor',
+                },
+                'security-template': 'undefined',
+            },
+        }
+
+        with self.subTest(key='all'):
+            with self.assertRaises(Exception) as r:
+                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+            self.assertTrue('is not allowed' in str(r.exception))
+
+        for sec in ['security-override', 'security-template', 'caps']:
+            data = copy.deepcopy(self.data)
+            del data['apps']['app1'][sec]
+            with self.subTest(key=sec):
+                with self.assertRaises(Exception) as r:
+                    snapcraft.yaml._validate_snapcraft_yaml(data)
+
+                self.assertTrue('is not allowed' in str(r.exception))
 
 
 class TestFilesets(tests.TestCase):
