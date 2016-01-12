@@ -57,10 +57,12 @@ If you just intend to pull and build the source, take a look at the `gopaste`
 example. In its `snapcraft.yaml` file you can find just this one `parts`
 paragraph:
 
-	parts:
- 	  gopaste:
-    	    plugin: go
-            source: git://github.com/wisnij/gopaste/gopasted
+```yaml
+parts:
+  gopaste:
+    plugin: go
+    source: git://github.com/wisnij/gopaste/gopasted
+```
 
 It starts off with the name of the specific part (`gopaste` here), the origin
 of the part (it's a `git` URL) and how to build it (plugin: `go`).
@@ -73,13 +75,15 @@ An interesting example is `py2-project` because it defines two parts
 `spongeshaker` using the `python2` plugin, and `make-project` using the
 `make` plugin.
 
-	parts:
-  	  spongeshaker:
-	    plugin: python2
-	    source: git://github.com/markokr/spongeshaker.git
-	  make-project:
-	    plugin: make
-	    source: .
+```yaml
+parts:
+  spongeshaker:
+    plugin: python2
+    source: git://github.com/markokr/spongeshaker.git
+  make-project:
+    plugin: make
+    source: .
+```
 
 The example above mixes and matches parts of different origin. Locally it
 provides a binary we intend to ship (the `sha3sum.py` script) and a
@@ -106,16 +110,17 @@ If your app is comprised of multiple parts, it might be necessary to build
 and stage parts in a particular order. This can be done by using the `after`
 keyword:
 
-	parts:
-	    pipelinetest:
-	        plugin: make
-	        source: lp:~mterry/+junk/pipelinetest
-	        after:
-	            - libpipeline
-	    libpipeline:
-	        plugin: autotools
-	        source: lp:~mterry/libpipeline/printf
-
+```yaml
+parts:
+  pipelinetest:
+    plugin: make
+    source: lp:~mterry/+junk/pipelinetest
+    after:
+      - libpipeline
+  libpipeline:
+    plugin: autotools
+    source: lp:~mterry/libpipeline/printf
+```
 
 In the case of the `libpipeline` example above, the part named `pipelinetest`
 will be built after `libpipeline`. Especially if you need specific
@@ -130,8 +135,10 @@ re-use parts which have worked well for them.
 In the `downloader-with-wiki-parts` example, you can see that the `main`
 part is built:
 
-	        after:
-	            - curl
+```yaml
+after:
+  - curl
+```
 
 As we never define the `curl` part in the above example, `snapcraft` will
 check the Ubuntu Wiki, which is where we currently host examples of
@@ -147,21 +154,25 @@ If you are planning to provide binaries and services to the users of your
 apps, you need to specify them in your definition first. It's just a matter
 of enumerating them.
 
-The `godd` example has one binary:
+The `godd` example has one app:
 
-	binaries:
-	  godd:
-	    exec: ./bin/godd
+```yaml
+apps:
+  godd:
+    command: ./bin/godd
+```
 
 The above will take care of making the script executable, adding it to the
 user's path and install it in the right place.
 
 For a simple service we can take a look at `gopaste`:
 
-	services:
-	  gopaste:
-	    description: "gopaste"
-	    start: bin/gopasted
+```yaml
+apps:
+  gopaste:
+    command: bin/gopasted
+    daemon: simple
+```
 
 You define a name for the service, describe it (so log messages are more
 descriptive), declare how to run the service and that's it. For more
@@ -176,11 +187,13 @@ on the resulting `.snap` file. If you find that certain files should not be
 shipped to the user (download size being just one factor), you can
 explicitly tell `snapcraft` which files to snap:
 
-	    snap:
-	     - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
-	     - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
-	     - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
-	     - bin/godd*
+```yaml
+  snap:
+    - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
+    - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
+    - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
+    - bin/godd*
+```
 
 Here `godd` further defines the list of files to be placed in the app
 during the `snap` phase. As you can see above, globs (using asterisks as
@@ -189,26 +202,28 @@ directory structure.
 
 In the `webcam-webui` example you can see the following part called `cam`:
 
-	  cam:
-	    plugin: go
-	    go-packages:
-	        - github.com/mikix/golang-static-http
-	    stage-packages:
-	      - fswebcam
-	    filesets:
-	      fswebcam:
-	        - usr/bin/fswebcam
-	        - lib
-	        - usr/lib
-	      go-server:
-	        - bin/golang-*
-	    stage:
-	      - $fswebcam
-	      - $go-server
-	    snap:
-	      - $fswebcam
-	      - $go-server
-	      - -usr/share/doc
+```yaml
+cam:
+  plugin: go
+    go-packages:
+      - github.com/mikix/golang-static-http
+    stage-packages:
+      - fswebcam
+    filesets:
+      fswebcam:
+      - usr/bin/fswebcam
+      - lib
+      - usr/lib
+    go-server:
+      - bin/golang-*
+    stage:
+      - $fswebcam
+      - $go-server
+    snap:
+      - $fswebcam
+      - $go-server
+      - -usr/share/doc
+```
 
 In the `stage` definition you can see how named filesets are re-used
 (`$fswebcam` and `$go-server`).
@@ -223,11 +238,13 @@ Snapping node.js apps has never been this easy. Take a look at the `shout`
 example and see how short and sweet it is. To bundle node packages, you simply
 do something like:
 
-	parts:
-	  shout:
-	    plugin: nodejs
-	    node-packages:
-	      - shout
+```yaml
+parts:
+  shout:
+    plugin: nodejs
+    node-packages:
+      - shout
+```
 
 `node-packages` simply lists which packages (including their dependencies) to
 add to the snap.

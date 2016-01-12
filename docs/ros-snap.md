@@ -267,9 +267,9 @@ version: 1.0
 summary: ROS Example
 description: Contains talker/listener ROS packages and a .launch file.
 
-binaries:
+apps:
   launch-project:
-    exec: roslaunch listener talk_and_listen.launch
+    command: roslaunch listener talk_and_listen.launch
 
 parts:
   foo:
@@ -287,9 +287,9 @@ but let's focus on a few specific pieces.
 
 ```yaml
 # ...
-binaries:
+apps:
   launch-project:
-    exec: roslaunch listener talk_and_listen.launch
+    command: roslaunch listener talk_and_listen.launch
 # ...
 ```
 
