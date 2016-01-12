@@ -144,12 +144,11 @@ def _copy(meta_dir, relpath, new_relpath=None):
 def _copy_security_profiles(meta_dir, apps):
     # TODO: remove once capabilities are implemented.
     for app in apps:
-        for entry in ('security-policy', 'security-override'):
-            if entry in apps[app]:
-                apps[app][entry]['apparmor'] = \
-                    _copy(meta_dir, apps[app][entry]['apparmor'])
-                apps[app][entry]['seccomp'] = \
-                    _copy(meta_dir, apps[app][entry]['seccomp'])
+        if 'security-policy' in apps[app]:
+            apps[app]['security-policy']['apparmor'] = \
+                _copy(meta_dir, apps[app]['security-policy']['apparmor'])
+            apps[app]['security-policy']['seccomp'] = \
+                _copy(meta_dir, apps[app]['security-policy']['seccomp'])
 
     return apps
 
