@@ -18,8 +18,6 @@ import argparse
 import logging
 import sys
 
-from testtools import run
-
 from examples_tests import tests
 
 
@@ -42,6 +40,11 @@ def main():
     parser.add_argument(
         '--filter',
         help=('a regular expression to filter the examples to test.'))
+    parser.add_argument(
+        '--subunit',
+        help='generate subunit results.',
+        action='store_true')
+
     args = parser.parse_args()
     if args.skip_install:
         tests.config['skip-install'] = True
@@ -52,10 +55,22 @@ def main():
     if args.filter:
         tests.config['filter'] = args.filter
 
-    # Strip all the command line arguments, so unittest does not handle them
-    # again.
+    if args.subunit:
+        from subunit import run
+        runner = run.SubunitTestProgram
+        stdout = open('results.subunit', 'wb')
+        test_runner = run.SubunitTestRunner
+    else:
+        from testtools import run
+        runner = run.TestProgram
+        stdout = None
+        test_runner = None
+
+    # Strip all the command line arguments, so the test runner does not handle
+    # them again.
     argv = [sys.argv[0]]
-    run.TestProgram('examples_tests.tests', verbosity=2, argv=argv)
+    runner('examples_tests.tests', verbosity=2, stdout=stdout,
+           testRunner=test_runner, argv=argv)
 
 
 if __name__ == '__main__':
