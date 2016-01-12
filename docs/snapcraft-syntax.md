@@ -20,24 +20,42 @@ contain.
  * `config` (string)  
    Path to the runnable in snap that will be used as the [Snappy config
    interface](https://developer.ubuntu.com/snappy/guides/config-command/).
- * `services` (yaml subsection)  
-   A set of keys representing service names with values as defined by the
-   [Snappy packaging spec](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
- * `binaries` (yaml subsection)  
-   A set of keys representing binary names with values as defined by the
-   [Snappy packaging spec](https://developer.ubuntu.com/snappy/guides/packaging-format-apps/).
+ * `apps` (yaml subsection)  
+   A map of keys for applications. These are either daemons or command line
+   accessible binaries.
+   * `command` (string)
+     Specifies the internal command to expose. If it is a `daemon` this
+     command is used to start the service.
+   * `daemon` (string)
+     If present, integrates the runnable as a system service. Valid values are
+     `forking` and `simple`.
+     If set to `simple`, it is expected that the command configured is the main
+     process.
+     If set to `forking`, it is expected that the configured command will call
+     fork() as part of its start-up. The parent process is expected to exit
+     when start-up is complete and all communication channels are set up.
+     The child continues to run as the main daemon process. This is the
+     behavior of traditional UNIX daemons.
+   * `stop-command` (string)
+     Requires `daemon` to be specified and represents the command to run to
+     stop the service.
+   * `stop-timeout` (integer)
+     Requires `daemon` to be specified. It is the length of time in seconds
+     that the system will wait for the service to stop before terminating it
+     via `SIGTERM` (and `SIGKILL` if that doesn't work).
  * `icon` (string)  
    Path to the icon that will be used for the snap.
- * `license` (yaml subsection)  
-   License the snap will carry.
-   * `text` (string)  
-     The license text for the snap itself.
-   * `accept-required` (boolean)  
-     If true, license acceptance is required for the package to be activated.
-     A good example for this one is the Sun JRE/JDK being bundled in a snap.
- * `framework-policy` (string)  
-   A relative path to a directory containing additional policies, used if
-   creating a framework and want to extend permissions to snap apps.
+ * `license` (string)  
+   Path to a license file.
+ * `license-agreement` (string)  
+   Requires `license` to be set. The only valid value for this entry is
+   `explicit` which requires the license to be accepted for the snap to
+   install.
+   A good example for this one is the Sun JRE/JDK being bundled in a snap.
+ * `license-version` (string)  
+   Requires `license` to be set. The version for the license.
+   A change in version when `license-accept` is set to `explicit` requires
+   a license to be reaccepted.
  * `parts` (yaml subsection)  
    A map of part names to their own part configuration. Order in the file is
    not relevant (to aid copy-and-pasting).

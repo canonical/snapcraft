@@ -74,10 +74,12 @@ then open the created snapcraft.yaml and edit the templated values for `name`,
 `version`, `summary` and `description`. You can make it look like
 this:
 
-    name: webcam-webui
-    version: 1
-    summary: Webcam web UI
-    description: Exposes your webcam over a web UI
+```yaml
+name: webcam-webui
+version: 1
+summary: Webcam web UI
+description: Exposes your webcam over a web UI
+```
 
 If you run `snapcraft snap` now, it will complain about not having any `parts`.
 
@@ -88,10 +90,12 @@ some `parts`.
 
 Let's start with the web server.
 
-    parts:
-      cam:
-        plugin: go
-        source: git://github.com/mikix/golang-static-http
+```yaml
+parts:
+  cam:
+    plugin: go
+    source: git://github.com/mikix/golang-static-http
+```
 
 You've just defined a `part` inside `parts` named `cam`, but you
 could call it anything. That part has a two options: A `plugin` option that
@@ -122,12 +126,14 @@ executable sitting in `./stage/bin`:
 Now let's add the webcam program `fswebcam` to our snap. Edit `snapcraft.yaml`
 to make the `cam` part look like:
 
-    parts:
-      cam:
-        plugin: go
-        source: git://github.com/mikix/golang-static-http
-        stage-packages:
-          - fswebcam
+```yaml
+parts:
+  cam:
+    plugin: go
+    source: git://github.com/mikix/golang-static-http
+    stage-packages:
+      - fswebcam
+```
 
 We've just added a new property to the `cam` part called `stage-packages` which
 contains a yaml list with any supporting Ubuntu package we want; in this case
@@ -169,16 +175,18 @@ Save the above as `webcam-webui` and make it executable:
 
 Alright, let's put this script in our snap too:
 
-    parts:
-      cam:
-        plugin: go
-        source: git://github.com/mikix/golang-static-http
-        stage-packages:
-          - fswebcam
-      glue:
-        plugin: copy
-        files:
-          webcam-webui: bin/webcam-webui
+```yaml
+parts:
+  cam:
+    plugin: go
+    source: git://github.com/mikix/golang-static-http
+    stage-packages:
+      - fswebcam
+  glue:
+    plugin: copy
+    files:
+      webcam-webui: bin/webcam-webui
+```
 
 The `copy` plugin takes a list of files to just directly copy without
 building or downloading anything. In this case, we just want to put our glue
@@ -203,26 +211,28 @@ so let's add some filesets for the snap.
 
 Edit `snapcraft.yaml` once more to make the `cam` part in `parts` to look like:
 
-    parts:
-      cam:
-        plugin: go
-        source: git://github.com/mikix/golang-static-http
-        stage-packages:
-          - fswebcam
-        filesets:
-          fswebcam:
-            - usr/bin/fswebcam
-            - lib
-            - usr/lib
-          go-server:
-            - bin/golang-*
-        snap:
-          - $fswebcam
-          - $go-server
-      glue:
-        plugin: copy
-        files:
-          webcam-webui: bin/webcam-webui
+```yaml
+parts:
+  cam:
+    plugin: go
+    source: git://github.com/mikix/golang-static-http
+    stage-packages:
+      - fswebcam
+    filesets:
+      fswebcam:
+        - usr/bin/fswebcam
+        - lib
+        - usr/lib
+      go-server:
+        - bin/golang-*
+    snap:
+      - $fswebcam
+      - $go-server
+  glue:
+    plugin: copy
+    files:
+      webcam-webui: bin/webcam-webui
+```
 
 What we did was add two `filesets`, one named `fswebcam` and another one named
 `go-server` and then added a `snap` entry referencing these two filesets with
@@ -241,32 +251,35 @@ You can read all about the resulting [format of this metadata](https://developer
 but we'll assume here that you're already familiar.
 
 The templated values when `snapcraft init` was run did not hold any `parts`
-which we've filled along the way. It also did not define any `services` or
-`binaries` which we will be adding now
+which we've filled along the way. It also did not define any `apps` which we
+will be adding now
 
 Edit `snapcraft.yaml` once more and add the `services` and `binaries` entry,
 your resulting `snapcraft.yaml` should look very similar to:
 
-    name: webcam-webui
-    version: 1
-    vendor: You <you@example.com>
-    summary: Webcam web UI
-    description: Exposes your webcam over a web UI
-    icon: icon.png
-    services:
-      webcam-webui:
-        start: bin/webcam-webui
+```yaml
+name: webcam-webui
+version: 1
+summary: Webcam web UI
+description: Exposes your webcam over a web UI
+icon: icon.png
 
-    parts:
-      golang-static-http:
-        plugin: go
-        source: git://github.com/mikix/golang-static-http
-        stage-packages:
-         - fswebcam
-      glue:
-        plugin: copy
-        files:
-          webcam-webui: bin/webcam-webui
+apps:
+  webcam-webui:
+    command: bin/webcam-webui
+    daemon: simple
+
+parts:
+  golang-static-http:
+    plugin: go
+    source: git://github.com/mikix/golang-static-http
+    stage-packages:
+     - fswebcam
+  glue:
+    plugin: copy
+    files:
+      webcam-webui: bin/webcam-webui
+```
 
 and tell Snapcraft to actually make the snap package:
 
@@ -290,7 +303,7 @@ get started on your own projects. To get a good overview of the snapcraft
 features used in these examples, check out
 [this article](snapcraft-advanced-features.md).
 
-If you are unsure, you can review the general 
+If you are unsure, you can review the general
 [snapcraft.yaml syntax](snapcraft-syntax.md). We also added some notes about
 [snapcraft usage](snapcraft-usage.md).
 
