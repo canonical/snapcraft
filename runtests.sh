@@ -1,7 +1,7 @@
 #!/bin/bash
 # -*- Mode:sh; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,24 +22,27 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 
 parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
+        export RUN_STATIC="true"
         export RUN_UNIT="true"
         export RUN_INTEGRATION="true"
         export RUN_EXAMPLES="true"
     else
-        if [ "$1" == "unit" ] ; then
+        if [ "$1" == "static" ] ; then
+            export RUN_STATIC="true"
+        elif [ "$1" == "unit" ] ; then
             export RUN_UNIT="true"
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
         elif [ "$1" == "examples" ] ; then
             export RUN_EXAMPLES="true"
         else
-            echo "Not recognized option, should be one of all, unit, integration or examples"
+            echo "Not recognized option, should be one of all, static, unit, integration or examples"
             exit 1
         fi
     fi
 }
 
-run_unit_tests(){
+run_static_tests(){
     SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
 
     # These three checks could easily be done with flake8 in one shot if
@@ -61,7 +64,9 @@ run_unit_tests(){
         echo "Here's the list of units exceeding 10:"
         echo -e "$mccabe_list"
     fi
+}
 
+run_unit_tests(){
     if which python3-coverage >/dev/null 2>&1; then
         python3-coverage erase
         python3-coverage run --branch --source snapcraft -m unittest discover -s snapcraft -t .
@@ -90,6 +95,10 @@ run_examples(){
 }
 
 parseargs "$@"
+
+if [ ! -z "$RUN_STATIC" ] ; then
+    run_static_tests
+fi
 
 if [ ! -z "$RUN_UNIT" ]; then
     run_unit_tests
