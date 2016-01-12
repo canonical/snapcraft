@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,7 +30,7 @@ def main():
     parser.add_argument(
         '--skip-install',
         help=('skip the tests that install the example snaps into a snappy '
-              'virtual machine'),
+              'virtual machine.'),
         action='store_true')
     parser.add_argument(
         '--ip',
@@ -38,7 +38,10 @@ def main():
               'be created for the test.'))
     parser.add_argument(
         '--port',
-        help=('SSH port of the testbed. Defaults to use port 22'))
+        help=('SSH port of the testbed. Defaults to use port 22.'))
+    parser.add_argument(
+        '--filter',
+        help=('a regular expression to filter the examples to test.'))
     args = parser.parse_args()
     if args.skip_install:
         tests.config['skip-install'] = True
@@ -46,6 +49,8 @@ def main():
         tests.config['ip'] = args.ip
     if args.port:
         tests.config['port'] = args.port
+    if args.filter:
+        tests.config['filter'] = args.filter
 
     # Strip all the command line arguments, so unittest does not handle them
     # again.
