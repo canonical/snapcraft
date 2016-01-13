@@ -205,67 +205,6 @@ class Config:
         self.all_parts.append(part)
         return part
 
-    def runtime_env(self, root):
-        env = []
-        env.append('PATH="' + ':'.join([
-            '{0}/bin',
-            '{0}/usr/bin',
-            '$PATH'
-        ]).format(root) + '"')
-
-        # Add the default LD_LIBRARY_PATH
-        env.append('LD_LIBRARY_PATH="' + ':'.join([
-            '{0}/lib',
-            '{0}/usr/lib',
-            '{0}/lib/{1}',
-            '{0}/usr/lib/{1}',
-            '$LD_LIBRARY_PATH'
-        ]).format(root, common.get_arch_triplet()) + '"')
-
-        # Add more specific LD_LIBRARY_PATH if necessary
-        ld_library_paths = libraries.determine_ld_library_path(root)
-        if ld_library_paths:
-            env.append('LD_LIBRARY_PATH="' + ':'.join(ld_library_paths) +
-                       ':$LD_LIBRARY_PATH"')
-
-        return env
-
-    def build_env(self, root):
-        env = []
-        env.append('CFLAGS="' + ' '.join([
-            '-I{0}/include',
-            '-I{0}/usr/include',
-            '-I{0}/include/{1}',
-            '-I{0}/usr/include/{1}',
-            '$CFLAGS'
-        ]).format(root, common.get_arch_triplet()) + '"')
-        env.append('CPPFLAGS="' + ' '.join([
-            '-I{0}/include',
-            '-I{0}/usr/include',
-            '-I{0}/include/{1}',
-            '-I{0}/usr/include/{1}',
-            '$CPPFLAGS'
-        ]).format(root, common.get_arch_triplet()) + '"')
-        env.append('LDFLAGS="' + ' '.join([
-            '-L{0}/lib',
-            '-L{0}/usr/lib',
-            '-L{0}/lib/{1}',
-            '-L{0}/usr/lib/{1}',
-            '$LDFLAGS'
-        ]).format(root, common.get_arch_triplet()) + '"')
-        env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(root))
-        env.append('PKG_CONFIG_PATH=' + ':'.join([
-            '{0}/usr/lib/pkgconfig',
-            '{0}/usr/lib/{1}/pkgconfig',
-            '{0}/usr/share/pkgconfig',
-            '{0}/usr/local/lib/pkgconfig',
-            '{0}/usr/local/lib/{1}/pkgconfig',
-            '{0}/usr/local/share/pkgconfig',
-            '$PKG_CONFIG_PATH'
-        ]).format(root, common.get_arch_triplet()))
-        env.append('PERL5LIB={0}/usr/share/perl5/'.format(root))
-        return env
-
     def build_env_for_part(self, part, root_part=True):
         """Return a build env of all the part's dependencies."""
 
@@ -277,35 +216,118 @@ class Config:
 
         if root_part:
             env += part.env(part.installdir)
-            env += self.runtime_env(part.installdir)
-            env += self.build_env(part.installdir)
+            env += _runtime_env(stagedir)
+            env += _runtime_env(part.installdir)
+            env += _build_env_for_stage(stagedir)
         else:
             env += part.env(stagedir)
-            env += self.runtime_env(stagedir)
-            env += self.build_env(stagedir)
+            env += _runtime_env(stagedir)
 
         return env
 
     def stage_env(self):
-        root = common.get_stagedir()
+        stagedir = common.get_stagedir()
         env = []
 
-        env += self.runtime_env(root)
-        env += self.build_env(root)
+        env += _runtime_env(stagedir)
+        env += _build_env_for_stage(stagedir)
         for part in self.all_parts:
-            env += part.env(root)
+            env += part.env(stagedir)
 
         return env
 
     def snap_env(self):
-        root = common.get_snapdir()
+        snapdir = common.get_snapdir()
         env = []
 
-        env += self.runtime_env(root)
+        env += _runtime_env(snapdir)
         for part in self.all_parts:
-            env += part.env(root)
+            env += part.env(snapdir)
 
         return env
+
+
+def _runtime_env(root):
+    """Set the environment variables required for running binaries."""
+    env = []
+
+    env.append('PATH="' + ':'.join([
+        '{0}/bin',
+        '{0}/usr/bin',
+        '$PATH'
+    ]).format(root) + '"')
+
+    # Add the default LD_LIBRARY_PATH
+    env.append('LD_LIBRARY_PATH="' + ':'.join([
+        '{0}/lib',
+        '{0}/usr/lib',
+        '{0}/lib/{1}',
+        '{0}/usr/lib/{1}',
+        '$LD_LIBRARY_PATH'
+    ]).format(root, common.get_arch_triplet()) + '"')
+
+    # Add more specific LD_LIBRARY_PATH if necessary
+    ld_library_paths = libraries.determine_ld_library_path(root)
+    if ld_library_paths:
+        env.append('LD_LIBRARY_PATH="' + ':'.join(ld_library_paths) +
+                   ':$LD_LIBRARY_PATH"')
+
+    return env
+
+
+def _build_env(root):
+    """Set the environment variables required for building.
+
+    This is required for the current parts installdir due to stage-packages
+    and also to setup the stagedir.
+    """
+    env = []
+
+    arch_triplet = common.get_arch_triplet()
+
+    env.append('CFLAGS="' + ' '.join([
+        '-I{0}/include',
+        '-I{0}/usr/include',
+        '-I{0}/include/{1}',
+        '-I{0}/usr/include/{1}',
+        '$CFLAGS'
+    ]).format(root, arch_triplet) + '"')
+    env.append('CPPFLAGS="' + ' '.join([
+        '-I{0}/include',
+        '-I{0}/usr/include',
+        '-I{0}/include/{1}',
+        '-I{0}/usr/include/{1}',
+        '$CPPFLAGS'
+    ]).format(root, arch_triplet) + '"')
+    env.append('LDFLAGS="' + ' '.join([
+        '-L{0}/lib',
+        '-L{0}/usr/lib',
+        '-L{0}/lib/{1}',
+        '-L{0}/usr/lib/{1}',
+        '$LDFLAGS'
+    ]).format(root, arch_triplet) + '"')
+    env.append('PKG_CONFIG_PATH=' + ':'.join([
+        '{0}/lib/pkgconfig',
+        '{0}/lib/{1}/pkgconfig',
+        '{0}/usr/lib/pkgconfig',
+        '{0}/usr/lib/{1}/pkgconfig',
+        '{0}/usr/share/pkgconfig',
+        '{0}/usr/local/lib/pkgconfig',
+        '{0}/usr/local/lib/{1}/pkgconfig',
+        '{0}/usr/local/share/pkgconfig',
+        '$PKG_CONFIG_PATH'
+    ]).format(root, arch_triplet))
+
+    return env
+
+
+def _build_env_for_stage(stagedir):
+    env = _build_env(stagedir)
+
+    env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
+    env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(stagedir))
+
+    return env
 
 
 def _validate_snapcraft_yaml(snapcraft_yaml):
