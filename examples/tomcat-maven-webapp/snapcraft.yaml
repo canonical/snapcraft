@@ -11,7 +11,7 @@ apps:
    command: bin/wrapper
    daemon: simple
    caps:
-   - networking
+   - network-client
    - network-service
 
 parts:
