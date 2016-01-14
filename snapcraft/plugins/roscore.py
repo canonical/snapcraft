@@ -16,6 +16,7 @@
 
 import snapcraft
 import os
+import re
 
 
 class RosCorePlugin(snapcraft.BasePlugin):
@@ -67,6 +68,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         os.chmod(service_wrapper, 0o755)
 
+        self._finish_build()
+
     def snap_fileset(self):
         rospath = os.path.join('opt', 'ros', self.options.rosdistro)
         return ([
@@ -81,3 +84,46 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             '-' + os.path.join(rospath, 'setup.sh'),
             '-' + os.path.join(rospath, '_setup_util.py')
         ])
+
+    def _finish_build(self):
+        rospath = os.path.join(self.installdir, 'opt', 'ros',
+                               self.options.rosdistro)
+
+        # Fix all shebangs to use the in-snap python.
+        _search_and_replace(rospath, re.compile(r''),
+                            re.compile(r'#!.*python'),
+                            r'#!/usr/bin/env python')
+
+        # Also replace the python usage in 10.ros.sh to use the in-snap python.
+        setup_util_file = os.path.join(rospath,
+                                       'etc/catkin/profile.d/10.ros.sh')
+        if os.path.isfile(setup_util_file):
+            with open(setup_util_file, 'r+') as f:
+                pattern = re.compile(r'/usr/bin/python')
+                replaced = pattern.sub(r'python', f.read())
+                f.seek(0)
+                f.truncate()
+                f.write(replaced)
+
+
+def _search_and_replace(directory, file_pattern, search_pattern, replacement):
+    for root, directories, files in os.walk(directory):
+        for file_name in files:
+            if file_pattern.match(file_name):
+                _search_and_replace_contents(os.path.join(root, file_name),
+                                             search_pattern, replacement)
+
+
+def _search_and_replace_contents(file_path, search_pattern, replacement):
+    with open(file_path, 'r+') as f:
+        try:
+            original = f.read()
+        except UnicodeDecodeError:
+            # This was probably a binary file. Skip it.
+            return
+
+        replaced = search_pattern.sub(replacement, original)
+        if replaced != original:
+            f.seek(0)
+            f.truncate()
+            f.write(replaced)
