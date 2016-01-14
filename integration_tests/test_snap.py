@@ -20,7 +20,6 @@ import subprocess
 import fixtures
 import testtools
 from testtools.matchers import (
-    DirExists,
     FileContains,
     FileExists,
     Not,
@@ -52,7 +51,8 @@ class SnapTestCase(integration_tests.TestCase):
         snap_file_path = 'assemble_1.0_{}.snap'.format(_get_deb_arch())
         self.assertThat(snap_file_path, FileExists())
 
-        binary1_wrapper_path = os.path.join('snap', 'binary1.wrapper')
+        binary1_wrapper_path = os.path.join(
+            'snap', 'command-assemble-bin.wrapper')
         with open('binary1.after', 'r') as file_:
             binary1_after = file_.read()
         expected_binary1_wrapper = binary1_after.replace(
@@ -64,10 +64,10 @@ class SnapTestCase(integration_tests.TestCase):
            fixtures.EnvironmentVariable(
                 'SNAP_APP_PATH', os.path.join(os.getcwd(), 'snap')))
         binary_scenarios = (
-            ('service-start.wrapper', 'service-start\n'),
-            ('service-stop.wrapper', 'service-stop\n'),
-            ('binary1.wrapper', 'binary1\n'),
-            (os.path.join('subdir', 'binary2.wrapper'), 'binary2\n'),
+            ('command-assemble-service.wrapper', 'service-start\n'),
+            ('stop-command-assemble-service.wrapper', 'service-stop\n'),
+            ('command-assemble-bin.wrapper', 'binary1\n'),
+            ('command-binary2.wrapper', 'binary2\n'),
         )
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
