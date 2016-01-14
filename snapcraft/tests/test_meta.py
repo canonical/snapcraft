@@ -147,7 +147,7 @@ class CreateTest(tests.TestCase):
 
         meta.create(self.config_data)
 
-        app1_wrapper_path = os.path.join(self.snap_dir, 'app1.sh.wrapper')
+        app1_wrapper_path = os.path.join(self.snap_dir, 'command-app1.wrapper')
         self.assertTrue(
             os.path.exists(app1_wrapper_path),
             'the wrapper for app1 was not setup correctly')
@@ -166,7 +166,7 @@ class CreateTest(tests.TestCase):
         expected = {'architectures': ['amd64'],
                     'apps': {
                         'app1': {
-                            'command': 'app1.sh.wrapper',
+                            'command': 'command-app1.wrapper',
                             'security-policy': {
                                 'apparmor': 'meta/stub-sec',
                                 'seccomp': 'meta/stub-sec',
@@ -194,11 +194,37 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         os.mkdir(snapdir)
 
         relative_exe_path = 'test_relexepath'
-        with open(os.path.join(snapdir, relative_exe_path), 'w'):
-            pass
+        open(os.path.join(snapdir, relative_exe_path), 'w').close()
 
         relative_wrapper_path = meta._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+
+        expected = ('#!/bin/sh\n'
+                    'PATH=$SNAP_APP_PATH/usr/bin:$SNAP_APP_PATH/bin\n'
+                    '\n\n'
+                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+        with open(wrapper_path) as wrapper_file:
+            wrapper_contents = wrapper_file.read()
+
+        self.assertEqual(expected, wrapper_contents)
+
+    @patch('snapcraft.common.assemble_env')
+    def test_wrap_exe_writes_wrapper_with_basename(self, mock_assemble_env):
+        mock_assemble_env.return_value = """\
+PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
+""".format(common.get_partsdir())
+
+        snapdir = common.get_snapdir()
+        os.mkdir(snapdir)
+
+        relative_exe_path = 'test_relexepath'
+        open(os.path.join(snapdir, relative_exe_path), 'w').close()
+
+        relative_wrapper_path = meta._wrap_exe(
+            relative_exe_path, basename='new-name')
+        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+
+        self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
 
         expected = ('#!/bin/sh\n'
                     'PATH=$SNAP_APP_PATH/usr/bin:$SNAP_APP_PATH/bin\n'
