@@ -248,9 +248,11 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def _finish_build(self):
         # Fix the shebang in _setup_util.py to be portable
-        setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
-        if os.path.isfile(setup_util_file):
-            with open(setup_util_file, 'r+') as f:
+        files = (os.path.join(self.rosdir, '_setup_util.py'),
+                 os.path.join(self.rosdir, 'etc', 'catkin', 'profile.d',
+                              '10.ros.sh'))
+        for fp in [f for f in files if os.path.isfile(f)]:
+            with open(fp, 'r+') as f:
                 pattern = re.compile(r'#!.*python')
                 replaced = pattern.sub(r'#!/usr/bin/env python', f.read())
                 f.seek(0)

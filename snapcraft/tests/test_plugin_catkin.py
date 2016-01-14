@@ -447,17 +447,27 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_finish_build(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
-        os.makedirs(plugin.rosdir)
+        profile_dir = os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d')
+        os.makedirs(profile_dir)
 
+        setup_util_path = os.path.join(plugin.rosdir, '_setup_util.py')
         # Place _setup_util.py with a bad shebang
-        with open(os.path.join(plugin.rosdir, '_setup_util.py'), 'w') as f:
+        with open(setup_util_path, 'w') as f:
             f.write('#!/foo/bar/baz/python')
 
+        ros10_path = os.path.join(profile_dir, '10.ros.sh')
+        # Place 10.ros.sh with a bad shebang
+        with open(ros10_path, 'w') as f:
+            f.write('#!/foo/bar/baz/python')
         plugin._finish_build()
 
         # Verify that _setup_util.py had its shebang rewritten correctly
-        with open('{}/_setup_util.py'.format(
-                plugin.rosdir), 'r') as f:
+        with open(setup_util_path, 'r') as f:
+            self.assertEqual(f.read(), '#!/usr/bin/env python',
+                             'The shebang was not replaced as expected')
+
+        # Verify that 10.ros.sh had its shebang rewritten correctly
+        with open(ros10_path, 'r') as f:
             self.assertEqual(f.read(), '#!/usr/bin/env python',
                              'The shebang was not replaced as expected')
 
