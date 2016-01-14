@@ -445,53 +445,82 @@ class CatkinPluginTestCase(tests.TestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build(self, run_output_mock, run_mock):
+    def test_finish_build_python_shebangs(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
-        os.makedirs(plugin.rosdir)
+        os.makedirs(os.path.join(plugin.rosdir, 'bin'))
 
-        # Place _setup_util.py with a bad shebang
-        with open(os.path.join(plugin.rosdir, '_setup_util.py'), 'w') as f:
-            f.write('#!/foo/bar/baz/python')
+        # Place a few files with bad shebangs, and some files that shouldn't be
+        # changed.
+        files = [
+            {
+                'path': '_setup_util.py',
+                'contents': '#!/foo/bar/baz/python',
+                'expected': '#!/usr/bin/env python',
+            },
+            {
+                'path': 'bin/catkin_find',
+                'contents': '#!/foo/baz/python',
+                'expected': '#!/usr/bin/env python',
+            },
+            {
+                'path': 'foo',
+                'contents': 'foo',
+                'expected': 'foo',
+            }
+        ]
+
+        for file_info in files:
+            with open(os.path.join(plugin.rosdir,
+                                   file_info['path']), 'w') as f:
+                f.write(file_info['contents'])
 
         plugin._finish_build()
 
-        # Verify that _setup_util.py had its shebang rewritten correctly
-        with open('{}/_setup_util.py'.format(
-                plugin.rosdir), 'r') as f:
-            self.assertEqual(f.read(), '#!/usr/bin/env python',
-                             'The shebang was not replaced as expected')
-
-        self.assertFalse(
-            self.dependencies_mock.called,
-            'Dependencies should have been discovered in the pull() step')
+        for file_info in files:
+            with open(os.path.join(plugin.rosdir,
+                                   file_info['path']), 'r') as f:
+                self.assertEqual(f.read(), file_info['expected'])
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build_file_missing(self, run_output_mock, run_mock):
+    def test_finish_build_absolute_python(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
-        os.makedirs(plugin.rosdir)
+        os.makedirs(os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d'))
 
-        try:
-            plugin._finish_build()
-        except FileNotFoundError:
-            self.fail('Unexpectedly raised an exception when files were '
-                      'missing')
+        ros_profile = os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d',
+                                   '10.ros.sh')
+
+        # Place 10.ros.sh with an absolute path to python
+        with open(ros_profile, 'w') as f:
+            f.write('/usr/bin/python foo')
+
+        plugin._finish_build()
+
+        # Verify that the absolute path in 10.ros.sh was rewritten correctly
+        with open(ros_profile, 'r') as f:
+            self.assertEqual(f.read(), 'python foo',
+                             'The absolute path to python was not replaced as '
+                             'expected')
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build_raise_errors(self, run_output_mock, run_mock):
+    def test_finish_build_binary(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         os.makedirs(plugin.rosdir)
 
-        with open(os.path.join(plugin.rosdir, '_setup_util.py'), 'w') as f:
-            f.write('#!/foo/bar/baz/python')
+        # Place a file to be discovered by _finish_build().
+        open(os.path.join(plugin.rosdir, 'foo'), 'w').close()
 
-        with mock.patch.object(builtins, 'open',
-                               side_effect=RuntimeError('foo')):
-            with self.assertRaises(RuntimeError) as raised:
+        file_mock = mock.mock_open()
+        with mock.patch.object(builtins, 'open', file_mock):
+            # Reading a binary file may throw a UnicodeDecodeError. Make sure
+            # that's handled.
+            file_mock.return_value.read.side_effect = UnicodeDecodeError(
+                'foo', b'bar', 1, 2, 'baz')
+            try:
                 plugin._finish_build()
-
-        self.assertEqual(raised.exception.args[0], 'foo')
+            except UnicodeDecodeError:
+                self.fail('Expected _finish_build to handle binary files')
 
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment(self, run_mock):

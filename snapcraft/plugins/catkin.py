@@ -234,25 +234,23 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             return '"' + ';'.join(paths) + '"'
 
         # Looking for any path-like string
-        pattern = re.compile(r'"(.*?/.*?)"')
-        for root, directories, files in os.walk(self.rosdir):
-            for fileName in files:
-                if fileName.endswith('Config.cmake'):
-                    with open(os.path.join(root, fileName), 'r+') as f:
-                        original = f.read()
-                        replaced = pattern.sub(rewrite_paths, original)
-                        if replaced != original:
-                            f.seek(0)
-                            f.truncate()
-                            f.write(replaced)
+        _search_and_replace(self.rosdir, re.compile(r'.*Config.cmake$'),
+                            re.compile(r'"(.*?/.*?)"'),
+                            rewrite_paths)
 
     def _finish_build(self):
-        # Fix the shebang in _setup_util.py to be portable
-        setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
+        # Fix all shebangs to use the in-snap python.
+        _search_and_replace(self.rosdir, re.compile(r''),
+                            re.compile(r'#!.*python'),
+                            r'#!/usr/bin/env python')
+
+        # Also replace the python usage in 10.ros.sh to use the in-snap python.
+        setup_util_file = os.path.join(self.rosdir,
+                                       'etc/catkin/profile.d/10.ros.sh')
         if os.path.isfile(setup_util_file):
             with open(setup_util_file, 'r+') as f:
-                pattern = re.compile(r'#!.*python')
-                replaced = pattern.sub(r'#!/usr/bin/env python', f.read())
+                pattern = re.compile(r'/usr/bin/python')
+                replaced = pattern.sub(r'python', f.read())
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
@@ -307,6 +305,29 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         # This has been fixed in Catkin Tools... perhaps we should be using
         # that instead.
         self._run_in_bash(catkincmd)
+
+
+def _search_and_replace(directory, file_pattern, search_pattern, replacement):
+    for root, directories, files in os.walk(directory):
+        for file_name in files:
+            if file_pattern.match(file_name):
+                _search_and_replace_contents(os.path.join(root, file_name),
+                                             search_pattern, replacement)
+
+
+def _search_and_replace_contents(file_path, search_pattern, replacement):
+    with open(file_path, 'r+') as f:
+        try:
+            original = f.read()
+        except UnicodeDecodeError:
+            # This was probably a binary file. Skip it.
+            return
+
+        replaced = search_pattern.sub(replacement, original)
+        if replaced != original:
+            f.seek(0)
+            f.truncate()
+            f.write(replaced)
 
 
 def _find_system_dependencies(catkin_packages, ros_distro, ros_package_path,
