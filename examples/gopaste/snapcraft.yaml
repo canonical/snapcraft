@@ -9,7 +9,9 @@ apps:
     command: bin/gopaste
     daemon: simple
     caps:
+      - network-listener
       - network-service
+      - network-management
 
 parts:
   gopaste:
