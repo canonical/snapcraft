@@ -8,6 +8,8 @@ apps:
   webchat:
     command: bin/webchat-for-a-snap
     daemon: simple
+    caps:
+      - network-listener
 
 parts:
   webchat:
