@@ -84,7 +84,7 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         os.symlink('1', self.tempdir + '/rel-to-1')
         os.symlink('/1', self.tempdir + '/abs-to-1')
 
-        repo._fix_contents(debdir=self.tempdir)
+        repo._fix_symlinks(debdir=self.tempdir)
 
         self.assertEqual(os.readlink(self.tempdir + '/rel-to-a'), 'a')
         self.assertEqual(os.readlink(self.tempdir + '/abs-to-a'), 'a')
@@ -106,6 +106,53 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
                 open(file, mode='w').close()
                 os.chmod(file, files[key][0])
 
-                repo._fix_contents(debdir=self.tempdir)
+                repo._fix_symlinks(debdir=self.tempdir)
                 self.assertEqual(
                     stat.S_IMODE(os.stat(file).st_mode), files[key][1])
+
+    def test_fix_shebang(self):
+        rootdir = 'root'
+
+        files = [
+            {
+                'path': os.path.join(rootdir, 'bin', 'a'),
+                'content': '#!/usr/bin/python\nimport this',
+                'expected': '#!/usr/bin/env python\nimport this',
+            },
+            {
+                'path': os.path.join(rootdir, 'sbin', 'b'),
+                'content': '#!/usr/bin/python\nimport this',
+                'expected': '#!/usr/bin/env python\nimport this',
+            },
+            {
+                'path': os.path.join(rootdir, 'usr', 'bin', 'c'),
+                'content': '#!/usr/bin/python\nimport this',
+                'expected': '#!/usr/bin/env python\nimport this',
+            },
+            {
+                'path': os.path.join(rootdir, 'usr', 'sbin', 'd'),
+                'content': '#!/usr/bin/python\nimport this',
+                'expected': '#!/usr/bin/env python\nimport this',
+            },
+            {
+                'path': os.path.join(rootdir, 'opt', 'bin', 'e'),
+                'content': '#!/usr/bin/python\nraise Exception()',
+                'expected': '#!/usr/bin/python\nraise Exception()',
+            },
+            {
+                'path': os.path.join(rootdir, 'bin', 'd'),
+                'content': '#!/usr/bin/python3\nraise Exception()',
+                'expected': '#!/usr/bin/python3\nraise Exception()',
+            },
+        ]
+
+        for f in files:
+            with self.subTest(key=f['path']):
+                os.makedirs(os.path.dirname(f['path']), exist_ok=True)
+                with open(f['path'], 'w') as fd:
+                    fd.write(f['content'])
+
+                repo._fix_shebangs(rootdir)
+
+                with open(f['path'], 'r') as fd:
+                    self.assertEqual(fd.read(), f['expected'])

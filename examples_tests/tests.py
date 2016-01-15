@@ -178,6 +178,11 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             'dir': 'ros',
             'name': 'ros-example',
             'version': '1.0',
+            'external_tests_commands': [
+                # check that the hardcoded /usr/bin/python in rosversion
+                # is changed to using /usr/bin/env python
+                ("sed -n '/env/p;1q' snap/usr/bin/rosversion",
+                 b'#!/usr/bin/env python\n',)],
             }),
         ('shout', {
             'dir': 'shout',
@@ -281,14 +286,20 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             self.addCleanup(self.remove_snap, self.name)
 
             if getattr(self, 'internal_tests_commads', None):
-                for command, expected_result in self.internal_tests_commands:
-                    with self.subTest(command):
-                        output = self.run_command_through_ssh(
-                            command.split(' '))
-                        self.assertEqual(output, expected_result)
+                self._run_internal_commands(self.internal_tests_commands)
 
             if getattr(self, 'external_tests_commands', None):
-                for command, expected_result in self.external_tests_commands:
-                    with self.subTest(command):
-                        output = subprocess.check_output(command.split(' '))
-                        self.assertEqual(output, expected_result)
+                self._run_external_commands(self.external_tests_commands,
+                                            example_dir)
+
+    def _run_internal_commands(self, internal_tests_commands):
+        for command, expected_result in internal_tests_commands:
+            with self.subTest(command):
+                output = self.run_command_through_ssh(command.split(' '))
+                self.assertEqual(output, expected_result)
+
+    def _run_external_commands(self, external_tests_commands, cwd=None):
+        for command, expected_result in external_tests_commands:
+            with self.subTest(command):
+                output = subprocess.check_output(command, cwd=cwd, shell=True)
+                self.assertEqual(output, expected_result)

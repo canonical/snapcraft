@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
 import os
 import re
+
+import snapcraft
+from snapcraft import common
 
 
 class RosCorePlugin(snapcraft.BasePlugin):
@@ -90,9 +92,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                                self.options.rosdistro)
 
         # Fix all shebangs to use the in-snap python.
-        _search_and_replace(rospath, re.compile(r''),
-                            re.compile(r'#!.*python'),
-                            r'#!/usr/bin/env python')
+        common.replace_in_file(rospath, re.compile(r''),
+                               re.compile(r'#!.*python'),
+                               r'#!/usr/bin/env python')
 
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         setup_util_file = os.path.join(rospath,
@@ -104,26 +106,3 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
-
-
-def _search_and_replace(directory, file_pattern, search_pattern, replacement):
-    for root, directories, files in os.walk(directory):
-        for file_name in files:
-            if file_pattern.match(file_name):
-                _search_and_replace_contents(os.path.join(root, file_name),
-                                             search_pattern, replacement)
-
-
-def _search_and_replace_contents(file_path, search_pattern, replacement):
-    with open(file_path, 'r+') as f:
-        try:
-            original = f.read()
-        except UnicodeDecodeError:
-            # This was probably a binary file. Skip it.
-            return
-
-        replaced = search_pattern.sub(replacement, original)
-        if replaced != original:
-            f.seek(0)
-            f.truncate()
-            f.write(replaced)
