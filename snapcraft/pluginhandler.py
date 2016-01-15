@@ -124,11 +124,14 @@ class PluginHandler:
             f.write(stage)
 
     def _setup_stage_packages(self):
-        if self.code.stage_packages:
-            ubuntu = repo.Ubuntu(
-                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
-            ubuntu.get(self.code.stage_packages)
-            ubuntu.unpack(self.code.installdir)
+        ubuntu = repo.Ubuntu(
+            self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+        ubuntu.get(self.code.stage_packages)
+        ubuntu.unpack(self.installdir)
+
+        snap_files, snap_dirs = self.migratable_fileset_for('stage')
+        _migrate_files(snap_files, snap_dirs, self.code.installdir,
+                       self.stagedir, missing_ok=True)
 
     def pull(self, force=False):
         if not self.should_step_run('pull', force):
@@ -136,7 +139,8 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage('Pulling')
-        self._setup_stage_packages()
+        if self.code.stage_packages:
+            self._setup_stage_packages()
         self.code.pull()
         self.mark_done('pull')
 
@@ -183,18 +187,10 @@ class PluginHandler:
         self.notify_stage('Staging')
         self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
-
-        try:
-            _migrate_files(snap_files, snap_dirs, self.code.installdir,
-                           self.stagedir)
-        except FileNotFoundError as e:
-            logger.error('Could not find file %s defined in stage',
-                         os.path.relpath(e.filename, os.path.curdir))
-            return False
+        _migrate_files(snap_files, snap_dirs, self.code.installdir,
+                       self.stagedir)
 
         self.mark_done('stage')
-
-        return True
 
     def strip(self, force=False):
         if not self.should_step_run('strip', force):
@@ -204,17 +200,9 @@ class PluginHandler:
 
         self.notify_stage('Stripping')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
-
-        try:
-            _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
-        except FileNotFoundError as e:
-                logger.error('Could not find file %s defined in snap',
-                             os.path.relpath(e.filename, os.path.curdir))
-                return False
+        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
 
         self.mark_done('strip')
-
-        return True
 
     def env(self, root):
         return self.code.env(root)
@@ -311,7 +299,7 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
     for directory in snap_dirs:
         os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
 
@@ -319,6 +307,8 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir):
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if missing_ok and not os.path.exists(src):
+            continue
         if not os.path.exists(dst) and not os.path.islink(dst):
             os.link(src, dst, follow_symlinks=False)
 
