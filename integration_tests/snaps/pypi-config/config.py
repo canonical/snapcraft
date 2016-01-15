@@ -11,7 +11,7 @@ _DEFAULT_INTERVAL = 10
 
 
 def main():
-    config_file = os.path.join(os.environ['SNAP_APP_DATA_PATH'], _CONFIG)
+    config_file = os.path.join(os.environ['SNAP_DATA'], _CONFIG)
 
     config_yaml = yaml.load(sys.stdin)
     if config_yaml:

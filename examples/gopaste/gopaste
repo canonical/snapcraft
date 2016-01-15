@@ -2,9 +2,9 @@
 
 set -x
 
-cd $SNAP_APP_DATA_PATH
-cp $SNAP_APP_PATH/web.template .
-cp -r $SNAP_APP_PATH/static .
-export HOME=$SNAP_APP_DATA_PATH
+cd $SNAP_DATA
+cp $SNAP/web.template .
+cp -r $SNAP/static .
+export HOME=$SNAP_DATA
 
-exec $SNAP_APP_PATH/bin/gopasted -port 8080 -external-host snappy
+exec $SNAP/bin/gopasted -port 8080 -external-host snappy

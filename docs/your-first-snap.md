@@ -160,7 +160,7 @@ We'll write a tiny little script that runs the server and `fswebcam` together:
     #!/bin/sh
     set -e
 
-    cd "$SNAP_APP_DATA_PATH"
+    cd "$SNAP_DATA"
 
     golang-static-http &
 

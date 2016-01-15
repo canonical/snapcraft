@@ -51,7 +51,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     def build(self):
         os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
         ros_dir = os.path.join(
-            '$SNAP_APP_PATH',
+            '$SNAP',
             'opt',
             'ros',
             self.options.rosdistro)
