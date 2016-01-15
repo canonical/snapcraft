@@ -128,7 +128,7 @@ class CreateTest(tests.TestCase):
 
         expected_wrapper = [
             '#!/bin/sh\n', '\n', '\n',
-            'exec "$SNAP_APP_PATH/config.sh" something $*\n']
+            'exec "$SNAP/config.sh" something $*\n']
         self.assertEqual(config_wrapper, expected_wrapper)
 
     def test_create_meta_with_app_with_security_policy(self):
@@ -200,9 +200,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP_APP_PATH/usr/bin:$SNAP_APP_PATH/bin\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n'
                     '\n\n'
-                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -227,9 +227,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
 
         expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP_APP_PATH/usr/bin:$SNAP_APP_PATH/bin\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n'
                     '\n\n'
-                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -244,8 +244,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         The shebang needs to be an absolute path, and we don't know
         in which directory the snap will be installed. Executing
-        it in the wrapper script allows us to use the $SNAP_APP_PATH
-        environment variable.
+        it in the wrapper script allows us to use the $SNAP environment
+        variable.
         """
         snapdir = common.get_snapdir()
         partsdir = common.get_partsdir()
@@ -264,8 +264,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         expected = (
             '#!/bin/sh\n'
             '\n\n'
-            'exec "$SNAP_APP_PATH/snap_exe"'
-            ' "$SNAP_APP_PATH/test_relexepath" $*\n')
+            'exec "$SNAP/snap_exe"'
+            ' "$SNAP/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -294,7 +294,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
-                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -323,7 +323,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
-                    'exec "$SNAP_APP_PATH/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" $*\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 

@@ -533,7 +533,7 @@ class CatkinPluginTestCase(tests.TestCase):
 
         self.assertTrue('ROS_MASTER_URI=http://localhost:11311' in environment)
 
-        self.assertTrue('ROS_HOME=$SNAP_APP_USER_DATA_PATH/ros' in environment)
+        self.assertTrue('ROS_HOME=$SNAP_USER_DATA/ros' in environment)
 
         self.assertTrue('_CATKIN_SETUP_DIR={}'.format(os.path.join(
             '/foo', 'opt', 'ros', self.properties.rosdistro)) in environment)
