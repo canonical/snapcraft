@@ -9,6 +9,8 @@ apps:
   webcam-webui:
     command: bin/webcam-webui
     daemon: simple
+    caps:
+      - network-listener
 
 parts:
   cam:
