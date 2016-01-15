@@ -6,7 +6,7 @@ icon: icon.png
 
 apps:
   server:
-    command: bin/shout --home $SNAP_APP_DATA_PATH
+    command: bin/shout --home $SNAP_DATA
     daemon: simple
 
 parts:

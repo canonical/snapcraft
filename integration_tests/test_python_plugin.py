@@ -45,8 +45,8 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 FileExists())
 
         expected_config = (
-            'exec "$SNAP_APP_PATH/usr/bin/python3" '
-            '"$SNAP_APP_PATH/usr/bin/config.py" $*\n')
+            'exec "$SNAP/usr/bin/python3" '
+            '"$SNAP/usr/bin/config.py" $*\n')
         with open(os.path.join(
                 project_dir, 'snap', 'meta', 'hooks', 'config')) as config:
             config_contents = config.read()

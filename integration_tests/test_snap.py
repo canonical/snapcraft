@@ -62,7 +62,7 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.useFixture(
            fixtures.EnvironmentVariable(
-                'SNAP_APP_PATH', os.path.join(os.getcwd(), 'snap')))
+                'SNAP', os.path.join(os.getcwd(), 'snap')))
         binary_scenarios = (
             ('command-assemble-service.wrapper', 'service-start\n'),
             ('stop-command-assemble-service.wrapper', 'service-stop\n'),

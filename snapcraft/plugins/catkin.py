@@ -121,7 +121,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             # Various ROS tools (e.g. rospack, roscore) keep a cache or a log,
             # and use $ROS_HOME to determine where to put them.
-            'ROS_HOME=$SNAP_APP_USER_DATA_PATH/ros',
+            'ROS_HOME=$SNAP_USER_DATA/ros',
 
             # This environment variable points to where the setup.sh and
             # _setup_util.py files are located. This is required at both build-
