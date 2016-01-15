@@ -18,4 +18,5 @@ parts:
      - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
      - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
      - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
+     - lib/x86_64-linux-gnu/libglib-2.0.so*
      - bin/godd*

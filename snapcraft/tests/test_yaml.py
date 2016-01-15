@@ -342,13 +342,19 @@ description: test
 
 parts:
   part1:
-    plugin: go
-    stage-packages: [fswebcam]
+    plugin: nil
 """)
 
-    def test_config_runtime_environment(self):
+        patcher = unittest.mock.patch('snapcraft.common.get_arch_triplet')
+        mock_arch = patcher.start()
+        mock_arch.return_value = 'x86_64-linux-gnu'
+        self.addCleanup(patcher.stop)
+
+    @unittest.mock.patch('snapcraft.common.get_snapdir')
+    def test_config_snap_environment(self, mock_snapdir):
+        mock_snapdir.return_value = 'foo'
         config = snapcraft.yaml.Config()
-        environment = config.runtime_env('foo')
+        environment = config.snap_env()
         self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
 
         # Ensure that LD_LIBRARY_PATH is present and it contains only the
@@ -369,7 +375,10 @@ parts:
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
                                 expected))
 
-    def test_config_runtime_environment_ld(self):
+    @unittest.mock.patch('snapcraft.common.get_snapdir')
+    def test_config_runtime_environment_ld(self, mock_snapdir):
+        mock_snapdir.return_value = 'foo'
+
         # Place a few ld.so.conf files in supported locations. We expect the
         # contents of these to make it into the LD_LIBRARY_PATH.
         os.makedirs('foo/usr/lib/my_arch/mesa/')
@@ -382,7 +391,7 @@ parts:
             f.write('/mesa-egl')
 
         config = snapcraft.yaml.Config()
-        environment = config.runtime_env('foo')
+        environment = config.snap_env()
 
         # Ensure that the LD_LIBRARY_PATH includes all the above paths
         paths = []
@@ -398,6 +407,39 @@ parts:
             self.assertTrue(expected in paths,
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
                                 expected))
+
+    @unittest.mock.patch('snapcraft.common.get_stagedir')
+    def test_config_stage_environment(self, mock_stagedir):
+        mock_stagedir.return_value = 'foo'
+
+        config = snapcraft.yaml.Config()
+        environment = config.stage_env()
+
+        self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
+        self.assertTrue(
+            'LD_LIBRARY_PATH="foo/lib:foo/usr/lib:'
+            'foo/lib/x86_64-linux-gnu:foo/usr/lib/x86_64-linux-gnu:'
+            '$LD_LIBRARY_PATH"' in environment)
+        self.assertTrue(
+            'CFLAGS="-Ifoo/include -Ifoo/usr/include '
+            '-Ifoo/include/x86_64-linux-gnu '
+            '-Ifoo/usr/include/x86_64-linux-gnu $CFLAGS"' in environment)
+        self.assertTrue(
+            'CPPFLAGS="-Ifoo/include -Ifoo/usr/include '
+            '-Ifoo/include/x86_64-linux-gnu '
+            '-Ifoo/usr/include/x86_64-linux-gnu $CPPFLAGS"' in environment)
+        self.assertTrue(
+            'LDFLAGS="-Lfoo/lib -Lfoo/usr/lib -Lfoo/lib/x86_64-linux-gnu '
+            '-Lfoo/usr/lib/x86_64-linux-gnu $LDFLAGS"' in environment)
+        self.assertTrue(
+            'PKG_CONFIG_PATH=foo/lib/pkgconfig:'
+            'foo/lib/x86_64-linux-gnu/pkgconfig:foo/usr/lib/pkgconfig:'
+            'foo/usr/lib/x86_64-linux-gnu/pkgconfig:foo/usr/share/pkgconfig:'
+            'foo/usr/local/lib/pkgconfig:'
+            'foo/usr/local/lib/x86_64-linux-gnu/pkgconfig:'
+            'foo/usr/local/share/pkgconfig:$PKG_CONFIG_PATH' in environment)
+        self.assertTrue('PERL5LIB=foo/usr/share/perl5/' in environment)
+        self.assertTrue('PKG_CONFIG_SYSROOT_DIR=foo' in environment)
 
 
 class TestValidation(tests.TestCase):

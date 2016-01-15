@@ -18,7 +18,6 @@
 
 import os
 import subprocess
-import sys
 import tempfile
 import urllib
 
@@ -60,10 +59,6 @@ def run_output(cmd, **kwargs):
         f.flush()
         return subprocess.check_output(['/bin/sh', f.name] + cmd,
                                        **kwargs).decode('utf8').strip()
-
-
-def fatal():
-    sys.exit(1)
 
 
 def get_arch():
