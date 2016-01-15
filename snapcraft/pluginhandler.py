@@ -309,8 +309,16 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         if missing_ok and not os.path.exists(src):
             continue
-        if not os.path.exists(dst) and not os.path.islink(dst):
-            os.link(src, dst, follow_symlinks=False)
+
+        # If the file is already here and it's a symlink, leave it alone.
+        if os.path.islink(dst):
+            continue
+
+        # Otherwise, remove and re-link it.
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        os.link(src, dst, follow_symlinks=False)
 
 
 def _get_file_list(stage_set):
