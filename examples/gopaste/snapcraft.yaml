@@ -12,6 +12,8 @@ apps:
       - network-listener
       - network-service
       - network-management
+    security-override:
+      syscalls: [fchown]
 
 parts:
   gopaste:
