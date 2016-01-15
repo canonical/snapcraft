@@ -181,6 +181,27 @@ class PluginTestCase(tests.TestCase):
 
                 self.assertEqual(expected, result)
 
+    def test_migrate_snap_files_already_exists(self):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        # Place the already-staged file
+        with open('stage/foo', 'w') as f:
+            f.write('staged')
+
+        # Place the to-be-staged file with the same name
+        with open('install/foo', 'w') as f:
+            f.write('installed')
+
+        files, dirs = pluginhandler._migratable_filesets('*', 'install')
+        pluginhandler._migrate_files(files, dirs, 'install', 'stage')
+
+        # Verify that the staged file is the one that was staged last
+        with open('stage/foo', 'r') as f:
+            self.assertEqual(f.read(), 'installed',
+                             'Expected staging to allow overwriting of '
+                             'already-staged files')
+
     @patch('snapcraft.pluginhandler._load_local')
     @patch('snapcraft.pluginhandler._get_plugin')
     def test_schema_not_found(self, plugin_mock, local_load_mock):
