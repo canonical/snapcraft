@@ -8,10 +8,16 @@ apps:
   rosmaster:
     command: bin/roscore-rosmaster-service
     daemon: simple
+    caps:
+      - network-listener
   listener:
     command: rosrun beginner_tutorials listener
+    caps:
+      - network-listener
   talker:
     command: rosrun beginner_tutorials talker
+    caps:
+      - network-listener
 
 parts:
   roscore:
