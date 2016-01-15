@@ -157,18 +157,17 @@ def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
     cwd = 'cd {}'.format(cwd) if cwd else ''
 
     snap_dir = common.get_snapdir()
-    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP_APP_PATH')
+    assembled_env = common.assemble_env().replace(snap_dir, '$SNAP')
     replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
         common.get_partsdir())
-    assembled_env = re.sub(replace_path, '$SNAP_APP_PATH', assembled_env)
+    assembled_env = re.sub(replace_path, '$SNAP', assembled_env)
     executable = '"{}"'.format(wrapexec)
     if shebang is not None:
-        new_shebang = re.sub(replace_path, '$SNAP_APP_PATH', shebang)
+        new_shebang = re.sub(replace_path, '$SNAP', shebang)
         if new_shebang != shebang:
             # If the shebang was pointing to and executable within the
             # local 'parts' dir, have the wrapper script execute it
-            # directly, since we can't use $SNAP_APP_PATH in the shebang
-            # itself.
+            # directly, since we can't use $SNAP in the shebang itself.
             executable = '"{}" "{}"'.format(new_shebang, wrapexec)
     script = ('#!/bin/sh\n' +
               '{}\n'.format(assembled_env) +
@@ -194,7 +193,7 @@ def _wrap_exe(command, basename=None):
     if os.path.exists(wrappath):
         os.remove(wrappath)
 
-    wrapexec = '$SNAP_APP_PATH/{}'.format(execparts[0])
+    wrapexec = '$SNAP/{}'.format(execparts[0])
     if not os.path.exists(exepath) and '/' not in execparts[0]:
         # If it doesn't exist it might be in the path
         logger.debug('Checking to see if {!r} is in the $PATH'.format(
