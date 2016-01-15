@@ -100,8 +100,7 @@ def _setup_assets(meta_dir, config_data):
 def _setup_config_hook(hooks_dir, config):
     config_hook_path = os.path.join(hooks_dir, 'config')
 
-    execparts = shlex.split(config)
-    execwrap = _wrap_exe(execparts[0], args=execparts[1:])
+    execwrap = _wrap_exe(config)
     os.rename(os.path.join(common.get_snapdir(), execwrap), config_hook_path)
 
 
@@ -182,28 +181,32 @@ def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
     os.chmod(wrappath, 0o755)
 
 
-def _wrap_exe(relexepath, args=None):
+def _wrap_exe(command, basename=None):
+    execparts = shlex.split(command)
     snap_dir = common.get_snapdir()
-    exepath = os.path.join(snap_dir, relexepath)
-    wrappath = exepath + '.wrapper'
+    exepath = os.path.join(snap_dir, execparts[0])
+    if basename:
+        wrappath = os.path.join(snap_dir, basename) + '.wrapper'
+    else:
+        wrappath = exepath + '.wrapper'
     shebang = None
 
     if os.path.exists(wrappath):
         os.remove(wrappath)
 
-    wrapexec = '$SNAP_APP_PATH/{}'.format(relexepath)
-    if not os.path.exists(exepath) and '/' not in relexepath:
+    wrapexec = '$SNAP_APP_PATH/{}'.format(execparts[0])
+    if not os.path.exists(exepath) and '/' not in execparts[0]:
         # If it doesn't exist it might be in the path
         logger.debug('Checking to see if {!r} is in the $PATH'.format(
-            relexepath))
+            execparts[0]))
         with tempfile.NamedTemporaryFile('w+') as tempf:
             script = ('#!/bin/sh\n' +
                       '{}\n'.format(common.assemble_env()) +
-                      'which "{}"\n'.format(relexepath))
+                      'which "{}"\n'.format(execparts[0]))
             tempf.write(script)
             tempf.flush()
             common.run(['/bin/sh', tempf.name], cwd=snap_dir)
-            wrapexec = relexepath
+            wrapexec = execparts[0]
     else:
         with open(exepath, 'rb') as exefile:
             # If the file has a she-bang, the path might be pointing to
@@ -212,7 +215,7 @@ def _wrap_exe(relexepath, args=None):
             if exefile.read(2) == b'#!':
                 shebang = exefile.readline().strip().decode('utf-8')
 
-    _write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=args)
+    _write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=execparts[1:])
 
     return os.path.relpath(wrappath, snap_dir)
 
@@ -220,7 +223,7 @@ def _wrap_exe(relexepath, args=None):
 def _wrap_apps(apps):
     for app in apps:
         for k in [k for k in ('command', 'stop-command') if k in apps[app]]:
-            execparts = shlex.split(apps[app][k])
-            apps[app][k] = _wrap_exe(execparts[0], args=execparts[1:])
+            apps[app][k] = _wrap_exe(
+                apps[app][k], '{}-{}'.format(k, app))
 
     return apps
