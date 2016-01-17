@@ -19,6 +19,7 @@ import itertools
 import logging
 import os
 import platform
+import re
 import string
 import shutil
 import stat
@@ -31,6 +32,14 @@ import apt
 from xml.etree import ElementTree
 
 from snapcraft import common
+
+
+_BIN_PATHS = (
+    'bin',
+    'sbin',
+    'usr/bin',
+    'usr/sbin',
+)
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +165,9 @@ class Ubuntu:
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 
-        _fix_contents(rootdir)
+        _fix_symlinks(rootdir)
         _fix_xml_tools(rootdir)
+        _fix_shebangs(rootdir)
 
     def _manifest_dep_names(self):
         manifest_dep_names = set()
@@ -249,7 +259,7 @@ def _setup_apt_cache(rootdir, sources, local=False):
     return apt_cache, progress
 
 
-def _fix_contents(debdir):
+def _fix_symlinks(debdir):
     '''
     Sometimes debs will contain absolute symlinks (e.g. if the relative
     path would go all the way to root, they just do absolute).  We can't
@@ -296,6 +306,15 @@ def _fix_filemode(path):
     if mode & 0o4000 or mode & 0o2000:
         logger.warning('Removing suid/guid from {}'.format(path))
         os.chmod(path, mode & 0o1777)
+
+
+def _fix_shebangs(path):
+    """Changes hard coded shebangs for files in _BIN_PATHS to use env."""
+    paths = [p for p in _BIN_PATHS if os.path.exists(os.path.join(path, p))]
+    for p in [os.path.join(path, p) for p in paths]:
+        common.replace_in_file(p, re.compile(r''),
+                               re.compile(r'#!.*python\n'),
+                               r'#!/usr/bin/env python\n')
 
 
 _skip_list = None
