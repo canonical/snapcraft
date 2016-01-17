@@ -38,7 +38,10 @@ import re
 import subprocess
 
 import snapcraft
-from snapcraft import repo
+from snapcraft import (
+    common,
+    repo,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -234,15 +237,15 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             return '"' + ';'.join(paths) + '"'
 
         # Looking for any path-like string
-        _search_and_replace(self.rosdir, re.compile(r'.*Config.cmake$'),
-                            re.compile(r'"(.*?/.*?)"'),
-                            rewrite_paths)
+        common.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
+                               re.compile(r'"(.*?/.*?)"'),
+                               rewrite_paths)
 
     def _finish_build(self):
         # Fix all shebangs to use the in-snap python.
-        _search_and_replace(self.rosdir, re.compile(r''),
-                            re.compile(r'#!.*python'),
-                            r'#!/usr/bin/env python')
+        common.replace_in_file(self.rosdir, re.compile(r''),
+                               re.compile(r'#!.*python'),
+                               r'#!/usr/bin/env python')
 
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         setup_util_file = os.path.join(self.rosdir,
@@ -291,7 +294,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 os.path.join(self.installdir, 'usr', 'include', 'c++',
                              self.gcc_version),
                 os.path.join(self.installdir, 'usr', 'include',
-                             snapcraft.common.get_arch_triplet(), 'c++',
+                             common.get_arch_triplet(), 'c++',
                              self.gcc_version)),
             '-DCMAKE_LD_FLAGS="$LDFLAGS"',
             '-DCMAKE_C_COMPILER={}'.format(
@@ -305,29 +308,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         # This has been fixed in Catkin Tools... perhaps we should be using
         # that instead.
         self._run_in_bash(catkincmd)
-
-
-def _search_and_replace(directory, file_pattern, search_pattern, replacement):
-    for root, directories, files in os.walk(directory):
-        for file_name in files:
-            if file_pattern.match(file_name):
-                _search_and_replace_contents(os.path.join(root, file_name),
-                                             search_pattern, replacement)
-
-
-def _search_and_replace_contents(file_path, search_pattern, replacement):
-    with open(file_path, 'r+') as f:
-        try:
-            original = f.read()
-        except UnicodeDecodeError:
-            # This was probably a binary file. Skip it.
-            return
-
-        replaced = search_pattern.sub(replacement, original)
-        if replaced != original:
-            f.seek(0)
-            f.truncate()
-            f.write(replaced)
 
 
 def _find_system_dependencies(catkin_packages, ros_distro, ros_package_path,

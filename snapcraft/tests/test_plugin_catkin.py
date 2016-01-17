@@ -453,25 +453,24 @@ class CatkinPluginTestCase(tests.TestCase):
         # changed.
         files = [
             {
-                'path': '_setup_util.py',
+                'path': os.path.join(plugin.rosdir, '_setup_util.py'),
                 'contents': '#!/foo/bar/baz/python',
                 'expected': '#!/usr/bin/env python',
             },
             {
-                'path': 'bin/catkin_find',
+                'path': os.path.join(plugin.rosdir, 'bin/catkin_find'),
                 'contents': '#!/foo/baz/python',
                 'expected': '#!/usr/bin/env python',
             },
             {
-                'path': 'foo',
+                'path': os.path.join(plugin.rosdir, 'foo'),
                 'contents': 'foo',
                 'expected': 'foo',
             }
         ]
 
         for file_info in files:
-            with open(os.path.join(plugin.rosdir,
-                                   file_info['path']), 'w') as f:
+            with open(file_info['path'], 'w') as f:
                 f.write(file_info['contents'])
 
         plugin._finish_build()

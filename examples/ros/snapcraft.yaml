@@ -22,6 +22,28 @@ apps:
 parts:
   roscore:
     plugin: roscore
+    filesets:
+      dev:
+        - usr/bin/2to3-2.7
+        - usr/bin/2to3-3.4
+        - usr/bin/easy_install-2.7
+        - usr/bin/f2py2.7
+        - usr/bin/lsb_release
+        - usr/bin/nosetests-2.7
+        - usr/bin/py3clean
+        - usr/bin/py3compile
+        - usr/bin/pydoc2.7
+        - usr/bin/pydoc3.4
+        - usr/lib/python2.7/pdb.py
+        - usr/lib/python3.4/pdb.py
+        - usr/share/dh-python/dh_pypy
+        - usr/share/dh-python/dh_python3
+        - usr/share/dh-python/pybuild
+        - usr/share/python3/py3versions.py
+    stage:
+      - -$dev
+    snap:
+      - -$dev
   catkin-tutorials:
     plugin: catkin
     source: .

@@ -115,3 +115,34 @@ def isurl(url):
 def reset_env():
     global env
     env = []
+
+
+def replace_in_file(directory, file_pattern, search_pattern, replacement):
+    """Searches and replaces patterns that match a file pattern.
+    :param str directory: The directory to look for files.
+    :param str file_pattern: The file pattern to match inside directory.
+    :param search_pattern: A re.compile'd pattern to search for within
+                           matching files.
+    :param str replacement: The string to replace the matching search_pattern
+                            with.
+    """
+    for root, directories, files in os.walk(directory):
+        for file_name in files:
+            if file_pattern.match(file_name):
+                _search_and_replace_contents(os.path.join(root, file_name),
+                                             search_pattern, replacement)
+
+
+def _search_and_replace_contents(file_path, search_pattern, replacement):
+    with open(file_path, 'r+') as f:
+        try:
+            original = f.read()
+        except UnicodeDecodeError:
+            # This was probably a binary file. Skip it.
+            return
+
+        replaced = search_pattern.sub(replacement, original)
+        if replaced != original:
+            f.seek(0)
+            f.truncate()
+            f.write(replaced)
