@@ -521,6 +521,28 @@ class CatkinPluginTestCase(tests.TestCase):
             except UnicodeDecodeError:
                 self.fail('Expected _finish_build to handle binary files')
 
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    def test_finish_build_cmake_prefix_path(self, run_output_mock, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+
+        setup_file = os.path.join(plugin.rosdir, '_setup_util.py')
+        os.makedirs(os.path.dirname(setup_file))
+
+        with open(setup_file, 'w') as f:
+            f.write("CMAKE_PREFIX_PATH = '{0}/{1};{0}\n".format(
+                plugin.rosdir, plugin.options.rosdistro))
+
+        plugin._finish_build()
+
+        expected = 'CMAKE_PREFIX_PATH = []\n'
+
+        with open(setup_file, 'r') as f:
+            self.assertEqual(
+                f.read(), expected,
+                'The absolute path to python or the CMAKE_PREFIX_PATH '
+                'was not replaced as expected')
+
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment(self, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)

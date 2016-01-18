@@ -247,11 +247,22 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                                re.compile(r'#!.*python'),
                                r'#!/usr/bin/env python')
 
-        # Also replace the python usage in 10.ros.sh to use the in-snap python.
-        setup_util_file = os.path.join(self.rosdir,
-                                       'etc/catkin/profile.d/10.ros.sh')
+        # Replace the CMAKE_PREFIX_PATH in _setup_util.sh
+        setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
         if os.path.isfile(setup_util_file):
             with open(setup_util_file, 'r+') as f:
+                pattern = re.compile(r"CMAKE_PREFIX_PATH = '{}.*".format(
+                    self.rosdir))
+                replaced = pattern.sub('CMAKE_PREFIX_PATH = []', f.read())
+                f.seek(0)
+                f.truncate()
+                f.write(replaced)
+
+        # Also replace the python usage in 10.ros.sh to use the in-snap python.
+        ros10_file = os.path.join(self.rosdir,
+                                  'etc/catkin/profile.d/10.ros.sh')
+        if os.path.isfile(ros10_file):
+            with open(ros10_file, 'r+') as f:
                 pattern = re.compile(r'/usr/bin/python')
                 replaced = pattern.sub(r'python', f.read())
                 f.seek(0)
