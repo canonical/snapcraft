@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import os.path
 from unittest.mock import Mock
 
@@ -30,6 +31,42 @@ class TestCopyPlugin(TestCase):
         # setup the expected target dir in our tempdir
         self.dst_prefix = 'parts/copy/install/'
         os.makedirs(self.dst_prefix)
+
+    def test_copy_plugin_with_symlink_false_copies_symlinked_file(self):
+        self.mock_options.files = {
+            'src': 'dst'
+        }
+
+        self.mock_options.follow_symlinks = False
+
+        os.makedirs('src')
+        open('src/file.txt', 'w').close()
+        os.symlink('file.txt', 'src/link.txt')
+
+        c = CopyPlugin('copy', self.mock_options)
+        c.build()
+
+        self.assertTrue(
+            os.path.isfile(os.path.join(self.dst_prefix, 'dst/link.txt')))
+        self.assertFalse(
+            os.path.islink(os.path.join(self.dst_prefix, 'dst/link.txt')))
+
+    def test_copy_plugin_with_symlink_true_copies_symlink_itself(self):
+        self.mock_options.files = {
+            'src': 'dst'
+        }
+
+        self.mock_options.follow_symlinks = True
+
+        os.makedirs('src')
+        open('src/file.txt', 'w').close()
+        os.symlink('file.txt', 'src/link.txt')
+
+        c = CopyPlugin('copy', self.mock_options)
+        c.build()
+
+        self.assertTrue(
+            os.path.islink(os.path.join(self.dst_prefix, 'dst/link.txt')))
 
     def test_copy_plugin_any_missing_src_raises_exception(self):
         # ensure that a bad file causes a warning and fails the build even
