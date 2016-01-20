@@ -52,6 +52,12 @@ class TestYaml(TestCase):
             'plugin': 'go', 'source': 'http://somesource'})
         self.assertEqual(self.w.get_part('part-not-in-wiki'), None)
 
+    def test_get_part_type(self):
+        result = self.w.get_part('part-in-wiki')
+        not_expected = {'plugin': 'go', 'source': '.', 'source-type': 'type'}
+        self.assertNotEqual(result, not_expected)
+        self.assertEqual(self.w.get_part('part-not-in-wiki'), None)
+
     def test_compose_part_with_properties_from_the_wiki(self):
         properties = self.w.compose(
             'part-in-wiki', {'source': '.', 'another': 'different'})
