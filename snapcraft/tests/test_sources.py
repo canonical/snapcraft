@@ -335,7 +335,24 @@ class TestUri(tests.TestCase):
 
         for source in sources:
             with self.subTest(key=source):
+                options = tests.MockOptions(source=source)
+                snapcraft.sources.get(
+                    sourcedir='dummy',
+                    builddir='dummy',
+                    options=options)
 
+                mock_pull.assert_called_once_with()
+                mock_pull.reset_mock()
+
+    @unittest.mock.patch('snapcraft.sources.Bazaar.pull')
+    def test_get_bzr_source_from_uri(self, mock_pull):
+        sources = [
+            'lp:snapcraft_test_source',
+            'bzr:dummy-source'
+        ]
+
+        for source in sources:
+            with self.subTest(key=source):
                 options = tests.MockOptions(source=source)
                 snapcraft.sources.get(
                     sourcedir='dummy',
