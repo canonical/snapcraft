@@ -80,7 +80,7 @@ be used in any part irrespective of the plugin, these are
     - build-packages:
       (list of strings)
       A list of Ubuntu packages to be installed on the host to aid in
-      building the part but not going into the final snap.
+      building the part. These packages will not go into the final snap.
     - organize:
       (yaml subsection)
       A dictionary exposing replacements, the key is the internal filename
