@@ -127,7 +127,7 @@ class Git(Base):
             if self.source_tag or self.source_branch:
                 branch_opts = ['--branch',
                                self.source_tag or self.source_branch]
-            cmd = ['git', 'clone'] + branch_opts + \
+            cmd = ['git', 'clone', '--depth', '1'] + branch_opts + \
                   [self.source, self.source_dir]
 
         subprocess.check_call(cmd)
