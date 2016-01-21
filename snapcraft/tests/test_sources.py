@@ -136,7 +136,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', 'git://my-source', 'source_dir'])
+            ['git', 'clone', '--depth', '1', 'git://my-source', 'source_dir'])
 
     def test_pull_branch(self):
         git = snapcraft.sources.Git('git://my-source', 'source_dir',
@@ -144,8 +144,8 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--branch', 'my-branch', 'git://my-source',
-             'source_dir'])
+            ['git', 'clone', '--depth', '1', '--branch', 'my-branch',
+             'git://my-source', 'source_dir'])
 
     def test_pull_tag(self):
         git = snapcraft.sources.Git('git://my-source', 'source_dir',
@@ -153,8 +153,8 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--branch', 'tag', 'git://my-source',
-             'source_dir'])
+            ['git', 'clone', '--depth', '1', '--branch', 'tag',
+             'git://my-source', 'source_dir'])
 
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
