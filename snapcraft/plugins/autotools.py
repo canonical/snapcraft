@@ -83,4 +83,5 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             else:
                 self.run(['autoreconf', '-i'])
         self.run(['./configure', '--prefix='] + self.options.configflags)
+        self.run(['make'])
         self.run(['make', 'install', 'DESTDIR=' + self.installdir])
