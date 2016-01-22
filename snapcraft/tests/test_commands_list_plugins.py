@@ -41,6 +41,7 @@ python3
 qml
 roscore
 scons
+script
 tar-content
 '''
         list_plugins.main()

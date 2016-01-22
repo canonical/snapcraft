@@ -37,5 +37,6 @@ class ListPluginsTestCase(integration_tests.TestCase):
                     'qml\n'
                     'roscore\n'
                     'scons\n'
+                    'script\n'
                     'tar-content\n')
         self.assertEqual(expected, output)
