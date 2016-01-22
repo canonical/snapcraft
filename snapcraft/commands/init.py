@@ -37,11 +37,9 @@ logger = logging.getLogger(__name__)
 
 _TEMPLATE_YAML = r'''name: # the name of the snap
 version: # the version of the snap
-# The vendor for the snap (replace 'Vendor <email@example.com>')
-vendor: Vendor <email@example.com>
 summary: # 79 char long summary
 description: # A longer description for the snap
-icon: # A path to an icon for the package
+icon: # A path to an icon for the package - this is optional.
 '''
 
 
