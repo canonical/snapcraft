@@ -32,12 +32,12 @@ class TestCopyPlugin(TestCase):
         self.dst_prefix = 'parts/copy/install/'
         os.makedirs(self.dst_prefix)
 
-    def test_copy_plugin_with_symlink_false_copies_symlinked_file(self):
+    def test_copy_plugin_with_follow_symlink_true_copies_symlinked_file(self):
         self.mock_options.files = {
             'src': 'dst'
         }
 
-        self.mock_options.follow_symlinks = False
+        self.mock_options.follow_symlinks = True
 
         os.makedirs('src')
         open('src/file.txt', 'w').close()
@@ -51,12 +51,12 @@ class TestCopyPlugin(TestCase):
         self.assertFalse(
             os.path.islink(os.path.join(self.dst_prefix, 'dst/link.txt')))
 
-    def test_copy_plugin_with_symlink_true_copies_symlink_itself(self):
+    def test_copy_plugin_with_follow_symlink_false_copies_symlink_itself(self):
         self.mock_options.files = {
             'src': 'dst'
         }
 
-        self.mock_options.follow_symlinks = True
+        self.mock_options.follow_symlinks = False
 
         os.makedirs('src')
         open('src/file.txt', 'w').close()
