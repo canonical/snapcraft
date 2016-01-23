@@ -90,9 +90,10 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertEqual(3, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['./configure', '--prefix=']),
+            mock.call(['make']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])
@@ -109,10 +110,11 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(3, run_mock.call_count)
+        self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
             mock.call(['./configure', '--prefix=']),
+            mock.call(['make']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])
@@ -126,10 +128,11 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(3, run_mock.call_count)
+        self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['autoreconf', '-i']),
             mock.call(['./configure', '--prefix=']),
+            mock.call(['make']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])
