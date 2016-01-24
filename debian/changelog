@@ -1,3 +1,21 @@
+snapcraft (2.0.1) xenial; urgency=medium
+
+  [ Vamshi Balanaga ]
+  * Added a unit test for pulling bazaar sources from URIs. (LP: #1536283)
+
+  [ Kyle Fazzari ]
+  * Autotools plugin: Call make before make install (LP: #1536700)
+  * Add build-package description to docs/snapcraft-sytax.md (LP: #1536659)
+  * Git source: Make a shallow clone. (LP: #1536696)
+  * Git source: Support submodules. (LP: #1536698)
+
+  [ Daniel Holbach ]
+  * Remove 'vendor' from snapcraft init template. Explain that the icon is optional.
+    (LP: #1536860)
+  * Add documentation about writing your own plugins. (LP: #1535897)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Sun, 24 Jan 2016 09:22:04 -0800
+
 snapcraft (2.0) xenial; urgency=medium
 
   [ Daniel Holbach ]
