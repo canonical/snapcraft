@@ -136,7 +136,8 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', 'git://my-source', 'source_dir'])
+            ['git', 'clone', '--depth', '1', '--recursive', 'git://my-source',
+             'source_dir'])
 
     def test_pull_branch(self):
         git = snapcraft.sources.Git('git://my-source', 'source_dir',
@@ -144,8 +145,8 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--branch', 'my-branch',
-             'git://my-source', 'source_dir'])
+            ['git', 'clone', '--depth', '1', '--recursive', '--branch',
+             'my-branch', 'git://my-source', 'source_dir'])
 
     def test_pull_tag(self):
         git = snapcraft.sources.Git('git://my-source', 'source_dir',
@@ -153,7 +154,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--branch', 'tag',
+            ['git', 'clone', '--depth', '1', '--recursive', '--branch', 'tag',
              'git://my-source', 'source_dir'])
 
     def test_pull_existing(self):
@@ -162,9 +163,13 @@ class TestGit(SourceTestCase):
         git = snapcraft.sources.Git('git://my-source', 'source_dir')
         git.pull()
 
-        self.mock_run.assert_called_once_with(
-            ['git', '-C', 'source_dir', 'pull', 'git://my-source',
-             'HEAD'])
+        self.mock_run.assert_has_calls([
+            unittest.mock.call(['git', '-C', 'source_dir', 'pull',
+                                '--recurse-submodules=yes', 'git://my-source',
+                                'HEAD']),
+            unittest.mock.call(['git', '-C', 'source_dir', 'submodule',
+                                'update'])
+        ])
 
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
@@ -173,9 +178,13 @@ class TestGit(SourceTestCase):
                                     source_tag='tag')
         git.pull()
 
-        self.mock_run.assert_called_once_with(
-            ['git', '-C', 'source_dir', 'pull', 'git://my-source',
-             'refs/tags/tag'])
+        self.mock_run.assert_has_calls([
+            unittest.mock.call(['git', '-C', 'source_dir', 'pull',
+                                '--recurse-submodules=yes', 'git://my-source',
+                                'refs/tags/tag']),
+            unittest.mock.call(['git', '-C', 'source_dir', 'submodule',
+                                'update'])
+        ])
 
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
@@ -184,9 +193,13 @@ class TestGit(SourceTestCase):
                                     source_branch='my-branch')
         git.pull()
 
-        self.mock_run.assert_called_once_with(
-            ['git', '-C', 'source_dir', 'pull', 'git://my-source',
-             'refs/heads/my-branch'])
+        self.mock_run.assert_has_calls([
+            unittest.mock.call(['git', '-C', 'source_dir', 'pull',
+                                '--recurse-submodules=yes', 'git://my-source',
+                                'refs/heads/my-branch']),
+            unittest.mock.call(['git', '-C', 'source_dir', 'submodule',
+                                'update'])
+        ])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         with self.assertRaises(
