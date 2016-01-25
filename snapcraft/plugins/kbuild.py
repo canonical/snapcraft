@@ -138,9 +138,7 @@ class KBuildPlugin(BasePlugin):
 
     def do_remake_config(self):
         # update config to include kconfig amendments using oldconfig
-        cmd = 'yes "" | make oldconfig'
-        if logger.isEnabledFor(logging.DEBUG):
-            cmd = '{} V=1'.format(cmd)
+        cmd = 'yes "" | {} oldconfig'.format(' '.join(self.make_cmd))
         subprocess.check_call(cmd, shell=True, cwd=self.builddir)
 
     def do_build(self):

@@ -695,13 +695,19 @@ class TestValidation(tests.TestCase):
                          msg=self.data)
 
     def test_valid_types(self):
-        self.data['type'] = 'app'
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        valid_types = [
+            'app',
+            'kernel',
+        ]
+
+        for t in valid_types:
+            data = self.data.copy()
+            with self.subTest(key=t):
+                snapcraft.yaml._validate_snapcraft_yaml(data)
 
     def test_invalid_types(self):
         invalid_types = [
             'apps',
-            'kernel',
             'framework',
             'platform',
             'oem',
@@ -719,7 +725,7 @@ class TestValidation(tests.TestCase):
 
                 expected_message = (
                     "The 'type' property does not match the required "
-                    "schema: '{}' is not one of ['app']").format(t)
+                    "schema: '{}' is not one of ['app', 'kernel']").format(t)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 

@@ -1,0 +1,31 @@
+name: 96boards-kernel
+version: 4.4.0
+summary: A 96boards kernel built from source
+description: This is the reference kernel from 96boards
+type: kernel
+
+parts:
+  kernel:
+    plugin: kernel
+    source: https://github.com/96boards/linux.git
+    source-type: git
+    kdefconfig: [defconfig, distro.config]
+    kconfigs:
+      - CONFIG_LOCALVERSION="-96boards"
+      - CONFIG_DEBUG_INFO=n
+      - CONFIG_SQUASHFS=m
+    kernel-initrd-modules:
+      - squashfs
+    kernel-initrd-firmware:
+      - lib/firmware/e100/d101m_ucode.bin
+      - lib/firmware/e100/d101s_ucode.bin
+      - lib/firmware/e100/d102e_ucode.bin
+    kernel-image-target: Image
+    kernel-image-path: arch/arm64/boot/Image
+    kernel-device-tree:
+      - qcom/apq8016-sbc
+      - qcom/msm8916-mtp
+  410c-firmware:
+    plugin: tar-content
+    source: firmware.tar # from developer.qualcomm.com v1.2
+    destination: lib/firmware

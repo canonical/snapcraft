@@ -112,18 +112,14 @@ class ArchTestCase(testtools.TestCase):
 
     def setUp(self):
         super().setUp()
-        machine = platform.machine()
-
-        patcher = patch('platform.machine')
-        self.mock_machine = patcher.start()
-        self.mock_machine.return_value = machine
-        self.addCleanup(patcher.stop)
+        common.host_machine = platform.machine()
+        common.target_machine = common.host_machine
 
     def test_get_arch_with_no_errors(self):
         common.get_arch()
 
     def test_get_arch_raises_exception_on_non_supported_arch(self):
-        self.mock_machine.return_value = 'badarch'
+        common.target_machine = 'badarch'
         e = self.assertRaises(
             common.PlatformError, common.get_arch)
         self.assertEqual(
@@ -135,7 +131,7 @@ class ArchTestCase(testtools.TestCase):
         self.assertThat(common.get_arch_triplet(), Contains('linux-gnu'))
 
     def test_get_arch_triple_raises_exception_on_non_supported_arch(self):
-        self.mock_machine.return_value = 'badarch'
+        common.target_machine = 'badarch'
         e = self.assertRaises(
             common.PlatformError, common.get_arch_triplet)
         self.assertEqual(
