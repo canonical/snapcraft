@@ -33,6 +33,7 @@ copy
 go
 jdk
 kbuild
+kernel
 make
 maven
 nil

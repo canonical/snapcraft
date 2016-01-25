@@ -123,6 +123,7 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
+      - kernel
   frameworks:
     type: array
     minItems: 1

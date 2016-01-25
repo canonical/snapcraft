@@ -98,6 +98,11 @@ class PluginHandler:
         plugin = _get_plugin(module)
         options = _make_options(properties, plugin.schema())
         self.code = plugin(self.name, options)
+        if common.host_machine != common.target_machine:
+            logger.debug(
+                'Setting {!r} as the compilation target for {!r}'.format(
+                    common.target_machine, plugin_name))
+            self.code.set_target_machine(common.target_machine)
 
     def makedirs(self):
         dirs = [

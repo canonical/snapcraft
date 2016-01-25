@@ -25,12 +25,13 @@ Usage:
 Options:
   -h --help              show this help message and exit
   -v --version           show program version and exit
-  -V --verbose           print additional information about command execution
   -d --debug             print debug information while executing (including
                          backtraces)
   --no-parallel-build    use only a single build job per part (the default
                          number of jobs per part is equal to the number of
                          CPUs)
+  --target-arch ARCH     EXPERIMENTAL: sets the target architecture. Very few
+                         plugins support this.
 
 The available commands are:
   list-parts   List available parts which are like "source packages" for snaps.
@@ -117,6 +118,9 @@ def main():
     log.configure(log_level=log_level)
 
     common.set_enable_parallel_builds(not args['--no-parallel-build'])
+
+    if args['--target-arch']:
+        common.set_target_machine(args['--target-arch'])
 
     try:
         commands.load(cmd).main(argv=args['ARGS'])
