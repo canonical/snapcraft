@@ -15,14 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import codecs
 import os
+import re
 
 from setuptools import setup
+
+version = 'devel'
+# look/set what version we have
+changelog = 'debian/changelog'
+if os.path.exists(changelog):
+    head = codecs.open(changelog, encoding='utf-8').readline()
+    match = re.compile('.*\((.*)\).*').match(head)
+    if match:
+        version = match.group(1)
 
 
 setup(
     name='snapcraft',
-    version='2.0',
+    version=version,
     description='Easily craft snaps from multiple sources',
     author_email='snappy-devel@lists.ubuntu.com',
     url='https://github.com/ubuntu-core/snapcraft',
