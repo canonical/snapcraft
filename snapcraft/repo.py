@@ -61,8 +61,10 @@ def install_build_packages(packages):
     new_packages = []
     for pkg in packages:
         try:
-            if not apt.Cache()[pkg].installed:
+            apt_cache = apt.Cache()
+            if not apt_cache[pkg].installed:
                 new_packages.append(pkg)
+            apt_cache.close()
         except KeyError:
             logger.error('Could not find all the "build-packages" required '
                          'in snapcraft.yaml')
