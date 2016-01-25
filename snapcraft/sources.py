@@ -121,16 +121,23 @@ class Git(Base):
                 refspec = 'refs/heads/' + self.source_branch
             elif self.source_tag:
                 refspec = 'refs/tags/' + self.source_tag
-            cmd = ['git', '-C', self.source_dir, 'pull', self.source, refspec]
+
+            # Pull changes to this repository and any submodules.
+            subprocess.check_call(['git', '-C', self.source_dir, 'pull',
+                                   '--recurse-submodules=yes', self.source,
+                                   refspec])
+
+            # Merge any updates for the submodules (if any).
+            subprocess.check_call(['git', '-C', self.source_dir, 'submodule',
+                                   'update'])
         else:
             branch_opts = []
             if self.source_tag or self.source_branch:
                 branch_opts = ['--branch',
                                self.source_tag or self.source_branch]
-            cmd = ['git', 'clone', '--depth', '1'] + branch_opts + \
-                  [self.source, self.source_dir]
-
-        subprocess.check_call(cmd)
+            subprocess.check_call(['git', 'clone', '--depth', '1',
+                                  '--recursive'] + branch_opts +
+                                  [self.source, self.source_dir])
 
 
 class Mercurial(Base):
