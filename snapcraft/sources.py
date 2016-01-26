@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -251,14 +251,13 @@ class Tar(Base):
 class Local(Base):
 
     def pull(self):
-        path = os.path.abspath(self.source)
-        if os.path.islink(self.source_dir):
-            os.remove(self.source_dir)
-        elif os.path.isdir(self.source_dir):
+        if os.path.isdir(self.source_dir):
             os.rmdir(self.source_dir)
         else:
             os.remove(self.source_dir)
-        os.symlink(path, self.source_dir)
+
+        source_abspath = os.path.abspath(self.source)
+        os.symlink(source_abspath, self.source_dir)
 
 
 def get(sourcedir, builddir, options):
