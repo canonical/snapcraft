@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -131,6 +131,39 @@ class CreateTest(tests.TestCase):
             'exec "$SNAP/config.sh" something $*\n']
         self.assertEqual(config_wrapper, expected_wrapper)
 
+    def test_create_meta_with_app(self):
+        os.makedirs(self.snap_dir)
+        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
+        self.config_data['apps'] = {
+            'app1': {'command': 'app1.sh'},
+        }
+
+        meta.create(self.config_data)
+
+        app1_wrapper_path = os.path.join(self.snap_dir, 'command-app1.wrapper')
+        self.assertTrue(
+            os.path.exists(app1_wrapper_path),
+            'the wrapper for app1 was not setup correctly')
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+
+        expected = {'architectures': ['amd64'],
+                    'apps': {
+                        'app1': {
+                            'command': 'command-app1.wrapper',
+                        },
+                    },
+                    'description': 'my description',
+                    'summary': 'my summary',
+                    'name': 'my-package',
+                    'version': '1.0'}
+
+        self.assertEqual(y, expected)
+
     def test_create_meta_with_app_with_security_policy(self):
         os.makedirs(self.snap_dir)
         open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
@@ -196,6 +229,10 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_exe_path = 'test_relexepath'
         open(os.path.join(snapdir, relative_exe_path), 'w').close()
 
+        # Check that the wrapper is created even if there is already a file
+        # with the same name.
+        open(os.path.join('snap', 'test_relexepath.wrapper'), 'w').close()
+
         relative_wrapper_path = meta._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(snapdir, relative_wrapper_path)
 
@@ -203,6 +240,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n'
                     '\n\n'
                     'exec "$SNAP/test_relexepath" $*\n')
+
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
