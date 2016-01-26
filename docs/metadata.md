@@ -23,7 +23,7 @@ So in the example, *app1* will declare its **exec** to the relative path
 different **exec** to `opt/bin/app2` and uses customized **security-policy**,
 `app2.apparmor` and `app2.seccomp` are relative paths to these security
 artifacts within your project. More about security templating can be read
-about in the [security section] [sec].
+in the [security section] [sec].
 
 ## Adding services
 
@@ -52,6 +52,9 @@ customized **security-policy**, `app2.apparmor` and `app2.seccomp` are
 relative paths to these security artifacts within your project. More about
 security templating can be read about in the [security section] [sec].
 
+*Note:* In `snapcraft` 1.x only simple daemons are supported. This means that
+the specified command is the main process and does not `fork()`.
+
 ## Snap config
 
 Snappy config is an entry point to configure your snap, in order to have the
@@ -69,4 +72,8 @@ parts:
     source: src/config
 ```
 
+More about the config command can be read in the [config command section]
+[conf].
+
+[conf]: https://developer.ubuntu.com/snappy/guides/config-command/
 [sec]: https://developer.ubuntu.com/snappy/guides/security-policy/
