@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,12 @@ build.
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin-specific keyword:
+
+    - makefile:
+      (string)
+      Use the given file as the makefile.
 """
 
 import snapcraft
@@ -29,11 +35,26 @@ import snapcraft
 
 class MakePlugin(snapcraft.BasePlugin):
 
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['makefile'] = {
+            'type': 'string'
+        }
+
+        return schema
+
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('make')
 
     def build(self):
         super().build()
-        self.run(['make'])
-        self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+
+        command = ['make']
+
+        if self.options.makefile:
+            command.extend(['-f', self.options.makefile])
+
+        self.run(command)
+        self.run(command + ['install', 'DESTDIR=' + self.installdir])
