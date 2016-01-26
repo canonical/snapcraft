@@ -33,3 +33,7 @@ parts:
     plugin: make
     source: project.tar.xz
     source-type: tar
+  destination-dir:
+    plugin: tar-content
+    source: simple.tar.bz2
+    destination: destdir1/destdir2
