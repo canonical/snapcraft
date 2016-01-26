@@ -19,6 +19,7 @@ set -e
 
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd):$PYTHONPATH
+export LC_ALL=en_US.UTF-8
 
 parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
