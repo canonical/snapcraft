@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -48,3 +48,12 @@ class MakePluginTestCase(integration_tests.TestCase):
         for dir_ in snap_dirs:
             self.assertThat(
                 os.path.join(project_dir, dir_), Not(DirExists()))
+
+    def test_nonstandard_makefile(self):
+        project_dir = 'simple-make-nonstandard-makefile'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'test'),
+            cwd=project_dir)
+        self.assertEqual('Hello world\n', binary_output)
