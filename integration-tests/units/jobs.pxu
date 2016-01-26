@@ -220,6 +220,14 @@ command:
     ${SNAPCRAFT} clean
 flags: simple has-leftovers
 
+id: snapcraft/normal/simple-make-nonstandard-makefile
+command:
+    set -ex
+    cp -rT $PLAINBOX_PROVIDER_DATA/simple-make-nonstandard-makefile .
+    ${SNAPCRAFT} stage
+    test "$(./stage/bin/test)" = "Hello world"
+flags: simple has-leftovers
+
 id: snapcraft/normal/simple-go
 command:
     set -ex
