@@ -281,47 +281,31 @@ class TestMercurial(SourceTestCase):
         self.assertEqual(raised.exception.message, expected_message)
 
 
-class TestLocal(SourceTestCase):
+class TestLocal(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-
-        patcher = unittest.mock.patch('os.path.isdir')
-        self.mock_isdir = patcher.start()
-        self.mock_isdir.return_value = True
-        self.addCleanup(patcher.stop)
-
-        patcher = unittest.mock.patch('os.symlink')
-        self.mock_symlink = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = unittest.mock.patch('os.remove')
-        self.mock_remove = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.mock_symlink.return_value = True
-
-        patcher = unittest.mock.patch('os.path.abspath')
-        self.mock_abspath = patcher.start()
-        self.mock_abspath.return_value = '/home/ubuntu/sources/snap/source'
-        self.addCleanup(patcher.stop)
-
-    def test_pull(self):
+    def test_pull_with_existing_source_dir_creates_symlink(self):
+        os.mkdir('source_dir')
         local = snapcraft.sources.Local('.', 'source_dir')
         local.pull()
 
-        self.mock_rmdir.assert_called_once_with('source_dir')
-        self.mock_symlink.assert_called_once_with(
-            '/home/ubuntu/sources/snap/source', 'source_dir')
+        self.assertTrue(os.path.islink('source_dir'))
+        self.assertEqual(os.path.realpath('source_dir'), self.path)
 
-    def test_pull_when_target_is_file(self):
-        self.mock_isdir.return_value = False
-
-        local = snapcraft.sources.Local('.', 'source_file')
+    def test_pull_with_existing_source_link_creates_symlink(self):
+        os.symlink('dummy', 'source_dir')
+        local = snapcraft.sources.Local('.', 'source_dir')
         local.pull()
 
-        self.mock_remove.assert_called_once_with('source_file')
-        self.mock_symlink.assert_called_once_with(
-            '/home/ubuntu/sources/snap/source', 'source_file')
+        self.assertTrue(os.path.islink('source_dir'))
+        self.assertEqual(os.path.realpath('source_dir'), self.path)
+
+    def test_pull_with_existing_source_file_creates_symlink(self):
+        open('source_dir', 'w').close()
+        local = snapcraft.sources.Local('.', 'source_dir')
+        local.pull()
+
+        self.assertTrue(os.path.islink('source_dir'))
+        self.assertEqual(os.path.realpath('source_dir'), self.path)
 
 
 class TestUri(tests.TestCase):
