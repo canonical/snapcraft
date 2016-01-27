@@ -32,6 +32,8 @@ from snapcraft import (
     repo,
 )
 
+_SNAPCRAFT_STAGE = '$SNAPCRAFT_STAGE'
+
 logger = logging.getLogger(__name__)
 
 
@@ -254,8 +256,19 @@ def _populate_options(options, properties, schema):
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
-        attr_value = properties.get(key, default_value)
+        attr_value = _expand_env(properties.get(key, default_value))
         setattr(options, attr_name, attr_value)
+
+
+def _expand_env(attr):
+    if isinstance(attr, str) and _SNAPCRAFT_STAGE in attr:
+        return attr.replace(_SNAPCRAFT_STAGE, common.get_stagedir())
+    elif isinstance(attr, list) or isinstance(attr, tuple):
+        return [_expand_env(i) for i in attr]
+    elif isinstance(attr, dict):
+        return {k: _expand_env(attr[k]) for k in attr}
+
+    return attr
 
 
 def _get_plugin(module):

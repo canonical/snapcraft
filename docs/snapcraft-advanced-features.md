@@ -127,6 +127,25 @@ will be built after `libpipeline`. Especially if you need specific
 functionality during a build or as part of checks during the `stage` phase,
 this will be handy.
 
+If any part built using the `after` keyword needs to explicitly access
+assets in the stage directory with configuration flags (e.g.; `configure`
+in the case of autotools) it can use of the `SNAPCRAFT_STAGE` environment
+variable, like this:
+
+```yaml
+parts:
+    my-part:
+        plugin: autotools
+        source: .
+        configFlags:
+            - --with-swig $SNAPCRAFT_STAGE/swig
+        after:
+            - swig
+    swig:
+        plugin: autotools
+        source: ./swig
+```
+
 ### Re-using parts
 
 With snapcraft we want to make it easy to learn from other app vendors and
