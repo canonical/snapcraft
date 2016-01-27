@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,6 +19,7 @@ import subprocess
 
 import shutil
 import testtools
+from testtools import content
 
 from snapcraft.tests import fixture_setup
 
@@ -46,9 +47,13 @@ class TestCase(testtools.TestCase):
                 cwd = os.path.join(self.path, project_dir)
         else:
             cwd = None
-        return subprocess.check_output(
-            [self.snapcraft_command] + command, cwd=cwd,
-            stderr=subprocess.STDOUT, universal_newlines=True)
+        try:
+            return subprocess.check_output(
+                [self.snapcraft_command] + command, cwd=cwd,
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('output', content.text_content(e.output))
+            raise
 
     def copy_project_to_tmp(self, project_dir):
         tmp_project_dir = os.path.join(self.path, project_dir)
