@@ -58,15 +58,17 @@ _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
 
 def install_build_packages(packages):
+    unique_packages = set(packages)
     new_packages = []
-    for pkg in packages:
-        try:
-            if not apt.Cache()[pkg].installed:
-                new_packages.append(pkg)
-        except KeyError:
-            logger.error('Could not find all the "build-packages" required '
-                         'in snapcraft.yaml')
-            sys.exit(1)
+    with apt.Cache() as apt_cache:
+        for pkg in unique_packages:
+            try:
+                if not apt_cache[pkg].installed:
+                    new_packages.append(pkg)
+            except KeyError:
+                logger.error('Could not find all the "build-packages" '
+                             'required in snapcraft.yaml')
+                sys.exit(1)
     if new_packages:
         logger.info(
             'Installing build dependencies: %s', ' '.join(new_packages))
