@@ -58,9 +58,7 @@ _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 
 
 def install_build_packages(packages):
-    seen = set()
-    seen_add = seen.add
-    unique_packages = [x for x in packages if not (x in seen or seen_add(x))]
+    unique_packages = set(packages)
     new_packages = []
     with apt.Cache() as apt_cache:
         for pkg in unique_packages:
