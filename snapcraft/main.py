@@ -33,6 +33,8 @@ The available commands are:
   add-part     Add a part to your snapcraft.yaml, interactively presenting
                options.
   help         Obtain help for a certain plugin or topic
+  login        Authenticate session against Ubuntu One SSO.
+  logout       Clear session credentials.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -41,6 +43,7 @@ The available lifecycle commands are:
   stage        Stage the part's built artifacts into the common staging area.
   strip        Final copy and preparation for the snap.
   snap         Create a snap.
+  upload       Upload a snap to the Ubuntu Store.
 
 See 'snapcraft COMMAND --help' for more information on a specific command.
 
@@ -70,6 +73,9 @@ _VALID_COMMANDS = [
     'strip',
     'snap',
     'help',
+    'login',
+    'logout',
+    'upload',
 ]
 
 try:
