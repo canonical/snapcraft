@@ -24,6 +24,7 @@ import tempfile
 import time
 
 import testscenarios
+from testtools import content
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,8 @@ def _run_command_through_ssh(ip, port, user, command):
     ssh_command = ['ssh', '-l', user, '-p', port, ip]
     ssh_command.extend(_get_ssh_options())
     ssh_command.extend(command)
-    return subprocess.check_output(ssh_command).decode("utf-8")
+    return subprocess.check_output(
+        ssh_command, stderr=subprocess.STDOUT, universal_newlines=True)
 
 
 def _get_ssh_options():
@@ -230,17 +232,32 @@ class TestSnapcraftExamples(testscenarios.TestWithScenarios):
             cls.vm_process.kill()
         shutil.rmtree(cls.temp_dir)
 
-    def run_command_through_ssh(self, command):
-        return _run_command_through_ssh(
-            self.testbed_ip, self.testbed_port, 'ubuntu', command)
-
-    def build_snap(self, project_dir):
+    def setUp(self):
+        super().setUp()
         # To measure coverage, a wrapper for the snapcraft binary might be set
         # in the environment variable.
         snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
-        snapcraft = os.path.join(os.getcwd(), 'bin', snapcraft_bin)
-        subprocess.check_call([snapcraft, 'clean'], cwd=project_dir)
-        subprocess.check_call([snapcraft, 'snap'], cwd=project_dir)
+        self.snapcraft_command = os.path.join(
+            os.getcwd(), 'bin', snapcraft_bin)
+
+    def run_command_through_ssh(self, command):
+        try:
+            return _run_command_through_ssh(
+                self.testbed_ip, self.testbed_port, 'ubuntu', command)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('ssh output', content.text_content(e.output))
+            raise
+
+    def build_snap(self, project_dir):
+        subprocess.check_call(
+            [self.snapcraft_command, 'clean'], cwd=project_dir)
+        try:
+            subprocess.check_output(
+                [self.snapcraft_command, 'snap'], cwd=project_dir,
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('output', content.text_content(e.output))
+            raise
 
     def copy_snap_to_testbed(self, snap_local_path):
         _copy_file_through_ssh(
