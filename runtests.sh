@@ -118,14 +118,16 @@ if [ ! -z "$RUN_EXAMPLES" ]; then
     run_examples "$@"
 fi
 
-if which python3-coverage >/dev/null 2>&1; then
-    python3-coverage combine
-    python3-coverage report
+if [ ! -z "$RUN_UNIT" -o ! -z "$RUN_INTEGRATION" ]; then
+    if which python3-coverage >/dev/null 2>&1; then
+        python3-coverage combine
+        python3-coverage report
 
-    echo
-    echo "Run 'python3-coverage html' to get a nice report"
-    echo "View it by running 'x-www-browser htmlcov'"
-    echo
+        echo
+        echo "Run 'python3-coverage html' to get a nice report"
+        echo "View it by running 'x-www-browser htmlcov'"
+        echo
+    fi
 fi
 
 echo -e "\e[1;32mEverything passed\e[0m"
