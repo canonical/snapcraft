@@ -23,13 +23,31 @@ from snapcraft import common
 from snapcraft import tests
 
 
+class verify_only_gopath():
+    def __init__(self, test, gopath):
+        self.test = test
+        self.gopath = gopath
+
+    def __eq__(self, env):
+        self.test.assertEqual(env['GOPATH'], self.gopath)
+
+        for variable in ['GOARCH', 'GOBIN', 'GOCHAR', 'GOEXE', 'GOHOSTARCH',
+                         'GOHOSTOS', 'GOOS', 'GORACE', 'GOROOT', 'GOTOOLDIR',
+                         'TERM', 'CC', 'GOGCCFLAGS', 'CXX', 'CGO_ENABLED']:
+            self.test.assertTrue(
+                variable not in env,
+                'Expected "{}" to not be defined'.format(variable))
+
+        return True
+
+
 class GoPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.common.run')
-        self.run_mock = patcher.start()
+        patcher = mock.patch('subprocess.check_call')
+        self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('sys.stdout')
@@ -61,10 +79,9 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', './dir/...'],
-                      cwd=plugin._gopath_src)])
+        self.check_call_mock.assert_called_once_with(
+            ['go', 'get', '-t', '-d', './dir/...'], cwd=plugin._gopath_src,
+            env=verify_only_gopath(self, plugin._gopath))
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
@@ -81,10 +98,10 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src)])
+        self.check_call_mock.assert_called_once_with(
+            ['go', 'get', '-t', '-d', plugin.options.go_packages[0]],
+            cwd=plugin._gopath_src, env=verify_only_gopath(self,
+                                                           plugin._gopath))
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
@@ -98,7 +115,7 @@ class GoPluginTestCase(tests.TestCase):
         plugin = go.GoPlugin('test-part', Options())
         plugin.pull()
 
-        self.run_mock.assert_has_calls([])
+        self.check_call_mock.assert_has_calls([])
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
@@ -121,13 +138,13 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', './dir/...'],
-                      cwd=plugin._gopath_src),
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'install', './dir/...'],
-                      cwd=plugin._gopath_src),
+        self.check_call_mock.assert_has_calls([
+            mock.call(['go', 'get', '-t', '-d', './dir/...'],
+                      cwd=plugin._gopath_src,
+                      env=verify_only_gopath(self, plugin._gopath)),
+            mock.call(['go', 'install', './dir/...'],
+                      cwd=plugin._gopath_src,
+                      env=verify_only_gopath(self, plugin._gopath)),
         ])
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -152,13 +169,13 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src),
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'install', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src),
+        self.check_call_mock.assert_has_calls([
+            mock.call(['go', 'get', '-t', '-d', plugin.options.go_packages[0]],
+                      cwd=plugin._gopath_src,
+                      env=verify_only_gopath(self, plugin._gopath)),
+            mock.call(['go', 'install', plugin.options.go_packages[0]],
+                      cwd=plugin._gopath_src,
+                      env=verify_only_gopath(self, plugin._gopath)),
         ])
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -183,7 +200,7 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.run_mock.assert_has_calls([])
+        self.check_call_mock.assert_has_calls([])
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
