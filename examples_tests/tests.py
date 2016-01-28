@@ -24,6 +24,7 @@ import tempfile
 import time
 
 import testscenarios
+import testtools
 from testtools import content
 
 
@@ -126,7 +127,7 @@ def _copy_file_through_ssh(ip, port, user, local_file_path, remote_file_path):
     subprocess.check_call(scp_command)
 
 
-class TestSnapcraftExamples(testscenarios.TestWithScenarios):
+class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
 
     vm_process = None
 
