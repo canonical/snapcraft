@@ -28,7 +28,7 @@ from .constants import (
 )
 
 
-def login(email, password, token_name, otp=None):
+def login(email, password, token_name, otp=''):
     """Log in via the Ubuntu One SSO API.
 
     If successful, returns the oauth token data.
@@ -46,7 +46,7 @@ def login(email, password, token_name, otp=None):
         'password': password,
         'token_name': token_name,
     }
-    if otp is not None:
+    if otp:
         data['otp'] = otp
     try:
         response = client.login(data=data)
