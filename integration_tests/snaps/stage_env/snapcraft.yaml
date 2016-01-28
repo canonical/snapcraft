@@ -1,0 +1,19 @@
+name: test-package
+version: 0.1
+summary: try out $SNAPCRAFT_STAGE
+description: |
+  The cmake-project expects to have a copied directory in the stage directory
+  to consume during its build time.
+
+parts:
+  cmake-project:
+    plugin: cmake
+    source: .
+    configflags:
+        - -DDEP_DIR=$SNAPCRAFT_STAGE/copied
+    after:
+      - copy
+  copy:
+    plugin: copy
+    files:
+        copied: copied
