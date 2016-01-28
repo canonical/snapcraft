@@ -9,10 +9,14 @@ icon: icon.png
 apps:
   qmldemo:
     command: qmlscene demo.qml --
-    caps:
-      - mir_client
-      - network-client
+    uses: [mir]
 
+uses:
+  mir:
+      type: migration-skill
+      caps:
+        - mir_client
+        - network-client
 parts:
   qml:
     plugin: qml

@@ -81,8 +81,8 @@ parts:
                         'Expected a snap directory')
         self.assertTrue(
             os.path.exists(
-                os.path.join(common.get_snapdir(), 'meta', 'package.yaml')),
-            'Expected a package.yaml')
+                os.path.join(common.get_snapdir(), 'meta', 'snap.yaml')),
+            'Expected a snap.yaml')
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
         self.assertTrue(os.path.exists(common.get_partsdir()),
@@ -108,8 +108,8 @@ parts:
 
         self.assertFalse(
             os.path.exists(
-                os.path.join(common.get_snapdir(), 'meta', 'package.yaml')),
-            'There should not be a package.yaml')
+                os.path.join(common.get_snapdir(), 'meta', 'snap.yaml')),
+            'There should not be a snap.yaml')
         self.assertTrue(os.path.exists(common.get_snapdir()),
                         'Expected a snap directory')
         self.assertTrue(os.path.exists(common.get_stagedir()),

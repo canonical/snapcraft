@@ -25,7 +25,6 @@ import yaml
 
 from snapcraft import (
     common,
-    meta_legacy,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,9 +39,11 @@ _MANDATORY_PACKAGE_KEYS = [
 
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
+    'offers',
     'type',
     'license-agreement',
     'license-version',
+    'uses',
 ]
 
 _OPTIONAL_HOOKS = [
@@ -61,10 +62,8 @@ def create(config_data):
     meta_dir = os.path.join(common.get_snapdir(), 'meta')
     os.makedirs(meta_dir, exist_ok=True)
 
-    snap_yaml = _write_snap_yaml(meta_dir, config_data)
+    _write_snap_yaml(meta_dir, config_data)
     _setup_assets(meta_dir, config_data)
-
-    meta_legacy.create(meta_dir, snap_yaml)
 
     return meta_dir
 
@@ -123,10 +122,11 @@ def _compose_snap_yaml(meta_dir, config_data):
             snap_yaml[key_name] = config_data[key_name]
 
     if 'apps' in config_data:
-        apps = config_data['apps']
-        apps = _wrap_apps(apps)
-        snap_yaml['apps'] = \
-            _copy_security_profiles(meta_dir, apps)
+        snap_yaml['apps'] = _wrap_apps(config_data['apps'])
+
+    if 'uses' in config_data:
+        snap_yaml['uses'] = \
+            _copy_security_profiles(meta_dir, config_data['uses'])
 
     return snap_yaml
 
@@ -140,16 +140,18 @@ def _copy(meta_dir, relpath, new_relpath=None):
     return os.path.join('meta', os.path.basename(relpath))
 
 
-def _copy_security_profiles(meta_dir, apps):
-    # TODO: remove once capabilities are implemented.
-    for app in apps:
-        if 'security-policy' in apps[app]:
-            apps[app]['security-policy']['apparmor'] = \
-                _copy(meta_dir, apps[app]['security-policy']['apparmor'])
-            apps[app]['security-policy']['seccomp'] = \
-                _copy(meta_dir, apps[app]['security-policy']['seccomp'])
+def _copy_security_profiles(meta_dir, uses):
+    # TODO: remove once skills are implemented.
+    for slot in uses:
+        if uses[slot]['type'] != 'migration-skill':
+            continue
+        if 'security-policy' in uses[slot]:
+            uses[slot]['security-policy']['apparmor'] = \
+                _copy(meta_dir, uses[slot]['security-policy']['apparmor'])
+            uses[slot]['security-policy']['seccomp'] = \
+                _copy(meta_dir, uses[slot]['security-policy']['seccomp'])
 
-    return apps
+    return uses
 
 
 def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
