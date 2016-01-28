@@ -35,6 +35,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 import shutil
+import subprocess
 
 import snapcraft
 
@@ -122,6 +123,17 @@ class GoPlugin(snapcraft.BasePlugin):
         for go_package in self.options.go_packages:
             self._run(['go', 'install', go_package])
 
-    def _run(self, cmd, **kwargs):
-        cmd = ['env', 'GOPATH={}'.format(self._gopath)] + cmd
-        return self.run(cmd, cwd=self._gopath_src, **kwargs)
+    def _run(self, cmd):
+        # Make sure any Go-related environment variables present in the
+        # development environment don't affect this command. They're all
+        # embedded in the go tool.
+        env = os.environ.copy()
+        env['GOPATH'] = self._gopath
+
+        for variable in ['GOARCH', 'GOBIN', 'GOCHAR', 'GOEXE', 'GOHOSTARCH',
+                         'GOHOSTOS', 'GOOS', 'GORACE', 'GOROOT', 'GOTOOLDIR',
+                         'TERM', 'CC', 'GOGCCFLAGS', 'CXX', 'CGO_ENABLED']:
+            if variable in env:
+                del env[variable]
+
+        subprocess.check_call(cmd, cwd=self._gopath_src, env=env)
