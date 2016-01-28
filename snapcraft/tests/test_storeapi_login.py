@@ -64,7 +64,7 @@ class LoginAPITestCase(TestCase):
         response._content = json.dumps(data).encode('utf-8')
         return response
 
-    def assert_login_request(self, otp=None, token_name=None):
+    def assert_login_request(self, otp='', token_name=None):
         if token_name is None:
             token_name = self.token_name
         data = {
@@ -72,7 +72,7 @@ class LoginAPITestCase(TestCase):
             'password': self.password,
             'token_name': token_name
         }
-        if otp is not None:
+        if otp:
             data['otp'] = otp
         self.mock_request.assert_called_once_with(
             'POST', UBUNTU_SSO_API_ROOT_URL + 'tokens/oauth',
@@ -84,6 +84,7 @@ class LoginAPITestCase(TestCase):
         result = login(self.email, self.password, self.token_name)
         expected = {'success': True, 'body': self.token_data}
         self.assertEqual(result, expected)
+        self.assert_login_request()
 
     def test_default_token_name(self):
         result = login(self.email, self.password, self.token_name)
@@ -103,6 +104,12 @@ class LoginAPITestCase(TestCase):
         expected = {'success': True, 'body': self.token_data}
         self.assertEqual(result, expected)
         self.assert_login_request(otp='123456')
+
+    def test_login_with_empty_otp_omits_it_from_request(self):
+        result = login(self.email, self.password, self.token_name, otp='')
+        expected = {'success': True, 'body': self.token_data}
+        self.assertEqual(result, expected)
+        self.assert_login_request()
 
     def test_login_unsuccessful_api_exception(self):
         error_data = {
