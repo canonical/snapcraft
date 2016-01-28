@@ -10,9 +10,12 @@ apps:
  tomcat:
    command: bin/wrapper
    daemon: simple
-   caps:
-   - network-client
-   - network-service
+   uses: [listener-service]
+
+uses:
+  listener-service:
+    type: migration-skill
+    caps: [network-listener, network-service]
 
 parts:
     webapp:

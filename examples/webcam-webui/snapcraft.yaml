@@ -9,8 +9,12 @@ apps:
   webcam-webui:
     command: bin/webcam-webui
     daemon: simple
-    caps:
-      - network-listener
+    uses: [listener]
+
+uses:
+  listener:
+    type: migration-skill
+    caps: [network-listener]
 
 parts:
   cam:

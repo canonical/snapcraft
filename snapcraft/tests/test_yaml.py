@@ -717,6 +717,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
+                'uses': ['file-migration'],
+            },
+        }
+        self.data['uses'] = {
+            'file-migration': {
+                'type': 'migration-skill',
                 'security-policy': {
                     'seccomp': 'file.seccomp',
                     'apparmor': 'file.apparmor',
@@ -730,6 +736,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
+                'uses': ['migration'],
+            },
+        }
+        self.data['uses'] = {
+            'migration': {
+                'type': 'migration-skill',
                 'security-override': {
                     'read-paths': ['path1', 'path2'],
                     'write-paths': ['path1', 'path2'],
@@ -745,6 +757,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
+                'uses': ['migration'],
+            },
+        }
+        self.data['uses'] = {
+            'migration': {
+                'type': 'migration-skill',
                 'security-template': 'unconfined',
             },
         }
@@ -755,6 +773,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
+                'uses': ['migration'],
+            },
+        }
+        self.data['uses'] = {
+            'migration': {
+                'type': 'migration-skill',
                 'caps': ['cap1', 'cap2'],
             },
         }
@@ -765,6 +789,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
+                'uses': ['migration'],
+            },
+        }
+        self.data['uses'] = {
+            'migration': {
+                'type': 'migration-skill',
                 'security-override': {
                     'read-paths': ['path1', 'path2'],
                     'write-paths': ['path1', 'path2'],
@@ -784,16 +814,18 @@ class TestValidation(tests.TestCase):
             with self.assertRaises(Exception) as r:
                 snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-            self.assertTrue('is not allowed' in str(r.exception))
+            self.assertTrue('is not valid under any of the given schemas'
+                            in str(r.exception), str(r.exception))
 
         for sec in ['security-override', 'security-template', 'caps']:
             data = copy.deepcopy(self.data)
-            del data['apps']['app1'][sec]
+            del data['uses']['migration'][sec]
             with self.subTest(key=sec):
                 with self.assertRaises(Exception) as r:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                self.assertTrue('is not allowed' in str(r.exception))
+                self.assertTrue('is not valid under any of the given schemas'
+                                in str(r.exception), str(r.exception))
 
 
 class TestFilesets(tests.TestCase):
