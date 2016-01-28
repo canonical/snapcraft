@@ -1,27 +1,32 @@
 name: mosquitto
 version: 0.1
 summary: mosquitto server and client
-description: |
-  MQTT example with a server, a publisher and a subscriber.
+description: MQTT example with a server, a publisher and a subscriber.
+
 apps:
   mosquitto:
     command: usr/sbin/mosquitto -c $SNAP/mosquitto.conf
     daemon: simple
-    caps:
-      - network-listener
-      - network-service
+    uses: [listener-service]
+  subscribe:
+    command: bin/subscribe
+    uses: [listener-service]
+  publish:
+    command: bin/publish
+    uses: [listener-service]
+
+uses:
+  listener:
+    type: migration-skill
+    caps: [network-listener]
+  listener-service:
+    type: migration-skill
+    caps: [network-listener, network-service]
     security-override:
       read-paths:
         - /etc/hosts.deny
         - /etc/hosts.allow
-  subscribe:
-    command: bin/subscribe
-    caps:
-      - network-listener
-  publish:
-    command: bin/publish
-    caps:
-      - network-listener
+
 
 parts:
   mosquitto:

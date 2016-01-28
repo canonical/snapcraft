@@ -8,16 +8,18 @@ apps:
   rosmaster:
     command: bin/roscore-rosmaster-service
     daemon: simple
-    caps:
-      - network-listener
+    uses: [listener]
   listener:
     command: rosrun beginner_tutorials listener
-    caps:
-      - network-listener
+    uses: [listener]
   talker:
     command: rosrun beginner_tutorials talker
-    caps:
-      - network-listener
+    uses: [listener]
+
+uses:
+  listener:
+    type: migration-skill
+    caps: [network-listener]
 
 parts:
   roscore:
@@ -49,4 +51,3 @@ parts:
     source: .
     catkin-packages:
       - beginner_tutorials
-

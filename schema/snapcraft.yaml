@@ -54,6 +54,32 @@ definitions:
   security-template:
       type: string
       description: alternate security template to use instead of default.
+  migration-skill:
+    type: object
+    additionalProperties: false
+    properties:
+        type:
+          type: string
+          enum:
+            - migration-skill
+        security-policy:
+          ref: "#definitions/security-policy"
+        security-override:
+          $ref: "#definitions/security-override"
+        security-template:
+          $ref: "#definitions/security-template"
+        caps:
+          $ref: "#definitions/security-caps"
+    not:
+      anyOf:
+        - required:
+            - security-policy
+            - security-override
+            - security-template
+            - caps
+        - required: [security-policy, security-override]
+        - required: [security-policy, security-template]
+        - required: [security-policy, caps]
 
 title: snapcraft schema
 type: object
@@ -127,16 +153,6 @@ properties:
         dependencies:
           stop-command: ["daemon"]
         additionalProperties: false
-        not:
-          anyOf:
-            - required:
-                - security-policy
-                - security-override
-                - security-template
-                - caps
-            - required: [security-policy, security-override]
-            - required: [security-policy, security-template]
-            - required: [security-policy, caps]
         properties:
           command:
             type: string
@@ -152,14 +168,18 @@ properties:
             enum:
               - simple
               - forking
-          security-policy:
-            $ref: "#definitions/security-policy"
-          security-override:
-            $ref: "#definitions/security-override"
-          security-template:
-            $ref: "#definitions/security-template"
-          caps:
-            $ref: "#definitions/security-caps"
+          uses:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+          offers:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
   parts:
     type: object
     minProperties: 1
@@ -217,6 +237,18 @@ properties:
             items:
               type: string
             default: ['*']
+  uses:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
+        oneOf:
+          - $ref: "#definitions/migration-skill"
+  offers:
+  # TODO: We have no real use case for this now, but when the snappy
+  # functionality comes we don't want to block people from experimenting
+  # with it right away
+    type: object
 required:
   - name
   - version
