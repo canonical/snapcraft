@@ -267,3 +267,11 @@ parts:
 
 `node-packages` simply lists which packages (including their dependencies) to
 add to the snap.
+
+### Endless possibilities
+
+Combining various plugins and parts and using the wiki plugin make `snapcraft`
+incredibly versatile. On top of that, you can write [your own plugin] [plugin]
+as well.
+
+[plugin]: plugins.md
