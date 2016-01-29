@@ -1,4 +1,4 @@
-# Setting up your Ubuntu development host
+# Getting set up
 
 Ubuntu is a great and convenient OS for developers. Snappy developer tools are
 readily available to enable app developers familiar with Ubuntu to port and
