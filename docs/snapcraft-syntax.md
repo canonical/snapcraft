@@ -58,7 +58,8 @@ contain.
   a license to be reaccepted.
 * `parts` (yaml subsection)
   A map of part names to their own part configuration. Order in the file is
-  not relevant (to aid copy-and-pasting).
+  not relevant (to aid copy-and-pasting). Check out the
+  [parts section](snapcraft-parts.md) for some more concrete examples.
     * `plugin` (string)
       Specifies the plugin name that will manage this part. Snapcraft will pass
       to it all the other user-specified part options. If plugin is not
@@ -101,3 +102,6 @@ contain.
 The `snapcraft.yaml` in any project is validated to be compliant to these
 keywords, if there is any missing expected component or invalid value,
 `snapcraft` will exit with an error.
+
+Review the [metadata section](metadata.md) for some more explicit examples on
+how to define commands, daemons or `config` declarations.
