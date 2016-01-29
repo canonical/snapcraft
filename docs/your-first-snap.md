@@ -303,9 +303,12 @@ get started on your own projects. To get a good overview of the snapcraft
 features used in these examples, check out
 [this article](snapcraft-advanced-features.md).
 
-If you are unsure, you can review the general
-[snapcraft.yaml syntax](snapcraft-syntax.md). We also added some notes about
-[snapcraft usage](snapcraft-usage.md).
+Some more suggestions in our docs:
+* If you are unsure, you can review the general
+  [snapcraft.yaml syntax](snapcraft-syntax.md).
+* Some discussion of [snapcraft parts](snapcraft-parts.md) in particular.
+* We also added some notes about [snapcraft usage](snapcraft-usage.md).
+* The [debug section](debug.md) might be helpful too.
 
 If you should have any more questions, ask us on
 

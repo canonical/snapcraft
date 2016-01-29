@@ -41,3 +41,13 @@ Take notice of the sideload word in the downloader snap, this indicates that
 the snap did not come signed from the store, if an app is sideloaded, it
 also fakes the version to allow easy iteration without the need to change the
 metadata.
+
+## Next
+
+Once you have played around with `snapcraft` for a bit, you might want to take
+a look at its [more advanced features] [advanced] or at an overview of the
+[snapcraft.yaml syntax] [syntax].
+
+
+[advanced]: snapcraft-advanced-features.md
+[syntax]: snapcraft-syntax.md
