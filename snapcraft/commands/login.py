@@ -47,7 +47,8 @@ def main(argv=None):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
-    otp = input('OTP: ')
+    otp = input('One-time password (just press enter if you don\'t use '
+                'two-factor authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
     response = login(email, password, token_name='snapcraft', otp=otp)

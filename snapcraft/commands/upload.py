@@ -62,10 +62,5 @@ def main(argv=None):
                 snap_name))
         snap.main(argv=argv)
 
-    logger.info('Uploading {}'.format(snap_name))
     config = load_config()
-    success = upload(snap_name, config=config)
-    if success:
-        logger.info('{} upload complete'.format(snap_name))
-    else:
-        logger.info('{} upload failed'.format(snap_name))
+    upload(snap_name, config=config)

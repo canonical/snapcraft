@@ -16,8 +16,14 @@
 from __future__ import absolute_import, unicode_literals
 import json
 import logging
+import functools
+import time
 import os
 import re
+
+from concurrent.futures import ThreadPoolExecutor
+from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
+from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from .common import (
     get_oauth_session,
@@ -32,8 +38,12 @@ from .constants import (
     SCAN_STATUS_POLL_RETRIES,
 )
 
-
 logger = logging.getLogger(__name__)
+
+
+def _update_progress_bar(progress_bar, maximum_value, monitor):
+    if monitor.bytes_read <= maximum_value:
+        progress_bar.update(monitor.bytes_read)
 
 
 def upload(binary_filename, metadata_filename='', metadata=None, config=None):
@@ -48,7 +58,9 @@ def upload(binary_filename, metadata_filename='', metadata=None, config=None):
         return
     name = match.groupdict()['name']
 
-    logger.info('Uploading files...')
+    # Print a newline so the progress bar has some breathing room.
+    print('')
+
     data = upload_files(binary_filename, config=config)
     success = data.get('success', False)
     errors = data.get('errors', [])
@@ -56,7 +68,6 @@ def upload(binary_filename, metadata_filename='', metadata=None, config=None):
         logger.info('Upload failed:\n\n%s\n', '\n'.join(errors))
         return False
 
-    logger.info('Uploading new version...')
     meta = read_metadata(metadata_filename)
     meta.update(metadata or {})
     result = upload_app(name, data, metadata=meta, config=config)
@@ -65,19 +76,25 @@ def upload(binary_filename, metadata_filename='', metadata=None, config=None):
     app_url = result.get('application_url', '')
     revision = result.get('revision')
 
+    # Print another newline to make sure the user sees the final result of the
+    # upload (success/failure).
+    print('')
+
     if success:
-        logger.info('Application uploaded successfully.')
+        message = 'Application uploaded successfully'
         if revision:
-            logger.info('Uploaded as revision %s.', revision)
+            message += ' (as revision {})'.format(revision)
+
+        logger.info(message)
     else:
         logger.info('Upload did not complete.')
 
     if errors:
-        logger.info('Some errors were detected:\n\n%s\n\n',
+        logger.info('Some errors were detected:\n\n%s\n',
                     '\n'.join(errors))
 
     if app_url:
-        logger.info('Please check out the application at: %s.\n',
+        logger.info('Please check out the application at: %s\n',
                     app_url)
 
     return success
@@ -92,26 +109,50 @@ def upload_files(binary_filename, config=None):
     updown_url = os.environ.get('UBUNTU_STORE_UPLOAD_ROOT_URL',
                                 UBUNTU_STORE_UPLOAD_ROOT_URL)
     unscanned_upload_url = urljoin(updown_url, 'unscanned-upload/')
-    files = {'binary': open(binary_filename, 'rb')}
 
     result = {'success': False, 'errors': []}
 
     session = get_oauth_session(config)
     if session is None:
-        result['errors'] = ['No valid credentials found.']
+        result['errors'] = [
+            'No valid credentials found. Have you run "snapcraft login"?']
         return result
 
     try:
+        binary_file_size = os.path.getsize(binary_filename)
+        binary_file = open(binary_filename, 'rb')
+        encoder = MultipartEncoder(
+            fields={
+                'binary': ('filename', binary_file, 'application/octet-stream')
+            }
+        )
+
+        # Create a progress bar that looks like: Uploading foo [==  ] 50%
+        progress_bar = ProgressBar(
+            widgets=['Uploading {} '.format(binary_filename),
+                     Bar(marker='=', left='[', right=']'), ' ', Percentage()],
+            maxval=os.path.getsize(binary_filename)).start()
+
+        # Create a monitor for this upload, so that progress can be displayed
+        monitor = MultipartEncoderMonitor(
+            encoder, functools.partial(_update_progress_bar, progress_bar,
+                                       binary_file_size))
+
+        # Begin upload
         response = session.post(
             unscanned_upload_url,
-            files=files)
+            data=monitor, headers={'Content-Type': monitor.content_type})
+
+        # Make sure progress bar shows 100% complete
+        progress_bar.finish()
+
         if response.ok:
             response_data = response.json()
             result.update({
                 'success': response_data.get('successful', True),
                 'upload_id': response_data['upload_id'],
                 'binary_filesize': os.path.getsize(binary_filename),
-                'source_uploaded': 'source' in files,
+                'source_uploaded': False,
             })
         else:
             logger.error(
@@ -125,9 +166,8 @@ def upload_files(binary_filename, config=None):
             'An unexpected error was found while uploading files.')
         result['errors'] = [str(err)]
     finally:
-        # make sure to close any open files used for request
-        for fd in files.values():
-            fd.close()
+        # Close the open file
+        binary_file.close()
 
     return result
 
@@ -153,7 +193,8 @@ def upload_app(name, upload_data, metadata=None, config=None):
 
     session = get_oauth_session(config)
     if session is None:
-        result['errors'] = ['No valid credentials found.']
+        result['errors'] = [
+            'No valid credentials found. Have you run "snapcraft login"?']
         return result
 
     if metadata is None:
@@ -167,11 +208,39 @@ def upload_app(name, upload_data, metadata=None, config=None):
         if response.ok:
             response_data = response.json()
             status_url = response_data['status_url']
-            logger.info('Package submitted to %s', upload_url)
-            logger.info('Checking package status...')
-            completed, data = get_scan_data(session, status_url)
+
+            # This is just a waiting game, so we'll show an indeterminate
+            # AnimatedMarker for it.
+            progress_indicator = ProgressBar(
+                widgets=['Checking package status... ', AnimatedMarker()],
+                maxval=7).start()
+
+            # Execute the package scan in another thread so we can update the
+            # progress indicator.
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(get_scan_data, session, status_url)
+
+                count = 0
+                while not future.done():
+                    # Annoyingly, there doesn't seem to be a way to actually
+                    # make a progress indicator that will go on forever, so we
+                    # need to restart this one each time we reach the end of
+                    # its animation.
+                    if count >= 7:
+                        progress_indicator.start()
+                        count = 0
+
+                    # Actually update the progress indicator
+                    progress_indicator.update(count)
+                    count += 1
+                    time.sleep(0.15)
+
+                # Grab the results from the package scan
+                completed, data = future.result()
+
+            progress_indicator.finish()
+
             if completed:
-                logger.info('Package scan completed.')
                 message = data.get('message', '')
                 if not message:
                     result['success'] = True
@@ -263,7 +332,7 @@ def get_scan_data(session, status_url):
     @retry(terminator=is_scan_completed,
            retries=SCAN_STATUS_POLL_RETRIES,
            delay=SCAN_STATUS_POLL_DELAY,
-           backoff=1, logger=logger)
+           backoff=1)
     def get_status():
         return session.get(status_url)
 

@@ -14,9 +14,8 @@ store on your behalf:
     Enter your Ubuntu One SSO credentials.
     Email: me@example.com
     Password:
-    OTP: <press enter here if you haven't enabled two-factor authentication>
+    One-time password (just press enter if you don't use two-factor authentication):
     Authenticating against Ubuntu One SSO.
-    Starting new HTTPS connection (1): login.ubuntu.com
     Login successful.
 
 These credentials will remain valid until you revoke them, which you can do
@@ -34,19 +33,12 @@ Now, let's upload that snap!
 Get into the directory containing the `snapcraft.yaml`, and do the following:
 
     $ snapcraft upload
-    Uploading foo_1_amd64.snap
-    Uploading files...
-    Starting new HTTPS connection (1): upload.apps.ubuntu.com
-    Uploading new version...
-    Starting new HTTPS connection (1): myapps.developer.ubuntu.com
-    Package submitted to https://myapps.developer.ubuntu.com/dev/api/click-package-upload/foo/
-    Checking package status...
-    Package scan completed.
-    Application uploaded successfully.
-    Uploaded as revision 1.
-    Please check out the application at: https://myapps.ubuntu.com/dev/click-apps/1337/.
 
-    foo_1_amd64.snap upload complete
+    Uploading foo_1_amd64.snap [==========================================] 100%
+    Checking package status... |
+
+    Application uploaded successfully (as revision 1)
+    Please check out the application at: https://myapps.ubuntu.com/dev/click-apps/1337/
 
 Your snap has now been uploaded to the store, and is now undergoing an
 automated review. You'll be emailed when the review has completed, at which time
