@@ -12,7 +12,8 @@ apps:
 parts:
   godd:
     plugin: go
-    source: git://github.com/mvo5/godd
+    source: https://github.com/mvo5/godd
+    source-type: git
     stage-packages: [libgudev-1.0-dev]
     snap:
      - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
