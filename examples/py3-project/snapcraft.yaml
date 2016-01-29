@@ -13,6 +13,7 @@ parts:
     plugin: python3
     source: https://github.com/markokr/spongeshaker.git
     source-type: git
+    build-packages: [gcc, libc6-dev]
   sha3:
     plugin: copy
     files:

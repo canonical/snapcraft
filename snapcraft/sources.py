@@ -277,6 +277,33 @@ def get(sourcedir, builddir, options):
     handler.pull()
 
 
+def get_required_packages(options):
+    """Return a list with required packages to handle the source.
+
+    :param source: the url for the source.
+    :param options: plugin options.
+    """
+    source = getattr(options, 'source', None)
+    if not source:
+        return []
+
+    source_type = getattr(options, 'source_type', None)
+    if not source_type:
+        source_type = _get_source_type_from_uri(source, ignore_errors=True)
+
+    packages = []
+    if source_type == 'bzr':
+        packages.append('bzr')
+    elif source_type == 'git':
+        packages.append('git')
+    elif source_type == 'tar':
+        packages.append('tar')
+    elif source_type == 'hg' or source_type == 'mercurial':
+        packages.append('mercurial')
+
+    return packages
+
+
 _source_handler = {
     'bzr': Bazaar,
     'git': Git,
@@ -296,7 +323,7 @@ def _get_source_handler(source_type, source):
 _tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
 
 
-def _get_source_type_from_uri(source):
+def _get_source_type_from_uri(source, ignore_errors=False):
     source_type = ''
     if source.startswith('bzr:') or source.startswith('lp:'):
         source_type = 'bzr'
@@ -304,9 +331,9 @@ def _get_source_type_from_uri(source):
         source_type = 'git'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
-    elif snapcraft.common.isurl(source):
+    elif snapcraft.common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
-    elif not os.path.isdir(source):
+    elif not os.path.isdir(source) and not ignore_errors:
         raise ValueError('local source is not a directory')
 
     return source_type
