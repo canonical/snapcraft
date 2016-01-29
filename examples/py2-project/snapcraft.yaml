@@ -13,6 +13,7 @@ parts:
     plugin: python2
     source: https://github.com/markokr/spongeshaker.git
     source-type: git
+    build-packages: [gcc, libc6-dev]
   make-project:
     plugin: make
     source: .
