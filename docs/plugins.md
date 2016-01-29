@@ -1,4 +1,4 @@
-# Extending Snapcraft: writing your own plugins
+# Write your own plugins
 
 Is Snapcraft missing support for your preferred build-system? Here's how you
 would add it!
