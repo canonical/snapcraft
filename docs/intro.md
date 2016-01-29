@@ -1,4 +1,4 @@
-# Intro
+# Snapcraft Overview
 
 Snapcraft is a build and packaging tool which helps you package your software
 as a snap. It makes it easy to incorporate components from different sources

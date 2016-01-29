@@ -1,4 +1,4 @@
-# Snapcraft Tutorial
+# Your first snap
 
 Let's make a snap from scratch using Snapcraft! We'll pick something a little
 interesting: a webcam server.
