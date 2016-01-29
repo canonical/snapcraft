@@ -1,5 +1,9 @@
 # Adding metadata
 
+The entire syntax of a `snapcraft.yaml` with all available keys can be
+reviewed in the [snapcraft.yaml syntax section] [syntax]. Here we will
+discuss the apps metadata section in more detail.
+
 ## Defining app commands
 
 For every app you build in your snap, you can define which commands or
@@ -78,3 +82,4 @@ To find out more about config command, have a look at the [config section]
 
 [conf]: https://developer.ubuntu.com/snappy/guides/config-command/
 [sec]: https://developer.ubuntu.com/snappy/guides/security-policy/
+[syntax]: snapcraft-syntax.md
