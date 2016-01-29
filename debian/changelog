@@ -1,3 +1,24 @@
+snapcraft (1.0.1) wily; urgency=medium
+
+  [ Daniel Holbach ]
+  * Add document about how to specify metadata (binaries, services or config).
+    (LP: #1535905)
+
+  [ Jonathan Cave ]
+  * Go plugin creating invalid environment (LP: #1524374)
+
+  [ Kyle Fazzari ]
+  * Git source:
+    - Make a shallow clone. (LP: #1536696)
+    - Support submodules. (LP: #1536698)
+  * Autotools plugin:
+    - Call make before make install (LP: #1536700)
+  * Make plugin:
+    - Support non-standard makefile name. (LP: #1500759)
+  * Add build-package description to docs/snapcraft-sytax.md (LP: #1536659)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Thu, 28 Jan 2016 18:54:28 +0000
+
 snapcraft (1.0) xenial; urgency=medium
 
   [ Sergio Schvezov ]
