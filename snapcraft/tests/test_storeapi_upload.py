@@ -17,11 +17,11 @@ from __future__ import absolute_import, unicode_literals
 import json
 import os
 import tempfile
-from unittest import TestCase
 
 from mock import ANY, call, patch
 from requests import Response
 
+from snapcraft import tests
 from snapcraft.storeapi._upload import (
     get_upload_url,
     upload_app,
@@ -30,7 +30,7 @@ from snapcraft.storeapi._upload import (
 )
 
 
-class UploadBaseTestCase(TestCase):
+class UploadBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super(UploadBaseTestCase, self).setUp()
@@ -313,7 +313,7 @@ class UploadFilesTestCase(UploadBaseTestCase):
 class UploadAppTestCase(UploadBaseTestCase):
 
     def setUp(self):
-        super(UploadAppTestCase, self).setUp()
+        super().setUp()
         self.data = {
             'upload_id': 'some-valid-upload-id',
             'binary_filesize': 123456,
