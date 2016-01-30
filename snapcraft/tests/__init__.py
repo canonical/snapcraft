@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import tempfile
 
@@ -51,6 +52,7 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
+        self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         tempdir_obj = tempfile.TemporaryDirectory()
