@@ -23,6 +23,7 @@ import integration_tests
 class BzrSourceTestCase(integration_tests.TestCase):
 
     def _init_and_config_bzr(self):
+        subprocess.check_call(['sudo', 'apt-get', 'install', '-y', 'bzr'])
         subprocess.check_call(
             ['bzr', 'init', '.'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

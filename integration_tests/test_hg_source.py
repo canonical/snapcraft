@@ -24,6 +24,11 @@ import integration_tests
 
 class HgSourceTestCase(integration_tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        subprocess.check_call(
+            ['sudo', 'apt-get', 'install', '-y', 'mercurial'])
+
     def _get_hg_revno(self, path):
         return subprocess.check_output(
             ['hg', 'log', '--cwd', path, '--template',

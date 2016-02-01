@@ -33,7 +33,7 @@ before_script:
   - sudo lxc config device add xenial /dev/sda1 disk source=$(pwd) path=$(pwd)
   # Install the snapcraft dependencies.
   - sudo lxc exec xenial -- apt-get update
-  - sudo lxc exec xenial -- apt-get install -y build-essential bzr dpkg-dev git mercurial pyflakes python-flake8 python3.4 python3-apt python3-docopt python3-coverage python3-fixtures python3-flake8 python3-jsonschema python3-mccabe python3-mock python3-pep8 python3-pip python3-requests python3-requests-oauthlib python3-responses python3-ssoclient python3-testscenarios python3-testtools python3-xdg python3-yaml python3-lxml squashfs-tools
+  - sudo lxc exec xenial -- apt-get install -y pyflakes python-flake8 python3.5 python3-apt python3-docopt python3-coverage python3-fixtures python3-flake8 python3-jsonschema python3-mccabe python3-mock python3-pep8 python3-pip python3-requests python3-requests-oauthlib python3-responses python3-ssoclient python3-testscenarios python3-testtools python3-xdg python3-yaml python3-lxml squashfs-tools
 script:
   - sudo -E lxc exec xenial -- su - ubuntu -c "cd $(pwd); ./runtests.sh $TEST_SUITE"
 after_success:

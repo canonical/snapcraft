@@ -2,9 +2,7 @@ Source: snapcraft
 Section: utils
 Priority: extra
 Maintainer: Snapcraft Team <snappy-devel@lists.ubuntu.com>
-Build-Depends: bzr,
-               cmake,
-               debhelper (>= 9),
+Build-Depends: debhelper (>= 9),
                dh-python,
                python3 (>= 3.4),
                python3-apt,
@@ -21,19 +19,13 @@ Build-Depends: bzr,
                python3-testscenarios,
                python3-xdg,
                python3-yaml,
-               wget,
-               xz-utils
 Homepage: https://github.com/ubuntu-core/snapcraft
 Vcs-Git: https://github.com/ubuntu-core/snapcraft
 Standards-Version: 3.9.6
 
 Package: snapcraft
 Architecture: all
-Depends: bzr,
-         dpkg-dev,
-         git,
-         mercurial,
-         python3-apt,
+Depends: python3-apt,
          python3-docopt,
          python3-jsonschema,
          python3-lxml,
@@ -45,8 +37,6 @@ Depends: bzr,
          python3-yaml,
          squashfs-tools,
          sudo,
-         wget,
-         xz-utils,
          ${misc:Depends},
          ${python3:Depends}
 Description: easily craft snaps

@@ -150,6 +150,62 @@ parts:
         mock_load.assert_has_calls([call1, call2])
         self.assertTrue(mock_get_part.called)
 
+    def test_config_adds_vcs_packages_to_build_packages(self):
+        scenarios = [
+            ('git://github.com/ubuntu-core/snapcraft.git', 'git'),
+            ('lp:ubuntu-push', 'bzr'),
+            ('https://github.com/ubuntu-core/snapcraft/archive/2.0.1.tar.gz',
+             'tar'),
+        ]
+        yaml_t = """name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    source: {0}
+    plugin: autotools
+"""
+
+        for s in scenarios:
+            with self.subTest(key=(s[1])):
+                self.make_snapcraft_yaml(yaml_t.format(s[0]))
+                c = snapcraft.yaml.Config()
+
+                self.assertTrue(
+                    s[1] in c.build_tools,
+                    '{} not found in {}'.format(s[1], c.build_tools))
+
+    def test_config_adds_vcs_packages_to_build_packages_from_types(self):
+        scenarios = [
+            ('git', 'git'),
+            ('hg', 'mercurial'),
+            ('mercurial', 'mercurial'),
+            ('bzr', 'bzr'),
+            ('tar', 'tar'),
+        ]
+        yaml_t = """name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    source: http://something/somewhere
+    source-type: {0}
+    plugin: autotools
+"""
+
+        for s in scenarios:
+            with self.subTest(key=(s[1])):
+                self.make_snapcraft_yaml(yaml_t.format(s[0]))
+                c = snapcraft.yaml.Config()
+
+                self.assertTrue(
+                    s[1] in c.build_tools,
+                    '{} not found in {}'.format(s[1], c.build_tools))
+
     def test_config_raises_on_missing_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
