@@ -15,7 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import platform
 import re
+from unittest.mock import patch
+
+import testtools
+from testtools.matchers import (
+    Contains,
+)
 
 from snapcraft import (
     common,
@@ -83,3 +90,33 @@ class CommonTestCase(tests.TestCase):
 
                 with open(file_info['path'], 'r') as f:
                     self.assertEqual(f.read(), file_info['expected'])
+
+
+class ArchTestCase(testtools.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        machine = platform.machine()
+
+        patcher = patch('platform.machine')
+        self.mock_machine = patcher.start()
+        self.mock_machine.return_value = machine
+        self.addCleanup(patcher.stop)
+
+    def test_get_arch_with_no_errors(self):
+        common.get_arch()
+
+    def test_get_arch_raises_exception_on_non_supported_arch(self):
+        self.mock_machine.return_value = 'badarch'
+        e = self.assertRaises(EnvironmentError, common.get_arch)
+        self.assertEqual('badarch is not supported, please log a bug at'
+                         'https://bugs.launchpad.net/snapcraft', str(e))
+
+    def test_get_arch_triplet(self):
+        self.assertThat(common.get_arch_triplet(), Contains('linux-gnu'))
+
+    def test_get_arch_triple_raises_exception_on_non_supported_arch(self):
+        self.mock_machine.return_value = 'badarch'
+        e = self.assertRaises(EnvironmentError, common.get_arch_triplet)
+        self.assertEqual('badarch is not supported, please log a bug at'
+                         'https://bugs.launchpad.net/snapcraft', str(e))

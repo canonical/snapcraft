@@ -17,6 +17,7 @@
 # Data/methods shared between plugins and snapcraft
 
 import os
+import platform
 import subprocess
 import tempfile
 import urllib
@@ -29,7 +30,6 @@ _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
 _arch = None
-_arch_triplet = None
 
 env = []
 
@@ -61,21 +61,46 @@ def run_output(cmd, **kwargs):
                                        **kwargs).decode('utf8').strip()
 
 
+_DEB_TRANSLATIONS = {
+    'armv7l': {
+        'arch': 'armhf',
+        'triplet': 'arm-linux-gnueabihf',
+    },
+    'aarch64': {
+        'arch': 'arm64',
+        'triplet': 'aarch64-linux-gnu',
+    },
+    'i686': {
+        'arch': 'i386',
+        'triplet': 'i386-linux-gnu',
+    },
+    'ppc64le': {
+        'arch': 'ppc64el',
+        'triplet': 'powerpc64le-linux-gnu',
+    },
+    'x86_64': {
+        'arch': 'amd64',
+        'triplet': 'x86_64-linux-gnu',
+    }
+}
+
+
 def get_arch():
-    global _arch
-    if _arch is None:
-        _arch = subprocess.check_output(
-            ['dpkg-architecture', '-qDEB_BUILD_ARCH']).decode('utf8').strip()
-    return _arch
+    try:
+        return _DEB_TRANSLATIONS[platform.machine()]['arch']
+    except KeyError:
+        raise EnvironmentError(
+            '{} is not supported, please log a bug at'
+            'https://bugs.launchpad.net/snapcraft'.format(platform.machine()))
 
 
 def get_arch_triplet():
-    global _arch_triplet
-    if _arch_triplet is None:
-        _arch_triplet = subprocess.check_output(
-            ['dpkg-architecture', '-qDEB_BUILD_MULTIARCH']
-        ).decode('utf8').strip()
-    return _arch_triplet
+    try:
+        return _DEB_TRANSLATIONS[platform.machine()]['triplet']
+    except KeyError:
+        raise EnvironmentError(
+            '{} is not supported, please log a bug at'
+            'https://bugs.launchpad.net/snapcraft'.format(platform.machine()))
 
 
 def get_partsdir():

@@ -28,6 +28,7 @@ from snapcraft import (
     common,
     libraries,
     pluginhandler,
+    sources,
     wiki,
 )
 
@@ -202,6 +203,7 @@ class Config:
             part_name, plugin_name, properties)
 
         self.build_tools += part.code.build_packages
+        self.build_tools += sources.get_required_packages(part.code.options)
         self.all_parts.append(part)
         return part
 

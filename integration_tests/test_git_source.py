@@ -23,6 +23,7 @@ import integration_tests
 class GitSourceTestCase(integration_tests.TestCase):
 
     def _init_and_config_git(self):
+        subprocess.check_call(['sudo', 'apt-get', 'install', '-y', 'git'])
         subprocess.check_call(
             ['git', 'init', '.'], stdout=subprocess.DEVNULL)
         subprocess.check_call(

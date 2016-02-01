@@ -1,7 +1,6 @@
 Tests: integrationtests examplestests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
-         build-essential,
          python3-pep8,
          pyflakes,
          python-flake8,
