@@ -80,9 +80,7 @@ parts:
             'Staging part1 \n'
             'Stripping part1 \n'
             'Snapping snap-test_1.0_amd64.snap\n'
-            'Snapped snap-test_1.0_amd64.snap\n'
-            'Uploading snap-test_1.0_amd64.snap\n'
-            'snap-test_1.0_amd64.snap upload complete\n',
+            'Snapped snap-test_1.0_amd64.snap\n',
             self.fake_logger.output)
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
@@ -114,9 +112,7 @@ parts:
             'Staging part1 \n'
             'Stripping part1 \n'
             'Snapping snap-test_1.0_amd64.snap\n'
-            'Snapped snap-test_1.0_amd64.snap\n'
-            'Uploading snap-test_1.0_amd64.snap\n'
-            'snap-test_1.0_amd64.snap upload failed\n',
+            'Snapped snap-test_1.0_amd64.snap\n',
             self.fake_logger.output)
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
@@ -139,11 +135,6 @@ parts:
         self.mock_os.path.exists.return_value = True
 
         upload.main()
-
-        self.assertEqual(
-            'Uploading snap-test_1.0_amd64.snap\n'
-            'snap-test_1.0_amd64.snap upload complete\n',
-            self.fake_logger.output)
 
         # stages are not build if snap file already exists
         self.assertFalse(os.path.exists(common.get_stagedir()),
