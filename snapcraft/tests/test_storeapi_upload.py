@@ -45,11 +45,23 @@ class UploadBaseTestCase(tests.TestCase):
         self.mock_logger = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = patch('sys.stdout')
+        self.mock_stdout = patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.mock_get = self.mock_get_oauth_session.return_value.get
         self.mock_post = self.mock_get_oauth_session.return_value.post
 
+        patcher = patch('snapcraft.storeapi._upload.ProgressBar')
+        self.mock_progressbar = patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.suffix = '_0.1_all.snap'
         self.binary_file = self.get_temporary_file(suffix=self.suffix)
+        with open(self.binary_file.name, 'w') as f:
+            f.write('bytes')
+
+        self.binary_file_size = os.path.getsize(self.binary_file.name)
 
     def get_temporary_file(self, suffix='.cfg'):
         return tempfile.NamedTemporaryFile(suffix=suffix)
@@ -73,10 +85,8 @@ class UploadTestCase(UploadBaseTestCase):
         success = upload(self.binary_file.name)
 
         self.assertFalse(success)
-        self.assertEqual(self.mock_logger.info.call_args_list, [
-            call('Uploading files...'),
-            call('Upload failed:\n\n%s\n', 'some error'),
-        ])
+        self.mock_logger.info.assert_called_once_with(
+            'Upload failed:\n\n%s\n', 'some error')
 
     def test_upload_app_ok(self):
         # fake upload response
@@ -100,11 +110,11 @@ class UploadTestCase(UploadBaseTestCase):
         success = upload(self.binary_file.name)
 
         self.assertTrue(success)
-        self.assertIn(call('Application uploaded successfully.'),
-                      self.mock_logger.info.call_args_list)
-        self.assertIn(call('Uploaded as revision %s.', revision),
-                      self.mock_logger.info.call_args_list)
-        self.assertIn(call('Please check out the application at: %s.\n',
+        self.assertIn(
+            call('Application uploaded successfully (as revision {})'.format(
+                revision)),
+            self.mock_logger.info.call_args_list)
+        self.assertIn(call('Please check out the application at: %s\n',
                            application_url),
                       self.mock_logger.info.call_args_list)
 
@@ -127,9 +137,6 @@ class UploadTestCase(UploadBaseTestCase):
         success = upload(self.binary_file.name)
 
         self.assertTrue(success)
-        self.assertIn(
-            call('Application uploaded successfully.'),
-            self.mock_logger.info.call_args_list)
         self.assertNotIn(
             call('Uploaded as revision %s.', ANY),
             self.mock_logger.info.call_args_list)
@@ -149,13 +156,10 @@ class UploadTestCase(UploadBaseTestCase):
 
         self.assertFalse(success)
         self.assertIn(
-            call('Uploading files...'),
-            self.mock_logger.info.call_args_list)
-        self.assertIn(
             call('Upload did not complete.'),
             self.mock_logger.info.call_args_list)
         self.assertIn(
-            call('Some errors were detected:\n\n%s\n\n',
+            call('Some errors were detected:\n\n%s\n',
                  'some error'),
             self.mock_logger.info.call_args_list)
 
@@ -175,7 +179,7 @@ class UploadWithScanTestCase(UploadBaseTestCase):
         data = {
             'updown_id': 'some-valid-upload-id',
             'source_uploaded': False,
-            'binary_filesize': 0,
+            'binary_filesize': self.binary_file_size,
         }
         name = os.path.basename(self.binary_file.name).replace(self.suffix, '')
         self.mock_post.assert_called_with(
@@ -200,7 +204,7 @@ class UploadWithScanTestCase(UploadBaseTestCase):
         data = {
             'updown_id': 'some-valid-upload-id',
             'source_uploaded': False,
-            'binary_filesize': 0,
+            'binary_filesize': self.binary_file_size,
             'name': 'from_file',
         }
         name = os.path.basename(self.binary_file.name).replace(self.suffix, '')
@@ -221,7 +225,7 @@ class UploadWithScanTestCase(UploadBaseTestCase):
         data = {
             'updown_id': 'some-valid-upload-id',
             'source_uploaded': False,
-            'binary_filesize': 0,
+            'binary_filesize': self.binary_file_size,
             'name': 'overridden',
         }
         name = os.path.basename(self.binary_file.name).replace(self.suffix, '')
@@ -233,7 +237,6 @@ class UploadFilesTestCase(UploadBaseTestCase):
 
     def setUp(self):
         super(UploadFilesTestCase, self).setUp()
-        self.binary_file = self.get_temporary_file(suffix='_0.1_all.snap')
 
     def test_upload_files(self):
         mock_response = self.mock_post.return_value
@@ -248,9 +251,14 @@ class UploadFilesTestCase(UploadBaseTestCase):
             'success': True,
             'errors': [],
             'upload_id': 'some-valid-upload-id',
-            'binary_filesize': os.path.getsize(self.binary_file.name),
+            'binary_filesize': self.binary_file_size,
             'source_uploaded': False,
         })
+
+        self.mock_progressbar.assert_called_once_with(
+            maxval=self.binary_file_size,
+            widgets=['Uploading {} '.format(self.binary_file.name), ANY, ' ',
+                     ANY])
 
     def test_upload_files_uses_environment_variables(self):
         with patch.dict(os.environ,
@@ -258,7 +266,12 @@ class UploadFilesTestCase(UploadBaseTestCase):
             upload_url = 'http://example.com/unscanned-upload/'
             upload_files(self.binary_file.name)
             self.mock_post.assert_called_once_with(
-                upload_url, files={'binary': ANY})
+                upload_url, data=ANY, headers={'Content-Type': ANY})
+
+        self.mock_progressbar.assert_called_once_with(
+            maxval=self.binary_file_size,
+            widgets=['Uploading {} '.format(self.binary_file.name), ANY, ' ',
+                     ANY])
 
     def test_upload_files_with_source_upload(self):
         mock_response = self.mock_post.return_value
@@ -277,14 +290,22 @@ class UploadFilesTestCase(UploadBaseTestCase):
             'source_uploaded': False,
         })
 
+        self.mock_progressbar.assert_called_once_with(
+            maxval=self.binary_file_size,
+            widgets=['Uploading {} '.format(self.binary_file.name), ANY, ' ',
+                     ANY])
+
     def test_upload_files_with_invalid_oauth_session(self):
         self.mock_get_oauth_session.return_value = None
         response = upload_files(self.binary_file.name)
         self.assertEqual(response, {
             'success': False,
-            'errors': ['No valid credentials found.'],
+            'errors': [
+                'No valid credentials found. Have you run "snapcraft login"?'
+            ],
         })
         self.assertFalse(self.mock_post.called)
+        self.assertFalse(self.mock_progressbar.called)
 
     def test_upload_files_error_response(self):
         mock_response = self.mock_post.return_value
@@ -298,6 +319,11 @@ class UploadFilesTestCase(UploadBaseTestCase):
             'errors': ['server failed'],
         })
 
+        self.mock_progressbar.assert_called_once_with(
+            maxval=self.binary_file_size,
+            widgets=['Uploading {} '.format(self.binary_file.name), ANY, ' ',
+                     ANY])
+
     def test_upload_files_handle_malformed_response(self):
         mock_response = self.mock_post.return_value
         mock_response.json.return_value = {'successful': False}
@@ -308,6 +334,11 @@ class UploadFilesTestCase(UploadBaseTestCase):
             'success': False,
             'errors': [str(err)],
         })
+
+        self.mock_progressbar.assert_called_once_with(
+            maxval=self.binary_file_size,
+            widgets=['Uploading {} '.format(self.binary_file.name), ANY, ' ',
+                     ANY])
 
 
 class UploadAppTestCase(UploadBaseTestCase):
@@ -332,7 +363,9 @@ class UploadAppTestCase(UploadBaseTestCase):
         response = upload_app(self.package_name, self.data)
         self.assertEqual(response, {
             'success': False,
-            'errors': ['No valid credentials found.'],
+            'errors': [
+                'No valid credentials found. Have you run "snapcraft login"?'
+            ],
             'application_url': '',
             'revision': None,
         })

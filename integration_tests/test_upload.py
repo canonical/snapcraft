@@ -45,5 +45,6 @@ class UploadTestCase(integration_tests.TestCase):
 
         self.assertIn('Snap assemble_1.0_amd64.snap not found. Running snap '
                       'step to create it.', output)
-        self.assertIn('Uploading {}'.format(snap_file_path), output)
-        self.assertIn('{} upload failed'.format(snap_file_path), output)
+        self.assertIn('Upload failed', output)
+        self.assertIn('No valid credentials found. Have you run "snapcraft '
+                      'login"?', output)

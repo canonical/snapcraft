@@ -60,3 +60,6 @@ def configure(logger_name=None):
         logger.addHandler(handler)
 
     logger.setLevel(logging.INFO)
+
+    # INFO from the requests lib is too noisy
+    logging.getLogger("requests").setLevel(logging.WARNING)
