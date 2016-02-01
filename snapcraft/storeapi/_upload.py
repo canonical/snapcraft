@@ -92,7 +92,6 @@ def upload_files(binary_filename, config=None):
     updown_url = os.environ.get('UBUNTU_STORE_UPLOAD_ROOT_URL',
                                 UBUNTU_STORE_UPLOAD_ROOT_URL)
     unscanned_upload_url = urljoin(updown_url, 'unscanned-upload/')
-    files = {'binary': open(binary_filename, 'rb')}
 
     result = {'success': False, 'errors': []}
 
@@ -100,6 +99,8 @@ def upload_files(binary_filename, config=None):
     if session is None:
         result['errors'] = ['No valid credentials found.']
         return result
+
+    files = {'binary': open(binary_filename, 'rb')}
 
     try:
         response = session.post(
