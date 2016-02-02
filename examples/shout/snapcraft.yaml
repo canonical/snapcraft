@@ -8,8 +8,12 @@ apps:
   server:
     command: bin/shout --home $SNAP_DATA
     daemon: simple
-    caps:
-      - network-listener
+    uses: [listener]
+
+uses:
+  listener:
+    type: migration-skill
+    caps: [network-listener]
 
 parts:
   shout:
