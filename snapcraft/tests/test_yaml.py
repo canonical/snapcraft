@@ -37,8 +37,8 @@ class TestYaml(tests.TestCase):
         dirs.setup_dirs()
 
         patcher = unittest.mock.patch('os.path.exists')
-        mock_wrap_exe = patcher.start()
-        mock_wrap_exe.return_value = True
+        self.mock_path_exists = patcher.start()
+        self.mock_path_exists.return_value = True
         self.addCleanup(patcher.stop)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
@@ -262,7 +262,7 @@ parts:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
-                         '\'name\' is a required property')
+                         "'name' is a required property")
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
@@ -283,7 +283,89 @@ parts:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
-                         '1 is not of type \'string\'')
+                         "The 'name' property does not match the required "
+                         "schema: 1 is not of type 'string'")
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_invalid_yaml_invalid_icon_extension(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+icon: icon.foo
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Config()
+
+        self.assertEqual(raised.exception.message,
+                         "'icon' must be either a .png or a .svg")
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_invalid_yaml_missing_icon(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.mock_path_exists.return_value = False
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+icon: icon.png
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Config()
+
+        self.assertEqual(raised.exception.message,
+                         "Specified icon 'icon.png' does not exist")
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_invalid_yaml_missing_apparmor(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.mock_path_exists.return_value = False
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+
+apps:
+  foo:
+    command: bar
+    uses: [migration]
+
+uses:
+  migration:
+    type: migration-skill
+    security-policy:
+      apparmor: path/profile
+      seccomp: path/profile
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Config()
+
+        self.assertEqual(raised.exception.message,
+                         "Specified file 'path/profile' does not exist")
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
@@ -305,7 +387,8 @@ parts:
 
         self.assertEqual(
             raised.exception.message,
-            '\'myapp@me_1.0\' does not match \'^[a-z0-9][a-z0-9+-]*$\'')
+            "The 'name' property does not match the required schema: "
+            "'myapp@me_1.0' does not match '^[a-z0-9][a-z0-9+-]*$'")
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
@@ -326,7 +409,7 @@ parts:
 
         self.assertEqual(
             raised.exception.message,
-            '\'description\' is a required property')
+            "'description' is a required property")
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
@@ -551,9 +634,9 @@ class TestValidation(tests.TestCase):
                         snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = (
-                    '\'{}\' does not match \'^[a-z0-9][a-z0-9+-]*$\'').format(
-                    name)
+                expected_message = ("The 'name' property does not match the "
+                                    "required schema: '{}' does not match "
+                                    "'^[a-z0-9][a-z0-9+-]*$'").format(name)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
@@ -562,7 +645,9 @@ class TestValidation(tests.TestCase):
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        expected_message = '\'{}\' is too long'.format(self.data['summary'])
+        expected_message = (
+            "The 'summary' property does not match the required schema: "
+            "'{}' is too long").format(self.data['summary'])
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 
@@ -589,8 +674,9 @@ class TestValidation(tests.TestCase):
                         snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = ('\'{}\' is not one of ' +
-                                    '[\'app\']').format(t)
+                expected_message = (
+                    "The 'type' property does not match the required "
+                    "schema: '{}' is not one of ['app']").format(t)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
@@ -627,8 +713,10 @@ class TestValidation(tests.TestCase):
                         snapcraft.yaml.SnapcraftSchemaError) as raised:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
 
-                expected_message = ('Additional properties are not allowed '
-                                    '(\'{}\' was unexpected)').format(t)
+                expected_message = (
+                    "The 'apps' property does not match the required "
+                    "schema: Additional properties are not allowed ('{}' "
+                    "was unexpected)").format(t)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
@@ -638,7 +726,9 @@ class TestValidation(tests.TestCase):
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        expected_message = '\'command\' is a required property'
+        expected_message = ("The 'service1' property does not match the "
+                            "required schema: 'command' is a required "
+                            "property")
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 
@@ -670,8 +760,9 @@ class TestValidation(tests.TestCase):
         with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
             snapcraft.yaml._validate_snapcraft_yaml(self.data)
 
-        expected_message = 'Additional properties are not allowed ' \
-                           '(\'plugins\' was unexpected)'
+        expected_message = ("The 'parts' property does not match the "
+                            "required schema: Additional properties are not "
+                            "allowed ('plugins' was unexpected)")
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
 

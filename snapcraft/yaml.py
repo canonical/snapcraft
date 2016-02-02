@@ -38,14 +38,26 @@ logger = logging.getLogger(__name__)
 
 @jsonschema.FormatChecker.cls_checks('file-path')
 def _validate_file_exists(instance):
-    return os.path.exists(instance)
+    if not os.path.exists(instance):
+        raise jsonschema.exceptions.ValidationError(
+            "Specified file '{}' does not exist".format(instance))
+
+    return True
 
 
 @jsonschema.FormatChecker.cls_checks('icon-path')
 def _validate_icon(instance):
-    normalized_icon = instance.lower()
-    ext = normalized_icon.endswith('.png') or normalized_icon.endswith('.svg')
-    return os.path.exists(instance) and ext
+    allowed_extensions = ['.png', '.svg']
+    extension = os.path.splitext(instance.lower())[1]
+    if extension not in allowed_extensions:
+        raise jsonschema.exceptions.ValidationError(
+            "'icon' must be either a .png or a .svg")
+
+    if not os.path.exists(instance):
+        raise jsonschema.exceptions.ValidationError(
+            "Specified icon '{}' does not exist".format(instance))
+
+    return True
 
 
 class SnapcraftYamlFileError(Exception):
@@ -346,7 +358,12 @@ def _validate_snapcraft_yaml(snapcraft_yaml):
         raise SnapcraftSchemaError(
             'snapcraft validation file is missing from installation path')
     except jsonschema.ValidationError as e:
-        raise SnapcraftSchemaError(e.message)
+        messages = [e.message]
+        if e.path:
+            messages.insert(0, "The '{}' property does not match the "
+                               "required schema:".format(e.path.pop()))
+
+        raise SnapcraftSchemaError(' '.join(messages))
 
 
 def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
