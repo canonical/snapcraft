@@ -25,20 +25,20 @@ from snapcraft import tests
 from snapcraft.plugins import catkin
 
 
-class _CompareLists():
+class _CompareContainers():
     def __init__(self, test, expected):
         self.test = test
         self.expected = expected
 
-    def __eq__(self, packages):
-        self.test.assertEqual(len(packages), len(self.expected),
-                              'Expected {} packages to be installed, '
+    def __eq__(self, container):
+        self.test.assertEqual(len(container), len(self.expected),
+                              'Expected {} items to be in container, '
                               'got {}'.format(len(self.expected),
-                                              len(packages)))
+                                              len(container)))
 
         for expectation in self.expected:
-            self.test.assertTrue(expectation in packages,
-                                 'Expected "{}" to be installed'
+            self.test.assertTrue(expectation in container,
+                                 'Expected "{}" to be in container'
                                  .format(expectation))
 
         return True
@@ -54,6 +54,7 @@ class CatkinPluginTestCase(tests.TestCase):
             catkin_packages = ['my_package']
             source_space = 'src'
             source_subdir = None
+            include_roscore = False
 
         self.properties = props()
 
@@ -65,6 +66,16 @@ class CatkinPluginTestCase(tests.TestCase):
             'snapcraft.plugins.catkin._find_system_dependencies')
         self.dependencies_mock = patcher.start()
         self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.plugins.catkin._Rosdep')
+        self.rosdep_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
+                            sources):
+        self.rosdep_mock.assert_has_calls([
+            mock.call(rosdistro, package_path, rosdep_path, sources),
+            mock.call().setup()])
 
     def test_schema(self):
         schema = catkin.CatkinPlugin.schema()
@@ -158,6 +169,28 @@ class CatkinPluginTestCase(tests.TestCase):
                          'Expected "source-space" "default" to be "src", but '
                          'it was "{}"'.format(source_space_default))
 
+        # Check include-roscore property
+        self.assertTrue('include-roscore' in properties,
+                        'Expected "include-roscore" to be included in '
+                        'properties')
+
+        include_roscore = properties['include-roscore']
+        self.assertTrue('type' in include_roscore,
+                        'Expected "type" to be included in "include-roscore"')
+        self.assertTrue('default' in include_roscore,
+                        'Expected "default" to be included in '
+                        '"include-roscore"')
+
+        include_roscore_type = include_roscore['type']
+        self.assertEqual(include_roscore_type, 'boolean',
+                         'Expected "include-roscore" "type" to be "boolean", '
+                         'but it was "{}"'.format(include_roscore_type))
+
+        include_roscore_default = include_roscore['default']
+        self.assertEqual(include_roscore_default, 'true',
+                         'Expected "include-roscore" "default" to be "true", '
+                         'but it was "{}"'.format(include_roscore_default))
+
         # Check required
         self.assertTrue('catkin-packages' in schema['required'],
                         'Expected "catkin-packages" to be included in '
@@ -167,20 +200,26 @@ class CatkinPluginTestCase(tests.TestCase):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
-        self.dependencies_mock.return_value = ['foo', 'bar', 'baz']
+        self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
 
         plugin.pull()
 
-        # Verify that dependencies were found as expected
-        self.dependencies_mock.assert_called_once_with(
-            {'my_package'}, self.properties.rosdistro,
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
 
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertEqual(1, self.dependencies_mock.call_count)
+        self.assertEqual({'my_package'},
+                         self.dependencies_mock.call_args[0][0])
+
         # Verify that the dependencies were installed
         self.ubuntu_mock.return_value.get.assert_called_with(
-            _CompareLists(self, ['foo', 'bar', 'baz']))
+            _CompareContainers(self, ['foo', 'bar', 'baz']))
         self.ubuntu_mock.return_value.unpack.assert_called_with(
             plugin.installdir)
 
@@ -191,20 +230,72 @@ class CatkinPluginTestCase(tests.TestCase):
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies (only local)
-        self.dependencies_mock.return_value = []
+        self.dependencies_mock.return_value = set()
 
         plugin.pull()
 
-        # Verify that dependencies were found as expected
-        self.dependencies_mock.assert_called_once_with(
-            {'my_package', 'package_2'}, self.properties.rosdistro,
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
 
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertEqual(1, self.dependencies_mock.call_count)
+        self.assertEqual({'my_package', 'package_2'},
+                         self.dependencies_mock.call_args[0][0])
+
         # Verify that no .deb packages were installed
         self.assertTrue(mock.call().unpack(plugin.installdir) not in
                         self.ubuntu_mock.mock_calls)
+
+    def test_pull_with_roscore(self):
+        self.properties.include_roscore = True
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = set()
+
+        def resolve(package_name):
+            if package_name == 'ros_core':
+                return 'ros-core-dependency'
+
+            return None
+
+        self.rosdep_mock.return_value.resolve_dependency = resolve
+
+        plugin.pull()
+
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        # Verify that roscore was installed
+        self.ubuntu_mock.return_value.get.assert_called_with(
+            {'ros-core-dependency'})
+        self.ubuntu_mock.return_value.unpack.assert_called_with(
+            plugin.installdir)
+
+    def test_pull_unable_to_resolve_roscore(self):
+        self.properties.include_roscore = True
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = set()
+
+        self.rosdep_mock.return_value.resolve_dependency.return_value = None
+
+        with self.assertRaises(RuntimeError) as raised:
+            plugin.pull()
+
+        self.assertEqual(str(raised.exception),
+                         'Unable to determine system dependency for roscore')
 
     def test_valid_catkin_workspace_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
@@ -586,72 +677,52 @@ class FindSystemDependenciesTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.plugins.catkin._Rosdep')
-        self.rosdep_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
-                            sources):
-        self.rosdep_mock.assert_has_calls([
-            mock.call(rosdistro, package_path, rosdep_path, sources),
-            mock.call().setup()])
-
     def test_find_system_dependencies_system_only(self):
-        mockInstance = self.rosdep_mock.return_value
-        mockInstance.get_dependencies.return_value = ['bar']
-        mockInstance.resolve_dependency.return_value = 'baz'
+        rosdep_mock = mock.MagicMock()
+        rosdep_mock.get_dependencies.return_value = ['bar']
+        rosdep_mock.resolve_dependency.return_value = 'baz'
 
-        self.assertEqual(['baz'], catkin._find_system_dependencies(
-            {'foo'}, 'indigo', '/test/path1', '/test/path2', []))
+        self.assertEqual({'baz'}, catkin._find_system_dependencies(
+            {'foo'}, rosdep_mock))
 
-        # Verify that rosdep was setup as expected
-        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
-
-        mockInstance.get_dependencies.assert_called_once_with('foo')
-        mockInstance.resolve_dependency.assert_called_once_with('bar')
+        rosdep_mock.get_dependencies.assert_called_once_with('foo')
+        rosdep_mock.resolve_dependency.assert_called_once_with('bar')
 
     def test_find_system_dependencies_local_only(self):
-        mockInstance = self.rosdep_mock.return_value
-        mockInstance.get_dependencies.return_value = ['bar']
+        rosdep_mock = mock.MagicMock()
+        rosdep_mock.get_dependencies.return_value = ['bar']
 
-        self.assertEqual([], catkin._find_system_dependencies(
-            {'foo', 'bar'}, 'indigo', '/test/path1', '/test/path2', []))
+        self.assertEqual(set(), catkin._find_system_dependencies(
+            {'foo', 'bar'}, rosdep_mock))
 
-        # Verify that rosdep was setup as expected
-        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
-
-        mockInstance.get_dependencies.assert_has_calls([mock.call('foo'),
-                                                        mock.call('bar')],
-                                                       any_order=True)
-        mockInstance.resolve_dependency.assert_not_called()
+        rosdep_mock.get_dependencies.assert_has_calls([mock.call('foo'),
+                                                       mock.call('bar')],
+                                                      any_order=True)
+        rosdep_mock.resolve_dependency.assert_not_called()
 
     def test_find_system_dependencies_mixed(self):
-        mockInstance = self.rosdep_mock.return_value
-        mockInstance.get_dependencies.return_value = ['bar', 'baz']
-        mockInstance.resolve_dependency.return_value = 'qux'
+        rosdep_mock = mock.MagicMock()
+        rosdep_mock.get_dependencies.return_value = ['bar', 'baz']
+        rosdep_mock.resolve_dependency.return_value = 'qux'
 
-        self.assertEqual(['qux'], catkin._find_system_dependencies(
-            {'foo', 'bar'}, 'indigo', '/test/path1', '/test/path2', []))
+        self.assertEqual({'qux'}, catkin._find_system_dependencies(
+            {'foo', 'bar'}, rosdep_mock))
 
-        # Verify that rosdep was setup as expected
-        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
-
-        mockInstance.get_dependencies.assert_has_calls([mock.call('foo'),
-                                                        mock.call('bar')],
-                                                       any_order=True)
-        mockInstance.resolve_dependency.assert_called_once_with('baz')
+        rosdep_mock.get_dependencies.assert_has_calls([mock.call('foo'),
+                                                       mock.call('bar')],
+                                                      any_order=True)
+        rosdep_mock.resolve_dependency.assert_called_once_with('baz')
 
     def test_find_system_dependencies_missing_local_dependency(self):
-        mockInstance = self.rosdep_mock.return_value
+        rosdep_mock = mock.MagicMock()
 
         # Setup a dependency on a non-existing package, and it doesn't resolve
         # to a system dependency.'
-        mockInstance.get_dependencies.return_value = ['bar']
-        mockInstance.resolve_dependency.return_value = None
+        rosdep_mock.get_dependencies.return_value = ['bar']
+        rosdep_mock.resolve_dependency.return_value = None
 
         with self.assertRaises(RuntimeError) as raised:
-            catkin._find_system_dependencies({'foo'}, 'indigo', '/test/path1',
-                                             '/test/path2', [])
+            catkin._find_system_dependencies({'foo'}, rosdep_mock)
 
         self.assertEqual(raised.exception.args[0],
                          'Package "bar" isn\'t a valid system dependency. Did '
@@ -661,20 +732,16 @@ class FindSystemDependenciesTestCase(tests.TestCase):
                          'database.')
 
     def test_find_system_dependencies_roscpp_includes_gplusplus(self):
-        mockInstance = self.rosdep_mock.return_value
-        mockInstance.get_dependencies.return_value = ['roscpp']
-        mockInstance.resolve_dependency.return_value = 'baz'
+        rosdep_mock = mock.MagicMock()
+        rosdep_mock.get_dependencies.return_value = ['roscpp']
+        rosdep_mock.resolve_dependency.return_value = 'baz'
 
-        self.assertEqual(_CompareLists(self, ['baz', 'g++']),
-                         catkin._find_system_dependencies({'foo'}, 'indigo',
-                                                          '/test/path1',
-                                                          '/test/path2', []))
+        self.assertEqual(_CompareContainers(self, {'baz', 'g++'}),
+                         catkin._find_system_dependencies({'foo'},
+                                                          rosdep_mock))
 
-        # Verify that rosdep was setup as expected
-        self.verify_rosdep_setup('indigo', '/test/path1', '/test/path2', [])
-
-        mockInstance.get_dependencies.assert_called_once_with('foo')
-        mockInstance.resolve_dependency.assert_called_once_with('roscpp')
+        rosdep_mock.get_dependencies.assert_called_once_with('foo')
+        rosdep_mock.resolve_dependency.assert_called_once_with('roscpp')
 
 
 class RosdepTestCase(tests.TestCase):

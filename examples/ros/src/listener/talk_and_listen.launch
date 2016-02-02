@@ -1,0 +1,9 @@
+<launch>
+    <node name = "talker" pkg = "talker" type = "talker_node"
+          output = "screen" />
+
+    <node name = "listener" pkg = "listener" type = "listener_node"
+          output = "screen">
+        <remap from = "babble" to = "chatter" />
+    </node>
+</launch>
