@@ -4,6 +4,8 @@ summary: test a simple scons project
 description: a longer description
 icon: icon.png
 
+build-packages: [gcc]
+
 parts:
   scons-project:
     scons-options:

@@ -4,11 +4,13 @@ summary: Test using a wiki part to complete the local part
 description:
  As the plugin keyword is not defined and the curl part exists on the
  wiki, this part will use data from the wiki to have all the necessary
- information to build. 
- 
+ information to build.
+
  In this case the wiki defines it wants curl 7.44.0 and we are telling
  it to use 7.45.0
 icon: icon.png
+
+build-packages: [gcc]
 
 parts:
   curl:
