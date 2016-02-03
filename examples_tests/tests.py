@@ -214,14 +214,14 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
         cls.temp_dir = tempfile.mkdtemp()
         if not config.get('skip-install', False):
             ip = config.get('ip', None)
-            if ip is None:
+            if not ip:
                 cls.testbed_ip = 'localhost'
                 cls.testbed_port = '8022'
                 cls.vm_process = _start_snappy_testbed(
                     cls.temp_dir, cls.testbed_port)
             else:
                 cls.testbed_ip = ip
-                cls.testbed_port = config.get('port', '22')
+                cls.testbed_port = config.get('port', None) or '22'
 
             _wait_for_ssh(
                 cls.testbed_ip, cls.testbed_port, 'ubuntu',
@@ -278,7 +278,7 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
         self.run_command_through_ssh(['sudo', 'snappy', 'remove', snap_name])
 
     def test_example(self):
-        filter_ = config.get('filter', False)
+        filter_ = config.get('filter', None)
         if filter_:
             if not re.match(filter_, self.dir):
                 self.skipTest(
