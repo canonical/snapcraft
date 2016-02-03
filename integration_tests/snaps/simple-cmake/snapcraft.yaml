@@ -4,6 +4,8 @@ summary: one line summary
 description: a longer description
 icon: icon.png
 
+build-packages: [gcc]
+
 parts:
   cmake-project:
     plugin: cmake
