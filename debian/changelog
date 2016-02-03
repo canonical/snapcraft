@@ -1,3 +1,52 @@
+snapcraft (2.1) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * Run the tests in a xenial LXC. (LP: #1532213)
+  * Added a mosquitto example. (LP: #1537778)
+  * Refactored the local source pull. (LP: #1538250)
+  * Full coverage of meta.py with unit tests. (LP: #1538260)
+  * Do not report coverage for static and examples tests. (LP: #1538643)
+  * Add tests errors as details. (LP: #1538354)
+  * Fix the examples tests using testtools as the base. (LP: #1539196)
+  * Use the git http protocol in the examples tests. (LP: #1539139)
+
+  [ Daniel Holbach ]
+  * Make sure that version is set correctly no matter what (version for
+    2.0.1 release was '2.0') (LP: #1537580)
+  * Add document about how to specify app metadata (commands, daemons,
+    config). (LP: #1535905)
+  * Add document about debugging snaps. (LP: #1538016)
+  * Try to capture what the articles are about in a more concise and
+    clearer way. (LP: #1539502)
+  * Add more links between the individual articles. (LP: #1539540)
+
+  [ Reto Breitenmoser ]
+  * tar-content plugin: Add capability to unpack into a specific
+    destination directory (LP: #1478055)
+
+  [ Kyle Fazzari ]
+  * Make plugin: Support non-standard makefile name. (LP: #1500759)
+  * Add documentation for how to use snapcraft upload. (LP: #1539234)
+  * Upload: Clean up output. (LP: #1538692, #1539814)
+
+  [ Alexander Sack ]
+  * Fix FD leakage by closing apt cache in repo.py (LP: #1537705)
+
+  [ Ricardo Kirkner ]
+  * Added support for uploading snap packages directly to the Ubuntu
+    Store. (LP: #1538657)
+  * Make sure otp is included in the login request only if it's not
+    empty (LP: #1539208)
+
+  [ Sergio Schvezov ]
+  * Support $SNAPCRAFT_STAGE for parts (LP: #1538688)
+  * debian/control: add python3-responses (LP: #1539199)
+  * Use the log fixture for logging by default for ut (LP: #1539817)
+  * Make package installation dynamic to reduce deps (LP: #1539146)
+  * Remove legacy formatting and implement skills (LP: #1539122)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Tue, 02 Feb 2016 10:24:04 -0300
+
 snapcraft (2.0.1) xenial; urgency=medium
 
   [ Vamshi Balanaga ]
