@@ -1,3 +1,13 @@
+snapcraft (2.1.1) xenial; urgency=medium
+
+  [ Kyle Fazzari ]
+  * Make requests-toolbelt and progressbar a Depends. (LP: #1541349)
+
+  [ Sergio Schvezov ]
+  * Add gcc as build-packages to integration tests (LP: #1541332)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 03 Feb 2016 11:00:00 -0300
+
 snapcraft (2.1) xenial; urgency=medium
 
   [ Leo Arias ]
