@@ -54,13 +54,13 @@ def main(argv=None):
 
     # make sure the full lifecycle is executed
     yaml_config = snapcraft.yaml.load_config()
-    snap_name = _format_snap_name(yaml_config.data)
+    snap_filename = _format_snap_name(yaml_config.data)
 
-    if not os.path.exists(snap_name):
+    if not os.path.exists(snap_filename):
         logger.info(
             'Snap {} not found. Running snap step to create it.'.format(
-                snap_name))
+                snap_filename))
         snap.main(argv=argv)
 
     config = load_config()
-    upload(snap_name, config=config)
+    upload(snap_filename, yaml_config.data['name'], config=config)

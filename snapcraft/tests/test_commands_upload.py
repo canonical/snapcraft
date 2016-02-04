@@ -97,6 +97,7 @@ parts:
 
         self.mock_upload.assert_called_once_with(
             'snap-test_1.0_amd64.snap',
+            'snap-test',
             config=self.mock_load_config.return_value)
 
     def test_upload_failed(self):
@@ -129,6 +130,7 @@ parts:
 
         self.mock_upload.assert_called_once_with(
             'snap-test_1.0_amd64.snap',
+            'snap-test',
             config=self.mock_load_config.return_value)
 
     def test_just_upload_if_snap_file_exists(self):
@@ -143,4 +145,5 @@ parts:
 
         self.mock_upload.assert_called_once_with(
             'snap-test_1.0_amd64.snap',
+            'snap-test',
             config=self.mock_load_config.return_value)
