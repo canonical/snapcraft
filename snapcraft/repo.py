@@ -255,6 +255,7 @@ def _setup_apt_cache(rootdir, sources, local=False):
         progress._width = 0
 
     apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+    apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
     apt_cache.update(fetch_progress=progress, sources_list=srcfile)
     apt_cache.open()
 
