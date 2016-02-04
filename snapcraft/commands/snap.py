@@ -45,8 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 def _snap_data_from_dir(dir):
-    # TODO: change to 'snap.yaml'
-    with open(os.path.join(dir, 'meta', 'package.yaml')) as f:
+    with open(os.path.join(dir, 'meta', 'snap.yaml')) as f:
         snap = yaml.load(f)
 
     return {'name': snap['name'],
@@ -64,8 +63,6 @@ def main(argv=None):
     args = docopt(__doc__, argv=argv)
 
     if args['DIRECTORY']:
-        # TODO: migrate to meta/snap.yaml
-        # TODO: write integration test
         snap_dir = os.path.abspath(args['DIRECTORY'])
         snap = _snap_data_from_dir(snap_dir)
     else:
