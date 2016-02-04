@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -82,6 +82,20 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join('snap', 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
+
+    def test_snap_directory(self):
+        project_dir = 'assemble'
+        self.run_snapcraft('snap', project_dir)
+        os.chdir(project_dir)
+
+        snap_file_path = 'assemble_1.0_{}.snap'.format(_get_deb_arch())
+        os.remove(snap_file_path)
+
+        # Verify that Snapcraft can snap its own snap directory (this will make
+        # sure `snapcraft snap` and `snapcraft snap <directory>` are always in
+        # sync).
+        self.run_snapcraft(['snap', 'snap'])
+        self.assertThat(snap_file_path, FileExists())
 
     def test_error_with_unexistent_build_package(self):
         project_dir = self.copy_project_to_tmp('assemble')

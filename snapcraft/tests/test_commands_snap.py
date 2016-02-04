@@ -110,7 +110,7 @@ parts:
 
         meta_dir = os.path.join('mysnap', 'meta')
         os.makedirs(meta_dir)
-        with open(os.path.join(meta_dir, 'package.yaml'), 'w') as f:
+        with open(os.path.join(meta_dir, 'snap.yaml'), 'w') as f:
             f.write("""name: my_snap
 version: 99
 architectures: [amd64, armhf]
