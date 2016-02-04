@@ -19,7 +19,6 @@ import logging
 import functools
 import time
 import os
-import re
 
 from concurrent.futures import ThreadPoolExecutor
 from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
@@ -46,18 +45,9 @@ def _update_progress_bar(progress_bar, maximum_value, monitor):
         progress_bar.update(monitor.bytes_read)
 
 
-def upload(binary_filename, metadata_filename='', metadata=None, config=None):
+def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
+           config=None):
     """Create a new upload based on a snap package."""
-
-    # validate package filename
-    pattern = (r'(.*/)?(?P<name>[\w\-_\.]+)_'
-               '(?P<version>[\d\.]+)_(?P<arch>\w+)\.snap')
-    match = re.match(pattern, binary_filename)
-    if not match:
-        logger.info('Invalid package filename.')
-        return
-    name = match.groupdict()['name']
-
     # Print a newline so the progress bar has some breathing room.
     print('')
 
@@ -70,7 +60,7 @@ def upload(binary_filename, metadata_filename='', metadata=None, config=None):
 
     meta = read_metadata(metadata_filename)
     meta.update(metadata or {})
-    result = upload_app(name, data, metadata=meta, config=config)
+    result = upload_app(snap_name, data, metadata=meta, config=config)
     success = result.get('success', False)
     errors = result.get('errors', [])
     app_url = result.get('application_url', '')
@@ -91,7 +81,7 @@ def upload(binary_filename, metadata_filename='', metadata=None, config=None):
 
     if errors:
         logger.info('Some errors were detected:\n\n%s\n',
-                    '\n'.join(errors))
+                    '\n'.join(str(error) for error in errors))
 
     if app_url:
         logger.info('Please check out the application at: %s\n',
