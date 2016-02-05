@@ -72,10 +72,15 @@ def install_build_packages(packages):
     if new_packages:
         logger.info(
             'Installing build dependencies: %s', ' '.join(new_packages))
+        env = os.environ.copy()
+        env.update({
+            'DEBIAN_FRONTEND': 'noninteractive',
+            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+        })
         subprocess.check_call(['sudo', 'apt-get', '-o',
                                'Dpkg::Progress-Fancy=1',
-                               '--no-install-recommends',
-                               '-y', 'install'] + new_packages)
+                               '--no-install-recommends', '-y',
+                               'install'] + new_packages, env=env)
 
 
 class PackageNotFoundError(Exception):
