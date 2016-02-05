@@ -69,20 +69,10 @@ class UploadBaseTestCase(tests.TestCase):
 
 class UploadTestCase(UploadBaseTestCase):
 
-    def test_invalid_package_name(self):
-        self.suffix = '_0.1_all.img'
-        self.binary_file = self.get_temporary_file(suffix=self.suffix)
-
-        success = upload(self.binary_file.name)
-
-        self.assertIsNone(success)
-        self.mock_logger.info.assert_called_once_with(
-            'Invalid package filename.')
-
     def test_upload_files_failed(self):
         self.mock_post.side_effect = Exception('some error')
 
-        success = upload(self.binary_file.name)
+        success = upload(self.binary_file.name, 'foo')
 
         self.assertFalse(success)
         self.mock_logger.info.assert_called_once_with(
@@ -107,7 +97,7 @@ class UploadTestCase(UploadBaseTestCase):
              'application_url': application_url}).encode('utf-8')
         self.mock_get.return_value = ok_response
 
-        success = upload(self.binary_file.name)
+        success = upload(self.binary_file.name, 'foo')
 
         self.assertTrue(success)
         self.assertIn(
@@ -134,7 +124,7 @@ class UploadTestCase(UploadBaseTestCase):
             {'completed': True}).encode('utf-8')
         self.mock_get.return_value = ok_response
 
-        success = upload(self.binary_file.name)
+        success = upload(self.binary_file.name, 'foo')
 
         self.assertTrue(success)
         self.assertNotIn(
@@ -152,7 +142,7 @@ class UploadTestCase(UploadBaseTestCase):
         # file uploaded ok, application submission failed
         self.mock_post.side_effect = [mock_response, Exception('some error')]
 
-        success = upload(self.binary_file.name)
+        success = upload(self.binary_file.name, 'foo')
 
         self.assertFalse(success)
         self.assertIn(
@@ -174,16 +164,16 @@ class UploadWithScanTestCase(UploadBaseTestCase):
             'upload_id': 'some-valid-upload-id',
         }
 
-        upload(self.binary_file.name)
+        upload(self.binary_file.name, 'foo')
 
         data = {
             'updown_id': 'some-valid-upload-id',
             'source_uploaded': False,
             'binary_filesize': self.binary_file_size,
         }
-        name = os.path.basename(self.binary_file.name).replace(self.suffix, '')
+
         self.mock_post.assert_called_with(
-            get_upload_url(name), data=data, files=[])
+            get_upload_url('foo'), data=data, files=[])
 
     def test_metadata_from_file(self):
         mock_response = self.mock_post.return_value
@@ -199,7 +189,8 @@ class UploadWithScanTestCase(UploadBaseTestCase):
             metadata_file.flush()
 
             upload(
-                self.binary_file.name, metadata_filename=metadata_file.name)
+                self.binary_file.name, 'foo',
+                metadata_filename=metadata_file.name)
 
         data = {
             'updown_id': 'some-valid-upload-id',
@@ -207,9 +198,9 @@ class UploadWithScanTestCase(UploadBaseTestCase):
             'binary_filesize': self.binary_file_size,
             'name': 'from_file',
         }
-        name = os.path.basename(self.binary_file.name).replace(self.suffix, '')
+
         self.mock_post.assert_called_with(
-            get_upload_url(name), data=data, files=[])
+            get_upload_url('foo'), data=data, files=[])
 
     def test_override_metadata(self):
         mock_response = self.mock_post.return_value
@@ -220,7 +211,8 @@ class UploadWithScanTestCase(UploadBaseTestCase):
         }
 
         upload(
-            self.binary_file.name, metadata={'name': 'overridden'})
+            self.binary_file.name, 'foo',
+            metadata={'name': 'overridden'})
 
         data = {
             'updown_id': 'some-valid-upload-id',
@@ -228,9 +220,9 @@ class UploadWithScanTestCase(UploadBaseTestCase):
             'binary_filesize': self.binary_file_size,
             'name': 'overridden',
         }
-        name = os.path.basename(self.binary_file.name).replace(self.suffix, '')
+
         self.mock_post.assert_called_with(
-            get_upload_url(name), data=data, files=[])
+            get_upload_url('foo'), data=data, files=[])
 
 
 class UploadFilesTestCase(UploadBaseTestCase):
