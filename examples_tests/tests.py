@@ -23,6 +23,7 @@ import subprocess
 import tempfile
 import time
 
+import fixtures
 import testscenarios
 import testtools
 from testtools import content
@@ -240,6 +241,8 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
         snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
         self.snapcraft_command = os.path.join(
             os.getcwd(), 'bin', snapcraft_bin)
+        self.useFixture(
+            fixtures.EnvironmentVariable('SNAPCRAFT_SETUP_PROXIES', '1'))
 
     def run_command_through_ssh(self, command):
         try:
