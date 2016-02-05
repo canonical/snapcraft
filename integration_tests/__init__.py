@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
 import subprocess
 
-import shutil
+import pexpect
 import testtools
 from testtools import content
 
@@ -70,3 +71,38 @@ class TestCase(testtools.TestCase):
         except subprocess.CalledProcessError as exception:
             output = exception.output
         return output
+
+    def login(self, email='u1test+snapcraft@canonical.com',
+              password=None, expect_success=True):
+        password = password or os.getenv('TEST_USER_PASSWORD', None)
+        if not password:
+            self.skipTest('No password provided for the test user.')
+
+        process = pexpect.spawn(self.snapcraft_command, ['login'])
+        process.expect_exact(
+            'Enter your Ubuntu One SSO credentials.\r\n'
+            'Email: ')
+        process.sendline(email)
+        process.expect_exact('Password: ')
+        process.sendline(password)
+        process.expect_exact(
+            "One-time password (just press enter if you don't use two-factor "
+            "authentication): ")
+        process.sendline('')
+        process.expect_exact(
+            # bold.
+            '\r\n\x1b[1m'
+            'Authenticating against Ubuntu One SSO.'
+            '\x1b[0m\r\n')
+        result = 'successful' if expect_success else 'failed'
+        process.expect_exact(
+            # bold.
+            '\x1b[1m'
+            'Login {}.'.format(result) +
+            '\x1b[0m\r\n')
+
+    def logout(self):
+        output = self.run_snapcraft('logout')
+        expected = ('Clearing credentials for Ubuntu One SSO.\n'
+                    'Credentials cleared.\n')
+        self.assertEqual(expected, output)

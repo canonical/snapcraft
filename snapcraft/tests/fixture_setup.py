@@ -27,3 +27,18 @@ class TempCWD(fixtures.TempDir):
         current_dir = os.getcwd()
         self.addCleanup(os.chdir, current_dir)
         os.chdir(self.path)
+
+
+class StagingStore(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable(
+            'UBUNTU_STORE_API_ROOT_URL',
+            'https://myapps.developer.staging.ubuntu.com/dev/api/'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'UBUNTU_STORE_UPLOAD_ROOT_URL',
+            'https://upload.apps.staging.ubuntu.com/'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'UBUNTU_SSO_API_ROOT_URL',
+            'https://login.staging.ubuntu.com/api/v2/'))
