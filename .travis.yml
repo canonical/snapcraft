@@ -36,7 +36,7 @@ before_script:
   - sudo lxc exec xenial -- apt-get update
   - sudo lxc exec xenial -- apt-get install -y pyflakes python-flake8 python3.5 python3-apt python3-docopt python3-coverage python3-fixtures python3-flake8 python3-jsonschema python3-mccabe python3-mock python3-pep8 python3-pexpect python3-pip python3-requests python3-requests-oauthlib python3-responses python3-ssoclient python3-testscenarios python3-testtools python3-xdg python3-yaml python3-lxml squashfs-tools python3-progressbar python3-requests-toolbelt
 script:
-  - sudo -E lxc exec xenial -- su - ubuntu -c "cd $(pwd); \$TEST_USER_PASSWORD=$TEST_USER_PASSWORD ./runtests.sh $TEST_SUITE"
+  - sudo -E lxc exec --env TEST_USER_PASSWORD=$TEST_USER_PASSWORD xenial -- su - ubuntu -c "cd $(pwd); ./runtests.sh $TEST_SUITE"
 after_success:
   - sudo apt-get install -qq python3-docopt python3-coverage python3-requests || true
   - pip install coveralls
