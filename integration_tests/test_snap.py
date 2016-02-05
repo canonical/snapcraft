@@ -97,6 +97,18 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft(['snap', 'snap'])
         self.assertThat(snap_file_path, FileExists())
 
+    def test_snap_long_output_option(self):
+        project_dir = 'assemble'
+        self.run_snapcraft(['snap', '--output', 'mysnap.snap'], project_dir)
+        os.chdir(project_dir)
+        self.assertThat('mysnap.snap', FileExists())
+
+    def test_snap_short_output_option(self):
+        project_dir = 'assemble'
+        self.run_snapcraft(['snap', '-o', 'mysnap.snap'], project_dir)
+        os.chdir(project_dir)
+        self.assertThat('mysnap.snap', FileExists())
+
     def test_error_with_unexistent_build_package(self):
         project_dir = self.copy_project_to_tmp('assemble')
         os.chdir(project_dir)
