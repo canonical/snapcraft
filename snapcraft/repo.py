@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -55,6 +55,16 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
 deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
+
+
+def is_package_installed(package):
+    """Return True if a package is installed on the system.
+
+    :param str package: the deb package to query for.
+    :returns: True if the package is installed, False if not.
+    """
+    with apt.Cache() as apt_cache:
+        return apt_cache[package].installed
 
 
 def install_build_packages(packages):

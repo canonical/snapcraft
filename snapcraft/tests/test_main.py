@@ -39,6 +39,7 @@ class TestMain(TestCase):
             'pull',
             'build',
             'clean',
+            'cleanbuild',
             'stage',
             'strip',
             'snap',

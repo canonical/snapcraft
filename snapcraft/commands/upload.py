@@ -34,17 +34,12 @@ from docopt import docopt
 
 import snapcraft.yaml
 from snapcraft.commands import snap
+from snapcraft.common import format_snap_name
 from snapcraft.config import load_config
 from snapcraft.storeapi import upload
 
 
 logger = logging.getLogger(__name__)
-
-
-def _format_snap_name(snap):
-    snap['arch'] = (snap['architectures'][0]
-                    if len(snap['architectures']) == 1 else 'multi')
-    return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
 def main(argv=None):
@@ -54,7 +49,7 @@ def main(argv=None):
 
     # make sure the full lifecycle is executed
     yaml_config = snapcraft.yaml.load_config()
-    snap_filename = _format_snap_name(yaml_config.data)
+    snap_filename = format_snap_name(yaml_config.data)
 
     if not os.path.exists(snap_filename):
         logger.info(

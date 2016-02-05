@@ -1,0 +1,105 @@
+#!/usr/bin/python3
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright (C) 2016 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import logging
+import os
+from contextlib import contextmanager
+from subprocess import check_call, CalledProcessError
+from time import sleep
+
+import petname
+
+from snapcraft.common import get_arch
+
+
+logger = logging.getLogger(__name__)
+
+_DEFAULT_IMAGE_SERVER = 'https://images.linuxcontainers.org:8443'
+_NETWORK_PROBE_COMMAND = \
+    'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
+        'http://start.ubuntu.com/connectivity-check.html')
+_PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
+
+
+class Cleanbuilder:
+
+    def __init__(self, snap_output, project, server=_DEFAULT_IMAGE_SERVER):
+        self._snap_output = snap_output
+        self._project = project
+        self._container_name = 'snapcraft-{}'.format(
+            petname.Generate(3, '-'))
+        self._server = server
+
+    def _push_file(self, src, dst):
+        check_call(['lxc', 'file', 'push',
+                    src, '{}/{}'.format(self._container_name, dst)])
+
+    def _pull_file(self, src, dst):
+        check_call(['lxc', 'file', 'pull',
+                    '{}/{}'.format(self._container_name, src), dst])
+
+    def _container_run(self, cmd):
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+
+    @contextmanager
+    def _create_container(self):
+        try:
+            remote_tmp = petname.Generate(2, '-')
+            check_call(['lxc', 'remote', 'add', remote_tmp, self._server])
+            check_call(['lxc', 'launch',
+                        '{}:ubuntu/xenial/{}'.format(remote_tmp, get_arch()),
+                        self._container_name])
+            yield
+        finally:
+            check_call(['lxc', 'stop', self._container_name])
+            check_call(['lxc', 'remote', 'remove', remote_tmp])
+
+    def execute(self):
+        with self._create_container():
+            self._setup_project()
+            self._wait_for_network()
+            self._container_run(['apt-get', 'update'])
+            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+            self._container_run(
+                ['snapcraft', 'snap', '--output', self._snap_output])
+            self._pull_snap()
+
+    def _setup_project(self):
+        logger.info('Setting up container with project assets')
+        dst = os.path.join('/root', os.path.basename(self._project))
+        self._push_file(self._project, dst)
+        self._container_run(['tar', 'xvf', dst])
+
+    def _pull_snap(self):
+        src = os.path.join('/root', self._snap_output)
+        self._pull_file(src, self._snap_output)
+        logger.info('Retrieved {}'.format(self._snap_output))
+
+    def _wait_for_network(self):
+        logger.info('Waiting for a network connection...')
+        not_connected = True
+        retry_count = 5
+        while not_connected:
+            sleep(5)
+            try:
+                self._container_run(['python3', '-c', _NETWORK_PROBE_COMMAND])
+                not_connected = False
+            except CalledProcessError as e:
+                retry_count -= 1
+                if retry_count == 0:
+                    raise e
+        logger.info('Network connection established')

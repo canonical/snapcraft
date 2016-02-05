@@ -32,6 +32,5 @@ class StageTestCase(integration_tests.TestCase):
         self.assertEqual(1, exception.returncode)
         expected = (
             "Parts 'p1' and 'p2' have the following file paths in common "
-            "which have different contents:\n"
-            "bin/test\n")
+            "which have\ndifferent contents: bin/test\n")
         self.assertThat(exception.output, EndsWith(expected))

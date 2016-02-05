@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -108,15 +108,21 @@ class ArchTestCase(testtools.TestCase):
 
     def test_get_arch_raises_exception_on_non_supported_arch(self):
         self.mock_machine.return_value = 'badarch'
-        e = self.assertRaises(EnvironmentError, common.get_arch)
-        self.assertEqual('badarch is not supported, please log a bug at'
-                         'https://bugs.launchpad.net/snapcraft', str(e))
+        e = self.assertRaises(
+            common.PlatformError, common.get_arch)
+        self.assertEqual(
+            'badarch is not supported, please log a bug at '
+            'https://bugs.launchpad.net/snapcraft/+filebug?'
+            'field.title=please+add+support+for+badarch', str(e))
 
     def test_get_arch_triplet(self):
         self.assertThat(common.get_arch_triplet(), Contains('linux-gnu'))
 
     def test_get_arch_triple_raises_exception_on_non_supported_arch(self):
         self.mock_machine.return_value = 'badarch'
-        e = self.assertRaises(EnvironmentError, common.get_arch_triplet)
-        self.assertEqual('badarch is not supported, please log a bug at'
-                         'https://bugs.launchpad.net/snapcraft', str(e))
+        e = self.assertRaises(
+            common.PlatformError, common.get_arch_triplet)
+        self.assertEqual(
+            'badarch is not supported, please log a bug at '
+            'https://bugs.launchpad.net/snapcraft/+filebug?'
+            'field.title=please+add+support+for+badarch', str(e))
