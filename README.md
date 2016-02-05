@@ -30,4 +30,4 @@ transactional update system.
 [coveralls-image]: https://coveralls.io/repos/ubuntu-core/snapcraft/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/ubuntu-core/snapcraft?branch=master
 
-[overview-image]: https://rawgit.com/ted-gould/snapcraft/snapcraft-overview-diagram/docs/snapcraft%20overview.svg
+[overview-image]: https://raw.githubusercontent.com/ubuntu-core/snapcraft/master/docs/images/snapcraft_overview.svg
