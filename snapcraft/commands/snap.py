@@ -23,8 +23,9 @@ Usage:
   snap [options] [DIRECTORY]
 
 Options:
-  DIRECTORY             optional target directory to snap.
-  -h --help             show this help message and exit.
+  DIRECTORY               optional target directory to snap.
+  -h --help               show this help message and exit.
+  -o SNAP --output SNAP   create snap with a specific filename
 
 """
 
@@ -70,7 +71,7 @@ def main(argv=None):
         snap_dir = common.get_snapdir()
         snap = lifecycle.execute('strip')
 
-    snap_name = _format_snap_name(snap)
+    snap_name = args['--output'] or _format_snap_name(snap)
 
     logger.info('Snapping {}'.format(snap_name))
     subprocess.check_call(

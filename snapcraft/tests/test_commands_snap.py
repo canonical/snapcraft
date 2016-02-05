@@ -126,3 +126,36 @@ architectures: [amd64, armhf]
         mock_call.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz'])
+
+    @mock.patch('subprocess.check_call')
+    def test_snap_with_output(self, mock_call):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.make_snapcraft_yaml()
+
+        snap.main(['--output', 'mysnap.snap'])
+
+        self.assertEqual(
+            'Pulling part1 \n'
+            'Building part1 \n'
+            'Staging part1 \n'
+            'Stripping part1 \n'
+            'Snapping mysnap.snap\n'
+            'Snapped mysnap.snap\n',
+            fake_logger.output)
+
+        self.assertTrue(os.path.exists(common.get_stagedir()),
+                        'Expected a stage directory')
+        self.assertTrue(self.state_file,
+                        'Expected a state file for the part1 part')
+
+        with open(self.state_file) as sf:
+            state = sf.readlines()
+        self.assertEqual(len(state), 1, 'Expected only one line in the state '
+                         'file for the part1 part')
+        self.assertEqual(state[0], 'strip', "Expected the state file for "
+                         "part1 to be 'strip'")
+
+        mock_call.assert_called_once_with([
+            'mksquashfs', common.get_snapdir(), 'mysnap.snap',
+            '-noappend', '-comp', 'xz'])
