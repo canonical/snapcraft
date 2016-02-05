@@ -1,3 +1,13 @@
+snapcraft (1.0.2) wily; urgency=medium
+
+  [ Alexander Sack ]
+  * Fix FD leakage by closing apt cache in repo.py (LP: #1537705)
+
+  [ Sergio Schvezov ]
+  * Fix ordering for conditional negations in catkin tests
+
+ -- Kyle Fazzari <kyle@canonical.com>  Fri, 05 Feb 2016 13:18:18 +0000
+
 snapcraft (1.0.1) wily; urgency=medium
 
   [ Daniel Holbach ]

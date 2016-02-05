@@ -22,7 +22,7 @@ from setuptools import setup
 
 setup(
     name='snapcraft',
-    version='1.0.1',
+    version='1.0.2',
     description='Easily craft snaps from multiple sources',
     author_email='snappy-devel@lists.ubuntu.com',
     url='https://github.com/ubuntu-core/snapcraft',
