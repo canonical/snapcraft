@@ -7,11 +7,8 @@ virtualenv:
   system_site_packages: true
 env:
   global:
-  # Encrypted Coveralls token. The secret token for your repository can be found at the
-  # bottom of your repository's page on Coveralls. To encrypt it, install the travis gem
-  # and run:
-  #     travis encrypt -r ubuntu-core/snapcraft COVERALLS_REPO_TOKEN=$secret_token
-  - secure: sc/JVLmOF6OESRSvPqRe3WFujYYbBX6FL0PH8jb6wUeALuqqFJPnb/5aLup0lCxCd+yJ0Puazo7EOX8Rk0txqmEYbufaPiPIxO3e5e32Md5qG5LX9JEUNiG1YAhB9IKqUeZBhWX6H3oOTCfko87j+NfJUOsqlKY4hWvYi4huGamrzIjLOK/lbPS6lSxaejEVACx8xUJax0KaVCu44JJQb1EfNjVkkhN374yFHfo5a8mBT1XwQCvkqXdPJ4phD4gFqqPy5zCrny3cKD10V8DhhhXtyDn71yP2saH4GXyPb9Uzv42n9hvafyZGElqNMgucpwgcnw1zBcHx3JvBye+MPJQhxAebMJ9kRbRsVp5xNh3YlcYw61st4aKutY5L3A42u+rlFzh+5I77ATj5XnPijd0IcHDCPMvaCoqQ2oQcBPtqHSYWMT0kVMA/u/THKwu8A6EtMWv55KNqd+ZW9Y5YHn5ODaAVi8rZby/QFLrMwrrO3Yq11VQFIB3ipafVNtTnAtACG4XkkxSiZ7U5eJQAX4B6Wn4anE9d+b3MzwKOD34pW9UNDqtA2KPutNdKRy6Pt7XAh+fPp9X71hNRegyxVNtqkTozaKCbbmfzZWb1bjC3esKBd9aLgjVy3IAQpQRklHWS6zyMNAXHFg29V16/K2d6KiD1zH+vPY7Kfmkfctc=
+  # Encrypted test user password. Generated with the travis gem:
+  #     travis encrypt -r ubuntu-core/snapcraft TEST_USER_PASSWORD=$password
   - secure: "H58yffyxq1y5RxbEBroXgdkmfc2ttvD8Y6ARh1HCNv0AvAfJ6FA5/Ly2rzBMh/ghXnwumkLHKUYa9dGnbJl0R26U4b7w4YkmSKsrWgNWL1M3iqXdiVsZRJ3K3RaVRya3m9k9DL6b3gR2ZVhz6FeDlaKuOZqCeFxRgXGTB71NrFUKSwXqqE5w10u3woItG3upqr2fPDjJ4bIaffpINpX2MabghfboBB9VbKdLvWiEkH7kEJKNh9zNHZJ4FK5LVt/GAR7CHQhuQsJVQOO+dPE7ZL7FlvqYg33b4ly75kpoo30muzSRXbs+qoSaBe6K41vbVhGdBmtJ9SXxYeuVGunFq8hKOGrSq00vIcPyOonTIZmkWVA/oxuo6viIzuzP1BlU5ulEmQjIbJj5trEzLo3Nd5o8WF19fLpp5MYuU0w28F/TzjarWYU9mw/sPkTJTrV5wHP5jGa/2mcExJBg+MgH60Q8I/uObz9EdovOjLKb1d8x2NSlWozXDyLYVTWIecetEPArhNVuOaGFLpGorDVVTvcrvkLR/rnvY+iqxthuQWuzfEsmkafWFwxgEO/G1mZUI66aq7UdtkToLKCcwi6FCYASQ7AA0mzizWI76teUXr3iJ/HFh7+BfKblfbkgS+eYIjLuAJBxp0NXY6J+eO0gG6n2Pp0emy+PFDJ4xD0XkR0="
   matrix:
   - TEST_SUITE=static
