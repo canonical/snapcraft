@@ -29,6 +29,31 @@ capability. More about security templating can be read about in the
 [security section] [sec].
 
 
+### The Snapcraft wrapper script explained
+
+It's customary to use within your app small wrappers that will launch the
+real binaries. For instance, to select the binaries for the correct
+architecture or to set runtime variables such as the application state
+directory.
+
+The typical wrapper is a small shell script that sets `PATH`,
+`LD_LIBRARY_PATH` or other runtime specific environment variables.
+
+For `PATH` to work properly, it's necessary not to hardcode any pathname in
+your code. For instance, don’t rely on `/usr/bin/python` or on
+`/usr/bin/java` but instead run `python` or `java`.
+
+While using snapcraft, proper wrappers will be generated for binaries
+declared for your app. Snapcraft will also adjust symlinks to be relative
+and work for your snap.
+
+It's also a nice touch to add a wrapper script to handle receiving and
+dumping the config of your snap as YAML. When run, the config hook reads
+your application's configuration and dumps it in YAML format to stdout. When
+passed a new config YAML on stdin, the config hook updates your application's
+configuration (more about `config` in the section below).
+
+
 ## Adding daemons
 
 Every app may build a binary that may need to be exposed in the system, with
