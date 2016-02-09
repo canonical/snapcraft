@@ -75,6 +75,36 @@ this in the snap directory, which is the final layout for the snap, this is
 where everything should look clean and crisp for a good quality snap.
 
 
+## Mastering the file system layout
+
+Snaps are typically deployed under `/snaps`, but because this location might
+change or multiple installation locations might be used (e.g.
+`/pre-installed` and `/snaps`), it's best not to hardcode it: to relate to
+resources shipped in your snap, use the `SNAP` environment variable.
+
+The contents of installed snaps is read-only; to store application state and
+data, system-wide and per-user directories are made available to snaps: use
+the `SNAP_DATA` environment variable to relate to the system-wide state
+directory for your snap and the `SNAP_USER_DATA` environment variable for the
+per-user directory.
+
+The layout of files under the `SNAP` is up to application authors, but it's
+quite common to use `lib/` and `bin/` for application runtime libraries and
+binaries, respectively. If your snap isn’t architecture-independent (such as
+a script), it's best to use directories qualified with the architecture such
+as `lib/arm-linux-gnueabihf/` or `bin/x86_64-linux-gnu/`.
+
+When using Snapcraft, files will follow this recommended layout.
+
+It's a good practice to keep apps' files relocatable, typically by using
+relative pathnames and finding libraries relative to the binaries whenever
+possible.
+
+Here again, Ubuntu runtimes pulled by snapcraft into your snap - such as
+python or openjdk - will load libraries relative to their installed
+location, i.e. from within your snap.
+
+
 ## Snapcraft for Python with PIP
 
 Snapcraft includes support for Python 2.x and Python 3.x parts; here's how a
