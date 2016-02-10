@@ -1,3 +1,36 @@
+snapcraft (2.2) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * Add the unit tests to the autopkgtest suite. (LP: #1541421)
+  * Use docopt to handle example tests arguments. (LP: #1533395)
+  * integration-tests: add login and logout tests (LP: #1541391)
+  * integration_tests: add a successful upload test (LP: #1541391)
+  * travis: remove the coveralls token (LP: #1543675)
+  * examples_tests: decode the output with utf-8 (LP: #1543714)
+
+  [ Daniel Holbach ]
+  * Clear APT::Update::Post-Invoke-Success so we don't run scripts like
+    update-motd-updates-available. (LP: #1541894)
+  * Import https://developer.ubuntu.com/snappy/guides/mir-snaps/
+    into docs/mir-snaps.md (LP: #1541404)
+  * Use image link which actually works (raw.githubusercontent.com shows
+    SVG as raw XML, rawgit.com works as expected). (LP: #1542422)
+  * Document Snapcraft's wrapper script (steal text from App Dev Manual 15.04)
+    (LP: #1543581)
+  * Briefly explain the filesystem layout. (LP: #1543596)
+  * move image into docs/images (LP: #1542422)
+
+  [ Kyle Fazzari ]
+  * Improve snapcraft.yaml validation errors. (LP: #1524663)
+  * Snap: When snapping a directory, look for snap.yaml. (LP: #1541987)
+  * Upload: Obtain name from YAML instead of snap package. (LP: #1541353)
+
+  [ Sergio Schvezov ]
+  * Support setting an output file when snapping (LP: #1542479)
+  * adt fixes for maven and noninteractive deb install (LP: #1542511)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 10 Feb 2016 14:56:42 -0300
+
 snapcraft (2.1.1) xenial; urgency=medium
 
   [ Kyle Fazzari ]
