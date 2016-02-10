@@ -73,7 +73,7 @@ def _run_command_through_ssh(ip, port, user, command):
     ssh_command.extend(_get_ssh_options())
     ssh_command.extend(command)
     return subprocess.check_output(
-        ssh_command, stderr=subprocess.STDOUT, universal_newlines=True)
+        ssh_command, stderr=subprocess.STDOUT).decode('utf-8')
 
 
 def _get_ssh_options():
@@ -246,7 +246,7 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
             return _run_command_through_ssh(
                 self.testbed_ip, self.testbed_port, 'ubuntu', command)
         except subprocess.CalledProcessError as e:
-            self.addDetail('ssh output', content.text_content(e.output))
+            self.addDetail('ssh output', content.text_content(str(e.output)))
             raise
 
     def build_snap(self, project_dir):
@@ -255,9 +255,9 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
         try:
             subprocess.check_output(
                 [self.snapcraft_command, 'snap'], cwd=project_dir,
-                stderr=subprocess.STDOUT, universal_newlines=True)
+                stderr=subprocess.STDOUT).decode('utf-8')
         except subprocess.CalledProcessError as e:
-            self.addDetail('output', content.text_content(e.output))
+            self.addDetail('output', content.text_content(str(e.output)))
             raise
 
     def copy_snap_to_testbed(self, snap_local_path):
