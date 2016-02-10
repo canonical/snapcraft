@@ -33,6 +33,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import glob
 import logging
 import os
+from urllib.parse import urlparse
 
 import snapcraft
 import snapcraft.common
@@ -40,6 +41,26 @@ import snapcraft.plugins.jdk
 
 
 logger = logging.getLogger(__name__)
+
+
+_MVN_SETTINGS_FORMAT = (
+    '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"\n'
+    '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
+    '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/'
+    '1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">\n'
+    '  <interactiveMode>false</interactiveMode>\n'
+    '  <proxies>\n'
+    '    <proxy>\n'
+    '      <id>proxy</id>\n'
+    '      <active>true</active>\n'
+    '      <protocol>http</protocol>\n'
+    '      <host>{}</host>\n'
+    '      <port>{}</port>\n'
+    '      <nonProxyHosts>{}</nonProxyHosts>\n'
+    '    </proxy>\n'
+    '  </proxies>\n'
+    '</settings>\n'
+)
 
 
 class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
@@ -63,10 +84,21 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
         super().__init__(name, options)
         self.build_packages.append('maven')
 
+    def _use_proxy(self):
+        return all([k in os.environ for k in
+                    ('SNAPCRAFT_SETUP_PROXIES', 'http_proxy')])
+
     def build(self):
         super().build()
 
-        self.run(['mvn', 'package'] + self.options.maven_options)
+        mvn_cmd = ['mvn', 'package']
+        if self._use_proxy():
+            settings_path = os.path.join(self.partdir, 'm2', 'settings.xml')
+            _create_settings(settings_path)
+            mvn_cmd += ['-s', settings_path]
+
+        self.run(mvn_cmd + self.options.maven_options)
+
         jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
         warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
         if not (jarfiles or warfiles):
@@ -79,3 +111,19 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             wardir = os.path.join(self.installdir, 'war')
             os.makedirs(wardir, exist_ok=True)
             self.run(['cp', '-a'] + warfiles + [wardir])
+
+
+def _create_settings(settings_path):
+    proxy = urlparse(os.environ['http_proxy'])
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    with open(settings_path, 'w') as f:
+        f.write(_MVN_SETTINGS_FORMAT.format(
+            proxy.hostname,
+            proxy.port,
+            _get_no_proxy_string()))
+
+
+def _get_no_proxy_string():
+    no_proxy = [k.strip() for k in
+                os.environ.get('no_proxy', 'localhost').split(',')]
+    return '|'.join(no_proxy)
