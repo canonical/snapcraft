@@ -88,6 +88,7 @@ class MavenPluginTestCase(tests.TestCase):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
+            ('no_proxy', None),
         )
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
