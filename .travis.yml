@@ -17,10 +17,11 @@ env:
   - TEST_SUITE=autopkgtest
 
 install:
+  - sudo echo "deb http://archive.ubuntu.com/ubuntu/ trusty-backports" >> /etc/apt/sources.list
   - sudo apt-add-repository -y ppa:ubuntu-lxc/lxd-stable
   - sudo apt-get update -qq
   - sudo apt-get -o Dpkg::Options::="--force-confnew" -y dist-upgrade || true
-  - sudo apt-get install -qq lxd lxcfs autopkgtest || true
+  - sudo apt-get install -qq lxd lxcfs autopkgtest/trusty-backports || true
 before_script:
   - sudo lxd-images import ubuntu xenial --stream daily --alias ubuntu
   - if [[ "$TEST_SUITE" == "autopkgtest" ]]; then adt-run --unbuilt-tree . --- lxd -d ubuntu:xenial && exit 0; fi
