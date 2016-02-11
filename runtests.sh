@@ -35,6 +35,8 @@ parseargs(){
             export RUN_INTEGRATION="true"
         elif [ "$1" == "examples" ] ; then
             export RUN_EXAMPLES="true"
+        elif [ "$1" == "autopkgtest" ] ; then
+            export RUN_AUTOPKGTEST="true"
         else
             echo "Not recognized option, should be one of all, static, unit, integration or examples"
             exit 1
@@ -89,6 +91,11 @@ run_examples(){
     python3 -m examples_tests "$@"
 }
 
+run_autopkgtest(){
+    adt-buildvm-ubuntu-cloud -v
+    adt-run --unbuilt-tree . --- qemu adt-*.img
+}
+
 parseargs "$@"
 
 if [ ! -z "$RUN_STATIC" ] ; then
@@ -110,6 +117,10 @@ if [ ! -z "$RUN_EXAMPLES" ]; then
         shift
     fi
     run_examples "$@"
+fi
+
+if [ ! -z "$RUN_AUTOPKGTEST" ]; then
+    run_autopkgtest
 fi
 
 if [ ! -z "$RUN_UNIT" -o ! -z "$RUN_INTEGRATION" ]; then
