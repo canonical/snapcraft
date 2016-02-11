@@ -16,7 +16,6 @@
 
 import fileinput
 import os
-import subprocess
 import uuid
 
 from testtools.matchers import (
@@ -25,15 +24,7 @@ from testtools.matchers import (
 
 import integration_tests
 from snapcraft.tests import fixture_setup
-
-
-def _get_deb_arch():
-    return _run_dpkg_architecture('-qDEB_BUILD_ARCH')
-
-
-def _run_dpkg_architecture(arg):
-    return subprocess.check_output(
-        ['dpkg-architecture', arg], universal_newlines=True).strip()
+from snapcraft.common import get_arch
 
 
 class UploadTestCase(integration_tests.TestCase):
@@ -43,7 +34,7 @@ class UploadTestCase(integration_tests.TestCase):
         output = self.run_snapcraft('upload', project_dir)
         os.chdir(project_dir)
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(_get_deb_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
         self.assertThat(snap_file_path, FileExists())
 
         self.assertIn('Snap assemble_1.0_amd64.snap not found. Running snap '
