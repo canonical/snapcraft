@@ -3,6 +3,8 @@ version: 1.0
 summary: Use OpenCV and OpenGL
 description: A simple OpenCV example
 
+build-packages: [gcc, g++, libc6-dev]
+
 apps:
   example:
     command: bin/example
