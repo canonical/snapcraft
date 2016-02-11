@@ -17,7 +17,7 @@ env:
   - TEST_SUITE=autopkgtest
 
 install:
-  - echo "deb http://archive.ubuntu.com/ubuntu/ trusty-backports" | sudo tee --append /etc/apt/sources.list
+  - echo "deb http://archive.ubuntu.com/ubuntu/ trusty-backports main restricted" | sudo tee --append /etc/apt/sources.list
   - sudo apt-add-repository -y ppa:ubuntu-lxc/lxd-stable
   - sudo apt-get update -qq
   - sudo apt-get -o Dpkg::Options::="--force-confnew" -y dist-upgrade || true
