@@ -1,3 +1,12 @@
+snapcraft (2.2.1) xenial; urgency=medium
+
+  * Add missing build-packages for the opencv example (LP: #1544347)
+  * Add missing libc6 build dep to integration tests (LP: #1544343)
+  * Replace dpkg-architecure calls in tests (LP: #1544340)
+  * Replacing the need for pyversions (LP: #1541451)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 11 Feb 2016 17:03:57 -0300
+
 snapcraft (2.2) xenial; urgency=medium
 
   [ Leo Arias ]
