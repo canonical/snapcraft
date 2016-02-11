@@ -546,22 +546,39 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment(self, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties)
-        environment = plugin.env('/foo')
 
-        self.assertTrue('PYTHONPATH={}'.format(os.path.join(
-            '/foo', 'usr', 'lib', 'bar', 'dist-packages')
-            in environment))
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+        os.makedirs(python_path)
+
+        environment = plugin.env(plugin.installdir)
+
+        self.assertTrue(
+            'PYTHONPATH={}'.format(python_path) in environment, environment)
 
         self.assertTrue('ROS_MASTER_URI=http://localhost:11311' in environment)
 
         self.assertTrue('ROS_HOME=$SNAP_USER_DATA/ros' in environment)
 
         self.assertTrue('_CATKIN_SETUP_DIR={}'.format(os.path.join(
-            '/foo', 'opt', 'ros', self.properties.rosdistro)) in environment)
+            plugin.installdir, 'opt', 'ros', self.properties.rosdistro))
+            in environment)
 
-        self.assertTrue('. {}'.format('/foo', 'opt', 'ros', 'setup.sh') in
-                        '\n'.join(environment),
-                        'Expected ROS\'s setup.sh to be sourced')
+        self.assertTrue(
+            '. {}'.format(plugin.installdir, 'opt', 'ros', 'setup.sh') in
+            '\n'.join(environment), 'Expected ROS\'s setup.sh to be sourced')
+
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
+    def test_run_environment_no_python(self, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+
+        environment = plugin.env(plugin.installdir)
+
+        self.assertFalse(
+            'PYTHONPATH={}'.format(python_path) in environment, environment)
 
 
 class FindSystemDependenciesTestCase(tests.TestCase):
