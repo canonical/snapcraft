@@ -16,6 +16,7 @@
 
 # Data/methods shared between plugins and snapcraft
 
+import glob
 import os
 import platform
 import subprocess
@@ -131,6 +132,17 @@ def set_schemadir(schemadir):
 
 def get_schemadir():
     return _schemadir
+
+
+def get_python2_path(root):
+    """Return a valid PYTHONPATH or raise an exception."""
+    python_paths = glob.glob(os.path.join(
+        root, 'usr', 'lib', 'python2*', 'dist-packages'))
+    try:
+        return python_paths[0]
+    except IndexError:
+        raise EnvironmentError(
+            'PYTHONPATH cannot be set for {!r}'.format(root))
 
 
 def isurl(url):
