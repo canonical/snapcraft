@@ -27,18 +27,10 @@ from testtools.matchers import (
 
 import integration_tests
 
-
-def _get_deb_arch():
-    return _run_dpkg_architecture('-qDEB_BUILD_ARCH')
-
-
-def _get_deb_multiarch():
-    return _run_dpkg_architecture('-qDEB_BUILD_MULTIARCH')
-
-
-def _run_dpkg_architecture(arg):
-    return subprocess.check_output(
-        ['dpkg-architecture', arg], universal_newlines=True).strip()
+from snapcraft.common import (
+    get_arch,
+    get_arch_triplet,
+)
 
 
 class SnapTestCase(integration_tests.TestCase):
@@ -48,7 +40,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
         os.chdir(project_dir)
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(_get_deb_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
         self.assertThat(snap_file_path, FileExists())
 
         binary1_wrapper_path = os.path.join(
@@ -56,7 +48,7 @@ class SnapTestCase(integration_tests.TestCase):
         with open('binary1.after', 'r') as file_:
             binary1_after = file_.read()
         expected_binary1_wrapper = binary1_after.replace(
-            '@MULTIARCH@', _get_deb_multiarch())
+            '@MULTIARCH@', get_arch_triplet())
         self.assertThat(
             binary1_wrapper_path, FileContains(expected_binary1_wrapper))
 
@@ -88,7 +80,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
         os.chdir(project_dir)
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(_get_deb_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
         os.remove(snap_file_path)
 
         # Verify that Snapcraft can snap its own snap directory (this will make
