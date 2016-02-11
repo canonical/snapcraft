@@ -40,8 +40,10 @@ class Python2PluginTestCase(tests.TestCase):
                                                 run_mock):
         plugin = python2.Python2Plugin('test-part', self.options)
         os.makedirs(plugin.sourcedir)
-        os.makedirs(os.path.join(plugin.installdir, 'usr', 'lib', 'python2.7',
-                                 'dist-packages'))
+        os.makedirs(os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'))
+        os.makedirs(os.path.join(
+            plugin.installdir, 'usr', 'include', 'python2.7'))
 
         open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
 
@@ -53,3 +55,9 @@ class Python2PluginTestCase(tests.TestCase):
                          'Expected site-packages to be a relative link to '
                          '"dist-packages", but it was a link to "{}"'
                          .format(link))
+
+    def test_get_python2_include_missing_raises_exception(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            python2._get_python2_include('/foo')
+        self.assertEqual(str(raised.exception),
+                         'python development headers not installed')

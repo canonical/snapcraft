@@ -37,9 +37,14 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A list of dependencies to get from PyPi
 """
 
+import glob
+import logging
 import os
 
 import snapcraft
+from snapcraft import common
+
+logger = logging.getLogger(__name__)
 
 
 class Python2Plugin(snapcraft.BasePlugin):
@@ -72,8 +77,14 @@ class Python2Plugin(snapcraft.BasePlugin):
         ])
 
     def env(self, root):
-        return ["PYTHONPATH={}".format(os.path.join(
-            root, 'usr', 'lib', self.python_version, 'dist-packages'))]
+        # There's a chicken and egg problem here, everything run get's an
+        # env built, even package installation, so the first runs for these
+        # will likely fail.
+        try:
+            return ['PYTHONPATH={0}'.format(common.get_python2_path(root))]
+        except EnvironmentError as e:
+            logger.debug(e)
+            return []
 
     def pull(self):
         super().pull()
@@ -95,7 +106,8 @@ class Python2Plugin(snapcraft.BasePlugin):
             self.installdir, 'usr', 'bin', 'easy_install')
         prefix = os.path.join(self.installdir, 'usr')
         site_packages_dir = os.path.join(
-            prefix, 'lib', self.python_version, 'site-packages')
+            os.path.dirname(common.get_python2_path(self.installdir)),
+            'site-packages')
 
         # If site-packages doesn't exist, make sure it points to the
         # dist-packages in the same directory (this is a relative link so that
@@ -108,9 +120,8 @@ class Python2Plugin(snapcraft.BasePlugin):
         pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
         pip_install = ['python2', pip2, 'install',
                        '--global-option=build_ext',
-                       '--global-option=-I{}'.format(os.path.join(
-                           self.installdir, 'usr', 'include', '{}'.format(
-                               self.python_version))),
+                       '--global-option=-I{}'.format(
+                           _get_python2_include(self.installdir)),
                        '--target', site_packages_dir]
 
         if self.options.requirements:
@@ -134,25 +145,13 @@ class Python2Plugin(snapcraft.BasePlugin):
         if not os.path.exists(setup_file):
             return
 
-        os.makedirs(self.dist_packages_dir, exist_ok=True)
+        os.makedirs(common.get_python2_path(self.installdir), exist_ok=True)
         self.run(
             ['python2', setup_file,
-             'build_ext', '-I{}'.format(os.path.join(
-                 self.installdir, 'usr', 'include', '{}'.format(
-                     self.python_version))),
+             'build_ext', '-I{}'.format(_get_python2_include(self.installdir)),
              'install', '--install-layout=deb',
              '--prefix={}/usr'.format(self.installdir),
              ], cwd=self.builddir)
-
-    @property
-    def dist_packages_dir(self):
-        return os.path.join(
-            self.installdir, 'usr', 'lib', self.python_version,
-            'dist-packages')
-
-    @property
-    def python_version(self):
-        return self.run_output(['pyversions', '-d'])
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
@@ -169,3 +168,10 @@ class Python2Plugin(snapcraft.BasePlugin):
         fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
         fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
         return fileset
+
+
+def _get_python2_include(root):
+    try:
+        return glob.glob(os.path.join(root, 'usr', 'include', 'python2*'))[0]
+    except IndexError:
+        raise EnvironmentError('python development headers not installed')

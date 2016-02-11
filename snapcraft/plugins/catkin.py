@@ -110,13 +110,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
 
-        return [
-            # The ROS packaging system tools (e.g. rospkg, etc.) don't go
-            # into the ROS install path (/opt/ros/$distro), so we need the
-            # PYTHONPATH to include the dist-packages in /usr/lib as well.
-            'PYTHONPATH={0}'.format(os.path.join(root, 'usr', 'lib',
-                                    self.python_version, 'dist-packages')),
-
+        env = [
             # This environment variable tells ROS nodes where to find ROS
             # master. It does not affect ROS master, however-- this is just the
             # default URI.
@@ -139,6 +133,19 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 os.path.join(
                     root, 'opt', 'ros', self.options.rosdistro, 'setup.sh'))
         ]
+
+        # There's a chicken and egg problem here, everything run get's an
+        # env built, even package installation, so the first runs for these
+        # will likely fail.
+        try:
+            # The ROS packaging system tools (e.g. rospkg, etc.) don't go
+            # into the ROS install path (/opt/ros/$distro), so we need the
+            # PYTHONPATH to include the dist-packages in /usr/lib as well.
+            env.append('PYTHONPATH={0}'.format(common.get_python2_path(root)))
+        except EnvironmentError as e:
+            logger.debug(e)
+
+        return env
 
     def pull(self):
         """Copy source into build directory and fetch dependencies.
@@ -177,10 +184,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             logger.info('Installing package dependencies...')
             ubuntu.unpack(self.installdir)
-
-    @property
-    def python_version(self):
-        return self.run_output(['pyversions', '-i'])
 
     @property
     def gcc_version(self):
