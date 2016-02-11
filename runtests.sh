@@ -93,7 +93,7 @@ run_examples(){
 
 run_autopkgtest(){
     adt-buildvm-ubuntu-cloud -v
-    adt-run --unbuilt-tree . --- qemu adt-*.img
+    adt-run --unbuilt-tree . --- lxd -d images:ubuntu/xenial/amd64 -- -c security.privileged=true
 }
 
 parseargs "$@"
