@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(simple-cmake)
+project(simple-cmake NONE)
 
 IF(NOT DEFINED DEP_DIR)
     message(FATAL_ERROR "DEP_DIR is not defined.")
