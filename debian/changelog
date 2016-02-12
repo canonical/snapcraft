@@ -1,3 +1,10 @@
+snapcraft (2.2.2) xenial; urgency=medium
+
+  * Set the "after" test's cmake project to use no language (LP: #1544792)
+  * Disable ros example in adt tests (LP: #1544790)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 12 Feb 2016 17:04:18 -0300
+
 snapcraft (2.2.1) xenial; urgency=medium
 
   * Add missing build-packages for the opencv example (LP: #1544347)
