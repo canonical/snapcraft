@@ -1,2 +1,2 @@
 #!/bin/sh
-./runtests.sh examples --skip-install
+./runtests.sh examples --skip-install --filter '^(?!ros$).*$'
