@@ -109,23 +109,30 @@ def retry(terminator=None, retries=3, delay=3, backoff=2, logger=None):
 
         @wraps(func)
         def wrapped(*args, **kwargs):
-            retries_left, current_delay = retries, delay
-
-            result = func(*args, **kwargs)
-            if terminator is not None:
-                while not terminator(result) and retries_left > 0:
-                    msg = "... retrying in %d seconds" % current_delay
-                    if logger:
-                        logger.warning(msg)
-
-                    # sleep
-                    time.sleep(current_delay)
-                    retries_left -= 1
-                    current_delay *= backoff
-
-                    # retry
-                    result = func(*args, **kwargs)
-            return result, retries_left == 0
+            return _wrapped_retry(
+                terminator, retries, delay, backoff, logger,
+                func, *args, **kwargs)
 
         return wrapped
     return decorated
+
+
+def _wrapped_retry(terminator, retries, delay, backoff, logger,
+                   func, *args, **kwargs):
+    retries_left, current_delay = retries, delay
+
+    result = func(*args, **kwargs)
+    if terminator is not None:
+        while not terminator(result) and retries_left > 0:
+            msg = "... retrying in %d seconds" % current_delay
+            if logger:
+                logger.warning(msg)
+
+            # sleep
+            time.sleep(current_delay)
+            retries_left -= 1
+            current_delay *= backoff
+            # retry
+            result = func(*args, **kwargs)
+
+    return result, retries_left == 0

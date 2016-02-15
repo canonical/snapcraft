@@ -46,7 +46,6 @@ run_static_tests(){
     SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
     python3 /usr/bin/flake8 $SRC_PATHS
 
-    # mccabe in 'warning' mode as we have high complexity
     mccabe_list=
     for unit in $(find snapcraft -type f -name '*.py')
     do
@@ -58,6 +57,7 @@ run_static_tests(){
         echo -e "\e[1;31mThe project has gotten complex\e[0m."
         echo "Here's the list of units exceeding 10:"
         echo -e "$mccabe_list"
+        exit 1
     fi
 }
 
