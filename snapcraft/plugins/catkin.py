@@ -141,7 +141,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             # The ROS packaging system tools (e.g. rospkg, etc.) don't go
             # into the ROS install path (/opt/ros/$distro), so we need the
             # PYTHONPATH to include the dist-packages in /usr/lib as well.
-            env.append('PYTHONPATH={0}'.format(common.get_python2_path(root)))
+            env.append('PYTHONPATH={0}:$PYTHONPATH'.format(
+                common.get_python2_path(root)))
         except EnvironmentError as e:
             logger.debug(e)
 
