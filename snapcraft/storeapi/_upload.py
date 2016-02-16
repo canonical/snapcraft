@@ -194,67 +194,7 @@ def upload_app(name, upload_data, metadata=None, config=None):
         data = get_post_data(upload_data, metadata=metadata)
         files = get_post_files(metadata=metadata)
 
-        response = session.post(upload_url, data=data, files=files)
-        if response.ok:
-            response_data = response.json()
-            status_url = response_data['status_url']
-
-            # This is just a waiting game, so we'll show an indeterminate
-            # AnimatedMarker for it.
-            progress_indicator = ProgressBar(
-                widgets=['Checking package status... ', AnimatedMarker()],
-                maxval=7).start()
-
-            # Execute the package scan in another thread so we can update the
-            # progress indicator.
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(get_scan_data, session, status_url)
-
-                count = 0
-                while not future.done():
-                    # Annoyingly, there doesn't seem to be a way to actually
-                    # make a progress indicator that will go on forever, so we
-                    # need to restart this one each time we reach the end of
-                    # its animation.
-                    if count >= 7:
-                        progress_indicator.start()
-                        count = 0
-
-                    # Actually update the progress indicator
-                    progress_indicator.update(count)
-                    count += 1
-                    time.sleep(0.15)
-
-                # Grab the results from the package scan
-                completed, data = future.result()
-
-            progress_indicator.finish()
-
-            if completed:
-                message = data.get('message', '')
-                if not message:
-                    result['success'] = True
-                    result['revision'] = data.get('revision')
-                else:
-                    result['errors'] = [message]
-            else:
-                result['errors'] = [
-                    'Package scan took too long.',
-                ]
-                status_web_url = response_data.get('web_status_url')
-                if status_web_url:
-                    result['errors'].append(
-                        'Please check the status later at: %s.' % (
-                            status_web_url),
-                    )
-            result['application_url'] = data.get('application_url', '')
-        else:
-            logger.error(
-                'There was an error uploading the application.\n'
-                'Reason: %s\n'
-                'Text: %s',
-                response.reason, response.text)
-            result['errors'] = [response.text]
+        result = _upload_files(session, upload_url, data, files, result)
     except Exception as err:
         logger.exception(
             'There was an error uploading the application.')
@@ -264,6 +204,70 @@ def upload_app(name, upload_data, metadata=None, config=None):
         for fname, fd in files:
             fd.close()
 
+    return result
+
+
+def _upload_files(session, upload_url, data, files, result):
+    response = session.post(upload_url, data=data, files=files)
+    if response.ok:
+        response_data = response.json()
+        status_url = response_data['status_url']
+
+        # This is just a waiting game, so we'll show an indeterminate
+        # AnimatedMarker for it.
+        progress_indicator = ProgressBar(
+            widgets=['Checking package status... ', AnimatedMarker()],
+            maxval=7).start()
+
+        # Execute the package scan in another thread so we can update the
+        # progress indicator.
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(get_scan_data, session, status_url)
+
+            count = 0
+            while not future.done():
+                # Annoyingly, there doesn't seem to be a way to actually
+                # make a progress indicator that will go on forever, so we
+                # need to restart this one each time we reach the end of
+                # its animation.
+                if count >= 7:
+                    progress_indicator.start()
+                    count = 0
+
+                # Actually update the progress indicator
+                progress_indicator.update(count)
+                count += 1
+                time.sleep(0.15)
+
+            # Grab the results from the package scan
+            completed, data = future.result()
+
+        progress_indicator.finish()
+
+        if completed:
+            message = data.get('message', '')
+            if not message:
+                result['success'] = True
+                result['revision'] = data.get('revision')
+            else:
+                result['errors'] = [message]
+        else:
+            result['errors'] = [
+                'Package scan took too long.',
+            ]
+            status_web_url = response_data.get('web_status_url')
+            if status_web_url:
+                result['errors'].append(
+                    'Please check the status later at: {}.'.format(
+                        status_web_url),
+                )
+        result['application_url'] = data.get('application_url', '')
+    else:
+        logger.error(
+            'There was an error uploading the application.\n'
+            'Reason: {}\n'
+            'Text: {}'.format(response.reason, response.text))
+        result['errors'] = [response.text]
     return result
 
 
