@@ -554,7 +554,8 @@ class CatkinPluginTestCase(tests.TestCase):
         environment = plugin.env(plugin.installdir)
 
         self.assertTrue(
-            'PYTHONPATH={}'.format(python_path) in environment, environment)
+            'PYTHONPATH={}:$PYTHONPATH'.format(python_path) in
+            environment, environment)
 
         self.assertTrue('ROS_MASTER_URI=http://localhost:11311' in environment)
 
