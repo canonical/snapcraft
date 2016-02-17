@@ -81,6 +81,7 @@ def _get_ssh_options():
     return [
         '-o', 'UserKnownHostsFile=/dev/null',
         '-o', 'StrictHostKeyChecking=no',
+        '-o', 'LogLevel=error',
         '-i', _get_latest_ssh_private_key()
     ]
 
@@ -158,9 +159,10 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
             'name': 'pipelinetest',
             'version': '1.0',
             'internal_tests_commands': [
-                ('/apps/bin/pipelinetest.pipelinetest',
+                ('/snaps/bin/pipelinetest.pipelinetest',
                  'running ls | grep c\n'
                  'custom libpipeline called\n'
+                 'command-pipelinetest.wrapper\n'
                  'include\n')],
             }),
         ('opencv', {
@@ -306,7 +308,7 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
             self.install_snap(snap_file_name)
             self.addCleanup(self.remove_snap, self.name)
 
-            if getattr(self, 'internal_tests_commads', None):
+            if getattr(self, 'internal_tests_commands', None):
                 self._run_internal_commands(self.internal_tests_commands)
 
             if getattr(self, 'external_tests_commands', None):
@@ -315,9 +317,8 @@ class TestSnapcraftExamples(testscenarios.WithScenarios, testtools.TestCase):
 
     def _run_internal_commands(self, internal_tests_commands):
         for command, expected_result in internal_tests_commands:
-            with self.subTest(command):
-                output = self.run_command_through_ssh(command.split(' '))
-                self.assertEqual(output, expected_result)
+            output = self.run_command_through_ssh(command.split(' '))
+            self.assertEqual(output, expected_result)
 
     def _run_external_commands(self, external_tests_commands, cwd=None):
         for command, expected_result in external_tests_commands:
