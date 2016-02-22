@@ -377,26 +377,31 @@ def _find_system_dependencies(catkin_packages, rosdep):
             # weren't instructed to build. It's probably a system dependency,
             # but the developer could have also forgotten to tell us to build
             # it.
-            system_dependency = rosdep.resolve_dependency(dependency)
-
-            if not system_dependency:
+            try:
+                these_dependencies = rosdep.resolve_dependency(dependency)
+            except SystemDependencyNotFound:
                 raise RuntimeError(
-                    'Package "{}" isn\'t a valid system dependency. '
-                    'Did you forget to add it to catkin-packages? If '
-                    'not, add the Ubuntu package containing it to '
-                    'stage-packages until you can get it into the '
-                    'rosdep database.'.format(dependency))
+                    "Package {!r} isn't a valid system dependency. "
+                    "Did you forget to add it to catkin-packages? If "
+                    "not, add the Ubuntu package containing it to "
+                    "stage-packages until you can get it into the "
+                    "rosdep database.".format(dependency))
 
-            system_dependencies[dependency] = system_dependency
+            system_dependencies[dependency] = these_dependencies
 
             # TODO: Not sure why this isn't pulled in by roscpp. Can it
             # be compiled by clang, etc.? If so, perhaps this should be
             # left up to the developer.
             if dependency == 'roscpp':
-                system_dependencies['g++'] = 'g++'
+                system_dependencies['g++'] = ['g++']
 
     # Finally, return a list of all system dependencies
-    return set(system_dependencies.values())
+    return set(item for sublist in system_dependencies.values()
+               for item in sublist)
+
+
+class SystemDependencyNotFound(Exception):
+    pass
 
 
 class _Rosdep:
@@ -473,20 +478,15 @@ class _Rosdep:
             output = self._run(['resolve', dependency_name, '--rosdistro',
                                 self._ros_distro, '--os', 'ubuntu:trusty'])
         except subprocess.CalledProcessError:
-            return None
+            raise SystemDependencyNotFound(
+                '{!r} does not resolve to a system dependency'.format(
+                    dependency_name))
 
-        # `rosdep resolve` returns output like:
-        # #apt
-        # ros-indigo-package
-        #
-        # We're obviously only interested in the second line.
-        resolved = output.split('\n')
-
-        if len(resolved) < 2:
-            raise RuntimeError(
-                'Unexpected rosdep resolve output:\n{}'.format(output))
-
-        return resolved[1]
+        # Everything that isn't a package name is prepended with the pound
+        # sign, so we'll ignore everything with that.
+        delimiters = re.compile(r'\n|\s')
+        lines = delimiters.split(output)
+        return [line for line in lines if not line.startswith('#')]
 
     def _run(self, arguments):
         env = os.environ.copy()
