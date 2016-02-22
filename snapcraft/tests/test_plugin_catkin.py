@@ -699,7 +699,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
     def test_find_system_dependencies_system_only(self):
         rosdep_mock = mock.MagicMock()
         rosdep_mock.get_dependencies.return_value = ['bar']
-        rosdep_mock.resolve_dependency.return_value = 'baz'
+        rosdep_mock.resolve_dependency.return_value = ['baz']
 
         self.assertEqual({'baz'}, catkin._find_system_dependencies(
             {'foo'}, rosdep_mock))
@@ -722,7 +722,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
     def test_find_system_dependencies_mixed(self):
         rosdep_mock = mock.MagicMock()
         rosdep_mock.get_dependencies.return_value = ['bar', 'baz']
-        rosdep_mock.resolve_dependency.return_value = 'qux'
+        rosdep_mock.resolve_dependency.return_value = ['qux']
 
         self.assertEqual({'qux'}, catkin._find_system_dependencies(
             {'foo', 'bar'}, rosdep_mock))
@@ -738,22 +738,23 @@ class FindSystemDependenciesTestCase(tests.TestCase):
         # Setup a dependency on a non-existing package, and it doesn't resolve
         # to a system dependency.'
         rosdep_mock.get_dependencies.return_value = ['bar']
-        rosdep_mock.resolve_dependency.return_value = None
+        exception = catkin.SystemDependencyNotFound('foo')
+        rosdep_mock.resolve_dependency.side_effect = exception
 
         with self.assertRaises(RuntimeError) as raised:
             catkin._find_system_dependencies({'foo'}, rosdep_mock)
 
         self.assertEqual(raised.exception.args[0],
-                         'Package "bar" isn\'t a valid system dependency. Did '
-                         'you forget to add it to catkin-packages? If not, '
-                         'add the Ubuntu package containing it to '
-                         'stage-packages until you can get it into the rosdep '
-                         'database.')
+                         "Package 'bar' isn't a valid system dependency. Did "
+                         "you forget to add it to catkin-packages? If not, "
+                         "add the Ubuntu package containing it to "
+                         "stage-packages until you can get it into the rosdep "
+                         "database.")
 
     def test_find_system_dependencies_roscpp_includes_gplusplus(self):
         rosdep_mock = mock.MagicMock()
         rosdep_mock.get_dependencies.return_value = ['roscpp']
-        rosdep_mock.resolve_dependency.return_value = 'baz'
+        rosdep_mock.resolve_dependency.return_value = ['baz']
 
         self.assertEqual(_CompareContainers(self, {'baz', 'g++'}),
                          catkin._find_system_dependencies({'foo'},
@@ -869,7 +870,7 @@ class RosdepTestCase(tests.TestCase):
     def test_resolve_dependency(self):
         self.check_output_mock.return_value = b'#apt\nmylib-dev'
 
-        self.assertEqual(self.rosdep.resolve_dependency('foo'), 'mylib-dev')
+        self.assertEqual(self.rosdep.resolve_dependency('foo'), ['mylib-dev'])
 
         self.check_output_mock.assert_called_with(
             ['rosdep', 'resolve', 'foo', '--rosdistro', 'ros_distro', '--os',
@@ -880,16 +881,22 @@ class RosdepTestCase(tests.TestCase):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(
             1, 'foo')
 
-        self.assertEqual(self.rosdep.resolve_dependency('bar'), None)
-
-    def test_resolve_dependency_weird_output(self):
-        self.check_output_mock.return_value = b'mylib-dev'
-
-        with self.assertRaises(RuntimeError) as raised:
-            self.rosdep.resolve_dependency('')
+        with self.assertRaises(catkin.SystemDependencyNotFound) as raised:
+            self.rosdep.resolve_dependency('bar')
 
         self.assertEqual(str(raised.exception),
-                         'Unexpected rosdep resolve output:\nmylib-dev')
+                         "'bar' does not resolve to a system dependency")
+
+    def test_resolve_no_dependency(self):
+        self.check_output_mock.return_value = b'#apt'
+
+        self.assertEqual(self.rosdep.resolve_dependency('bar'), [])
+
+    def test_resolve_multiple_dependencies(self):
+        self.check_output_mock.return_value = b'#apt\nlib1 lib2'
+
+        self.assertEqual(self.rosdep.resolve_dependency('foo'),
+                         ['lib1', 'lib2'])
 
     def test_run(self):
         rosdep = self.rosdep
