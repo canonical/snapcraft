@@ -26,6 +26,8 @@ Options:
   -h --help        show this help message and exit
   -v --version     show program version and exit
   -V --verbose     print additional information about command execution
+  -d --debug       print debug information while executing (including
+                   backtraces)
 
 The available commands are:
   list-parts   List available parts which are like “source packages” for snaps.
@@ -95,16 +97,25 @@ def _get_version():
 
 
 def main():
-    log.configure()
     args = docopt(__doc__, version=_get_version(), options_first=True)
 
     cmd = args['COMMAND'] or 'snap'
     if cmd not in _VALID_COMMANDS:
         sys.exit('Command {!r} was not recognized'.format(cmd))
 
+    # Default log level is INFO unless --debug is specified
+    log_level = logging.INFO
+    if args['--debug']:
+        log_level = logging.DEBUG
+
+    log.configure(log_level=log_level)
+
     try:
         commands.load(cmd).main(argv=args['ARGS'])
     except Exception as e:
+        if args['--debug']:
+            raise
+
         sys.exit(textwrap.fill(str(e)))
 
 
