@@ -207,7 +207,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             ubuntu = repo.Ubuntu(ubuntudir, sources=self.PLUGIN_STAGE_SOURCES)
 
             logger.info('Fetching package dependencies...')
-            ubuntu.get(system_dependencies)
+            try:
+                ubuntu.get(system_dependencies)
+            except repo.PackageNotFoundError as e:
+                raise RuntimeError(
+                    'Failed to fetch system dependencies: {}'.format(
+                        e.message))
 
             logger.info('Installing package dependencies...')
             ubuntu.unpack(self.installdir)
