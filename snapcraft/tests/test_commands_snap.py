@@ -76,7 +76,7 @@ parts:
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz'])
+            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
 
     @mock.patch('subprocess.check_call')
     def test_snap_defaults_with_parts_in_strip(self, mock_call):
@@ -101,7 +101,7 @@ parts:
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz'])
+            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
 
     @mock.patch('subprocess.check_call')
     def test_snap_from_dir(self, mock_call):
@@ -125,7 +125,7 @@ architectures: [amd64, armhf]
 
         mock_call.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz'])
+            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
 
     @mock.patch('subprocess.check_call')
     def test_snap_with_output(self, mock_call):
@@ -158,4 +158,4 @@ architectures: [amd64, armhf]
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'mysnap.snap',
-            '-noappend', '-comp', 'xz'])
+            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
