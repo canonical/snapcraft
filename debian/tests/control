@@ -5,6 +5,7 @@ Depends: @builddeps@
 Tests: integrationtests examplestests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
+         lxd,
          python3-pep8,
          pyflakes,
          python-flake8,

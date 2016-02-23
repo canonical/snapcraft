@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -38,6 +38,7 @@ The available commands are:
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
+  cleanbuild   Create a snap using a clean environment managed by lxd.
   pull         Download or retrieve artifacts defined for a part.
   build        Build artifacts defined for a part.
   stage        Stage the part's built artifacts into the common staging area.
@@ -53,6 +54,7 @@ http://developer.ubuntu.com/snappy/snapcraft
 
 import pkg_resources
 import sys
+import textwrap
 
 from docopt import docopt
 
@@ -69,6 +71,7 @@ _VALID_COMMANDS = [
     'pull',
     'build',
     'clean',
+    'cleanbuild',
     'stage',
     'strip',
     'snap',
@@ -95,7 +98,7 @@ def main():
     try:
         commands.load(args['COMMAND']).main(argv=args['ARGS'])
     except Exception as e:
-        sys.exit(e)
+        sys.exit(textwrap.fill(str(e)))
 
 
 if __name__ == '__main__':
