@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -86,22 +86,34 @@ _DEB_TRANSLATIONS = {
 }
 
 
+class PlatformError(Exception):
+
+    def __init__(self):
+        super().__init__(
+            '{0} is not supported, please log a bug at '
+            'https://bugs.launchpad.net/snapcraft/+filebug?'
+            'field.title=please+add+support+for+{0}'.format(
+                platform.machine()))
+
+
 def get_arch():
     try:
         return _DEB_TRANSLATIONS[platform.machine()]['arch']
     except KeyError:
-        raise EnvironmentError(
-            '{} is not supported, please log a bug at'
-            'https://bugs.launchpad.net/snapcraft'.format(platform.machine()))
+        raise PlatformError()
 
 
 def get_arch_triplet():
     try:
         return _DEB_TRANSLATIONS[platform.machine()]['triplet']
     except KeyError:
-        raise EnvironmentError(
-            '{} is not supported, please log a bug at'
-            'https://bugs.launchpad.net/snapcraft'.format(platform.machine()))
+        raise PlatformError()
+
+
+def format_snap_name(snap):
+    snap['arch'] = (snap['architectures'][0]
+                    if len(snap['architectures']) == 1 else 'multi')
+    return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
 def get_partsdir():
