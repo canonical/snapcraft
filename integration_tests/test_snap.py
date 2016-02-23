@@ -75,6 +75,14 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join('snap', 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
+    def test_snap_default(self):
+        project_dir = 'assemble'
+        self.run_snapcraft([], project_dir)
+        os.chdir(project_dir)
+
+        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        self.assertThat(snap_file_path, FileExists())
+
     def test_cleanbuild(self):
         self.skipTest("Fails to run correctly on travis.")
         project_dir = 'assemble'
