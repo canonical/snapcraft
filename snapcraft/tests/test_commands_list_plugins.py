@@ -39,7 +39,6 @@ nodejs
 python2
 python3
 qml
-roscore
 scons
 tar-content
 '''
