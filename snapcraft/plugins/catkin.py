@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - source-space:
       (string)
       The source space containing Catkin packages. By default this is 'src'.
+    - include-roscore:
+      (boolean)
+      Whether or not to include roscore with the part. Defaults to true.
 """
 
 import os
@@ -75,6 +78,15 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         schema['properties']['source-space'] = {
             'type': 'string',
             'default': 'src',
+        }
+
+        # The default is true since we expect most Catkin packages to be ROS
+        # packages. The only reason one wouldn't want to include ROS in the
+        # snap is if library snaps exist, which will still likely be the
+        # minority.
+        schema['properties']['include-roscore'] = {
+            'type': 'boolean',
+            'default': 'true',
         }
 
         schema['required'].append('catkin-packages')
@@ -166,11 +178,25 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 'Unable to find package path: "{}"'.format(
                     self._ros_package_path))
 
+        # Use rosdep for dependency detection and resolution
+        rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
+                         os.path.join(self.partdir, 'rosdep'),
+                         self.PLUGIN_STAGE_SOURCES)
+        rosdep.setup()
+
         # Parse the Catkin packages to pull out their system dependencies
-        system_dependencies = _find_system_dependencies(
-            self.catkin_packages, self.options.rosdistro,
-            self._ros_package_path, os.path.join(self.partdir, 'rosdep'),
-            self.PLUGIN_STAGE_SOURCES)
+        system_dependencies = _find_system_dependencies(self.catkin_packages,
+                                                        rosdep)
+
+        # If the package requires roscore, resolve it into a system dependency
+        # as well.
+        if self.options.include_roscore:
+            roscore_dependency = rosdep.resolve_dependency('ros_core')
+            if roscore_dependency:
+                system_dependencies.add(roscore_dependency)
+            else:
+                raise RuntimeError(
+                    'Unable to determine system dependency for roscore')
 
         # Pull down and install any system dependencies that were discovered
         if system_dependencies:
@@ -325,12 +351,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._run_in_bash(catkincmd)
 
 
-def _find_system_dependencies(catkin_packages, ros_distro, ros_package_path,
-                              rosdep_path, ubuntu_sources):
+def _find_system_dependencies(catkin_packages, rosdep):
     """Find system dependencies for a given set of Catkin packages."""
-
-    rosdep = _Rosdep(ros_distro, ros_package_path, rosdep_path, ubuntu_sources)
-    rosdep.setup()
 
     system_dependencies = {}
 
@@ -369,7 +391,7 @@ def _find_system_dependencies(catkin_packages, ros_distro, ros_package_path,
                 system_dependencies['g++'] = 'g++'
 
     # Finally, return a list of all system dependencies
-    return list(system_dependencies.values())
+    return set(system_dependencies.values())
 
 
 class _Rosdep:

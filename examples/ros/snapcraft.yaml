@@ -1,19 +1,11 @@
 name: ros-example
 version: 1.0
-summary: A robot example
-icon: icon.svg
-description: A really small ROS example
+summary: ROS Example
+description: Contains talker/listener ROS packages and a .launch file.
 
 apps:
-  rosmaster:
-    command: bin/roscore-rosmaster-service
-    daemon: simple
-    uses: [listener]
-  listener:
-    command: rosrun beginner_tutorials listener
-    uses: [listener]
-  talker:
-    command: rosrun beginner_tutorials talker
+  launch-project:
+    command: roslaunch listener talk_and_listen.launch
     uses: [listener]
 
 uses:
@@ -22,32 +14,10 @@ uses:
     caps: [network-listener]
 
 parts:
-  roscore:
-    plugin: roscore
-    filesets:
-      dev:
-        - usr/bin/2to3-2.7
-        - usr/bin/2to3-3.4
-        - usr/bin/easy_install-2.7
-        - usr/bin/f2py2.7
-        - usr/bin/lsb_release
-        - usr/bin/nosetests-2.7
-        - usr/bin/py3clean
-        - usr/bin/py3compile
-        - usr/bin/pydoc2.7
-        - usr/bin/pydoc3.4
-        - usr/lib/python2.7/pdb.py
-        - usr/lib/python3.4/pdb.py
-        - usr/share/dh-python/dh_pypy
-        - usr/share/dh-python/dh_python3
-        - usr/share/dh-python/pybuild
-        - usr/share/python3/py3versions.py
-    stage:
-      - -$dev
-    snap:
-      - -$dev
-  catkin-tutorials:
+  ros-project:
     plugin: catkin
     source: .
     catkin-packages:
-      - beginner_tutorials
+      - talker
+      - listener
+    include-roscore: true

@@ -262,7 +262,7 @@ We tell Snapcraft how to create the .snap via a file named `snapcraft.yaml`;
 let's create that file in the workspace root, containing the following:
 
 ```yaml
-name: ros-talker-and-listener
+name: ros-example
 version: 1.0
 summary: ROS Example
 description: Contains talker/listener ROS packages and a .launch file.
@@ -270,16 +270,21 @@ description: Contains talker/listener ROS packages and a .launch file.
 apps:
   launch-project:
     command: roslaunch listener talk_and_listen.launch
+    uses: [listener]
+
+uses:
+  listener:
+    type: migration-skill
+    caps: [network-listener]
 
 parts:
-  foo:
+  ros-project:
     plugin: catkin
     source: .
     catkin-packages:
       - talker
       - listener
-    stage-packages:
-      - ros-indigo-ros-core
+    include-roscore: true
 ```
 
 Most of this file should look familiar to you if you've met the prerequisites,
@@ -290,6 +295,7 @@ but let's focus on a few specific pieces.
 apps:
   launch-project:
     command: roslaunch listener talk_and_listen.launch
+    uses: [listener]
 # ...
 ```
 
@@ -303,23 +309,25 @@ will make more sense when we actually use it.
 ```yaml
 # ...
 parts:
-  foo:
+  ros-project:
     plugin: catkin
     source: .
     catkin-packages:
       - talker
       - listener
-    stage-packages:
-      - ros-indigo-ros-core
+    include-roscore: true
 # ...
 ```
 
-This is specifying that the .snap is made up of a single part, called "foo,"
-which utilizes the Catkin plugin. It states that the workspace is in the same
-path as the `snapcraft.yaml`, and it specifies which ROS packages should be
-included in the .snap (`talker` and `listener`). Finally, and this is important,
-it specifies that the Ubuntu package containing `roscore` (ros-indigo-ros-core)
-should be installed into the .snap.
+This is specifying that the .snap is made up of a single part, called
+"ros-project," which utilizes the Catkin plugin. It states that the workspace is
+in the same path as the `snapcraft.yaml`, and it specifies which ROS packages
+should be included in the .snap (`talker` and `listener`). Note that no
+`stage-packages` are specified here-- dependencies are extracted from the Catkin
+packages via `rosdep`. Finally, and this is important, it specifies that
+`roscore` should be installed into the .snap (note that `include-roscore`
+defaults to true; it doesn't need to be specified. It's done here for
+illustrative purposes).
 
 That last point is worth discussing. Currently, since .snaps cannot depend upon
 each other, any .snap that uses roscore must distribute roscore within it. We're
@@ -345,18 +353,20 @@ You can transfer your newly-minted .snap to your Ubuntu Core machine and install
 it at the same time via `snappy-remote`, for example:
 
     $ snappy-remote --url=ssh://<host>:<port> install \
-      ros-talker-and-listener_1.0_amd64.snap
+      ros-example_1.0_amd64.snap
 
-Now on the Ubuntu Core machine, take a look in `/apps/bin/`, and you'll see the
-binary you requested, called `ros-talker-and-listener.launch-project`. Test it
+Now on the Ubuntu Core machine, take a look in `/snaps/bin/`, and you'll see the
+binary you requested, called `ros-example.launch-project`. Test it
 out:
 
-    $ ros-talker-and-listener.launch-project
+    $ ros-example.launch-project
 
 And you should see the talker and listener communicating like before. As usual,
 ctrl+c will stop it. Note also that, since ROS is running in a confined
 environment, its log isn't in `$HOME/.ros` as usual, but in
-`$HOME/apps/ros-talker-and-listener.sideload/1.0/ros`.
+`$HOME/snaps/ros-example.sideload/<version>/ros`. Note: if you make the app a
+service, `$HOME` will be `/root`, so the logs will be in
+`/root/snaps/ros-example.sideload/<version>/ros`.
 
 [1]: http://www.ros.org/
 [2]: get-started.md
