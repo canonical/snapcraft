@@ -74,6 +74,9 @@ def main(argv=None):
     snap_name = args['--output'] or _format_snap_name(snap)
 
     logger.info('Snapping {}'.format(snap_name))
+    # These options need to match the review tools:
+    # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
+    mksquashfs_args = ['-noappend', '-comp', 'xz', '-all-root', '-no-xattrs']
     subprocess.check_call(
-        ['mksquashfs', snap_dir, snap_name, '-noappend', '-comp', 'xz'])
+        ['mksquashfs', snap_dir, snap_name] + mksquashfs_args)
     logger.info('Snapped {}'.format(snap_name))
