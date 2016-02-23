@@ -20,6 +20,7 @@ snapcraft
 
 Usage:
   snapcraft [--version | --help] [options] COMMAND [ARGS ...]
+  snapcraft [options]
 
 Options:
   -h --help        show this help message and exit
@@ -47,11 +48,13 @@ The available lifecycle commands are:
   upload       Upload a snap to the Ubuntu Store.
 
 See 'snapcraft COMMAND --help' for more information on a specific command.
+Calling snapcraft without a COMMAND will default to 'snap'
 
 For more help, visit the documentation:
 http://developer.ubuntu.com/snappy/snapcraft
 """
 
+import logging
 import pkg_resources
 import sys
 import textwrap
@@ -62,6 +65,8 @@ from snapcraft import (
     log,
     commands,
 )
+
+logger = logging.getLogger(__name__)
 
 _VALID_COMMANDS = [
     'list-parts',
@@ -81,25 +86,27 @@ _VALID_COMMANDS = [
     'upload',
 ]
 
-try:
-    version = pkg_resources.require('snapcraft')[0].version
-except pkg_resources.DistributionNotFound:
-    version = 'devel'
+
+def _get_version():
+    try:
+        return pkg_resources.require('snapcraft')[0].version
+    except pkg_resources.DistributionNotFound:
+        return 'devel'
 
 
 def main():
     log.configure()
-    args = docopt(__doc__,
-                  version=version,
-                  options_first=True)
-    if args['COMMAND'] not in _VALID_COMMANDS:
-        sys.exit('Command {!r} was not recognized'.format(args['COMMAND']))
+    args = docopt(__doc__, version=_get_version(), options_first=True)
+
+    cmd = args['COMMAND'] or 'snap'
+    if cmd not in _VALID_COMMANDS:
+        sys.exit('Command {!r} was not recognized'.format(cmd))
 
     try:
-        commands.load(args['COMMAND']).main(argv=args['ARGS'])
+        commands.load(cmd).main(argv=args['ARGS'])
     except Exception as e:
         sys.exit(textwrap.fill(str(e)))
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == '__main__':  # pragma: no cover
+    main()                  # pragma: no cover
