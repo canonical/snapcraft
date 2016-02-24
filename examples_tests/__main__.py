@@ -37,7 +37,7 @@ import sys
 
 import docopt
 
-from examples_tests import tests
+import examples_tests
 
 
 def main():
@@ -45,27 +45,31 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    tests.config['skip-install'] = arguments['--skip-install']
-    tests.config['ip'] = arguments['--ip']
-    tests.config['port'] = arguments['--port']
-    tests.config['filter'] = arguments['--filter']
+    examples_tests.config['skip-install'] = arguments['--skip-install']
+    examples_tests.config['ip'] = arguments['--ip']
+    examples_tests.config['port'] = arguments['--port']
+    examples_tests.config['filter'] = arguments['--filter']
 
     if arguments['--subunit']:
         from subunit import run
         runner = run.SubunitTestProgram
         stdout = open('results.subunit', 'wb')
         test_runner = run.SubunitTestRunner
+        exit = False
     else:
         from testtools import run
         runner = run.TestProgram
         stdout = None
         test_runner = None
+        exit = True
 
     # Strip all the command line arguments, so the test runner does not handle
     # them again.
     argv = [sys.argv[0]]
-    runner('examples_tests.tests', verbosity=2, stdout=stdout,
-           testRunner=test_runner, argv=argv)
+    argv.append('discover')
+    argv.append('examples_tests')
+    runner(module=None, verbosity=2, stdout=stdout,
+           testRunner=test_runner, exit=exit, argv=argv)
 
 
 if __name__ == '__main__':
