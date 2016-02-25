@@ -41,8 +41,13 @@ def configure(logger_name=None):
     if not os.isatty(1) and not sys.stdout.line_buffering:
         # Line buffering makes logs easier to handle.
         sys.stdout.flush()
-        sys.stdout = io.TextIOWrapper(
-            sys.stdout.detach(), encoding='UTF-8', line_buffering=True)
+        try:
+            sys.stdout = io.TextIOWrapper(
+                sys.stdout.detach(), encoding='UTF-8', line_buffering=True)
+        except io.UnsupportedOperation:
+            # debuilding fails, we will just let it pass as if it were a
+            # isatty call
+            pass
 
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     stdout_handler.addFilter(_StdoutFilter())
