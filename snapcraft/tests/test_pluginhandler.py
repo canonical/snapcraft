@@ -24,7 +24,6 @@ from unittest.mock import (
     MagicMock,
     patch,
 )
-import yaml
 
 import fixtures
 
@@ -330,17 +329,6 @@ class StateTestCase(tests.TestCase):
         self.handler.pull()
 
         self.assertEqual('pull', self.handler.last_step())
-        with open(self.handler._step_state_file('pull'), 'r') as f:
-            state = yaml.load(f)
-
-        self.assertTrue(state, 'Expected stage to save state YAML')
-        self.assertTrue(type(state) is pluginhandler.PullState)
-        self.assertTrue(type(state.stage_package_files) is set)
-        self.assertTrue(type(state.stage_package_directories) is set)
-        self.assertEqual(1, len(state.stage_package_files))
-        self.assertTrue('bin/1' in state.stage_package_files)
-        self.assertEqual(1, len(state.stage_package_directories))
-        self.assertTrue('bin' in state.stage_package_directories)
 
     @patch.object(nil.NilPlugin, 'clean_pull')
     def test_clean_pull_state(self, mock_clean_pull):
@@ -355,23 +343,13 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual(None, self.handler.last_step())
 
-    def test_build_state(self):
+    @patch('snapcraft.repo.Ubuntu')
+    def test_build_state(self, ubuntu_mock):
         self.assertEqual(None, self.handler.last_step())
 
         self.handler.build()
 
         self.assertEqual('build', self.handler.last_step())
-
-    def test_build_old_pull_state_with_stage_packages(self):
-        self.handler.code.stage_packages.append('foo')
-        self.handler.mark_done('pull', None)
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            self.handler.build()
-
-        self.assertEqual(
-            str(raised.exception),
-            'Failed to build: Missing necessary pull state. Please run pull '
-            'again.')
 
     @patch.object(nil.NilPlugin, 'clean_build')
     def test_clean_build_state(self, mock_clean_build):
@@ -399,8 +377,7 @@ class StateTestCase(tests.TestCase):
         self.handler.stage()
 
         self.assertEqual('stage', self.handler.last_step())
-        with open(self.handler._step_state_file('stage'), 'r') as f:
-            state = yaml.load(f)
+        state = self.handler.get_state('stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
         self.assertTrue(type(state) is pluginhandler.StageState)
@@ -485,7 +462,11 @@ class StateTestCase(tests.TestCase):
             "Failed to clean step 'stage': Missing necessary state. Please "
             "run stage again.")
 
-    def test_strip_state(self):
+    @patch('snapcraft.pluginhandler._find_dependencies')
+    @patch('shutil.copy')
+    def test_strip_state(self, mock_copy, mock_find_dependencies):
+        mock_find_dependencies.return_value = set()
+
         self.assertEqual(None, self.handler.last_step())
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
@@ -498,17 +479,67 @@ class StateTestCase(tests.TestCase):
         self.handler.strip()
 
         self.assertEqual('strip', self.handler.last_step())
-        with open(self.handler._step_state_file('strip'), 'r') as f:
-            state = yaml.load(f)
+        mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
+        self.assertFalse(mock_copy.called)
+
+        state = self.handler.get_state('strip')
 
         self.assertTrue(type(state) is pluginhandler.StripState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.dependency_paths) is set)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/1' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
+        self.assertEqual(0, len(state.dependency_paths))
+
+    @patch('snapcraft.pluginhandler._find_dependencies')
+    @patch('snapcraft.pluginhandler._migrate_files')
+    def test_strip_state_with_dependencies(self, mock_migrate_files,
+                                           mock_find_dependencies):
+        mock_find_dependencies.return_value = {
+            '/foo/bar/baz',
+            '{}/lib1/installed'.format(self.handler.installdir),
+            '{}/lib2/staged'.format(self.handler.stagedir),
+        }
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        self.handler.strip()
+
+        self.assertEqual('strip', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
+        mock_migrate_files.assert_has_calls([
+            call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
+                 self.handler.snapdir),
+            call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
+                 follow_symlinks=True),
+        ])
+
+        state = self.handler.get_state('strip')
+
+        self.assertTrue(type(state) is pluginhandler.StripState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.dependency_paths) is set)
+        self.assertEqual(2, len(state.files))
+        self.assertTrue('bin/1' in state.files)
+        self.assertTrue('bin/1' in state.files)
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
+        self.assertEqual(3, len(state.dependency_paths))
+        self.assertTrue('foo/bar' in state.dependency_paths)
+        self.assertTrue('lib1' in state.dependency_paths)
+        self.assertTrue('lib2' in state.dependency_paths)
 
     def test_clean_strip_state(self):
         self.assertEqual(None, self.handler.last_step())
@@ -1290,3 +1321,123 @@ class StageEnvTestCase(tests.TestCase):
         }
 
         self.assertEqual(pluginhandler._expand_env(subject), expected)
+
+
+class FindDependenciesTestCase(tests.TestCase):
+
+    @patch('magic.open')
+    @patch('snapcraft.libraries.get_dependencies')
+    def test_find_dependencies(self, mock_dependencies, mock_magic):
+        workdir = os.path.join(os.getcwd(), 'workdir')
+        os.makedirs(workdir)
+
+        linked_elf_path = os.path.join(workdir, 'linked')
+        open(linked_elf_path, 'w').close()
+
+        mock_ms = Mock()
+        mock_magic.return_value = mock_ms
+        mock_ms.load.return_value = 0
+        mock_ms.file.return_value = (
+            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
+            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped')
+
+        mock_dependencies.return_value = ['/usr/lib/libDepends.so']
+
+        dependencies = pluginhandler._find_dependencies(workdir)
+
+        mock_ms.file.assert_called_once_with(bytes(linked_elf_path, 'utf-8'))
+        self.assertEqual(dependencies, {'/usr/lib/libDepends.so'})
+
+    @patch('magic.open')
+    @patch('snapcraft.libraries.get_dependencies')
+    def test_no_find_dependencies_of_non_dynamically_linked(
+            self, mock_dependencies, mock_magic):
+        workdir = os.path.join(os.getcwd(), 'workdir')
+        os.makedirs(workdir)
+
+        statically_linked_elf_path = os.path.join(workdir, 'statically-linked')
+        open(statically_linked_elf_path, 'w').close()
+
+        mock_ms = Mock()
+        mock_magic.return_value = mock_ms
+        mock_ms.load.return_value = 0
+        mock_ms.file.return_value = (
+            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+            'statically linked, for GNU/Linux 2.6.32, '
+            'BuildID[sha1]=XYZ, stripped')
+
+        dependencies = pluginhandler._find_dependencies(workdir)
+
+        mock_ms.file.assert_called_once_with(
+            bytes(statically_linked_elf_path, 'utf-8'))
+
+        self.assertFalse(
+            mock_dependencies.called,
+            'statically linked files should not have library dependencies')
+
+        self.assertFalse(dependencies)
+
+    @patch('magic.open')
+    @patch('snapcraft.libraries.get_dependencies')
+    def test_no_find_dependencies_of_non_elf_files(
+            self, mock_dependencies, mock_magic):
+        workdir = os.path.join(os.getcwd(), 'workdir')
+        os.makedirs(workdir)
+
+        non_elf_path = os.path.join(workdir, 'non-elf')
+        open(non_elf_path, 'w').close()
+
+        mock_ms = Mock()
+        mock_magic.return_value = mock_ms
+        mock_ms.load.return_value = 0
+        mock_ms.file.return_value = 'JPEG image data, Exif standard: ...'
+
+        dependencies = pluginhandler._find_dependencies(workdir)
+
+        mock_ms.file.assert_called_once_with(bytes(non_elf_path, 'utf-8'))
+
+        self.assertFalse(
+            mock_dependencies.called,
+            'non elf files should not have library dependencies')
+
+        self.assertFalse(
+            dependencies,
+            'non elf files should not have library dependencies')
+
+    @patch('magic.open')
+    @patch('snapcraft.libraries.get_dependencies')
+    def test_no_find_dependencies_of_symlinks(
+            self, mock_dependencies, mock_magic):
+        workdir = os.path.join(os.getcwd(), 'workdir')
+        os.makedirs(workdir)
+
+        symlinked_path = os.path.join(workdir, 'symlinked')
+        os.symlink('/bin/dash', symlinked_path)
+
+        mock_ms = Mock()
+        mock_magic.return_value = mock_ms
+        mock_ms.load.return_value = 0
+
+        dependencies = pluginhandler._find_dependencies(workdir)
+
+        self.assertFalse(
+            mock_ms.file.called, 'magic is not needed for symlinks')
+
+        self.assertFalse(
+            mock_dependencies.called,
+            'statically linked files should not have library dependencies')
+
+        self.assertFalse(
+            dependencies,
+            'statically linked files should not have library dependencies')
+
+    @patch('magic.open')
+    def test_fail_to_load_magic_raises_exception(self, mock_magic):
+        mock_magic.return_value.load.return_value = 1
+
+        with self.assertRaises(RuntimeError) as raised:
+            pluginhandler._find_dependencies('.')
+
+        self.assertEqual(
+            raised.exception.__str__(), 'Cannot load magic header detection')

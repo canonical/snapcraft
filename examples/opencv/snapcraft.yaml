@@ -3,7 +3,7 @@ version: 1.0
 summary: Use OpenCV and OpenGL
 description: A simple OpenCV example
 
-build-packages: [gcc, g++, libc6-dev]
+build-packages: [gcc, g++, libc6-dev, libopencv-dev]
 
 apps:
   example:
@@ -13,4 +13,3 @@ parts:
   example:
     plugin: cmake
     source: src
-    stage-packages: [libopencv-dev]

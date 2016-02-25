@@ -14,11 +14,4 @@ parts:
     plugin: go
     source: https://github.com/mvo5/godd
     source-type: git
-    build-packages: [gcc]
-    stage-packages: [libgudev-1.0-dev]
-    snap:
-     - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
-     - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
-     - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
-     - lib/x86_64-linux-gnu/libglib-2.0.so*
-     - bin/godd*
+    build-packages: [gcc, libgudev-1.0-dev]

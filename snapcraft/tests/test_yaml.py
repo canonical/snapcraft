@@ -17,6 +17,7 @@
 import copy
 import logging
 import os
+import subprocess
 import unittest
 import unittest.mock
 
@@ -614,6 +615,54 @@ parts:
                              'Current environment is {!r}'.format(e))
 
     @unittest.mock.patch('snapcraft.common.get_snapdir')
+    @unittest.mock.patch.object(snapcraft.pluginhandler.PluginHandler,
+                                'get_stripped_dependency_paths')
+    def test_config_snap_environment_with_dependencies(self,
+                                                       mock_get_dependencies,
+                                                       mock_snapdir):
+        library_paths = {'foo/lib1', 'foo/lib2'}
+        mock_snapdir.return_value = 'foo'
+        mock_get_dependencies.return_value = library_paths
+        config = snapcraft.yaml.Config()
+
+        for lib_path in library_paths:
+            os.makedirs(lib_path)
+
+        # Ensure that LD_LIBRARY_PATH is present and it contains the
+        # extra dependency paths.
+        paths = []
+        for variable in config.snap_env():
+            if 'LD_LIBRARY_PATH' in variable:
+                these_paths = variable.split('=')[1].strip()
+                paths.extend(these_paths.replace('"', '').split(':'))
+
+        self.assertTrue(len(paths) > 0,
+                        'Expected LD_LIBRARY_PATH to be in environment')
+
+        for expected in ['foo/lib1', 'foo/lib2']:
+            self.assertTrue(
+                expected in paths,
+                'Expected LD_LIBRARY_PATH ({!r}) to include {!r}'.format(
+                    paths, expected))
+
+    @unittest.mock.patch('snapcraft.common.get_snapdir')
+    @unittest.mock.patch.object(snapcraft.pluginhandler.PluginHandler,
+                                'get_stripped_dependency_paths')
+    def test_config_snap_environment_with_dependencies_but_no_paths(
+            self, mock_get_dependencies, mock_snapdir):
+        library_paths = {'foo/lib1', 'foo/lib2'}
+        mock_snapdir.return_value = 'foo'
+        mock_get_dependencies.return_value = library_paths
+        config = snapcraft.yaml.Config()
+
+        # Ensure that LD_LIBRARY_PATH is present, but is completey empty since
+        # no library paths actually exist.
+        for variable in config.snap_env():
+            self.assertFalse(
+                'LD_LIBRARY_PATH' in variable,
+                'Expected no LD_LIBRARY_PATH (got {!r})'.format(variable))
+
+    @unittest.mock.patch('snapcraft.common.get_snapdir')
     def test_config_runtime_environment_ld(self, mock_snapdir):
         mock_snapdir.return_value = 'foo'
 
@@ -687,16 +736,7 @@ parts:
             'LDFLAGS="-Lfoo/lib -Lfoo/usr/lib -Lfoo/lib/x86_64-linux-gnu '
             '-Lfoo/usr/lib/x86_64-linux-gnu $LDFLAGS"' in environment,
             'Current environment is {!r}'.format(environment))
-        self.assertTrue(
-            'PKG_CONFIG_PATH=foo/lib/pkgconfig:'
-            'foo/lib/x86_64-linux-gnu/pkgconfig:foo/usr/lib/pkgconfig:'
-            'foo/usr/lib/x86_64-linux-gnu/pkgconfig:foo/usr/share/pkgconfig:'
-            'foo/usr/local/lib/pkgconfig:'
-            'foo/usr/local/lib/x86_64-linux-gnu/pkgconfig:'
-            'foo/usr/local/share/pkgconfig:$PKG_CONFIG_PATH' in environment,
-            'Current environment is {!r}'.format(environment))
         self.assertTrue('PERL5LIB=foo/usr/share/perl5/' in environment)
-        self.assertTrue('PKG_CONFIG_SYSROOT_DIR=foo' in environment)
 
 
 class TestValidation(tests.TestCase):
@@ -1116,3 +1156,78 @@ class TestFilesets(tests.TestCase):
             raised.exception.message,
             '\'$3\' referred to in the \'stage\' fileset but it is not '
             'in filesets')
+
+
+class TestPkgConfig(tests.TestCase):
+
+    _PC_TEMPLATE = """prefix=/usr
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib/x86_64-linux-gnu
+includedir=${{prefix}}/include
+
+Name: {module}
+Description: test
+Version: 1.0
+Libs: -L${{libdir}} -llib{module}
+Cflags: -I${{includedir}}/{module}
+"""
+
+    def setUp(self):
+        super().setUp()
+
+        self.installdir = os.path.join(os.getcwd(), 'installdir')
+        os.makedirs(self.installdir)
+
+        self.stagedir = os.path.join(os.getcwd(), 'stagedir')
+        os.makedirs(self.stagedir)
+
+        self.bindir = os.path.join(os.getcwd(), 'bin')
+        os.makedirs(self.bindir)
+
+        env = snapcraft.yaml._create_pkg_config_override(
+            self.bindir, self.installdir, self.stagedir)
+        self.assertEqual(env, ['PATH={}:$PATH'.format(self.bindir)])
+
+        self.pkg_config_bin = os.path.join(self.bindir, 'pkg-config')
+
+    def _create_pc_file(self, workdir, module):
+        pkgconfig_dir = os.path.join(workdir, 'usr', 'lib', 'pkgconfig')
+        os.makedirs(pkgconfig_dir, exist_ok=True)
+        pc_module = os.path.join(pkgconfig_dir, '{}.pc'.format(module))
+        with open(pc_module, 'w') as fn:
+            fn.write(self._PC_TEMPLATE.format(module=module))
+
+    def test_pkg_config_prefers_installdir(self):
+        self._create_pc_file(self.installdir, 'module1')
+        self._create_pc_file(self.stagedir, 'module1')
+
+        out = subprocess.check_output([
+            self.pkg_config_bin, '--cflags-only-I',
+            'module1']).decode('utf-8').strip()
+
+        self.assertEqual(
+            out, '-I{}/usr/include/module1'.format(self.installdir))
+
+    def test_pkg_config_finds_in_stagedir(self):
+        self._create_pc_file(self.installdir, 'module2')
+        self._create_pc_file(self.stagedir, 'module1')
+
+        out = subprocess.check_output([
+            self.pkg_config_bin, '--cflags-only-I',
+            'module1']).decode('utf-8').strip()
+
+        self.assertEqual(
+            out, '-I{}/usr/include/module1'.format(self.stagedir))
+
+    def test_pkg_config_works_with_two_modules(self):
+        self._create_pc_file(self.installdir, 'module1')
+        self._create_pc_file(self.installdir, 'module2')
+
+        out = subprocess.check_output([
+            self.pkg_config_bin, '--cflags-only-I',
+            'module1', 'module2']).decode('utf-8').strip()
+
+        self.assertEqual(out,
+                         '-I{dir}/usr/include/module1 '
+                         '-I{dir}/usr/include/module2'.format(
+                            dir=self.installdir))

@@ -75,7 +75,9 @@ parts:
         self.assertEqual(
             'Snap snap-test_1.0_amd64.snap not found. '
             'Running snap step to create it.\n'
+            'Preparing to pull part1 \n'
             'Pulling part1 \n'
+            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
@@ -100,7 +102,9 @@ parts:
         self.assertEqual(
             'Snap snap-test_1.0_amd64.snap not found. '
             'Running snap step to create it.\n'
+            'Preparing to pull part1 \n'
             'Pulling part1 \n'
+            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
