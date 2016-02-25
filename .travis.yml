@@ -24,7 +24,8 @@ before_script:
   - sudo lxd-images import ubuntu xenial --stream daily --alias ubuntu
   - sudo lxc launch ubuntu xenial -c security.privileged=true
   # Wait for the container to get an IP address.
-  - while ! sudo lxc info xenial | grep -q eth0.*IPV4; do sleep 5s; done
+  - sleep 30
+  - sudo lxc info xenial
   # Allow the container user to do everything on the repository.
   - sudo chmod -R 777 $(pwd)
   # Mount the repository directory in the container.
