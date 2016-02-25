@@ -56,7 +56,9 @@ parts:
         snap.main()
 
         self.assertEqual(
+            'Preparing to pull part1 \n'
             'Pulling part1 \n'
+            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
@@ -82,7 +84,9 @@ parts:
         snap.main()
 
         self.assertEqual(
+            'Preparing to pull part1 \n'
             'Pulling part1 \n'
+            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
@@ -112,10 +116,10 @@ parts:
         snap.main()
 
         self.assertEqual(
-            'Skipping pull part1  (already ran)\n'
-            'Skipping build part1  (already ran)\n'
-            'Skipping stage part1  (already ran)\n'
-            'Skipping strip part1  (already ran)\n'
+            'Skipping pull part1 (already ran)\n'
+            'Skipping build part1 (already ran)\n'
+            'Skipping stage part1 (already ran)\n'
+            'Skipping strip part1 (already ran)\n'
             'Snapping snap-test_1.0_amd64.snap\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
@@ -205,7 +209,9 @@ type: os
         snap.main(['--output', 'mysnap.snap'])
 
         self.assertEqual(
+            'Preparing to pull part1 \n'
             'Pulling part1 \n'
+            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'

@@ -272,10 +272,14 @@ class Config:
             env += self.build_env_for_part(dep_part, root_part=False)
 
         if root_part:
+            # this has to come before any {}/usr/bin
+            env += _create_pkg_config_override(
+                part.bindir, part.installdir, stagedir)
             env += part.env(part.installdir)
             env += _runtime_env(stagedir)
             env += _runtime_env(part.installdir)
             env += _build_env_for_stage(stagedir)
+            env += _build_env(part.installdir)
         else:
             env += part.env(stagedir)
             env += _runtime_env(stagedir)
@@ -298,8 +302,20 @@ class Config:
         env = []
 
         env += _runtime_env(snapdir)
+        dependency_paths = set()
         for part in self.all_parts:
             env += part.env(snapdir)
+            dependency_paths |= part.get_stripped_dependency_paths()
+
+        # Dependency paths are only valid if they actually exist. Sorting them
+        # here as well so the LD_LIBRARY_PATH is consistent between runs.
+        dependency_paths = sorted({
+            path for path in dependency_paths if os.path.isdir(path)})
+
+        if dependency_paths:
+            # Add more specific LD_LIBRARY_PATH from the dependencies.
+            env.append('LD_LIBRARY_PATH="' + ':'.join(dependency_paths) +
+                       ':$LD_LIBRARY_PATH"')
 
         return env
 
@@ -320,7 +336,7 @@ def _runtime_env(root):
     if library_path:
         env.append(library_path)
 
-    # Add more specific LD_LIBRARY_PATH if necessary
+    # Add more specific LD_LIBRARY_PATH from staged packages if necessary
     ld_library_paths = libraries.determine_ld_library_path(root)
     if ld_library_paths:
         env.append('LD_LIBRARY_PATH="' + ':'.join(ld_library_paths) +
@@ -337,8 +353,6 @@ def _build_env(root):
     """
     env = []
 
-    arch_triplet = common.get_arch_triplet()
-
     for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
         include_path_for_env = _get_include_paths(envvar, root)
         if include_path_for_env:
@@ -346,17 +360,6 @@ def _build_env(root):
     library_path = _get_library_paths('LDFLAGS', root)
     if library_path:
         env.append(library_path)
-    env.append('PKG_CONFIG_PATH=' + ':'.join([
-        '{0}/lib/pkgconfig',
-        '{0}/lib/{1}/pkgconfig',
-        '{0}/usr/lib/pkgconfig',
-        '{0}/usr/lib/{1}/pkgconfig',
-        '{0}/usr/share/pkgconfig',
-        '{0}/usr/local/lib/pkgconfig',
-        '{0}/usr/local/lib/{1}/pkgconfig',
-        '{0}/usr/local/share/pkgconfig',
-        '$PKG_CONFIG_PATH'
-    ]).format(root, arch_triplet))
 
     return env
 
@@ -400,11 +403,87 @@ def _get_library_paths(envvar, root, prepend='-L', sep=' '):
 
 def _build_env_for_stage(stagedir):
     env = _build_env(stagedir)
-
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
-    env.append('PKG_CONFIG_SYSROOT_DIR={0}'.format(stagedir))
 
     return env
+
+
+_PKG_CONFIG_TEMPLATE = """#!/usr/bin/env python3
+
+import os
+import sys
+from subprocess import check_call, CalledProcessError
+
+real_env = os.environ.copy()
+
+
+def run_pkg_config(args, env):
+    check_call(['/usr/bin/pkg-config'] + args, env=env)
+
+
+def get_pkg_env_for(basedir):
+    current_env = real_env.copy()
+    env = {{}}
+    env['PKG_CONFIG_PATH'] = ':'.join([
+        '{{basedir}}/lib/pkgconfig',
+        '{{basedir}}/lib/{arch}/pkgconfig',
+        '{{basedir}}/usr/lib/pkgconfig',
+        '{{basedir}}/usr/lib/{arch}/pkgconfig',
+        '{{basedir}}/usr/share/pkgconfig',
+        '{{basedir}}/usr/local/lib/pkgconfig',
+        '{{basedir}}/usr/local/lib/{arch}/pkgconfig',
+        '{{basedir}}/usr/local/share/pkgconfig']).format(basedir=basedir)
+    env['PKG_CONFIG_SYSROOT_DIR'] = basedir
+    env['PKG_CONFIG_LIBDIR'] = ''
+
+    current_env.update(env)
+
+    return current_env
+
+
+def modules_exist(modules, env):
+    try:
+        check_call(['/usr/bin/pkg-config', '--exists'] + modules, env=env)
+        return True
+    except CalledProcessError:
+        return False
+
+
+def main():
+    args = sys.argv[1:]
+    modules = list(filter(lambda x: not x.startswith('-'), args))
+
+    env = get_pkg_env_for('{installdir}')
+    if modules_exist(modules, env):
+        run_pkg_config(args, env)
+        return
+
+    env = get_pkg_env_for('{stagedir}')
+    if modules_exist(modules, env):
+        run_pkg_config(args, env)
+        return
+
+    run_pkg_config(args, env=real_env)
+
+
+if __name__ == '__main__':
+    main()
+"""
+
+
+def _create_pkg_config_override(bindir, installdir, stagedir):
+    pkg_config_path = os.path.join(bindir, 'pkg-config')
+    os.makedirs(os.path.dirname(pkg_config_path), exist_ok=True)
+
+    arch = common.get_arch_triplet()
+    pkg_config_content = _PKG_CONFIG_TEMPLATE.format(
+        installdir=installdir, stagedir=stagedir, arch=arch)
+
+    with open(pkg_config_path, 'w') as fn:
+        fn.write(pkg_config_content)
+    os.chmod(pkg_config_path, 0o755)
+
+    return ['PATH={}:$PATH'.format(bindir)]
 
 
 def _validate_snapcraft_yaml(snapcraft_yaml):

@@ -83,11 +83,14 @@ parts:
         self.assertEqual(snap_info, expected_snap_info)
 
         self.assertEqual(
+            'Preparing to pull part1 \n'
             'Pulling part1 \n'
             '\'part2\' has prerequisites that need to be staged: part1\n'
-            'Skipping pull part1  (already ran)\n'
+            'Skipping pull part1 (already ran)\n'
+            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
+            'Preparing to pull part2 \n'
             'Pulling part2 \n',
             fake_logger.output)
 

@@ -28,3 +28,4 @@ def setup_dirs():
     if os.path.exists(os.path.join(topdir, 'setup.py')):
         common.set_plugindir(os.path.join(topdir, 'plugins'))
         common.set_schemadir(os.path.join(topdir, 'schema'))
+        common.set_librariesdir(os.path.join(topdir, 'libraries'))

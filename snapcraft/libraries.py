@@ -16,6 +16,14 @@
 
 import re
 import glob
+import logging
+import os
+import platform
+
+from snapcraft import common
+
+
+logger = logging.getLogger(__name__)
 
 
 def determine_ld_library_path(root):
@@ -48,3 +56,40 @@ def _extract_ld_library_paths(ld_conf_file):
                 paths.extend(path_delimiters.split(line))
 
     return paths
+
+
+_libraries = None
+
+
+def _get_system_libs():
+    global _libraries
+    if _libraries:
+        return _libraries
+
+    release = platform.linux_distribution()[1]
+    lib_path = os.path.join(common.get_librariesdir(), release)
+
+    if not os.path.exists(lib_path):
+        logger.debug('No libraries to exclude from this release')
+
+    with open(lib_path) as fn:
+        _libraries = frozenset(fn.read().split())
+
+    return _libraries
+
+
+def get_dependencies(elf):
+    """Return a list of libraries that are needed to satisfy elf's runtime.
+
+    This may include libraries contained within the project.
+    """
+    logger.debug('Getting dependencies for {!r}'.format(elf))
+    ldd_out = common.run_output(['ldd', elf]).split('\n')
+    ldd_out = [l.split() for l in ldd_out]
+    ldd_out = [l[2] for l in ldd_out if len(l) > 2 and os.path.exists(l[2])]
+
+    # Now lets filter out what would be on the system
+    system_libs = _get_system_libs()
+    libs = [l for l in ldd_out if not os.path.basename(l) in system_libs]
+
+    return libs
