@@ -88,23 +88,27 @@ class SshTestbed:
 
 class QemuTestbed(SshTestbed):
 
-    def __init__(self, image_path, ssh_port, user, private_key):
+    def __init__(
+            self, image_path, ssh_port, user, private_key, redirect_ports):
         super().__init__('localhost', ssh_port, user, private_key)
         self._image_path = image_path
-        self._ssh_port = ssh_port
         self._process = None
+        self._redirect_ports = redirect_ports
 
     def create(self):
         logger.info('Running the snappy image in a virtual machine.')
+        ports = ' -redir tcp:{}::22'.format(self.port)
+        for port in self._redirect_ports:
+            ports += ' -redir tcp:{0}::{0}'.format(port)
         qemu_command = (
             'qemu-system-{}' +
             ' -snapshot' +
             ' -enable-kvm' +
             ' -m 512 -nographic -net user -net nic,model=virtio' +
             ' -drive file={}' +
-            ',if=virtio -redir tcp:{}::22' +
+            ',if=virtio' +
             ' -monitor none -serial none').format(
-                platform.machine(), self._image_path, self._ssh_port)
+                platform.machine(), self._image_path) + ports
         self._process = subprocess.Popen(qemu_command, shell=True)
 
     def delete(self):
