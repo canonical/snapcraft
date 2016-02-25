@@ -1,3 +1,25 @@
+snapcraft (2.3) xenial; urgency=medium
+
+  [ Leonardo Arias Fonseca ]
+  * storeapi: reduce the mccabe complexity (LP: #1541011)
+  * catkin plugin: do not overwrite the PYTHONPATH (LP: #1544790)
+  * examples_tests: fix the libpipeline test. (LP: #1546771)
+  * travis: update the command to wait for the network (LP: #1549880)
+
+  [ Daniel Holbach ]
+  * Generate reference from snapcraft's "help" command. (LP: #1544540)
+
+  [ Kyle Fazzari ]
+  * Remove roscore plugin. (LP: #1539169)
+
+  [ Sergio Schvezov ]
+  * New command cleanbuild (using lxd) (LP: #1480144)
+  * Calling snapcraft with no args defaults to snap (LP: #1548915)
+  * More attributes for the squashfs'ed snap (LP: #1546821)
+  * Catch a failure to detach for the log (LP: #1549831)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 25 Feb 2016 16:00:05 -0300
+
 snapcraft (2.2.2) xenial; urgency=medium
 
   * Set the "after" test's cmake project to use no language (LP: #1544792)
