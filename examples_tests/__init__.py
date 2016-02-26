@@ -157,11 +157,12 @@ class ExampleTestCase(testtools.TestCase):
                 '.*')
             self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
-    def run_command_in_snappy_testbed(self, command):
+    def assert_command_in_snappy_testbed(self, command, expected_output):
         if not config.get('skip-install', False):
             try:
-                return self.snappy_testbed.run_command(command)
+                output = self.snappy_testbed.run_command(command)
             except subprocess.CalledProcessError as e:
                 self.addDetail(
                     'ssh output', content.text_content(str(e.output)))
                 raise
+            self.assertEqual(output, expected_output)
