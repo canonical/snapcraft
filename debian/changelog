@@ -1,3 +1,10 @@
+snapcraft (2.3.2) xenial; urgency=medium
+
+  * debian/control: lxd should be a suggestion, not a direct dependency.
+    (LP: #1550381)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 26 Feb 2016 11:59:46 -0300
+
 snapcraft (2.3.1) xenial; urgency=medium
 
   [ Leonardo Arias Fonseca (¡paz y baile!) ]
