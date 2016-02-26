@@ -1,3 +1,11 @@
+snapcraft (2.3.1) xenial; urgency=medium
+
+  [ Leonardo Arias Fonseca (¡paz y baile!) ]
+  * examples_tests/libpipeline: skip the output assertion when skipping the
+    install. (LP: #1550108)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 26 Feb 2016 03:47:11 -0300
+
 snapcraft (2.3) xenial; urgency=medium
 
   [ Leonardo Arias Fonseca ]
