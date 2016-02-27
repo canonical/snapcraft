@@ -85,3 +85,25 @@ class LogTestCase(tests.TestCase):
             '\033[1mTest critical\033[0m\n')
         self.assertEqual(expected_out, mock_stdout.getvalue())
         self.assertEqual(expected_err, mock_stderr.getvalue())
+
+    def test_configure_must_support_debug(
+            self, mock_stderr, mock_stdout, mock_isatty):
+        logger_name = self.id()
+        log.configure(logger_name, log_level=logging.DEBUG)
+        logger = logging.getLogger(logger_name)
+
+        logger.debug('Test debug')
+        logger.info('Test info')
+        logger.warning('Test warning')
+        logger.error('Test error')
+        logger.critical('Test critical')
+
+        expected_out = (
+            '\033[1mTest debug\033[0m\n'
+            '\033[1mTest info\033[0m\n'
+            '\033[1mTest warning\033[0m\n')
+        expected_err = (
+            '\033[1mTest error\033[0m\n'
+            '\033[1mTest critical\033[0m\n')
+        self.assertEqual(expected_out, mock_stdout.getvalue())
+        self.assertEqual(expected_err, mock_stderr.getvalue())
