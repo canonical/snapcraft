@@ -21,8 +21,11 @@ import builtins
 
 from unittest import mock
 
-from snapcraft import tests
 from snapcraft.plugins import catkin
+from snapcraft import (
+    repo,
+    tests,
+)
 
 
 class _CompareContainers():
@@ -250,6 +253,22 @@ class CatkinPluginTestCase(tests.TestCase):
         # Verify that no .deb packages were installed
         self.assertTrue(mock.call().unpack(plugin.installdir) not in
                         self.ubuntu_mock.mock_calls)
+
+    def test_pull_invalid_dependency(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        self.dependencies_mock.return_value = ['foo']
+
+        mock_instance = self.ubuntu_mock.return_value
+        mock_instance.get.side_effect = repo.PackageNotFoundError('foo')
+
+        with self.assertRaises(RuntimeError) as raised:
+            plugin.pull()
+
+        self.assertEqual(str(raised.exception),
+                         'Failed to fetch system dependencies: The Ubuntu '
+                         'package "foo" was not found')
 
     def test_pull_with_roscore(self):
         self.properties.include_roscore = True
