@@ -50,43 +50,37 @@ class TestBasePlugin(tests.TestCase):
         self.assertEqual(raised.exception.__str__(),
                          'local source is not a directory')
 
-    def test_build_with_subdir_copies_subdir(self):
+    def test_build_with_subdir_copies_sourcedir(self):
         options = tests.MockOptions(source_subdir='src')
         plugin = snapcraft.BasePlugin('test-part', options)
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.sourcedir = tmpdir.name
         subdir = os.path.join(plugin.sourcedir, plugin.options.source_subdir)
-        os.mkdir(subdir)
-        open(os.path.join(subdir, 'file'), 'w').close()
+        os.makedirs(subdir)
+        open(os.path.join(plugin.sourcedir, 'file1'), 'w').close()
+        open(os.path.join(subdir, 'file2'), 'w').close()
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.builddir = tmpdir.name
+        self.assertEqual(
+            os.path.join(plugin.build_basedir, options.source_subdir),
+            plugin.builddir)
 
         plugin.build()
 
-        self.assertTrue(os.path.exists(os.path.join(plugin.builddir, 'file')))
+        self.assertTrue(
+            os.path.exists(os.path.join(plugin.build_basedir, 'file1')))
+        self.assertTrue(os.path.exists(os.path.join(plugin.builddir, 'file2')))
 
     def test_build_without_subdir_copies_sourcedir(self):
         plugin = snapcraft.BasePlugin('test-part', options=None)
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.sourcedir = tmpdir.name
-        subdir = os.path.join(plugin.sourcedir, 'src')
-        os.mkdir(subdir)
-        open(os.path.join(subdir, 'file'), 'w').close()
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'file'), 'w').close()
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.builddir = tmpdir.name
+        self.assertEqual(plugin.build_basedir, plugin.builddir)
 
         plugin.build()
 
-        self.assertTrue(os.path.exists(
-            os.path.join(plugin.builddir, 'src', 'file')))
+        self.assertTrue(
+            os.path.exists(os.path.join(plugin.build_basedir, 'file')))
 
 
 class GetSourceWithBranches(tests.TestCase):
