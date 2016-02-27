@@ -19,8 +19,11 @@ import os
 
 from unittest import mock
 
-from snapcraft import tests
 from snapcraft.plugins import cmake
+from snapcraft import (
+    common,
+    tests,
+)
 
 
 class CMakeTestCase(tests.TestCase):
@@ -46,10 +49,10 @@ class CMakeTestCase(tests.TestCase):
 
         self.run_mock.assert_has_calls([
             mock.call(['cmake', plugin.sourcedir, '-DCMAKE_INSTALL_PREFIX='],
-                      cwd=plugin.builddir),
+                      cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)],
-                      cwd=plugin.builddir)])
+                      cwd=plugin.builddir, env=mock.ANY)])
 
     def test_build_referencing_sourcedir_with_subdir(self):
         class Options:
@@ -64,7 +67,42 @@ class CMakeTestCase(tests.TestCase):
             plugin.sourcedir, plugin.options.source_subdir)
         self.run_mock.assert_has_calls([
             mock.call(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='],
-                      cwd=plugin.builddir),
+                      cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)],
-                      cwd=plugin.builddir)])
+                      cwd=plugin.builddir, env=mock.ANY)])
+
+    def test_build_environment(self):
+        class Options:
+            configflags = []
+
+        plugin = cmake.CMakePlugin('test-part', Options())
+        os.makedirs(plugin.builddir)
+        plugin.build()
+
+        expected = {}
+
+        expected['CMAKE_PREFIX_PATH'] = '$CMAKE_PREFIX_PATH:{}'.format(
+            common.get_stagedir())
+        expected['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
+            ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
+             '{0}/usr/include/{1}']).format(common.get_stagedir(),
+                                            common.get_arch_triplet())
+        expected['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
+            ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
+             '{0}/usr/lib/{1}']).format(common.get_stagedir(),
+                                        common.get_arch_triplet())
+
+        self.assertEqual(2, self.run_mock.call_count)
+        for call_args in self.run_mock.call_args_list:
+            environment = call_args[1]['env']
+            for variable, value in expected.items():
+                self.assertTrue(
+                    variable in environment,
+                    'Expected variable "{}" to be in environment'.format(
+                        variable))
+
+                self.assertEqual(
+                    environment[variable], value,
+                    'Expected ${}={}, but it was {}'.format(
+                        variable, value, environment[variable]))
