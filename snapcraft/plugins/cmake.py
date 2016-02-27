@@ -34,6 +34,7 @@ import os
 import shutil
 
 import snapcraft.plugins.make
+from snapcraft import common
 
 
 class CMakePlugin(snapcraft.plugins.make.MakePlugin):
@@ -69,5 +70,21 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             sourcedir = self.sourcedir
 
         self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
-                 self.options.configflags)
-        self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+                 self.options.configflags, env=self._build_environment())
+        self.run(['make', 'install', 'DESTDIR=' + self.installdir],
+                 env=self._build_environment())
+
+    def _build_environment(self):
+        env = os.environ.copy()
+        env['CMAKE_PREFIX_PATH'] = '$CMAKE_PREFIX_PATH:{}'.format(
+            common.get_stagedir())
+        env['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
+            ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
+             '{0}/usr/include/{1}']).format(common.get_stagedir(),
+                                            common.get_arch_triplet())
+        env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
+            ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
+             '{0}/usr/lib/{1}']).format(common.get_stagedir(),
+                                        common.get_arch_triplet())
+
+        return env
