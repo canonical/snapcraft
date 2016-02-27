@@ -37,7 +37,10 @@ class _StderrFilter(logging.Filter):
         return record.levelno >= logging.ERROR
 
 
-def configure(logger_name=None):
+def configure(logger_name=None, log_level=None):
+    if not log_level:
+        log_level = logging.INFO
+
     if not os.isatty(1) and not sys.stdout.line_buffering:
         # Line buffering makes logs easier to handle.
         sys.stdout.flush()
@@ -64,7 +67,7 @@ def configure(logger_name=None):
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)
 
     # INFO from the requests lib is too noisy
     logging.getLogger("requests").setLevel(logging.WARNING)

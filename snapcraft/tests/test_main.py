@@ -16,6 +16,7 @@
 
 import io
 import mock
+import logging
 import pkg_resources
 import sys
 
@@ -50,6 +51,7 @@ class TestMain(TestCase):
     def test_invalid_command(self, mock_docopt):
         mock_docopt.return_value = {
             'COMMAND': 'invalid',
+            '--debug': False,
             'ARGS': [],
         }
 
@@ -62,18 +64,22 @@ class TestMain(TestCase):
     def test_default_command_is_snap(self, mock_docopt):
         mock_docopt.return_value = {
             'COMMAND': '',
+            '--debug': False,
             'ARGS': [],
         }
         with mock.patch('snapcraft.commands.snap.main') as mock_cmd:
             snapcraft.main.main()
             mock_cmd.assert_called_once_with(argv=[])
 
+    @mock.patch('snapcraft.log.configure')
     @mock.patch('snapcraft.main.docopt')
-    def test_command_error(self, mock_docopt):
+    def test_command_error(self, mock_docopt, mock_log_configure):
         mock_docopt.return_value = {
             'COMMAND': 'help',
+            '--debug': False,
             'ARGS': [],
         }
+
         with mock.patch('snapcraft.commands.help.main') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
 
@@ -81,6 +87,29 @@ class TestMain(TestCase):
                 snapcraft.main.main()
 
         self.assertEqual(str(cm.exception), 'some error')
+        mock_log_configure.assert_called_once_with(log_level=logging.INFO)
+
+    @mock.patch('snapcraft.log.configure')
+    @mock.patch('snapcraft.main.docopt')
+    def test_command_error_debug(self, mock_docopt, mock_log_configure):
+        mock_docopt.return_value = {
+            'COMMAND': 'help',
+            '--debug': True,
+            'ARGS': [],
+        }
+
+        with mock.patch('snapcraft.commands.help.main') as mock_cmd:
+            mock_cmd.side_effect = Exception('some error')
+
+            # When verbose, the exception should be re-raised instead of
+            # SystemExit. Note that this test works since SystemExit doesn't
+            # inherit from Exception.
+            with self.assertRaises(Exception) as cm:
+                snapcraft.main.main()
+
+        self.assertEqual(str(cm.exception), 'some error')
+        mock_log_configure.assert_called_once_with(
+            log_level=logging.DEBUG)
 
     @mock.patch('pkg_resources.require')
     @mock.patch('sys.stdout', new_callable=io.StringIO)
