@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - configflags:
       (list of strings)
       configure flags to pass to the build using the common cmake semantics.
+    - install-via:
+      (enum, 'destdir' or 'prefix'; default 'destdir')
+      Whether to install via DESTDIR or CMAKE_INSTALL_PREFIX
 """
 
 import os
@@ -51,11 +54,24 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             'default': [],
         }
 
+        schema['properties']['install-via'] = {
+            'enum': ['destdir', 'prefix'],
+            'default': 'destdir',
+        }
+
         return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
         self.build_packages.append('cmake')
+
+        if options.install_via == 'destdir':
+            self.install_via_destdir = True
+        elif options.install_via == 'prefix':
+            self.install_via_destdir = False
+        else:
+            raise RuntimeError('Unsupported installation method: "{}"'.format(
+                options.install_via))
 
     def build(self):
         if os.path.exists(self.builddir):
@@ -68,6 +84,15 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         else:
             sourcedir = self.sourcedir
 
-        self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
-                 self.options.configflags)
-        self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+        cmake_command = ['cmake', sourcedir]
+        make_command = ['make', 'install']
+
+        if self.install_via_destdir:
+            cmake_command.append('-DCMAKE_INSTALL_PREFIX=')
+            make_command.append('DESTDIR=' + self.installdir)
+        else:
+            cmake_command.append('-DCMAKE_INSTALL_PREFIX={}'.format(
+                self.installdir))
+
+        self.run(cmake_command + self.options.configflags)
+        self.run(make_command)
