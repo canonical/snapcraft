@@ -19,6 +19,7 @@ import logging
 import re
 import shlex
 import shutil
+import subprocess
 import tempfile
 
 import yaml
@@ -49,6 +50,10 @@ _OPTIONAL_PACKAGE_KEYS = [
 _OPTIONAL_HOOKS = [
     'config',
 ]
+
+
+class CommandError(Exception):
+    pass
 
 
 def create(config_data):
@@ -198,17 +203,8 @@ def _wrap_exe(command, basename=None):
 
     wrapexec = '$SNAP/{}'.format(execparts[0])
     if not os.path.exists(exepath) and '/' not in execparts[0]:
-        # If it doesn't exist it might be in the path
-        logger.debug('Checking to see if {!r} is in the $PATH'.format(
-            execparts[0]))
-        with tempfile.NamedTemporaryFile('w+') as tempf:
-            script = ('#!/bin/sh\n' +
-                      '{}\n'.format(common.assemble_env()) +
-                      'which "{}"\n'.format(execparts[0]))
-            tempf.write(script)
-            tempf.flush()
-            common.run(['/bin/sh', tempf.name], cwd=snap_dir)
-            wrapexec = execparts[0]
+        _find_bin(execparts[0], snap_dir)
+        wrapexec = execparts[0]
     else:
         with open(exepath, 'rb') as exefile:
             # If the file has a she-bang, the path might be pointing to
@@ -222,10 +218,28 @@ def _wrap_exe(command, basename=None):
     return os.path.relpath(wrappath, snap_dir)
 
 
+def _find_bin(binary, basedir):
+    # If it doesn't exist it might be in the path
+    logger.debug('Checking that {!r} is in the $PATH'.format(binary))
+    script = ('#!/bin/sh\n' +
+              '{}\n'.format(common.assemble_env()) +
+              'which "{}"\n'.format(binary))
+    with tempfile.NamedTemporaryFile('w+') as tempf:
+        tempf.write(script)
+        tempf.flush()
+        try:
+            common.run(['/bin/sh', tempf.name], cwd=basedir)
+        except subprocess.CalledProcessError:
+            raise CommandError(binary)
+
+
 def _wrap_apps(apps):
     for app in apps:
         for k in [k for k in ('command', 'stop-command') if k in apps[app]]:
-            apps[app][k] = _wrap_exe(
-                apps[app][k], '{}-{}'.format(k, app))
-
+            try:
+                apps[app][k] = _wrap_exe(apps[app][k], '{}-{}'.format(k, app))
+            except CommandError as e:
+                raise EnvironmentError(
+                    'The specified command {!r} defined in {!r} does '
+                    'not exist or is not executable'.format(str(e), app))
     return apps
