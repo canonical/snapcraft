@@ -549,3 +549,50 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
+
+    def test_command_does_not_exist(self):
+        snap_dir = common.get_snapdir()
+        common.env = ['PATH={}/bin:$PATH'.format(snap_dir)]
+
+        os.mkdir(snap_dir)
+        apps = {'app1': {'command': 'command-does-not-exist'}}
+
+        with self.assertRaises(EnvironmentError) as raised:
+            meta._wrap_apps(apps)
+        self.assertEqual(
+            "The specified command 'command-does-not-exist' defined in 'app1' "
+            "does not exist or is not executable",
+            str(raised.exception))
+
+    def test_command_is_not_executable(self):
+        snap_dir = common.get_snapdir()
+        common.env = ['PATH={}/bin:$PATH'.format(snap_dir)]
+
+        apps = {'app1': {'command': 'command-not-executable'}}
+
+        cmd_path = os.path.join(snap_dir, 'bin', apps['app1']['command'])
+        os.makedirs(os.path.dirname(cmd_path))
+        open(cmd_path, 'w').close()
+
+        with self.assertRaises(EnvironmentError) as raised:
+            meta._wrap_apps(apps)
+        self.assertEqual(
+            "The specified command 'command-not-executable' defined in 'app1' "
+            "does not exist or is not executable",
+            str(raised.exception))
+
+    def test_command_found(self):
+        snap_dir = common.get_snapdir()
+        common.env = ['PATH={}/bin:$PATH'.format(snap_dir)]
+
+        apps = {'app1': {'command': 'command-executable'}}
+
+        cmd_path = os.path.join(snap_dir, 'bin', apps['app1']['command'])
+        os.makedirs(os.path.dirname(cmd_path))
+        open(cmd_path, 'w').close()
+        os.chmod(cmd_path, 0o755)
+
+        wrapped_apps = meta._wrap_apps(apps)
+
+        self.assertEqual(wrapped_apps,
+                         {'app1': {'command': 'command-app1.wrapper'}})
