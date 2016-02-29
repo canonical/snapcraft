@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+from snapcraft import BasePlugin
 
 
-class LocalPlugin(snapcraft.BasePlugin):
+class LocalPlugin(BasePlugin):
     def build(self):
         return self.run(['touch', 'build-stamp'], self.installdir)

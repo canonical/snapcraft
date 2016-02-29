@@ -273,8 +273,13 @@ def _expand_env(attr):
 
 def _get_plugin(module):
     for attr in vars(module).values():
-        if isinstance(attr, type) and issubclass(attr, snapcraft.BasePlugin):
-            return attr
+        if not isinstance(attr, type):
+            continue
+        if not issubclass(attr, snapcraft.BasePlugin):
+            continue
+        if attr == snapcraft.BasePlugin:
+            continue
+        return attr
 
 
 def _load_local(module_name):
