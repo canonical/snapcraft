@@ -30,6 +30,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         class Options:
             configflags = []
+            install_via = 'destdir'
 
         self.options = Options()
 
@@ -40,10 +41,14 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def test_schema(self):
         schema = autotools.AutotoolsPlugin.schema()
 
+        # Verify the presence of all properties
         properties = schema['properties']
         self.assertTrue('configflags' in properties,
                         'Expected "configflags" to be included in properties')
+        self.assertTrue('install-via' in properties,
+                        'Expected "install-via" to be included in properties')
 
+        # Check configflags property
         configflags = properties['configflags']
         for item in ['type', 'minitems', 'uniqueItems', 'items', 'default']:
             self.assertTrue(item in configflags,
@@ -78,8 +83,31 @@ class AutotoolsPluginTestCase(tests.TestCase):
                          '"string", but it was "{}"'
                          .format(configflags_items_type))
 
-    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
-    def test_build_configure(self, run_mock):
+        # Check install-via property
+        installvia = properties['install-via']
+        self.assertTrue('enum' in installvia,
+                        'Expected "enum" to be included in "install-via"')
+        self.assertTrue('default' in installvia,
+                        'Expected "default" to be included in "install-via"')
+
+        installvia_enum = installvia['enum']
+        # Using sets for order independence in the comparison
+        self.assertEqual(set(['destdir', 'prefix']), set(installvia_enum))
+
+        installvia_default = installvia['default']
+        self.assertEqual(installvia_default, 'destdir',
+                         'Expected "install-via" "default" to be "destdir", '
+                         'but it was "{}"'.format(installvia_default))
+
+    def test_install_via_invalid_enum(self):
+        self.options.install_via = 'invalid'
+        with self.assertRaises(RuntimeError) as raised:
+            autotools.AutotoolsPlugin('test-part', self.options)
+
+        self.assertEqual(str(raised.exception),
+                         'Unsupported installation method: "invalid"')
+
+    def build_with_configure(self):
         plugin = autotools.AutotoolsPlugin('test-part', self.options)
         os.makedirs(plugin.sourcedir)
 
@@ -90,6 +118,12 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         plugin.build()
 
+        return plugin
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_configure_with_destdir(self, run_mock):
+        plugin = self.build_with_configure()
+
         self.assertEqual(3, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['./configure', '--prefix=']),
@@ -99,7 +133,19 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
-    def test_build_autogen(self, run_mock):
+    def test_build_configure_with_prefix(self, run_mock):
+        self.options.install_via = 'prefix'
+        plugin = self.build_with_configure()
+
+        self.assertEqual(3, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['./configure', '--prefix={}'.format(
+                plugin.installdir)]),
+            mock.call(['make']),
+            mock.call(['make', 'install'])
+        ])
+
+    def build_with_autogen(self):
         plugin = autotools.AutotoolsPlugin('test-part', self.options)
         os.makedirs(plugin.sourcedir)
 
@@ -109,6 +155,12 @@ class AutotoolsPluginTestCase(tests.TestCase):
                  stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
         plugin.build()
+
+        return plugin
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autogen_with_destdir(self, run_mock):
+        plugin = self.build_with_autogen()
 
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
@@ -120,13 +172,32 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
-    def test_build_autoreconf(self, run_mock):
+    def test_build_autogen_with_prefix(self, run_mock):
+        self.options.install_via = 'prefix'
+        plugin = self.build_with_autogen()
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
+            mock.call(['./configure', '--prefix={}'.format(
+                plugin.installdir)]),
+            mock.call(['make']),
+            mock.call(['make', 'install'])
+        ])
+
+    def build_with_autoreconf(self):
         plugin = autotools.AutotoolsPlugin('test-part', self.options)
         os.makedirs(plugin.sourcedir)
 
         # No configure or autogen.sh.
 
         plugin.build()
+
+        return plugin
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autoreconf_with_destdir(self, run_mock):
+        plugin = self.build_with_autoreconf()
 
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
@@ -135,6 +206,20 @@ class AutotoolsPluginTestCase(tests.TestCase):
             mock.call(['make']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
+        ])
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autoreconf_with_prefix(self, run_mock):
+        self.options.install_via = 'prefix'
+        plugin = self.build_with_autoreconf()
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['autoreconf', '-i']),
+            mock.call(['./configure', '--prefix={}'.format(
+                plugin.installdir)]),
+            mock.call(['make']),
+            mock.call(['make', 'install'])
         ])
 
     @mock.patch('sys.stdout')

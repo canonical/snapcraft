@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,6 +32,10 @@ In additon, this plugin uses the following plugin-specific keywords:
       (list of strings)
       configure flags to pass to the build such as those shown by running
       './configure --help'
+    - install-via:
+      (enum, 'destdir' or 'prefix')
+      Whether to install via DESTDIR or by using --prefix (default is
+      'destdir')
 """
 
 import os
@@ -55,6 +59,11 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
+        schema['properties']['install-via'] = {
+            'enum': ['destdir', 'prefix'],
+            'default': 'destdir',
+        }
+
         return schema
 
     def __init__(self, name, options):
@@ -66,6 +75,14 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             'libtool',
             'make',
         ])
+
+        if options.install_via == 'destdir':
+            self.install_via_destdir = True
+        elif options.install_via == 'prefix':
+            self.install_via_destdir = False
+        else:
+            raise RuntimeError('Unsupported installation method: "{}"'.format(
+                options.install_via))
 
     def build(self):
         super().build()
@@ -82,6 +99,17 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
                 self.run(['env', 'NOCONFIGURE=1', './autogen.sh'])
             else:
                 self.run(['autoreconf', '-i'])
-        self.run(['./configure', '--prefix='] + self.options.configflags)
+
+        configure_command = ['./configure']
+        make_install_command = ['make', 'install']
+
+        if self.install_via_destdir:
+            # Use an empty prefix since we'll install via DESTDIR
+            configure_command.append('--prefix=')
+            make_install_command.append('DESTDIR=' + self.installdir)
+        else:
+            configure_command.append('--prefix=' + self.installdir)
+
+        self.run(configure_command + self.options.configflags)
         self.run(['make'])
-        self.run(['make', 'install', 'DESTDIR=' + self.installdir])
+        self.run(make_install_command)
