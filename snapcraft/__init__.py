@@ -178,8 +178,14 @@ class BasePlugin:
         self.options = options
         self.partdir = os.path.join(common.get_partsdir(), self.name)
         self.sourcedir = os.path.join(self.partdir, 'src')
-        self.builddir = os.path.join(self.partdir, 'build')
         self.installdir = os.path.join(self.partdir, 'install')
+
+        self.build_basedir = os.path.join(self.partdir, 'build')
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir:
+            self.builddir = os.path.join(self.build_basedir, source_subdir)
+        else:
+            self.builddir = self.build_basedir
 
     # The API
     def pull(self):
@@ -199,25 +205,20 @@ class BasePlugin:
         enhance with custom pull logic.
         """
         if getattr(self.options, 'source', None):
-            sources.get(self.sourcedir, self.builddir, self.options)
+            sources.get(self.sourcedir, self.build_basedir, self.options)
 
     def build(self):
         """Build the source code retrieved from the pull phase.
 
-        The base implementation only copies sourcedir to builddir. Override
-        this method if you need to process the source code to make it runnable.
+        The base implementation only copies sourcedir to build_basedir.
+        Override this method if you need to process the source code to make it
+        runnable.
         """
-        if os.path.exists(self.builddir):
-            shutil.rmtree(self.builddir)
-
-        source_subdir = getattr(self.options, 'source_subdir', None)
-        if source_subdir:
-            sourcedir = os.path.join(self.sourcedir, source_subdir)
-        else:
-            sourcedir = self.sourcedir
+        if os.path.exists(self.build_basedir):
+            shutil.rmtree(self.build_basedir)
 
         shutil.copytree(
-            sourcedir, self.builddir, symlinks=True,
+            self.sourcedir, self.build_basedir, symlinks=True,
             ignore=lambda d, s: common.SNAPCRAFT_FILES
             if d is self.sourcedir else [])
 
