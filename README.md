@@ -1,5 +1,7 @@
 [![Build Status][travis-image]][travis-url] [![Coverage Status][coveralls-image]][coveralls-url]
 
+
+
 # Snapcraft
 
 Snapcraft is a delightful packaging tool
