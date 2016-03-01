@@ -113,6 +113,10 @@ class Config:
         self.after_requests = {}
 
         self.data = _snapcraft_yaml_load()
+
+        # To make the transition less painful
+        self._remap_skills_to_interfaces()
+
         _validate_snapcraft_yaml(self.data)
 
         self.build_tools = self.data.get('build-packages', [])
@@ -151,6 +155,22 @@ class Config:
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [common.get_arch(), ]
+
+    def _remap_skills_to_interfaces(self):
+        if 'uses' in self.data:
+            logger.warning(
+                "DEPRECATED: Instances of 'uses' remapped to 'slots'")
+            self.data['slots'] = self.data['uses']
+            del self.data['uses']
+
+        for slot in self.data.get('slots', []):
+            if self.data['slots'][slot].get('type', '') == 'migration-skill':
+                self.data['slots'][slot]['type'] = 'old-security'
+        for app in self.data.get('apps', []):
+            if 'uses' in self.data['apps'][app]:
+                self.data['apps'][app]['slots'] = \
+                    self.data['apps'][app]['uses']
+                del self.data['apps'][app]['uses']
 
     def _compute_part_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''
