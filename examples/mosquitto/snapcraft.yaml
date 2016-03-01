@@ -7,20 +7,20 @@ apps:
   mosquitto:
     command: usr/sbin/mosquitto -c $SNAP/mosquitto.conf
     daemon: simple
-    uses: [listener-service]
+    slots: [listener-service]
   subscribe:
     command: bin/subscribe
-    uses: [listener-service]
+    slots: [listener]
   publish:
     command: bin/publish
-    uses: [listener-service]
+    slots: [listener]
 
-uses:
+slots:
   listener:
-    type: migration-skill
+    type: old-security
     caps: [network-listener]
   listener-service:
-    type: migration-skill
+    type: old-security
     caps: [network-listener, network-service]
     security-override:
       read-paths:

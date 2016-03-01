@@ -8,12 +8,11 @@ apps:
   gopaste:
     command: bin/gopaste
     daemon: simple
-    uses:
-      - gopaste-permissions
+    slots:
+      - old-security
 
-uses:
-  gopaste-permissions:
-    type: migration-skill
+slots:
+  old-security:
     caps:
       - network-listener
       - network-service
