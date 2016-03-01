@@ -6,26 +6,39 @@ python:
 virtualenv:
   system_site_packages: true
 env:
-  global:
-  # Encrypted Coveralls token. The secret token for your repository can be found at the
-  # bottom of your repository's page on Coveralls. To encrypt it, install the travis gem
-  # and run:
-  #     travis encrypt -r ubuntu-core/snappy COVERALLS_TOKEN=$secret_token
-  - secure: JJEh1YfzNJGb1//ca447JtRunHmNXsVDGy5fS882/RQV3XtS9mCaSS+PZF4AbVABSiDw96mvwv05KmhdgV575y0NVHuRPd3rJBku9HOmhOKfCykn5tXgVJUEgeW5HIPusltRkXJUxnm48l+RfHHJU1h6iJnpGjvwxygeQljM4d22+G493ymvv4KZJSnbtuDbmhWvnZtdV2cCFeZ+EWqLgyWaFQmMgeMkYYcY3Cy19d++WquLs4woN9S9szrXJQlIv3xuZ8XNLbWmHoe6uD4y1Fn7YYfRgz861KqusxcGO9OyCh1S6uLgDuETS4Uw2zBg77vv59jSJieEfcY8jQtFE65axot/90jwhp5IV0tIpd9O/AMZXIGqKk44RU+Sj9gDbPbBIhj9dew3BTwSuOcNITSg1a4sOkxHGyIj2NozCkgFqPq0d4RM7xRrOYfnmjP1sJ+tEH4XMbs4gNZ/abccJXeUx6i5qWhDdnix132C62vvl+ItnsfMtkXQ34hluYxoab+rS0Zz3MM/ENqHySvU/R2n7+WTVXHyoK55HvExX7Y+McqPU2uVsHDabmDmQfcYom9nDY1OTBM3JbTOuqtIrzSIlFYdogyttXrTsmSue8TAoWWnHirKdkzeskIs5ZbI/pfGV3eRol+9Mn0MtmaoLp1VrAtSiZYwPRdcIGBDNMQ=
   matrix:
-  - TEST_SUITE=unit
-  - TEST_SUITE=plainbox
-  - TEST_SUITE="examples --skip-install"
+  - DIST=trusty TEST_SUITE=unit
+  - DIST=vivid TEST_SUITE=unit
+  - DIST=trusty TEST_SUITE=plainbox
+  - DIST=vivid TEST_SUITE=plainbox
+  - DIST=trusty TEST_SUITE="examples --skip-install"
+  - DIST=vivid TEST_SUITE="examples --skip-install"
 
 install:
-  # PPA for plainbox.
-  - sudo apt-add-repository -y ppa:hardware-certification/public
-  # PPA for snappy.
-  - sudo apt-add-repository -y ppa:snappy-dev/tools-proposed
+  - sudo apt-add-repository -y ppa:ubuntu-lxc/lxd-stable
   - sudo apt-get update -qq
-  - sudo apt-get install -qq build-essential dpkg-dev plainbox pyflakes python3-apt python3-coverage python3-fixtures python3-jsonschema python3-mccabe python3-pep8 python3-requests python3-testscenarios python3-testtools python3-yaml ubuntu-snappy-cli python3-lxml
+  - sudo apt-get -o Dpkg::Options::="--force-confnew" -y dist-upgrade || true
+  - sudo apt-get install -qq lxd lxcfs || true
+before_script:
+  - sudo lxd-images import ubuntu $DIST --stream daily --alias ubuntu
+  - sudo lxc launch ubuntu $DIST
+  # Wait for the container to get an IP address.
+  - while ! sudo lxc info $DIST | grep -q eth0.*IPV4; do sleep 5s; done
+  # Allow the container user to do everything on the repository.
+  - sudo chmod 777 $(pwd)
+  # Mount the repository directory in the container.
+  - sudo lxc config device add $DIST /dev/sda1 disk source=$(pwd) path=$(pwd)
+  # PPA for plainbox.
+  - sudo lxc exec $DIST -- apt-add-repository -y ppa:hardware-certification/public
+  # PPA for snappy.
+  - sudo lxc exec $DIST -- apt-add-repository -y ppa:snappy-dev/tools-proposed
+  - sudo lxc exec $DIST -- apt-get update
+  - sudo lxc exec xenial -- apt-get install -y devscripts equivs
+  - sudo lxc exec xenial -- mk-build-deps --install --tool "apt-get -y" --build-dep debian/control
+  - sudo lxc exec $DIST -- apt-get install -y build-essential dpkg-dev git mercurial plainbox pyflakes python3-coverage python3-mccabe python3-pep8 python3-pip python3-testtools
 script:
-  - ./runtests.sh $TEST_SUITE
+  - sudo lxc exec $DIST -- su - ubuntu -c "cd $(pwd); ./runtests.sh $TEST_SUITE'"
 after_success:
+  - sudo apt-get install -qq python3-coverage || true
   - pip install coveralls
-  - COVERALLS_REPO_TOKEN=$COVERALLS_TOKEN coveralls
+  - coveralls
