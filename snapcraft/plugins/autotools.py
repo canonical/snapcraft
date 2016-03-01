@@ -42,6 +42,7 @@ import os
 import stat
 
 import snapcraft
+import snapcraft.common
 
 
 class AutotoolsPlugin(snapcraft.BasePlugin):
@@ -111,5 +112,6 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             configure_command.append('--prefix=' + self.installdir)
 
         self.run(configure_command + self.options.configflags)
-        self.run(['make'])
+        self.run(['make', '-j{}'.format(
+            snapcraft.common.get_parallel_build_count())])
         self.run(make_install_command)

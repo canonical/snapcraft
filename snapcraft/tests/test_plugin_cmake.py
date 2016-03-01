@@ -39,6 +39,11 @@ class CMakeTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
+        self.get_parallel_build_count_mock = patcher.start()
+        self.get_parallel_build_count_mock.return_value = 2
+        self.addCleanup(patcher.stop)
+
     def test_build_referencing_sourcedir_if_no_subdir(self):
         class Options:
             configflags = []
@@ -47,9 +52,12 @@ class CMakeTestCase(tests.TestCase):
         os.makedirs(plugin.builddir)
         plugin.build()
 
+        self.get_parallel_build_count_mock.assert_called_with()
+
         self.run_mock.assert_has_calls([
             mock.call(['cmake', plugin.sourcedir, '-DCMAKE_INSTALL_PREFIX='],
                       cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)],
                       cwd=plugin.builddir, env=mock.ANY)])
@@ -63,11 +71,14 @@ class CMakeTestCase(tests.TestCase):
         os.makedirs(plugin.builddir)
         plugin.build()
 
+        self.get_parallel_build_count_mock.assert_called_with()
+
         sourcedir = os.path.join(
             plugin.sourcedir, plugin.options.source_subdir)
         self.run_mock.assert_has_calls([
             mock.call(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='],
                       cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)],
                       cwd=plugin.builddir, env=mock.ANY)])
@@ -93,7 +104,7 @@ class CMakeTestCase(tests.TestCase):
              '{0}/usr/lib/{1}']).format(common.get_stagedir(),
                                         common.get_arch_triplet())
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertEqual(3, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:
             environment = call_args[1]['env']
             for variable, value in expected.items():

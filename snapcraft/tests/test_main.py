@@ -21,6 +21,7 @@ import pkg_resources
 import sys
 
 import snapcraft.main
+import snapcraft.common
 
 from snapcraft.tests import TestCase
 
@@ -52,6 +53,7 @@ class TestMain(TestCase):
         mock_docopt.return_value = {
             'COMMAND': 'invalid',
             '--debug': False,
+            '--no-parallel-build': False,
             'ARGS': [],
         }
 
@@ -65,6 +67,7 @@ class TestMain(TestCase):
         mock_docopt.return_value = {
             'COMMAND': '',
             '--debug': False,
+            '--no-parallel-build': False,
             'ARGS': [],
         }
         with mock.patch('snapcraft.commands.snap.main') as mock_cmd:
@@ -77,6 +80,7 @@ class TestMain(TestCase):
         mock_docopt.return_value = {
             'COMMAND': 'help',
             '--debug': False,
+            '--no-parallel-build': False,
             'ARGS': [],
         }
 
@@ -95,6 +99,7 @@ class TestMain(TestCase):
         mock_docopt.return_value = {
             'COMMAND': 'help',
             '--debug': True,
+            '--no-parallel-build': False,
             'ARGS': [],
         }
 
@@ -110,6 +115,38 @@ class TestMain(TestCase):
         self.assertEqual(str(cm.exception), 'some error')
         mock_log_configure.assert_called_once_with(
             log_level=logging.DEBUG)
+
+    @mock.patch('snapcraft.main.docopt')
+    def test_command_parallel_build(self, mock_docopt):
+        mock_docopt.return_value = {
+            'COMMAND': 'help',
+            '--debug': False,
+            '--no-parallel-build': False,
+            'ARGS': [],
+        }
+
+        self.assertTrue(snapcraft.common.get_enable_parallel_builds())
+
+        with mock.patch('snapcraft.commands.help.main'):
+            snapcraft.main.main()
+
+        self.assertTrue(snapcraft.common.get_enable_parallel_builds())
+
+    @mock.patch('snapcraft.main.docopt')
+    def test_command_disable_parallel_build(self, mock_docopt):
+        mock_docopt.return_value = {
+            'COMMAND': 'help',
+            '--debug': False,
+            '--no-parallel-build': True,
+            'ARGS': [],
+        }
+
+        self.assertTrue(snapcraft.common.get_enable_parallel_builds())
+
+        with mock.patch('snapcraft.commands.help.main'):
+            snapcraft.main.main()
+
+        self.assertFalse(snapcraft.common.get_enable_parallel_builds())
 
     @mock.patch('pkg_resources.require')
     @mock.patch('sys.stdout', new_callable=io.StringIO)

@@ -36,6 +36,11 @@ class MakePluginTestCase(tests.TestCase):
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
+        self.get_parallel_build_count_mock = patcher.start()
+        self.get_parallel_build_count_mock.return_value = 2
+        self.addCleanup(patcher.stop)
+
     def test_schema(self):
         schema = make.MakePlugin.schema()
 
@@ -59,9 +64,11 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
+        self.get_parallel_build_count_mock.assert_called_with()
+
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make']),
+            mock.call(['make', '-j2']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])
@@ -74,9 +81,11 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
+        self.get_parallel_build_count_mock.assert_called_with()
+
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-f', 'makefile.linux']),
+            mock.call(['make', '-f', 'makefile.linux', '-j2']),
             mock.call(['make', '-f', 'makefile.linux', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])

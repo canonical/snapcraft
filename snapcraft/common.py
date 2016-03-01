@@ -17,6 +17,8 @@
 # Data/methods shared between plugins and snapcraft
 
 import glob
+import logging
+import multiprocessing
 import os
 import platform
 import subprocess
@@ -26,6 +28,8 @@ import urllib
 
 SNAPCRAFT_FILES = ['snapcraft.yaml', 'parts', 'stage', 'snap']
 COMMAND_ORDER = ['pull', 'build', 'stage', 'strip']
+_DEFAULT_ENABLE_PARALLEL_BUILDS = True
+_enable_parallel_builds = _DEFAULT_ENABLE_PARALLEL_BUILDS
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
@@ -33,6 +37,8 @@ _schemadir = _DEFAULT_SCHEMADIR
 _arch = None
 
 env = []
+
+logger = logging.getLogger(__name__)
 
 
 def assemble_env():
@@ -144,6 +150,27 @@ def set_schemadir(schemadir):
 
 def get_schemadir():
     return _schemadir
+
+
+def set_enable_parallel_builds(enable):
+    global _enable_parallel_builds
+    _enable_parallel_builds = enable
+
+
+def get_enable_parallel_builds():
+    return _enable_parallel_builds
+
+
+def get_parallel_build_count():
+    build_count = 1
+    if get_enable_parallel_builds():
+        try:
+            build_count = multiprocessing.cpu_count()
+        except NotImplementedError:
+            logger.warning('Unable to determine CPU count; disabling parallel '
+                           'builds')
+
+    return build_count
 
 
 def get_python2_path(root):
