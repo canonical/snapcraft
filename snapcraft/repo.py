@@ -26,7 +26,6 @@ import stat
 import subprocess
 import urllib
 import urllib.request
-import sys
 
 import apt
 from xml.etree import ElementTree
@@ -75,10 +74,10 @@ def install_build_packages(packages):
             try:
                 if not apt_cache[pkg].installed:
                     new_packages.append(pkg)
-            except KeyError:
-                logger.error('Could not find all the "build-packages" '
-                             'required in snapcraft.yaml')
-                sys.exit(1)
+            except KeyError as e:
+                raise EnvironmentError(
+                    "Could not find a required package in "
+                    "'build-packages': {}".format(str(e)))
     if new_packages:
         logger.info(
             'Installing build dependencies: %s', ' '.join(new_packages))
