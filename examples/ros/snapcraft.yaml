@@ -6,11 +6,11 @@ description: Contains talker/listener ROS packages and a .launch file.
 apps:
   launch-project:
     command: roslaunch listener talk_and_listen.launch
-    uses: [listener]
+    slots: [listener]
 
-uses:
+slots:
   listener:
-    type: migration-skill
+    type: old-security
     caps: [network-listener]
 
 parts:

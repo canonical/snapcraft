@@ -10,11 +10,11 @@ apps:
  tomcat:
    command: bin/wrapper
    daemon: simple
-   uses: [listener-service]
+   slots: [listener-service]
 
-uses:
+slots:
   listener-service:
-    type: migration-skill
+    type: old-security
     caps: [network-listener, network-service]
 
 parts:
