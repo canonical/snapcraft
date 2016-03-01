@@ -91,6 +91,22 @@ class CommonTestCase(tests.TestCase):
                 with open(file_info['path'], 'r') as f:
                     self.assertEqual(f.read(), file_info['expected'])
 
+    @patch('multiprocessing.cpu_count')
+    def test_get_parallel_build_count(self, mock_cpu_count):
+        mock_cpu_count.return_value = 3
+        self.assertEqual(common.get_parallel_build_count(), 3)
+
+    @patch('multiprocessing.cpu_count')
+    def test_get_parallel_build_count_disabled(self, mock_cpu_count):
+        common.set_enable_parallel_builds(False)
+        mock_cpu_count.return_value = 3
+        self.assertEqual(common.get_parallel_build_count(), 1)
+
+    @patch('multiprocessing.cpu_count')
+    def test_get_parallel_build_count_handle_exception(self, mock_cpu_count):
+        mock_cpu_count.side_effect = NotImplementedError
+        self.assertEqual(common.get_parallel_build_count(), 1)
+
 
 class ArchTestCase(testtools.TestCase):
 
