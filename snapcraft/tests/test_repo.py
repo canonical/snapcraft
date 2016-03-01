@@ -156,3 +156,15 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
 
                 with open(f['path'], 'r') as fd:
                     self.assertEqual(fd.read(), f['expected'])
+
+
+class BuildPackagesTestCase(tests.TestCase):
+
+    def test_invalid_package_requested(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            repo.install_build_packages(['package-does-not-exist'])
+
+        self.assertEqual(
+            "Could not find a required package in 'build-packages': "
+            '"The cache has no package named \'package-does-not-exist\'"',
+            str(raised.exception))
