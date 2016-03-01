@@ -54,14 +54,14 @@ definitions:
   security-template:
       type: string
       description: alternate security template to use instead of default.
-  migration-skill:
+  old-security:
     type: object
     additionalProperties: false
     properties:
         type:
           type: string
           enum:
-            - migration-skill
+            - old-security
         security-policy:
           $ref: "#definitions/security-policy"
         security-override:
@@ -168,13 +168,13 @@ properties:
             enum:
               - simple
               - forking
-          uses:
+          slots:
             type: array
             minitems: 1
             uniqueItems: true
             items:
               type: string
-          offers:
+          plugs:
             type: array
             minitems: 1
             uniqueItems: true
@@ -237,13 +237,13 @@ properties:
             items:
               type: string
             default: ['*']
-  uses:
+  slots:
     type: object
     additionalProperties: false
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
         oneOf:
-          - $ref: "#definitions/migration-skill"
+          - $ref: "#definitions/old-security"
   offers:
   # TODO: We have no real use case for this now, but when the snappy
   # functionality comes we don't want to block people from experimenting
