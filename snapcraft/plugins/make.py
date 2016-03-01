@@ -31,6 +31,7 @@ Additionally, this plugin uses the following plugin-specific keyword:
 """
 
 import snapcraft
+import snapcraft.common
 
 
 class MakePlugin(snapcraft.BasePlugin):
@@ -56,5 +57,6 @@ class MakePlugin(snapcraft.BasePlugin):
         if self.options.makefile:
             command.extend(['-f', self.options.makefile])
 
-        self.run(command)
+        self.run(command + ['-j{}'.format(
+            snapcraft.common.get_parallel_build_count())])
         self.run(command + ['install', 'DESTDIR=' + self.installdir])

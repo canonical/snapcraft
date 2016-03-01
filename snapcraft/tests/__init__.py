@@ -49,6 +49,8 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.addCleanup(common.set_plugindir, common.get_plugindir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
+        self.addCleanup(common.set_enable_parallel_builds,
+                        common.get_enable_parallel_builds())
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
