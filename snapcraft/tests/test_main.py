@@ -20,6 +20,8 @@ import logging
 import pkg_resources
 import sys
 
+import fixtures
+
 import snapcraft.main
 import snapcraft.common
 
@@ -158,3 +160,25 @@ class TestMain(TestCase):
             snapcraft.main.main()
 
         self.assertEqual(mock_stdout.getvalue(), 'devel\n')
+
+    @mock.patch('os.umask')
+    @mock.patch('snapcraft.main.docopt')
+    def test_warn_umask(self, mock_docopt, mock_umask):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        mock_docopt.return_value = {
+            'COMMAND': 'help',
+            '--debug': False,
+            '--no-parallel-build': False,
+            'ARGS': [],
+        }
+
+        mock_umask.return_value = 0o007
+
+        with mock.patch('snapcraft.commands.help.main'):
+            snapcraft.main.main()
+
+        self.assertEqual('Umask is set to 0007. Some files may not be '
+                         'accessible from your resulting snap\n',
+                         fake_logger.output)
