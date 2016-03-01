@@ -23,11 +23,14 @@ Usage:
   snapcraft [options]
 
 Options:
-  -h --help        show this help message and exit
-  -v --version     show program version and exit
-  -V --verbose     print additional information about command execution
-  -d --debug       print debug information while executing (including
-                   backtraces)
+  -h --help              show this help message and exit
+  -v --version           show program version and exit
+  -V --verbose           print additional information about command execution
+  -d --debug             print debug information while executing (including
+                         backtraces)
+  --no-parallel-build    use only a single build job per part (the default
+                         number of jobs per part is equal to the number of
+                         CPUs)
 
 The available commands are:
   list-parts   List available parts which are like “source packages” for snaps.
@@ -43,7 +46,9 @@ The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
   cleanbuild   Create a snap using a clean environment managed by lxd.
   pull         Download or retrieve artifacts defined for a part.
-  build        Build artifacts defined for a part.
+  build        Build artifacts defined for a part. Build systems capable of
+               running parallel build jobs will do so unless
+               --no-parallel-build is specified.
   stage        Stage the part's built artifacts into the common staging area.
   strip        Final copy and preparation for the snap.
   snap         Create a snap.
@@ -66,6 +71,7 @@ from docopt import docopt
 from snapcraft import (
     log,
     commands,
+    common,
 )
 
 logger = logging.getLogger(__name__)
@@ -109,6 +115,8 @@ def main():
         log_level = logging.DEBUG
 
     log.configure(log_level=log_level)
+
+    common.set_enable_parallel_builds(not args['--no-parallel-build'])
 
     try:
         commands.load(cmd).main(argv=args['ARGS'])
