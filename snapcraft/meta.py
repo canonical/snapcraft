@@ -40,11 +40,11 @@ _MANDATORY_PACKAGE_KEYS = [
 
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
-    'offers',
     'type',
     'license-agreement',
     'license-version',
-    'uses',
+    'plugs',
+    'slots',
 ]
 
 _OPTIONAL_HOOKS = [

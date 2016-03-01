@@ -8,11 +8,11 @@ apps:
   webchat:
     command: bin/webchat-for-a-snap
     daemon: simple
-    uses: [listener]
+    slots: [listener]
 
-uses:
+slots:
   listener:
-    type: migration-skill
+    type: old-security
     caps: [network-listener]
 
 parts:

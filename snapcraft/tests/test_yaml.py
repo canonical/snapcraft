@@ -63,6 +63,49 @@ parts:
         self.assertFalse(mock_get_part.called)
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    def test_config_works_with_skills(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+
+apps:
+   app1:
+     command: runme
+     uses:
+       - migration
+
+uses:
+  migration:
+    type: migration-skill
+    caps:
+      - network-listener
+""")
+
+        config = snapcraft.yaml.Config()
+        self.assertEqual(
+            config.data,
+            {'apps': {'app1': {'command': 'runme', 'slots': ['migration']}},
+             'architectures': [snapcraft.common.get_arch()],
+             'description': 'test',
+             'name': 'test',
+             'parts': {
+                'part1': {
+                    'snap': [], 'stage': [],
+                    'stage-packages': ['fswebcam']}},
+             'slots': {
+                'migration': {
+                    'caps': ['network-listener'],
+                    'type': 'old-security'}},
+             'summary': 'test',
+             'version': '1'})
+
+    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
     def test_config_loads_with_different_encodings(
             self, mock_get_part, mock_loadPlugin):
@@ -347,11 +390,11 @@ description: test
 apps:
   foo:
     command: bar
-    uses: [migration]
+    slots: [migration]
 
-uses:
+slots:
   migration:
-    type: migration-skill
+    type: old-security
     security-policy:
       apparmor: path/profile
       seccomp: path/profile
@@ -808,12 +851,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'uses': ['file-migration'],
+                'slots': ['file-migration'],
             },
         }
-        self.data['uses'] = {
+        self.data['slots'] = {
             'file-migration': {
-                'type': 'migration-skill',
+                'type': 'old-security',
                 'security-policy': {
                     'seccomp': 'file.seccomp',
                     'apparmor': 'file.apparmor',
@@ -827,12 +870,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'uses': ['migration'],
+                'slots': ['migration'],
             },
         }
-        self.data['uses'] = {
+        self.data['slots'] = {
             'migration': {
-                'type': 'migration-skill',
+                'type': 'old-security',
                 'security-override': {
                     'read-paths': ['path1', 'path2'],
                     'write-paths': ['path1', 'path2'],
@@ -848,12 +891,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'uses': ['migration'],
+                'slots': ['old-security'],
             },
         }
-        self.data['uses'] = {
+        self.data['slots'] = {
             'migration': {
-                'type': 'migration-skill',
+                'type': 'old-security',
                 'security-template': 'unconfined',
             },
         }
@@ -864,12 +907,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'uses': ['migration'],
+                'slots': ['migration'],
             },
         }
-        self.data['uses'] = {
+        self.data['slots'] = {
             'migration': {
-                'type': 'migration-skill',
+                'type': 'old-security',
                 'caps': ['cap1', 'cap2'],
             },
         }
@@ -880,12 +923,12 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'uses': ['migration'],
+                'slots': ['migration'],
             },
         }
-        self.data['uses'] = {
+        self.data['slots'] = {
             'migration': {
-                'type': 'migration-skill',
+                'type': 'old-security',
                 'security-override': {
                     'read-paths': ['path1', 'path2'],
                     'write-paths': ['path1', 'path2'],
@@ -910,7 +953,7 @@ class TestValidation(tests.TestCase):
 
         for sec in ['security-override', 'security-template', 'caps']:
             data = copy.deepcopy(self.data)
-            del data['uses']['migration'][sec]
+            del data['slots']['migration'][sec]
             with self.subTest(key=sec):
                 with self.assertRaises(Exception) as r:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
