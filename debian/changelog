@@ -1,3 +1,12 @@
+snapcraft (1.1.0) wily; urgency=medium
+
+  [ Kyle Fazzari ]
+  * CMake plugin: Automatically find staged libs and files. (LP: #1550778)
+  * Autotools plugin: Support installing via prefix. (LP: #1544629)
+  * Copy entire source, even if source-subdir is specified. (LP: #1549676)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Tue, 01 Mar 2016 00:25:38 +0000
+
 snapcraft (1.0.2) wily; urgency=medium
 
   [ Alexander Sack ]
