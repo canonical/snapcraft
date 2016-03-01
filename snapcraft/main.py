@@ -62,6 +62,7 @@ http://developer.ubuntu.com/snappy/snapcraft
 """
 
 import logging
+import os
 import pkg_resources
 import sys
 import textwrap
@@ -114,6 +115,8 @@ def main():
     if args['--debug']:
         log_level = logging.DEBUG
 
+    # Ensure the mask is friendly enough for a snap.
+    os.umask(0)
     log.configure(log_level=log_level)
 
     common.set_enable_parallel_builds(not args['--no-parallel-build'])
