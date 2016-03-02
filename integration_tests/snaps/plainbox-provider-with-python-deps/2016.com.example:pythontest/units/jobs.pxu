@@ -1,0 +1,17 @@
+
+unit: category
+id: simple
+_name: Simple
+
+unit: job
+id: python-test
+category_id: simple
+_summary: A trivial test with python dep
+_description:
+   This simple test should exceed as long as
+   the import of external library suceeds
+plugin: shell
+estimated_duration: 0.01
+command: python_dep_test
+flags: preserve-locale
+

@@ -1,0 +1,7 @@
+#!/bin/sh
+# Set a PROVIDERPATH so that plainbox can find bundled providers:
+#   each provider is installed to /providers/$name, they are listed
+#   in a typical :-separated PATH-like variable.
+export PROVIDERPATH="$SNAP_APP_PATH/providers/simple-plainbox-provider"
+export PATH="$PATH:$SNAP_APP_PATH/usr/sbin"
+exec python3 $(which plainbox) "$@"
