@@ -168,6 +168,14 @@ properties:
             enum:
               - simple
               - forking
+          restart-condition:
+              type: string
+              enum:
+                - on-success
+                - on-failure
+                - on-abnormal
+                - on-abort
+                - always
           slots:
             type: array
             minitems: 1
