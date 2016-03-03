@@ -14,7 +14,7 @@ apps:
 
 slots:
   listener-service:
-    type: old-security
+    interface: old-security
     caps: [network-listener, network-service]
 
 parts:
