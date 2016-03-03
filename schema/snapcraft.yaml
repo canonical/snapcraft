@@ -58,7 +58,7 @@ definitions:
     type: object
     additionalProperties: false
     properties:
-        type:
+        interface:
           type: string
           enum:
             - old-security
