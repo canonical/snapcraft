@@ -734,10 +734,48 @@ class TestValidation(tests.TestCase):
             'service3': {
                 'command': 'binary3',
                 'daemon': 'forking',
+            },
+            'service4': {
+                'command': 'binary4',
+                'daemon': 'simple',
+                'restart-condition': 'always',
             }
         }
 
         snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_valid_restart_conditions(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'daemon': 'simple',
+            }
+        }
+        valid_conditions = ['always', 'on-success', 'on-failure',
+                            'on-abnormal', 'on-abort']
+
+        for condition in valid_conditions:
+            with self.subTest(key=condition):
+                self.data['apps']['service1']['restart-condition'] = condition
+                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+    def test_invalid_restart_condition(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'daemon': 'simple',
+                'restart-condition': 'on-watchdog',
+            }
+        }
+
+        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+
+        self.assertEqual(
+            "The 'restart-condition' property does not match the required "
+            "schema: 'on-watchdog' is not one of ['on-success', "
+            "'on-failure', 'on-abnormal', 'on-abort', 'always']",
+            str(raised.exception))
 
     def test_invalid_app_names(self):
         invalid_names = {
