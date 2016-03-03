@@ -164,8 +164,12 @@ class Config:
             del self.data['uses']
 
         for slot in self.data.get('slots', []):
-            if self.data['slots'][slot].get('type', '') == 'migration-skill':
-                self.data['slots'][slot]['type'] = 'old-security'
+            if 'type' in self.data['slots'][slot]:
+                slot_interface = self.data['slots'][slot]['type']
+                if slot_interface == 'migration-skill':
+                    slot_interface = 'old-security'
+                self.data['slots'][slot]['interface'] = slot_interface
+                del self.data['slots'][slot]['type']
         for app in self.data.get('apps', []):
             if 'uses' in self.data['apps'][app]:
                 self.data['apps'][app]['slots'] = \
