@@ -280,7 +280,7 @@ class CatkinPluginTestCase(tests.TestCase):
 
         def resolve(package_name):
             if package_name == 'ros_core':
-                return 'ros-core-dependency'
+                return ['ros-core-dependency']
 
             return None
 
