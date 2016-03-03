@@ -101,7 +101,7 @@ uses:
              'slots': {
                 'migration': {
                     'caps': ['network-listener'],
-                    'type': 'old-security'}},
+                    'interface': 'old-security'}},
              'summary': 'test',
              'version': '1'})
 
@@ -394,7 +394,7 @@ apps:
 
 slots:
   migration:
-    type: old-security
+    interface: old-security
     security-policy:
       apparmor: path/profile
       seccomp: path/profile
@@ -856,7 +856,7 @@ class TestValidation(tests.TestCase):
         }
         self.data['slots'] = {
             'file-migration': {
-                'type': 'old-security',
+                'interface': 'old-security',
                 'security-policy': {
                     'seccomp': 'file.seccomp',
                     'apparmor': 'file.apparmor',
@@ -875,7 +875,7 @@ class TestValidation(tests.TestCase):
         }
         self.data['slots'] = {
             'migration': {
-                'type': 'old-security',
+                'interface': 'old-security',
                 'security-override': {
                     'read-paths': ['path1', 'path2'],
                     'write-paths': ['path1', 'path2'],
@@ -896,7 +896,7 @@ class TestValidation(tests.TestCase):
         }
         self.data['slots'] = {
             'migration': {
-                'type': 'old-security',
+                'interface': 'old-security',
                 'security-template': 'unconfined',
             },
         }
@@ -912,7 +912,7 @@ class TestValidation(tests.TestCase):
         }
         self.data['slots'] = {
             'migration': {
-                'type': 'old-security',
+                'interface': 'old-security',
                 'caps': ['cap1', 'cap2'],
             },
         }
@@ -928,7 +928,7 @@ class TestValidation(tests.TestCase):
         }
         self.data['slots'] = {
             'migration': {
-                'type': 'old-security',
+                'interface': 'old-security',
                 'security-override': {
                     'read-paths': ['path1', 'path2'],
                     'write-paths': ['path1', 'path2'],

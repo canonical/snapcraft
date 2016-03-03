@@ -17,10 +17,10 @@ apps:
 
 slots:
   listener:
-    type: old-security
+    interface: old-security
     caps: [network-listener]
   listener-service:
-    type: old-security
+    interface: old-security
     caps: [network-listener, network-service]
     security-override:
       read-paths:
