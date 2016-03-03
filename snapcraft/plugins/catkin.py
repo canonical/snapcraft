@@ -193,7 +193,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         if self.options.include_roscore:
             roscore_dependency = rosdep.resolve_dependency('ros_core')
             if roscore_dependency:
-                system_dependencies.add(roscore_dependency)
+                system_dependencies |= set(roscore_dependency)
             else:
                 raise RuntimeError(
                     'Unable to determine system dependency for roscore')
