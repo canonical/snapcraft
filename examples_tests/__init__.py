@@ -126,7 +126,7 @@ class ExampleTestCase(testtools.TestCase):
         try:
             subprocess.check_output(
                 [self.snapcraft_command, 'snap'], cwd=working_dir,
-                stderr=subprocess.STDOUT).decode('utf-8')
+                stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(str(e.output)))
             raise
