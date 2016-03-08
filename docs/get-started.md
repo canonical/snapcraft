@@ -14,27 +14,13 @@ This version of snapcraft only works on Ubuntu 16.04 (Xenial Xerus), for
 previous versions of snapcraft, refer to the
 [1.x documentation](https://github.com/ubuntu-core/snapcraft/blob/1.x/docs/get-started.md).
 
-Once your Ubuntu host system is up and running, you can then enable the
-snappy-tools PPA to get the latest tools to develop for Snappy. A PPA is a
-Personal Package Archive that developers can subscribe to install and get
-frequent updates of the software the archive contains. Open up a terminal with
-`Ctrl+Alt+T` and type the following command to add the snappy-tools PPA to
-your system:
-
-	$ sudo apt-add-repository ppa:snappy-dev/tools
-	$ sudo apt update
-
-After that, running the following command will install the `snappy-tools`
-package, which will in turn install the optimal selection of Snappy development
-software to your system.
+Once your Ubuntu host system is up and running, you can then install the
+`snappy-tools` package, which will in turn install the optimal selection of
+Snappy development software to your system.
 
 	$ sudo apt install snappy-tools
 
-The snappy-tools PPA is officially supported by the Snappy Core team for
-Ubuntu LTS releases.  In addition to it, we try to keep snappy-tools also
-conveniently available for the latest Ubuntu stable release as well as the
-current development release for those who prefer those as host. For a
-production environment however, we recommend using an Ubuntu LTS-based host.
+For a production environment, we recommend using an Ubuntu LTS-based host.
 
 This is the most important selection of tools you will get after installation:
 
