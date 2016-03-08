@@ -1,17 +1,19 @@
 name: pipelinetest
 version: 1.0
 summary: Libpipeline example
-description: this is an example package of an autotools project built with snapcraft using
+description: |
+  This is an example package of an autotools project built with snapcraft
+  using a remote source.
 icon: icon.png
 
 apps:
   pipelinetest:
-    command: ./bin/pipelinetest
+    command: ./bin/test
 
 parts:
     pipelinetest:
         plugin: make
-        source: lp:~mterry/+junk/pipelinetest
+        source: .
         after:
             - libpipeline
     libpipeline:
