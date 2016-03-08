@@ -25,9 +25,8 @@ class LibPipelineTestCase(examples_tests.ExampleTestCase):
         self.build_snap(self.example_dir)
         self.install_snap(self.example_dir, 'pipelinetest', '1.0')
         expected = (
-            'running ls | grep c\n'
+            'running echo test | grep s | grep t\n'
             'custom libpipeline called\n'
-            'command-pipelinetest.wrapper\n'
-            'include\n')
+            'test\n')
         self.assert_command_in_snappy_testbed(
             '/snaps/bin/pipelinetest.pipelinetest', expected)
