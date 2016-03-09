@@ -8,9 +8,9 @@ apps:
   webchat:
     command: bin/webchat-for-a-snap
     daemon: simple
-    slots: [listener]
+    plugs: [listener]
 
-slots:
+plugs:
   listener:
     interface: old-security
     caps: [network-listener]

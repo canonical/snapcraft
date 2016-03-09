@@ -245,14 +245,14 @@ properties:
             items:
               type: string
             default: ['*']
-  slots:
+  plugs:
     type: object
     additionalProperties: false
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
         oneOf:
           - $ref: "#definitions/old-security"
-  offers:
+  slots:
   # TODO: We have no real use case for this now, but when the snappy
   # functionality comes we don't want to block people from experimenting
   # with it right away
