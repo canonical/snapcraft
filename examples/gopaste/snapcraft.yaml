@@ -8,10 +8,10 @@ apps:
   gopaste:
     command: bin/gopaste
     daemon: simple
-    slots:
+    plugs:
       - old-security
 
-slots:
+plugs:
   old-security:
     caps:
       - network-listener

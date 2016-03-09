@@ -10,9 +10,9 @@ apps:
  tomcat:
    command: bin/wrapper
    daemon: simple
-   slots: [listener-service]
+   plugs: [listener-service]
 
-slots:
+plugs:
   listener-service:
     interface: old-security
     caps: [network-listener, network-service]
