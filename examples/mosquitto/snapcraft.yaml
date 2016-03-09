@@ -7,15 +7,15 @@ apps:
   mosquitto:
     command: usr/sbin/mosquitto -c $SNAP/mosquitto.conf
     daemon: simple
-    slots: [listener-service]
+    plugs: [listener-service]
   subscribe:
     command: bin/subscribe
-    slots: [listener]
+    plugs: [listener]
   publish:
     command: bin/publish
-    slots: [listener]
+    plugs: [listener]
 
-slots:
+plugs:
   listener:
     interface: old-security
     caps: [network-listener]

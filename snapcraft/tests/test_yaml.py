@@ -90,7 +90,7 @@ uses:
         config = snapcraft.yaml.Config()
         self.assertEqual(
             config.data,
-            {'apps': {'app1': {'command': 'runme', 'slots': ['migration']}},
+            {'apps': {'app1': {'command': 'runme', 'plugs': ['migration']}},
              'architectures': [snapcraft.common.get_arch()],
              'description': 'test',
              'name': 'test',
@@ -98,7 +98,7 @@ uses:
                 'part1': {
                     'snap': [], 'stage': [],
                     'stage-packages': ['fswebcam']}},
-             'slots': {
+             'plugs': {
                 'migration': {
                     'caps': ['network-listener'],
                     'interface': 'old-security'}},
@@ -390,9 +390,9 @@ description: test
 apps:
   foo:
     command: bar
-    slots: [migration]
+    plugs: [migration]
 
-slots:
+plugs:
   migration:
     interface: old-security
     security-policy:
@@ -889,10 +889,10 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'slots': ['file-migration'],
+                'plugs': ['file-migration'],
             },
         }
-        self.data['slots'] = {
+        self.data['plugs'] = {
             'file-migration': {
                 'interface': 'old-security',
                 'security-policy': {
@@ -908,10 +908,10 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'slots': ['migration'],
+                'plugs': ['migration'],
             },
         }
-        self.data['slots'] = {
+        self.data['plugs'] = {
             'migration': {
                 'interface': 'old-security',
                 'security-override': {
@@ -929,10 +929,10 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'slots': ['old-security'],
+                'plugs': ['old-security'],
             },
         }
-        self.data['slots'] = {
+        self.data['plugs'] = {
             'migration': {
                 'interface': 'old-security',
                 'security-template': 'unconfined',
@@ -945,10 +945,10 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'slots': ['migration'],
+                'plugs': ['migration'],
             },
         }
-        self.data['slots'] = {
+        self.data['plugs'] = {
             'migration': {
                 'interface': 'old-security',
                 'caps': ['cap1', 'cap2'],
@@ -961,10 +961,10 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {
             'app1': {
                 'command': 'binary',
-                'slots': ['migration'],
+                'plugs': ['migration'],
             },
         }
-        self.data['slots'] = {
+        self.data['plugs'] = {
             'migration': {
                 'interface': 'old-security',
                 'security-override': {
@@ -991,7 +991,7 @@ class TestValidation(tests.TestCase):
 
         for sec in ['security-override', 'security-template', 'caps']:
             data = copy.deepcopy(self.data)
-            del data['slots']['migration'][sec]
+            del data['plugs']['migration'][sec]
             with self.subTest(key=sec):
                 with self.assertRaises(Exception) as r:
                     snapcraft.yaml._validate_snapcraft_yaml(data)
