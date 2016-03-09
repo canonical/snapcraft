@@ -159,20 +159,20 @@ class Config:
     def _remap_skills_to_interfaces(self):
         if 'uses' in self.data:
             logger.warning(
-                "DEPRECATED: Instances of 'uses' remapped to 'slots'")
-            self.data['slots'] = self.data['uses']
+                "DEPRECATED: Instances of 'uses' remapped to 'plugs'")
+            self.data['plugs'] = self.data['uses']
             del self.data['uses']
 
-        for slot in self.data.get('slots', []):
-            if 'type' in self.data['slots'][slot]:
-                slot_interface = self.data['slots'][slot]['type']
+        for slot in self.data.get('plugs', []):
+            if 'type' in self.data['plugs'][slot]:
+                slot_interface = self.data['plugs'][slot]['type']
                 if slot_interface == 'migration-skill':
                     slot_interface = 'old-security'
-                self.data['slots'][slot]['interface'] = slot_interface
-                del self.data['slots'][slot]['type']
+                self.data['plugs'][slot]['interface'] = slot_interface
+                del self.data['plugs'][slot]['type']
         for app in self.data.get('apps', []):
             if 'uses' in self.data['apps'][app]:
-                self.data['apps'][app]['slots'] = \
+                self.data['apps'][app]['plugs'] = \
                     self.data['apps'][app]['uses']
                 del self.data['apps'][app]['uses']
 
