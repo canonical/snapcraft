@@ -1,3 +1,32 @@
+snapcraft (2.4) xenial; urgency=medium
+
+  [ Kyle Fazzari ]
+  * Catkin plugin: Print nice message if dependency is invalid. (LP: #1548370)
+  * Catkin plugin: Handle rosdep empty and multiple dependencies.
+    (LP: #1548406, #1548404)
+  * Support --debug flag to enable backtrace and debug logs. (LP: #1548492)
+  * CMake plugin: Automatically find staged libs and files. (LP: #1550778)
+  * Copy entire source, even if source-subdir is specified. (LP: #1549676)
+  * Autotools plugin: Support installing via prefix. (LP: #1544629)
+  * Support parallel builds (enabled by default). (LP: #1551417)
+
+  [ Sergio Schvezov ]
+  * Clear error when specifying a non existing command (LP: #1550496)
+  * Skip the BasePlugin from plugin search (LP: #1547681)
+  * Expose the invalid build-package on error (LP: #1547672)
+  * Migrate from skills to interfaces (LP: #1549427)
+  * Do not print which's output to stdout (LP: #1551939)
+  * catkin plugin: combine deps as a union of sets (LP: #1552498)
+  * Support for a daemon's restart-condition. (LP: #1552160)
+  * Remove the useles decode done in tests. (LP: #1552403)
+
+  [ Leonardo Arias Fonseca ]
+  * travis: clean up the lxd script (LP: #1550379)
+  * examples_tests: update the expected result of the libpipeline test
+    (LP: #1554637, #1554641)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 09 Mar 2016 17:31:26 +0700
+
 snapcraft (2.3.2) xenial; urgency=medium
 
   * debian/control: lxd should be a suggestion, not a direct dependency.
