@@ -36,21 +36,6 @@ class TestSnapcraftExamples(
             'name': 'godd',
             'version': '1.0',
             }),
-        ('gopaste', {
-            'example_dir': 'gopaste',
-            'name': 'gopaste',
-            'version': '1.0',
-            }),
-        ('java-hello-world', {
-            'example_dir': 'java-hello-world',
-            'name': 'java-hello-world',
-            'version': '0',
-            }),
-        ('opencv', {
-            'example_dir': 'opencv',
-            'name': 'opencv-example',
-            'version': '1.0',
-            }),
         ('py2-project', {
             'example_dir': 'py2-project',
             'name': 'spongeshaker',
@@ -70,26 +55,6 @@ class TestSnapcraftExamples(
                 # is changed to using /usr/bin/env python
                 ("sed -n '/env/p;1q' snap/usr/bin/rosversion",
                  b'#!/usr/bin/env python\n',)],
-            }),
-        ('shout', {
-            'example_dir': 'shout',
-            'name': 'shout',
-            'version': '0.52.0',
-            }),
-        ('tomcat-maven-webapp', {
-            'example_dir': 'tomcat-maven-webapp',
-            'name': 'tomcat-webapp-demo',
-            'version': '1.0',
-            }),
-        ('webcam-webui', {
-            'example_dir': 'webcam-webui',
-            'name': 'webcam-webui',
-            'version': '1',
-            }),
-        ('webchat', {
-            'example_dir': 'webchat',
-            'name': 'webchat',
-            'version': '0.0.1',
             }),
     ]
 
