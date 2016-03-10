@@ -15,10 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import atexit
+import http.client
 import logging
 import os
 import re
 import tempfile
+import time
 import shutil
 import subprocess
 
@@ -32,6 +34,8 @@ from examples_tests import testbed
 logger = logging.getLogger(__name__)
 
 config = {}
+
+_KVM_REDIRECT_PORTS = ['8080', '9000', '3000']
 
 
 def _get_latest_ssh_private_key():
@@ -114,9 +118,9 @@ class ExampleTestCase(testtools.TestCase):
             # Delete the image when the execution exits.
             atexit.register(shutil.rmtree, temp_dir)
         snappy_testbed = testbed.QemuTestbed(
-            snappy_image, '8022', 'ubuntu', private_key)
+            snappy_image, '8022', 'ubuntu', private_key, _KVM_REDIRECT_PORTS)
         snappy_testbed.create()
-        self.addCleanup(self.snappy_testbed.delete)
+        self.addCleanup(snappy_testbed.delete)
         return snappy_testbed
 
     def build_snap(self, example_dir):
@@ -159,10 +163,23 @@ class ExampleTestCase(testtools.TestCase):
 
     def assert_command_in_snappy_testbed(self, command, expected_output):
         if not config.get('skip-install', False):
-            try:
-                output = self.snappy_testbed.run_command(command)
-            except subprocess.CalledProcessError as e:
-                self.addDetail(
-                    'ssh output', content.text_content(str(e.output)))
-                raise
+            output = self._run_command_in_snappy_testbed(command)
             self.assertEqual(output, expected_output)
+
+    def _run_command_in_snappy_testbed(self, command):
+        try:
+            return self.snappy_testbed.run_command(command)
+        except subprocess.CalledProcessError as e:
+            self.addDetail(
+                'ssh output', content.text_content(str(e.output)))
+            raise
+
+    def assert_service_running(self, snap, service):
+        if not config.get('skip-install', False):
+            output = self._run_command_in_snappy_testbed(
+                ['sudo', 'snappy', 'service', 'status', snap])
+            expected = (
+                'Snap\t+Service\t+State\n'
+                '{}\t+{}\t+enabled; loaded; active \(running\)\n'.format(
+                    snap, service))
+            self.assertThat(output, MatchesRegex(expected))
