@@ -15,12 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import atexit
-import http.client
 import logging
 import os
 import re
 import tempfile
-import time
 import shutil
 import subprocess
 

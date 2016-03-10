@@ -44,7 +44,7 @@ parseargs(){
 
 run_static_tests(){
     SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
-    python3 /usr/bin/flake8 $SRC_PATHS
+    python3 -m flake8 $SRC_PATHS
 
     mccabe_list=
     for unit in $(find snapcraft -type f -name '*.py')
@@ -63,8 +63,8 @@ run_static_tests(){
 
 run_unit_tests(){
     if which python3-coverage >/dev/null 2>&1; then
-        python3-coverage erase
-        python3-coverage run --branch --source snapcraft -m unittest discover -s snapcraft -t .
+        python3 -m coverage erase
+        python3 -m coverage run --branch --source snapcraft -m unittest discover -s snapcraft -t .
         mv .coverage .coverage.unit
     else
         python3 -m unittest discover -s snapcraft -t .
@@ -73,7 +73,7 @@ run_unit_tests(){
 
 run_integration(){
     if which python3-coverage >/dev/null 2>&1; then
-        python3-coverage erase
+        python3 -m coverage erase
         export SNAPCRAFT=snapcraft-coverage
     fi
 
@@ -82,7 +82,7 @@ run_integration(){
 
 run_examples(){
     if which python3-coverage >/dev/null 2>&1; then
-        python3-coverage erase
+        python3 -m coverage erase
         export SNAPCRAFT=snapcraft-coverage
     fi
 
@@ -114,8 +114,8 @@ fi
 
 if [ ! -z "$RUN_UNIT" -o ! -z "$RUN_INTEGRATION" ]; then
     if which python3-coverage >/dev/null 2>&1; then
-        python3-coverage combine
-        python3-coverage report
+        python3 -m coverage combine
+        python3 -m coverage report
 
         echo
         echo "Run 'python3-coverage html' to get a nice report"
