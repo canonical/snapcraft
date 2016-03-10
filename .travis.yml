@@ -13,31 +13,13 @@ env:
   matrix:
   - TEST_SUITE=static
   - TEST_SUITE=unit
-  - TEST_SUITE=integration
-
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y python3-coverage python3-distutils-extra
 install:
-  - sudo apt-add-repository -y ppa:ubuntu-lxc/lxd-stable
-  - sudo apt-get update -qq
-  - sudo apt-get -o Dpkg::Options::="--force-confnew" -y dist-upgrade || true
-  - sudo apt-get install -qq lxd lxcfs || true
-before_script:
-  - sudo lxd-images import ubuntu xenial --stream daily --alias ubuntu
-  - sudo lxc launch ubuntu xenial
-  # Wait for the container to get an IP address.
-  - while ! sudo lxc info xenial | grep -q eth0.*inet; do sleep 5s; done
-  # Allow the container user to do everything on the repository.
-  - sudo chmod 777 $(pwd)
-  # Mount the repository directory in the container.
-  - sudo lxc config device add xenial /dev/sda1 disk source=$(pwd) path=$(pwd)
-  # Install the snapcraft dependencies.
-  - sudo lxc exec xenial -- apt-get update
-  - sudo lxc exec xenial -- apt-get install -y devscripts equivs
-  - sudo lxc exec xenial -- mk-build-deps --install --tool "apt-get -y" --build-dep $(pwd)/debian/control
-  - sudo lxc exec xenial -- apt-get install -y lxd pyflakes python-flake8 python3.5 python3-apt python3-coverage python3-flake8 python3-mccabe python3-pep8 python3-pexpect python3-pip python3-testtools python3-lxml python3-progressbar python3-requests-toolbelt squashfs-tools
-  - sudo lxc exec xenial -- usermod ubuntu -a -G lxd
+  - pip install docopt fixtures flake8 jsonschema lxml mccabe petname pexpect python-apt pyxdg pyyaml py3-progressbar requests requests-oauthlib requests-toolbelt responses setuptools ssoclient testscenarios
 script:
-  - sudo -E lxc exec xenial -- su - ubuntu -c "cd $(pwd); TEST_USER_PASSWORD=$TEST_USER_PASSWORD ./runtests.sh $TEST_SUITE"
+  - ./runtests.sh $TEST_SUITE
 after_success:
-  - sudo apt-get install -qq python3-docopt python3-coverage || true
   - pip install coveralls
   - coveralls
