@@ -62,3 +62,14 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         os.chdir(tempdir_obj.name)
         with open('snapcraft.yaml', 'w', encoding=encoding) as fp:
             fp.write(content)
+
+    def verify_state(self, part_name, state_dir, expected_step):
+        self.assertTrue(os.path.isdir(state_dir),
+                        'Expected state directory for {}'.format(part_name))
+
+        # Expect every step up to and including the specified one to be run
+        index = common.COMMAND_ORDER.index(expected_step)
+        for step in common.COMMAND_ORDER[:index+1]:
+            self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
+                            'Expected {!r} to be run for {}'.format(
+                                step, part_name))

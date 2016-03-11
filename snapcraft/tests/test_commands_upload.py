@@ -67,7 +67,7 @@ parts:
 
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
-        self.state_file = os.path.join(common.get_partsdir(), 'part1', 'state')
+        self.statedir = os.path.join(common.get_partsdir(), 'part1', 'state')
 
     def test_upload(self):
         upload.main()
@@ -85,15 +85,7 @@ parts:
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
-        self.assertTrue(self.state_file,
-                        'Expected a state file for the part1 part')
-
-        with open(self.state_file) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the part1 part')
-        self.assertEqual(state[0], 'strip', "Expected the state file for "
-                         "part1 to be 'strip'")
+        self.verify_state('part1', self.statedir, 'strip')
 
         self.mock_upload.assert_called_once_with(
             'snap-test_1.0_amd64.snap',
@@ -118,15 +110,7 @@ parts:
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
-        self.assertTrue(self.state_file,
-                        'Expected a state file for the part1 part')
-
-        with open(self.state_file) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the part1 part')
-        self.assertEqual(state[0], 'strip', "Expected the state file for "
-                         "part1 to be 'strip'")
+        self.verify_state('part1', self.statedir, 'strip')
 
         self.mock_upload.assert_called_once_with(
             'snap-test_1.0_amd64.snap',
@@ -141,7 +125,7 @@ parts:
         # stages are not build if snap file already exists
         self.assertFalse(os.path.exists(common.get_stagedir()),
                          'Expected a stage directory')
-        self.assertFalse(os.path.exists(self.state_file))
+        self.assertFalse(os.path.exists(self.statedir))
 
         self.mock_upload.assert_called_once_with(
             'snap-test_1.0_amd64.snap',

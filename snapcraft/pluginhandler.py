@@ -62,11 +62,12 @@ class PluginHandler:
         self._name = part_name
         self.deps = []
 
-        parts_dir = common.get_partsdir()
-        self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.stagedir = os.path.join(os.getcwd(), 'stage')
         self.snapdir = os.path.join(os.getcwd(), 'snap')
-        self.statefile = os.path.join(parts_dir, part_name, 'state')
+
+        parts_dir = common.get_partsdir()
+        self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
+        self.statedir = os.path.join(parts_dir, part_name, 'state')
 
         try:
             self._load_code(plugin_name, properties)
@@ -101,7 +102,7 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.stagedir, self.snapdir, self.ubuntudir
+            self.stagedir, self.snapdir, self.ubuntudir, self.statedir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -109,21 +110,41 @@ class PluginHandler:
     def notify_stage(self, stage, hint=''):
         logger.info('%s %s %s', stage, self.name, hint)
 
-    def is_dirty(self, stage):
-        try:
-            with open(self.statefile, 'r') as f:
-                lastStep = f.read()
-                return (common.COMMAND_ORDER.index(stage) >
-                        common.COMMAND_ORDER.index(lastStep))
-        except Exception:
-            return True
+    def last_step(self):
+        for step in reversed(common.COMMAND_ORDER):
+            if os.path.exists(self._step_state_file(step)):
+                return step
+
+        return None
+
+    def is_dirty(self, step):
+        last_step = self.last_step()
+        if last_step:
+            return (common.COMMAND_ORDER.index(step) >
+                    common.COMMAND_ORDER.index(last_step))
+
+        return True
 
     def should_step_run(self, step, force=False):
         return force or self.is_dirty(step)
 
-    def mark_done(self, stage):
-        with open(self.statefile, 'w+') as f:
-            f.write(stage)
+    def mark_done(self, step):
+        index = common.COMMAND_ORDER.index(step)
+
+        # Currently only creating the step file. TODO: This will be a YAML file
+        # holding step-specific state information.
+        open(self._step_state_file(step), 'w').close()
+
+        # We know we've only just completed this step, so make sure any later
+        # steps don't have a saved state.
+        if index+1 != len(common.COMMAND_ORDER):
+            for command in common.COMMAND_ORDER[index+1:]:
+                state_file = self._step_state_file(command)
+                if os.path.exists(state_file):
+                    os.remove(state_file)
+
+    def _step_state_file(self, step):
+        return os.path.join(self.statedir, step)
 
     def _setup_stage_packages(self):
         ubuntu = repo.Ubuntu(
@@ -159,6 +180,7 @@ class PluginHandler:
         plugin_fileset = self.code.snap_fileset()
         fileset = getattr(self.code.options, stage, ['*']) or ['*']
         fileset.extend(plugin_fileset)
+
         return _migratable_filesets(fileset, self.code.installdir)
 
     def _organize(self):
