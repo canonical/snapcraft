@@ -16,6 +16,7 @@
 
 import logging
 import os
+import shutil
 import tempfile
 from unittest.mock import (
     Mock,
@@ -272,6 +273,61 @@ class PluginMakedirsTestCase(tests.TestCase):
         p.makedirs()
         for d in dirs:
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
+
+
+class StateTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        part_name = 'test_part'
+        self.handler = pluginhandler.load_plugin(part_name, 'nil')
+        os.makedirs(os.path.join(common.get_partsdir(), part_name))
+
+    def test_mark_done_clears_later_steps(self):
+        for index, step in enumerate(common.COMMAND_ORDER):
+            shutil.rmtree(common.get_partsdir())
+            with self.subTest('{} step'.format(step)):
+                handler = pluginhandler.load_plugin('foo', 'nil')
+                handler.makedirs()
+
+                for later_step in common.COMMAND_ORDER[index+1:]:
+                    open(handler._step_state_file(later_step), 'w').close()
+
+                handler.mark_done(step)
+
+                for later_step in common.COMMAND_ORDER[index+1:]:
+                    self.assertFalse(
+                        os.path.exists(handler._step_state_file(later_step)),
+                        'Expected later step states to be cleared')
+
+    def test_pull_state(self):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.pull()
+
+        self.assertEqual('pull', self.handler.last_step())
+
+    def test_build_state(self):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.build()
+
+        self.assertEqual('build', self.handler.last_step())
+
+    def test_stage_state(self):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.stage()
+
+        self.assertEqual('stage', self.handler.last_step())
+
+    def test_strip_state(self):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.strip()
+
+        self.assertEqual('strip', self.handler.last_step())
 
 
 class CleanTestCase(tests.TestCase):
