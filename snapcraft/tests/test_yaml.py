@@ -510,6 +510,44 @@ parts:
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
 
+    def test_part_prereqs(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  main:
+    plugin: nil
+
+  dependent:
+    plugin: nil
+    after: [main]
+""")
+        config = snapcraft.yaml.Config()
+
+        self.assertFalse(config.part_prereqs('main'))
+        self.assertEqual({'main'}, config.part_prereqs('dependent'))
+
+    def test_part_dependents(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  main:
+    plugin: nil
+
+  dependent:
+    plugin: nil
+    after: [main]
+""")
+        config = snapcraft.yaml.Config()
+
+        self.assertFalse(config.part_dependents('dependent'))
+        self.assertEqual({'dependent'}, config.part_dependents('main'))
+
 
 class TestYamlEnvironment(tests.TestCase):
 
