@@ -26,3 +26,5 @@ class TomcatMavenWebappTestCase(examples_tests.ExampleTestCase):
         snap_name = 'tomcat-webapp-demo'
         self.install_snap(self.example_dir, snap_name, '1.0')
         self.assert_service_running(snap_name, 'tomcat')
+        expected = '.*<html.*>.*<title>Apache Tomcat/.*</title>.*</html>.*'
+        self.assert_http_get(8080, expected)

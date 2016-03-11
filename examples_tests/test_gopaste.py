@@ -26,3 +26,5 @@ class GopasteTestCase(examples_tests.ExampleTestCase):
         snap_name = 'gopaste'
         self.install_snap(self.example_dir, snap_name, '1.0')
         self.assert_service_running(snap_name, 'gopaste')
+        expected = '.*<html .*>.*<title>Home :: gopaste</title>.*</html>.*'
+        self.assert_http_get(8080, expected)

@@ -15,10 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import atexit
+import http.client
 import logging
 import os
 import re
 import tempfile
+import time
 import shutil
 import subprocess
 
@@ -182,3 +184,18 @@ class ExampleTestCase(testtools.TestCase):
                  'snap.{}.{}'.format(snap, service)])
             expected = 'Active: active (running)'
             self.assertThat(output, Contains(expected))
+
+    def assert_http_get(self, port, expected_regex):
+        if not config.get('skip-install', False):
+            # XXX snappy doesn't wait for the service to be listening on the
+            # port. See https://bugs.launchpad.net/snappy/+bug/1474463
+            time.sleep(15)
+            connection = http.client.HTTPConnection(
+                self.snappy_testbed.ip, port)
+            self.addCleanup(connection.close)
+            connection.request('GET', '/')
+            response = connection.getresponse()
+            self.assertEqual(response.status, 200)
+            self.assertThat(
+                response.read().decode(),
+                MatchesRegex(expected_regex, flags=re.DOTALL))
