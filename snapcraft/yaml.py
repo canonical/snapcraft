@@ -227,6 +227,16 @@ class Config:
         """Returns a set with all of part_names' prerequisites."""
         return set(self.after_requests.get(part_name, []))
 
+    def part_dependents(self, part_name):
+        """Returns a set of all the parts that depend upon part_name."""
+
+        dependents = set()
+        for part, prerequisites in self.after_requests.items():
+            if part_name in prerequisites:
+                dependents.add(part)
+
+        return dependents
+
     def validate_parts(self, part_names):
         for part_name in part_names:
             if part_name not in self._part_names:

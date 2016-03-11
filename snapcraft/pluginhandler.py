@@ -128,12 +128,14 @@ class PluginHandler:
     def should_step_run(self, step, force=False):
         return force or self.is_dirty(step)
 
-    def mark_done(self, step):
+    def mark_done(self, step, state=None):
+        if not state:
+            state = {}
+
         index = common.COMMAND_ORDER.index(step)
 
-        # Currently only creating the step file. TODO: This will be a YAML file
-        # holding step-specific state information.
-        open(self._step_state_file(step), 'w').close()
+        with open(self._step_state_file(step), 'w') as f:
+            f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
         # steps don't have a saved state.
@@ -142,6 +144,13 @@ class PluginHandler:
                 state_file = self._step_state_file(command)
                 if os.path.exists(state_file):
                     os.remove(state_file)
+
+    def mark_cleaned(self, step):
+        index = common.COMMAND_ORDER.index(step)
+        if index > 0:
+            self.mark_done(common.COMMAND_ORDER[index-1])
+        elif os.path.isdir(self.statedir):
+            shutil.rmtree(self.statedir)
 
     def _step_state_file(self, step):
         return os.path.join(self.statedir, step)
@@ -167,6 +176,11 @@ class PluginHandler:
         self.code.pull()
         self.mark_done('pull')
 
+    def clean_pull(self):
+        raise NotImplementedError(
+            'Cleaning up step "pull" for part "{}" is not yet '
+            'supported'.format(self.name))
+
     def build(self, force=False):
         if not self.should_step_run('build', force):
             self.notify_stage('Skipping build', ' (already ran)')
@@ -176,9 +190,14 @@ class PluginHandler:
         self.code.build()
         self.mark_done('build')
 
-    def migratable_fileset_for(self, stage):
+    def clean_build(self):
+        raise NotImplementedError(
+            'Cleaning up step "build" for part "{}" is not yet '
+            'supported'.format(self.name))
+
+    def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset = getattr(self.code.options, step, ['*']) or ['*']
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
@@ -216,6 +235,11 @@ class PluginHandler:
 
         self.mark_done('stage')
 
+    def clean_stage(self):
+        raise NotImplementedError(
+            'Cleaning up step "stage" for part "{}" is not yet '
+            'supported'.format(self.name))
+
     def strip(self, force=False):
         if not self.should_step_run('strip', force):
             self.notify_stage('Skipping strip', ' (already ran)')
@@ -226,15 +250,46 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
 
-        self.mark_done('strip')
+        state = {
+            'snap-files': snap_files,
+            'snap-directories': snap_dirs
+        }
+
+        self.mark_done('strip', state)
+
+    def clean_strip(self):
+        logger.info('Cleaning up step "strip" for part "{}"'.format(self.name))
+
+        with open(self._step_state_file('strip'), 'r') as f:
+            state = yaml.load(f.read())
+
+        _clean_migrated_files(state['snap-files'], state['snap-directories'],
+                              self.snapdir)
+
+        self.mark_cleaned('strip')
 
     def env(self, root):
         return self.code.env(root)
 
-    def clean(self):
-        logger.info('Cleaning up for part "{}"'.format(self.name))
-        if os.path.exists(self.code.partdir):
-            shutil.rmtree(self.code.partdir)
+    def clean(self, step=None):
+        if step:
+            if step == "strip":
+                self.clean_strip()
+            elif step == "stage":
+                self.clean_stage()
+            elif step == "build":
+                self.clean_build()
+            elif step == "pull":
+                self.clean_pull()
+            else:
+                raise RuntimeError(
+                    '"{}" is not a valid step for part "{}"'.format(
+                        step, self.name))
+        else:
+            # No step specified, so just blow the entire part directory away
+            logger.info('Cleaning up for part "{}"'.format(self.name))
+            if os.path.exists(self.code.partdir):
+                shutil.rmtree(self.code.partdir)
 
 
 def _make_options(properties, schema):
@@ -359,6 +414,20 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
             os.remove(dst)
 
         os.link(src, dst, follow_symlinks=False)
+
+
+def _clean_migrated_files(snap_files, snap_dirs, directory):
+    for snap_file in snap_files:
+        os.remove(os.path.join(directory, snap_file))
+
+    # snap_dirs may not be ordered so that subdirectories come before
+    # parents, and we want to be able to remove directories if possible, so
+    # we'll sort them in reverse here to get subdirectories before parents.
+    snap_dirs = sorted(snap_dirs, reverse=True)
+
+    for snap_dir in snap_dirs:
+        if not os.listdir(os.path.join(directory, snap_dir)):
+            os.rmdir(os.path.join(directory, snap_dir))
 
 
 def _get_file_list(stage_set):
