@@ -148,12 +148,14 @@ class PluginHandler:
     def should_step_run(self, step, force=False):
         return force or self.is_dirty(step)
 
-    def mark_done(self, step):
+    def mark_done(self, step, state=None):
+        if not state:
+            state = {}
+
         index = common.COMMAND_ORDER.index(step)
 
-        # Currently only creating the step file. TODO: This will be a YAML file
-        # holding step-specific state information.
-        open(self._step_state_file(step), 'w').close()
+        with open(self._step_state_file(step), 'w') as f:
+            f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
         # steps don't have a saved state.
@@ -162,6 +164,15 @@ class PluginHandler:
                 state_file = self._step_state_file(command)
                 if os.path.exists(state_file):
                     os.remove(state_file)
+
+    def get_state(self, step):
+        state = None
+        state_file = self._step_state_file(step)
+        if os.path.isfile(state_file):
+            with open(state_file, 'r') as f:
+                state = yaml.load(f.read())
+
+        return state
 
     def _step_state_file(self, step):
         return os.path.join(self.statedir, step)
@@ -187,6 +198,11 @@ class PluginHandler:
         self.code.pull()
         self.mark_done('pull')
 
+    def clean_pull(self):
+        raise NotImplementedError(
+            "Cleaning up step 'pull' for part {!r} is not yet "
+            "supported".format(self.name))
+
     def build(self, force=False):
         if not self.should_step_run('build', force):
             self.notify_stage('Skipping build', ' (already ran)')
@@ -196,9 +212,14 @@ class PluginHandler:
         self.code.build()
         self.mark_done('build')
 
-    def migratable_fileset_for(self, stage):
+    def clean_build(self):
+        raise NotImplementedError(
+            "Cleaning up step 'build' for part {!r} is not yet "
+            "supported".format(self.name))
+
+    def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset = getattr(self.code.options, step, ['*']) or ['*']
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
@@ -236,6 +257,11 @@ class PluginHandler:
 
         self.mark_done('stage')
 
+    def clean_stage(self, project_staged_state):
+        raise NotImplementedError(
+            "Cleaning up step 'stage' for part {!r} is not yet "
+            "supported".format(self.name))
+
     def strip(self, force=False):
         if not self.should_step_run('strip', force):
             self.notify_stage('Skipping strip', ' (already ran)')
@@ -248,13 +274,63 @@ class PluginHandler:
 
         self.mark_done('strip')
 
+    def clean_strip(self, project_stripped_state):
+        raise NotImplementedError(
+            "Cleaning up step 'strip' for part {!r} is not yet "
+            "supported".format(self.name))
+
     def env(self, root):
         return self.code.env(root)
 
-    def clean(self):
-        logger.info('Cleaning up for part "{}"'.format(self.name))
-        if os.path.exists(self.code.partdir):
-            shutil.rmtree(self.code.partdir)
+    def clean(self, project_staged_state=None, project_stripped_state=None,
+              step=None):
+        # TODO: Remove this function and rename _new_clean to clean once all
+        # pieces are implemented.
+        try:
+            self._new_clean(project_staged_state, project_stripped_state, step)
+        except NotImplementedError:
+            logger.info('Cleaning up for part "{}"'.format(self.name))
+            if os.path.exists(self.code.partdir):
+                shutil.rmtree(self.code.partdir)
+
+    def _new_clean(self, project_staged_state=None,
+                   project_stripped_state=None, step=None):
+        if not project_staged_state:
+            project_staged_state = {}
+
+        if not project_stripped_state:
+            project_stripped_state = {}
+
+        self._clean_steps(project_staged_state, project_stripped_state, step)
+
+        # Remove the part directory if it's completely empty (i.e. all steps
+        # have been cleaned).
+        if (os.path.exists(self.code.partdir) and
+                not os.listdir(self.code.partdir)):
+            os.rmdir(self.code.partdir)
+
+    def _clean_steps(self, project_staged_state, project_stripped_state,
+                     step=None):
+        index = None
+        if step:
+            if step not in common.COMMAND_ORDER:
+                raise RuntimeError(
+                    '{!r} is not a valid step for part {!r}'.format(
+                        step, self.name))
+
+            index = common.COMMAND_ORDER.index(step)
+
+        if not index or index <= common.COMMAND_ORDER.index('strip'):
+            self.clean_strip(project_stripped_state)
+
+        if not index or index <= common.COMMAND_ORDER.index('stage'):
+            self.clean_stage(project_staged_state)
+
+        if not index or index <= common.COMMAND_ORDER.index('build'):
+            self.clean_build()
+
+        if not index or index <= common.COMMAND_ORDER.index('pull'):
+            self.clean_pull()
 
 
 def _make_options(properties, schema):

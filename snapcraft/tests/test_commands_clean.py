@@ -16,8 +16,11 @@
 
 import os
 
+from unittest import mock
+
 from snapcraft import (
     common,
+    pluginhandler,
     tests,
 )
 from snapcraft.commands import clean
@@ -116,3 +119,111 @@ parts:
         self.assertEqual(
             raised.exception.__str__(),
             "The part named 'no-clean' is not defined in 'snapcraft.yaml'")
+
+    @mock.patch.object(pluginhandler.PluginHandler, 'clean')
+    def test_per_step_cleaning(self, mock_clean):
+        self.make_snapcraft_yaml(n=3)
+
+        clean.main(['--step=foo'])
+
+        expected_state = {
+            'clean0': None,
+            'clean1': None,
+            'clean2': None,
+        }
+
+        mock_clean.assert_called_with(expected_state, expected_state, 'foo')
+
+    def test_clean_dependent_parts(self):
+        yaml = """name: clean-test
+version: 1.0
+summary: test clean
+description: test clean
+
+parts:
+  main:
+    plugin: nil
+    source: .
+
+  dependent:
+    plugin: nil
+    source: .
+    after: [main]"""
+
+        super().make_snapcraft_yaml(yaml)
+
+        part_dirs = {}
+        for part in ['main', 'dependent']:
+            part_dirs[part] = os.path.join(common.get_partsdir(), part)
+            os.makedirs(part_dirs[part])
+
+        os.makedirs(common.get_stagedir())
+        os.makedirs(common.get_snapdir())
+
+        # Cleaning only `main`. Since `dependent` depends upon main, we expect
+        # that it will be cleaned as well. Otherwise it won't be using the new
+        # `main` when it is built.
+        clean.main(['main'])
+
+        self.assertFalse(os.path.exists(part_dirs['main']),
+                         'Expected part directory for main to be cleaned')
+        self.assertFalse(
+            os.path.exists(part_dirs['dependent']),
+            'Expected part directory for dependent to be cleaned as it '
+            'depends upon main')
+
+        self.assertFalse(os.path.exists(common.get_partsdir()))
+        self.assertFalse(os.path.exists(common.get_stagedir()))
+        self.assertFalse(os.path.exists(common.get_snapdir()))
+
+    def test_clean_nested_dependent_parts(self):
+        yaml = """name: clean-test
+version: 1.0
+summary: test clean
+description: test clean
+
+parts:
+  main:
+    plugin: nil
+    source: .
+
+  dependent:
+    plugin: nil
+    source: .
+    after: [main]
+
+  dependent-dependent:
+    plugin: nil
+    source: .
+    after: [dependent]"""
+
+        super().make_snapcraft_yaml(yaml)
+
+        part_dirs = {}
+        for part in ['main', 'dependent', 'dependent-dependent']:
+            part_dirs[part] = os.path.join(common.get_partsdir(), part)
+            os.makedirs(part_dirs[part])
+
+        os.makedirs(common.get_stagedir())
+        os.makedirs(common.get_snapdir())
+
+        # Cleaning only `main`. Since `dependent` depends upon main, we expect
+        # that it will be cleaned as well. Otherwise it won't be using the new
+        # `main` when it is built.
+        clean.main(['main'])
+
+        self.assertFalse(os.path.exists(part_dirs['main']),
+                         'Expected part directory for main to be cleaned')
+        self.assertFalse(
+            os.path.exists(part_dirs['dependent']),
+            'Expected part directory for dependent to be cleaned as it '
+            'depends upon main')
+
+        self.assertFalse(
+            os.path.exists(part_dirs['dependent-dependent']),
+            'Expected part directory for dependent-dependent to be cleaned as '
+            'it depends upon dependent, which depends upon main')
+
+        self.assertFalse(os.path.exists(common.get_partsdir()))
+        self.assertFalse(os.path.exists(common.get_stagedir()))
+        self.assertFalse(os.path.exists(common.get_snapdir()))
