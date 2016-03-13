@@ -71,7 +71,8 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
 
         env = self._build_environment()
 
-        self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
+        self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX=',
+                  '-DCMAKE_BUILD_TYPE=None', '-DCMAKE_VERBOSE_MAKEFILE=ON'] +
                  self.options.configflags, env=env)
 
         self.run(['make', '-j{}'.format(common.get_parallel_build_count())],
