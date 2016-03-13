@@ -330,6 +330,13 @@ def _build_env(root):
         '-I{0}/usr/include/{1}',
         '$CFLAGS'
     ]).format(root, arch_triplet) + '"')
+    env.append('CXXFLAGS="' + ' '.join([
+        '-I{0}/include',
+        '-I{0}/usr/include',
+        '-I{0}/include/{1}',
+        '-I{0}/usr/include/{1}',
+        '$CFLAGS'
+    ]).format(root, arch_triplet) + '"')
     env.append('CPPFLAGS="' + ' '.join([
         '-I{0}/include',
         '-I{0}/usr/include',
