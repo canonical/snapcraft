@@ -102,3 +102,34 @@ class HelpCommandTestCase(tests.TestCase):
                     output, expected[key],
                     'The help message does not start with {!r} but with '
                     '{!r} instead'.format(expected[key], output))
+
+    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_no_unicode_in_help_strings(self, mock_stdout):
+        helps = ['--help', 'topics']
+
+        for key in help._TOPICS.keys():
+            helps.append(str(key))
+
+        # Get a list of plugins
+        import snapcraft.plugins
+        import os
+        from pathlib import Path
+        for plugin in Path(snapcraft.plugins.__path__[0]).glob('*.py'):
+            if (os.path.isfile(str(plugin)) and
+                    not os.path.basename(str(plugin)).startswith('_')):
+                helps.append(os.path.basename(str(plugin)[:-3]))
+
+        for key in helps:
+            mock_stdout.truncate(0)
+            mock_stdout.seek(0)
+            with self.subTest(key=key):
+                if key is '--help':
+                    from snapcraft import main
+                    print(main.__doc__)
+                else:
+                    help.main([key])
+                try:
+                    mock_stdout.getvalue().encode('ascii')
+                except UnicodeEncodeError:
+                    self.fail('Non-ASCII characters in help text for '
+                              '{!r}'.format(key))
