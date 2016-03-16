@@ -99,13 +99,13 @@ be used in any part irrespective of the plugin, these are
       `parts/<part-name>/install`.
     - stage:
       (list of strings)
-      A list of files from a part’s installation to expose in `stage`.
+      A list of files from a part's installation to expose in `stage`.
       Rules applying to the list here are the same as those of filesets.
       Referencing of fileset keys is done with a $ prefixing the fileset
       key, which will expand with the value of such key.
     - snap:
       (list of strings)
-      A list of files from a part’s installation to expose in `snap`.
+      A list of files from a part's installation to expose in `snap`.
       Rules applying to the list here are the same as those of filesets.
       Referencing of fileset keys is done with a $ prefixing the fileset
       key, which will expand with the value of such key.

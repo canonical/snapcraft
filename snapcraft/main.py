@@ -33,7 +33,7 @@ Options:
                          CPUs)
 
 The available commands are:
-  list-parts   List available parts which are like “source packages” for snaps.
+  list-parts   List available parts which are like "source packages" for snaps.
   list-plugins List the available plugins that handle different types of part.
   init         Initialize a snapcraft project.
   add-part     Add a part to your snapcraft.yaml, interactively presenting
