@@ -30,6 +30,7 @@ class MainTestCase(integration_tests.TestCase):
             'copy',
             'go',
             'jdk',
+            'kbuild',
             'make',
             'maven',
             'nil',
