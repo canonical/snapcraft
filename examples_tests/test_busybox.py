@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,34 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import io
-from unittest import mock
-
-from snapcraft import tests
-from snapcraft.commands import list_plugins
+import examples_tests
 
 
-class ListPluginsCommandTestCase(tests.TestCase):
+class BusyBoxTestCase(examples_tests.ExampleTestCase):
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_list_plugins(self, mock_stdout):
-        expected_list = '''ant
-autotools
-catkin
-cmake
-copy
-go
-jdk
-kbuild
-make
-maven
-nil
-nodejs
-python2
-python3
-qml
-scons
-tar-content
-'''
-        list_plugins.main()
-        self.assertEqual(mock_stdout.getvalue(), expected_list)
+    example_dir = 'busybox'
+
+    def test_busybox(self):
+        self.build_snap(self.example_dir)
+        self.install_snap(self.example_dir, 'busybox', '1.0')
+        # TODO once PWD issues are sorted make use of busybox.touch
+        # for a more complete test run.
+        self.assert_command_in_snappy_testbed(
+            '/snaps/bin/busybox.ls', '')

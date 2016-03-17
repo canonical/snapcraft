@@ -28,6 +28,7 @@ class ListPluginsTestCase(integration_tests.TestCase):
                     'copy\n'
                     'go\n'
                     'jdk\n'
+                    'kbuild\n'
                     'make\n'
                     'maven\n'
                     'nil\n'
