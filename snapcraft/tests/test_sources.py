@@ -299,9 +299,31 @@ class TestLocal(tests.TestCase):
         self.assertTrue(os.path.islink('source_dir'))
         self.assertEqual(os.path.realpath('source_dir'), self.path)
 
-    def test_pull_with_existing_source_file_creates_symlink(self):
+    def test_pull_with_existing_source_file_fails(self):
         open('source_dir', 'w').close()
         local = snapcraft.sources.Local('.', 'source_dir')
+
+        with self.assertRaises(EnvironmentError) as raised:
+            local.pull()
+
+        self.assertEqual("Cannot pull to target 'source_dir'",
+                         str(raised.exception))
+
+    def test_pull_with_source_dir_with_content_fails(self):
+        os.mkdir('source_dir')
+        open(os.path.join('source_dir', 'file'), 'w').close()
+        local = snapcraft.sources.Local('.', 'source_dir')
+
+        with self.assertRaises(EnvironmentError) as raised:
+            local.pull()
+
+        self.assertEqual("Cannot pull to target 'source_dir'",
+                         str(raised.exception))
+
+    def test_pulling_twice_with_existing_source_dir_creates_symlink(self):
+        os.mkdir('source_dir')
+        local = snapcraft.sources.Local('.', 'source_dir')
+        local.pull()
         local.pull()
 
         self.assertTrue(os.path.islink('source_dir'))
