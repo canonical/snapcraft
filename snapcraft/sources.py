@@ -251,10 +251,14 @@ class Tar(Base):
 class Local(Base):
 
     def pull(self):
-        if os.path.isdir(self.source_dir):
+        if os.path.islink(self.source_dir):
+            os.remove(self.source_dir)
+        elif (os.path.isdir(self.source_dir) and
+              not os.listdir(self.source_dir)):
             os.rmdir(self.source_dir)
         else:
-            os.remove(self.source_dir)
+            raise EnvironmentError('Cannot pull to target {!r}'.format(
+                self.source_dir))
 
         source_abspath = os.path.abspath(self.source)
         os.symlink(source_abspath, self.source_dir)
