@@ -50,10 +50,10 @@ parts:
         parts = []
         for i in range(n):
             part_dir = os.path.join(common.get_partsdir(), 'stage{}'.format(i))
-            state_file = os.path.join(part_dir, 'state')
+            state_dir = os.path.join(part_dir, 'state')
             parts.append({
                 'part_dir': part_dir,
-                'state_file': state_file,
+                'state_dir': state_dir,
             })
 
         return parts
@@ -83,15 +83,8 @@ parts:
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')
-        self.assertTrue(os.path.exists(parts[0]['state_file']),
-                        'Expected a state file for the build0 part')
 
-        with open(parts[0]['state_file']) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the build0 part')
-        self.assertEqual(state[0], 'stage', "Expected the state file for "
-                         "build0 to be 'stage'")
+        self.verify_state('build0', parts[0]['state_dir'], 'stage')
 
     def test_stage_one_part_only_from_3(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -106,20 +99,13 @@ parts:
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[1]['part_dir']),
                         'Expected a part directory for the stage1 part')
-        self.assertTrue(os.path.exists(parts[1]['state_file']),
-                        'Expected a state file for the stage1 part')
 
-        with open(parts[1]['state_file']) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the stage1 part')
-        self.assertEqual(state[0], 'stage', "Expected the state file for "
-                         " stage1 to be 'stage'")
+        self.verify_state('stage1', parts[1]['state_dir'], 'stage')
 
         for i in [0, 2]:
             self.assertFalse(os.path.exists(parts[i]['part_dir']),
                              'Pulled wrong part')
-            self.assertFalse(os.path.exists(parts[i]['state_file']),
+            self.assertFalse(os.path.exists(parts[i]['state_dir']),
                              'Expected for only to be a state file for build1')
 
     def test_stage_ran_twice_is_a_noop(self):
@@ -141,15 +127,8 @@ parts:
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')
-        self.assertTrue(os.path.exists(parts[0]['state_file']),
-                        'Expected a state file for the build0 part')
 
-        with open(parts[0]['state_file']) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the build0 part')
-        self.assertEqual(state[0], 'stage', "Expected the state file for "
-                         "build0 to be 'stage'")
+        self.verify_state('build0', parts[0]['state_dir'], 'stage')
 
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
