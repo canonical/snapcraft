@@ -43,7 +43,7 @@ parts:
 
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
-        self.state_file = os.path.join(common.get_partsdir(), 'part1', 'state')
+        self.state_dir = os.path.join(common.get_partsdir(), 'part1', 'state')
 
     @mock.patch('subprocess.check_call')
     def test_snap_defaults(self, mock_call):
@@ -64,15 +64,8 @@ parts:
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
-        self.assertTrue(self.state_file,
-                        'Expected a state file for the part1 part')
 
-        with open(self.state_file) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the part1 part')
-        self.assertEqual(state[0], 'strip', "Expected the state file for "
-                         "part1 to be 'strip'")
+        self.verify_state('part1', self.state_dir, 'strip')
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
@@ -84,9 +77,9 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        os.makedirs(os.path.dirname(self.state_file))
-        with open(self.state_file, 'w') as f:
-            f.write('strip')
+        # Pretend this part has already been stripped
+        os.makedirs(self.state_dir)
+        open(os.path.join(self.state_dir, 'strip'), 'w').close()
 
         snap.main()
 
@@ -146,15 +139,8 @@ architectures: [amd64, armhf]
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
-        self.assertTrue(self.state_file,
-                        'Expected a state file for the part1 part')
 
-        with open(self.state_file) as sf:
-            state = sf.readlines()
-        self.assertEqual(len(state), 1, 'Expected only one line in the state '
-                         'file for the part1 part')
-        self.assertEqual(state[0], 'strip', "Expected the state file for "
-                         "part1 to be 'strip'")
+        self.verify_state('part1', self.state_dir, 'strip')
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'mysnap.snap',
