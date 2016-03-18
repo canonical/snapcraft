@@ -230,11 +230,11 @@ cam:
       - fswebcam
     filesets:
       fswebcam:
-      - usr/bin/fswebcam
-      - lib
-      - usr/lib
-    go-server:
-      - bin/golang-*
+        - usr/bin/fswebcam
+        - lib
+        - usr/lib
+      go-server:
+        - bin/golang-*
     stage:
       - $fswebcam
       - $go-server
