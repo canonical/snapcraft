@@ -69,6 +69,8 @@ class PluginHandler:
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.statedir = os.path.join(parts_dir, part_name, 'state')
 
+        self._migrate_state_file()
+
         try:
             self._load_code(plugin_name, properties)
         except jsonschema.ValidationError as e:
@@ -106,6 +108,19 @@ class PluginHandler:
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
+
+    def _migrate_state_file(self):
+        # In previous versions of Snapcraft, the state directory was a file.
+        # Rather than die if we're running on output from an old version,
+        # migrate it for them.
+        if os.path.isfile(self.statedir):
+            with open(self.statedir, 'r') as f:
+                step = f.read()
+
+            if step:
+                os.remove(self.statedir)
+                os.makedirs(self.statedir)
+                self.mark_done(step)
 
     def notify_stage(self, stage, hint=''):
         logger.info('%s %s %s', stage, self.name, hint)

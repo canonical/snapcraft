@@ -301,6 +301,19 @@ class StateTestCase(tests.TestCase):
                         os.path.exists(handler._step_state_file(later_step)),
                         'Expected later step states to be cleared')
 
+    def test_state_file_migration(self):
+        part_name = 'foo'
+        for step in common.COMMAND_ORDER:
+            shutil.rmtree(common.get_partsdir())
+            with self.subTest('{} step'.format(step)):
+                part_dir = os.path.join(common.get_partsdir(), part_name)
+                os.makedirs(part_dir)
+                with open(os.path.join(part_dir, 'state'), 'w') as f:
+                    f.write(step)
+
+                handler = pluginhandler.load_plugin(part_name, 'nil')
+                self.assertEqual(step, handler.last_step())
+
     def test_pull_state(self):
         self.assertEqual(None, self.handler.last_step())
 
