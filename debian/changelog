@@ -1,3 +1,31 @@
+snapcraft (2.5) xenial; urgency=medium
+
+  [ Leonardo Arias Fonseca ]
+  * examples_tests: added more tests after the snaps are installed.
+    (LP: #1545071)
+  * travis: run the tests in the GCE trusty machine. (LP: #1555386)
+
+  [ Daniel Holbach ]
+  * Remove information about PPA. snapcraft and tools will be kept
+    up-to-date in xenial. (LP: #1554565)
+
+  [ Scott Sweeny ]
+  * Remove Unicode quotes from help text (LP: #1555733)
+
+  [ Sergio Schvezov ]
+  * Correct local source pulling (LP: #1558446)
+  * New plugin: kbuild (LP: #1558623)
+  * Support downloading snaps (LP: #1558970)
+
+  [ Alexander Sack ]
+  * New plugin: kernel (LP: #1552168)
+
+  [ Kyle Fazzari ]
+  * Improve per-step state tracking. (LP: #1558810)
+  * Migrate old state to new. (LP: #1560158)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 21 Mar 2016 20:38:18 -0300
+
 snapcraft (2.4) xenial; urgency=medium
 
   [ Kyle Fazzari ]
