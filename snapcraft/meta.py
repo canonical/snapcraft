@@ -51,6 +51,14 @@ _OPTIONAL_HOOKS = [
     'config',
 ]
 
+_KERNEL_KEYS = {
+    'kernel': 'vmlinuz',
+    'initrd': 'initrd.img',
+    'modules': 'lib/modules/{}',
+    'firmware': 'lib/firmware',
+    'dtbs': 'dtbs',
+}
+
 
 class CommandError(Exception):
     pass
@@ -129,11 +137,22 @@ def _compose_snap_yaml(meta_dir, config_data):
     if 'apps' in config_data:
         snap_yaml['apps'] = _wrap_apps(config_data['apps'])
 
+    if config_data.get('type', '') == 'kernel':
+        snap_yaml.update(_get_kernel_keys())
+
     if 'uses' in config_data:
         snap_yaml['uses'] = \
             _copy_security_profiles(meta_dir, config_data['uses'])
 
     return snap_yaml
+
+
+def _get_kernel_keys():
+    kernel_keys = _KERNEL_KEYS.copy()
+    version = os.listdir(os.path.join(common.get_snapdir(), 'lib', 'modules'))
+    kernel_keys['modules'] = kernel_keys['modules'].format(version[0])
+
+    return kernel_keys
 
 
 def _copy(meta_dir, relpath, new_relpath=None):

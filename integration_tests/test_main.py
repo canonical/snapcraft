@@ -31,6 +31,7 @@ class MainTestCase(integration_tests.TestCase):
             'go',
             'jdk',
             'kbuild',
+            'kernel',
             'make',
             'maven',
             'nil',
