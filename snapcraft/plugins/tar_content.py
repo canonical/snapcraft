@@ -52,6 +52,9 @@ class TarContentPlugin(snapcraft.BasePlugin):
 
         self.tar = snapcraft.sources.Tar(self.options.source, builddir)
 
+    def set_target_machine(self, machine):
+        pass
+
     def pull(self):
         self.tar.pull()
 

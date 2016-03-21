@@ -79,7 +79,7 @@ class KBuildPluginTestCase(tests.TestCase):
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
-            mock.call('yes "" | make oldconfig', shell=True,
+            mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
@@ -119,7 +119,7 @@ class KBuildPluginTestCase(tests.TestCase):
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
-            mock.call('yes "" | make oldconfig V=1', shell=True,
+            mock.call('yes "" | make -j2 V=1 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
@@ -162,7 +162,7 @@ class KBuildPluginTestCase(tests.TestCase):
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
-            mock.call('yes "" | make oldconfig', shell=True,
+            mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
@@ -220,7 +220,7 @@ ACCEPT=n
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
-            mock.call('yes "" | make oldconfig', shell=True,
+            mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 

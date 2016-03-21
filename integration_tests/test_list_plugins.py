@@ -29,6 +29,7 @@ class ListPluginsTestCase(integration_tests.TestCase):
                     'go\n'
                     'jdk\n'
                     'kbuild\n'
+                    'kernel\n'
                     'make\n'
                     'maven\n'
                     'nil\n'

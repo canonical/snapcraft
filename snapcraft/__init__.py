@@ -254,6 +254,13 @@ class BasePlugin:
         """
         return []
 
+    def set_target_machine(self, machine):
+        """Set the target compilation architecture to machine."""
+        raise NotImplementedError(
+            'Building for a different target architecture requires '
+            'a plugin specific implementation in the '
+            '{!r} plugin'.format(self.name))
+
     # Helpers
     def run(self, cmd, cwd=None, **kwargs):
         if cwd is None:

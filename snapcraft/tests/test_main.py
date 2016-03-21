@@ -54,6 +54,7 @@ class TestMain(TestCase):
             'COMMAND': 'invalid',
             '--debug': False,
             '--no-parallel-build': False,
+            '--target-arch': None,
             'ARGS': [],
         }
 
@@ -68,6 +69,7 @@ class TestMain(TestCase):
             'COMMAND': '',
             '--debug': False,
             '--no-parallel-build': False,
+            '--target-arch': None,
             'ARGS': [],
         }
         with mock.patch('snapcraft.commands.snap.main') as mock_cmd:
@@ -81,6 +83,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': False,
             '--no-parallel-build': False,
+            '--target-arch': None,
             'ARGS': [],
         }
 
@@ -100,6 +103,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': True,
             '--no-parallel-build': False,
+            '--target-arch': None,
             'ARGS': [],
         }
 
@@ -122,6 +126,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': False,
             '--no-parallel-build': False,
+            '--target-arch': None,
             'ARGS': [],
         }
 
@@ -138,6 +143,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': False,
             '--no-parallel-build': True,
+            '--target-arch': None,
             'ARGS': [],
         }
 
