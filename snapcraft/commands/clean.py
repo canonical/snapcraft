@@ -25,6 +25,8 @@ Usage:
 
 Options:
   -h --help             show this help message and exit.
+  -s STEP --step=STEP   only clean the specified step and those that depend
+                        upon it.
 """
 
 import os
@@ -39,6 +41,33 @@ from snapcraft import common
 logger = logging.getLogger(__name__)
 
 
+def _reverse_dependency_tree(config, part_name):
+    dependents = config.part_dependents(part_name)
+    for dependent in dependents.copy():
+        dependents |= _reverse_dependency_tree(config, dependent)
+
+    return dependents
+
+
+def _clean_part_and_all_dependents(config, part, step):
+    cleaned_parts = set()
+
+    # Clean the part in question
+    part.clean(step)
+    cleaned_parts.add(part.name)
+
+    # Now obtain the reverse dependency tree for this part. Make sure
+    # all dependents are also cleaned.
+    dependents = _reverse_dependency_tree(config, part.name)
+    cleaned_parts |= dependents
+    dependent_parts = {p for p in config.all_parts
+                       if p.name in dependents}
+    for dependent_part in dependent_parts:
+        dependent_part.clean(step)
+
+    return cleaned_parts
+
+
 def main(argv=None):
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
@@ -48,16 +77,22 @@ def main(argv=None):
     if args['PART']:
         config.validate_parts(args['PART'])
 
+    cleaned_parts = set()
     for part in config.all_parts:
-        if not args['PART'] or part.name in args['PART']:
-            part.clean()
+        if not args['PART']:
+            part.clean(args['--step'])
+            cleaned_parts.add(part.name)
+        elif part.name in args['PART']:
+            cleaned_parts |= _clean_part_and_all_dependents(
+                config, part, args['--step'])
 
-    # parts dir does not contain only generated code.
+    # parts dir does not contain only generated code, so only blow it away if
+    # there's nothing left inside it.
     if (os.path.exists(common.get_partsdir()) and
             not os.listdir(common.get_partsdir())):
         os.rmdir(common.get_partsdir())
 
-    parts_match = set(config.part_names) == set(args['PART'])
+    parts_match = set(config.part_names) == cleaned_parts
     # Only clean stage if all the parts were cleaned up.
     clean_stage = not args['PART'] or parts_match
     if clean_stage and os.path.exists(common.get_stagedir()):

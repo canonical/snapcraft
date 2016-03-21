@@ -22,6 +22,7 @@ from unittest.mock import (
     Mock,
     patch,
 )
+import yaml
 
 import fixtures
 
@@ -282,7 +283,7 @@ class StateTestCase(tests.TestCase):
 
         part_name = 'test_part'
         self.handler = pluginhandler.load_plugin(part_name, 'nil')
-        os.makedirs(os.path.join(common.get_partsdir(), part_name))
+        self.handler.makedirs()
 
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
@@ -325,9 +326,42 @@ class StateTestCase(tests.TestCase):
     def test_strip_state(self):
         self.assertEqual(None, self.handler.last_step())
 
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
         self.handler.strip()
 
         self.assertEqual('strip', self.handler.last_step())
+        with open(self.handler._step_state_file('strip'), 'r') as f:
+            state = yaml.load(f)
+
+        self.assertTrue(state, 'Expected strip to save state YAML')
+
+        self.assertTrue('snap-files' in state)
+        self.assertEqual(2, len(state['snap-files']))
+        self.assertTrue('bin/1' in state['snap-files'])
+        self.assertTrue('bin/1' in state['snap-files'])
+
+        self.assertTrue('snap-directories' in state)
+        self.assertEqual(1, len(state['snap-directories']))
+        self.assertTrue('bin' in state['snap-directories'])
+
+    def test_clean_strip_state(self):
+        self.assertEqual(None, self.handler.last_step())
+        self.handler.makedirs()
+        fake_state = {
+            'snap-files': [],
+            'snap-directories': []
+        }
+        self.handler.mark_done('strip', fake_state)
+
+        self.handler.clean_strip()
+
+        self.assertEqual('stage', self.handler.last_step())
 
 
 class CleanTestCase(tests.TestCase):
@@ -359,6 +393,153 @@ class CleanTestCase(tests.TestCase):
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
         self.assertFalse(mock_rmtree.called)
+
+    def clear_common_directories(self):
+        if os.path.exists(common.get_partsdir()):
+            shutil.rmtree(common.get_partsdir())
+
+        if os.path.exists(common.get_stagedir()):
+            shutil.rmtree(common.get_stagedir())
+
+        if os.path.exists(common.get_snapdir()):
+            shutil.rmtree(common.get_snapdir())
+
+    def test_clean_strip(self):
+        filesets = {
+            'all': {
+                'fileset': ['*'],
+            },
+            'no1': {
+                'fileset': ['-1'],
+            },
+            'onlya': {
+                'fileset': ['a'],
+            },
+            'onlybase': {
+                'fileset': ['*', '-*/*'],
+            },
+            'nostara': {
+                'fileset': ['-*/a'],
+            },
+        }
+
+        for key, value in filesets.items():
+            with self.subTest(key=key):
+                self.clear_common_directories()
+
+                handler = pluginhandler.load_plugin('test_part', 'nil', {
+                    'snap': value['fileset']
+                })
+                handler.makedirs()
+
+                installdir = handler.code.installdir
+                os.makedirs(installdir + '/1/1a/1b')
+                os.makedirs(installdir + '/2/2a')
+                os.makedirs(installdir + '/3')
+                open(installdir + '/a', mode='w').close()
+                open(installdir + '/b', mode='w').close()
+                open(installdir + '/1/a', mode='w').close()
+                open(installdir + '/3/a', mode='w').close()
+
+                handler.mark_done('build')
+
+                # Stage the installed files
+                handler.stage()
+
+                # Now strip them
+                handler.strip()
+
+                self.assertTrue(os.listdir(common.get_snapdir()))
+
+                handler.clean_strip()
+
+                self.assertFalse(os.listdir(common.get_snapdir()),
+                                 'Expected snapdir to be completely cleaned')
+
+    def test_clean_strip_multiple_independent_parts(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = pluginhandler.load_plugin('part1', 'nil')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+
+        handler1.mark_done('build')
+
+        # Now create part2 and get it through the "build" step.
+        handler2 = pluginhandler.load_plugin('part2', 'nil')
+        handler2.makedirs()
+
+        bindir = os.path.join(handler2.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        handler2.mark_done('build')
+
+        # Now stage both parts
+        handler1.stage()
+        handler2.stage()
+
+        # And strip both parts
+        handler1.strip()
+        handler2.strip()
+
+        # Verify that part1's file has been stripped
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')))
+
+        # Verify that part2's file has been stripped
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')))
+
+        # Now clean the strip step for part1
+        handler1.clean_strip()
+
+        # Verify that part1's file is no longer stripped
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')),
+            "Expected part1's stripped files to be cleaned")
+
+        # Verify that part2's file is still there
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')),
+            "Expected part2's stripped files to be untouched")
+
+    def test_clean_strip_after_fileset_change(self):
+        # Create part1 and get it through the "build" step.
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        bindir = os.path.join(handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        handler.mark_done('build')
+        handler.stage()
+        handler.strip()
+
+        # Verify that both files have been stripped
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')))
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')))
+
+        # Now update the `snap` fileset to only snap one of these files
+        handler.code.options.snap = ['bin/1']
+
+        # Now clean the strip step for part1
+        handler.clean_strip()
+
+        # Verify that part1's file is no longer stripped
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')),
+            'Expected bin/1 to be cleaned')
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')),
+            'Expected bin/2 to be cleaned as well, even though the filesets '
+            'changed since it was stripped.')
 
 
 class CollisionTestCase(tests.TestCase):
