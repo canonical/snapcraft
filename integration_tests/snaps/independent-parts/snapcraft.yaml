@@ -1,0 +1,15 @@
+name: independent-parts
+version: 1
+summary: Two independent parts
+description: Two independent parts
+
+parts:
+  part1:
+    plugin: copy
+    files:
+      file1: bin/file1
+
+  part2:
+    plugin: copy
+    files:
+      file2: bin/file2
