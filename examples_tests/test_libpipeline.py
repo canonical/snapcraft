@@ -29,4 +29,4 @@ class LibPipelineTestCase(examples_tests.ExampleTestCase):
             'custom libpipeline called\n'
             'test\n')
         self.assert_command_in_snappy_testbed(
-            '/snaps/bin/pipelinetest.pipelinetest', expected)
+            '/snaps/bin/pipelinetest', expected)
