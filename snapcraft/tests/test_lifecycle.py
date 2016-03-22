@@ -19,6 +19,7 @@ import logging
 import fixtures
 
 from snapcraft import (
+    common,
     lifecycle,
     tests,
 )
@@ -71,7 +72,15 @@ parts:
 """)
         open('icon.png', 'w').close()
 
-        lifecycle.execute('pull')
+        snap_info = lifecycle.execute('pull')
+
+        expected_snap_info = {
+            'name': 'after',
+            'version': 0,
+            'arch': [common.get_arch()],
+            'type': ''
+        }
+        self.assertEqual(snap_info, expected_snap_info)
 
         self.assertEqual(
             'Pulling part1 \n'
@@ -81,3 +90,33 @@ parts:
             'Staging part1 \n'
             'Pulling part2 \n',
             fake_logger.output)
+
+    def test_os_type_returned_by_lifecycle(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: after
+version: 0
+summary: test stage
+description: check and see if we return type 'os'
+type: os
+
+parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after:
+      - part1
+""")
+        open('icon.png', 'w').close()
+
+        snap_info = lifecycle.execute('pull')
+
+        expected_snap_info = {
+            'name': 'after',
+            'version': 0,
+            'arch': [common.get_arch()],
+            'type': 'os'
+        }
+        self.assertEqual(snap_info, expected_snap_info)
