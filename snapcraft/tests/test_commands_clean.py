@@ -136,9 +136,9 @@ parts:
         clean.main(['--step=foo'])
 
         expected_staged_state = {
-            'clean0': {},
-            'clean1': {},
-            'clean2': {},
+            'clean0': pluginhandler.StageState({'clean0'}, set()),
+            'clean1': pluginhandler.StageState({'clean1'}, set()),
+            'clean2': pluginhandler.StageState({'clean2'}, set()),
         }
 
         expected_stripped_state = {
