@@ -54,7 +54,8 @@ def execute(step, part_names=None):
 
     return {'name': config.data['name'],
             'version': config.data['version'],
-            'arch': config.data['architectures']}
+            'arch': config.data['architectures'],
+            'type': config.data.get('type', '')}
 
 
 class _Executor:
