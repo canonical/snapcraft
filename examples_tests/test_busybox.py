@@ -24,7 +24,10 @@ class BusyBoxTestCase(examples_tests.ExampleTestCase):
     def test_busybox(self):
         self.build_snap(self.example_dir)
         self.install_snap(self.example_dir, 'busybox', '1.0')
-        # TODO once PWD issues are sorted make use of busybox.touch
-        # for a more complete test run.
         self.assert_command_in_snappy_testbed(
-            '/snaps/bin/busybox.ls', '')
+            ['/snaps/bin/busybox.touch', 'busybox.test'], '')
+        self.addCleanup(
+            self.run_command_in_snappy_testbed, ['rm', 'busybox.test'])
+        self.assert_command_in_snappy_testbed(
+            '/snaps/bin/busybox.ls',
+            'busybox.test\nbusybox_1.0_amd64.snap\nsnaps\n')
