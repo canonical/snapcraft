@@ -149,6 +149,29 @@ architectures: [amd64, armhf]
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
 
     @mock.patch('subprocess.check_call')
+    def test_snap_from_dir_with_no_arch(self, mock_call):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        meta_dir = os.path.join('mysnap', 'meta')
+        os.makedirs(meta_dir)
+        with open(os.path.join(meta_dir, 'snap.yaml'), 'w') as f:
+            f.write("""name: my_snap
+version: 99
+""")
+
+        snap.main(['mysnap'])
+
+        self.assertEqual(
+            'Snapping my_snap_99_all.snap\n'
+            'Snapped my_snap_99_all.snap\n',
+            fake_logger.output)
+
+        mock_call.assert_called_once_with([
+            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_all.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+
+    @mock.patch('subprocess.check_call')
     def test_snap_from_dir_type_os_does_not_use_all_root(self, mock_call):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
