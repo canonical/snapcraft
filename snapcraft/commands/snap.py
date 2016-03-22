@@ -51,7 +51,8 @@ def _snap_data_from_dir(dir):
 
     return {'name': snap['name'],
             'version': snap['version'],
-            'arch': snap['architectures']}
+            'arch': snap['architectures'],
+            'type': snap.get('type', '')}
 
 
 def _format_snap_name(snap):
@@ -76,7 +77,10 @@ def main(argv=None):
     logger.info('Snapping {}'.format(snap_name))
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
-    mksquashfs_args = ['-noappend', '-comp', 'xz', '-all-root', '-no-xattrs']
+    mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
+    if snap['type'] != 'os':
+        mksquashfs_args.append('-all-root')
+
     subprocess.check_call(
         ['mksquashfs', snap_dir, snap_name] + mksquashfs_args)
     logger.info('Snapped {}'.format(snap_name))

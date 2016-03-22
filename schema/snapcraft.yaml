@@ -124,6 +124,7 @@ properties:
     enum:
       - app
       - kernel
+      - os
   frameworks:
     type: array
     minItems: 1

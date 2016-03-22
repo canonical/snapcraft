@@ -698,6 +698,7 @@ class TestValidation(tests.TestCase):
         valid_types = [
             'app',
             'kernel',
+            'os',
         ]
 
         for t in valid_types:
@@ -711,7 +712,6 @@ class TestValidation(tests.TestCase):
             'framework',
             'platform',
             'oem',
-            'os',
         ]
 
         for t in invalid_types:
@@ -725,7 +725,8 @@ class TestValidation(tests.TestCase):
 
                 expected_message = (
                     "The 'type' property does not match the required "
-                    "schema: '{}' is not one of ['app', 'kernel']").format(t)
+                    "schema: '{}' is not one of "
+                    "['app', 'kernel', 'os']").format(t)
                 self.assertEqual(raised.exception.message, expected_message,
                                  msg=data)
 
