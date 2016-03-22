@@ -51,12 +51,18 @@ def _snap_data_from_dir(dir):
 
     return {'name': snap['name'],
             'version': snap['version'],
-            'arch': snap['architectures'],
+            'arch': snap.get('architectures', []),
             'type': snap.get('type', '')}
 
 
 def _format_snap_name(snap):
-    snap['arch'] = snap['arch'][0] if len(snap['arch']) == 1 else 'multi'
+    if not snap['arch']:
+        snap['arch'] = 'all'
+    elif len(snap['arch']) == 1:
+        snap['arch'] = snap['arch'][0]
+    else:
+        snap['arch'] = 'multi'
+
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
