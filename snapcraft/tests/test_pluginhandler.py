@@ -19,7 +19,9 @@ import os
 import shutil
 import tempfile
 from unittest.mock import (
+    call,
     Mock,
+    MagicMock,
     patch,
 )
 
@@ -282,7 +284,7 @@ class StateTestCase(tests.TestCase):
 
         part_name = 'test_part'
         self.handler = pluginhandler.load_plugin(part_name, 'nil')
-        os.makedirs(os.path.join(common.get_partsdir(), part_name))
+        self.handler.makedirs()
 
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
@@ -372,6 +374,76 @@ class CleanTestCase(tests.TestCase):
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
         self.assertFalse(mock_rmtree.called)
+
+
+class PerStepCleanTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.manager_mock = MagicMock()
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_pull')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_pull')
+        self.addCleanup(patcher.stop)
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_build')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_build')
+        self.addCleanup(patcher.stop)
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_stage')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_stage')
+        self.addCleanup(patcher.stop)
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_strip')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_strip')
+        self.addCleanup(patcher.stop)
+
+    def test_clean_pull_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='pull')
+
+        # Verify the step cleaning order
+        self.assertEqual(4, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+            call.clean_stage({}),
+            call.clean_build(),
+            call.clean_pull(),
+        ])
+
+    def test_clean_build_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='build')
+
+        # Verify the step cleaning order
+        self.assertEqual(3, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+            call.clean_stage({}),
+            call.clean_build(),
+        ])
+
+    def test_clean_stage_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='stage')
+
+        # Verify the step cleaning order
+        self.assertEqual(2, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+            call.clean_stage({}),
+        ])
+
+    def test_clean_strip_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='strip')
+
+        # Verify the step cleaning order
+        self.assertEqual(1, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+        ])
 
 
 class CollisionTestCase(tests.TestCase):
