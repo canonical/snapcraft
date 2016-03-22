@@ -27,6 +27,7 @@ parts:
     plugin: kbuild
     source: https://github.com/asac/busybox.git
     source-type: git
+    build-packages: [gcc, libc6-dev]
     kconfigs:
      - CONFIG_FEATURE_SUID=n
      - CONFIG_HTTPD=n
