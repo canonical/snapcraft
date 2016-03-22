@@ -35,14 +35,16 @@ version: 1.0
 summary: test strip
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']
+type: {}
 
 parts:
     part1:
       plugin: nil
 """
 
-    def make_snapcraft_yaml(self, n=1):
-        super().make_snapcraft_yaml(self.yaml_template)
+    def make_snapcraft_yaml(self, n=1, snap_type='app'):
+        snapcraft_yaml = self.yaml_template.format(snap_type)
+        super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(common.get_partsdir(), 'part1', 'state')
 
     @mock.patch('subprocess.check_call')
@@ -69,7 +71,33 @@ parts:
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+
+    @mock.patch('subprocess.check_call')
+    def test_snap_type_os_does_not_use_all_root(self, mock_call):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.make_snapcraft_yaml(snap_type='os')
+
+        snap.main()
+
+        self.assertEqual(
+            'Pulling part1 \n'
+            'Building part1 \n'
+            'Staging part1 \n'
+            'Stripping part1 \n'
+            'Snapping snap-test_1.0_amd64.snap\n'
+            'Snapped snap-test_1.0_amd64.snap\n',
+            fake_logger.output)
+
+        self.assertTrue(os.path.exists(common.get_stagedir()),
+                        'Expected a stage directory')
+
+        self.verify_state('part1', self.state_dir, 'strip')
+
+        mock_call.assert_called_once_with([
+            'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs'])
 
     @mock.patch('subprocess.check_call')
     def test_snap_defaults_with_parts_in_strip(self, mock_call):
@@ -94,7 +122,7 @@ parts:
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
 
     @mock.patch('subprocess.check_call')
     def test_snap_from_dir(self, mock_call):
@@ -118,7 +146,32 @@ architectures: [amd64, armhf]
 
         mock_call.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+
+    @mock.patch('subprocess.check_call')
+    def test_snap_from_dir_type_os_does_not_use_all_root(self, mock_call):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        meta_dir = os.path.join('mysnap', 'meta')
+        os.makedirs(meta_dir)
+        with open(os.path.join(meta_dir, 'snap.yaml'), 'w') as f:
+            f.write("""name: my_snap
+version: 99
+architectures: [amd64, armhf]
+type: os
+""")
+
+        snap.main(['mysnap'])
+
+        self.assertEqual(
+            'Snapping my_snap_99_multi.snap\n'
+            'Snapped my_snap_99_multi.snap\n',
+            fake_logger.output)
+
+        mock_call.assert_called_once_with([
+            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs'])
 
     @mock.patch('subprocess.check_call')
     def test_snap_with_output(self, mock_call):
@@ -144,4 +197,4 @@ architectures: [amd64, armhf]
 
         mock_call.assert_called_once_with([
             'mksquashfs', common.get_snapdir(), 'mysnap.snap',
-            '-noappend', '-comp', 'xz', '-all-root', '-no-xattrs'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
