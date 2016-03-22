@@ -161,20 +161,21 @@ class ExampleTestCase(testtools.TestCase):
 
     def assert_command_in_snappy_testbed(self, command, expected_output):
         if not config.get('skip-install', False):
-            output = self._run_command_in_snappy_testbed(command)
+            output = self.run_command_in_snappy_testbed(command)
             self.assertEqual(output, expected_output)
 
-    def _run_command_in_snappy_testbed(self, command):
-        try:
-            return self.snappy_testbed.run_command(command)
-        except subprocess.CalledProcessError as e:
-            self.addDetail(
-                'ssh output', content.text_content(str(e.output)))
-            raise
+    def run_command_in_snappy_testbed(self, command):
+        if not config.get('skip-install', False):
+            try:
+                return self.snappy_testbed.run_command(command)
+            except subprocess.CalledProcessError as e:
+                self.addDetail(
+                    'ssh output', content.text_content(str(e.output)))
+                raise
 
     def assert_service_running(self, snap, service):
         if not config.get('skip-install', False):
-            output = self._run_command_in_snappy_testbed(
+            output = self.run_command_in_snappy_testbed(
                 ['sudo', 'snappy', 'service', 'status', snap])
             expected = (
                 'Snap\t+Service\t+State\n'
