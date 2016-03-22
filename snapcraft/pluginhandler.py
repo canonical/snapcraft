@@ -67,6 +67,24 @@ class StripState(yaml.YAMLObject):
         return False
 
 
+class StageState(yaml.YAMLObject):
+    yaml_tag = u'!StageState'
+
+    def __init__(self, files, directories):
+        self.files = files
+        self.directories = directories
+
+    def __repr__(self):
+        return '{}(files: {}, directories: {})'.format(
+            self.__class__, self.files, self.directories)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
 class PluginHandler:
 
     @property
@@ -183,16 +201,15 @@ class PluginHandler:
         # steps don't have a saved state.
         if index+1 != len(common.COMMAND_ORDER):
             for command in common.COMMAND_ORDER[index+1:]:
-                state_file = self._step_state_file(command)
-                if os.path.exists(state_file):
-                    os.remove(state_file)
+                self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        index = common.COMMAND_ORDER.index(step)
-        if index > 0:
-            self.mark_done(common.COMMAND_ORDER[index-1])
-        elif os.path.isdir(self.statedir):
-            shutil.rmtree(self.statedir)
+        state_file = self._step_state_file(step)
+        if os.path.exists(state_file):
+            os.remove(state_file)
+
+        if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
+            os.rmdir(self.statedir)
 
     def get_state(self, step):
         state = None
@@ -284,12 +301,29 @@ class PluginHandler:
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir)
 
-        self.mark_done('stage')
+        self.mark_done('stage', StageState(snap_files, snap_dirs))
 
     def clean_stage(self, project_staged_state):
-        raise NotImplementedError(
-            "Cleaning up step 'stage' for part {!r} is not yet "
-            "supported".format(self.name))
+        state_file = self._step_state_file('stage')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning staging area for',
+                              '(already clean)')
+            return
+
+        self.notify_stage('Cleaning staging area for')
+
+        with open(state_file, 'r') as f:
+            state = yaml.load(f.read())
+
+        try:
+            self._clean_shared_area(self.stagedir, state,
+                                    project_staged_state)
+        except AttributeError:
+            raise MissingState(
+                "Failed to clean step 'stage': Missing necessary state. "
+                "Please run stage again.")
+
+        self.mark_cleaned('stage')
 
     def strip(self, force=False):
         if not self.should_step_run('strip', force):
