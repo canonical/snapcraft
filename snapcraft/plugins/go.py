@@ -65,6 +65,7 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath = os.path.join(self.partdir, 'go')
         self._gopath_src = os.path.join(self._gopath, 'src')
         self._gopath_bin = os.path.join(self._gopath, 'bin')
+        self._gopath_pkg = os.path.join(self._gopath, 'pkg')
 
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
@@ -113,6 +114,15 @@ class GoPlugin(snapcraft.BasePlugin):
         for binary in os.listdir(os.path.join(self._gopath_bin)):
             binary_path = os.path.join(self._gopath_bin, binary)
             shutil.copy2(binary_path, install_bin_path)
+
+    def clean_build(self):
+        super().clean_build()
+
+        if os.path.isdir(self._gopath_bin):
+            shutil.rmtree(self._gopath_bin)
+
+        if os.path.isdir(self._gopath_pkg):
+            shutil.rmtree(self._gopath_pkg)
 
     def _local_build(self):
         go_package = os.path.basename(os.path.abspath(self.options.source))

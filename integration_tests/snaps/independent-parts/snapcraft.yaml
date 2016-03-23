@@ -5,11 +5,9 @@ description: Two independent parts
 
 parts:
   part1:
-    plugin: copy
-    files:
-      file1: bin/file1
+    plugin: make
+    source: part1
 
   part2:
-    plugin: copy
-    files:
-      file2: bin/file2
+    plugin: make
+    source: part2
