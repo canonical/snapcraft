@@ -61,7 +61,7 @@ class CreateTest(tests.TestCase):
 
         self.assertEqual(y, expected)
 
-    def test_create_meta_with_license(self):
+    def test_create_meta_with_declared_license(self):
         open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
         self.config_data['license'] = 'LICENSE'
 
@@ -79,15 +79,109 @@ class CreateTest(tests.TestCase):
         self.assertFalse('license' in y,
                          'license found in snap.yaml {}'.format(y))
 
-    def test_create_meta_with_icon(self):
+    def test_create_meta_with_declared_license_and_setup(self):
+        open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
+        self.config_data['license'] = 'LICENSE'
+
+        os.mkdir('setup')
+        license_text = 'this is the license'
+        with open(os.path.join('setup', 'license.txt'), 'w') as f:
+            f.write(license_text)
+
+        meta.create(self.config_data)
+
+        expected_license = os.path.join(self.meta_dir, 'license.txt')
+        self.assertTrue(os.path.exists(expected_license),
+                        'license.txt was not setup correctly')
+        with open(expected_license) as f:
+            self.assertEqual(f.read(), license_text)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertFalse('license' in y,
+                         'license found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_license_in_setup(self):
+        os.mkdir('setup')
+        license_text = 'this is the license'
+        with open(os.path.join('setup', 'license.txt'), 'w') as f:
+            f.write(license_text)
+
+        meta.create(self.config_data)
+
+        expected_license = os.path.join(self.meta_dir, 'license.txt')
+        self.assertTrue(os.path.exists(expected_license),
+                        'license.txt was not setup correctly')
+        with open(expected_license) as f:
+            self.assertEqual(f.read(), license_text)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertFalse('license' in y,
+                         'license found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
         meta.create(self.config_data)
 
         self.assertTrue(
-            os.path.exists(os.path.join(self.meta_dir, 'icon.png')),
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
             'icon.png was not setup correctly')
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_declared_icon_and_setup(self):
+        gui_path = os.path.join('setup', 'gui')
+        os.makedirs(gui_path)
+        icon_content = b'this is the icon'
+        with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
+            f.write(icon_content)
+
+        open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
+        self.config_data['icon'] = 'my-icon.png'
+
+        meta.create(self.config_data)
+
+        expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
+        self.assertTrue(os.path.exists(expected_icon),
+                        'icon.png was not setup correctly')
+        with open(expected_icon, 'rb') as f:
+            self.assertEqual(f.read(), icon_content)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_icon_in_setup(self):
+        gui_path = os.path.join('setup', 'gui')
+        os.makedirs(gui_path)
+        icon_content = b'this is the icon'
+        with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
+            f.write(icon_content)
+
+        meta.create(self.config_data)
+
+        expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
+        self.assertTrue(os.path.exists(expected_icon),
+                        'icon.png was not setup correctly')
+        with open(expected_icon, 'rb') as f:
+            self.assertEqual(f.read(), icon_content)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
