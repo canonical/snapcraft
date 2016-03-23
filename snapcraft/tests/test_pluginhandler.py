@@ -342,6 +342,19 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(1, len(state.stage_package_directories))
         self.assertTrue('bin' in state.stage_package_directories)
 
+    @patch.object(nil.NilPlugin, 'clean_pull')
+    def test_clean_pull_state(self, mock_clean_pull):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.pull()
+
+        self.handler.clean_pull()
+
+        # Verify that the plugin had clean_pull() called
+        mock_clean_pull.assert_called_once_with()
+
+        self.assertEqual(None, self.handler.last_step())
+
     def test_build_state(self):
         self.assertEqual(None, self.handler.last_step())
 
@@ -571,10 +584,13 @@ class StateTestCase(tests.TestCase):
 
 class CleanTestCase(tests.TestCase):
 
-    @patch('shutil.rmtree')
+    @patch('os.rmdir')
+    @patch('os.listdir')
     @patch('os.path.exists')
-    def test_clean_part_that_exists(self, mock_exists, mock_rmtree):
+    def test_clean_part_that_exists(self, mock_exists, mock_listdir,
+                                    mock_rmdir):
         mock_exists.return_value = True
+        mock_listdir.return_value = False
 
         part_name = 'test_part'
         p = pluginhandler.load_plugin(part_name, 'nil')
@@ -583,11 +599,14 @@ class CleanTestCase(tests.TestCase):
         partdir = os.path.join(
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
-        mock_rmtree.assert_called_once_with(partdir)
+        mock_listdir.assert_called_once_with(partdir)
+        mock_rmdir.assert_called_once_with(partdir)
 
-    @patch('shutil.rmtree')
+    @patch('os.rmdir')
+    @patch('os.listdir')
     @patch('os.path.exists')
-    def test_clean_part_already_clean(self, mock_exists, mock_rmtree):
+    def test_clean_part_already_clean(self, mock_exists, mock_listdir,
+                                      mock_rmdir):
         mock_exists.return_value = False
 
         part_name = 'test_part'
@@ -597,7 +616,26 @@ class CleanTestCase(tests.TestCase):
         partdir = os.path.join(
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
-        self.assertFalse(mock_rmtree.called)
+        self.assertFalse(mock_listdir.called)
+        self.assertFalse(mock_rmdir.called)
+
+    @patch('os.rmdir')
+    @patch('os.listdir')
+    @patch('os.path.exists')
+    def test_clean_part_remaining_parts(self, mock_exists, mock_listdir,
+                                        mock_rmdir):
+        mock_exists.return_value = True
+        mock_listdir.return_value = True
+
+        part_name = 'test_part'
+        p = pluginhandler.load_plugin(part_name, 'nil')
+        p.clean()
+
+        partdir = os.path.join(
+            os.path.abspath(os.curdir), 'parts', part_name)
+        mock_exists.assert_called_once_with(partdir)
+        mock_listdir.assert_called_once_with(partdir)
+        self.assertFalse(mock_rmdir.called)
 
     def clear_common_directories(self):
         if os.path.exists(common.get_partsdir()):

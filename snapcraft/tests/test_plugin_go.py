@@ -217,3 +217,21 @@ class GoPluginTestCase(tests.TestCase):
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertFalse(os.path.exists(plugin._gopath_bin))
         self.assertFalse(os.path.exists(plugin._gopath_pkg))
+
+    def test_clean_pull(self):
+        class Options:
+            source = 'dir'
+            go_packages = []
+
+        plugin = go.GoPlugin('test-part', Options())
+
+        os.makedirs(plugin.options.source)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+
+        plugin.clean_pull()
+
+        self.assertFalse(os.path.exists(plugin._gopath))

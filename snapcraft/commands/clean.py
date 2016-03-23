@@ -83,6 +83,14 @@ def _cleanup_common_directories(config):
             if index > max_index:
                 max_index = index
 
+    # If no parts have been pulled, remove the parts directory. In most cases
+    # this directory should have already been cleaned, but this handles the
+    # case of a failed pull.
+    should_remove_partsdir = max_index < common.COMMAND_ORDER.index('pull')
+    if should_remove_partsdir and os.path.exists(common.get_partsdir()):
+        logger.info('Cleaning up parts directory')
+        shutil.rmtree(common.get_partsdir())
+
     # If no parts have been staged, remove staging area.
     should_remove_stagedir = max_index < common.COMMAND_ORDER.index('stage')
     if should_remove_stagedir and os.path.exists(common.get_stagedir()):
