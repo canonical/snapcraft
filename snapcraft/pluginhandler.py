@@ -85,6 +85,26 @@ class StageState(yaml.YAMLObject):
         return False
 
 
+class PullState(yaml.YAMLObject):
+    yaml_tag = u'!PullState'
+
+    def __init__(self, stage_package_files, stage_package_directories):
+        self.stage_package_files = stage_package_files
+        self.stage_package_directories = stage_package_directories
+
+    def __repr__(self):
+        return ('{}(stage-package-files: {}, '
+                'stage-package-directories: {})').format(
+            self.__class__, self.stage_package_files,
+            self.stage_packages_directories)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
 class PluginHandler:
 
     @property
@@ -100,6 +120,7 @@ class PluginHandler:
         self.code = None
         self.config = {}
         self._name = part_name
+        self._ubuntu = None
         self.deps = []
 
         self.stagedir = os.path.join(os.getcwd(), 'stage')
@@ -229,9 +250,11 @@ class PluginHandler:
         ubuntu.get(self.code.stage_packages)
         ubuntu.unpack(self.installdir)
 
-        snap_files, snap_dirs = self.migratable_fileset_for('stage')
-        _migrate_files(snap_files, snap_dirs, self.code.installdir,
+        package_files, package_dirs = self.migratable_fileset_for('stage')
+        _migrate_files(package_files, package_dirs, self.code.installdir,
                        self.stagedir, missing_ok=True)
+
+        return (package_files, package_dirs)
 
     def pull(self, force=False):
         if not self.should_step_run('pull', force):
@@ -239,10 +262,15 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage('Pulling')
+        package_files = set()
+        package_directories = set()
         if self.code.stage_packages:
-            self._setup_stage_packages()
+            package_files, package_directories = self._setup_stage_packages()
         self.code.pull()
-        self.mark_done('pull')
+
+        # Record the files and directories unpacked from the stage packages
+        state = PullState(package_files, package_directories)
+        self.mark_done('pull', state)
 
     def clean_pull(self):
         raise NotImplementedError(
@@ -255,13 +283,32 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage('Building')
+        if self.code.stage_packages:
+            # Stage packages were already fetched and unpacked in pull(), but
+            # they need to be unpacked into the stage directory again in case
+            # it's been cleaned.
+            state = self.get_state('pull')
+            try:
+                _migrate_files(
+                    state.stage_package_files,
+                    state.stage_package_directories, self.code.installdir,
+                    self.stagedir, missing_ok=True)
+            except AttributeError:
+                raise MissingState(
+                    "Failed to build: Missing necessary pull state. "
+                    "Please run pull again.")
         self.code.build()
         self.mark_done('build')
 
     def clean_build(self):
-        raise NotImplementedError(
-            "Cleaning up step 'build' for part {!r} is not yet "
-            "supported".format(self.name))
+        state_file = self._step_state_file('build')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning build for', '(already clean)')
+            return
+
+        self.notify_stage('Cleaning build for')
+        self.code.clean_build()
+        self.mark_cleaned('build')
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
