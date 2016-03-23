@@ -33,6 +33,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import platform
+import shutil
 
 import snapcraft
 from snapcraft import sources
@@ -72,13 +73,20 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self._nodejs_tar = sources.Tar(_get_nodejs_release(),
-                                       os.path.join(self.partdir, 'npm'))
+        self._npm_dir = os.path.join(self.partdir, 'npm')
+        self._nodejs_tar = sources.Tar(_get_nodejs_release(), self._npm_dir)
 
     def pull(self):
         super().pull()
         os.makedirs(os.path.join(self.partdir, 'npm'))
         self._nodejs_tar.pull()
+
+    def clean_pull(self):
+        super().clean_pull()
+
+        # Remove the npm directory (if any)
+        if os.path.exists(self._npm_dir):
+            shutil.rmtree(self._npm_dir)
 
     def build(self):
         super().build()
