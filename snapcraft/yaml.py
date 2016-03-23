@@ -296,13 +296,10 @@ def _runtime_env(root):
     ]).format(root) + '"')
 
     # Add the default LD_LIBRARY_PATH
-    env.append('LD_LIBRARY_PATH="' + ':'.join([
-        '{0}/lib',
-        '{0}/usr/lib',
-        '{0}/lib/{1}',
-        '{0}/usr/lib/{1}',
-        '$LD_LIBRARY_PATH'
-    ]).format(root, common.get_arch_triplet()) + '"')
+    library_path = _get_library_paths(
+        'LD_LIBRARY_PATH', root, prepend='', sep=':')
+    if library_path:
+        env.append(library_path)
 
     # Add more specific LD_LIBRARY_PATH if necessary
     ld_library_paths = libraries.determine_ld_library_path(root)
@@ -323,27 +320,13 @@ def _build_env(root):
 
     arch_triplet = common.get_arch_triplet()
 
-    env.append('CFLAGS="' + ' '.join([
-        '-I{0}/include',
-        '-I{0}/usr/include',
-        '-I{0}/include/{1}',
-        '-I{0}/usr/include/{1}',
-        '$CFLAGS'
-    ]).format(root, arch_triplet) + '"')
-    env.append('CPPFLAGS="' + ' '.join([
-        '-I{0}/include',
-        '-I{0}/usr/include',
-        '-I{0}/include/{1}',
-        '-I{0}/usr/include/{1}',
-        '$CPPFLAGS'
-    ]).format(root, arch_triplet) + '"')
-    env.append('LDFLAGS="' + ' '.join([
-        '-L{0}/lib',
-        '-L{0}/usr/lib',
-        '-L{0}/lib/{1}',
-        '-L{0}/usr/lib/{1}',
-        '$LDFLAGS'
-    ]).format(root, arch_triplet) + '"')
+    for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
+        include_path_for_env = _get_include_paths(envvar, root)
+        if include_path_for_env:
+            env.append(include_path_for_env)
+    library_path = _get_library_paths('LDFLAGS', root)
+    if library_path:
+        env.append(library_path)
     env.append('PKG_CONFIG_PATH=' + ':'.join([
         '{0}/lib/pkgconfig',
         '{0}/lib/{1}/pkgconfig',
@@ -357,6 +340,43 @@ def _build_env(root):
     ]).format(root, arch_triplet))
 
     return env
+
+
+def _get_include_paths(envvar, root):
+    machine_info = common.get_machine_info(common.target_machine)
+    paths = [
+        os.path.join(root, 'include'),
+        os.path.join(root, 'usr', 'include'),
+        os.path.join(root, 'include', machine_info['triplet']),
+        os.path.join(root, 'usr', 'include', machine_info['triplet']),
+    ]
+
+    include_paths = ['-I{}'.format(p) for p in paths if os.path.exists(p)]
+
+    if not include_paths:
+        return ''
+    else:
+        return '{envvar}="{include_paths} ${envvar}"'.format(
+            envvar=envvar, include_paths=' '.join(include_paths))
+
+
+def _get_library_paths(envvar, root, prepend='-L', sep=' '):
+    machine_info = common.get_machine_info(common.target_machine)
+    paths = [
+        os.path.join(root, 'lib'),
+        os.path.join(root, 'usr', 'lib'),
+        os.path.join(root, 'lib', machine_info['triplet']),
+        os.path.join(root, 'usr', 'lib', machine_info['triplet']),
+    ]
+
+    library_paths = ['{}{}'.format(prepend, l)
+                     for l in paths if os.path.exists(l)]
+
+    if not library_paths:
+        return ''
+    else:
+        return '{envvar}="{library_paths}{sep}${envvar}"'.format(
+            envvar=envvar, sep=sep, library_paths=sep.join(library_paths))
 
 
 def _build_env_for_stage(stagedir):
