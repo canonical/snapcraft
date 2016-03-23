@@ -228,3 +228,35 @@ class CleanBuildTestCase(tests.TestCase):
 
         # Make sure the install directory is gone
         self.assertFalse(os.path.exists(plugin.installdir))
+
+
+class CleanPullTestCase(tests.TestCase):
+
+    def test_clean_pull_directory(self):
+        options = tests.MockOptions(source='src')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
+
+        os.makedirs(plugin.sourcedir)
+        source_file = os.path.join(plugin.sourcedir, 'source')
+        open(source_file, 'w').close()
+
+        plugin.clean_pull()
+
+        # The source directory should now be gone
+        self.assertFalse(os.path.exists(plugin.sourcedir))
+
+    def test_clean_pull_symlink(self):
+        options = tests.MockOptions(source='src')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
+
+        real_source_directory = os.path.join(os.getcwd(), 'src')
+        os.mkdir(real_source_directory)
+        os.makedirs(plugin.partdir)
+        os.symlink(real_source_directory, plugin.sourcedir)
+
+        plugin.clean_pull()
+
+        # The source symlink should now be gone, but the real source should
+        # still be there.
+        self.assertFalse(os.path.exists(plugin.sourcedir))
+        self.assertTrue(os.path.isdir(real_source_directory))

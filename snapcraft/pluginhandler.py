@@ -273,9 +273,27 @@ class PluginHandler:
         self.mark_done('pull', state)
 
     def clean_pull(self):
-        raise NotImplementedError(
-            "Cleaning up step 'pull' for part {!r} is not yet "
-            "supported".format(self.name))
+        state_file = self._step_state_file('pull')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning pulled source for',
+                              '(already clean)')
+            return
+
+        self.notify_stage('Cleaning pulled source for')
+        # Remove ubuntu cache (if any)
+        if os.path.exists(self.ubuntudir):
+            shutil.rmtree(self.ubuntudir)
+
+        # Remove installdir (where the debs are unpacked), if any
+        if os.path.exists(self.installdir):
+            shutil.rmtree(self.installdir)
+
+        # Remove builddir, if any
+        if os.path.exists(self.code.builddir):
+            shutil.rmtree(self.code.builddir)
+
+        self.code.clean_pull()
+        self.mark_cleaned('pull')
 
     def build(self, force=False):
         if not self.should_step_run('build', force):
@@ -429,17 +447,6 @@ class PluginHandler:
 
     def clean(self, project_staged_state=None, project_stripped_state=None,
               step=None):
-        # TODO: Remove this function and rename _new_clean to clean once all
-        # pieces are implemented.
-        try:
-            self._new_clean(project_staged_state, project_stripped_state, step)
-        except NotImplementedError:
-            logger.info('Cleaning up for part {!r}'.format(self.name))
-            if os.path.exists(self.code.partdir):
-                shutil.rmtree(self.code.partdir)
-
-    def _new_clean(self, project_staged_state=None,
-                   project_stripped_state=None, step=None):
         if not project_staged_state:
             project_staged_state = {}
 

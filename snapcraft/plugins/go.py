@@ -90,6 +90,13 @@ class GoPlugin(snapcraft.BasePlugin):
             self._local_pull()
         self._remote_pull()
 
+    def clean_pull(self):
+        super().clean_pull()
+
+        # Remove the gopath (if present)
+        if os.path.exists(self._gopath):
+            shutil.rmtree(self._gopath)
+
     def _local_pull(self):
         go_package = os.path.basename(os.path.abspath(self.options.source))
         local_path = os.path.join(self._gopath_src, go_package)

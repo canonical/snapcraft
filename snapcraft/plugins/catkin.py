@@ -98,6 +98,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         # Get a unique set of packages
         self.catkin_packages = set(options.catkin_packages)
+        self._rosdep_path = os.path.join(self.partdir, 'rosdep')
 
         # The path created via the `source` key (or a combination of `source`
         # and `source-subdir` keys) needs to point to a valid Catkin workspace
@@ -180,8 +181,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         # Use rosdep for dependency detection and resolution
         rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
-                         os.path.join(self.partdir, 'rosdep'),
-                         self.PLUGIN_STAGE_SOURCES)
+                         self._rosdep_path, self.PLUGIN_STAGE_SOURCES)
         rosdep.setup()
 
         # Parse the Catkin packages to pull out their system dependencies
@@ -216,6 +216,13 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             logger.info('Installing package dependencies...')
             ubuntu.unpack(self.installdir)
+
+    def clean_pull(self):
+        super().clean_pull()
+
+        # Remove the rosdep path, if any
+        if os.path.exists(self._rosdep_path):
+            shutil.rmtree(self._rosdep_path)
 
     @property
     def gcc_version(self):

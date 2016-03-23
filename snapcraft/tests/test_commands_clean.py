@@ -59,6 +59,7 @@ parts:
                 open(os.path.join(
                     handler.code.installdir, part_name), 'w').close()
 
+                handler.mark_done('pull')
                 handler.mark_done('build')
 
                 handler.stage()

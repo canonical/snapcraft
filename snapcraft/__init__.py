@@ -207,6 +207,19 @@ class BasePlugin:
         if getattr(self.options, 'source', None):
             sources.get(self.sourcedir, self.build_basedir, self.options)
 
+    def clean_pull(self):
+        """Clean the pulled source for this part.
+
+        The base implementation simply removes the sourcedir. Override this
+        method if your pull process was more involved and needs more cleaning.
+        """
+
+        if os.path.exists(self.sourcedir):
+            if os.path.islink(self.sourcedir):
+                os.remove(self.sourcedir)
+            else:
+                shutil.rmtree(self.sourcedir)
+
     def build(self):
         """Build the source code retrieved from the pull phase.
 
