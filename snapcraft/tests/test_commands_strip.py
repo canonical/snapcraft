@@ -33,7 +33,6 @@ class StripCommandTestCase(tests.TestCase):
 version: 1.0
 summary: test strip
 description: if the strip is succesful the state file will be updated
-icon: icon.png
 
 parts:
 {parts}"""
@@ -45,7 +44,6 @@ parts:
     def make_snapcraft_yaml(self, n=1):
         parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
         super().make_snapcraft_yaml(self.yaml_template.format(parts=parts))
-        open('icon.png', 'w').close()
 
         parts = []
         for i in range(n):

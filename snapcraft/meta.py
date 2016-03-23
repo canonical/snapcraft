@@ -100,13 +100,39 @@ def _setup_assets(meta_dir, config_data):
         _setup_config_hook(hooks_dir, config_data['config'])
 
     if 'license' in config_data:
+        logger.warning("DEPRECATED: 'license' defined in snapcraft.yaml")
         license_path = os.path.join(meta_dir, 'license.txt')
-        shutil.copyfile(config_data['license'], license_path)
+        os.link(config_data['license'], license_path)
 
     if 'icon' in config_data:
+        logger.warning("DEPRECATED: 'icon' defined in snapcraft.yaml")
         icon_ext = config_data['icon'].split(os.path.extsep)[1]
-        icon_path = os.path.join(meta_dir, 'icon.{}'.format(icon_ext))
-        shutil.copyfile(config_data['icon'], icon_path)
+        icon_dir = os.path.join(meta_dir, 'gui')
+        icon_path = os.path.join(icon_dir, 'icon.{}'.format(icon_ext))
+        os.mkdir(icon_dir)
+        os.link(config_data['icon'], icon_path)
+
+    _setup_from_setup(meta_dir)
+
+
+def _setup_from_setup(meta_dir):
+    setup_dir = 'setup'
+    if not os.path.exists(setup_dir):
+        return
+
+    gui_src = os.path.join(setup_dir, 'gui')
+    gui_dst = os.path.join(meta_dir, 'gui')
+    if os.path.exists(gui_dst) and os.path.exists(gui_src):
+        shutil.rmtree(gui_dst)
+    if os.path.exists(gui_src):
+        shutil.copytree(gui_src, gui_dst)
+
+    license_src = os.path.join(setup_dir, 'license.txt')
+    license_dst = os.path.join(meta_dir, 'license.txt')
+    if os.path.exists(license_dst) and os.path.exists(license_src):
+        os.unlink(license_dst)
+    if os.path.exists(license_src):
+        os.link(license_src, license_dst)
 
 
 def _setup_config_hook(hooks_dir, config):
