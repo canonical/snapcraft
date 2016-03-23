@@ -45,6 +45,28 @@ class PluginError(Exception):
     pass
 
 
+class MissingState(Exception):
+    pass
+
+
+class StripState(yaml.YAMLObject):
+    yaml_tag = u'!StripState'
+
+    def __init__(self, files, directories):
+        self.files = files
+        self.directories = directories
+
+    def __repr__(self):
+        return '{}(files: {}, directories: {})'.format(
+            self.__class__, self.files, self.directories)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
 class PluginHandler:
 
     @property
@@ -165,6 +187,13 @@ class PluginHandler:
                 if os.path.exists(state_file):
                     os.remove(state_file)
 
+    def mark_cleaned(self, step):
+        index = common.COMMAND_ORDER.index(step)
+        if index > 0:
+            self.mark_done(common.COMMAND_ORDER[index-1])
+        elif os.path.isdir(self.statedir):
+            shutil.rmtree(self.statedir)
+
     def get_state(self, step):
         state = None
         state_file = self._step_state_file(step)
@@ -272,12 +301,47 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
 
-        self.mark_done('strip')
+        self.mark_done('strip', StripState(snap_files, snap_dirs))
 
     def clean_strip(self, project_stripped_state):
-        raise NotImplementedError(
-            "Cleaning up step 'strip' for part {!r} is not yet "
-            "supported".format(self.name))
+        state_file = self._step_state_file('strip')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning snapping area for',
+                              '(already clean)')
+            return
+
+        self.notify_stage('Cleaning snapping area for')
+
+        with open(state_file, 'r') as f:
+            state = yaml.load(f.read())
+
+        try:
+            self._clean_shared_area(self.snapdir, state,
+                                    project_stripped_state)
+        except AttributeError:
+            raise MissingState(
+                "Failed to clean step 'strip': Missing necessary state. "
+                "Please run strip again.")
+
+        self.mark_cleaned('strip')
+
+    def _clean_shared_area(self, shared_directory, part_state, project_state):
+        stripped_files = part_state.files
+        stripped_directories = part_state.directories
+
+        # We want to make sure we don't remove a file or directory that's
+        # being used by another part. So we'll examine the state for all parts
+        # in the project and leave any files or directories found to be in
+        # common.
+        for other_name, other_state in project_state.items():
+            if other_state and (other_name != self.name):
+                stripped_files -= other_state.files
+                stripped_directories -= other_state.directories
+
+        # Finally, clean the files and directories that are specific to this
+        # part.
+        _clean_migrated_files(stripped_files, stripped_directories,
+                              shared_directory)
 
     def env(self, root):
         return self.code.env(root)
@@ -289,7 +353,7 @@ class PluginHandler:
         try:
             self._new_clean(project_staged_state, project_stripped_state, step)
         except NotImplementedError:
-            logger.info('Cleaning up for part "{}"'.format(self.name))
+            logger.info('Cleaning up for part {!r}'.format(self.name))
             if os.path.exists(self.code.partdir):
                 shutil.rmtree(self.code.partdir)
 
@@ -301,7 +365,21 @@ class PluginHandler:
         if not project_stripped_state:
             project_stripped_state = {}
 
-        self._clean_steps(project_staged_state, project_stripped_state, step)
+        try:
+            self._clean_steps(project_staged_state, project_stripped_state,
+                              step)
+        except MissingState:
+            # If one of the step cleaning rules is missing state, it must be
+            # running on the output of an old Snapcraft. In that case, if we
+            # were specifically asked to clean that step we need to fail.
+            # Otherwise, just clean like the old Snapcraft did, and blow away
+            # the entire part directory.
+            if step:
+                raise
+
+            logger.info('Cleaning up for part {!r}'.format(self.name))
+            if os.path.exists(self.code.partdir):
+                shutil.rmtree(self.code.partdir)
 
         # Remove the part directory if it's completely empty (i.e. all steps
         # have been cleaned).
@@ -455,6 +533,20 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
             os.remove(dst)
 
         os.link(src, dst, follow_symlinks=False)
+
+
+def _clean_migrated_files(snap_files, snap_dirs, directory):
+    for snap_file in snap_files:
+        os.remove(os.path.join(directory, snap_file))
+
+    # snap_dirs may not be ordered so that subdirectories come before
+    # parents, and we want to be able to remove directories if possible, so
+    # we'll sort them in reverse here to get subdirectories before parents.
+    snap_dirs = sorted(snap_dirs, reverse=True)
+
+    for snap_dir in snap_dirs:
+        if not os.listdir(os.path.join(directory, snap_dir)):
+            os.rmdir(os.path.join(directory, snap_dir))
 
 
 def _get_file_list(stage_set):

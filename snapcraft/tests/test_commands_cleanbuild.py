@@ -43,7 +43,7 @@ parts:
 
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
-        self.state_file = os.path.join(common.get_partsdir(), 'part1', 'state')
+        self.state_dir = os.path.join(common.get_partsdir(), 'part1', 'state')
 
     @mock.patch('snapcraft.lxd.check_call')
     @mock.patch('snapcraft.repo.is_package_installed')

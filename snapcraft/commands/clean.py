@@ -53,22 +53,47 @@ def _reverse_dependency_tree(config, part_name):
 
 def _clean_part_and_all_dependents(config, part, staged_state, stripped_state,
                                    step):
-    cleaned_parts = set()
-
     # Clean the part in question
     part.clean(staged_state, stripped_state, step)
-    cleaned_parts.add(part.name)
 
     # Now obtain the reverse dependency tree for this part. Make sure
     # all dependents are also cleaned.
     dependents = _reverse_dependency_tree(config, part.name)
-    cleaned_parts |= dependents
     dependent_parts = {p for p in config.all_parts
                        if p.name in dependents}
     for dependent_part in dependent_parts:
         dependent_part.clean(staged_state, stripped_state, step)
 
-    return cleaned_parts
+
+def _remove_directory_if_empty(directory):
+    if os.path.isdir(directory) and not os.listdir(directory):
+        os.rmdir(directory)
+
+
+def _cleanup_common_directories(config):
+    _remove_directory_if_empty(common.get_partsdir())
+    _remove_directory_if_empty(common.get_stagedir())
+    _remove_directory_if_empty(common.get_snapdir())
+
+    max_index = -1
+    for part in config.all_parts:
+        step = part.last_step()
+        if step:
+            index = common.COMMAND_ORDER.index(step)
+            if index > max_index:
+                max_index = index
+
+    # If no parts have been staged, remove staging area.
+    should_remove_stagedir = max_index < common.COMMAND_ORDER.index('stage')
+    if should_remove_stagedir and os.path.exists(common.get_stagedir()):
+        logger.info('Cleaning up staging area')
+        shutil.rmtree(common.get_stagedir())
+
+    # If no parts have been stripped, remove snapping area.
+    should_remove_snapdir = max_index < common.COMMAND_ORDER.index('strip')
+    if should_remove_snapdir and os.path.exists(common.get_snapdir()):
+        logger.info('Cleaning up snapping area')
+        shutil.rmtree(common.get_snapdir())
 
 
 def main(argv=None):
@@ -83,28 +108,11 @@ def main(argv=None):
     staged_state = config.get_project_state('stage')
     stripped_state = config.get_project_state('strip')
 
-    cleaned_parts = set()
     for part in config.all_parts:
         if not args['PART']:
             part.clean(staged_state, stripped_state, args['--step'])
-            cleaned_parts.add(part.name)
         elif part.name in args['PART']:
-            cleaned_parts |= _clean_part_and_all_dependents(
+            _clean_part_and_all_dependents(
                 config, part, staged_state, stripped_state, args['--step'])
 
-    # parts dir does not contain only generated code, so only blow it away if
-    # there's nothing left inside it.
-    if (os.path.exists(common.get_partsdir()) and
-            not os.listdir(common.get_partsdir())):
-        os.rmdir(common.get_partsdir())
-
-    parts_match = set(config.part_names) == cleaned_parts
-    # Only clean stage if all the parts were cleaned up.
-    clean_stage = not args['PART'] or parts_match
-    if clean_stage and os.path.exists(common.get_stagedir()):
-        logger.info('Cleaning up staging area')
-        shutil.rmtree(common.get_stagedir())
-
-    if os.path.exists(common.get_snapdir()):
-        logger.info('Cleaning up snapping area')
-        shutil.rmtree(common.get_snapdir())
+    _cleanup_common_directories(config)
