@@ -1,3 +1,21 @@
+snapcraft (2.6) xenial; urgency=medium
+
+  [ Leonardo Arias Fonseca ]
+  * libpipeline example test: update the binary name (LP: #1560254)
+  * busybox example: update the expected results (LP: #1560255)
+
+  [ Sergio Schvezov ]
+  * Snaps of type os should not squash with -all-root (LP: #1557513)
+  * Support architecture all packages when snapping (LP: #1560481)
+  * Add missing build-packages to the busybox example (LP: #1560586)
+  * Fixed assets go into a setup dir (LP: 1560969)
+  * Include and library paths must exist (LP: #1558965)
+
+  [ Kyle Fazzari ]
+  * Support per-step clean command. (LP: #1537786)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 24 Mar 2016 01:16:12 -0300
+
 snapcraft (2.5) xenial; urgency=medium
 
   [ Leonardo Arias Fonseca ]
