@@ -77,14 +77,25 @@ class Python2Plugin(snapcraft.BasePlugin):
         ])
 
     def env(self, root):
+        # This is until we figure out how to get pip to download only
+        # and then build in the build step or split out pulling
+        # stage-packages in an internal private step.
+        env = [
+            'CPPFLAGS="-I{} $CPPFLAGS"'.format(os.path.join(
+                root, 'usr', 'include')),
+            'CFLAGS="-I{} $CFLAGS"'.format(os.path.join(
+                root, 'usr', 'include')),
+        ]
+
         # There's a chicken and egg problem here, everything run get's an
         # env built, even package installation, so the first runs for these
         # will likely fail.
         try:
-            return ['PYTHONPATH={0}'.format(common.get_python2_path(root))]
+            env.append('PYTHONPATH={0}'.format(common.get_python2_path(root)))
         except EnvironmentError as e:
             logger.debug(e)
-            return []
+
+        return env
 
     def pull(self):
         super().pull()

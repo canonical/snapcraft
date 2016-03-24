@@ -72,8 +72,17 @@ class Python3Plugin(snapcraft.BasePlugin):
         ])
 
     def env(self, root):
-        return ['PYTHONPATH={}'.format(os.path.join(
-            root, 'usr', 'lib', self.python_version, 'dist-packages'))]
+        return [
+            'PYTHONPATH={}'.format(os.path.join(
+                root, 'usr', 'lib', self.python_version, 'dist-packages')),
+            # This is until we figure out how to get pip to download only
+            # and then build in the build step or split out pulling
+            # stage-packages in an internal private step.
+            'CPPFLAGS="-I{} $CPPFLAGS"'.format(os.path.join(
+                root, 'usr', 'include')),
+            'CFLAGS="-I{} $CFLAGS"'.format(os.path.join(
+                root, 'usr', 'include')),
+        ]
 
     def pull(self):
         super().pull()
