@@ -17,7 +17,7 @@ called `sample` would look like:
 ```yaml
 parts:
   example-part:
-    type: sample
+    plugin: sample
     stage-packages:
       - gpg
       - wget
