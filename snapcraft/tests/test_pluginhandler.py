@@ -33,6 +33,7 @@ from snapcraft import (
     pluginhandler,
     tests,
 )
+from snapcraft.plugins import nil
 
 
 class PluginTestCase(tests.TestCase):
@@ -317,12 +318,29 @@ class StateTestCase(tests.TestCase):
                 handler = pluginhandler.load_plugin(part_name, 'nil')
                 self.assertEqual(step, handler.last_step())
 
-    def test_pull_state(self):
+    @patch('snapcraft.repo.Ubuntu')
+    def test_pull_state(self, ubuntu_mock):
         self.assertEqual(None, self.handler.last_step())
+
+        self.handler.code.stage_packages.append('foo')
+        bindir = os.path.join(self.handler.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
 
         self.handler.pull()
 
         self.assertEqual('pull', self.handler.last_step())
+        with open(self.handler._step_state_file('pull'), 'r') as f:
+            state = yaml.load(f)
+
+        self.assertTrue(state, 'Expected stage to save state YAML')
+        self.assertTrue(type(state) is pluginhandler.PullState)
+        self.assertTrue(type(state.stage_package_files) is set)
+        self.assertTrue(type(state.stage_package_directories) is set)
+        self.assertEqual(1, len(state.stage_package_files))
+        self.assertTrue('bin/1' in state.stage_package_files)
+        self.assertEqual(1, len(state.stage_package_directories))
+        self.assertTrue('bin' in state.stage_package_directories)
 
     def test_build_state(self):
         self.assertEqual(None, self.handler.last_step())
@@ -330,6 +348,31 @@ class StateTestCase(tests.TestCase):
         self.handler.build()
 
         self.assertEqual('build', self.handler.last_step())
+
+    def test_build_old_pull_state_with_stage_packages(self):
+        self.handler.code.stage_packages.append('foo')
+        self.handler.mark_done('pull', None)
+        with self.assertRaises(pluginhandler.MissingState) as raised:
+            self.handler.build()
+
+        self.assertEqual(
+            str(raised.exception),
+            'Failed to build: Missing necessary pull state. Please run pull '
+            'again.')
+
+    @patch.object(nil.NilPlugin, 'clean_build')
+    def test_clean_build_state(self, mock_clean_build):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.mark_done('pull')
+        self.handler.build()
+
+        self.handler.clean_build()
+
+        # Verify that the plugin had clean_build() called
+        mock_clean_build.assert_called_once_with()
+
+        self.assertEqual('pull', self.handler.last_step())
 
     def test_stage_state(self):
         self.assertEqual(None, self.handler.last_step())
@@ -352,7 +395,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
-        self.assertTrue('bin/1' in state.files)
+        self.assertTrue('bin/2' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
 
