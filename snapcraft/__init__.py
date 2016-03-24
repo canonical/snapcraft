@@ -207,6 +207,19 @@ class BasePlugin:
         if getattr(self.options, 'source', None):
             sources.get(self.sourcedir, self.build_basedir, self.options)
 
+    def clean_pull(self):
+        """Clean the pulled source for this part.
+
+        The base implementation simply removes the sourcedir. Override this
+        method if your pull process was more involved and needs more cleaning.
+        """
+
+        if os.path.exists(self.sourcedir):
+            if os.path.islink(self.sourcedir):
+                os.remove(self.sourcedir)
+            else:
+                shutil.rmtree(self.sourcedir)
+
     def build(self):
         """Build the source code retrieved from the pull phase.
 
@@ -214,6 +227,7 @@ class BasePlugin:
         Override this method if you need to process the source code to make it
         runnable.
         """
+
         if os.path.exists(self.build_basedir):
             shutil.rmtree(self.build_basedir)
 
@@ -221,6 +235,20 @@ class BasePlugin:
             self.sourcedir, self.build_basedir, symlinks=True,
             ignore=lambda d, s: common.SNAPCRAFT_FILES
             if d is self.sourcedir else [])
+
+    def clean_build(self):
+        """Clean the artifacts that resulted from building this part.
+
+        The base implementation simply removes the build_basedir and
+        installdir. Override this method if your build process was more
+        involved and needs more cleaning.
+        """
+
+        if os.path.exists(self.build_basedir):
+            shutil.rmtree(self.build_basedir)
+
+        if os.path.exists(self.installdir):
+            shutil.rmtree(self.installdir)
 
     def snap_fileset(self):
         """Return a list of files to include or exclude in the resulting snap

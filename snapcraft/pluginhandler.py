@@ -45,6 +45,66 @@ class PluginError(Exception):
     pass
 
 
+class MissingState(Exception):
+    pass
+
+
+class StripState(yaml.YAMLObject):
+    yaml_tag = u'!StripState'
+
+    def __init__(self, files, directories):
+        self.files = files
+        self.directories = directories
+
+    def __repr__(self):
+        return '{}(files: {}, directories: {})'.format(
+            self.__class__, self.files, self.directories)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
+class StageState(yaml.YAMLObject):
+    yaml_tag = u'!StageState'
+
+    def __init__(self, files, directories):
+        self.files = files
+        self.directories = directories
+
+    def __repr__(self):
+        return '{}(files: {}, directories: {})'.format(
+            self.__class__, self.files, self.directories)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
+class PullState(yaml.YAMLObject):
+    yaml_tag = u'!PullState'
+
+    def __init__(self, stage_package_files, stage_package_directories):
+        self.stage_package_files = stage_package_files
+        self.stage_package_directories = stage_package_directories
+
+    def __repr__(self):
+        return ('{}(stage-package-files: {}, '
+                'stage-package-directories: {})').format(
+            self.__class__, self.stage_package_files,
+            self.stage_package_directories)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
 class PluginHandler:
 
     @property
@@ -60,6 +120,7 @@ class PluginHandler:
         self.code = None
         self.config = {}
         self._name = part_name
+        self._ubuntu = None
         self.deps = []
 
         self.stagedir = os.path.join(os.getcwd(), 'stage')
@@ -148,20 +209,37 @@ class PluginHandler:
     def should_step_run(self, step, force=False):
         return force or self.is_dirty(step)
 
-    def mark_done(self, step):
+    def mark_done(self, step, state=None):
+        if not state:
+            state = {}
+
         index = common.COMMAND_ORDER.index(step)
 
-        # Currently only creating the step file. TODO: This will be a YAML file
-        # holding step-specific state information.
-        open(self._step_state_file(step), 'w').close()
+        with open(self._step_state_file(step), 'w') as f:
+            f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
         # steps don't have a saved state.
         if index+1 != len(common.COMMAND_ORDER):
             for command in common.COMMAND_ORDER[index+1:]:
-                state_file = self._step_state_file(command)
-                if os.path.exists(state_file):
-                    os.remove(state_file)
+                self.mark_cleaned(command)
+
+    def mark_cleaned(self, step):
+        state_file = self._step_state_file(step)
+        if os.path.exists(state_file):
+            os.remove(state_file)
+
+        if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
+            os.rmdir(self.statedir)
+
+    def get_state(self, step):
+        state = None
+        state_file = self._step_state_file(step)
+        if os.path.isfile(state_file):
+            with open(state_file, 'r') as f:
+                state = yaml.load(f.read())
+
+        return state
 
     def _step_state_file(self, step):
         return os.path.join(self.statedir, step)
@@ -172,9 +250,11 @@ class PluginHandler:
         ubuntu.get(self.code.stage_packages)
         ubuntu.unpack(self.installdir)
 
-        snap_files, snap_dirs = self.migratable_fileset_for('stage')
-        _migrate_files(snap_files, snap_dirs, self.code.installdir,
+        package_files, package_dirs = self.migratable_fileset_for('stage')
+        _migrate_files(package_files, package_dirs, self.code.installdir,
                        self.stagedir, missing_ok=True)
+
+        return (package_files, package_dirs)
 
     def pull(self, force=False):
         if not self.should_step_run('pull', force):
@@ -182,10 +262,38 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage('Pulling')
+        package_files = set()
+        package_directories = set()
         if self.code.stage_packages:
-            self._setup_stage_packages()
+            package_files, package_directories = self._setup_stage_packages()
         self.code.pull()
-        self.mark_done('pull')
+
+        # Record the files and directories unpacked from the stage packages
+        state = PullState(package_files, package_directories)
+        self.mark_done('pull', state)
+
+    def clean_pull(self):
+        state_file = self._step_state_file('pull')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning pulled source for',
+                              '(already clean)')
+            return
+
+        self.notify_stage('Cleaning pulled source for')
+        # Remove ubuntu cache (if any)
+        if os.path.exists(self.ubuntudir):
+            shutil.rmtree(self.ubuntudir)
+
+        # Remove installdir (where the debs are unpacked), if any
+        if os.path.exists(self.installdir):
+            shutil.rmtree(self.installdir)
+
+        # Remove builddir, if any
+        if os.path.exists(self.code.builddir):
+            shutil.rmtree(self.code.builddir)
+
+        self.code.clean_pull()
+        self.mark_cleaned('pull')
 
     def build(self, force=False):
         if not self.should_step_run('build', force):
@@ -193,12 +301,36 @@ class PluginHandler:
             return
         self.makedirs()
         self.notify_stage('Building')
+        if self.code.stage_packages:
+            # Stage packages were already fetched and unpacked in pull(), but
+            # they need to be unpacked into the stage directory again in case
+            # it's been cleaned.
+            state = self.get_state('pull')
+            try:
+                _migrate_files(
+                    state.stage_package_files,
+                    state.stage_package_directories, self.code.installdir,
+                    self.stagedir, missing_ok=True)
+            except AttributeError:
+                raise MissingState(
+                    "Failed to build: Missing necessary pull state. "
+                    "Please run pull again.")
         self.code.build()
         self.mark_done('build')
 
-    def migratable_fileset_for(self, stage):
+    def clean_build(self):
+        state_file = self._step_state_file('build')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning build for', '(already clean)')
+            return
+
+        self.notify_stage('Cleaning build for')
+        self.code.clean_build()
+        self.mark_cleaned('build')
+
+    def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, stage, ['*']) or ['*']
+        fileset = getattr(self.code.options, step, ['*']) or ['*']
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
@@ -234,7 +366,29 @@ class PluginHandler:
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir)
 
-        self.mark_done('stage')
+        self.mark_done('stage', StageState(snap_files, snap_dirs))
+
+    def clean_stage(self, project_staged_state):
+        state_file = self._step_state_file('stage')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning staging area for',
+                              '(already clean)')
+            return
+
+        self.notify_stage('Cleaning staging area for')
+
+        with open(state_file, 'r') as f:
+            state = yaml.load(f.read())
+
+        try:
+            self._clean_shared_area(self.stagedir, state,
+                                    project_staged_state)
+        except AttributeError:
+            raise MissingState(
+                "Failed to clean step 'stage': Missing necessary state. "
+                "Please run stage again.")
+
+        self.mark_cleaned('stage')
 
     def strip(self, force=False):
         if not self.should_step_run('strip', force):
@@ -246,15 +400,103 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
 
-        self.mark_done('strip')
+        self.mark_done('strip', StripState(snap_files, snap_dirs))
+
+    def clean_strip(self, project_stripped_state):
+        state_file = self._step_state_file('strip')
+        if not os.path.isfile(state_file):
+            self.notify_stage('Skipping cleaning snapping area for',
+                              '(already clean)')
+            return
+
+        self.notify_stage('Cleaning snapping area for')
+
+        with open(state_file, 'r') as f:
+            state = yaml.load(f.read())
+
+        try:
+            self._clean_shared_area(self.snapdir, state,
+                                    project_stripped_state)
+        except AttributeError:
+            raise MissingState(
+                "Failed to clean step 'strip': Missing necessary state. "
+                "Please run strip again.")
+
+        self.mark_cleaned('strip')
+
+    def _clean_shared_area(self, shared_directory, part_state, project_state):
+        stripped_files = part_state.files
+        stripped_directories = part_state.directories
+
+        # We want to make sure we don't remove a file or directory that's
+        # being used by another part. So we'll examine the state for all parts
+        # in the project and leave any files or directories found to be in
+        # common.
+        for other_name, other_state in project_state.items():
+            if other_state and (other_name != self.name):
+                stripped_files -= other_state.files
+                stripped_directories -= other_state.directories
+
+        # Finally, clean the files and directories that are specific to this
+        # part.
+        _clean_migrated_files(stripped_files, stripped_directories,
+                              shared_directory)
 
     def env(self, root):
         return self.code.env(root)
 
-    def clean(self):
-        logger.info('Cleaning up for part "{}"'.format(self.name))
-        if os.path.exists(self.code.partdir):
-            shutil.rmtree(self.code.partdir)
+    def clean(self, project_staged_state=None, project_stripped_state=None,
+              step=None):
+        if not project_staged_state:
+            project_staged_state = {}
+
+        if not project_stripped_state:
+            project_stripped_state = {}
+
+        try:
+            self._clean_steps(project_staged_state, project_stripped_state,
+                              step)
+        except MissingState:
+            # If one of the step cleaning rules is missing state, it must be
+            # running on the output of an old Snapcraft. In that case, if we
+            # were specifically asked to clean that step we need to fail.
+            # Otherwise, just clean like the old Snapcraft did, and blow away
+            # the entire part directory.
+            if step:
+                raise
+
+            logger.info('Cleaning up for part {!r}'.format(self.name))
+            if os.path.exists(self.code.partdir):
+                shutil.rmtree(self.code.partdir)
+
+        # Remove the part directory if it's completely empty (i.e. all steps
+        # have been cleaned).
+        if (os.path.exists(self.code.partdir) and
+                not os.listdir(self.code.partdir)):
+            os.rmdir(self.code.partdir)
+
+    def _clean_steps(self, project_staged_state, project_stripped_state,
+                     step=None):
+        index = None
+        if step:
+            if step not in common.COMMAND_ORDER:
+                raise RuntimeError(
+                    '{!r} is not a valid step for part {!r}'.format(
+                        step, self.name))
+
+            index = common.COMMAND_ORDER.index(step)
+
+        if not index or index <= common.COMMAND_ORDER.index('strip'):
+            self.clean_strip(project_stripped_state)
+
+        if not index or index <= common.COMMAND_ORDER.index('stage'):
+            self.clean_stage(project_staged_state)
+
+        if not index or index <= common.COMMAND_ORDER.index('build'):
+            self.clean_build()
+
+        if not index or index <= common.COMMAND_ORDER.index('pull'):
+            self.clean_pull()
 
 
 def _make_options(properties, schema):
@@ -379,6 +621,20 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
             os.remove(dst)
 
         os.link(src, dst, follow_symlinks=False)
+
+
+def _clean_migrated_files(snap_files, snap_dirs, directory):
+    for snap_file in snap_files:
+        os.remove(os.path.join(directory, snap_file))
+
+    # snap_dirs may not be ordered so that subdirectories come before
+    # parents, and we want to be able to remove directories if possible, so
+    # we'll sort them in reverse here to get subdirectories before parents.
+    snap_dirs = sorted(snap_dirs, reverse=True)
+
+    for snap_dir in snap_dirs:
+        if not os.listdir(os.path.join(directory, snap_dir)):
+            os.rmdir(os.path.join(directory, snap_dir))
 
 
 def _get_file_list(stage_set):
