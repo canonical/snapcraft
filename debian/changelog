@@ -1,3 +1,10 @@
+snapcraft (2.6.1) xenial; urgency=medium
+
+  [ Kyle Fazzari ]
+  * Clean: Leave local plugins alone. (LP: #1561546)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Thu, 24 Mar 2016 16:04:13 +0000
+
 snapcraft (2.6) xenial; urgency=medium
 
   [ Leonardo Arias Fonseca ]
