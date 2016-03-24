@@ -29,7 +29,6 @@ import integration_tests
 
 from snapcraft.common import (
     get_arch,
-    get_arch_triplet,
 )
 
 
@@ -46,9 +45,7 @@ class SnapTestCase(integration_tests.TestCase):
         binary1_wrapper_path = os.path.join(
             'snap', 'command-assemble-bin.wrapper')
         with open('binary1.after', 'r') as file_:
-            binary1_after = file_.read()
-        expected_binary1_wrapper = binary1_after.replace(
-            '@MULTIARCH@', get_arch_triplet())
+            expected_binary1_wrapper = file_.read()
         self.assertThat(
             binary1_wrapper_path, FileContains(expected_binary1_wrapper))
 

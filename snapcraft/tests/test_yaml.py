@@ -536,6 +536,13 @@ parts:
     def test_config_snap_environment(self, mock_snapdir):
         mock_snapdir.return_value = 'foo'
         config = snapcraft.yaml.Config()
+
+        arch = snapcraft.common.get_arch_triplet()
+        lib_paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
+                     'foo/usr/lib/{}'.format(arch)]
+        for lib_path in lib_paths:
+            os.makedirs(lib_path)
+
         environment = config.snap_env()
         self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
 
@@ -550,12 +557,23 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        arch = snapcraft.common.get_arch_triplet()
         for expected in ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
                          'foo/usr/lib/{}'.format(arch)]:
-            self.assertTrue(expected in paths,
-                            'Expected LD_LIBRARY_PATH to include "{}"'.format(
-                                expected))
+            self.assertTrue(
+                expected in paths,
+                'Expected LD_LIBRARY_PATH in {!r} to include {!r}'.format(
+                    paths, expected))
+
+    @unittest.mock.patch('snapcraft.common.get_snapdir')
+    def test_config_snap_environment_with_no_library_paths(self, mock_snapdir):
+        mock_snapdir.return_value = 'foo'
+        config = snapcraft.yaml.Config()
+
+        environment = config.snap_env()
+        self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
+        for e in environment:
+            self.assertFalse('LD_LIBRARY_PATH' in e,
+                             'Current environment is {!r}'.format(e))
 
     @unittest.mock.patch('snapcraft.common.get_snapdir')
     def test_config_runtime_environment_ld(self, mock_snapdir):
@@ -594,6 +612,15 @@ parts:
     def test_config_stage_environment(self, mock_stagedir):
         mock_stagedir.return_value = 'foo'
 
+        arch = snapcraft.common.get_arch_triplet()
+        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
+                 'foo/usr/lib/{}'.format(arch),
+                 'foo/include', 'foo/usr/include',
+                 'foo/include/{}'.format(arch),
+                 'foo/usr/include/{}'.format(arch)]
+        for path in paths:
+            os.makedirs(path)
+
         config = snapcraft.yaml.Config()
         environment = config.stage_env()
 
@@ -601,25 +628,35 @@ parts:
         self.assertTrue(
             'LD_LIBRARY_PATH="foo/lib:foo/usr/lib:'
             'foo/lib/x86_64-linux-gnu:foo/usr/lib/x86_64-linux-gnu:'
-            '$LD_LIBRARY_PATH"' in environment)
+            '$LD_LIBRARY_PATH"' in environment,
+            'Current environment is {!r}'.format(environment))
         self.assertTrue(
             'CFLAGS="-Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu $CFLAGS"' in environment)
+            '-Ifoo/usr/include/x86_64-linux-gnu $CFLAGS"' in environment,
+            'Current environment is {!r}'.format(environment))
         self.assertTrue(
             'CPPFLAGS="-Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu $CPPFLAGS"' in environment)
+            '-Ifoo/usr/include/x86_64-linux-gnu $CPPFLAGS"' in environment,
+            'Current environment is {!r}'.format(environment))
+        self.assertTrue(
+            'CXXFLAGS="-Ifoo/include -Ifoo/usr/include '
+            '-Ifoo/include/x86_64-linux-gnu '
+            '-Ifoo/usr/include/x86_64-linux-gnu $CXXFLAGS"' in environment,
+            'Current environment is {!r}'.format(environment))
         self.assertTrue(
             'LDFLAGS="-Lfoo/lib -Lfoo/usr/lib -Lfoo/lib/x86_64-linux-gnu '
-            '-Lfoo/usr/lib/x86_64-linux-gnu $LDFLAGS"' in environment)
+            '-Lfoo/usr/lib/x86_64-linux-gnu $LDFLAGS"' in environment,
+            'Current environment is {!r}'.format(environment))
         self.assertTrue(
             'PKG_CONFIG_PATH=foo/lib/pkgconfig:'
             'foo/lib/x86_64-linux-gnu/pkgconfig:foo/usr/lib/pkgconfig:'
             'foo/usr/lib/x86_64-linux-gnu/pkgconfig:foo/usr/share/pkgconfig:'
             'foo/usr/local/lib/pkgconfig:'
             'foo/usr/local/lib/x86_64-linux-gnu/pkgconfig:'
-            'foo/usr/local/share/pkgconfig:$PKG_CONFIG_PATH' in environment)
+            'foo/usr/local/share/pkgconfig:$PKG_CONFIG_PATH' in environment,
+            'Current environment is {!r}'.format(environment))
         self.assertTrue('PERL5LIB=foo/usr/share/perl5/' in environment)
         self.assertTrue('PKG_CONFIG_SYSROOT_DIR=foo' in environment)
 
