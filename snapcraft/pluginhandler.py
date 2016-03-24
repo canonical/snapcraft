@@ -37,10 +37,6 @@ _SNAPCRAFT_STAGE = '$SNAPCRAFT_STAGE'
 logger = logging.getLogger(__name__)
 
 
-def _local_plugindir():
-    return os.path.abspath(os.path.join('parts', 'plugins'))
-
-
 class PluginError(Exception):
     pass
 
@@ -567,7 +563,7 @@ def _get_plugin(module):
 
 
 def _load_local(module_name):
-    sys.path = [_local_plugindir()] + sys.path
+    sys.path = [common.get_local_plugindir()] + sys.path
     module = importlib.import_module(module_name)
     sys.path.pop(0)
 

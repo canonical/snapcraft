@@ -76,6 +76,20 @@ parts:
         self.assertFalse(os.path.exists(common.get_stagedir()))
         self.assertFalse(os.path.exists(common.get_snapdir()))
 
+    def test_local_plugin_not_removed(self):
+        self.make_snapcraft_yaml(n=3)
+
+        local_plugin = os.path.join(common.get_local_plugindir(), 'foo.py')
+        os.makedirs(os.path.dirname(local_plugin))
+        open(local_plugin, 'w').close()
+
+        clean.main()
+
+        self.assertFalse(os.path.exists(common.get_stagedir()))
+        self.assertFalse(os.path.exists(common.get_snapdir()))
+        self.assertTrue(os.path.exists(common.get_partsdir()))
+        self.assertTrue(os.path.isfile(local_plugin))
+
     def test_clean_all_when_all_parts_specified(self):
         self.make_snapcraft_yaml(n=3)
 
