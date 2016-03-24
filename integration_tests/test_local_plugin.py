@@ -29,3 +29,14 @@ class LocalPluginTestCase(integration_tests.TestCase):
 
         self.assertThat(
             os.path.join(project_dir, 'stage', 'build-stamp'), FileExists())
+
+    def test_clean_local_plugin(self):
+        project_dir = 'local-plugin'
+        self.run_snapcraft('stage', project_dir)
+
+        # Now clean, and verify that the local plugin is still there.
+        self.run_snapcraft('clean', project_dir)
+
+        self.assertThat(
+            os.path.join(project_dir, 'parts', 'plugins', 'x_local_plugin.py'),
+            FileExists(), 'Expected local plugin to remain when cleaned')
