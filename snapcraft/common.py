@@ -165,6 +165,10 @@ def get_snapdir():
     return os.path.join(os.getcwd(), 'snap')
 
 
+def get_local_plugindir():
+    return os.path.abspath(os.path.join(get_partsdir(), 'plugins'))
+
+
 def set_plugindir(plugindir):
     global _plugindir
     _plugindir = plugindir
