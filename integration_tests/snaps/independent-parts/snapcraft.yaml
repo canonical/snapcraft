@@ -1,0 +1,13 @@
+name: independent-parts
+version: 1
+summary: Two independent parts
+description: Two independent parts
+
+parts:
+  part1:
+    plugin: make
+    source: part1
+
+  part2:
+    plugin: make
+    source: part2

@@ -200,3 +200,63 @@ class BuildTestCase(tests.TestCase):
         for file_ in common.SNAPCRAFT_FILES:
             self.assertFalse(
                 os.path.exists(os.path.join(plugin.builddir, file_)))
+
+
+class CleanBuildTestCase(tests.TestCase):
+
+    def test_clean_build(self):
+        options = tests.MockOptions(source='src')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
+
+        os.makedirs(plugin.sourcedir)
+        source_file = os.path.join(plugin.sourcedir, 'source')
+        open(source_file, 'w').close()
+
+        os.makedirs(plugin.build_basedir)
+        open(os.path.join(plugin.build_basedir, 'built'), 'w').close()
+
+        os.makedirs(plugin.installdir)
+        open(os.path.join(plugin.installdir, 'installed'), 'w').close()
+
+        plugin.clean_build()
+
+        # Make sure the source file hasn't been touched
+        self.assertTrue(os.path.isfile(source_file))
+
+        # Make sure the build directory is gone
+        self.assertFalse(os.path.exists(plugin.build_basedir))
+
+        # Make sure the install directory is gone
+        self.assertFalse(os.path.exists(plugin.installdir))
+
+
+class CleanPullTestCase(tests.TestCase):
+
+    def test_clean_pull_directory(self):
+        options = tests.MockOptions(source='src')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
+
+        os.makedirs(plugin.sourcedir)
+        source_file = os.path.join(plugin.sourcedir, 'source')
+        open(source_file, 'w').close()
+
+        plugin.clean_pull()
+
+        # The source directory should now be gone
+        self.assertFalse(os.path.exists(plugin.sourcedir))
+
+    def test_clean_pull_symlink(self):
+        options = tests.MockOptions(source='src')
+        plugin = snapcraft.BasePlugin('test_plugin', options)
+
+        real_source_directory = os.path.join(os.getcwd(), 'src')
+        os.mkdir(real_source_directory)
+        os.makedirs(plugin.partdir)
+        os.symlink(real_source_directory, plugin.sourcedir)
+
+        plugin.clean_pull()
+
+        # The source symlink should now be gone, but the real source should
+        # still be there.
+        self.assertFalse(os.path.exists(plugin.sourcedir))
+        self.assertTrue(os.path.isdir(real_source_directory))

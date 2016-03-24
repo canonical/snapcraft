@@ -316,6 +316,22 @@ class CatkinPluginTestCase(tests.TestCase):
         self.assertEqual(str(raised.exception),
                          'Unable to determine system dependency for roscore')
 
+    def test_clean_pull(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
+
+        plugin.pull()
+
+        self.assertTrue(os.path.exists(plugin._ros_package_path))
+        os.makedirs(plugin._rosdep_path)
+
+        plugin.clean_pull()
+
+        self.assertFalse(os.path.exists(plugin._ros_package_path))
+        self.assertFalse(os.path.exists(plugin._rosdep_path))
+
     def test_valid_catkin_workspace_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it contains a 'src' directory, this is a valid Catkin workspace.

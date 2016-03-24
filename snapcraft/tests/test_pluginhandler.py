@@ -19,9 +19,12 @@ import os
 import shutil
 import tempfile
 from unittest.mock import (
+    call,
     Mock,
+    MagicMock,
     patch,
 )
+import yaml
 
 import fixtures
 
@@ -30,6 +33,7 @@ from snapcraft import (
     pluginhandler,
     tests,
 )
+from snapcraft.plugins import nil
 
 
 class PluginTestCase(tests.TestCase):
@@ -282,7 +286,7 @@ class StateTestCase(tests.TestCase):
 
         part_name = 'test_part'
         self.handler = pluginhandler.load_plugin(part_name, 'nil')
-        os.makedirs(os.path.join(common.get_partsdir(), part_name))
+        self.handler.makedirs()
 
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
@@ -314,12 +318,42 @@ class StateTestCase(tests.TestCase):
                 handler = pluginhandler.load_plugin(part_name, 'nil')
                 self.assertEqual(step, handler.last_step())
 
-    def test_pull_state(self):
+    @patch('snapcraft.repo.Ubuntu')
+    def test_pull_state(self, ubuntu_mock):
         self.assertEqual(None, self.handler.last_step())
+
+        self.handler.code.stage_packages.append('foo')
+        bindir = os.path.join(self.handler.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
 
         self.handler.pull()
 
         self.assertEqual('pull', self.handler.last_step())
+        with open(self.handler._step_state_file('pull'), 'r') as f:
+            state = yaml.load(f)
+
+        self.assertTrue(state, 'Expected stage to save state YAML')
+        self.assertTrue(type(state) is pluginhandler.PullState)
+        self.assertTrue(type(state.stage_package_files) is set)
+        self.assertTrue(type(state.stage_package_directories) is set)
+        self.assertEqual(1, len(state.stage_package_files))
+        self.assertTrue('bin/1' in state.stage_package_files)
+        self.assertEqual(1, len(state.stage_package_directories))
+        self.assertTrue('bin' in state.stage_package_directories)
+
+    @patch.object(nil.NilPlugin, 'clean_pull')
+    def test_clean_pull_state(self, mock_clean_pull):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.pull()
+
+        self.handler.clean_pull()
+
+        # Verify that the plugin had clean_pull() called
+        mock_clean_pull.assert_called_once_with()
+
+        self.assertEqual(None, self.handler.last_step())
 
     def test_build_state(self):
         self.assertEqual(None, self.handler.last_step())
@@ -328,27 +362,235 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual('build', self.handler.last_step())
 
+    def test_build_old_pull_state_with_stage_packages(self):
+        self.handler.code.stage_packages.append('foo')
+        self.handler.mark_done('pull', None)
+        with self.assertRaises(pluginhandler.MissingState) as raised:
+            self.handler.build()
+
+        self.assertEqual(
+            str(raised.exception),
+            'Failed to build: Missing necessary pull state. Please run pull '
+            'again.')
+
+    @patch.object(nil.NilPlugin, 'clean_build')
+    def test_clean_build_state(self, mock_clean_build):
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.mark_done('pull')
+        self.handler.build()
+
+        self.handler.clean_build()
+
+        # Verify that the plugin had clean_build() called
+        mock_clean_build.assert_called_once_with()
+
+        self.assertEqual('pull', self.handler.last_step())
+
     def test_stage_state(self):
         self.assertEqual(None, self.handler.last_step())
 
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
         self.handler.stage()
 
         self.assertEqual('stage', self.handler.last_step())
+        with open(self.handler._step_state_file('stage'), 'r') as f:
+            state = yaml.load(f)
+
+        self.assertTrue(state, 'Expected stage to save state YAML')
+        self.assertTrue(type(state) is pluginhandler.StageState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertEqual(2, len(state.files))
+        self.assertTrue('bin/1' in state.files)
+        self.assertTrue('bin/2' in state.files)
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
+
+        self.assertEqual('stage', self.handler.last_step())
+
+    def test_clean_stage_state(self):
+        self.assertEqual(None, self.handler.last_step())
+        bindir = os.path.join(common.get_stagedir(), 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+
+        self.handler.mark_done(
+            'stage', pluginhandler.StageState({'bin/1', 'bin/2'}, {'bin'}))
+
+        self.handler.clean_stage({})
+
+        self.assertEqual('build', self.handler.last_step())
+        self.assertFalse(os.path.exists(bindir))
+
+    def test_clean_stage_state_multiple_parts(self):
+        self.assertEqual(None, self.handler.last_step())
+        bindir = os.path.join(common.get_stagedir(), 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+        open(os.path.join(bindir, '3'), 'w').close()
+
+        self.handler.mark_done('build')
+
+        self.handler.mark_done(
+            'stage', pluginhandler.StageState({'bin/1', 'bin/2'}, {'bin'}))
+
+        self.handler.clean_stage({})
+
+        self.assertEqual('build', self.handler.last_step())
+        self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
+        self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
+        self.assertTrue(
+            os.path.exists(os.path.join(bindir, '3')),
+            "Expected 'bin/3' to remain as it wasn't staged by this part")
+
+    def test_clean_stage_state_common_files(self):
+        self.assertEqual(None, self.handler.last_step())
+        bindir = os.path.join(common.get_stagedir(), 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+
+        self.handler.mark_done(
+            'stage', pluginhandler.StageState({'bin/1', 'bin/2'}, {'bin'}))
+
+        self.handler.clean_stage({
+            'other_part': pluginhandler.StageState({'bin/2'}, {'bin'})
+        })
+
+        self.assertEqual('build', self.handler.last_step())
+        self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
+        self.assertTrue(
+            os.path.exists(os.path.join(bindir, '2')),
+            "Expected 'bin/2' to remain as it's required by other parts")
+
+    def test_clean_stage_old_state(self):
+        self.handler.mark_done('stage', None)
+        with self.assertRaises(pluginhandler.MissingState) as raised:
+            self.handler.clean_stage({})
+
+        self.assertEqual(
+            str(raised.exception),
+            "Failed to clean step 'stage': Missing necessary state. Please "
+            "run stage again.")
 
     def test_strip_state(self):
         self.assertEqual(None, self.handler.last_step())
 
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
         self.handler.strip()
 
         self.assertEqual('strip', self.handler.last_step())
+        with open(self.handler._step_state_file('strip'), 'r') as f:
+            state = yaml.load(f)
+
+        self.assertTrue(type(state) is pluginhandler.StripState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertEqual(2, len(state.files))
+        self.assertTrue('bin/1' in state.files)
+        self.assertTrue('bin/1' in state.files)
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
+
+    def test_clean_strip_state(self):
+        self.assertEqual(None, self.handler.last_step())
+        bindir = os.path.join(common.get_snapdir(), 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('stage')
+
+        self.handler.mark_done(
+            'strip', pluginhandler.StripState({'bin/1', 'bin/2'}, {'bin'}))
+
+        self.handler.clean_strip({})
+
+        self.assertEqual('stage', self.handler.last_step())
+        self.assertFalse(os.path.exists(bindir))
+
+    def test_clean_strip_state_multiple_parts(self):
+        self.assertEqual(None, self.handler.last_step())
+        bindir = os.path.join(common.get_snapdir(), 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+        open(os.path.join(bindir, '3'), 'w').close()
+
+        self.handler.mark_done('stage')
+
+        self.handler.mark_done(
+            'strip', pluginhandler.StripState({'bin/1', 'bin/2'}, {'bin'}))
+
+        self.handler.clean_strip({})
+
+        self.assertEqual('stage', self.handler.last_step())
+        self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
+        self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
+        self.assertTrue(
+            os.path.exists(os.path.join(bindir, '3')),
+            "Expected 'bin/3' to remain as it wasn't stripped by this part")
+
+    def test_clean_strip_state_common_files(self):
+        self.assertEqual(None, self.handler.last_step())
+        bindir = os.path.join(common.get_snapdir(), 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('stage')
+
+        self.handler.mark_done(
+            'strip', pluginhandler.StripState({'bin/1', 'bin/2'}, {'bin'}))
+
+        self.handler.clean_strip({
+            'other_part': pluginhandler.StripState({'bin/2'}, {'bin'})
+        })
+
+        self.assertEqual('stage', self.handler.last_step())
+        self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
+        self.assertTrue(
+            os.path.exists(os.path.join(bindir, '2')),
+            "Expected 'bin/2' to remain as it's required by other parts")
+
+    def test_clean_strip_old_state(self):
+        self.handler.mark_done('strip', None)
+        with self.assertRaises(pluginhandler.MissingState) as raised:
+            self.handler.clean_strip({})
+
+        self.assertEqual(
+            str(raised.exception),
+            "Failed to clean step 'strip': Missing necessary state. Please "
+            "run strip again.")
 
 
 class CleanTestCase(tests.TestCase):
 
-    @patch('shutil.rmtree')
+    @patch('os.rmdir')
+    @patch('os.listdir')
     @patch('os.path.exists')
-    def test_clean_part_that_exists(self, mock_exists, mock_rmtree):
+    def test_clean_part_that_exists(self, mock_exists, mock_listdir,
+                                    mock_rmdir):
         mock_exists.return_value = True
+        mock_listdir.return_value = False
 
         part_name = 'test_part'
         p = pluginhandler.load_plugin(part_name, 'nil')
@@ -357,11 +599,14 @@ class CleanTestCase(tests.TestCase):
         partdir = os.path.join(
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
-        mock_rmtree.assert_called_once_with(partdir)
+        mock_listdir.assert_called_once_with(partdir)
+        mock_rmdir.assert_called_once_with(partdir)
 
-    @patch('shutil.rmtree')
+    @patch('os.rmdir')
+    @patch('os.listdir')
     @patch('os.path.exists')
-    def test_clean_part_already_clean(self, mock_exists, mock_rmtree):
+    def test_clean_part_already_clean(self, mock_exists, mock_listdir,
+                                      mock_rmdir):
         mock_exists.return_value = False
 
         part_name = 'test_part'
@@ -371,7 +616,438 @@ class CleanTestCase(tests.TestCase):
         partdir = os.path.join(
             os.path.abspath(os.curdir), 'parts', part_name)
         mock_exists.assert_called_once_with(partdir)
-        self.assertFalse(mock_rmtree.called)
+        self.assertFalse(mock_listdir.called)
+        self.assertFalse(mock_rmdir.called)
+
+    @patch('os.rmdir')
+    @patch('os.listdir')
+    @patch('os.path.exists')
+    def test_clean_part_remaining_parts(self, mock_exists, mock_listdir,
+                                        mock_rmdir):
+        mock_exists.return_value = True
+        mock_listdir.return_value = True
+
+        part_name = 'test_part'
+        p = pluginhandler.load_plugin(part_name, 'nil')
+        p.clean()
+
+        partdir = os.path.join(
+            os.path.abspath(os.curdir), 'parts', part_name)
+        mock_exists.assert_called_once_with(partdir)
+        mock_listdir.assert_called_once_with(partdir)
+        self.assertFalse(mock_rmdir.called)
+
+    def clear_common_directories(self):
+        if os.path.exists(common.get_partsdir()):
+            shutil.rmtree(common.get_partsdir())
+
+        if os.path.exists(common.get_stagedir()):
+            shutil.rmtree(common.get_stagedir())
+
+        if os.path.exists(common.get_snapdir()):
+            shutil.rmtree(common.get_snapdir())
+
+    def test_clean_strip(self):
+        filesets = {
+            'all': {
+                'fileset': ['*'],
+            },
+            'no1': {
+                'fileset': ['-1'],
+            },
+            'onlya': {
+                'fileset': ['a'],
+            },
+            'onlybase': {
+                'fileset': ['*', '-*/*'],
+            },
+            'nostara': {
+                'fileset': ['-*/a'],
+            },
+        }
+
+        for key, value in filesets.items():
+            with self.subTest(key=key):
+                self.clear_common_directories()
+
+                handler = pluginhandler.load_plugin('test_part', 'nil', {
+                    'snap': value['fileset']
+                })
+                handler.makedirs()
+
+                installdir = handler.code.installdir
+                os.makedirs(installdir + '/1/1a/1b')
+                os.makedirs(installdir + '/2/2a')
+                os.makedirs(installdir + '/3')
+                open(installdir + '/a', mode='w').close()
+                open(installdir + '/b', mode='w').close()
+                open(installdir + '/1/a', mode='w').close()
+                open(installdir + '/3/a', mode='w').close()
+
+                handler.mark_done('build')
+
+                # Stage the installed files
+                handler.stage()
+
+                # Now strip them
+                handler.strip()
+
+                self.assertTrue(os.listdir(common.get_snapdir()))
+
+                handler.clean_strip({})
+
+                self.assertFalse(os.listdir(common.get_snapdir()),
+                                 'Expected snapdir to be completely cleaned')
+
+    def test_clean_strip_multiple_independent_parts(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = pluginhandler.load_plugin('part1', 'nil')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+
+        handler1.mark_done('build')
+
+        # Now create part2 and get it through the "build" step.
+        handler2 = pluginhandler.load_plugin('part2', 'nil')
+        handler2.makedirs()
+
+        bindir = os.path.join(handler2.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        handler2.mark_done('build')
+
+        # Now stage both parts
+        handler1.stage()
+        handler2.stage()
+
+        # And strip both parts
+        handler1.strip()
+        handler2.strip()
+
+        # Verify that part1's file has been stripped
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')))
+
+        # Verify that part2's file has been stripped
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')))
+
+        # Now clean the strip step for part1
+        handler1.clean_strip({})
+
+        # Verify that part1's file is no longer stripped
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')),
+            "Expected part1's stripped files to be cleaned")
+
+        # Verify that part2's file is still there
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')),
+            "Expected part2's stripped files to be untouched")
+
+    def test_clean_strip_after_fileset_change(self):
+        # Create part1 and get it through the "build" step.
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        bindir = os.path.join(handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        handler.mark_done('build')
+        handler.stage()
+        handler.strip()
+
+        # Verify that both files have been stripped
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')))
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')))
+
+        # Now update the `snap` fileset to only snap one of these files
+        handler.code.options.snap = ['bin/1']
+
+        # Now clean the strip step for part1
+        handler.clean_strip({})
+
+        # Verify that part1's file is no longer stripped
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')),
+            'Expected bin/1 to be cleaned')
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')),
+            'Expected bin/2 to be cleaned as well, even though the filesets '
+            'changed since it was stripped.')
+
+    def test_clean_old_strip_state(self):
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        open(os.path.join(common.get_snapdir(), '1'), 'w').close()
+
+        handler.mark_done('strip', None)
+
+        self.assertTrue(os.path.exists(handler.code.partdir))
+
+        handler.clean()
+
+        self.assertFalse(os.path.exists(handler.code.partdir))
+
+    def test_clean_strip_old_strip_state(self):
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        stripped_file = os.path.join(common.get_snapdir(), '1')
+        open(stripped_file, 'w').close()
+
+        handler.mark_done('strip', None)
+
+        with self.assertRaises(pluginhandler.MissingState) as raised:
+            handler.clean(step='strip')
+
+        self.assertEqual(
+            str(raised.exception),
+            "Failed to clean step 'strip': Missing necessary state. Please "
+            "run strip again.")
+
+        self.assertTrue(os.path.isfile(stripped_file))
+
+    def test_clean_stage(self):
+        filesets = {
+            'all': {
+                'fileset': ['*'],
+            },
+            'no1': {
+                'fileset': ['-1'],
+            },
+            'onlya': {
+                'fileset': ['a'],
+            },
+            'onlybase': {
+                'fileset': ['*', '-*/*'],
+            },
+            'nostara': {
+                'fileset': ['-*/a'],
+            },
+        }
+
+        for key, value in filesets.items():
+            with self.subTest(key=key):
+                self.clear_common_directories()
+
+                handler = pluginhandler.load_plugin('test_part', 'nil', {
+                    'stage': value['fileset']
+                })
+                handler.makedirs()
+
+                installdir = handler.code.installdir
+                os.makedirs(installdir + '/1/1a/1b')
+                os.makedirs(installdir + '/2/2a')
+                os.makedirs(installdir + '/3')
+                open(installdir + '/a', mode='w').close()
+                open(installdir + '/b', mode='w').close()
+                open(installdir + '/1/a', mode='w').close()
+                open(installdir + '/3/a', mode='w').close()
+
+                handler.mark_done('build')
+
+                # Stage the installed files
+                handler.stage()
+
+                self.assertTrue(os.listdir(common.get_stagedir()))
+
+                handler.clean_stage({})
+
+                self.assertFalse(os.listdir(common.get_stagedir()),
+                                 'Expected snapdir to be completely cleaned')
+
+    def test_clean_stage_multiple_independent_parts(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = pluginhandler.load_plugin('part1', 'nil')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+
+        handler1.mark_done('build')
+
+        # Now create part2 and get it through the "build" step.
+        handler2 = pluginhandler.load_plugin('part2', 'nil')
+        handler2.makedirs()
+
+        bindir = os.path.join(handler2.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        handler2.mark_done('build')
+
+        # Now stage both parts
+        handler1.stage()
+        handler2.stage()
+
+        # Verify that part1's file has been staged
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')))
+
+        # Verify that part2's file has been staged
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')))
+
+        # Now clean the stage step for part1
+        handler1.clean_stage({})
+
+        # Verify that part1's file is no longer staged
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')),
+            "Expected part1's staged files to be cleaned")
+
+        # Verify that part2's file is still there
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')),
+            "Expected part2's staged files to be untouched")
+
+    def test_clean_stage_after_fileset_change(self):
+        # Create part1 and get it through the "build" step.
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        bindir = os.path.join(handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        handler.mark_done('build')
+        handler.stage()
+
+        # Verify that both files have been staged
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')))
+        self.assertTrue(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')))
+
+        # Now update the `stage` fileset to only snap one of these files
+        handler.code.options.stage = ['bin/1']
+
+        # Now clean the strip step for part1
+        handler.clean_stage({})
+
+        # Verify that part1's file is no longer staged
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')),
+            'Expected bin/1 to be cleaned')
+        self.assertFalse(
+            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')),
+            'Expected bin/2 to be cleaned as well, even though the filesets '
+            'changed since it was staged.')
+
+    def test_clean_old_stage_state(self):
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        open(os.path.join(common.get_stagedir(), '1'), 'w').close()
+
+        handler.mark_done('stage', None)
+
+        self.assertTrue(os.path.exists(handler.code.partdir))
+
+        handler.clean()
+
+        self.assertFalse(os.path.exists(handler.code.partdir))
+
+    def test_clean_stage_old_stage_state(self):
+        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler.makedirs()
+
+        staged_file = os.path.join(common.get_stagedir(), '1')
+        open(staged_file, 'w').close()
+
+        handler.mark_done('stage', None)
+
+        with self.assertRaises(pluginhandler.MissingState) as raised:
+            handler.clean(step='stage')
+
+        self.assertEqual(
+            str(raised.exception),
+            "Failed to clean step 'stage': Missing necessary state. Please "
+            "run stage again.")
+
+        self.assertTrue(os.path.isfile(staged_file))
+
+
+class PerStepCleanTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.manager_mock = MagicMock()
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_pull')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_pull')
+        self.addCleanup(patcher.stop)
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_build')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_build')
+        self.addCleanup(patcher.stop)
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_stage')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_stage')
+        self.addCleanup(patcher.stop)
+
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_strip')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_strip')
+        self.addCleanup(patcher.stop)
+
+    def test_clean_pull_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='pull')
+
+        # Verify the step cleaning order
+        self.assertEqual(4, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+            call.clean_stage({}),
+            call.clean_build(),
+            call.clean_pull(),
+        ])
+
+    def test_clean_build_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='build')
+
+        # Verify the step cleaning order
+        self.assertEqual(3, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+            call.clean_stage({}),
+            call.clean_build(),
+        ])
+
+    def test_clean_stage_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='stage')
+
+        # Verify the step cleaning order
+        self.assertEqual(2, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+            call.clean_stage({}),
+        ])
+
+    def test_clean_strip_order(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='strip')
+
+        # Verify the step cleaning order
+        self.assertEqual(1, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}),
+        ])
 
 
 class CollisionTestCase(tests.TestCase):

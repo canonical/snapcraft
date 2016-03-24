@@ -136,3 +136,20 @@ class NodePluginTestCase(tests.TestCase):
         schema_mock.return_value = {'properties': {}}
 
         self.assertTrue('required' not in nodejs.NodePlugin.schema())
+
+    def test_clean_pull_step(self):
+        class Options:
+            source = '.'
+            node_packages = []
+
+        plugin = nodejs.NodePlugin('test-part', Options())
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.assertTrue(os.path.exists(plugin._npm_dir))
+
+        plugin.clean_pull()
+
+        self.assertFalse(os.path.exists(plugin._npm_dir))
