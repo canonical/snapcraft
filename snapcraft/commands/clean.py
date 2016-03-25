@@ -26,8 +26,8 @@ Usage:
 Options:
   -h --help             show this help message and exit.
   -s STEP --step=STEP   only clean the specified step and those that depend
-                        upon it. STEP can be one of: pull, build, stage, strip,
-                        snap. See 'snapcraft help plugins' to learn more.
+                        upon it. STEP can be one of: pull, build, stage, strip.
+                        See 'snapcraft help plugins' to learn more.
 """
 
 import os
