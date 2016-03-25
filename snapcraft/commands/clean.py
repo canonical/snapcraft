@@ -86,9 +86,11 @@ def _cleanup_common_directories(config):
 
     # If no parts have been pulled, remove the parts directory. In most cases
     # this directory should have already been cleaned, but this handles the
-    # case of a failed pull.
-    should_remove_partsdir = max_index < common.COMMAND_ORDER.index('pull')
-    if should_remove_partsdir and os.path.exists(common.get_partsdir()):
+    # case of a failed pull. Note however that the presence of local plugins
+    # should prevent this removal.
+    if (max_index < common.COMMAND_ORDER.index('pull') and
+            os.path.exists(common.get_partsdir()) and not
+            os.path.exists(common.get_local_plugindir())):
         logger.info('Cleaning up parts directory')
         shutil.rmtree(common.get_partsdir())
 
