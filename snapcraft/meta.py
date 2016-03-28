@@ -109,7 +109,10 @@ def _setup_assets(meta_dir, config_data):
         icon_ext = config_data['icon'].split(os.path.extsep)[1]
         icon_dir = os.path.join(meta_dir, 'gui')
         icon_path = os.path.join(icon_dir, 'icon.{}'.format(icon_ext))
-        os.mkdir(icon_dir)
+        if not os.path.exists(icon_dir):
+            os.mkdir(icon_dir)
+        if os.path.exists(icon_path):
+            os.unlink(icon_path)
         os.link(config_data['icon'], icon_path)
 
     _setup_from_setup(meta_dir)

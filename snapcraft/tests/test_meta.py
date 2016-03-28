@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from unittest.mock import patch
 
+import fixtures
 import yaml
 
 from snapcraft import (
@@ -143,6 +145,9 @@ class CreateTest(tests.TestCase):
                          'icon found in snap.yaml {}'.format(y))
 
     def test_create_meta_with_declared_icon_and_setup(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
         gui_path = os.path.join('setup', 'gui')
         os.makedirs(gui_path)
         icon_content = b'this is the icon'
@@ -163,10 +168,29 @@ class CreateTest(tests.TestCase):
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
 
+        self.assertTrue(
+            "DEPRECATED: 'icon' defined in snapcraft.yaml"
+            in fake_logger.output, 'Missing deprecation message for icon')
+
         with open(self.snap_yaml) as f:
             y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_declared_icon_and_setup_ran_twice_ok(self):
+        gui_path = os.path.join('setup', 'gui')
+        os.makedirs(gui_path)
+        icon_content = b'this is the icon'
+        with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
+            f.write(icon_content)
+
+        open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
+        self.config_data['icon'] = 'my-icon.png'
+
+        meta.create(self.config_data)
+
+        # Running again should be good
+        meta.create(self.config_data)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
