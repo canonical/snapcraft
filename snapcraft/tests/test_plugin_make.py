@@ -29,6 +29,7 @@ class MakePluginTestCase(tests.TestCase):
 
         class Options:
             makefile = None
+            make_parameters = []
 
         self.options = Options()
 
@@ -47,6 +48,9 @@ class MakePluginTestCase(tests.TestCase):
         properties = schema['properties']
         self.assertTrue('makefile' in properties,
                         'Expected "makefile" to be included in properties')
+        self.assertTrue(
+            'make-parameters' in properties,
+            'Expected "make-parameters" to be included in properties')
 
         makefile = properties['makefile']
         self.assertTrue('type' in makefile,
@@ -56,6 +60,16 @@ class MakePluginTestCase(tests.TestCase):
         self.assertEqual(makefile_type, 'string',
                          'Expected "makefile" "type" to be "string", but it '
                          'was "{}"'.format(makefile_type))
+
+        make_parameters = properties['make-parameters']
+        self.assertTrue('type' in make_parameters,
+                        'Expected "type" to be included in "make-parameters"')
+
+        make_parameters_type = make_parameters['type']
+        self.assertEqual(
+            make_parameters_type, 'array',
+            'Expected "make-parameters" "type" to be "array", but it '
+            'was "{}"'.format(make_parameters_type))
 
     @mock.patch.object(make.MakePlugin, 'run')
     def test_build(self, run_mock):
