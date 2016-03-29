@@ -105,6 +105,32 @@ To find out more about config command, have a look at the [config section]
 [conf].
 
 
+## Fixed assets
+
+Some metadata is provided in the form of conventions, such as license files,
+icons and desktop files among others. For these fixed files to make it into
+your final snap they need to be in a `setup` directory at the same level of
+your `snapcraft.yaml`.
+
+### Snap icon
+
+Providing an icon for your snap is important, even for command-line
+applications, if for nothing else than discoverability from management
+interfaces such as store fronts like webdm.
+
+To use an icon to represent the snap, just drop a PNG or SVG in `setup/gui`
+named `icon.png` for the former or `icon.svg` for the latter such that the
+(reduced) project tree would look like:
+
+    setup/gui/icon.png
+    snapcraft.yaml
+
+or
+
+    setup/gui/icon.svg
+    snapcraft.yaml
+
+
 [conf]: https://developer.ubuntu.com/snappy/guides/config-command/
 [sec]: https://developer.ubuntu.com/snappy/guides/security-policy/
 [syntax]: snapcraft-syntax.md
