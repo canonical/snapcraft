@@ -3,48 +3,50 @@
 Is Snapcraft missing support for your preferred build-system? Here's how you
 would add it!
 
-Snapcraft can be extended by adding new part plugins. Let's add support for
-running a custom build-tool named "Crafty". The goal of this plugin is to
-pass a configurable target to the `crafty sometarget` command inside the
-`src/crafty` source directory.
+Snapcraft can be extended by adding new part plugins, which are written in
+Python. Let's add support for running a custom build-tool named "Crafty". The
+goal of this plugin is to pass a configurable target to the `crafty sometarget`
+command inside the `src/crafty` source directory.
 
-Relative to the directory of `snapcraft.yaml`, create 
-`parts/plugins/x-crafty.yaml` with:
-
-```yaml
-options:
-    source:
-        required: true
-    source-type:
-    source-tag:
-    source-branch:
-    crafty-target:
-        required: true
-```
-
-and `parts/plugins/x_crafty.py` with:
+Relative to the directory of `snapcraft.yaml`, create
+`parts/plugins/x-crafty.py` with:
 
 ```python
 import snapcraft
 
 
-class XCraftyPlugin(snapcraft.BasePlugin):
+class CraftyPlugin(snapcraft.BasePlugin):
+    @classmethod
+    def schema(cls):
+        # Use base implementation to get the `source` keywords.
+        schema = super().schema()
+
+        # Add another option for our custom target.
+        schema['properties']['crafty-target'] = {
+            type: 'string'
+        }
+
+        # Our custom target is required.
+        schema['required'].append('crafty-target')
+
+        return schema
+
     def build(self):
         return self.run(['crafty', self.options.crafty_target])
-
-    def pull(self):
-	return self.handle_source_options()
 ```
 
-Note that to avoid collisions with official part plugins, the names are
-prefixed with "x":  `x_crafty`, and `x-crafty`.
-
-This part plugin is then used in `snapcraft.yaml` with:
+Note that by starting the name of the plugin with `x-` we tell Snapcraft to
+give our plugins priority over plugins of the same name shipped within Snapcraft
+itself. This means that, if Snapcraft at some point ships a plugin named
+`crafty`, our snap won't break. We can continue to use the name `crafty` in our
+`snapcraft.yaml` though, like this:
 
 ```yaml
+# ...
+
 parts:
   crafted-bits:
-    plugin: x-crafty
+    plugin: crafty
     source: src/crafty
     crafty-target: sometarget
 ```
