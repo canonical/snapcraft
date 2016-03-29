@@ -105,7 +105,11 @@ def _setup_assets(meta_dir, config_data):
         os.link(config_data['license'], license_path)
 
     if 'icon' in config_data:
-        logger.warning("DEPRECATED: 'icon' defined in snapcraft.yaml")
+        # TODO: use developer.ubuntu.com once it has updated documentation.
+        logger.warning(
+            "DEPRECATED: 'icon' defined in snapcraft.yaml. Look at "
+            "https://github.com/ubuntu-core/snapcraft/blob/master/docs/"
+            "metadata.md#snap-icon for more information")
         icon_ext = config_data['icon'].split(os.path.extsep)[1]
         icon_dir = os.path.join(meta_dir, 'gui')
         icon_path = os.path.join(icon_dir, 'icon.{}'.format(icon_ext))
