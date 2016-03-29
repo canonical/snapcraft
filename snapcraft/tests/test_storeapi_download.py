@@ -158,3 +158,13 @@ class DownloadTestCase(DownloadBaseTestCase):
             call("Getting details for 'os'"),
             call("Already downloaded 'os'")])
         self.assertTrue(os.path.exists('os.snap'))
+
+    def test_download_fails_when_not_logged_in(self):
+        self.mock_get_oauth_session.return_value = None
+
+        with self.assertRaises(EnvironmentError) as raised:
+            download('os', 'os.snap', None, 'amd64')
+
+        self.assertEqual(
+            'No valid credentials found. Have you run "snapcraft login"?',
+            str(raised.exception))
