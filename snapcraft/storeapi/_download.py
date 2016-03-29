@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 def download(snap, download_path, config, arch):
     """Download snap from the store to download_path"""
     session = get_oauth_session(config)
+    if session is None:
+        raise EnvironmentError(
+            'No valid credentials found. Have you run "snapcraft login"?')
 
     # TODO add release header
     session.headers.update({'X-Ubuntu-Architecture': arch})
