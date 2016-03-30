@@ -18,17 +18,20 @@ import contextlib
 import filecmp
 import glob
 import importlib
+import itertools
 import logging
 import os
 import shutil
 import sys
 
 import jsonschema
+import magic
 import yaml
 
 import snapcraft
 from snapcraft import (
     common,
+    libraries,
     repo,
 )
 
@@ -45,16 +48,34 @@ class MissingState(Exception):
     pass
 
 
+def _strip_state_constructor(loader, node):
+    parameters = loader.construct_mapping(node)
+    return StripState(**parameters)
+
+
+def _stage_state_constructor(loader, node):
+    parameters = loader.construct_mapping(node)
+    return StageState(**parameters)
+
+yaml.add_constructor(u'!StripState', _strip_state_constructor)
+yaml.add_constructor(u'!StageState', _stage_state_constructor)
+
+
 class StripState(yaml.YAMLObject):
     yaml_tag = u'!StripState'
 
-    def __init__(self, files, directories):
+    def __init__(self, files, directories, dependency_paths=None):
         self.files = files
         self.directories = directories
+        self.dependency_paths = set()
+
+        if dependency_paths:
+            self.dependency_paths = dependency_paths
 
     def __repr__(self):
-        return '{}(files: {}, directories: {})'.format(
-            self.__class__, self.files, self.directories)
+        return ('{}(files: {}, directories: {}, dependency_paths: {})').format(
+            self.__class__, self.files, self.directories,
+            self.dependency_paths)
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -81,26 +102,6 @@ class StageState(yaml.YAMLObject):
         return False
 
 
-class PullState(yaml.YAMLObject):
-    yaml_tag = u'!PullState'
-
-    def __init__(self, stage_package_files, stage_package_directories):
-        self.stage_package_files = stage_package_files
-        self.stage_package_directories = stage_package_directories
-
-    def __repr__(self):
-        return ('{}(stage-package-files: {}, '
-                'stage-package-directories: {})').format(
-            self.__class__, self.stage_package_files,
-            self.stage_package_directories)
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__dict__ == other.__dict__
-
-        return False
-
-
 class PluginHandler:
 
     @property
@@ -110,6 +111,14 @@ class PluginHandler:
     @property
     def installdir(self):
         return self.code.installdir
+
+    @property
+    def ubuntu(self):
+        if not self._ubuntu:
+            self._ubuntu = repo.Ubuntu(
+                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+
+        return self._ubuntu
 
     def __init__(self, plugin_name, part_name, properties):
         self.valid = False
@@ -123,6 +132,7 @@ class PluginHandler:
         self.snapdir = os.path.join(os.getcwd(), 'snap')
 
         parts_dir = common.get_partsdir()
+        self.bindir = os.path.join(parts_dir, part_name, 'bin')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.statedir = os.path.join(parts_dir, part_name, 'state')
 
@@ -184,8 +194,8 @@ class PluginHandler:
                 os.makedirs(self.statedir)
                 self.mark_done(step)
 
-    def notify_stage(self, stage, hint=''):
-        logger.info('%s %s %s', stage, self.name, hint)
+    def notify_part_progress(self, progress, hint=''):
+        logger.info('%s %s %s', progress, self.name, hint)
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
@@ -240,87 +250,62 @@ class PluginHandler:
     def _step_state_file(self, step):
         return os.path.join(self.statedir, step)
 
-    def _setup_stage_packages(self):
-        ubuntu = repo.Ubuntu(
-            self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
-        ubuntu.get(self.code.stage_packages)
-        ubuntu.unpack(self.installdir)
+    def _fetch_stage_packages(self):
+        if self.code.stage_packages:
+            self.ubuntu.get(self.code.stage_packages)
 
-        package_files, package_dirs = self.migratable_fileset_for('stage')
-        _migrate_files(package_files, package_dirs, self.code.installdir,
-                       self.stagedir, missing_ok=True)
+    def _unpack_stage_packages(self):
+        if self.code.stage_packages:
+            self.ubuntu.unpack(self.installdir)
 
-        return (package_files, package_dirs)
+    def prepare_pull(self, force=False):
+        self.makedirs()
+        self.notify_part_progress('Preparing to pull')
+        self._fetch_stage_packages()
+        self._unpack_stage_packages()
 
     def pull(self, force=False):
-        if not self.should_step_run('pull', force):
-            self.notify_stage('Skipping pull', ' (already ran)')
-            return
         self.makedirs()
-        self.notify_stage('Pulling')
-        package_files = set()
-        package_directories = set()
-        if self.code.stage_packages:
-            package_files, package_directories = self._setup_stage_packages()
+        self.notify_part_progress('Pulling')
         self.code.pull()
-
-        # Record the files and directories unpacked from the stage packages
-        state = PullState(package_files, package_directories)
-        self.mark_done('pull', state)
+        self.mark_done('pull')
 
     def clean_pull(self):
         state_file = self._step_state_file('pull')
         if not os.path.isfile(state_file):
-            self.notify_stage('Skipping cleaning pulled source for',
-                              '(already clean)')
+            self.notify_part_progress('Skipping cleaning pulled source for',
+                                      '(already clean)')
             return
 
-        self.notify_stage('Cleaning pulled source for')
-        # Remove ubuntu cache (if any)
+        self.notify_part_progress('Cleaning pulled source for')
+        # Remove ubuntu cache (where stage packages are fetched)
         if os.path.exists(self.ubuntudir):
             shutil.rmtree(self.ubuntudir)
-
-        # Remove installdir (where the debs are unpacked), if any
-        if os.path.exists(self.installdir):
-            shutil.rmtree(self.installdir)
-
-        # Remove builddir, if any
-        if os.path.exists(self.code.builddir):
-            shutil.rmtree(self.code.builddir)
 
         self.code.clean_pull()
         self.mark_cleaned('pull')
 
-    def build(self, force=False):
-        if not self.should_step_run('build', force):
-            self.notify_stage('Skipping build', ' (already ran)')
-            return
+    def prepare_build(self, force=False):
         self.makedirs()
-        self.notify_stage('Building')
-        if self.code.stage_packages:
-            # Stage packages were already fetched and unpacked in pull(), but
-            # they need to be unpacked into the stage directory again in case
-            # it's been cleaned.
-            state = self.get_state('pull')
-            try:
-                _migrate_files(
-                    state.stage_package_files,
-                    state.stage_package_directories, self.code.installdir,
-                    self.stagedir, missing_ok=True)
-            except AttributeError:
-                raise MissingState(
-                    "Failed to build: Missing necessary pull state. "
-                    "Please run pull again.")
+        self.notify_part_progress('Preparing to build')
+        # Stage packages are fetched and unpacked in the pull step, but we'll
+        # unpack again here just in case the build step has been cleaned.
+        self._unpack_stage_packages()
+
+    def build(self, force=False):
+        self.makedirs()
+        self.notify_part_progress('Building')
         self.code.build()
         self.mark_done('build')
 
     def clean_build(self):
         state_file = self._step_state_file('build')
         if not os.path.isfile(state_file):
-            self.notify_stage('Skipping cleaning build for', '(already clean)')
+            self.notify_part_progress('Skipping cleaning build for',
+                                      '(already clean)')
             return
 
-        self.notify_stage('Cleaning build for')
+        self.notify_part_progress('Cleaning build for')
         self.code.clean_build()
         self.mark_cleaned('build')
 
@@ -351,27 +336,25 @@ class PluginHandler:
             shutil.move(src, dst)
 
     def stage(self, force=False):
-        if not self.should_step_run('stage', force):
-            self.notify_stage('Skipping stage', ' (already ran)')
-            return
         self.makedirs()
-
-        self.notify_stage('Staging')
+        self.notify_part_progress('Staging')
         self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir)
+        # TODO once `snappy try` is in place we will need to copy
+        # dependencies here too
 
         self.mark_done('stage', StageState(snap_files, snap_dirs))
 
     def clean_stage(self, project_staged_state):
         state_file = self._step_state_file('stage')
         if not os.path.isfile(state_file):
-            self.notify_stage('Skipping cleaning staging area for',
-                              '(already clean)')
+            self.notify_part_progress('Skipping cleaning staging area for',
+                                      '(already clean)')
             return
 
-        self.notify_stage('Cleaning staging area for')
+        self.notify_part_progress('Cleaning staging area for')
 
         with open(state_file, 'r') as f:
             state = yaml.load(f.read())
@@ -387,25 +370,53 @@ class PluginHandler:
         self.mark_cleaned('stage')
 
     def strip(self, force=False):
-        if not self.should_step_run('strip', force):
-            self.notify_stage('Skipping strip', ' (already ran)')
-            return
         self.makedirs()
-
-        self.notify_stage('Stripping')
+        self.notify_part_progress('Stripping')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        dependencies = _find_dependencies(self.snapdir)
 
-        self.mark_done('strip', StripState(snap_files, snap_dirs))
+        # Split the necessary dependencies into their corresponding location.
+        # We'll both migrate and track the system dependencies, but we'll only
+        # track the part and staged dependencies, since they should have
+        # already been stripped by other means, and migrating them again could
+        # potentially override the `stage` or `snap` filtering.
+        part_dependencies = set()
+        staged_dependencies = set()
+        system_dependencies = set()
+        for file_path in dependencies:
+            if file_path.startswith(self.installdir):
+                part_dependencies.add(
+                    os.path.relpath(file_path, self.installdir))
+            elif file_path.startswith(self.stagedir):
+                staged_dependencies.add(
+                    os.path.relpath(file_path, self.stagedir))
+            else:
+                system_dependencies.add(file_path.lstrip('/'))
+
+        part_dependency_paths = {os.path.dirname(d) for d in part_dependencies}
+        staged_dependency_paths = {os.path.dirname(d) for d in
+                                   staged_dependencies}
+        system_dependency_paths = {os.path.dirname(d) for d in
+                                   system_dependencies}
+        # Lots of dependencies are linked with a symlink, so we need to make
+        # sure we follow those symlinks when we migrate the dependencies.
+        _migrate_files(system_dependencies, system_dependency_paths, '/',
+                       self.snapdir, follow_symlinks=True)
+
+        dependency_paths = (part_dependency_paths | staged_dependency_paths |
+                            system_dependency_paths)
+        self.mark_done('strip', StripState(
+            snap_files, snap_dirs, dependency_paths))
 
     def clean_strip(self, project_stripped_state):
         state_file = self._step_state_file('strip')
         if not os.path.isfile(state_file):
-            self.notify_stage('Skipping cleaning snapping area for',
-                              '(already clean)')
+            self.notify_part_progress('Skipping cleaning snapping area for',
+                                      '(already clean)')
             return
 
-        self.notify_stage('Cleaning snapping area for')
+        self.notify_part_progress('Cleaning snapping area for')
 
         with open(state_file, 'r') as f:
             state = yaml.load(f.read())
@@ -437,6 +448,16 @@ class PluginHandler:
         # part.
         _clean_migrated_files(stripped_files, stripped_directories,
                               shared_directory)
+
+    def get_stripped_dependency_paths(self):
+        dependency_paths = set()
+        state = self.get_state('strip')
+        if state:
+            for path in state.dependency_paths:
+                dependency_paths.add(
+                    os.path.join(self.snapdir, path.lstrip('/')))
+
+        return dependency_paths
 
     def env(self, root):
         return self.code.env(root)
@@ -597,7 +618,8 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
+                   follow_symlinks=False):
     for directory in snap_dirs:
         os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
 
@@ -616,7 +638,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False):
         if os.path.exists(dst):
             os.remove(dst)
 
-        os.link(src, dst, follow_symlinks=False)
+        _link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
@@ -631,6 +653,42 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_dir in snap_dirs:
         if not os.listdir(os.path.join(directory, snap_dir)):
             os.rmdir(os.path.join(directory, snap_dir))
+
+
+def _link_or_copy(source, destination, follow_symlinks=False):
+    # Hard-link this file to the source. It's possible for this to
+    # fail (e.g. a cross-device link), so as a backup plan we'll
+    # just copy it.
+    try:
+        os.link(source, destination, follow_symlinks=follow_symlinks)
+    except OSError:
+        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+
+
+def _find_dependencies(workdir):
+    ms = magic.open(magic.NONE)
+    if ms.load() != 0:
+        raise RuntimeError('Cannot load magic header detection')
+
+    elf_files = set()
+    fs_encoding = sys.getfilesystemencoding()
+
+    for root, dirs, files in os.walk(workdir.encode(fs_encoding)):
+        for entry in itertools.chain(files, dirs):
+            path = os.path.join(root, entry)
+            if os.path.islink(path):
+                logger.debug('Skipped link {!r} when parsing {!r}'.format(
+                    path, workdir))
+                continue
+            file_m = ms.file(path)
+            if file_m.startswith('ELF') and 'dynamically linked' in file_m:
+                elf_files.add(path)
+
+    dependencies = []
+    for elf_file in elf_files:
+        dependencies += libraries.get_dependencies(elf_file)
+
+    return set(dependencies)
 
 
 def _get_file_list(stage_set):

@@ -126,7 +126,9 @@ parts:
         strip.main()
 
         self.assertEqual(
+            'Preparing to pull strip0 \n'
             'Pulling strip0 \n'
+            'Preparing to build strip0 \n'
             'Building strip0 \n'
             'Staging strip0 \n'
             'Stripping strip0 \n',
@@ -147,8 +149,8 @@ parts:
         strip.main()
 
         self.assertEqual(
-            'Skipping pull strip0  (already ran)\n'
-            'Skipping build strip0  (already ran)\n'
-            'Skipping stage strip0  (already ran)\n'
-            'Skipping strip strip0  (already ran)\n',
+            'Skipping pull strip0 (already ran)\n'
+            'Skipping build strip0 (already ran)\n'
+            'Skipping stage strip0 (already ran)\n'
+            'Skipping strip strip0 (already ran)\n',
             fake_logger.output)

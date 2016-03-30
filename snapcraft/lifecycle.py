@@ -101,6 +101,17 @@ class _Executor:
                 '{}'.format(part.name, ' '.join(prereqs)))
             self.run('stage', prereqs, recursed=True)
 
+        # Prepare to run this step, if such a method is implemented
+        if not part.should_step_run(step):
+            part.notify_part_progress('Skipping {}'.format(step),
+                                      '(already ran)')
+            return
+
+        try:
+            getattr(part, 'prepare_{}'.format(step))()
+        except AttributeError:
+            pass
+
         common.env = self.config.build_env_for_part(part)
         getattr(part, step)()
 

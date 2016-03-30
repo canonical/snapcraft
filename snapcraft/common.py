@@ -22,6 +22,7 @@ import multiprocessing
 import os
 import platform
 import subprocess
+import sys
 import tempfile
 import urllib
 
@@ -34,6 +35,8 @@ _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
+_DEFAULT_LIBRARIESDIR = 'usr/share/snapcraft/libraries'
+_librariesdir = _DEFAULT_LIBRARIESDIR
 
 host_machine = platform.machine()
 target_machine = host_machine
@@ -66,8 +69,13 @@ def run_output(cmd, **kwargs):
         f.write('\n')
         f.write('exec $*')
         f.flush()
-        return subprocess.check_output(['/bin/sh', f.name] + cmd,
-                                       **kwargs).decode('utf8').strip()
+        output = subprocess.check_output(['/bin/sh', f.name] + cmd, **kwargs)
+        try:
+            return output.decode(sys.getfilesystemencoding()).strip()
+        except UnicodeEncodeError:
+            logger.warning('Could not decode output for {!r} correctly'.format(
+                cmd))
+            return output.decode('latin-1', 'surrogateescape').strip()
 
 
 _ARCH_TRANSLATIONS = {
@@ -206,6 +214,15 @@ def get_parallel_build_count():
                            'builds')
 
     return build_count
+
+
+def set_librariesdir(librariesdir):
+    global _librariesdir
+    _librariesdir = librariesdir
+
+
+def get_librariesdir():
+    return _librariesdir
 
 
 def get_python2_path(root):
