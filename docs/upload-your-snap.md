@@ -4,6 +4,14 @@ So you've been working hard on your snap, and you finally have it to the point
 where you're ready to share it with the world? Great! You can use Snapcraft to
 upload it directly to the store.
 
+## Build the snap
+
+Get into the directory containing the `snapcraft.yaml` file, and do the following:
+
+    $ snapcraft snap
+    [...]
+    Snapped foo_1_amd64.snap
+
 
 ## Authenticate to the store
 
@@ -30,9 +38,9 @@ Now, let's upload that snap!
 
 ## Upload the snap
 
-Get into the directory containing the `snapcraft.yaml`, and do the following:
+Run the `snapcraft upload` command passing the path to the `snap` file as an argument:
 
-    $ snapcraft upload
+    $ snapcraft upload foo_1_amd64.snap
 
     Uploading foo_1_amd64.snap [==========================================] 100%
     Checking package status... |

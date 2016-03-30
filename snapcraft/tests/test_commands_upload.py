@@ -19,119 +19,75 @@ import os
 import os.path
 from unittest import mock
 
+import docopt
 import fixtures
 
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 from snapcraft.commands import upload
 
 
 class UploadCommandTestCase(tests.TestCase):
 
-    yaml_template = """name: snap-test
-version: 1.0
-summary: test strip
-description: if snap is succesful a snap package will be available
-architectures: ['amd64']
+    def _patch_snap_yaml(self, snap_name):
+        meta_path = os.path.join(os.getcwd(), 'squashfs-root', 'meta')
+        os.makedirs(meta_path)
+        with open(os.path.join(meta_path, 'snap.yaml'), 'w') as yaml_file:
+            yaml_file.write('name: {}\n'.format(snap_name))
 
-parts:
-    part1:
-      plugin: nil
-"""
+        temp_dir = upload.tempfile.TemporaryDirectory
 
-    def setUp(self):
-        super().setUp()
+        def create_patch(method, return_value):
+            patcher = mock.patch.object(temp_dir, method)
+            mock_method = patcher.start()
+            mock_method.return_value = return_value
+            self.addCleanup(patcher.stop)
+
+        create_patch('_cleanup', None)
+        create_patch('__enter__', os.getcwd())
+        create_patch('__exit__', False)
+
+    def test_upload_without_snap_must_raise_exception(self):
+        with self.assertRaises(docopt.DocoptExit) as raised:
+            upload.main()
+
+        self.assertEqual(
+            'Usage:\n  upload [options] SNAP_FILE', str(raised.exception))
+
+    def test_upload_nonexisting_snap_must_raise_exception(self):
+        with self.assertRaises(FileNotFoundError) as raised:
+            upload.main(['unexisting.snap'])
+
+        self.assertEqual('unexisting.snap', str(raised.exception))
+
+    def test_upload_existing_snap(self):
         patcher = mock.patch('snapcraft.commands.upload.upload')
-        self.mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.commands.upload.os')
-        self.mock_os = patcher.start()
-        self.mock_os.path.exists.return_value = False
+        mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.commands.upload.load_config')
-        self.mock_load_config = patcher.start()
+        mock_load_config = patcher.start()
         self.addCleanup(patcher.stop)
+        mock_load_config.return_value = 'test config'
 
         patcher = mock.patch('snapcraft.commands.snap.subprocess.check_call')
-        patcher.start()
+        mock_check_call = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
 
-        self.make_snapcraft_yaml()
+        open('test.snap', 'w').close()
 
-    def make_snapcraft_yaml(self, n=1):
-        super().make_snapcraft_yaml(self.yaml_template)
-        self.statedir = os.path.join(common.get_partsdir(), 'part1', 'state')
+        self._patch_snap_yaml('snaptestname')
+        upload.main(['test.snap'])
 
-    def test_upload(self):
-        upload.main()
-
+        mock_check_call.assert_called_once_with(
+            ['unsquashfs', '-d', os.path.join(os.getcwd(), 'squashfs-root'),
+             'test.snap', '-e', os.path.join('meta', 'snap.yaml')])
         self.assertEqual(
-            'Snap snap-test_1.0_amd64.snap not found. '
-            'Running snap step to create it.\n'
-            'Preparing to pull part1 \n'
-            'Pulling part1 \n'
-            'Preparing to build part1 \n'
-            'Building part1 \n'
-            'Staging part1 \n'
-            'Stripping part1 \n'
-            'Snapping snap-test_1.0_amd64.snap\n'
-            'Snapped snap-test_1.0_amd64.snap\n',
-            self.fake_logger.output)
+            'Uploading existing test.snap.\n', fake_logger.output)
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
-                        'Expected a stage directory')
-        self.verify_state('part1', self.statedir, 'strip')
-
-        self.mock_upload.assert_called_once_with(
-            'snap-test_1.0_amd64.snap',
-            'snap-test',
-            config=self.mock_load_config.return_value)
-
-    def test_upload_failed(self):
-        self.mock_upload.return_value = False
-
-        upload.main()
-
-        self.assertEqual(
-            'Snap snap-test_1.0_amd64.snap not found. '
-            'Running snap step to create it.\n'
-            'Preparing to pull part1 \n'
-            'Pulling part1 \n'
-            'Preparing to build part1 \n'
-            'Building part1 \n'
-            'Staging part1 \n'
-            'Stripping part1 \n'
-            'Snapping snap-test_1.0_amd64.snap\n'
-            'Snapped snap-test_1.0_amd64.snap\n',
-            self.fake_logger.output)
-
-        self.assertTrue(os.path.exists(common.get_stagedir()),
-                        'Expected a stage directory')
-        self.verify_state('part1', self.statedir, 'strip')
-
-        self.mock_upload.assert_called_once_with(
-            'snap-test_1.0_amd64.snap',
-            'snap-test',
-            config=self.mock_load_config.return_value)
-
-    def test_just_upload_if_snap_file_exists(self):
-        self.mock_os.path.exists.return_value = True
-
-        upload.main()
-
-        # stages are not build if snap file already exists
-        self.assertFalse(os.path.exists(common.get_stagedir()),
-                         'Expected a stage directory')
-        self.assertFalse(os.path.exists(self.statedir))
-
-        self.mock_upload.assert_called_once_with(
-            'snap-test_1.0_amd64.snap',
-            'snap-test',
-            config=self.mock_load_config.return_value)
+        mock_upload.assert_called_once_with(
+            'test.snap',
+            'snaptestname',
+            config='test config')
