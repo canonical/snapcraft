@@ -29,16 +29,29 @@ from snapcraft.common import get_arch
 
 class UploadTestCase(integration_tests.TestCase):
 
+    def _update_version(self, project_dir, version=None):
+        # Change to a random version.
+        # The maximum size is 32 chars.
+        if version is None:
+            version = str(uuid.uuid4().int)[:32]
+        updated_project_dir = self.copy_project_to_tmp(project_dir)
+        yaml_file = os.path.join(project_dir, 'snapcraft.yaml')
+        for line in fileinput.input(yaml_file, inplace=True):
+            if 'version: ' in line:
+                print('version: ' + version)
+            else:
+                print(line)
+        return updated_project_dir
+
     def test_upload_without_login(self):
         project_dir = 'assemble'
-        output = self.run_snapcraft('upload', project_dir)
-        os.chdir(project_dir)
-
+        self.run_snapcraft('snap', project_dir)
         snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        os.chdir(project_dir)
         self.assertThat(snap_file_path, FileExists())
 
-        self.assertIn('Snap assemble_1.0_amd64.snap not found. Running snap '
-                      'step to create it.', output)
+        output = self.run_snapcraft(['upload', snap_file_path])
+
         self.assertIn('Upload failed', output)
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', output)
@@ -46,21 +59,23 @@ class UploadTestCase(integration_tests.TestCase):
     def test_upload_with_login(self):
         self.useFixture(fixture_setup.StagingStore())
 
+        # Make a snap
         project_dir = 'basic'
         self.addCleanup(self.logout)
         self.login()
 
-        project_dir = self.copy_project_to_tmp(project_dir)
-        yaml_file = os.path.join(project_dir, 'snapcraft.yaml')
-        for line in fileinput.input(yaml_file, inplace=True):
-            if 'version: ' in line:
-                # Change to a random version.
-                # The maximum size is 32 chars.
-                print('version: ' + str(uuid.uuid4().int)[:32])
-            else:
-                print(line)
+        # Change to a random version.
+        # The maximum size is 32 chars.
+        new_version = str(uuid.uuid4().int)[:32]
+        project_dir = self._update_version(project_dir, new_version)
 
-        output = self.run_snapcraft('upload', project_dir)
+        self.run_snapcraft('snap', project_dir)
+
+        # Upload the snap
+        snap_file_path = 'basic_{}_{}.snap'.format(new_version, get_arch())
+        self.assertThat(os.path.join(project_dir, snap_file_path), FileExists())
+
+        output = self.run_snapcraft(['upload', snap_file_path], project_dir)
         self.assertIn(
             'Application uploaded successfully (as revision ', output)
         self.assertIn('Please check out the application at: ', output)

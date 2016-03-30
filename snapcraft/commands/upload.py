@@ -20,7 +20,7 @@ snapcraft upload
 Upload snap package to the Ubuntu Store.
 
 Usage:
-  upload [options]
+  upload [options] SNAP_FILE
 
 Options:
   -h --help             show this help message and exit.
@@ -29,12 +29,12 @@ Options:
 
 import logging
 import os
+import subprocess
+import tempfile
 
+import yaml
 from docopt import docopt
 
-import snapcraft.yaml
-from snapcraft.commands import snap
-from snapcraft.common import format_snap_name
 from snapcraft.config import load_config
 from snapcraft.storeapi import upload
 
@@ -42,20 +42,29 @@ from snapcraft.storeapi import upload
 logger = logging.getLogger(__name__)
 
 
+def _get_name_from_snap_file(snap_path):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        subprocess.check_call(
+            ['unsquashfs', '-d', os.path.join(temp_dir, 'squashfs-root'),
+             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
+        with open(os.path.join(
+                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')) as yaml_file:
+            snap_yaml = yaml.load(yaml_file)
+
+    return snap_yaml['name']
+
+
 def main(argv=None):
     """Upload snap package to the Ubuntu Store."""
     argv = argv if argv else []
-    docopt(__doc__, argv=argv)
+    args = docopt(__doc__, argv=argv)
 
-    # make sure the full lifecycle is executed
-    yaml_config = snapcraft.yaml.load_config()
-    snap_filename = format_snap_name(yaml_config.data)
-
+    snap_filename = args['SNAP_FILE']
     if not os.path.exists(snap_filename):
-        logger.info(
-            'Snap {} not found. Running snap step to create it.'.format(
-                snap_filename))
-        snap.main(argv=argv)
+        raise FileNotFoundError(snap_filename)
+    else:
+        snap_name = _get_name_from_snap_file(snap_filename)
+        logger.info('Uploading existing {}.'.format(snap_filename))
 
-    config = load_config()
-    upload(snap_filename, yaml_config.data['name'], config=config)
+        config = load_config()
+        upload(snap_filename, snap_name, config=config)
