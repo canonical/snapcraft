@@ -116,7 +116,9 @@ parts:
         stage.main()
 
         self.assertEqual(
+            'Preparing to pull stage0 \n'
             'Pulling stage0 \n'
+            'Preparing to build stage0 \n'
             'Building stage0 \n'
             'Staging stage0 \n',
             fake_logger.output)
@@ -136,7 +138,7 @@ parts:
         stage.main()
 
         self.assertEqual(
-            'Skipping pull stage0  (already ran)\n'
-            'Skipping build stage0  (already ran)\n'
-            'Skipping stage stage0  (already ran)\n',
+            'Skipping pull stage0 (already ran)\n'
+            'Skipping build stage0 (already ran)\n'
+            'Skipping stage stage0 (already ran)\n',
             fake_logger.output)

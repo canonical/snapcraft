@@ -62,3 +62,14 @@ environment variables:
 - **tests:** Tests, obviously. `unit` holds Python unit tests and `plainbox` holds plainbox integration tests.
 
 - **snapcraft:** The Python module that houses the core snapcraft logic. The `plugins` subdirectory holds the code for each plugin.
+
+### Updating library filter
+
+To update the list of libraries that get excluded from inclusion into a
+snap run:
+
+    ./libraries/generate_lib_list.py libraries/<release>
+
+e.g.; to update the list for 16.04,
+
+    ./libraries/generate_lib_list.py libraries/16.04
