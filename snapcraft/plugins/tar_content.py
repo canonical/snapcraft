@@ -15,8 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
+import shutil
+
 import snapcraft
 import snapcraft.sources
+
+logger = logging.getLogger(__name__)
 
 
 class TarContentPlugin(snapcraft.BasePlugin):
@@ -39,32 +44,31 @@ class TarContentPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        if not self.options.destination:
-            builddir = self.builddir
-        else:
-            if os.path.isabs(self.options.destination):
-                raise ValueError('path "{}" must be relative'
-                                 .format(self.options.destination))
 
-            builddir = os.path.join(self.builddir, self.options.destination)
-            if not os.path.exists(builddir):
-                os.makedirs(builddir)
+        logger.warning("DEPRECATED: The 'tar-content' plugin's functionality "
+                       "has been replaced by the 'copy' plugin, and it will "
+                       "soon be removed.")
 
-        self.tar = snapcraft.sources.Tar(self.options.source, builddir)
+        if (self.options.destination and
+                os.path.isabs(self.options.destination)):
+            raise ValueError('path {!r} must be relative'.format(
+                self.options.destination))
 
     def set_target_machine(self, machine):
         pass
 
     def pull(self):
-        self.tar.pull()
+        snapcraft.sources.Tar(self.options.source, self.sourcedir).pull()
 
     def build(self):
-        if not self.options.destination:
-            installdir = self.installdir
-        else:
+        super().build()
+
+        installdir = self.installdir
+        if self.options.destination:
             installdir = os.path.join(self.installdir,
                                       self.options.destination)
-            if not os.path.exists(installdir):
-                os.makedirs(installdir)
 
-        self.tar.provision(installdir)
+        if os.path.exists(installdir):
+            shutil.rmtree(installdir)
+
+        shutil.copytree(self.builddir, installdir)

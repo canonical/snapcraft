@@ -181,10 +181,13 @@ class Tar(Base):
 
     def pull(self):
         if snapcraft.common.isurl(self.source):
-            self._download()
+            self.download()
+        else:
+            shutil.copy2(self.source, self.source_dir)
+
         self.provision(self.source_dir)
 
-    def _download(self):
+    def download(self):
         req = requests.get(self.source, stream=True, allow_redirects=True)
         if req.status_code is not 200:
             raise EnvironmentError('unexpected http status code when '
@@ -197,12 +200,7 @@ class Tar(Base):
 
     def provision(self, dst, clean_target=True):
         # TODO add unit tests.
-        if snapcraft.common.isurl(self.source):
-            tarball = os.path.join(
-                self.source_dir,
-                os.path.basename(self.source))
-        else:
-            tarball = os.path.abspath(self.source)
+        tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -212,6 +210,7 @@ class Tar(Base):
             shutil.move(tmp_tarball, tarball)
 
         self._extract(tarball, dst)
+        os.remove(tarball)
 
     def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
@@ -256,7 +255,7 @@ class Local(Base):
         elif (os.path.isdir(self.source_dir) and
               not os.listdir(self.source_dir)):
             os.rmdir(self.source_dir)
-        else:
+        elif os.path.exists(self.source_dir):
             raise EnvironmentError('Cannot pull to target {!r}'.format(
                 self.source_dir))
 
@@ -324,7 +323,7 @@ def _get_source_handler(source_type, source):
     return _source_handler.get(source_type, Local)
 
 
-_tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
+_tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
 
 
 def _get_source_type_from_uri(source, ignore_errors=False):
