@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import pydoc
 from unittest import mock
 
 import fixtures
@@ -24,6 +25,14 @@ from snapcraft.commands import help
 
 
 class HelpCommandTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        # pydoc pager guess can fail, for tests we want a plain pager
+        # anyway
+        p = mock.patch('pydoc.pager', new=pydoc.plainpager)
+        p.start()
+        self.addCleanup(p.stop)
 
     def test_topic_and_plugin_not_found_exits_with_tip(self):
         fake_logger = fixtures.FakeLogger()
