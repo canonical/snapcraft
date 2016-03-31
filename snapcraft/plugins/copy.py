@@ -34,6 +34,12 @@ class CopyPlugin(snapcraft.BasePlugin):
                 'files': {
                     'type': 'object',
                 },
+                'follow-symlinks': {
+                    'type': 'boolean',
+                    'default': True,
+                    'description': 'copy linked file content instead of'
+                                   ' copying only symlink metadata',
+                }
             },
             'required': [
                 'files',
@@ -57,6 +63,7 @@ class CopyPlugin(snapcraft.BasePlugin):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
 
             if os.path.isdir(src):
-                shutil.copytree(src, dst)
+                shutil.copytree(
+                    src, dst, symlinks=not self.options.follow_symlinks)
             else:
                 shutil.copy2(src, dst)
