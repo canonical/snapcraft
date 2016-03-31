@@ -42,6 +42,7 @@ python2
 python3
 qml
 scons
+script
 tar-content
 '''
         list_plugins.main()
