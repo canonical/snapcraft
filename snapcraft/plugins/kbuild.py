@@ -110,8 +110,10 @@ class KBuildPlugin(BasePlugin):
         # if kconfigfile is provided use that
         # otherwise use defconfig to seed the base config
         if self.options.kconfigfile is None:
-            # first run defconfig for setting baseline
-            self.run(self.make_cmd + self.options.kdefconfig)
+            # we need to run this with -j1, unit tests are a good defense here.
+            make_cmd = self.make_cmd.copy()
+            make_cmd[1] = '-j1'
+            self.run(make_cmd + self.options.kdefconfig)
         else:
             shutil.copy(self.options.kconfigfile, config_path)
 
