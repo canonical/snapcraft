@@ -23,8 +23,10 @@ import tempfile
 
 import yaml
 
-from snapcraft.config import clear_config, load_config, save_config
-from snapcraft import storeapi
+from snapcraft import (
+    config,
+    storeapi,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -38,11 +40,16 @@ def login():
                 'two-factor authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    response = storeapi.login(email, password, token_name='snapcraft', otp=otp)
+    with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
+    if with_macaroons:
+        do_login = storeapi.login_with_macaroons
+    else:
+        do_login = storeapi.login
+    response = do_login(email, password, token_name='snapcraft', otp=otp)
     success = response.get('success', False)
 
     if success:
-        save_config(response['body'])
+        config.save_config(response['body'])
         logger.info('Login successful.')
     else:
         logger.info('Login failed.')
@@ -50,7 +57,7 @@ def login():
 
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
-    clear_config()
+    config.clear_config()
     logger.info('Credentials cleared.')
 
 
@@ -61,8 +68,8 @@ def upload(snap_filename):
         snap_name = _get_name_from_snap_file(snap_filename)
         logger.info('Uploading existing {}.'.format(snap_filename))
 
-        config = load_config()
-        storeapi.upload(snap_filename, snap_name, config=config)
+        conf = config.load_config()
+        storeapi.upload(snap_filename, snap_name, config=conf)
 
 
 def _get_name_from_snap_file(snap_path):

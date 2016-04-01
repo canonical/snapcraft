@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import os
 from unittest import mock
 
 import fixtures
@@ -30,6 +31,15 @@ class LoginCommandTestCase(tests.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
+        # Ensure SNAPCRAFT_WITH_MACAROONS is not defined
+        patcher = mock.patch.dict(os.environ, {})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        try:
+            del os.environ['SNAPCRAFT_WITH_MACAROONS']
+        except KeyError:
+            pass
+
         patcher = mock.patch('builtins.input')
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -42,7 +52,7 @@ class LoginCommandTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft._store.save_config')
+        patcher = mock.patch('snapcraft.config.save_config')
         self.mock_save = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -76,6 +86,83 @@ class LoginCommandTestCase(tests.TestCase):
             'body': {},
         }
         self.mock_login.return_value = response
+
+        main(['login'])
+
+        self.assertEqual(
+            'Authenticating against Ubuntu One SSO.\n'
+            'Login failed.\n',
+            self.fake_logger.output)
+        self.assertFalse(self.mock_save.called)
+
+
+class LoginWithMacaroonsCommandTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        # Ensure SNAPCRAFT_WITH_MACAROONS is properly set
+        patcher = mock.patch.dict(os.environ, SNAPCRAFT_WITH_MACAROONS='1')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('builtins.input')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('builtins.print')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('getpass.getpass')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.config.save_config')
+        self.mock_save = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch(
+            'snapcraft.storeapi._macaroon_login.get_root_macaroon')
+        self.mock_root_macaroon = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch(
+            'snapcraft.storeapi._macaroon_login.get_discharge_macaroon')
+        self.mock_discharge_macaroon = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_successful_login_saves_config(self):
+        self.mock_root_macaroon.return_value = ('root', None)
+        self.mock_discharge_macaroon.return_value = ('discharge', None)
+
+        main(['login'])
+
+        self.assertEqual(
+            'Authenticating against Ubuntu One SSO.\n'
+            'Login successful.\n',
+            self.fake_logger.output)
+        self.mock_save.assert_called_once_with(
+            dict(root_macaroon='root', discharge_macaroon='discharge'))
+
+    def test_failed_root_macaroon_does_not_save_config(self):
+        self.mock_root_macaroon.return_value = (None, 'Failed')
+
+        main(['login'])
+
+        self.assertEqual(
+            'Authenticating against Ubuntu One SSO.\n'
+            'Login failed.\n',
+            self.fake_logger.output)
+        self.assertFalse(self.mock_save.called)
+
+    def test_failed_disacharge_macaroon_does_not_save_config(self):
+        response = ('root', None)
+        self.mock_root_macaroon.return_value = response
+        response = (None, 'Failed')
+        self.mock_discharge_macaroon.return_value = response
 
         main(['login'])
 
