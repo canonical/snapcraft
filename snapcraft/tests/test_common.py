@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import platform
 import re
 from unittest.mock import patch
 
@@ -112,8 +111,15 @@ class ArchTestCase(testtools.TestCase):
 
     def setUp(self):
         super().setUp()
-        common.host_machine = platform.machine()
-        common.target_machine = common.host_machine
+        # tests will override host_machine, protect it first
+        patcher = patch('snapcraft.common.host_machine',
+                        new=common.host_machine)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = patch('snapcraft.common.target_machine',
+                        new=common.host_machine)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_get_arch_with_no_errors(self):
         common.get_arch()
