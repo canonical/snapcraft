@@ -17,5 +17,6 @@
 from .channels import get_channels, update_channels  # noqa
 from .info import get_info  # noqa
 from ._login import login  # noqa
+from ._macaroon_login import login as login_with_macaroons  # noqa
 from ._download import download  # noqa
 from ._upload import upload  # noqa

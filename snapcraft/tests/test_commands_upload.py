@@ -64,7 +64,7 @@ class UploadCommandTestCase(tests.TestCase):
         mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft._store.load_config')
+        patcher = mock.patch('snapcraft.config.load_config')
         mock_load_config = patcher.start()
         self.addCleanup(patcher.stop)
         mock_load_config.return_value = 'test config'

@@ -25,7 +25,7 @@ from snapcraft import tests
 
 class LogoutCommandTestCase(tests.TestCase):
 
-    @mock.patch('snapcraft._store.clear_config')
+    @mock.patch('snapcraft.config.clear_config')
     def test_successful_login_saves_config(self, mock_clear):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
