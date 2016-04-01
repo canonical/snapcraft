@@ -31,6 +31,7 @@ from snapcraft import (
     sources,
     wiki,
 )
+from snapcraft._schema import Validator, SnapcraftSchemaError
 
 
 logger = logging.getLogger(__name__)
@@ -80,16 +81,6 @@ class SnapcraftLogicError(Exception):
         self._message = message
 
 
-class SnapcraftSchemaError(Exception):
-
-    @property
-    def message(self):
-        return self._message
-
-    def __init__(self, message):
-        self._message = message
-
-
 class PluginNotDefinedError(Exception):
 
     @property
@@ -117,7 +108,8 @@ class Config:
         # To make the transition less painful
         self._remap_skills_to_interfaces()
 
-        _validate_snapcraft_yaml(self.data)
+        self._validator = Validator(self.data)
+        self._validator.validate()
 
         self.build_tools = self.data.get('build-packages', [])
 
@@ -255,7 +247,7 @@ class Config:
 
     def load_plugin(self, part_name, plugin_name, properties):
         part = pluginhandler.load_plugin(
-            part_name, plugin_name, properties)
+            part_name, plugin_name, properties, self._validator.part_schema)
 
         self.build_tools += part.code.build_packages
         self.build_tools += sources.get_required_packages(part.code.options)
@@ -486,26 +478,23 @@ def _create_pkg_config_override(bindir, installdir, stagedir):
     return ['PATH={}:$PATH'.format(bindir)]
 
 
-def _validate_snapcraft_yaml(snapcraft_yaml):
-    schema_file = os.path.abspath(os.path.join(common.get_schemadir(),
-                                               'snapcraft.yaml'))
+def _expand_filesets_for(stage, properties):
+    filesets = properties.get('filesets', {})
+    fileset_for_stage = properties.get(stage, {})
+    new_stage_set = []
 
-    try:
-        with open(schema_file) as fp:
-            schema = yaml.load(fp)
-            format_check = jsonschema.FormatChecker()
-            jsonschema.validate(snapcraft_yaml, schema,
-                                format_checker=format_check)
-    except FileNotFoundError:
-        raise SnapcraftSchemaError(
-            'snapcraft validation file is missing from installation path')
-    except jsonschema.ValidationError as e:
-        messages = [e.message]
-        if e.path:
-            messages.insert(0, "The '{}' property does not match the "
-                               "required schema:".format(e.path.pop()))
+    for item in fileset_for_stage:
+        if item.startswith('$'):
+            try:
+                new_stage_set.extend(filesets[item[1:]])
+            except KeyError:
+                raise SnapcraftLogicError(
+                    '\'{}\' referred to in the \'{}\' fileset but it is not '
+                    'in filesets'.format(item, stage))
+        else:
+            new_stage_set.append(item)
 
-        raise SnapcraftSchemaError(' '.join(messages))
+    return new_stage_set
 
 
 def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
@@ -527,25 +516,6 @@ def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
         raise SnapcraftSchemaError(
             '{} on line {} of {}'.format(
                 e.problem, e.problem_mark.line, yaml_file))
-
-
-def _expand_filesets_for(stage, properties):
-    filesets = properties.get('filesets', {})
-    fileset_for_stage = properties.get(stage, {})
-    new_stage_set = []
-
-    for item in fileset_for_stage:
-        if item.startswith('$'):
-            try:
-                new_stage_set.extend(filesets[item[1:]])
-            except KeyError:
-                raise SnapcraftLogicError(
-                    '\'{}\' referred to in the \'{}\' fileset but it is not '
-                    'in filesets'.format(item, stage))
-        else:
-            new_stage_set.append(item)
-
-    return new_stage_set
 
 
 def load_config():

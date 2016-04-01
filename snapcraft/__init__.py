@@ -134,6 +134,7 @@ class BasePlugin:
         return {
             '$schema': 'http://json-schema.org/draft-04/schema#',
             'type': 'object',
+            'additionalProperties': False,
             'properties': {
                 'source': {
                     'type': 'string',
