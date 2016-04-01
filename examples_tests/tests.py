@@ -36,6 +36,11 @@ class TestSnapcraftExamples(
             'name': 'godd',
             'version': '1.0',
             }),
+        ('git', {
+            'example_dir': 'git',
+            'name': 'git',
+            'version': '2.8.0',
+            }),
         ('py2-project', {
             'example_dir': 'py2-project',
             'name': 'spongeshaker',
