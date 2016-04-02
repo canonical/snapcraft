@@ -1,0 +1,41 @@
+name: test-package
+version: 0.1
+summary: one line summary
+description: a longer description
+icon: icon.png
+
+build-packages: [gcc, libc6-dev]
+
+parts:
+  oneflat:
+    plugin: copy
+    source: oneflat.tar.bz2
+  onedeep:
+    plugin: copy
+    source: onedeep.tar.gz
+  nodir:
+    plugin: copy
+    source: nodir.tar.xz
+  flat:
+    plugin: copy
+    source: flat.tar.xz
+  simple:
+    plugin: copy
+    source: simple.tar.bz2
+  evil-parent:
+    plugin: copy
+    source: evil-parent.tar.gz
+  evil-slash:
+    plugin: copy
+    source: evil-slash.tar.gz
+  readonly-files:
+    plugin: copy
+    source: readonly-files.tar.gz
+  project:
+    plugin: make
+    source: project.tar.xz
+    source-type: tar
+  destination-dir:
+    plugin: copy
+    source: simple.tar.bz2
+    destination: destdir1/destdir2

@@ -1,0 +1,14 @@
+name: test-package
+version: 0.1
+summary: A test of the copy plugin
+description: |
+    Unsupported configuration with dest and files. We do not support it.
+icon: icon.png
+
+parts:
+  copy-example:
+    plugin: copy
+    files:
+      src: dst
+      srcdir: dstdir
+    destination: subdir

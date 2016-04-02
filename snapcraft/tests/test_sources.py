@@ -338,6 +338,7 @@ class TestUri(tests.TestCase):
             'https://golang.tar.xz',
             'https://golang.tar.bz2',
             'https://golang.tar.tgz',
+            'https://golang.tar',
         ]
 
         for source in sources:
@@ -380,3 +381,30 @@ class TestUri(tests.TestCase):
 
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
+
+
+class TestSourceType(tests.TestCase):
+
+    @unittest.mock.patch('snapcraft.sources._get_source_type_from_uri')
+    def test_get_source_type_set(self, mock_get_source_type_from_uri):
+        '''Return source type when explicitely set by the user'''
+        options = unittest.mock.Mock()
+        options.source_type = 'footype'
+
+        self.assertEqual(snapcraft.sources.get_source_type(options),
+                         'footype')
+        self.assertFalse(mock_get_source_type_from_uri.called,
+                         "Get source type from uri not called")
+
+    @unittest.mock.patch('snapcraft.sources._get_source_type_from_uri')
+    def test_get_source_type_from_uri(self, mock_get_source_type_from_uri):
+        '''Call get_source_type_from_uri when unset source type'''
+        options = unittest.mock.Mock()
+        options.source = 'source_uri'
+        options.source_type = None
+        mock_get_source_type_from_uri.return_value = 'computedtype'
+
+        self.assertEqual(snapcraft.sources.get_source_type(options),
+                         'computedtype')
+        mock_get_source_type_from_uri.assert_called_once_with(
+            'source_uri', ignore_errors=True)
