@@ -332,7 +332,7 @@ def _get_source_handler(options):
     return _source_handler.get(source_type, Local)
 
 
-_tar_type_regex = re.compile(r'.*\.((tar\.(xz|gz|bz2))|tgz)$')
+_tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
 
 
 def _get_source_type_from_uri(source, ignore_errors=False):
