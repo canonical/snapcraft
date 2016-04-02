@@ -271,11 +271,10 @@ def get(sourcedir, builddir, options):
     :param str builddir: The build directory to use.
     :param options: source options.
     """
-    source_type = getattr(options, 'source_type', None)
     source_tag = getattr(options, 'source_tag', None)
     source_branch = getattr(options, 'source_branch', None)
 
-    handler_class = _get_source_handler(source_type, options.source)
+    handler_class = _get_source_handler(options)
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
     handler.pull()
@@ -291,9 +290,7 @@ def get_required_packages(options):
     if not source:
         return []
 
-    source_type = getattr(options, 'source_type', None)
-    if not source_type:
-        source_type = _get_source_type_from_uri(source, ignore_errors=True)
+    source_type = get_source_type(options)
 
     packages = []
     if source_type == 'bzr':
@@ -317,9 +314,20 @@ _source_handler = {
 }
 
 
-def _get_source_handler(source_type, source):
+def get_source_type(options, ignore_errors=True):
+    """Return source_type depending on user defined source type or computed"""
+    source = getattr(options, 'source', None)
+    source_type = getattr(options, 'source_type', None)
+
     if not source_type:
-        source_type = _get_source_type_from_uri(source)
+        source_type = _get_source_type_from_uri(source,
+                                                ignore_errors=ignore_errors)
+
+    return source_type
+
+
+def _get_source_handler(options):
+    source_type = get_source_type(options, ignore_errors=False)
 
     return _source_handler.get(source_type, Local)
 
