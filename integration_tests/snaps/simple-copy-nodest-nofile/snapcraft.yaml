@@ -1,0 +1,10 @@
+name: test-package
+version: 0.1
+summary: A test of the copy plugin with no dest
+description: |
+    Copies all files present in local source. The test verifies they're there.
+icon: icon.png
+
+parts:
+  copy-example:
+    plugin: copy
