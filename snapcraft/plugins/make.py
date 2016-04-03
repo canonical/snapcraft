@@ -28,6 +28,10 @@ Additionally, this plugin uses the following plugin-specific keyword:
     - makefile:
       (string)
       Use the given file as the makefile.
+
+    - make-parameters:
+      (list of strings)
+      Pass the given parameters to the make command.
 """
 
 import snapcraft
@@ -41,6 +45,15 @@ class MakePlugin(snapcraft.BasePlugin):
         schema = super().schema()
         schema['properties']['makefile'] = {
             'type': 'string'
+        }
+        schema['properties']['make-parameters'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
         }
 
         return schema
@@ -56,6 +69,9 @@ class MakePlugin(snapcraft.BasePlugin):
 
         if self.options.makefile:
             command.extend(['-f', self.options.makefile])
+
+        if self.options.make_parameters:
+            command.extend(self.options.make_parameters)
 
         self.run(command + ['-j{}'.format(
             snapcraft.common.get_parallel_build_count())])
