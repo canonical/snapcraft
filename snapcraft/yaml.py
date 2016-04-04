@@ -478,23 +478,23 @@ def _create_pkg_config_override(bindir, installdir, stagedir):
     return ['PATH={}:$PATH'.format(bindir)]
 
 
-def _expand_filesets_for(stage, properties):
+def _expand_filesets_for(step, properties):
     filesets = properties.get('filesets', {})
-    fileset_for_stage = properties.get(stage, {})
-    new_stage_set = []
+    fileset_for_step = properties.get(step, {})
+    new_step_set = []
 
-    for item in fileset_for_stage:
+    for item in fileset_for_step:
         if item.startswith('$'):
             try:
-                new_stage_set.extend(filesets[item[1:]])
+                new_step_set.extend(filesets[item[1:]])
             except KeyError:
                 raise SnapcraftLogicError(
                     '\'{}\' referred to in the \'{}\' fileset but it is not '
-                    'in filesets'.format(item, stage))
+                    'in filesets'.format(item, step))
         else:
-            new_stage_set.append(item)
+            new_step_set.append(item)
 
-    return new_stage_set
+    return new_step_set
 
 
 def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
