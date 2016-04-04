@@ -331,7 +331,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     source_type = ''
     if source.startswith('bzr:') or source.startswith('lp:'):
         source_type = 'bzr'
-    elif source.startswith('git:') or source.startswith('git@'):
+    elif source.startswith('git:') or source.startswith('git@') or \
+            source.endswith('.git'):
         source_type = 'git'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
