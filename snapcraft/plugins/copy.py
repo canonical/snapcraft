@@ -25,11 +25,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - files:
       (object)
       A dictionary of key-value pairs. The key is the current location of the
-      file relative to snapcraft.yaml (unless 'source' is specified, in which
+      file relative to snapcraft.yaml (unless `source` is specified, in which
       case it's relative to the root of the source). The value is where to
       place the file in-snap, and is relative to the root of the snap. This
       works like `cp -r <key> <value>`. Note that globbing is supported for the
-      key.
+      key, allowing one to use *, ?, and character ranges expressed with [].
 """
 
 import logging
@@ -41,46 +41,6 @@ import snapcraft
 
 
 logger = logging.getLogger(__name__)
-
-
-def _recursively_link(source, destination):
-    if os.path.isdir(source):
-        if os.path.isdir(destination):
-            destination = os.path.join(destination, os.path.basename(source))
-        elif os.path.exists(destination):
-            raise NotADirectoryError(
-                'Cannot overwrite non-directory {!r} with directory '
-                '{!r}'.format(destination, source))
-        _linktree(source, destination)
-    else:
-        snapcraft.common.link_or_copy(source, destination,
-                                      follow_symlinks=False)
-
-
-def _create_similar_directory(source, destination):
-    os.makedirs(destination, exist_ok=True)
-    shutil.copystat(source, destination, follow_symlinks=False)
-
-
-def _linktree(source_tree, destination_tree):
-    if not os.path.isdir(destination_tree):
-        _create_similar_directory(source_tree, destination_tree)
-
-    for root, directories, files in os.walk(source_tree):
-        for directory in directories:
-            source = os.path.join(root, directory)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
-
-            _create_similar_directory(source, destination)
-
-        for file_name in files:
-            source = os.path.join(root, file_name)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
-
-            snapcraft.common.link_or_copy(
-                source, destination, follow_symlinks=False)
 
 
 class CopyPlugin(snapcraft.BasePlugin):
@@ -121,3 +81,43 @@ class CopyPlugin(snapcraft.BasePlugin):
             dst = os.path.join(self.installdir, filepaths[src].lstrip('/'))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             _recursively_link(src, dst)
+
+
+def _recursively_link(source, destination):
+    if os.path.isdir(source):
+        if os.path.isdir(destination):
+            destination = os.path.join(destination, os.path.basename(source))
+        elif os.path.exists(destination):
+            raise NotADirectoryError(
+                'Cannot overwrite non-directory {!r} with directory '
+                '{!r}'.format(destination, source))
+        _linktree(source, destination)
+    else:
+        snapcraft.common.link_or_copy(source, destination,
+                                      follow_symlinks=False)
+
+
+def _create_similar_directory(source, destination):
+    os.makedirs(destination, exist_ok=True)
+    shutil.copystat(source, destination, follow_symlinks=False)
+
+
+def _linktree(source_tree, destination_tree):
+    if not os.path.isdir(destination_tree):
+        _create_similar_directory(source_tree, destination_tree)
+
+    for root, directories, files in os.walk(source_tree):
+        for directory in directories:
+            source = os.path.join(root, directory)
+            destination = os.path.join(
+                destination_tree, os.path.relpath(source, source_tree))
+
+            _create_similar_directory(source, destination)
+
+        for file_name in files:
+            source = os.path.join(root, file_name)
+            destination = os.path.join(
+                destination_tree, os.path.relpath(source, source_tree))
+
+            snapcraft.common.link_or_copy(
+                source, destination, follow_symlinks=False)
