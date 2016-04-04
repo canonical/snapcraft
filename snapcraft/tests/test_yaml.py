@@ -29,6 +29,7 @@ from snapcraft import (
     dirs,
     tests,
 )
+from snapcraft._schema import SnapcraftSchemaError
 
 
 class TestYaml(tests.TestCase):
@@ -41,6 +42,7 @@ class TestYaml(tests.TestCase):
         self.mock_path_exists = patcher.start()
         self.mock_path_exists.return_value = True
         self.addCleanup(patcher.stop)
+        self.part_schema = snapcraft.yaml.Validator().part_schema
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
@@ -187,9 +189,11 @@ parts:
         snapcraft.yaml.Config()
 
         call1 = unittest.mock.call('part1', 'go', {
-            'stage-packages': ['fswebcam'], 'stage': [], 'snap': []})
+            'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
+            self.part_schema)
         call2 = unittest.mock.call('part2wiki', 'go', {
-            'source': 'http://somesource'})
+            'source': 'http://somesource'},
+            self.part_schema)
 
         mock_load.assert_has_calls([call1, call2])
         self.assertTrue(mock_get_part.called)
@@ -302,7 +306,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
@@ -323,7 +327,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
@@ -346,7 +350,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
@@ -370,7 +374,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
@@ -405,7 +409,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(raised.exception.message,
@@ -426,7 +430,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(
@@ -448,7 +452,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(
@@ -470,7 +474,7 @@ parts:
     stage-packages: [fswebcam]
 """)
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
+        with self.assertRaises(SnapcraftSchemaError) as raised:
             snapcraft.yaml.Config()
 
         self.assertEqual(
@@ -768,9 +772,8 @@ class TestValidation(tests.TestCase):
             with self.subTest(key=key):
                 del data[key]
 
-                with self.assertRaises(
-                        snapcraft.yaml.SnapcraftSchemaError) as raised:
-                    snapcraft.yaml._validate_snapcraft_yaml(data)
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    snapcraft.yaml.Validator(data).validate()
 
                 expected_message = '\'{}\' is a required property'.format(key)
                 self.assertEqual(raised.exception.message, expected_message,
@@ -788,9 +791,8 @@ class TestValidation(tests.TestCase):
             with self.subTest(key=name):
                 data['name'] = name
 
-                with self.assertRaises(
-                        snapcraft.yaml.SnapcraftSchemaError) as raised:
-                    snapcraft.yaml._validate_snapcraft_yaml(data)
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    snapcraft.yaml.Validator(data).validate()
 
                 expected_message = ("The 'name' property does not match the "
                                     "required schema: '{}' does not match "
@@ -800,8 +802,8 @@ class TestValidation(tests.TestCase):
 
     def test_summary_too_long(self):
         self.data['summary'] = 'a' * 80
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Validator(self.data).validate()
 
         expected_message = (
             "The 'summary' property does not match the required schema: "
@@ -819,7 +821,7 @@ class TestValidation(tests.TestCase):
         for t in valid_types:
             data = self.data.copy()
             with self.subTest(key=t):
-                snapcraft.yaml._validate_snapcraft_yaml(data)
+                snapcraft.yaml.Validator(data).validate()
 
     def test_invalid_types(self):
         invalid_types = [
@@ -834,9 +836,8 @@ class TestValidation(tests.TestCase):
             with self.subTest(key=t):
                 data['type'] = t
 
-                with self.assertRaises(
-                        snapcraft.yaml.SnapcraftSchemaError) as raised:
-                    snapcraft.yaml._validate_snapcraft_yaml(data)
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    snapcraft.yaml.Validator(data).validate()
 
                 expected_message = (
                     "The 'type' property does not match the required "
@@ -864,7 +865,7 @@ class TestValidation(tests.TestCase):
             }
         }
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_valid_restart_conditions(self):
         self.data['apps'] = {
@@ -879,7 +880,7 @@ class TestValidation(tests.TestCase):
         for condition in valid_conditions:
             with self.subTest(key=condition):
                 self.data['apps']['service1']['restart-condition'] = condition
-                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+                snapcraft.yaml.Validator(self.data).validate()
 
     def test_invalid_restart_condition(self):
         self.data['apps'] = {
@@ -890,8 +891,8 @@ class TestValidation(tests.TestCase):
             }
         }
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Validator(self.data).validate()
 
         self.assertEqual(
             "The 'restart-condition' property does not match the required "
@@ -912,9 +913,8 @@ class TestValidation(tests.TestCase):
             with self.subTest(key=t):
                 data['apps'] = {t: invalid_names[t]}
 
-                with self.assertRaises(
-                        snapcraft.yaml.SnapcraftSchemaError) as raised:
-                    snapcraft.yaml._validate_snapcraft_yaml(data)
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    snapcraft.yaml.Validator(data).validate()
 
                 expected_message = (
                     "The 'apps' property does not match the required "
@@ -926,8 +926,8 @@ class TestValidation(tests.TestCase):
     def test_apps_required_properties(self):
         self.data['apps'] = {'service1': {}}
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Validator(self.data).validate()
 
         expected_message = ("The 'service1' property does not match the "
                             "required schema: 'command' is a required "
@@ -939,11 +939,10 @@ class TestValidation(tests.TestCase):
         mock_the_open = unittest.mock.mock_open()
         mock_the_open.side_effect = FileNotFoundError()
 
-        with unittest.mock.patch('snapcraft.yaml.open', mock_the_open,
-                                 create=True):
-            with self.assertRaises(
-                    snapcraft.yaml.SnapcraftSchemaError) as raised:
-                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with unittest.mock.patch('snapcraft._schema.open',
+                                 mock_the_open, create=True):
+            with self.assertRaises(SnapcraftSchemaError) as raised:
+                snapcraft.yaml.Validator(self.data).validate()
 
         expected_path = os.path.join(snapcraft.common.get_schemadir(),
                                      'snapcraft.yaml')
@@ -955,13 +954,13 @@ class TestValidation(tests.TestCase):
     def test_icon_missing_is_valid_yaml(self):
         self.mock_path_exists.return_value = False
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_invalid_part_name_plugin_raises_exception(self):
         self.data['parts']['plugins'] = {'type': 'go'}
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Validator(self.data).validate()
 
         expected_message = ("The 'parts' property does not match the "
                             "required schema: Additional properties are not "
@@ -972,26 +971,26 @@ class TestValidation(tests.TestCase):
     def test_license_hook(self):
         self.data['license'] = 'LICENSE'
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_full_license_use(self):
         self.data['license'] = 'LICENSE'
         self.data['license-agreement'] = 'explicit'
         self.data['license-version'] = '1.0'
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_license_with_license_version(self):
         self.data['license'] = 'LICENSE'
         self.data['license-version'] = '1.0'
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_license_agreement_without_license_raises_exception(self):
         self.data['license-agreement'] = 'explicit'
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Validator(self.data).validate()
 
         expected_message = "'license' is a dependency of 'license-agreement'"
         self.assertEqual(raised.exception.message, expected_message,
@@ -1000,8 +999,8 @@ class TestValidation(tests.TestCase):
     def test_license_version_without_license_raises_exception(self):
         self.data['license-version'] = '1.1'
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftSchemaError) as raised:
-            snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            snapcraft.yaml.Validator(self.data).validate()
 
         expected_message = "'license' is a dependency of 'license-version'"
         self.assertEqual(raised.exception.message, expected_message,
@@ -1024,7 +1023,7 @@ class TestValidation(tests.TestCase):
             },
         }
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_valid_security_override_for_apps(self):
         self.data['apps'] = {
@@ -1045,7 +1044,7 @@ class TestValidation(tests.TestCase):
             },
         }
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_valid_security_template_for_apps(self):
         self.data['apps'] = {
@@ -1061,7 +1060,7 @@ class TestValidation(tests.TestCase):
             },
         }
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_valid_caps_for_apps(self):
         self.data['apps'] = {
@@ -1077,7 +1076,7 @@ class TestValidation(tests.TestCase):
             },
         }
 
-        snapcraft.yaml._validate_snapcraft_yaml(self.data)
+        snapcraft.yaml.Validator(self.data).validate()
 
     def test_invalid_security_override_combinations(self):
         self.data['apps'] = {
@@ -1106,7 +1105,7 @@ class TestValidation(tests.TestCase):
 
         with self.subTest(key='all'):
             with self.assertRaises(Exception) as r:
-                snapcraft.yaml._validate_snapcraft_yaml(self.data)
+                snapcraft.yaml.Validator(self.data).validate()
 
             self.assertTrue('is not valid under any of the given schemas'
                             in str(r.exception), str(r.exception))
@@ -1116,7 +1115,7 @@ class TestValidation(tests.TestCase):
             del data['plugs']['migration'][sec]
             with self.subTest(key=sec):
                 with self.assertRaises(Exception) as r:
-                    snapcraft.yaml._validate_snapcraft_yaml(data)
+                    snapcraft.yaml.Validator(data).validate()
 
                 self.assertTrue('is not valid under any of the given schemas'
                                 in str(r.exception), str(r.exception))

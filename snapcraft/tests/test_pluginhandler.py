@@ -206,19 +206,6 @@ class PluginTestCase(tests.TestCase):
                              'Expected staging to allow overwriting of '
                              'already-staged files')
 
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
-    def test_schema_not_found(self, plugin_mock, local_load_mock):
-        mock_plugin = Mock()
-        mock_plugin.schema.return_value = {}
-        plugin_mock.return_value = mock_plugin
-        local_load_mock.return_value = "not None"
-
-        common.set_schemadir(os.path.join('', 'foo'))
-
-        with self.assertRaises(FileNotFoundError):
-            pluginhandler.PluginHandler('mock', 'mock-part', {})
-
     @patch('importlib.import_module')
     @patch('snapcraft.pluginhandler._load_local')
     @patch('snapcraft.pluginhandler._get_plugin')
@@ -228,7 +215,8 @@ class PluginTestCase(tests.TestCase):
         mock_plugin.schema.return_value = {}
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
-        pluginhandler.PluginHandler('mock', 'mock-part', {})
+        pluginhandler.PluginHandler(
+            'mock', 'mock-part', {}, {'properties': {}})
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock')
 
