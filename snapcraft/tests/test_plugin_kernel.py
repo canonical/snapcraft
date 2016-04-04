@@ -364,7 +364,7 @@ ACCEPT=n
 
         self.assertEqual(3, self.run_mock.call_count)
         self.run_mock.assert_has_calls([
-            mock.call(['make', '-j2', 'defconfig']),
+            mock.call(['make', '-j1', 'defconfig']),
             mock.call(['make', '-j2', 'bzImage', 'modules']),
             mock.call(['make', '-j2',
                        'CONFIG_PREFIX={}'.format(plugin.installdir),
@@ -389,6 +389,47 @@ SOMETHING=y
 ACCEPT=n
 """
         self.assertEqual(config_contents, expected_config)
+        self._assert_common_assets(plugin.installdir)
+
+    def test_build_with_two_defconfigs(self):
+        self.options.kdefconfig = ['defconfig', 'defconfig2']
+
+        plugin = kernel.KernelPlugin('test-part', self.options)
+
+        config_file = os.path.join(plugin.builddir, '.config')
+
+        def fake_defconfig(*args, **kwargs):
+            if os.path.exists(config_file):
+                return
+            with open(config_file, 'w') as f:
+                f.write('ACCEPT=y\n')
+
+        self.run_mock.side_effect = fake_defconfig
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        plugin.build()
+
+        self.get_parallel_build_count_mock.assert_called_with()
+
+        self._assert_generic_check_call(plugin.builddir, plugin.installdir,
+                                        plugin.os_snap)
+
+        self.assertEqual(3, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(['make', '-j1', 'defconfig', 'defconfig2']),
+            mock.call(['make', '-j2', 'bzImage', 'modules']),
+            mock.call(['make', '-j2',
+                       'CONFIG_PREFIX={}'.format(plugin.installdir),
+                       'modules_install',
+                       'INSTALL_MOD_PATH={}'.format(plugin.installdir),
+                       'firmware_install',
+                       'INSTALL_FW_PATH={}'.format(os.path.join(
+                           plugin.installdir, 'lib', 'firmware'))])
+        ])
+
+        self.assertTrue(os.path.exists(config_file))
         self._assert_common_assets(plugin.installdir)
 
     def test_build_with_kconfigfile_and_dtbs(self):
