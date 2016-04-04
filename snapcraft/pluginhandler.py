@@ -365,7 +365,7 @@ class PluginHandler:
         except AttributeError:
             raise MissingState(
                 "Failed to clean step 'stage': Missing necessary state. "
-                "Please run stage again.")
+                "This won't work until a complete clean has occurred.")
 
         self.mark_cleaned('stage')
 
@@ -427,7 +427,7 @@ class PluginHandler:
         except AttributeError:
             raise MissingState(
                 "Failed to clean step 'strip': Missing necessary state. "
-                "Please run strip again.")
+                "This won't work until a complete clean has occurred.")
 
         self.mark_cleaned('strip')
 
