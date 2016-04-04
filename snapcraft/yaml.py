@@ -127,6 +127,9 @@ class Config:
                 with contextlib.suppress(KeyError):
                     properties = self._wiki.compose(part_name, properties)
                     plugin_name = properties.pop('plugin', None)
+                    # The wiki still supports using 'type' for snapcraft 1.x
+                    if 'type' in properties:
+                        del properties['type']
 
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
