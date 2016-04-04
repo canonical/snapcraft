@@ -21,8 +21,7 @@ parts:
       - lib/firmware/e100/d101s_ucode.bin
       - lib/firmware/e100/d102e_ucode.bin
     kernel-image-target: Image
-    kernel-image-path: arch/arm64/boot/Image
-    kernel-device-tree:
+    kernel-device-trees:
       - qcom/apq8016-sbc
       - qcom/msm8916-mtp
   410c-firmware:
