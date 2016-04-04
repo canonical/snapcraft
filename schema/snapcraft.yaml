@@ -247,6 +247,15 @@ properties:
             items:
               type: string
             default: ['*']
+          plugs:
+            type: object
+            description: used to connect to interfaces
+          slots:
+            type: object
+            description: used to offer interfaces
+          uses:
+            type: object
+            description: legacy skills, use interfaces and plugs
   plugs:
     type: object
     additionalProperties: false
