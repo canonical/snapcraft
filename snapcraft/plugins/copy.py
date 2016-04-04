@@ -54,28 +54,32 @@ class CopyPlugin(snapcraft.BasePlugin):
         }
 
         # The `files` keyword is required here, but the `source` keyword is
-        # not. It should default to the current working directory.
+        # not.
         schema['required'].append('files')
         schema['required'].remove('source')
-        schema['properties']['source']['default'] = '.'
 
         return schema
 
     def build(self):
-        super().build()
+        # If operating on local assets, run from alongside the snapcraft.yaml.
+        # Otherwise run in the build directory.
+        builddir = ''
+        if self.options.source:
+            super().build()
+            builddir = self.builddir
 
         files = self.options.files
         globs = {f: files[f] for f in files if glob.has_magic(f)}
-        filepaths = {os.path.join(self.builddir, f): files[f] for f in files
+        filepaths = {os.path.join(builddir, f): files[f] for f in files
                      if not glob.has_magic(f)}
 
         for src in globs:
-            paths = glob.glob(os.path.join(self.builddir, src))
+            paths = glob.glob(os.path.join(builddir, src))
             if not paths:
                 raise EnvironmentError('no matches for {!r}'.format(src))
             for path in paths:
                 filepaths.update(
-                    {os.path.join(self.builddir, path): globs[src]})
+                    {os.path.join(builddir, path): globs[src]})
 
         for src in sorted(filepaths):
             dst = os.path.join(self.installdir, filepaths[src].lstrip('/'))

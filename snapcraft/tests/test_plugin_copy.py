@@ -29,7 +29,7 @@ class TestCopyPlugin(TestCase):
     def setUp(self):
         super().setUp()
         self.mock_options = Mock()
-        self.mock_options.source = '.'
+        self.mock_options.source = None
         self.mock_options.source_subdir = None
         self.mock_options.files = {}
         # setup the expected target dir in our tempdir
@@ -50,10 +50,8 @@ class TestCopyPlugin(TestCase):
         with self.assertRaises(EnvironmentError) as raised:
             c.build()
 
-        self.assertEqual(
-            str(raised.exception),
-            "[Errno 2] No such file or directory: '{}/src'".format(
-                c.builddir))
+        self.assertEqual(str(raised.exception),
+                         "[Errno 2] No such file or directory: 'src'")
 
     def test_copy_glob_does_not_match_anything(self):
         # ensure that a bad file causes a warning and fails the build even
