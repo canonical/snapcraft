@@ -459,8 +459,8 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "Failed to clean step 'stage': Missing necessary state. Please "
-            "run stage again.")
+            "Failed to clean step 'stage': Missing necessary state. "
+            "This won't work until a complete clean has occurred.")
 
     @patch('snapcraft.pluginhandler._find_dependencies')
     @patch('shutil.copy')
@@ -609,8 +609,8 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "Failed to clean step 'strip': Missing necessary state. Please "
-            "run strip again.")
+            "Failed to clean step 'strip': Missing necessary state. "
+            "This won't work until a complete clean has occurred.")
 
 
 class CleanTestCase(tests.TestCase):
@@ -843,8 +843,8 @@ class CleanTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "Failed to clean step 'strip': Missing necessary state. Please "
-            "run strip again.")
+            "Failed to clean step 'strip': Missing necessary state. "
+            "This won't work until a complete clean has occurred.")
 
         self.assertTrue(os.path.isfile(stripped_file))
 
@@ -1005,8 +1005,8 @@ class CleanTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "Failed to clean step 'stage': Missing necessary state. Please "
-            "run stage again.")
+            "Failed to clean step 'stage': Missing necessary state. "
+            "This won't work until a complete clean has occurred.")
 
         self.assertTrue(os.path.isfile(staged_file))
 
