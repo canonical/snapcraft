@@ -46,6 +46,8 @@ setup(
     data_files=[
         ('share/snapcraft/schema',
             ['schema/' + x for x in os.listdir('schema')]),
+        ('share/snapcraft/libraries',
+            ['libraries/' + x for x in os.listdir('libraries')]),
     ],
     install_requires=[
         'pyxdg',
