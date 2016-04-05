@@ -350,7 +350,8 @@ class TestUri(tests.TestCase):
     def test_get_git_source_from_uri(self, mock_pull):
         sources = [
             'git://github.com:ubuntu-core/snapcraft.git',
-            'git@github.com:ubuntu-core/snapcraft.git'
+            'git@github.com:ubuntu-core/snapcraft.git',
+            'https://github.com:ubuntu-core/snapcraft.git',
         ]
 
         for source in sources:
