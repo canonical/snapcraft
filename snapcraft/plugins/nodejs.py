@@ -79,7 +79,7 @@ class NodePlugin(snapcraft.BasePlugin):
     def pull(self):
         super().pull()
         os.makedirs(os.path.join(self.partdir, 'npm'))
-        self._nodejs_tar.pull()
+        self._nodejs_tar.download()
 
     def clean_pull(self):
         super().clean_pull()

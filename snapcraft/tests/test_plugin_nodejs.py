@@ -56,7 +56,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(
                 nodejs._get_nodejs_release(),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
-            mock.call().pull()])
+            mock.call().download()])
 
     def test_build_local_sources(self):
         class Options:
@@ -97,7 +97,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(
                 nodejs._get_nodejs_release(),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
-            mock.call().pull(),
+            mock.call().download(),
             mock.call().provision(plugin.installdir)])
 
     @mock.patch('platform.machine')
