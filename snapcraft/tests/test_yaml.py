@@ -18,6 +18,8 @@ import copy
 import logging
 import os
 import subprocess
+import sys
+import tempfile
 import unittest
 import unittest.mock
 
@@ -741,6 +743,75 @@ parts:
             '-Lfoo/usr/lib/x86_64-linux-gnu $LDFLAGS"' in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue('PERL5LIB=foo/usr/share/perl5/' in environment)
+
+    @unittest.mock.patch('snapcraft.common.get_stagedir')
+    @unittest.mock.patch('snapcraft.common.get_partsdir')
+    def test_parts_build_env_ordering_with_deps(self,
+                                                mock_partsdir,
+                                                mock_stagedir):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after: [part1]
+""")
+
+        self.useFixture(fixtures.EnvironmentVariable('PATH', '/bin'))
+        mock_partsdir.return_value = 'parts'
+        mock_stagedir.return_value = 'foo'
+
+        arch = snapcraft.common.get_arch_triplet()
+        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
+                 'foo/usr/lib/{}'.format(arch),
+                 'foo/include', 'foo/usr/include',
+                 'foo/include/{}'.format(arch),
+                 'foo/usr/include/{}'.format(arch),
+                 'parts/part1/install/include',
+                 'parts/part1/install/lib',
+                 'parts/part2/install/include',
+                 'parts/part2/install/lib']
+        for path in paths:
+            os.makedirs(path)
+
+        config = snapcraft.yaml.Config()
+        part2 = [part for part in config.all_parts if part.name == 'part2'][0]
+        env = config.build_env_for_part(part2)
+        env_lines = '\n'.join(['export {}\n'.format(e) for e in env])
+
+        def get_envvar(envvar):
+            with tempfile.NamedTemporaryFile(mode='w+') as f:
+                f.write(env_lines)
+                f.write('echo ${}'.format(envvar))
+                f.flush()
+                output = subprocess.check_output(['/bin/sh', f.name])
+            return output.decode(sys.getfilesystemencoding()).strip()
+
+        expected_cflags = (
+            '-Iparts/part2/install/include -Ifoo/include -Ifoo/usr/include '
+            '-Ifoo/include/{arch_triplet} '
+            '-Ifoo/usr/include/{arch_triplet}'.format(arch_triplet=arch))
+        self.assertEqual(get_envvar('CFLAGS'), expected_cflags)
+        self.assertEqual(get_envvar('CXXFLAGS'), expected_cflags)
+        self.assertEqual(get_envvar('CPPFLAGS'), expected_cflags)
+
+        self.assertEqual(
+            get_envvar('LDFLAGS'),
+            '-Lparts/part2/install/lib -Lfoo/lib -Lfoo/usr/lib '
+            '-Lfoo/lib/{arch_triplet} -Lfoo/usr/lib/{arch_triplet}'.format(
+                arch_triplet=arch))
+
+        self.assertEqual(
+            get_envvar('LD_LIBRARY_PATH'),
+            'parts/part2/install/lib:foo/lib:foo/usr/lib:'
+            'foo/lib/{arch_triplet}:foo/usr/lib/{arch_triplet}:'
+            'foo/lib:foo/usr/lib:foo/lib/{arch_triplet}:'
+            'foo/usr/lib/{arch_triplet}:'.format(arch_triplet=arch))
 
 
 class TestValidation(tests.TestCase):
