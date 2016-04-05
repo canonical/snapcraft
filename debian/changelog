@@ -1,3 +1,35 @@
+snapcraft (2.7) xenial; urgency=medium
+
+  [ Joe Talbott ]
+  * docs - Fix indentation of 'cam' example.
+  * make plugin: Add 'make_parameters' option. (LP: #1563535)
+
+  [ Ted Gould ]
+  * docs/snapcraft-parts.md: Replace type with plugin.
+
+  [ Sergio Schvezov ]
+  * Clear icon path before trying to write the new one (LP: #1561331)
+  * Raise a nice error when downloading without a login (LP: #1560553)
+  * Explain the new way to provide snap icons. (LP: #1561327)
+  * Redo pkg-config handling with library collecting (LP: #1549570)
+  * Properly validate the schema (LP: #1564607)
+  * kbuild: always run defconf with -j1 (LP: #1564191)
+
+  [ Leonardo Arias Fonseca ]
+  * integration tests: use a temporary config path (LP: #1562000)
+  * Upload snaps passing the snap path. (LP: #1563760)
+
+  [ Vincent Ladeuil ]
+  * Fix test isolation issues. (LP: 1563965)
+
+  [ Kyle Fazzari ]
+  * docs/plugins.md: Update for new plugin API. (LP: #1561524)
+  * Suggest a full clean if step clean is missing state. (LP: #1561328)
+  * Added valid STEPs to clean command.
+  * Copy plugin: Add support for sources. (LP: #1559154)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 04 Apr 2016 23:54:56 -0300
+
 snapcraft (2.6.1) xenial; urgency=medium
 
   [ Kyle Fazzari ]
