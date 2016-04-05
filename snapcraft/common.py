@@ -21,6 +21,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -35,7 +36,7 @@ _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
-_DEFAULT_LIBRARIESDIR = 'usr/share/snapcraft/libraries'
+_DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
 _librariesdir = _DEFAULT_LIBRARIESDIR
 
 host_machine = platform.machine()
@@ -243,6 +244,16 @@ def isurl(url):
 def reset_env():
     global env
     env = []
+
+
+def link_or_copy(source, destination, follow_symlinks=False):
+    # Hard-link this file to the source. It's possible for this to
+    # fail (e.g. a cross-device link), so as a backup plan we'll
+    # just copy it.
+    try:
+        os.link(source, destination, follow_symlinks=follow_symlinks)
+    except OSError:
+        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
 
 
 def replace_in_file(directory, file_pattern, search_pattern, replacement):

@@ -120,7 +120,7 @@ class PluginHandler:
 
         return self._ubuntu
 
-    def __init__(self, plugin_name, part_name, properties):
+    def __init__(self, plugin_name, part_name, properties, part_schema):
         self.valid = False
         self.code = None
         self.config = {}
@@ -139,12 +139,12 @@ class PluginHandler:
         self._migrate_state_file()
 
         try:
-            self._load_code(plugin_name, properties)
+            self._load_code(plugin_name, properties, part_schema)
         except jsonschema.ValidationError as e:
             raise PluginError('properties failed to load for {}: {}'.format(
                 part_name, e.message))
 
-    def _load_code(self, plugin_name, properties):
+    def _load_code(self, plugin_name, properties, part_schema):
         module_name = plugin_name.replace('-', '_')
         module = None
 
@@ -165,7 +165,7 @@ class PluginHandler:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
-        options = _make_options(properties, plugin.schema())
+        options = _make_options(part_schema, properties, plugin.schema())
         self.code = plugin(self.name, options)
         if common.host_machine != common.target_machine:
             logger.debug(
@@ -365,7 +365,7 @@ class PluginHandler:
         except AttributeError:
             raise MissingState(
                 "Failed to clean step 'stage': Missing necessary state. "
-                "Please run stage again.")
+                "This won't work until a complete clean has occurred.")
 
         self.mark_cleaned('stage')
 
@@ -427,7 +427,7 @@ class PluginHandler:
         except AttributeError:
             raise MissingState(
                 "Failed to clean step 'strip': Missing necessary state. "
-                "Please run strip again.")
+                "This won't work until a complete clean has occurred.")
 
         self.mark_cleaned('strip')
 
@@ -516,40 +516,21 @@ class PluginHandler:
             self.clean_pull()
 
 
-def _make_options(properties, schema):
-    jsonschema.validate(properties, schema)
+def _make_options(part_schema, properties, plugin_schema):
+    if 'properties' not in plugin_schema:
+        plugin_schema['properties'] = {}
+    # The base part_schema takes precedense over the plugin.
+    plugin_schema['properties'].update(part_schema)
+
+    jsonschema.validate(properties, plugin_schema)
 
     class Options():
         pass
     options = Options()
 
-    # Look at the system level props
-    _populate_options(options, properties,
-                      _system_schema_part_props())
-
-    # Look at the plugin level props
-    _populate_options(options, properties, schema)
+    _populate_options(options, properties, plugin_schema)
 
     return options
-
-
-def _system_schema_part_props():
-    schema_file = os.path.abspath(os.path.join(common.get_schemadir(),
-                                               'snapcraft.yaml'))
-
-    try:
-        with open(schema_file) as fp:
-            schema = yaml.load(fp)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            'snapcraft validation file is missing from installation path')
-
-    props = {'properties': {}}
-    partpattern = schema['properties']['parts']['patternProperties']
-    for pattern in partpattern:
-        props['properties'].update(partpattern[pattern]['properties'])
-
-    return props
 
 
 def _populate_options(options, properties, schema):
@@ -591,10 +572,12 @@ def _load_local(module_name):
     return module
 
 
-def load_plugin(part_name, plugin_name, properties=None):
+def load_plugin(part_name, plugin_name, properties=None, part_schema=None):
     if properties is None:
         properties = {}
-    return PluginHandler(plugin_name, part_name, properties)
+    if part_schema is None:
+        part_schema = {}
+    return PluginHandler(plugin_name, part_name, properties, part_schema)
 
 
 def _migratable_filesets(fileset, srcdir):
@@ -638,7 +621,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         if os.path.exists(dst):
             os.remove(dst)
 
-        _link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+        common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
@@ -653,16 +636,6 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_dir in snap_dirs:
         if not os.listdir(os.path.join(directory, snap_dir)):
             os.rmdir(os.path.join(directory, snap_dir))
-
-
-def _link_or_copy(source, destination, follow_symlinks=False):
-    # Hard-link this file to the source. It's possible for this to
-    # fail (e.g. a cross-device link), so as a backup plan we'll
-    # just copy it.
-    try:
-        os.link(source, destination, follow_symlinks=follow_symlinks)
-    except OSError:
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
 
 
 def _find_dependencies(workdir):

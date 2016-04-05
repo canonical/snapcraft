@@ -338,6 +338,7 @@ class TestUri(tests.TestCase):
             'https://golang.tar.xz',
             'https://golang.tar.bz2',
             'https://golang.tar.tgz',
+            'https://golang.tar',
         ]
 
         for source in sources:

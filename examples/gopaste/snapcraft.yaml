@@ -27,9 +27,12 @@ parts:
     source-type: git
   assets:
     plugin: copy
+    source: https://github.com/wisnij/gopaste.git
+    source-type: git
     files:
-      parts/gopaste/src/static: static
-      parts/gopaste/src/web.template: web.template
-      gopaste: bin/gopaste
-    after:
-      - gopaste
+      static: .
+      web.template: .
+  glue:
+    plugin: copy
+    files:
+      gopaste: bin/
