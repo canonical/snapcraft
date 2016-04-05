@@ -78,8 +78,10 @@ class TestCase(testtools.TestCase):
             output = exception.output
         return output
 
-    def login(self, email='u1test+snapcraft@canonical.com',
+    def login(self, email=None,
               password=None, expect_success=True):
+        email = email or os.getenv('TEST_USER_EMAIL',
+                                   'u1test+snapcraft@canonical.com')
         password = password or os.getenv('TEST_USER_PASSWORD', None)
         if not password:
             self.skipTest('No password provided for the test user.')
