@@ -784,15 +784,25 @@ parts:
         env = config.build_env_for_part(part2)
         env_lines = '\n'.join(['export {}\n'.format(e) for e in env])
 
+        shell_env = {
+            'CFLAGS': '-I/user-provided',
+            'CXXFLAGS': '-I/user-provided',
+            'CPPFLAGS': '-I/user-provided',
+            'LDFLAGS': '-L/user-provided',
+            'LD_LIBRARY_PATH': '/user-provided',
+        }
+
         def get_envvar(envvar):
             with tempfile.NamedTemporaryFile(mode='w+') as f:
                 f.write(env_lines)
                 f.write('echo ${}'.format(envvar))
                 f.flush()
-                output = subprocess.check_output(['/bin/sh', f.name])
+                output = subprocess.check_output(['/bin/sh', f.name],
+                                                 env=shell_env)
             return output.decode(sys.getfilesystemencoding()).strip()
 
         expected_cflags = (
+            '-I/user-provided '
             '-Iparts/part2/install/include -Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/{arch_triplet} '
             '-Ifoo/usr/include/{arch_triplet}'.format(arch_triplet=arch))
@@ -802,16 +812,18 @@ parts:
 
         self.assertEqual(
             get_envvar('LDFLAGS'),
+            '-L/user-provided '
             '-Lparts/part2/install/lib -Lfoo/lib -Lfoo/usr/lib '
             '-Lfoo/lib/{arch_triplet} -Lfoo/usr/lib/{arch_triplet}'.format(
                 arch_triplet=arch))
 
         self.assertEqual(
             get_envvar('LD_LIBRARY_PATH'),
+            '/user-provided:'
             'parts/part2/install/lib:foo/lib:foo/usr/lib:'
             'foo/lib/{arch_triplet}:foo/usr/lib/{arch_triplet}:'
             'foo/lib:foo/usr/lib:foo/lib/{arch_triplet}:'
-            'foo/usr/lib/{arch_triplet}:'.format(arch_triplet=arch))
+            'foo/usr/lib/{arch_triplet}'.format(arch_triplet=arch))
 
 
 class TestValidation(tests.TestCase):
