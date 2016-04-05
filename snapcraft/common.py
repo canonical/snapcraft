@@ -36,7 +36,7 @@ _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
-_DEFAULT_LIBRARIESDIR = 'usr/share/snapcraft/libraries'
+_DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
 _librariesdir = _DEFAULT_LIBRARIESDIR
 
 host_machine = platform.machine()
