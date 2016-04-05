@@ -63,6 +63,7 @@ http://developer.ubuntu.com/snappy/snapcraft
 """
 
 import logging
+import os
 import pkg_resources
 import sys
 import textwrap
@@ -103,6 +104,13 @@ def _get_version():
         return 'devel'
 
 
+def _get_umask():
+    shell_umask = os.umask(0)
+    os.umask(shell_umask)
+
+    return shell_umask
+
+
 def main():
     args = docopt(__doc__, version=_get_version(), options_first=True)
 
@@ -129,6 +137,11 @@ def main():
             raise
 
         sys.exit(textwrap.fill(str(e)))
+
+    umask = _get_umask()
+    if umask != 0o0022 and umask != 0o0002:
+        logger.warning('Umask is set to {:04o}. Some files may not be '
+                       'accessible from your resulting snap'.format(umask))
 
 
 if __name__ == '__main__':  # pragma: no cover
