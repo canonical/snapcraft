@@ -621,7 +621,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         if os.path.exists(dst):
             os.remove(dst)
 
-        _link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+        common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
@@ -636,16 +636,6 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_dir in snap_dirs:
         if not os.listdir(os.path.join(directory, snap_dir)):
             os.rmdir(os.path.join(directory, snap_dir))
-
-
-def _link_or_copy(source, destination, follow_symlinks=False):
-    # Hard-link this file to the source. It's possible for this to
-    # fail (e.g. a cross-device link), so as a backup plan we'll
-    # just copy it.
-    try:
-        os.link(source, destination, follow_symlinks=follow_symlinks)
-    except OSError:
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
 
 
 def _find_dependencies(workdir):

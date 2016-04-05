@@ -40,16 +40,7 @@ class TestTarContentPlugin(TestCase):
             TarContentPlugin('tar_content', Options())
 
         self.assertEqual(raised.exception.__str__(),
-                         'path "/destdir1" must be relative')
-
-    def test_build_destination_dir_exists(self):
-        class Options:
-            source = '.'
-            destination = 'destdir1'
-        TarContentPlugin('tar_content', Options())
-
-        self.assertTrue(
-            os.path.exists(os.path.join(self.build_prefix, 'destdir1')))
+                         "path '/destdir1' must be relative")
 
     def test_install_destination_dir_exists(self):
         class Options:
@@ -60,11 +51,13 @@ class TestTarContentPlugin(TestCase):
         os.mkdir('src')
         file_to_tar = os.path.join('src', 'test.txt')
         open(file_to_tar, 'w').close()
-        tar = tarfile.open(os.path.join('src', 'test.tar'), "w")
+        tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
         tar.add(file_to_tar)
         tar.close()
 
         t = TarContentPlugin('tar_content', Options())
+        os.mkdir(t.sourcedir)
+        t.pull()
         t.build()
 
         self.assertTrue(
