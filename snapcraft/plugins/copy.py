@@ -80,10 +80,29 @@ class CopyPlugin(snapcraft.BasePlugin):
         for src in sorted(filepaths):
             dst = os.path.join(self.installdir, filepaths[src].lstrip('/'))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            _recursively_link(src, dst)
+            _recursively_link(src, dst, self.installdir)
 
 
-def _recursively_link(source, destination):
+def _link_or_copy(source, destination, boundary):
+    """Attempt to copy symlinks as symlinks unless pointing out of boundary."""
+
+    follow_symlinks = False
+
+    # If this is a symlink, analyze where it's pointing and make sure it will
+    # still be valid when snapped. If it won't, follow the symlink when
+    # copying (i.e. copy the file to which the symlink is pointing instead).
+    if os.path.islink(source):
+        link = os.readlink(source)
+        destination_dirname = os.path.dirname(destination)
+        normalized = os.path.normpath(os.path.join(destination_dirname, link))
+        if os.path.isabs(link) or not normalized.startswith(boundary):
+            follow_symlinks = True
+
+    snapcraft.common.link_or_copy(source, destination,
+                                  follow_symlinks=follow_symlinks)
+
+
+def _recursively_link(source, destination, boundary):
     if os.path.isdir(source):
         if os.path.isdir(destination):
             destination = os.path.join(destination, os.path.basename(source))
@@ -91,10 +110,9 @@ def _recursively_link(source, destination):
             raise NotADirectoryError(
                 'Cannot overwrite non-directory {!r} with directory '
                 '{!r}'.format(destination, source))
-        _linktree(source, destination)
+        _linktree(source, destination, boundary)
     else:
-        snapcraft.common.link_or_copy(source, destination,
-                                      follow_symlinks=False)
+        _link_or_copy(source, destination, boundary)
 
 
 def _create_similar_directory(source, destination):
@@ -102,7 +120,7 @@ def _create_similar_directory(source, destination):
     shutil.copystat(source, destination, follow_symlinks=False)
 
 
-def _linktree(source_tree, destination_tree):
+def _linktree(source_tree, destination_tree, boundary):
     if not os.path.isdir(destination_tree):
         _create_similar_directory(source_tree, destination_tree)
 
@@ -119,5 +137,4 @@ def _linktree(source_tree, destination_tree):
             destination = os.path.join(
                 destination_tree, os.path.relpath(source, source_tree))
 
-            snapcraft.common.link_or_copy(
-                source, destination, follow_symlinks=False)
+            _link_or_copy(source, destination, boundary)
