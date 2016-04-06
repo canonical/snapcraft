@@ -719,28 +719,29 @@ parts:
 
         self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
         self.assertTrue(
-            'LD_LIBRARY_PATH="foo/lib:foo/usr/lib:'
-            'foo/lib/x86_64-linux-gnu:foo/usr/lib/x86_64-linux-gnu:'
-            '$LD_LIBRARY_PATH"' in environment,
+            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:foo/lib:foo/usr/lib:'
+            'foo/lib/x86_64-linux-gnu:foo/usr/lib/x86_64-linux-gnu"'
+            in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue(
-            'CFLAGS="-Ifoo/include -Ifoo/usr/include '
+            'CFLAGS="$CFLAGS -Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu $CFLAGS"' in environment,
+            '-Ifoo/usr/include/x86_64-linux-gnu"' in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue(
-            'CPPFLAGS="-Ifoo/include -Ifoo/usr/include '
+            'CPPFLAGS="$CPPFLAGS -Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu $CPPFLAGS"' in environment,
+            '-Ifoo/usr/include/x86_64-linux-gnu"' in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue(
-            'CXXFLAGS="-Ifoo/include -Ifoo/usr/include '
+            'CXXFLAGS="$CXXFLAGS -Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu $CXXFLAGS"' in environment,
+            '-Ifoo/usr/include/x86_64-linux-gnu"' in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue(
-            'LDFLAGS="-Lfoo/lib -Lfoo/usr/lib -Lfoo/lib/x86_64-linux-gnu '
-            '-Lfoo/usr/lib/x86_64-linux-gnu $LDFLAGS"' in environment,
+            'LDFLAGS="$LDFLAGS -Lfoo/lib -Lfoo/usr/lib '
+            '-Lfoo/lib/x86_64-linux-gnu -Lfoo/usr/lib/x86_64-linux-gnu"'
+            in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue('PERL5LIB=foo/usr/share/perl5/' in environment)
 
