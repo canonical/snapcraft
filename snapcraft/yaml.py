@@ -262,22 +262,23 @@ class Config:
 
         env = []
         stagedir = common.get_stagedir()
-        for dep_part in part.deps:
-            env += dep_part.env(stagedir)
-            env += self.build_env_for_part(dep_part, root_part=False)
 
         if root_part:
             # this has to come before any {}/usr/bin
             env += _create_pkg_config_override(
                 part.bindir, part.installdir, stagedir)
             env += part.env(part.installdir)
-            env += _runtime_env(stagedir)
             env += _runtime_env(part.installdir)
-            env += _build_env_for_stage(stagedir)
+            env += _runtime_env(stagedir)
             env += _build_env(part.installdir)
+            env += _build_env_for_stage(stagedir)
         else:
             env += part.env(stagedir)
             env += _runtime_env(stagedir)
+
+        for dep_part in part.deps:
+            env += dep_part.env(stagedir)
+            env += self.build_env_for_part(dep_part, root_part=False)
 
         return env
 
@@ -373,7 +374,7 @@ def _get_include_paths(envvar, root):
     if not include_paths:
         return ''
     else:
-        return '{envvar}="{include_paths} ${envvar}"'.format(
+        return '{envvar}="${envvar} {include_paths}"'.format(
             envvar=envvar, include_paths=' '.join(include_paths))
 
 
@@ -392,7 +393,7 @@ def _get_library_paths(envvar, root, prepend='-L', sep=' '):
     if not library_paths:
         return ''
     else:
-        return '{envvar}="{library_paths}{sep}${envvar}"'.format(
+        return '{envvar}="${envvar}{sep}{library_paths}"'.format(
             envvar=envvar, sep=sep, library_paths=sep.join(library_paths))
 
 
