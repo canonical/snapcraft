@@ -50,7 +50,7 @@ _TOPICS = {
 }
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     args = docopt(__doc__, argv=argv)
 
     topic = args['TOPIC'] or args['PLUGIN']

@@ -39,7 +39,7 @@ from snapcraft.storeapi import login
 logger = logging.getLogger(__name__)
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     """Authenticates session against Ubuntu One SSO."""
     argv = argv if argv else []
     docopt(__doc__, argv=argv)

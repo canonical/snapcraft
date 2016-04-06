@@ -35,12 +35,16 @@ import snapcraft
 from snapcraft import lifecycle
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
 
-    project_options = snapcraft.get_project_options()
-    if args['--enable-geoip']:
-        project_options.use_geoip = True
+    if not project_options:
+        project_options = snapcraft.ProjectOptions()
 
-    lifecycle.execute('pull', args['PART'])
+        # This will be set by the call to main, we keep this here in case
+        # this module is called in directly.
+        if args['--enable-geoip']:
+            project_options.use_geoip = True
+
+    lifecycle.execute('pull', args['PART'], project_options)

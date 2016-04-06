@@ -54,7 +54,7 @@ def _get_name_from_snap_file(snap_path):
     return snap_yaml['name']
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     """Upload snap package to the Ubuntu Store."""
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
@@ -66,5 +66,5 @@ def main(argv=None):
         snap_name = _get_name_from_snap_file(snap_filename)
         logger.info('Uploading existing {}.'.format(snap_filename))
 
-        config = load_config()
+        config = load_config(project_options)
         upload(snap_filename, snap_name, config=config)

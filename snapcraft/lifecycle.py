@@ -30,7 +30,7 @@ from snapcraft import (
 logger = logging.getLogger(__name__)
 
 
-def execute(step, part_names=None):
+def execute(step, project_options, part_names=None):
     """Exectute until step in the lifecycle.
 
     Lifecycle execution will happen for each step iterating over all
@@ -42,12 +42,13 @@ def execute(step, part_names=None):
     and after is not in this set, an exception will be raised.
 
     :param str step: A valid step in the lifecycle: pull, build, strip or snap.
+    :param project_options: Runtime options for the project.
     :raises RuntimeError: If a prerequesite of the part needs to be staged
                           and such part is not in the list of parts to iterate
                           over.
-    :returns: A dict with the snap name, version and architectures.
+    :returns: A dict with the snap name, version, type and architectures.
     """
-    config = snapcraft.yaml.load_config()
+    config = snapcraft.yaml.load_config(project_options)
     repo.install_build_packages(config.build_tools)
 
     _Executor(config).run(step, part_names)

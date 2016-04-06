@@ -37,7 +37,7 @@ from snapcraft.config import clear_config
 logger = logging.getLogger(__name__)
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     """Forget credentials for Ubuntu One SSO."""
     argv = argv if argv else []
     docopt(__doc__, argv=argv)

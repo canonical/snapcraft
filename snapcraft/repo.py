@@ -30,7 +30,6 @@ import urllib.request
 import apt
 from xml.etree import ElementTree
 
-import snapcraft
 from snapcraft import common
 
 
@@ -116,12 +115,14 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, rootdir, recommends=False, sources=None):
+    def __init__(self, rootdir, recommends=False,
+                 sources=None, use_geoip=True):
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.recommends = recommends
 
-        self.apt_cache, self.apt_progress = _setup_apt_cache(rootdir, sources)
+        self.apt_cache, self.apt_progress = _setup_apt_cache(
+            rootdir, sources, use_geoip)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -243,11 +244,10 @@ def _format_sources_list(sources, use_geoip, arch, release='xenial'):
     })
 
 
-def _setup_apt_cache(rootdir, sources):
+def _setup_apt_cache(rootdir, sources, use_geoip):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
-    use_geoip = snapcraft.get_project_options().use_geoip
     if use_geoip or sources:
         release = platform.linux_distribution()[2]
         arch = common.get_arch()

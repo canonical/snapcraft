@@ -115,7 +115,7 @@ import contextlib
 import os
 import shutil
 
-from snapcraft._options import get_project_options  # noqa
+from snapcraft._options import ProjectOptions  # noqa
 from snapcraft import common
 from snapcraft import sources
 

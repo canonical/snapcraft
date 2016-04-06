@@ -64,7 +64,7 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     argv = [] if argv is None else argv
     docopt(__doc__, argv=argv)
 

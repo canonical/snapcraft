@@ -108,11 +108,11 @@ def _cleanup_common_directories(config):
         shutil.rmtree(common.get_snapdir())
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
 
-    config = snapcraft.yaml.load_config()
+    config = snapcraft.yaml.load_config(project_options)
 
     if args['PART']:
         config.validate_parts(args['PART'])

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class _Project:
+class ProjectOptions:
 
     @property
     def use_geoip(self):
@@ -27,15 +27,3 @@ class _Project:
 
     def __init__(self):
         self.__use_geoip = False
-
-
-_project = _Project()
-
-
-def get_project_options():
-    return _project
-
-
-def reset_project():
-    global _project
-    _project = _Project()

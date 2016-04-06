@@ -122,7 +122,7 @@ def main():
 
     common.set_enable_parallel_builds(not args['--no-parallel-build'])
 
-    project_options = snapcraft.get_project_options()
+    project_options = snapcraft.ProjectOptions()
     if args['--enable-geoip']:
         project_options.use_geoip = True
 
@@ -130,7 +130,7 @@ def main():
         common.set_target_machine(args['--target-arch'])
 
     try:
-        commands.load(cmd).main(argv=args['ARGS'])
+        commands.load(cmd).main(args['ARGS'], project_options)
     except Exception as e:
         if args['--debug']:
             raise

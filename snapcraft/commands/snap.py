@@ -66,7 +66,7 @@ def _format_snap_name(snap):
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
 
@@ -76,7 +76,7 @@ def main(argv=None):
     else:
         # make sure the full lifecycle is executed
         snap_dir = common.get_snapdir()
-        snap = lifecycle.execute('strip')
+        snap = lifecycle.execute('strip', project_options)
 
     snap_name = args['--output'] or _format_snap_name(snap)
 

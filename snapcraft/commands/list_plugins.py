@@ -34,7 +34,7 @@ from docopt import docopt
 import snapcraft.plugins
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     argv = argv if argv else []
     docopt(__doc__, argv=argv)
 

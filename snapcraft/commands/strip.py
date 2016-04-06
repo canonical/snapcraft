@@ -32,8 +32,8 @@ from docopt import docopt
 from snapcraft import lifecycle
 
 
-def main(argv=None):
+def main(argv=None, project_options=None):
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
 
-    lifecycle.execute('strip', args['PART'])
+    lifecycle.execute('strip', args['PART'], project_options)
