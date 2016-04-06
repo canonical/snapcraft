@@ -16,14 +16,19 @@
 
 import os
 import subprocess
+import shutil
 
 import integration_tests
 
 
 class GitSourceTestCase(integration_tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        if shutil.which('git') is None:
+            self.skipTest('git is not installed')
+
     def _init_and_config_git(self):
-        subprocess.check_call(['sudo', 'apt-get', 'install', '-y', 'git'])
         subprocess.check_call(
             ['git', 'init', '.'], stdout=subprocess.DEVNULL)
         subprocess.check_call(

@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+import shutil
 
 from testtools.matchers import FileExists
 
@@ -26,8 +27,8 @@ class HgSourceTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        subprocess.check_call(
-            ['sudo', 'apt-get', 'install', '-y', 'mercurial'])
+        if shutil.which('hg') is None:
+            self.skipTest('mercurial is not installed')
 
     def _get_hg_revno(self, path):
         return subprocess.check_output(
