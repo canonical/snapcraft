@@ -219,6 +219,117 @@ class TestCopyPlugin(TestCase):
             "[Errno 2] No such file or directory: '{}/foo/bar'".format(
                 c.builddir))
 
+    def test_copy_symlinks(self):
+        self.mock_options.files = {'foo/*': 'baz/'}
+
+        c = CopyPlugin('copy', self.mock_options)
+
+        os.makedirs('foo/bar')
+        with open('foo/file', 'w') as f:
+            f.write('foo')
+
+        destination = os.path.join(c.installdir, 'baz')
+
+        symlinks = [
+            {
+                'source': 'file',
+                'link_name': 'foo/relative1',
+                'destination': os.path.join(destination, 'relative1'),
+                'expected_realpath': os.path.join(destination, 'file'),
+                'expected_contents': 'foo',
+            },
+            {
+                'source': '../file',
+                'link_name': 'foo/bar/relative2',
+                'destination': os.path.join(destination, 'bar', 'relative2'),
+                'expected_realpath': os.path.join(destination, 'file'),
+                'expected_contents': 'foo',
+            },
+            {
+                'source': '../../baz/file',
+                'link_name': 'foo/bar/relative3',
+                'destination': os.path.join(destination, 'bar', 'relative3'),
+                'expected_realpath': os.path.join(destination, 'file'),
+                'expected_contents': 'foo',
+            },
+        ]
+
+        for symlink in symlinks:
+            os.symlink(symlink['source'], symlink['link_name'])
+
+        c.pull()
+        c.build()
+
+        self.assertTrue(os.path.isdir(destination),
+                        "Expected foo's contents to be copied into baz/")
+        with open(os.path.join(destination, 'file'), 'r') as f:
+            self.assertEqual(f.read(), 'foo')
+
+        for symlink in symlinks:
+            destination = symlink['destination']
+            with self.subTest('link: {}'.format(destination)):
+                self.assertTrue(
+                    os.path.islink(destination),
+                    'Expected {!r} to be a symlink'.format(destination))
+
+                self.assertEqual(
+                    os.path.realpath(destination),
+                    symlink['expected_realpath'],
+                    'Expected {!r} to be a relative path to {!r}'.format(
+                        destination, symlink['expected_realpath']))
+
+                with open(destination, 'r') as f:
+                    self.assertEqual(f.read(), symlink['expected_contents'])
+
+    def test_copy_symlinks_that_should_be_followed(self):
+        self.mock_options.files = {'foo/*': '.'}
+
+        c = CopyPlugin('copy', self.mock_options)
+
+        os.makedirs('foo/bar')
+        with open('foo/file', 'w') as f:
+            f.write('foo')
+
+        with open('unsnapped', 'w') as f:
+            f.write('bar')
+
+        symlinks = [
+            # Links with an absolute path should be followed
+            {
+                'source': os.path.abspath('foo/file'),
+                'link_name': 'foo/absolute',
+                'destination': os.path.join(c.installdir, 'absolute'),
+                'expected_contents': 'foo',
+            },
+            # Links with a relative path that points outside of the snap
+            # should also be followed
+            {
+                'source': '../unsnapped',
+                'link_name': 'foo/bad_relative',
+                'destination': os.path.join(c.installdir, 'bad_relative'),
+                'expected_contents': 'bar',
+            },
+        ]
+
+        for symlink in symlinks:
+            os.symlink(symlink['source'], symlink['link_name'])
+
+        c.pull()
+        c.build()
+
+        with open(os.path.join(c.installdir, 'file'), 'r') as f:
+            self.assertEqual(f.read(), 'foo')
+
+        for symlink in symlinks:
+            destination = symlink['destination']
+            with self.subTest('link: {}'.format(destination)):
+                self.assertFalse(os.path.islink(destination),
+                                 'Expected {!r} to be a copy rather than a '
+                                 'symlink'.format(destination))
+
+                with open(destination, 'r') as f:
+                    self.assertEqual(f.read(), symlink['expected_contents'])
+
 
 class TestRecursivelyLink(TestCase):
 
@@ -232,23 +343,23 @@ class TestRecursivelyLink(TestCase):
         open(os.path.join('foo', 'bar', 'baz', '4'), 'w').close()
 
     def test_recursively_link_file_to_file(self):
-        _recursively_link('1', 'qux')
+        _recursively_link('1', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile('qux'))
 
     def test_recursively_link_file_into_directory(self):
         os.mkdir('qux')
-        _recursively_link('1', 'qux')
+        _recursively_link('1', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '1')))
 
     def test_recursively_link_directory_to_directory(self):
-        _recursively_link('foo', 'qux')
+        _recursively_link('foo', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '2')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'bar', '3')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'bar', 'baz', '4')))
 
     def test_recursively_link_directory_into_directory(self):
         os.mkdir('qux')
-        _recursively_link('foo', 'qux')
+        _recursively_link('foo', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', 'foo', '2')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'foo', 'bar', '3')))
         self.assertTrue(
@@ -257,13 +368,13 @@ class TestRecursivelyLink(TestCase):
     def test_recursively_link_directory_overwrite_file_raises(self):
         open('qux', 'w').close()
         with self.assertRaises(NotADirectoryError) as raised:
-            _recursively_link('foo', 'qux')
+            _recursively_link('foo', 'qux', os.getcwd())
 
         self.assertEqual(
             str(raised.exception),
             "Cannot overwrite non-directory 'qux' with directory 'foo'")
 
     def test_recursively_link_subtree(self):
-        _recursively_link('foo/bar', 'qux')
+        _recursively_link('foo/bar', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '3')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'baz', '4')))
