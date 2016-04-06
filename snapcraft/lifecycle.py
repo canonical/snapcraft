@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 
 import snapcraft
@@ -88,10 +89,12 @@ class _Executor:
         if recursed:
             prereqs = prereqs & dirty
         if prereqs and not prereqs.issubset(part_names):
-            raise RuntimeError(
-                'Requested {!r} of {!r} but there are unsatisfied '
-                'prerequisites: {!r}'.format(
-                    step, part.name, ' '.join(prereqs)))
+            for prereq in self.config.all_parts:
+                if prereq.name in prereqs and prereq.should_step_run('stage'):
+                    raise RuntimeError(
+                        'Requested {!r} of {!r} but there are unsatisfied '
+                        'prerequisites: {!r}'.format(
+                            step, part.name, ' '.join(prereqs)))
         elif prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
@@ -101,16 +104,14 @@ class _Executor:
                 '{}'.format(part.name, ' '.join(prereqs)))
             self.run('stage', prereqs, recursed=True)
 
-        # Prepare to run this step, if such a method is implemented
         if not part.should_step_run(step):
             part.notify_part_progress('Skipping {}'.format(step),
                                       '(already ran)')
             return
 
-        try:
+        # Run the preparation function for this step (if implemented)
+        with contextlib.suppress(AttributeError):
             getattr(part, 'prepare_{}'.format(step))()
-        except AttributeError:
-            pass
 
         common.env = self.config.build_env_for_part(part)
         getattr(part, step)()
