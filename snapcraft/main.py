@@ -30,6 +30,8 @@ Options:
   --no-parallel-build    use only a single build job per part (the default
                          number of jobs per part is equal to the number of
                          CPUs)
+  --enable-geoip         enables geoip for the pull step if stage-packages
+                         are used.
   --target-arch ARCH     EXPERIMENTAL: sets the target architecture. Very few
                          plugins support this.
 
@@ -69,6 +71,7 @@ import textwrap
 
 from docopt import docopt
 
+import snapcraft
 from snapcraft import (
     log,
     commands,
@@ -118,6 +121,10 @@ def main():
     log.configure(log_level=log_level)
 
     common.set_enable_parallel_builds(not args['--no-parallel-build'])
+
+    project_options = snapcraft.get_project_options()
+    if args['--enable-geoip']:
+        project_options.use_geoip = True
 
     if args['--target-arch']:
         common.set_target_machine(args['--target-arch'])

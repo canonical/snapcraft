@@ -30,6 +30,7 @@ import urllib.request
 import apt
 from xml.etree import ElementTree
 
+import snapcraft
 from snapcraft import common
 
 
@@ -115,19 +116,12 @@ class UnpackError(Exception):
 
 class Ubuntu:
 
-    def __init__(self, rootdir, recommends=False, sources=_DEFAULT_SOURCES):
+    def __init__(self, rootdir, recommends=False, sources=None):
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.recommends = recommends
-        sources = sources or _DEFAULT_SOURCES
-        local = False
 
-        if 'SNAPCRAFT_LOCAL_SOURCES' in os.environ:
-            print('using local sources')
-            sources = _get_local_sources_list()
-            local = True
-        self.apt_cache, self.apt_progress = _setup_apt_cache(
-            rootdir, sources, local)
+        self.apt_cache, self.apt_progress = _setup_apt_cache(rootdir, sources)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -224,9 +218,15 @@ def _get_geoip_country_code_prefix():
     return ''
 
 
-def _format_sources_list(sources, arch, release='vivid'):
+def _format_sources_list(sources, use_geoip, arch, release='xenial'):
+    if not sources:
+        sources = _DEFAULT_SOURCES
+
     if arch in ('amd64', 'i386'):
-        geoip_prefix = _get_geoip_country_code_prefix()
+        if use_geoip:
+            geoip_prefix = _get_geoip_country_code_prefix()
+        else:
+            geoip_prefix = None
         prefix = geoip_prefix + '.archive' if geoip_prefix else 'archive'
         suffix = 'ubuntu'
         security = 'security'
@@ -243,13 +243,17 @@ def _format_sources_list(sources, arch, release='vivid'):
     })
 
 
-def _setup_apt_cache(rootdir, sources, local=False):
+def _setup_apt_cache(rootdir, sources):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
-    if not local:
-        series = platform.linux_distribution()[2]
-        sources = _format_sources_list(sources, common.get_arch(), series)
+    use_geoip = snapcraft.get_project_options().use_geoip
+    if use_geoip or sources:
+        release = platform.linux_distribution()[2]
+        arch = common.get_arch()
+        sources = _format_sources_list(sources, use_geoip, arch, release)
+    else:
+        sources = _get_local_sources_list()
 
     with open(srcfile, 'w') as f:
         f.write(sources)

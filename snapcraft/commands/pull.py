@@ -24,16 +24,23 @@ Usage:
 
 Options:
   -h --help             show this help message and exit.
+  --enable-geoip        enables geoip for the pull step if stage-packages
+                        are used.
 
 """
 
 from docopt import docopt
 
+import snapcraft
 from snapcraft import lifecycle
 
 
 def main(argv=None):
     argv = argv if argv else []
     args = docopt(__doc__, argv=argv)
+
+    project_options = snapcraft.get_project_options()
+    if args['--enable-geoip']:
+        project_options.use_geoip = True
 
     lifecycle.execute('pull', args['PART'])

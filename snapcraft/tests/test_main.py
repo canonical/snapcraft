@@ -54,6 +54,7 @@ class TestMain(TestCase):
             'COMMAND': 'invalid',
             '--debug': False,
             '--no-parallel-build': False,
+            '--enable-geoip': False,
             '--target-arch': None,
             'ARGS': [],
         }
@@ -69,6 +70,7 @@ class TestMain(TestCase):
             'COMMAND': '',
             '--debug': False,
             '--no-parallel-build': False,
+            '--enable-geoip': False,
             '--target-arch': None,
             'ARGS': [],
         }
@@ -83,6 +85,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': False,
             '--no-parallel-build': False,
+            '--enable-geoip': False,
             '--target-arch': None,
             'ARGS': [],
         }
@@ -103,6 +106,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': True,
             '--no-parallel-build': False,
+            '--enable-geoip': False,
             '--target-arch': None,
             'ARGS': [],
         }
@@ -126,6 +130,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': False,
             '--no-parallel-build': False,
+            '--enable-geoip': False,
             '--target-arch': None,
             'ARGS': [],
         }
@@ -143,6 +148,7 @@ class TestMain(TestCase):
             'COMMAND': 'help',
             '--debug': False,
             '--no-parallel-build': True,
+            '--enable-geoip': False,
             '--target-arch': None,
             'ARGS': [],
         }
