@@ -158,7 +158,7 @@ class LoginWithMacaroonsCommandTestCase(tests.TestCase):
             self.fake_logger.output)
         self.assertFalse(self.mock_save.called)
 
-    def test_failed_disacharge_macaroon_does_not_save_config(self):
+    def test_failed_discharge_macaroon_does_not_save_config(self):
         response = ('root', None)
         self.mock_root_macaroon.return_value = response
         response = (None, 'Failed')
