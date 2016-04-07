@@ -18,12 +18,12 @@ import os
 
 from unittest import mock
 
+from snapcraft.main import main
 from snapcraft import (
     common,
     pluginhandler,
     tests,
 )
-from snapcraft.commands import clean
 
 
 class CleanCommandTestCase(tests.TestCase):
@@ -70,7 +70,7 @@ parts:
     def test_clean_all(self):
         self.make_snapcraft_yaml(n=3)
 
-        clean.main()
+        main(['clean'])
 
         self.assertFalse(os.path.exists(common.get_partsdir()))
         self.assertFalse(os.path.exists(common.get_stagedir()))
@@ -83,7 +83,7 @@ parts:
         os.makedirs(os.path.dirname(local_plugin))
         open(local_plugin, 'w').close()
 
-        clean.main()
+        main(['clean'])
 
         self.assertFalse(os.path.exists(common.get_stagedir()))
         self.assertFalse(os.path.exists(common.get_snapdir()))
@@ -93,7 +93,7 @@ parts:
     def test_clean_all_when_all_parts_specified(self):
         self.make_snapcraft_yaml(n=3)
 
-        clean.main(['clean0', 'clean1', 'clean2'])
+        main(['clean', 'clean0', 'clean1', 'clean2'])
 
         self.assertFalse(os.path.exists(common.get_partsdir()))
         self.assertFalse(os.path.exists(common.get_stagedir()))
@@ -102,7 +102,7 @@ parts:
     def test_partial_clean(self):
         parts = self.make_snapcraft_yaml(n=3)
 
-        clean.main(['clean0', 'clean2'])
+        main(['clean', 'clean0', 'clean2'])
 
         for i in [0, 2]:
             self.assertFalse(
@@ -117,7 +117,7 @@ parts:
         self.assertTrue(os.path.exists(common.get_snapdir()))
 
         # Now clean it the rest of the way
-        clean.main(['clean1'])
+        main(['clean', 'clean1'])
 
         for i in range(0, 3):
             self.assertFalse(
@@ -132,13 +132,13 @@ parts:
         """Don't crash if everything is already clean."""
         self.make_snapcraft_yaml(n=3, create=False)
 
-        clean.main()
+        main(['clean'])
 
     def test_part_to_remove_not_defined_exits_with_error(self):
         self.make_snapcraft_yaml(n=3)
 
-        with self.assertRaises(EnvironmentError) as raised:
-            clean.main(['no-clean', ])
+        with self.assertRaises(SystemExit) as raised:
+            main(['clean', 'no-clean'])
 
         self.assertEqual(
             raised.exception.__str__(),
@@ -148,7 +148,7 @@ parts:
     def test_per_step_cleaning(self, mock_clean):
         self.make_snapcraft_yaml(n=3)
 
-        clean.main(['--step=foo'])
+        main(['clean', '--step=foo'])
 
         expected_staged_state = {
             'clean0': pluginhandler.StageState({'clean0'}, set()),
@@ -194,7 +194,7 @@ parts:
         # Cleaning only `main`. Since `dependent` depends upon main, we expect
         # that it will be cleaned as well. Otherwise it won't be using the new
         # `main` when it is built.
-        clean.main(['main'])
+        main(['clean', 'main'])
 
         self.assertFalse(os.path.exists(part_dirs['main']),
                          'Expected part directory for main to be cleaned')
@@ -241,7 +241,7 @@ parts:
         # Cleaning only `main`. Since `dependent` depends upon main, we expect
         # that it will be cleaned as well. Otherwise it won't be using the new
         # `main` when it is built.
-        clean.main(['main'])
+        main(['clean', 'main'])
 
         self.assertFalse(os.path.exists(part_dirs['main']),
                          'Expected part directory for main to be cleaned')

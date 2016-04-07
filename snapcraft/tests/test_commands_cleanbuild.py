@@ -21,11 +21,11 @@ from unittest import mock
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import (
     common,
     tests,
 )
-from snapcraft.commands import cleanbuild
 
 
 class CleanBuildCommandTestCase(tests.TestCase):
@@ -77,7 +77,7 @@ parts:
         for f in files_tar + files_no_tar:
             open(f, 'w').close()
 
-        cleanbuild.main()
+        main(['cleanbuild', '--debug'])
 
         self.assertEqual(
             'Setting up container with project assets\n'
@@ -101,13 +101,14 @@ parts:
     @mock.patch('snapcraft.repo.is_package_installed')
     def test_no_lxd(self, mock_installed):
         mock_installed.return_value = False
-        with self.assertRaises(EnvironmentError) as raised:
-            cleanbuild.main()
+        with self.assertRaises(SystemExit) as raised:
+            main(['cleanbuild'])
 
+        self.maxDiff = None
         self.assertEqual(
             str(raised.exception),
             'The lxd package is not installed, in order to use `cleanbuild` '
-            'you must install lxd onto your system. Refer to the '
-            '"Ubuntu Desktop and Ubuntu Server" section on '
-            'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
+            'you\nmust install lxd onto your system. Refer to the '
+            '"Ubuntu Desktop and\nUbuntu Server" section on '
+            'https://linuxcontainers.org/lxd/getting-\nstarted-cli/'
+            '#ubuntu-desktop-and-ubuntu-server to enable a proper\nsetup.')

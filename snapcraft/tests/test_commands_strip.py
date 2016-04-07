@@ -20,11 +20,11 @@ import os.path
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import (
     common,
     tests,
 )
-from snapcraft.commands import strip
 
 
 class StripCommandTestCase(tests.TestCase):
@@ -61,19 +61,19 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            strip.main(['no-strip', ])
+        with self.assertRaises(SystemExit) as raised:
+            main(['strip', 'no-strip', ])
 
         self.assertEqual(
-            raised.exception.__str__(),
-            "The part named 'no-strip' is not defined in 'snapcraft.yaml'")
+            "The part named 'no-strip' is not defined in 'snapcraft.yaml'",
+            str(raised.exception))
 
     def test_strip_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml()
 
-        strip.main()
+        main(['strip'])
 
         self.assertTrue(os.path.exists(common.get_snapdir()),
                         'Expected a snap directory')
@@ -95,7 +95,7 @@ parts:
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml(n=3)
 
-        strip.main(['strip1', ])
+        main(['strip', 'strip1'])
 
         self.assertFalse(
             os.path.exists(
@@ -123,7 +123,7 @@ parts:
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml()
 
-        strip.main()
+        main(['strip'])
 
         self.assertEqual(
             'Preparing to pull strip0 \n'
@@ -146,7 +146,7 @@ parts:
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        strip.main()
+        main(['strip'])
 
         self.assertEqual(
             'Skipping pull strip0 (already ran)\n'
