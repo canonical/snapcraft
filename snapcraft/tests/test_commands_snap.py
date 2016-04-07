@@ -21,11 +21,11 @@ from unittest import mock
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import (
     common,
     tests,
 )
-from snapcraft.commands import snap
 
 
 class SnapCommandTestCase(tests.TestCase):
@@ -53,7 +53,7 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        snap.main()
+        main(['snap'])
 
         self.assertEqual(
             'Preparing to pull part1 \n'
@@ -81,7 +81,7 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml(snap_type='os')
 
-        snap.main()
+        main(['snap'])
 
         self.assertEqual(
             'Preparing to pull part1 \n'
@@ -113,7 +113,7 @@ parts:
         os.makedirs(self.state_dir)
         open(os.path.join(self.state_dir, 'strip'), 'w').close()
 
-        snap.main()
+        main(['snap'])
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n'
@@ -141,7 +141,7 @@ version: 99
 architectures: [amd64, armhf]
 """)
 
-        snap.main(['mysnap'])
+        main(['snap', 'mysnap'])
 
         self.assertEqual(
             'Snapping my_snap_99_multi.snap\n'
@@ -164,7 +164,7 @@ architectures: [amd64, armhf]
 version: 99
 """)
 
-        snap.main(['mysnap'])
+        main(['snap', 'mysnap'])
 
         self.assertEqual(
             'Snapping my_snap_99_all.snap\n'
@@ -189,7 +189,7 @@ architectures: [amd64, armhf]
 type: os
 """)
 
-        snap.main(['mysnap'])
+        main(['snap', 'mysnap'])
 
         self.assertEqual(
             'Snapping my_snap_99_multi.snap\n'
@@ -206,7 +206,7 @@ type: os
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        snap.main(['--output', 'mysnap.snap'])
+        main(['snap', '--output', 'mysnap.snap'])
 
         self.assertEqual(
             'Preparing to pull part1 \n'
