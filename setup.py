@@ -38,7 +38,6 @@ setup(
     author_email='snappy-devel@lists.ubuntu.com',
     url='https://github.com/ubuntu-core/snapcraft',
     packages=['snapcraft',
-              'snapcraft.commands',
               'snapcraft.plugins',
               'snapcraft.storeapi'],
     package_data={'snapcraft': ['manifest.txt']},

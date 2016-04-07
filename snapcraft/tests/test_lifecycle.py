@@ -18,9 +18,9 @@ import logging
 
 import fixtures
 
+import snapcraft
 from snapcraft import (
     common,
-    lifecycle,
     tests,
 )
 
@@ -45,7 +45,8 @@ parts:
         open('icon.png', 'w').close()
 
         with self.assertRaises(RuntimeError) as raised:
-            lifecycle.execute('pull', part_names=['part2'])
+            snapcraft.lifecycle.execute(
+                'pull', snapcraft.ProjectOptions(), part_names=['part2'])
 
         self.assertEqual(
             raised.exception.__str__(),
@@ -72,7 +73,8 @@ parts:
 """)
         open('icon.png', 'w').close()
 
-        snap_info = lifecycle.execute('pull')
+        snap_info = snapcraft.lifecycle.execute(
+            'pull', snapcraft.ProjectOptions())
 
         expected_snap_info = {
             'name': 'after',
@@ -114,7 +116,8 @@ parts:
 """)
         open('icon.png', 'w').close()
 
-        snap_info = lifecycle.execute('pull')
+        snap_info = snapcraft.lifecycle.execute(
+            'pull', snapcraft.ProjectOptions())
 
         expected_snap_info = {
             'name': 'after',

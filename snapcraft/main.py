@@ -19,31 +19,57 @@
 snapcraft
 
 Usage:
-  snapcraft [--version | --help] [options] COMMAND [ARGS ...]
-  snapcraft [options]
+  snapcraft [options] [--enable-geoip --no-parallel-build]
+  snapcraft [options] init
+  snapcraft [options] pull [<part> ...]  [--enable-geoip]
+  snapcraft [options] build [<part> ...] [--no-parallel-build]
+  snapcraft [options] stage [<part> ...]
+  snapcraft [options] strip [<part> ...]
+  snapcraft [options] clean [<part> ...] [--step <step>]
+  snapcraft [options] snap [<directory> --output <snap-file>]
+  snapcraft [options] cleanbuild
+  snapcraft [options] login
+  snapcraft [options] logout
+  snapcraft [options] upload <snap-file>
+  snapcraft [options] list-plugins
+  snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
+  snapcraft (-h | --help)
+  snapcraft --version
 
 Options:
-  -h --help              show this help message and exit
-  -v --version           show program version and exit
-  -d --debug             print debug information while executing (including
-                         backtraces)
-  --no-parallel-build    use only a single build job per part (the default
-                         number of jobs per part is equal to the number of
-                         CPUs)
+  -h --help                             show this help message and exit
+  -v --version                          show program version and exit
+  -d --debug                            print debug information while executing
+                                        (including backtraces)
+  --target-arch ARCH                    EXPERIMENTAL: sets the target
+                                        architecture. Very few plugins support
+                                        this.
+
+Options specific to pulling:
   --enable-geoip         enables geoip for the pull step if stage-packages
                          are used.
-  --target-arch ARCH     EXPERIMENTAL: sets the target architecture. Very few
-                         plugins support this.
+
+Options specific to building:
+  --no-parallel-build                   use only a single build job per part
+                                        (the default number of jobs per part is
+                                        equal to the number of CPUs)
+
+Options specific to cleaning:
+  -s <step>, --step <step>              only clean the specified step and those
+                                        that depend upon it. <step> can be one
+                                        of: pull, build, stage or strip.
+
+Options specific to snapping:
+  -o <snap-file>, --output <snap-file>  used in case you want to rename the
+                                        snap.
 
 The available commands are:
-  list-parts   List available parts which are like "source packages" for snaps.
-  list-plugins List the available plugins that handle different types of part.
-  init         Initialize a snapcraft project.
-  add-part     Add a part to your snapcraft.yaml, interactively presenting
-               options.
   help         Obtain help for a certain plugin or topic
+  init         Initialize a snapcraft project.
+  list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  upload       Upload a snap to the Ubuntu Store.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -51,14 +77,18 @@ The available lifecycle commands are:
   pull         Download or retrieve artifacts defined for a part.
   build        Build artifacts defined for a part. Build systems capable of
                running parallel build jobs will do so unless
-               --no-parallel-build is specified.
+               "--no-parallel-build" is specified.
   stage        Stage the part's built artifacts into the common staging area.
   strip        Final copy and preparation for the snap.
   snap         Create a snap.
-  upload       Upload a snap to the Ubuntu Store.
 
-See 'snapcraft COMMAND --help' for more information on a specific command.
 Calling snapcraft without a COMMAND will default to 'snap'
+
+The cleanbuild command requires a properly setup lxd environment that
+can connect to external networks. Refer to the "Ubuntu Desktop and
+Ubuntu Server" section on
+https://linuxcontainers.org/lxd/getting-started-cli
+to get started.
 
 For more help, visit the documentation:
 http://developer.ubuntu.com/snappy/snapcraft
@@ -66,6 +96,7 @@ http://developer.ubuntu.com/snappy/snapcraft
 
 import logging
 import pkg_resources
+import pkgutil
 import sys
 import textwrap
 
@@ -74,29 +105,10 @@ from docopt import docopt
 import snapcraft
 from snapcraft import (
     log,
-    commands,
     common,
 )
 
 logger = logging.getLogger(__name__)
-
-_VALID_COMMANDS = [
-    'list-parts',
-    'list-plugins',
-    'init',
-    'add-part',
-    'pull',
-    'build',
-    'clean',
-    'cleanbuild',
-    'stage',
-    'strip',
-    'snap',
-    'help',
-    'login',
-    'logout',
-    'upload',
-]
 
 
 def _get_version():
@@ -106,12 +118,14 @@ def _get_version():
         return 'devel'
 
 
-def main():
-    args = docopt(__doc__, version=_get_version(), options_first=True)
+def _list_plugins():
+    for importer, modname, is_package in pkgutil.iter_modules(
+            snapcraft.plugins.__path__):
+        print(modname.replace('_', '-'))
 
-    cmd = args['COMMAND'] or 'snap'
-    if cmd not in _VALID_COMMANDS:
-        sys.exit('Command {!r} was not recognized'.format(cmd))
+
+def main(argv=None):
+    args = docopt(__doc__, version=_get_version(), argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
@@ -130,12 +144,54 @@ def main():
         common.set_target_machine(args['--target-arch'])
 
     try:
-        commands.load(cmd).main(args['ARGS'], project_options)
+        run(args, project_options)
     except Exception as e:
         if args['--debug']:
             raise
 
         sys.exit(textwrap.fill(str(e)))
+
+
+def _get_lifecycle_command(args):
+    lifecycle_commands = ['pull', 'build', 'stage', 'strip']
+    lifecycle_command = [k for k in lifecycle_commands if args[k]]
+    if len(lifecycle_command) == 0:
+        return None
+    return lifecycle_command[0]
+
+
+def _get_command_from_arg(args):
+    functions = {
+        'cleanbuild': snapcraft.lifecycle.cleanbuild,
+        'init': snapcraft.lifecycle.init,
+        'login': snapcraft.login,
+        'logout': snapcraft.logout,
+        'list-plugins': _list_plugins,
+    }
+    function = [k for k in functions if args[k]]
+    if len(function) == 0:
+        return None
+    return functions[function[0]]
+
+
+def run(args, project_options):
+    lifecycle_command = _get_lifecycle_command(args)
+    argless_command = _get_command_from_arg(args)
+    if lifecycle_command:
+        snapcraft.lifecycle.execute(
+            lifecycle_command, project_options, args['<part>'])
+    elif argless_command:
+        argless_command()
+    elif args['clean']:
+        snapcraft.lifecycle.clean(args['<part>'], args['--step'])
+    elif args['upload']:
+        snapcraft.upload(args['<snap-file>'])
+    elif args['help']:
+        snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
+                             args['--devel'], args['topics'])
+    else:  # snap by default:
+        snapcraft.lifecycle.snap(
+            project_options, args['<directory>'], args['--output'])
 
 
 if __name__ == '__main__':  # pragma: no cover

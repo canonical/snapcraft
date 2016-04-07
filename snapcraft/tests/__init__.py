@@ -22,7 +22,6 @@ import fixtures
 import testscenarios
 
 from snapcraft import common
-from snapcraft._options import reset_project
 from snapcraft.tests import fixture_setup
 
 
@@ -53,7 +52,6 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.addCleanup(common.set_enable_parallel_builds,
                         common.get_enable_parallel_builds())
         self.addCleanup(common.reset_env)
-        self.addCleanup(reset_project)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
         self.useFixture(fixtures.FakeLogger(level=logging.ERROR))

@@ -40,7 +40,7 @@ class UbuntuTestCase(tests.TestCase):
         mock_cc.return_value = 'ar'
 
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, 'amd64', 'vivid')
+            repo._DEFAULT_SOURCES, True, 'amd64', 'vivid')
 
         expected_sources_list = \
             '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
@@ -58,7 +58,7 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
     @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, 'armhf', 'trusty')
+            repo._DEFAULT_SOURCES, True, 'armhf', 'trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted

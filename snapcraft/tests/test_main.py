@@ -21,142 +21,59 @@ import pkg_resources
 import sys
 
 import snapcraft.main
-import snapcraft.common
 
 from snapcraft.tests import TestCase
 
 
 class TestMain(TestCase):
 
-    def test_valid_commands(self):
-        expected = [
-            'list-parts',
-            'list-plugins',
-            'init',
-            'add-part',
-            'pull',
-            'build',
-            'clean',
-            'cleanbuild',
-            'stage',
-            'strip',
-            'snap',
-            'help',
-            'login',
-            'logout',
-            'upload',
-        ]
-        self.assertEqual(snapcraft.main._VALID_COMMANDS, expected)
-
-    @mock.patch('snapcraft.main.docopt')
-    def test_invalid_command(self, mock_docopt):
-        mock_docopt.return_value = {
-            'COMMAND': 'invalid',
-            '--debug': False,
-            '--no-parallel-build': False,
-            '--enable-geoip': False,
-            '--target-arch': None,
-            'ARGS': [],
-        }
-
-        with self.assertRaises(SystemExit) as cm:
-            snapcraft.main.main()
-        self.assertEqual(
-            str(cm.exception), "Command 'invalid' was not recognized")
-
-    @mock.patch('snapcraft.main.docopt')
-    def test_default_command_is_snap(self, mock_docopt):
-        mock_docopt.return_value = {
-            'COMMAND': '',
-            '--debug': False,
-            '--no-parallel-build': False,
-            '--enable-geoip': False,
-            '--target-arch': None,
-            'ARGS': [],
-        }
-        with mock.patch('snapcraft.commands.snap.main') as mock_cmd:
-            snapcraft.main.main()
-            mock_cmd.assert_called_once_with(argv=[])
+    @mock.patch('snapcraft.ProjectOptions')
+    def test_default_command_is_snap(self, mock_project_options):
+        project_options = 'FakeOptions'
+        mock_project_options.return_value = project_options
+        with mock.patch('snapcraft.lifecycle.snap') as mock_cmd:
+            snapcraft.main.main([])
+            mock_cmd.assert_called_once_with(project_options, None, None)
 
     @mock.patch('snapcraft.log.configure')
-    @mock.patch('snapcraft.main.docopt')
-    def test_command_error(self, mock_docopt, mock_log_configure):
-        mock_docopt.return_value = {
-            'COMMAND': 'help',
-            '--debug': False,
-            '--no-parallel-build': False,
-            '--enable-geoip': False,
-            '--target-arch': None,
-            'ARGS': [],
-        }
-
-        with mock.patch('snapcraft.commands.help.main') as mock_cmd:
+    def test_command_error(self, mock_log_configure):
+        with mock.patch('snapcraft.topic_help') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
 
             with self.assertRaises(SystemExit) as cm:
-                snapcraft.main.main()
+                snapcraft.main.main(['help', 'topics'])
 
         self.assertEqual(str(cm.exception), 'some error')
         mock_log_configure.assert_called_once_with(log_level=logging.INFO)
 
     @mock.patch('snapcraft.log.configure')
-    @mock.patch('snapcraft.main.docopt')
-    def test_command_error_debug(self, mock_docopt, mock_log_configure):
-        mock_docopt.return_value = {
-            'COMMAND': 'help',
-            '--debug': True,
-            '--no-parallel-build': False,
-            '--enable-geoip': False,
-            '--target-arch': None,
-            'ARGS': [],
-        }
-
-        with mock.patch('snapcraft.commands.help.main') as mock_cmd:
+    def test_command_error_debug(self, mock_log_configure):
+        with mock.patch('snapcraft.topic_help') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
 
             # When verbose, the exception should be re-raised instead of
             # SystemExit. Note that this test works since SystemExit doesn't
             # inherit from Exception.
             with self.assertRaises(Exception) as cm:
-                snapcraft.main.main()
+                snapcraft.main.main(['help', 'topics', '--debug'])
 
         self.assertEqual(str(cm.exception), 'some error')
         mock_log_configure.assert_called_once_with(
             log_level=logging.DEBUG)
 
-    @mock.patch('snapcraft.main.docopt')
-    def test_command_parallel_build(self, mock_docopt):
-        mock_docopt.return_value = {
-            'COMMAND': 'help',
-            '--debug': False,
-            '--no-parallel-build': False,
-            '--enable-geoip': False,
-            '--target-arch': None,
-            'ARGS': [],
-        }
+    def test_command_parallel_build(self):
+        self.assertTrue(snapcraft.common.get_enable_parallel_builds())
+
+        with mock.patch('snapcraft.topic_help'):
+            snapcraft.main.main(['help', 'topics'])
 
         self.assertTrue(snapcraft.common.get_enable_parallel_builds())
 
-        with mock.patch('snapcraft.commands.help.main'):
-            snapcraft.main.main()
-
+    def test_command_disable_parallel_build(self):
         self.assertTrue(snapcraft.common.get_enable_parallel_builds())
 
-    @mock.patch('snapcraft.main.docopt')
-    def test_command_disable_parallel_build(self, mock_docopt):
-        mock_docopt.return_value = {
-            'COMMAND': 'help',
-            '--debug': False,
-            '--no-parallel-build': True,
-            '--enable-geoip': False,
-            '--target-arch': None,
-            'ARGS': [],
-        }
-
-        self.assertTrue(snapcraft.common.get_enable_parallel_builds())
-
-        with mock.patch('snapcraft.commands.help.main'):
-            snapcraft.main.main()
+        with mock.patch('snapcraft.lifecycle.execute'):
+            snapcraft.main.main(['--no-parallel-build', 'build'])
 
         self.assertFalse(snapcraft.common.get_enable_parallel_builds())
 
