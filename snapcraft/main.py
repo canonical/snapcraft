@@ -180,7 +180,7 @@ def run(args):
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
-    else:  # snap of default:
+    else:  # snap by default:
         snapcraft.lifecycle.snap(args['<directory>'], args['--output'])
 
 
