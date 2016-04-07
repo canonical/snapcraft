@@ -63,7 +63,7 @@ def upload(snap_filename):
         logger.info('Uploading existing {}.'.format(snap_filename))
 
         config = load_config()
-        upload(snap_filename, snap_name, config=config)
+        storeapi.upload(snap_filename, snap_name, config=config)
 
 
 def _get_name_from_snap_file(snap_path):
