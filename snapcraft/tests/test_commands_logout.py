@@ -19,18 +19,18 @@ from unittest import mock
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import tests
-from snapcraft.commands import logout
 
 
 class LogoutCommandTestCase(tests.TestCase):
 
-    @mock.patch('snapcraft.commands.logout.clear_config')
+    @mock.patch('snapcraft._store.clear_config')
     def test_successful_login_saves_config(self, mock_clear):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        logout.main()
+        main(['logout'])
 
         self.assertEqual(
             'Clearing credentials for Ubuntu One SSO.\n'

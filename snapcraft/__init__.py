@@ -115,7 +115,11 @@ import contextlib
 import os
 import shutil
 
+from snapcraft._help import topic_help  # noqa
+from snapcraft._store import login, logout, upload  # noqa
 from snapcraft import common
+from snapcraft import lifecycle  # noqa
+from snapcraft import plugins  # noqa
 from snapcraft import sources
 
 
