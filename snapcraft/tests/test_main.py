@@ -69,8 +69,8 @@ class TestMain(TestCase):
     def test_command_disable_parallel_build(self):
         self.assertTrue(snapcraft.common.get_enable_parallel_builds())
 
-        with mock.patch('snapcraft.topic_help'):
-            snapcraft.main.main(['--no-parallel-build', 'help', 'topics'])
+        with mock.patch('snapcraft.lifecycle.execute'):
+            snapcraft.main.main(['--no-parallel-build', 'build'])
 
         self.assertFalse(snapcraft.common.get_enable_parallel_builds())
 
