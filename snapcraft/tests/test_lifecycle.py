@@ -35,14 +35,17 @@ class ExecutionTestCases(tests.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-    def make_snapcraft_yaml(self, parts):
+    def make_snapcraft_yaml(self, parts, snap_type=''):
         yaml = """name: test
 version: 0
 summary: test
 description: test
+{type}
+
+{parts}
 """
 
-        super().make_snapcraft_yaml(yaml + parts)
+        super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
 
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""parts:
@@ -118,15 +121,14 @@ description: test
             self.fake_logger.output)
 
     def test_os_type_returned_by_lifecycle(self):
-        self.make_snapcraft_yaml("""type: os
-parts:
+        self.make_snapcraft_yaml("""parts:
   part1:
     plugin: nil
   part2:
     plugin: nil
     after:
       - part1
-""")
+""", 'type: os')
 
         snap_info = lifecycle.execute('pull')
 
