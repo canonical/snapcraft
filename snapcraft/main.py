@@ -37,19 +37,21 @@ Usage:
   snapcraft --version
 
 Options:
-  -h --help                 show this help message and exit
-  -v --version              show program version and exit
-  -d --debug                print debug information while executing (including
-                            backtraces)
-  --no-parallel-build       use only a single build job per part (the default
-                            number of jobs per part is equal to the number of
-                            CPUs)
-  --target-arch ARCH        EXPERIMENTAL: sets the target architecture.
-                                          Very few plugins support this.
-  --output <snap-file>      used in case you want to rename the snap.
-  -s <step>, --step <step>  only clean the specified step and those that depend
-                            upon it. <step> can be one of: pull, build, stage
-                            or strip.
+  -h --help                             show this help message and exit
+  -v --version                          show program version and exit
+  -d --debug                            print debug information while executing
+                                        (including backtraces)
+  --no-parallel-build                   use only a single build job per part
+                                        (the default number of jobs per part is
+                                        equal to the number of CPUs)
+  --target-arch ARCH                    EXPERIMENTAL: sets the target
+                                        architecture. Very few plugins support
+                                        this.
+  -s <step>, --step <step>              only clean the specified step and those
+                                        that depend upon it. <step> can be one
+                                        of: pull, build, stage or strip.
+  -o <snap-file>, --output <snap-file>  used in case you want to rename the
+                                        snap.
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
