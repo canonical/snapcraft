@@ -22,8 +22,9 @@ from unittest import mock
 import docopt
 import fixtures
 
+import snapcraft._store
 from snapcraft import tests
-from snapcraft.commands import upload
+from snapcraft.main import main
 
 
 class UploadCommandTestCase(tests.TestCase):
@@ -34,7 +35,7 @@ class UploadCommandTestCase(tests.TestCase):
         with open(os.path.join(meta_path, 'snap.yaml'), 'w') as yaml_file:
             yaml_file.write('name: {}\n'.format(snap_name))
 
-        temp_dir = upload.tempfile.TemporaryDirectory
+        temp_dir = snapcraft._store.tempfile.TemporaryDirectory
 
         def create_patch(method, return_value):
             patcher = mock.patch.object(temp_dir, method)
@@ -48,28 +49,27 @@ class UploadCommandTestCase(tests.TestCase):
 
     def test_upload_without_snap_must_raise_exception(self):
         with self.assertRaises(docopt.DocoptExit) as raised:
-            upload.main()
+            main(['upload'])
 
-        self.assertEqual(
-            'Usage:\n  upload [options] SNAP_FILE', str(raised.exception))
+        self.assertTrue('Usage:' in str(raised.exception))
 
     def test_upload_nonexisting_snap_must_raise_exception(self):
-        with self.assertRaises(FileNotFoundError) as raised:
-            upload.main(['unexisting.snap'])
+        with self.assertRaises(SystemExit) as raised:
+            main(['upload', 'unexisting.snap'])
 
         self.assertEqual('unexisting.snap', str(raised.exception))
 
     def test_upload_existing_snap(self):
-        patcher = mock.patch('snapcraft.commands.upload.upload')
+        patcher = mock.patch('snapcraft._store.upload')
         mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.commands.upload.load_config')
+        patcher = mock.patch('snapcraft._store.load_config')
         mock_load_config = patcher.start()
         self.addCleanup(patcher.stop)
         mock_load_config.return_value = 'test config'
 
-        patcher = mock.patch('snapcraft.commands.snap.subprocess.check_call')
+        patcher = mock.patch('subprocess.check_call')
         mock_check_call = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -79,7 +79,7 @@ class UploadCommandTestCase(tests.TestCase):
         open('test.snap', 'w').close()
 
         self._patch_snap_yaml('snaptestname')
-        upload.main(['test.snap'])
+        main(['upload', 'test.snap'])
 
         mock_check_call.assert_called_once_with(
             ['unsquashfs', '-d', os.path.join(os.getcwd(), 'squashfs-root'),

@@ -18,29 +18,25 @@ import logging
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import tests
-from snapcraft.commands import init
 
 
 class InitCommandTestCase(tests.TestCase):
 
     def test_init_with_existing_snapcraft_yaml_must_fail(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
         open('snapcraft.yaml', 'w').close()
 
         with self.assertRaises(SystemExit) as raised:
-            init.main()
+            main(['init'])
 
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(
-            'snapcraft.yaml already exists!\n', fake_logger.output)
+            'snapcraft.yaml already exists!', str(raised.exception))
 
     def test_init_must_write_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        init.main()
+        main(['init'])
 
         self.assertEqual('Created snapcraft.yaml.\n', fake_logger.output)

@@ -32,7 +32,7 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
-  snapcraft help (topics | <plugin> | <topics>)
+  snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
 
@@ -112,10 +112,8 @@ def _list_plugins():
         print(modname.replace('_', '-'))
 
 
-def main():
-    args = docopt(__doc__, version=_get_version(), options_first=False)
-
-    print(args)
+def main(argv=None):
+    args = docopt(__doc__, version=_get_version(), argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
@@ -175,8 +173,8 @@ def run(args):
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
     else:  # snap of default:
-        snapcraft.lifecycle.snap(args['<directory>'], args['<snap-file>'])
+        snapcraft.lifecycle.snap(args['<directory>'], args['--output'])
 
 
 if __name__ == '__main__':  # pragma: no cover
-    main()                  # pragma: no cover
+    main()          # pragma: no cover

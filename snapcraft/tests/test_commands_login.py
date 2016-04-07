@@ -19,8 +19,8 @@ from unittest import mock
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import tests
-from snapcraft.commands import login
 
 
 class LoginCommandTestCase(tests.TestCase):
@@ -38,15 +38,15 @@ class LoginCommandTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.commands.login.getpass.getpass')
+        patcher = mock.patch('getpass.getpass')
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.commands.login.save_config')
+        patcher = mock.patch('snapcraft._store.save_config')
         self.mock_save = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.commands.login.login')
+        patcher = mock.patch('snapcraft.storeapi.login')
         self.mock_login = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -62,7 +62,7 @@ class LoginCommandTestCase(tests.TestCase):
         }
         self.mock_login.return_value = response
 
-        login.main()
+        main(['login'])
 
         self.assertEqual(
             'Authenticating against Ubuntu One SSO.\n'
@@ -77,7 +77,7 @@ class LoginCommandTestCase(tests.TestCase):
         }
         self.mock_login.return_value = response
 
-        login.main()
+        main(['login'])
 
         self.assertEqual(
             'Authenticating against Ubuntu One SSO.\n'
