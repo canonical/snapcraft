@@ -157,8 +157,13 @@ def get_arch_triplet():
 
 
 def format_snap_name(snap):
-    snap['arch'] = (snap['architectures'][0]
-                    if len(snap['architectures']) == 1 else 'multi')
+    if not snap['arch']:
+        snap['arch'] = snap.get('architectures', 'all')
+    elif len(snap['arch']) == 1:
+        snap['arch'] = snap['arch'][0]
+    else:
+        snap['arch'] = 'multi'
+
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 

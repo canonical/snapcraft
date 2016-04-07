@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016 Canonical Ltd
@@ -14,36 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-snapcraft login
-
-Authenticates session against Ubuntu One SSO.
-
-Usage:
-  login [options]
-
-Options:
-  -h --help             show this help message and exit.
-
-"""
 
 import getpass
 import logging
+import os
+import subprocess
+import tempfile
 
-from docopt import docopt
+import yaml
 
-from snapcraft.config import save_config
-from snapcraft.storeapi import login
+from snapcraft.config import clear_config, load_config, save_config
+from snapcraft import storeapi
 
 
 logger = logging.getLogger(__name__)
 
 
-def main(argv=None):
-    """Authenticates session against Ubuntu One SSO."""
-    argv = argv if argv else []
-    docopt(__doc__, argv=argv)
-
+def login():
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
@@ -51,7 +39,7 @@ def main(argv=None):
                 'two-factor authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    response = login(email, password, token_name='snapcraft', otp=otp)
+    response = storeapi.login(email, password, token_name='snapcraft', otp=otp)
     success = response.get('success', False)
 
     if success:
@@ -59,3 +47,32 @@ def main(argv=None):
         logger.info('Login successful.')
     else:
         logger.info('Login failed.')
+
+
+def logout():
+    logger.info('Clearing credentials for Ubuntu One SSO.')
+    clear_config()
+    logger.info('Credentials cleared.')
+
+
+def upload(snap_filename):
+    if not os.path.exists(snap_filename):
+        raise FileNotFoundError(snap_filename)
+    else:
+        snap_name = _get_name_from_snap_file(snap_filename)
+        logger.info('Uploading existing {}.'.format(snap_filename))
+
+        config = load_config()
+        upload(snap_filename, snap_name, config=config)
+
+
+def _get_name_from_snap_file(snap_path):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        subprocess.check_call(
+            ['unsquashfs', '-d', os.path.join(temp_dir, 'squashfs-root'),
+             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
+        with open(os.path.join(
+                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')) as yaml_file:
+            snap_yaml = yaml.load(yaml_file)
+
+    return snap_yaml['name']
