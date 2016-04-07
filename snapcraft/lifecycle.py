@@ -57,7 +57,7 @@ def init():
 
 
 def execute(step, part_names=None):
-    """Exectute until step in the lifecycle.
+    """Execute until step in the lifecycle for part_names or all parts.
 
     Lifecycle execution will happen for each step iterating over all
     the available parts, if part_names is specified, only those parts
@@ -68,6 +68,7 @@ def execute(step, part_names=None):
     and after is not in this set, an exception will be raised.
 
     :param str step: A valid step in the lifecycle: pull, build, strip or snap.
+    :param list part_names: A list of parts to execute the lifecycle on.
     :raises RuntimeError: If a prerequesite of the part needs to be staged
                           and such part is not in the list of parts to iterate
                           over.
