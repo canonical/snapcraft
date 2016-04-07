@@ -60,7 +60,7 @@ class UploadCommandTestCase(tests.TestCase):
         self.assertEqual('unexisting.snap', str(raised.exception))
 
     def test_upload_existing_snap(self):
-        patcher = mock.patch('snapcraft._store.upload')
+        patcher = mock.patch('snapcraft.storeapi.upload')
         mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
 
