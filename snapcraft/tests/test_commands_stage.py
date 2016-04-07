@@ -20,11 +20,11 @@ import os.path
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import (
     common,
     tests,
 )
-from snapcraft.commands import stage
 
 
 class StageCommandTestCase(tests.TestCase):
@@ -33,7 +33,6 @@ class StageCommandTestCase(tests.TestCase):
 version: 1.0
 summary: test stage
 description: if the build is succesful the state file will be updated
-icon: icon.png
 
 parts:
 {parts}"""
@@ -45,7 +44,6 @@ parts:
     def make_snapcraft_yaml(self, n=1):
         parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
         super().make_snapcraft_yaml(self.yaml_template.format(parts=parts))
-        open('icon.png', 'w').close()
 
         parts = []
         for i in range(n):
@@ -63,19 +61,19 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            stage.main(['no-stage', ])
+        with self.assertRaises(SystemExit) as raised:
+            main(['stage', 'no-stage', ])
 
         self.assertEqual(
-            raised.exception.__str__(),
-            "The part named 'no-stage' is not defined in 'snapcraft.yaml'")
+            "The part named 'no-stage' is not defined in 'snapcraft.yaml'",
+            str(raised.exception))
 
     def test_stage_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml()
 
-        stage.main()
+        main(['stage'])
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
@@ -91,7 +89,7 @@ parts:
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml(n=3)
 
-        stage.main(['stage1', ])
+        main(['stage', 'stage1'])
 
         self.assertTrue(os.path.exists(common.get_stagedir()),
                         'Expected a stage directory')
@@ -113,7 +111,7 @@ parts:
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml()
 
-        stage.main()
+        main(['stage'])
 
         self.assertEqual(
             'Preparing to pull stage0 \n'
@@ -135,7 +133,7 @@ parts:
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        stage.main()
+        main(['stage'])
 
         self.assertEqual(
             'Skipping pull stage0 (already ran)\n'

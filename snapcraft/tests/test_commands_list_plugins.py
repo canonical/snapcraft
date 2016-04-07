@@ -17,8 +17,8 @@
 import io
 from unittest import mock
 
+from snapcraft.main import main
 from snapcraft import tests
-from snapcraft.commands import list_plugins
 
 
 class ListPluginsCommandTestCase(tests.TestCase):
@@ -44,5 +44,5 @@ qml
 scons
 tar-content
 '''
-        list_plugins.main()
+        main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), expected_list)

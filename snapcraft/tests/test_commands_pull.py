@@ -20,11 +20,11 @@ import os.path
 
 import fixtures
 
+from snapcraft.main import main
 from snapcraft import (
     common,
     tests,
 )
-from snapcraft.commands import pull
 
 
 class PullCommandTestCase(tests.TestCase):
@@ -33,7 +33,6 @@ class PullCommandTestCase(tests.TestCase):
 version: 1.0
 summary: test pull
 description: if the pull is succesful the state file will be updated
-icon: icon.png
 
 parts:
 {parts}"""
@@ -45,7 +44,6 @@ parts:
     def make_snapcraft_yaml(self, n=1):
         parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
         super().make_snapcraft_yaml(self.yaml_template.format(parts=parts))
-        open('icon.png', 'w').close()
 
         parts = []
         for i in range(n):
@@ -63,19 +61,19 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            pull.main(['no-pull', ])
+        with self.assertRaises(SystemExit) as raised:
+            main(['pull', 'no-pull', ])
 
         self.assertEqual(
-            raised.exception.__str__(),
-            "The part named 'no-pull' is not defined in 'snapcraft.yaml'")
+            "The part named 'no-pull' is not defined in 'snapcraft.yaml'",
+            str(raised.exception))
 
     def test_pull_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml()
 
-        pull.main()
+        main(['pull'])
 
         self.assertTrue(os.path.exists(common.get_partsdir()),
                         'Expected a parts directory')
@@ -89,7 +87,7 @@ parts:
         self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml(n=3)
 
-        pull.main(['pull1', ])
+        main(['pull', 'pull1'])
 
         self.assertTrue(os.path.exists(common.get_partsdir()),
                         'Expected a parts directory')

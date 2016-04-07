@@ -1,6 +1,7 @@
+#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,35 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-snapcraft help
-
-Obtain help for plugins and specific topics.
-
-Usage:
-  help [options] topics
-  help [options] TOPIC
-  help [options] PLUGIN
-
-Options:
-  -h --help             show this help message and exit.
-  -d --devel            show the development help.
-
-To see the list of available plugins run
-
-    snapcraft list-plugins
-"""
 
 import importlib
-import logging
-import sys
-
-from docopt import docopt
 
 import snapcraft
 from snapcraft import sources
-
-logger = logging.getLogger(__name__)
 
 _TOPICS = {
     'sources': sources,
@@ -50,18 +27,14 @@ _TOPICS = {
 }
 
 
-def main(argv=None):
-    args = docopt(__doc__, argv=argv)
-
-    topic = args['TOPIC'] or args['PLUGIN']
-
-    if args['topics']:
+def topic_help(topic, show_devel, list_topics):
+    if list_topics:
         for key in _TOPICS:
             print(key)
     elif topic in _TOPICS:
-        _topic_help(topic, args['--devel'])
+        _topic_help(topic, show_devel)
     else:
-        _module_help(topic, args['--devel'])
+        _module_help(topic, show_devel)
 
 
 def _topic_help(module_name, devel):
@@ -82,6 +55,6 @@ def _module_help(module_name, devel):
         else:
             print('The plugin has no documentation')
     except ImportError:
-        logger.error('The plugin does not exist. Run `snapcraft list-plugins` '
-                     'to see the available plugins.')
-        sys.exit(1)
+        raise EnvironmentError(
+            'The plugin does not exist. Run `snapcraft list-plugins` '
+            'to see the available plugins.')
