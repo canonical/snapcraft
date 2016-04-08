@@ -19,9 +19,9 @@
 snapcraft
 
 Usage:
-  snapcraft [options] [--no-parallel-build]
+  snapcraft [options] [--enable-geoip --no-parallel-build]
   snapcraft [options] init
-  snapcraft [options] pull [<part> ...]
+  snapcraft [options] pull [<part> ...]  [--enable-geoip]
   snapcraft [options] build [<part> ...] [--no-parallel-build]
   snapcraft [options] stage [<part> ...]
   snapcraft [options] strip [<part> ...]
@@ -44,6 +44,10 @@ Options:
   --target-arch ARCH                    EXPERIMENTAL: sets the target
                                         architecture. Very few plugins support
                                         this.
+
+Options specific to pulling:
+  --enable-geoip         enables geoip for the pull step if stage-packages
+                         are used.
 
 Options specific to building:
   --no-parallel-build                   use only a single build job per part
@@ -132,11 +136,15 @@ def main(argv=None):
 
     common.set_enable_parallel_builds(not args['--no-parallel-build'])
 
+    project_options = snapcraft.ProjectOptions()
+    if args['--enable-geoip']:
+        project_options.use_geoip = True
+
     if args['--target-arch']:
         common.set_target_machine(args['--target-arch'])
 
     try:
-        run(args)
+        run(args, project_options)
     except Exception as e:
         if args['--debug']:
             raise
@@ -166,11 +174,12 @@ def _get_command_from_arg(args):
     return functions[function[0]]
 
 
-def run(args):
+def run(args, project_options):
     lifecycle_command = _get_lifecycle_command(args)
     argless_command = _get_command_from_arg(args)
     if lifecycle_command:
-        snapcraft.lifecycle.execute(lifecycle_command, args['<part>'])
+        snapcraft.lifecycle.execute(
+            lifecycle_command, project_options, args['<part>'])
     elif argless_command:
         argless_command()
     elif args['clean']:
@@ -181,8 +190,9 @@ def run(args):
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
     else:  # snap by default:
-        snapcraft.lifecycle.snap(args['<directory>'], args['--output'])
+        snapcraft.lifecycle.snap(
+            project_options, args['<directory>'], args['--output'])
 
 
 if __name__ == '__main__':  # pragma: no cover
-    main()          # pragma: no cover
+    main()                  # pragma: no cover

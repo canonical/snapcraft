@@ -14,17 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
 import os.path
 
-import fixtures
+from unittest import mock
 
 from snapcraft.main import main
 from snapcraft import (
     common,
     tests,
 )
+
+
+class FakeUbuntuRepo:
+
+    def __init__(self, rootdir, recommends=False,
+                 sources=None, use_geoip=True):
+        self.use_geoip = use_geoip
 
 
 class PullCommandTestCase(tests.TestCase):
@@ -38,11 +44,13 @@ parts:
 {parts}"""
 
     yaml_part = """  pull{:d}:
-    plugin: nil
-    source: ."""
+    plugin: nil"""
 
-    def make_snapcraft_yaml(self, n=1):
-        parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
+    def make_snapcraft_yaml(self, n=1, yaml_part=None):
+        if not yaml_part:
+            yaml_part = self.yaml_part
+
+        parts = '\n'.join([yaml_part.format(i) for i in range(n)])
         super().make_snapcraft_yaml(self.yaml_template.format(parts=parts))
 
         parts = []
@@ -57,8 +65,6 @@ parts:
         return parts
 
     def test_pull_invalid_part(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
         with self.assertRaises(SystemExit) as raised:
@@ -69,8 +75,6 @@ parts:
             str(raised.exception))
 
     def test_pull_defaults(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml()
 
         main(['pull'])
@@ -83,8 +87,6 @@ parts:
         self.verify_state('pull0', parts[0]['state_dir'], 'pull')
 
     def test_pull_one_part_only_from_3(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
         parts = self.make_snapcraft_yaml(n=3)
 
         main(['pull', 'pull1'])
@@ -101,3 +103,49 @@ parts:
                              'Pulled wrong part')
             self.assertFalse(os.path.exists(parts[i]['state_dir']),
                              'Expected for only to be a state file for pull1')
+
+    @mock.patch('snapcraft.repo._setup_apt_cache')
+    @mock.patch('snapcraft.repo.Ubuntu.get')
+    @mock.patch('snapcraft.repo.Ubuntu.unpack')
+    def test_pull_stage_packages_without_geoip(self, mock_get, mock_ubpack,
+                                               mock_setup_apt_cache):
+        yaml_part = """  pull{:d}:
+        plugin: nil
+        stage-packages: ['mir']"""
+
+        self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
+
+        mock_apt_cache = mock.Mock()
+        mock_apt_progress = mock.Mock()
+        mock_setup_apt_cache.return_value = (mock_apt_cache, mock_apt_progress)
+
+        main(['pull', 'pull1'])
+
+        mock_setup_apt_cache.assert_called_once_with(
+            os.path.join(common.get_partsdir(), 'pull1', 'ubuntu'),
+            [],     # no sources
+            False,  # use_geoip
+        )
+
+    @mock.patch('snapcraft.repo._setup_apt_cache')
+    @mock.patch('snapcraft.repo.Ubuntu.get')
+    @mock.patch('snapcraft.repo.Ubuntu.unpack')
+    def test_pull_stage_packages_with_geoip(self, mock_get, mock_ubpack,
+                                            mock_setup_apt_cache):
+        yaml_part = """  pull{:d}:
+        plugin: nil
+        stage-packages: ['mir']"""
+
+        self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
+
+        mock_apt_cache = mock.Mock()
+        mock_apt_progress = mock.Mock()
+        mock_setup_apt_cache.return_value = (mock_apt_cache, mock_apt_progress)
+
+        main(['pull', 'pull1', '--enable-geoip'])
+
+        mock_setup_apt_cache.assert_called_once_with(
+            os.path.join(common.get_partsdir(), 'pull1', 'ubuntu'),
+            [],     # no sources
+            True,   # use_geoip
+        )
