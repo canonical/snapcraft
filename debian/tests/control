@@ -5,6 +5,9 @@ Depends: @builddeps@
 Tests: integrationtests examplestests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
+         bzr,
+         git,
+         mercurial,
          lxd,
          python3-pep8,
          pyflakes,

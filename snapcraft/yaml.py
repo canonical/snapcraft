@@ -24,6 +24,7 @@ import sys
 import jsonschema
 import yaml
 
+import snapcraft
 from snapcraft import (
     common,
     libraries,
@@ -97,10 +98,11 @@ class Config:
     def part_names(self):
         return self._part_names
 
-    def __init__(self):
+    def __init__(self, project_options=None):
         self.build_tools = []
         self.all_parts = []
         self._part_names = []
+        self._project_options = project_options
         self.after_requests = {}
 
         self.data = _snapcraft_yaml_load()
@@ -250,7 +252,8 @@ class Config:
 
     def load_plugin(self, part_name, plugin_name, properties):
         part = pluginhandler.load_plugin(
-            part_name, plugin_name, properties, self._validator.part_schema)
+            part_name, plugin_name, properties,
+            self._project_options, self._validator.part_schema)
 
         self.build_tools += part.code.build_packages
         self.build_tools += sources.get_required_packages(part.code.options)
@@ -522,9 +525,11 @@ def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
                 e.problem, e.problem_mark.line, yaml_file))
 
 
-def load_config():
+def load_config(project_options=None):
+    if not project_options:
+        project_options = snapcraft.ProjectOptions()
     try:
-        return Config()
+        return Config(project_options)
     except SnapcraftYamlFileError as e:
         logger.error(
             'Could not find {}.  Are you sure you are in the right '

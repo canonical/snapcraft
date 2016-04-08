@@ -16,14 +16,19 @@
 
 import os
 import subprocess
+import shutil
 
 import integration_tests
 
 
 class BzrSourceTestCase(integration_tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        if shutil.which('bzr') is None:
+            self.skipTest('bzr is not installed')
+
     def _init_and_config_bzr(self):
-        subprocess.check_call(['sudo', 'apt-get', 'install', '-y', 'bzr'])
         subprocess.check_call(
             ['bzr', 'init', '.'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

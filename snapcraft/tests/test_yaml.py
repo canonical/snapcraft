@@ -188,14 +188,16 @@ parts:
             'source': 'http://somesource'
         }
 
-        snapcraft.yaml.Config()
+        project_options = snapcraft.ProjectOptions()
+
+        snapcraft.yaml.Config(project_options)
 
         call1 = unittest.mock.call('part1', 'go', {
             'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
-            self.part_schema)
+            project_options, self.part_schema)
         call2 = unittest.mock.call('part2wiki', 'go', {
             'source': 'http://somesource'},
-            self.part_schema)
+            project_options, self.part_schema)
 
         mock_load.assert_has_calls([call1, call2])
         self.assertTrue(mock_get_part.called)

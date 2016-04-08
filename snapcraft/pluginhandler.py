@@ -116,16 +116,19 @@ class PluginHandler:
     def ubuntu(self):
         if not self._ubuntu:
             self._ubuntu = repo.Ubuntu(
-                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES)
+                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES,
+                use_geoip=self._project_options.use_geoip)
 
         return self._ubuntu
 
-    def __init__(self, plugin_name, part_name, properties, part_schema):
+    def __init__(self, plugin_name, part_name, properties,
+                 project_options, part_schema):
         self.valid = False
         self.code = None
         self.config = {}
         self._name = part_name
         self._ubuntu = None
+        self._project_options = project_options
         self.deps = []
 
         self.stagedir = os.path.join(os.getcwd(), 'stage')
@@ -572,12 +575,14 @@ def _load_local(module_name):
     return module
 
 
-def load_plugin(part_name, plugin_name, properties=None, part_schema=None):
+def load_plugin(part_name, plugin_name, properties=None,
+                project_options=None, part_schema=None):
     if properties is None:
         properties = {}
     if part_schema is None:
         part_schema = {}
-    return PluginHandler(plugin_name, part_name, properties, part_schema)
+    return PluginHandler(plugin_name, part_name, properties,
+                         project_options, part_schema)
 
 
 def _migratable_filesets(fileset, srcdir):
