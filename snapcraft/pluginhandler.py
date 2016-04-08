@@ -117,7 +117,7 @@ class PluginHandler:
         if not self._ubuntu:
             self._ubuntu = repo.Ubuntu(
                 self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES,
-                use_geoip=self._project_options.use_geoip)
+                project_options=self._project_options)
 
         return self._ubuntu
 
@@ -169,12 +169,15 @@ class PluginHandler:
 
         plugin = _get_plugin(module)
         options = _make_options(part_schema, properties, plugin.schema())
+        # For backwards compatibility we add the project options as an option
+        setattr(options, 'project', self._project_options)
         self.code = plugin(self.name, options)
-        if common.host_machine != common.target_machine:
+
+        if self._project_options.is_cross_compiling():
             logger.debug(
                 'Setting {!r} as the compilation target for {!r}'.format(
-                    common.target_machine, plugin_name))
-            self.code.set_target_machine(common.target_machine)
+                    self._project_options.target_machine, plugin_name))
+            self.code.set_target_machine()
 
     def makedirs(self):
         dirs = [

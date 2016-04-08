@@ -77,7 +77,7 @@ class GoPlugin(snapcraft.BasePlugin):
                 '-L{0}/lib/{1}',
                 '-L{0}/usr/lib/{1}',
                 '$LDFLAGS'
-            ]).format(root, snapcraft.common.get_arch_triplet()) + '"',
+            ]).format(root, self.options.project.arch_triplet) + '"',
         ]
         return env
 

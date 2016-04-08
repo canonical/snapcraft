@@ -144,14 +144,13 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
         self._target_arch = get_machine_info(target_machine)
 
-    def set_target_machine(self, machine):
-        self._target_arch = get_machine_info(machine)
+    def set_target_machine(self):
         logger.info('Cross compiling kernel target {!r}'.format(
-            self._target_arch['kernel']))
-        self.build_packages.extend(self._target_arch['cross-build-packages'])
-        self.make_cmd.append('ARCH={}'.format(self._target_arch['kernel']))
+            self._options.project.kernel_arch))
+        self.make_cmd.append('ARCH={}'.format(
+            self._options.project.kernel_arch))
         self.make_cmd.append('CROSS_COMPILE={}'.format(
-            self._target_arch['cross-compiler-prefix']))
+            self._options.project.cross_compiler_prefix))
 
     def _get_fw_install_targets(self):
         if not self.options.kernel_with_firmware:

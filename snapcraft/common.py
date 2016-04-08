@@ -18,9 +18,7 @@
 
 import glob
 import logging
-import multiprocessing
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -30,17 +28,12 @@ import urllib
 
 SNAPCRAFT_FILES = ['snapcraft.yaml', 'parts', 'stage', 'snap']
 COMMAND_ORDER = ['pull', 'build', 'stage', 'strip']
-_DEFAULT_ENABLE_PARALLEL_BUILDS = True
-_enable_parallel_builds = _DEFAULT_ENABLE_PARALLEL_BUILDS
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
 _librariesdir = _DEFAULT_LIBRARIESDIR
-
-host_machine = platform.machine()
-target_machine = host_machine
 
 env = []
 
@@ -77,83 +70,6 @@ def run_output(cmd, **kwargs):
             logger.warning('Could not decode output for {!r} correctly'.format(
                 cmd))
             return output.decode('latin-1', 'surrogateescape').strip()
-
-
-_ARCH_TRANSLATIONS = {
-    'armv7l': {
-        'kernel': 'arm',
-        'deb': 'armhf',
-        'cross-compiler-prefix': 'arm-linux-gnueabihf-',
-        'cross-build-packages': ['gcc-arm-linux-gnueabihf'],
-        'triplet': 'arm-linux-gnueabihf',
-    },
-    'aarch64': {
-        'kernel': 'arm64',
-        'deb': 'arm64',
-        'cross-compiler-prefix': 'aarch64-linux-gnu-',
-        'cross-build-packages': ['gcc-aarch64-linux-gnu'],
-        'triplet': 'aarch64-linux-gnu',
-    },
-    'i686': {
-        'kernel': 'x86',
-        'deb': 'i386',
-        'triplet': 'i386-linux-gnu',
-    },
-    'ppc64le': {
-        'kernel': 'powerpc',
-        'deb': 'ppc64el',
-        'cross-compiler-prefix': 'gcc-powerpc64-linux-gnu',
-        'cross-build-packages': ['gcc-powerpc64-linux-gnu'],
-        'triplet': 'powerpc64le-linux-gnu',
-    },
-    'x86_64': {
-        'kernel': 'x86',
-        'deb': 'amd64',
-        'triplet': 'x86_64-linux-gnu',
-    }
-}
-
-
-class PlatformError(Exception):
-
-    def __init__(self):
-        super().__init__(
-            '{0} is not supported, please log a bug at '
-            'https://bugs.launchpad.net/snapcraft/+filebug?'
-            'field.title=please+add+support+for+{0}'.format(target_machine))
-
-
-def get_machine_info(machine):
-    try:
-        return _ARCH_TRANSLATIONS[machine]
-    except KeyError:
-        raise PlatformError()
-
-
-def set_target_machine(deb_arch):
-    global target_machine
-    for machine in _ARCH_TRANSLATIONS:
-        if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
-            logger.info('Setting target machine to {!r}'.format(machine))
-            target_machine = machine
-            return
-
-    raise EnvironmentError(
-        'Cannot set machine from deb_arch {!r}'.format(deb_arch))
-
-
-def get_arch():
-    try:
-        return _ARCH_TRANSLATIONS[target_machine]['deb']
-    except KeyError:
-        raise PlatformError()
-
-
-def get_arch_triplet():
-    try:
-        return _ARCH_TRANSLATIONS[target_machine]['triplet']
-    except KeyError:
-        raise PlatformError()
 
 
 def format_snap_name(snap):
@@ -201,27 +117,6 @@ def set_schemadir(schemadir):
 
 def get_schemadir():
     return _schemadir
-
-
-def set_enable_parallel_builds(enable):
-    global _enable_parallel_builds
-    _enable_parallel_builds = enable
-
-
-def get_enable_parallel_builds():
-    return _enable_parallel_builds
-
-
-def get_parallel_build_count():
-    build_count = 1
-    if get_enable_parallel_builds():
-        try:
-            build_count = multiprocessing.cpu_count()
-        except NotImplementedError:
-            logger.warning('Unable to determine CPU count; disabling parallel '
-                           'builds')
-
-    return build_count
 
 
 def set_librariesdir(librariesdir):

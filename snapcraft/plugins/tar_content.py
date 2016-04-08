@@ -54,7 +54,7 @@ class TarContentPlugin(snapcraft.BasePlugin):
             raise ValueError('path {!r} must be relative'.format(
                 self.options.destination))
 
-    def set_target_machine(self, machine):
+    def set_target_machine(self):
         pass
 
     def pull(self):

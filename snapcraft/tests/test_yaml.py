@@ -574,9 +574,10 @@ parts:
     plugin: nil
 """)
 
-        patcher = unittest.mock.patch('snapcraft.common.get_arch_triplet')
+        self.arch_triplet = 'x86_64-linux-gnu'
+        patcher = unittest.mock.patch('snapcraft.Project.arch_triplet')
         mock_arch = patcher.start()
-        mock_arch.return_value = 'x86_64-linux-gnu'
+        mock_arch.return_value = self.arch_triplet
         self.addCleanup(patcher.stop)
 
     @unittest.mock.patch('snapcraft.common.get_snapdir')
@@ -584,9 +585,9 @@ parts:
         mock_snapdir.return_value = 'foo'
         config = snapcraft.yaml.Config()
 
-        arch = snapcraft.common.get_arch_triplet()
-        lib_paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
-                     'foo/usr/lib/{}'.format(arch)]
+        lib_paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
+                        self.arch_triplet),
+                     'foo/usr/lib/{}'.format(self.arch_triplet)]
         for lib_path in lib_paths:
             os.makedirs(lib_path)
 
@@ -604,8 +605,9 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        for expected in ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
-                         'foo/usr/lib/{}'.format(arch)]:
+        for expected in ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
+                            self.arch_triplet),
+                         'foo/usr/lib/{}'.format(self.arch_triplet)]:
             self.assertTrue(
                 expected in paths,
                 'Expected LD_LIBRARY_PATH in {!r} to include {!r}'.format(
@@ -707,12 +709,12 @@ parts:
     def test_config_stage_environment(self, mock_stagedir):
         mock_stagedir.return_value = 'foo'
 
-        arch = snapcraft.common.get_arch_triplet()
-        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
-                 'foo/usr/lib/{}'.format(arch),
+        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
+                    self.arch_triplet),
+                 'foo/usr/lib/{}'.format(self.arch_triplet),
                  'foo/include', 'foo/usr/include',
-                 'foo/include/{}'.format(arch),
-                 'foo/usr/include/{}'.format(arch)]
+                 'foo/include/{}'.format(self.arch_triplet),
+                 'foo/usr/include/{}'.format(self.arch_triplet)]
         for path in paths:
             os.makedirs(path)
 
@@ -769,12 +771,12 @@ parts:
         mock_partsdir.return_value = 'parts'
         mock_stagedir.return_value = 'foo'
 
-        arch = snapcraft.common.get_arch_triplet()
-        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(arch),
-                 'foo/usr/lib/{}'.format(arch),
+        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
+                    self.arch_triplet),
+                 'foo/usr/lib/{}'.format(self.arch_triplet),
                  'foo/include', 'foo/usr/include',
-                 'foo/include/{}'.format(arch),
-                 'foo/usr/include/{}'.format(arch),
+                 'foo/include/{}'.format(self.arch_triplet),
+                 'foo/usr/include/{}'.format(self.arch_triplet),
                  'parts/part1/install/include',
                  'parts/part1/install/lib',
                  'parts/part2/install/include',
@@ -808,7 +810,8 @@ parts:
             '-I/user-provided '
             '-Iparts/part2/install/include -Ifoo/include -Ifoo/usr/include '
             '-Ifoo/include/{arch_triplet} '
-            '-Ifoo/usr/include/{arch_triplet}'.format(arch_triplet=arch))
+            '-Ifoo/usr/include/{arch_triplet}'.format(
+                arch_triplet=self.arch_triplet))
         self.assertEqual(get_envvar('CFLAGS'), expected_cflags)
         self.assertEqual(get_envvar('CXXFLAGS'), expected_cflags)
         self.assertEqual(get_envvar('CPPFLAGS'), expected_cflags)
@@ -818,7 +821,7 @@ parts:
             '-L/user-provided '
             '-Lparts/part2/install/lib -Lfoo/lib -Lfoo/usr/lib '
             '-Lfoo/lib/{arch_triplet} -Lfoo/usr/lib/{arch_triplet}'.format(
-                arch_triplet=arch))
+                arch_triplet=self.arch_triplet))
 
         self.assertEqual(
             get_envvar('LD_LIBRARY_PATH'),
@@ -826,7 +829,8 @@ parts:
             'parts/part2/install/lib:foo/lib:foo/usr/lib:'
             'foo/lib/{arch_triplet}:foo/usr/lib/{arch_triplet}:'
             'foo/lib:foo/usr/lib:foo/lib/{arch_triplet}:'
-            'foo/usr/lib/{arch_triplet}'.format(arch_triplet=arch))
+            'foo/usr/lib/{arch_triplet}'.format(
+                arch_triplet=self.arch_triplet))
 
 
 class TestValidation(tests.TestCase):

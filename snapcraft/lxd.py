@@ -23,8 +23,6 @@ from time import sleep
 
 import petname
 
-from snapcraft.common import get_arch
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +35,8 @@ _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 class Cleanbuilder:
 
-    def __init__(self, snap_output, project, server=_DEFAULT_IMAGE_SERVER):
+    def __init__(self, snap_output, project, deb_arch,
+                 server=_DEFAULT_IMAGE_SERVER):
         self._snap_output = snap_output
         self._project = project
         self._container_name = 'snapcraft-{}'.format(
@@ -56,13 +55,14 @@ class Cleanbuilder:
         check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
     @contextmanager
-    def _create_container(self):
+    def _create_container(self, deb_arch):
         try:
             remote_tmp = petname.Generate(2, '-')
             check_call(['lxc', 'remote', 'add', remote_tmp, self._server])
-            check_call(['lxc', 'launch',
-                        '{}:ubuntu/xenial/{}'.format(remote_tmp, get_arch()),
-                        self._container_name])
+            check_call([
+                'lxc', 'launch',
+                '{}:ubuntu/xenial/{}'.format(remote_tmp, self.deb_arch),
+                self._container_name])
             yield
         finally:
             check_call(['lxc', 'stop', self._container_name])

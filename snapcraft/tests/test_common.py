@@ -18,11 +18,6 @@ import os
 import re
 from unittest.mock import patch
 
-import testtools
-from testtools.matchers import (
-    Contains,
-)
-
 from snapcraft import (
     common,
     tests
@@ -105,42 +100,3 @@ class CommonTestCase(tests.TestCase):
     def test_get_parallel_build_count_handle_exception(self, mock_cpu_count):
         mock_cpu_count.side_effect = NotImplementedError
         self.assertEqual(common.get_parallel_build_count(), 1)
-
-
-class ArchTestCase(testtools.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        # tests will override host_machine, protect it first
-        patcher = patch('snapcraft.common.host_machine',
-                        new=common.host_machine)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = patch('snapcraft.common.target_machine',
-                        new=common.host_machine)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_get_arch_with_no_errors(self):
-        common.get_arch()
-
-    def test_get_arch_raises_exception_on_non_supported_arch(self):
-        common.target_machine = 'badarch'
-        e = self.assertRaises(
-            common.PlatformError, common.get_arch)
-        self.assertEqual(
-            'badarch is not supported, please log a bug at '
-            'https://bugs.launchpad.net/snapcraft/+filebug?'
-            'field.title=please+add+support+for+badarch', str(e))
-
-    def test_get_arch_triplet(self):
-        self.assertThat(common.get_arch_triplet(), Contains('linux-gnu'))
-
-    def test_get_arch_triple_raises_exception_on_non_supported_arch(self):
-        common.target_machine = 'badarch'
-        e = self.assertRaises(
-            common.PlatformError, common.get_arch_triplet)
-        self.assertEqual(
-            'badarch is not supported, please log a bug at '
-            'https://bugs.launchpad.net/snapcraft/+filebug?'
-            'field.title=please+add+support+for+badarch', str(e))

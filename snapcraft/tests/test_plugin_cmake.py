@@ -97,12 +97,14 @@ class CMakeTestCase(tests.TestCase):
             common.get_stagedir())
         expected['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
-             '{0}/usr/include/{1}']).format(common.get_stagedir(),
-                                            common.get_arch_triplet())
+             '{0}/usr/include/{1}']).format(
+                common.get_stagedir(),
+                self.options.project.arch_triplet)
         expected['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
-             '{0}/usr/lib/{1}']).format(common.get_stagedir(),
-                                        common.get_arch_triplet())
+             '{0}/usr/lib/{1}']).format(
+                common.get_stagedir(),
+                self.options.project.arch_triplet)
 
         self.assertEqual(3, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:

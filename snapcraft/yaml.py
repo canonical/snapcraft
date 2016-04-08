@@ -114,6 +114,7 @@ class Config:
         self._validator.validate()
 
         self.build_tools = self.data.get('build-packages', [])
+        self.build_tools.extend(project_options.additional_build_packages)
 
         self._wiki = wiki.Wiki()
 
@@ -151,7 +152,7 @@ class Config:
         self.all_parts = self._sort_parts()
 
         if 'architectures' not in self.data:
-            self.data['architectures'] = [common.get_arch(), ]
+            self.data['architectures'] = [project_options.deb_arch]
 
     def _remap_skills_to_interfaces(self):
         if 'uses' in self.data:
@@ -269,11 +270,13 @@ class Config:
         if root_part:
             # this has to come before any {}/usr/bin
             env += _create_pkg_config_override(
-                part.bindir, part.installdir, stagedir)
+                part.bindir, part.installdir, stagedir,
+                self._project_options.arch_triplet)
             env += part.env(part.installdir)
             env += _runtime_env(part.installdir)
             env += _runtime_env(stagedir)
-            env += _build_env(part.installdir)
+            env += _build_env(part.installdir,
+                              self._project_options.arch_triplet)
             env += _build_env_for_stage(stagedir)
         else:
             env += part.env(stagedir)
@@ -344,7 +347,7 @@ def _runtime_env(root):
     return env
 
 
-def _build_env(root):
+def _build_env(root, arch_triplet):
     """Set the environment variables required for building.
 
     This is required for the current parts installdir due to stage-packages
@@ -363,13 +366,12 @@ def _build_env(root):
     return env
 
 
-def _get_include_paths(envvar, root):
-    machine_info = common.get_machine_info(common.target_machine)
+def _get_include_paths(envvar, root, arch_triplet):
     paths = [
         os.path.join(root, 'include'),
         os.path.join(root, 'usr', 'include'),
-        os.path.join(root, 'include', machine_info['triplet']),
-        os.path.join(root, 'usr', 'include', machine_info['triplet']),
+        os.path.join(root, 'include', arch_triplet),
+        os.path.join(root, 'usr', 'include', arch_triplet),
     ]
 
     include_paths = ['-I{}'.format(p) for p in paths if os.path.exists(p)]
@@ -425,12 +427,12 @@ def get_pkg_env_for(basedir):
     env = {{}}
     env['PKG_CONFIG_PATH'] = ':'.join([
         '{{basedir}}/lib/pkgconfig',
-        '{{basedir}}/lib/{arch}/pkgconfig',
+        '{{basedir}}/lib/{arch_triplet}/pkgconfig',
         '{{basedir}}/usr/lib/pkgconfig',
-        '{{basedir}}/usr/lib/{arch}/pkgconfig',
+        '{{basedir}}/usr/lib/{arch_triplet}/pkgconfig',
         '{{basedir}}/usr/share/pkgconfig',
         '{{basedir}}/usr/local/lib/pkgconfig',
-        '{{basedir}}/usr/local/lib/{arch}/pkgconfig',
+        '{{basedir}}/usr/local/lib/{arch_triplet}/pkgconfig',
         '{{basedir}}/usr/local/share/pkgconfig']).format(basedir=basedir)
     env['PKG_CONFIG_SYSROOT_DIR'] = basedir
     env['PKG_CONFIG_LIBDIR'] = ''
@@ -470,13 +472,12 @@ if __name__ == '__main__':
 """
 
 
-def _create_pkg_config_override(bindir, installdir, stagedir):
+def _create_pkg_config_override(bindir, installdir, stagedir, arch_triplet):
     pkg_config_path = os.path.join(bindir, 'pkg-config')
     os.makedirs(os.path.dirname(pkg_config_path), exist_ok=True)
 
-    arch = common.get_arch_triplet()
     pkg_config_content = _PKG_CONFIG_TEMPLATE.format(
-        installdir=installdir, stagedir=stagedir, arch=arch)
+        installdir=installdir, stagedir=stagedir, arch_triplet=arch_triplet)
 
     with open(pkg_config_path, 'w') as fn:
         fn.write(pkg_config_content)

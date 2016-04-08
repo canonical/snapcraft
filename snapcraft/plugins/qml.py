@@ -66,7 +66,7 @@ class QmlPlugin(snapcraft.BasePlugin):
                 ]
 
     def _build_qt_config(self):
-        arch = snapcraft.common.get_arch_triplet()
+        arch = self.options.project.arch_triplet
         configdir = os.path.join(self.installdir, 'etc', 'xdg', 'qtchooser')
         os.makedirs(configdir, exist_ok=True)
         with open(os.path.join(configdir, 'snappy-qt5.conf'), 'w') as config:
@@ -77,7 +77,7 @@ class QmlPlugin(snapcraft.BasePlugin):
         self._build_qt_config()
 
     def env(self, root):
-        arch = snapcraft.common.get_arch_triplet()
+        arch = self.options.project.arch_triplet
         return [
             'LD_LIBRARY_PATH={}/usr/lib/{}:$LD_LIBRARY_PATH'.format(
                 root, arch),

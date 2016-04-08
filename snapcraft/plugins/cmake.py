@@ -85,11 +85,13 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             common.get_stagedir())
         env['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
-             '{0}/usr/include/{1}']).format(common.get_stagedir(),
-                                            common.get_arch_triplet())
+             '{0}/usr/include/{1}']).format(
+                common.get_stagedir(),
+                self.options.project.arch_triplet)
         env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
-             '{0}/usr/lib/{1}']).format(common.get_stagedir(),
-                                        common.get_arch_triplet())
+             '{0}/usr/lib/{1}']).format(
+                common.get_stagedir(),
+                self.options.project.arch_triplet)
 
         return env

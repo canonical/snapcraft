@@ -19,7 +19,6 @@ import os
 from unittest import mock
 
 from snapcraft.plugins import go
-from snapcraft import common
 from snapcraft import tests
 
 
@@ -47,7 +46,7 @@ class GoPluginTestCase(tests.TestCase):
             'CGO_LDFLAGS="$CGO_LDFLAGS -Lmyroot/lib -Lmyroot/usr/lib '
             '-Lmyroot/lib/{0} '
             '-Lmyroot/usr/lib/{0} $LDFLAGS"'.format(
-                common.get_arch_triplet())])
+                plugin.options.project.arch_triplet)])
 
     def test_pull_local_sources(self):
         class Options:
