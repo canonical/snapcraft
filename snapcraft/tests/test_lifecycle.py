@@ -17,24 +17,38 @@
 import logging
 
 import fixtures
+from unittest import mock
 
 import snapcraft
 from snapcraft import (
     common,
+    pluginhandler,
     tests,
 )
 
 
 class ExecutionTestCases(tests.TestCase):
 
-    def test_exception_when_dependency_is_required(self):
-        self.make_snapcraft_yaml("""name: after
-version: 0
-summary: test stage
-description: if the build is succesful the state file will be updated
-icon: icon.png
+    def setUp(self):
+        super().setUp()
 
-parts:
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+    def make_snapcraft_yaml(self, parts, snap_type=''):
+        yaml = """name: test
+version: 0
+summary: test
+description: test
+{type}
+
+{parts}
+"""
+
+        super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
+
+    def test_exception_when_dependency_is_required(self):
+        self.make_snapcraft_yaml("""parts:
   part1:
     plugin: nil
   part2:
@@ -42,7 +56,6 @@ parts:
     after:
       - part1
 """)
-        open('icon.png', 'w').close()
 
         with self.assertRaises(RuntimeError) as raised:
             snapcraft.lifecycle.execute(
@@ -53,17 +66,8 @@ parts:
             "Requested 'pull' of 'part2' but there are unsatisfied "
             "prerequisites: 'part1'")
 
-    def test_dependency_recursed_correctly(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: after
-version: 0
-summary: test stage
-description: if the build is succesful the state file will be updated
-icon: icon.png
-
-parts:
+    def test_no_exception_when_dependency_is_required_but_already_staged(self):
+        self.make_snapcraft_yaml("""parts:
   part1:
     plugin: nil
   part2:
@@ -71,13 +75,36 @@ parts:
     after:
       - part1
 """)
-        open('icon.png', 'w').close()
+
+        def _fake_should_step_run(self, step, force=False):
+            return self.name != 'part1'
+
+        with mock.patch.object(pluginhandler.PluginHandler,
+                               'should_step_run',
+                               _fake_should_step_run):
+            snapcraft.lifecycle.execute(
+                'pull', snapcraft.ProjectOptions(), part_names=['part2'])
+
+        self.assertEqual(
+            'Preparing to pull part2 \n'
+            'Pulling part2 \n',
+            self.fake_logger.output)
+
+    def test_dependency_recursed_correctly(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after:
+      - part1
+""")
 
         snap_info = snapcraft.lifecycle.execute(
             'pull', snapcraft.ProjectOptions())
 
         expected_snap_info = {
-            'name': 'after',
+            'name': 'test',
             'version': 0,
             'arch': [common.get_arch()],
             'type': ''
@@ -94,33 +121,23 @@ parts:
             'Staging part1 \n'
             'Preparing to pull part2 \n'
             'Pulling part2 \n',
-            fake_logger.output)
+            self.fake_logger.output)
 
     def test_os_type_returned_by_lifecycle(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: after
-version: 0
-summary: test stage
-description: check and see if we return type 'os'
-type: os
-
-parts:
+        self.make_snapcraft_yaml("""parts:
   part1:
     plugin: nil
   part2:
     plugin: nil
     after:
       - part1
-""")
-        open('icon.png', 'w').close()
+""", 'type: os')
 
         snap_info = snapcraft.lifecycle.execute(
             'pull', snapcraft.ProjectOptions())
 
         expected_snap_info = {
-            'name': 'after',
+            'name': 'test',
             'version': 0,
             'arch': [common.get_arch()],
             'type': 'os'
