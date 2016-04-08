@@ -59,13 +59,21 @@ class SshTestbed:
                     timeout -= sleep
 
     def run_command(self, command):
+        ssh_command = self._prepare_ssh_command(command)
+        return subprocess.check_output(
+            ssh_command, stderr=subprocess.STDOUT).decode('utf-8')
+
+    def _prepare_ssh_command(self, command):
         if isinstance(command, str):
             command = [command]
         ssh_command = ['ssh', '-l', self.user, '-p', self.port, self.ip]
         ssh_command.extend(self._get_options())
         ssh_command.extend(command)
-        return subprocess.check_output(
-            ssh_command, stderr=subprocess.STDOUT).decode('utf-8')
+        return ssh_command
+
+    def run_command_in_background(self, command):
+        ssh_command = self._prepare_ssh_command(command)
+        return subprocess.Popen(ssh_command)
 
     def _get_options(self):
         options = [
