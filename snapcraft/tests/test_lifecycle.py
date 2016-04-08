@@ -141,3 +141,32 @@ description: test
             'type': 'os'
         }
         self.assertEqual(snap_info, expected_snap_info)
+
+
+class HumanizeListTestCases(tests.TestCase):
+
+    def test_no_items(self):
+        items = []
+        output = snapcraft.lifecycle._humanize_list(items)
+        self.assertEqual(output, '')
+
+    def test_one_item(self):
+        items = ['foo']
+        output = snapcraft.lifecycle._humanize_list(items)
+        self.assertEqual(output, "'foo'")
+
+    def test_two_items(self):
+        items = ['foo', 'bar']
+        output = snapcraft.lifecycle._humanize_list(items)
+        self.assertEqual(output, "'bar' and 'foo'",
+                         "Expected 'bar' before 'foo' due to sorting")
+
+    def test_three_items(self):
+        items = ['foo', 'bar', 'baz']
+        output = snapcraft.lifecycle._humanize_list(items)
+        self.assertEqual(output, "'bar', 'baz', and 'foo'")
+
+    def test_four_items(self):
+        items = ['foo', 'bar', 'baz', 'qux']
+        output = snapcraft.lifecycle._humanize_list(items)
+        self.assertEqual(output, "'bar', 'baz', 'foo', and 'qux'")

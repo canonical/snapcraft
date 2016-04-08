@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
 
 from unittest import mock
 
@@ -165,50 +166,13 @@ parts:
         mock_clean.assert_called_with(
             expected_staged_state, expected_stripped_state, 'foo')
 
-    def test_clean_dependent_parts(self):
-        yaml = """name: clean-test
-version: 1.0
-summary: test clean
-description: test clean
 
-parts:
-  main:
-    plugin: nil
-    source: .
+class CleanCommandReverseDependenciesTestCase(tests.TestCase):
 
-  dependent:
-    plugin: nil
-    source: .
-    after: [main]"""
+    def setUp(self):
+        super().setUp()
 
-        super().make_snapcraft_yaml(yaml)
-
-        part_dirs = {}
-        for part in ['main', 'dependent']:
-            part_dirs[part] = os.path.join(common.get_partsdir(), part)
-            os.makedirs(part_dirs[part])
-
-        os.makedirs(common.get_stagedir())
-        os.makedirs(common.get_snapdir())
-
-        # Cleaning only `main`. Since `dependent` depends upon main, we expect
-        # that it will be cleaned as well. Otherwise it won't be using the new
-        # `main` when it is built.
-        main(['clean', 'main'])
-
-        self.assertFalse(os.path.exists(part_dirs['main']),
-                         'Expected part directory for main to be cleaned')
-        self.assertFalse(
-            os.path.exists(part_dirs['dependent']),
-            'Expected part directory for dependent to be cleaned as it '
-            'depends upon main')
-
-        self.assertFalse(os.path.exists(common.get_partsdir()))
-        self.assertFalse(os.path.exists(common.get_stagedir()))
-        self.assertFalse(os.path.exists(common.get_snapdir()))
-
-    def test_clean_nested_dependent_parts(self):
-        yaml = """name: clean-test
+        self.make_snapcraft_yaml("""name: clean-test
 version: 1.0
 summary: test clean
 description: test clean
@@ -223,38 +187,109 @@ parts:
     source: .
     after: [main]
 
-  dependent-dependent:
+  nested-dependent:
     plugin: nil
     source: .
-    after: [dependent]"""
+    after: [dependent]""")
 
-        super().make_snapcraft_yaml(yaml)
-
-        part_dirs = {}
-        for part in ['main', 'dependent', 'dependent-dependent']:
-            part_dirs[part] = os.path.join(common.get_partsdir(), part)
-            os.makedirs(part_dirs[part])
+        self.part_dirs = {}
+        for part in ['main', 'dependent', 'nested-dependent']:
+            self.part_dirs[part] = os.path.join(common.get_partsdir(), part)
+            os.makedirs(os.path.join(self.part_dirs[part], 'state'))
+            open(os.path.join(self.part_dirs[part], 'state', 'pull'),
+                 'w').close()
 
         os.makedirs(common.get_stagedir())
         os.makedirs(common.get_snapdir())
 
-        # Cleaning only `main`. Since `dependent` depends upon main, we expect
-        # that it will be cleaned as well. Otherwise it won't be using the new
-        # `main` when it is built.
-        main(['clean', 'main'])
+    def assert_clean(self, parts, common=False):
+        for part in parts:
+            self.assertFalse(
+                os.path.exists(self.part_dirs[part]),
+                'Expected part directory for {!r} to be cleaned'.format(part))
 
-        self.assertFalse(os.path.exists(part_dirs['main']),
-                         'Expected part directory for main to be cleaned')
-        self.assertFalse(
-            os.path.exists(part_dirs['dependent']),
-            'Expected part directory for dependent to be cleaned as it '
-            'depends upon main')
+        if common:
+            self.assertFalse(os.path.exists(common.get_partsdir()),
+                             'Expected parts/ directory to be removed')
+            self.assertFalse(os.path.exists(common.get_stagedir()),
+                             'Expected stage/ directory to be removed')
+            self.assertFalse(os.path.exists(common.get_snapdir()),
+                             'Expected snap/ directory to be removed')
 
-        self.assertFalse(
-            os.path.exists(part_dirs['dependent-dependent']),
-            'Expected part directory for dependent-dependent to be cleaned as '
-            'it depends upon dependent, which depends upon main')
+    def test_clean_dependent_parts(self):
+        main(['clean', 'dependent', 'nested-dependent'])
 
-        self.assertFalse(os.path.exists(common.get_partsdir()))
-        self.assertFalse(os.path.exists(common.get_stagedir()))
-        self.assertFalse(os.path.exists(common.get_snapdir()))
+        self.assert_clean(['dependent', 'nested-dependent'])
+        self.assertTrue(
+            os.path.exists(self.part_dirs['main']),
+            'Expected part directory for main to be untouched by the clean')
+
+    def test_clean_part_with_clean_dependent(self):
+        main(['clean', 'nested-dependent'])
+        self.assert_clean(['nested-dependent'])
+
+        # Not specifying nested-dependent here should be okay since it's
+        # already clean.
+        main(['clean', 'dependent'])
+        self.assert_clean(['dependent', 'nested-dependent'])
+
+    def test_clean_part_unspecified_uncleaned_dependent_raises(self):
+        # Not specifying nested-dependent here should result in clean raising
+        # an exception, saying that it has dependents. Note the use of '-d',
+        # so we get a RuntimeError instead of SystemExit.
+        with self.assertRaises(RuntimeError) as raised:
+            main(['-d', 'clean', 'dependent'])
+
+        self.assertEqual(
+            str(raised.exception),
+            "Requested clean of 'dependent' but 'nested-dependent' depends "
+            "upon it. Please add each to the clean command if that's what you "
+            "intended.")
+
+    def test_clean_nested_dependent_parts(self):
+        main(['clean', 'main', 'dependent', 'nested-dependent'])
+        self.assert_clean(['main', 'dependent', 'nested-dependent'])
+
+    def test_clean_part_with_clean_dependent_uncleaned_nested_dependent(self):
+        shutil.rmtree(self.part_dirs['dependent'])
+        self.assert_clean(['dependent'])
+
+        # Not specifying dependent here should be okay since it's already
+        # clean.
+        main(['clean', 'main', 'nested-dependent'])
+        self.assert_clean(['main', 'dependent', 'nested-dependent'])
+
+    def test_clean_part_with_clean_nested_dependent(self):
+        shutil.rmtree(self.part_dirs['nested-dependent'])
+        self.assert_clean(['nested-dependent'])
+
+        # Not specifying nested-dependent here should be okay since it's
+        # already clean.
+        main(['clean', 'main', 'dependent'])
+        self.assert_clean(['main', 'dependent', 'nested-dependent'])
+
+    def test_clean_part_unspecified_uncleaned_dependent_with_nest_raises(self):
+        # Not specifying dependent here should result in clean raising
+        # an exception, saying that it has dependents.  Note the use of '-d',
+        # so we get a RuntimeError instead of SystemExit.
+        with self.assertRaises(RuntimeError) as raised:
+            main(['-d', 'clean', 'main'])
+
+        self.assertEqual(
+            str(raised.exception),
+            "Requested clean of 'main' but 'dependent' depends upon it. "
+            "Please add each to the clean command if that's what you "
+            "intended.")
+
+    def test_clean_part_unspecified_uncleaned_nested_dependent_raises(self):
+        # Not specifying nested-dependent here should result in clean raising
+        # an exception, saying that it has dependents.  Note the use of '-d',
+        # so we get a RuntimeError instead of SystemExit.
+        with self.assertRaises(RuntimeError) as raised:
+            main(['-d', 'clean', 'main', 'dependent'])
+
+        self.assertEqual(
+            str(raised.exception),
+            "Requested clean of 'dependent' but 'nested-dependent' depends "
+            "upon it. Please add each to the clean command if that's what you "
+            "intended.")
