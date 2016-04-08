@@ -226,9 +226,9 @@ def _format_sources_list(sources, use_geoip, arch, release='xenial'):
     if arch in ('amd64', 'i386'):
         if use_geoip:
             geoip_prefix = _get_geoip_country_code_prefix()
+            prefix = '{}.archive'.format(geoip_prefix)
         else:
-            geoip_prefix = None
-        prefix = geoip_prefix + '.archive' if geoip_prefix else 'archive'
+            prefix = 'archive'
         suffix = 'ubuntu'
         security = 'security'
     else:
