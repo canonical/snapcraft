@@ -176,6 +176,9 @@ def read_metadata(metadata_filename):
 
 def upload_app(name, upload_data, metadata=None, config=None):
     """Request a new upload to be created for a given upload_id."""
+    if metadata is None:
+        metadata = {}
+
     upload_url = get_upload_url(name)
 
     result = {'success': False, 'errors': [],
@@ -187,12 +190,9 @@ def upload_app(name, upload_data, metadata=None, config=None):
             'No valid credentials found. Have you run "snapcraft login"?']
         return result
 
-    if metadata is None:
-        metadata = {}
-
     try:
-        data = get_post_data(upload_data, metadata=metadata)
-        files = get_post_files(metadata=metadata)
+        data = get_post_data(upload_data, metadata)
+        files = get_post_files(metadata)
 
         result = _upload_files(session, upload_url, data, files, result)
     except Exception as err:
@@ -280,7 +280,7 @@ def get_upload_url(name):
     return upload_url
 
 
-def get_post_data(upload_data, metadata=None):
+def get_post_data(upload_data, metadata):
     """Return the data to be posted in order to create the upload."""
     data = {
         'updown_id': upload_data['upload_id'],
@@ -301,7 +301,7 @@ def get_post_data(upload_data, metadata=None):
     return data
 
 
-def get_post_files(metadata=None):
+def get_post_files(metadata):
     """Return data about files to upload during the package upload request."""
     files = []
 
