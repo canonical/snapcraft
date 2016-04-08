@@ -36,11 +36,50 @@ class UbuntuTestCase(tests.TestCase):
         self.tempdir = tempdirObj.name
 
     @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
+    def test_sources_is_none_uses_default(self, mock_cc):
+        mock_cc.return_value = 'ar'
+
+        self.maxDiff = None
+        sources_list = repo._format_sources_list('', True, 'amd64')
+
+        expected_sources_list = \
+            '''deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial universe
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates universe
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates multiverse
+deb http://security.ubuntu.com/ubuntu xenial-security main restricted
+deb http://security.ubuntu.com/ubuntu xenial-security universe
+deb http://security.ubuntu.com/ubuntu xenial-security multiverse
+'''
+        self.assertEqual(sources_list, expected_sources_list)
+
+    def test_no_geoip_uses_default_archive(self):
+        sources_list = repo._format_sources_list(
+            repo._DEFAULT_SOURCES, False, 'amd64')
+
+        expected_sources_list = \
+            '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
+deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted
+deb http://archive.ubuntu.com/ubuntu/ xenial universe
+deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe
+deb http://archive.ubuntu.com/ubuntu/ xenial multiverse
+deb http://archive.ubuntu.com/ubuntu/ xenial-updates multiverse
+deb http://security.ubuntu.com/ubuntu xenial-security main restricted
+deb http://security.ubuntu.com/ubuntu xenial-security universe
+deb http://security.ubuntu.com/ubuntu xenial-security multiverse
+'''
+
+        self.assertEqual(sources_list, expected_sources_list)
+
+    @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
+        self.maxDiff = None
         mock_cc.return_value = 'ar'
 
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, 'amd64', 'vivid')
+            repo._DEFAULT_SOURCES, True, 'amd64', 'vivid')
 
         expected_sources_list = \
             '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
@@ -58,7 +97,7 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
     @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, 'armhf', 'trusty')
+            repo._DEFAULT_SOURCES, True, 'armhf', 'trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted

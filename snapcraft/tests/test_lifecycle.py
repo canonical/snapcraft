@@ -17,11 +17,11 @@
 import logging
 
 import fixtures
-import mock
+from unittest import mock
 
+import snapcraft
 from snapcraft import (
     common,
-    lifecycle,
     pluginhandler,
     tests,
 )
@@ -58,7 +58,8 @@ description: test
 """)
 
         with self.assertRaises(RuntimeError) as raised:
-            lifecycle.execute('pull', part_names=['part2'])
+            snapcraft.lifecycle.execute(
+                'pull', snapcraft.ProjectOptions(), part_names=['part2'])
 
         self.assertEqual(
             raised.exception.__str__(),
@@ -81,7 +82,8 @@ description: test
         with mock.patch.object(pluginhandler.PluginHandler,
                                'should_step_run',
                                _fake_should_step_run):
-            lifecycle.execute('pull', part_names=['part2'])
+            snapcraft.lifecycle.execute(
+                'pull', snapcraft.ProjectOptions(), part_names=['part2'])
 
         self.assertEqual(
             'Preparing to pull part2 \n'
@@ -98,7 +100,8 @@ description: test
       - part1
 """)
 
-        snap_info = lifecycle.execute('pull')
+        snap_info = snapcraft.lifecycle.execute(
+            'pull', snapcraft.ProjectOptions())
 
         expected_snap_info = {
             'name': 'test',
@@ -130,7 +133,8 @@ description: test
       - part1
 """, 'type: os')
 
-        snap_info = lifecycle.execute('pull')
+        snap_info = snapcraft.lifecycle.execute(
+            'pull', snapcraft.ProjectOptions())
 
         expected_snap_info = {
             'name': 'test',

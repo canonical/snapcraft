@@ -27,10 +27,23 @@ from snapcraft.tests import TestCase
 
 class TestMain(TestCase):
 
-    def test_default_command_is_snap(self):
-        with mock.patch('snapcraft.lifecycle.snap') as mock_cmd:
+    @mock.patch('snapcraft.lifecycle.snap')
+    def test_default_command_is_snap(self, mock_cmd):
+        project_options = snapcraft.ProjectOptions()
+        with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
+            mock_project_options.return_value = project_options
             snapcraft.main.main([])
-            mock_cmd.assert_called_once_with(None, None)
+            mock_cmd.assert_called_once_with(project_options, None, None)
+        self.assertFalse(project_options.use_geoip)
+
+    @mock.patch('snapcraft.lifecycle.snap')
+    def test_command_with_geoip(self, mock_cmd):
+        project_options = snapcraft.ProjectOptions()
+        with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
+            mock_project_options.return_value = project_options
+            snapcraft.main.main(['--enable-geoip'])
+            mock_cmd.assert_called_once_with(project_options, None, None)
+        self.assertTrue(project_options.use_geoip)
 
     @mock.patch('snapcraft.log.configure')
     def test_command_error(self, mock_log_configure):

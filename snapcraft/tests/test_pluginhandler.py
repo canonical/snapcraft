@@ -216,7 +216,7 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
-            'mock', 'mock-part', {}, {'properties': {}})
+            'mock', 'mock-part', {}, None, {'properties': {}})
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock')
 
