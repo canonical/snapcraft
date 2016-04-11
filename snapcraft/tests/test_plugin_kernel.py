@@ -676,11 +676,11 @@ ACCEPT=n
             'kernel build did not output a System.map in top level dir',
             str(raised.exception))
 
-    def test_set_target_machine(self):
+    def test_enable_cross_compilation(self):
         self.options.project = snapcraft.ProjectOptions(
             target_deb_arch='arm64')
         plugin = kernel.KernelPlugin('test-part', self.options)
-        plugin.set_target_machine()
+        plugin.enable_cross_compilation()
 
         self.assertEqual(
             plugin.make_cmd,

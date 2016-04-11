@@ -120,13 +120,14 @@ class ProjectOptions:
             self.__target_machine = self.__host_machine
         else:
             self.__target_machine = _find_machine(target_deb_arch)
+            logger.info('Setting target machine to {!r}'.format(
+                target_deb_arch))
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
 
 
 def _find_machine(deb_arch):
     for machine in _ARCH_TRANSLATIONS:
         if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
-            logger.info('Setting target machine to {!r}'.format(machine))
             return machine
 
     raise EnvironmentError(

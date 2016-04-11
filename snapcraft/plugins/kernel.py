@@ -142,7 +142,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
 
-    def set_target_machine(self):
+    def enable_cross_compilation(self):
         logger.info('Cross compiling kernel target {!r}'.format(
             self.options.project.kernel_arch))
         self.make_cmd.append('ARCH={}'.format(

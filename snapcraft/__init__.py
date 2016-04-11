@@ -288,8 +288,8 @@ class BasePlugin:
         """
         return []
 
-    def set_target_machine(self):
-        """Set the target compilation architecture to machine."""
+    def enable_cross_compilation(self):
+        """Enable cross compilation for the plugin."""
         raise NotImplementedError(
             'Building for a different target architecture requires '
             'a plugin specific implementation in the '

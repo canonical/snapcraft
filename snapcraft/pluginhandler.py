@@ -176,8 +176,8 @@ class PluginHandler:
         if self._project_options.is_cross_compiling:
             logger.debug(
                 'Setting {!r} as the compilation target for {!r}'.format(
-                    self._project_options.target_machine, plugin_name))
-            self.code.set_target_machine()
+                    self._project_options.deb_arch, plugin_name))
+            self.code.enable_cross_compilation()
 
     def makedirs(self):
         dirs = [

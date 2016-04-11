@@ -128,6 +128,7 @@ def _get_project_options(args):
     options = {}
     options['use_geoip'] = args['--enable-geoip']
     options['parallel_builds'] = not args['--no-parallel-build']
+    options['target_deb_arch'] = args['--target-arch']
 
     return snapcraft.ProjectOptions(**options)
 
@@ -142,9 +143,6 @@ def main(argv=None):
 
     log.configure(log_level=log_level)
     project_options = _get_project_options(args)
-
-    if args['--target-arch']:
-        common.set_target_machine(args['--target-arch'])
 
     try:
         return run(args, project_options)
