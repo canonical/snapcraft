@@ -83,3 +83,31 @@ class CommonTestCase(tests.TestCase):
 
                 with open(file_info['path'], 'r') as f:
                     self.assertEqual(f.read(), file_info['expected'])
+
+
+class CommonMigratedTestCase(tests.TestCase):
+
+    def test_parallel_build_count_migration_message(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            common.get_parallel_build_count()
+
+        self.assertEqual(
+            str(raised.exception),
+            "This plugin is outdated, use "
+            "'options.project.parallel_build_count'")
+
+    def test_deb_arch_migration_message(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            common.get_arch()
+
+        self.assertEqual(
+            str(raised.exception),
+            "This plugin is outdated, use 'options.project.deb_arch'")
+
+    def test_arch_triplet_migration_message(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            common.get_arch_triplet()
+
+        self.assertEqual(
+            str(raised.exception),
+            "This plugin is outdated, use 'options.project.arch_triplet'")
