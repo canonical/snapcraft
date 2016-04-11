@@ -35,9 +35,9 @@ class KBuildPluginTestCase(tests.TestCase):
             kconfigfile = None
             kdefconfig = []
             kconfigs = []
-            project = snapcraft.ProjectOptions()
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
@@ -66,7 +66,8 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -104,7 +105,8 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -145,7 +147,8 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -191,7 +194,8 @@ ACCEPT=n
             'ACCEPT=n',
         ]
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         config_file = os.path.join(plugin.builddir, '.config')
 

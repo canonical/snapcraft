@@ -19,6 +19,7 @@ import os
 from os import path
 from unittest import mock
 
+import snapcraft
 from snapcraft.plugins import nodejs
 from snapcraft import tests
 
@@ -27,6 +28,8 @@ class NodePluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
+
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.common.run')
         self.run_mock = patcher.start()
@@ -45,7 +48,8 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
             node_packages = []
 
-        plugin = nodejs.NodePlugin('test-part', Options())
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -63,7 +67,8 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
             node_packages = []
 
-        plugin = nodejs.NodePlugin('test-part', Options())
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
 
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
@@ -83,7 +88,8 @@ class NodePluginTestCase(tests.TestCase):
             source = None
             node_packages = ['my-pkg']
 
-        plugin = nodejs.NodePlugin('test-part', Options())
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -109,7 +115,8 @@ class NodePluginTestCase(tests.TestCase):
             node_packages = []
 
         with self.assertRaises(EnvironmentError) as raised:
-            nodejs.NodePlugin('test-part', Options())
+            nodejs.NodePlugin('test-part', Options(),
+                              self.project_options)
 
         self.assertEqual(raised.exception.__str__(),
                          'architecture not supported (fantasy-arch)')
@@ -144,7 +151,8 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
             node_packages = []
 
-        plugin = nodejs.NodePlugin('test-part', Options())
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
 
         os.makedirs(plugin.sourcedir)
 

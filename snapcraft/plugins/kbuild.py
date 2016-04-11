@@ -94,14 +94,14 @@ class KBuildPlugin(BasePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.append('make')
 
         self.make_targets = []
         self.make_install_targets = ['install']
         self.make_cmd = [
-            'make', '-j{}'.format(options.project.parallel_build_count)]
+            'make', '-j{}'.format(project.parallel_build_count)]
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
 

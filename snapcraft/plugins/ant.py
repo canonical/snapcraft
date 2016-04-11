@@ -38,8 +38,8 @@ logger = logging.getLogger(__name__)
 
 class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.append('ant')
 
     def build(self):

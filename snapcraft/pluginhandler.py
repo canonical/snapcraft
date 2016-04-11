@@ -170,8 +170,13 @@ class PluginHandler:
         plugin = _get_plugin(module)
         options = _make_options(part_schema, properties, plugin.schema())
         # For backwards compatibility we add the project options as an option
-        setattr(options, 'project', self._project_options)
-        self.code = plugin(self.name, options)
+        try:
+            self.code = plugin(self.name, options, self._project_options)
+        except TypeError:
+            self.code = plugin(self.name, options)
+            setattr(self.code, 'project', self._project_options)
+        if not self.code.project:
+            self.code.project = self._project_options
 
         if self._project_options.is_cross_compiling:
             logger.debug(

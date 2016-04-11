@@ -42,9 +42,9 @@ class KernelPluginTestCase(tests.TestCase):
             kernel_initrd_firmware = []
             kernel_device_trees = []
             kernel_initrd_compression = 'gz'
-            project = snapcraft.ProjectOptions()
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
@@ -141,8 +141,7 @@ class KernelPluginTestCase(tests.TestCase):
 
         def create_assets():
             build_arch_path = os.path.join(
-                builddir, 'arch',
-                self.options.project.kernel_arch, 'boot')
+                builddir, 'arch', self.project_options.kernel_arch, 'boot')
 
             initrd_path = os.path.join(
                 installdir, 'initrd-{}.img'.format(kernel_version))
@@ -188,7 +187,8 @@ class KernelPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -227,7 +227,8 @@ class KernelPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -284,7 +285,8 @@ class KernelPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -330,7 +332,8 @@ ACCEPT=n
             'ACCEPT=n',
         ]
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         config_file = os.path.join(plugin.builddir, '.config')
 
@@ -382,7 +385,8 @@ ACCEPT=n
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ['defconfig', 'defconfig2']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         config_file = os.path.join(plugin.builddir, '.config')
 
@@ -424,7 +428,8 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_device_trees = ['fake-dtb']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True)
@@ -464,7 +469,8 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_device_trees = ['fake-dtb']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -481,7 +487,8 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_initrd_modules = ['my-fake-module']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -543,7 +550,8 @@ ACCEPT=n
         self.options.kernel_initrd_firmware = [
             'lib/firmware/fake-fw-dir', 'lib/firmware/fake-fw.bin']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -592,7 +600,8 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_with_firmware = False
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True)
@@ -621,7 +630,8 @@ ACCEPT=n
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir,
@@ -633,7 +643,7 @@ ACCEPT=n
         self.assertEqual(
             'kernel build did not output a vmlinux binary in top level dir, '
             'expected {!r}'.format(os.path.join(
-                plugin.builddir, 'arch', self.options.project.kernel_arch,
+                plugin.builddir, 'arch', self.project_options.kernel_arch,
                 'boot', 'bzImage')),
             str(raised.exception))
 
@@ -643,7 +653,8 @@ ACCEPT=n
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir,
@@ -663,7 +674,8 @@ ACCEPT=n
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir,
@@ -677,9 +689,9 @@ ACCEPT=n
             str(raised.exception))
 
     def test_enable_cross_compilation(self):
-        self.options.project = snapcraft.ProjectOptions(
-            target_deb_arch='arm64')
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
         plugin.enable_cross_compilation()
 
         self.assertEqual(
@@ -692,9 +704,10 @@ ACCEPT=n
         config = {'config_key': 'config_value'}
         config_mock.return_value = config
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
         plugin.pull()
 
         download_mock.assert_called_once_with(
             'ubuntu-core/edge', plugin.os_snap, config,
-            self.options.project.deb_arch)
+            self.project_options.deb_arch)

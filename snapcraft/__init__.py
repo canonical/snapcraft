@@ -171,7 +171,7 @@ class BasePlugin:
         """Define additional sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
-    def __init__(self, name, options):
+    def __init__(self, name, options, project=None):
         self.name = name
         self.build_packages = []
         self.stage_packages = []
@@ -181,6 +181,7 @@ class BasePlugin:
         with contextlib.suppress(AttributeError):
             self.build_packages = options.build_packages
 
+        self.project = project
         self.options = options
         self.partdir = os.path.join(common.get_partsdir(), self.name)
         self.sourcedir = os.path.join(self.partdir, 'src')

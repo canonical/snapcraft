@@ -59,8 +59,8 @@ class GoPlugin(snapcraft.BasePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.append('golang-go')
         self._gopath = os.path.join(self.partdir, 'go')
         self._gopath_src = os.path.join(self._gopath, 'src')
@@ -76,8 +76,7 @@ class GoPlugin(snapcraft.BasePlugin):
                 '-L{0}/usr/lib',
                 '-L{0}/lib/{1}',
                 '-L{0}/usr/lib/{1}',
-                '$LDFLAGS'
-            ]).format(root, self.options.project.arch_triplet) + '"',
+                '$LDFLAGS']).format(root, self.project.arch_triplet) + '"',
         ]
         return env
 

@@ -128,8 +128,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
     def compression_cmd(self):
         return _compression_command[self.options.kernel_initrd_compression]
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
 
         self.make_targets = [self.options.kernel_image_target, 'modules']
         self.dtbs = ['{}.dtb'.format(i)
@@ -144,11 +144,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def enable_cross_compilation(self):
         logger.info('Cross compiling kernel target {!r}'.format(
-            self.options.project.kernel_arch))
+            self.project.kernel_arch))
         self.make_cmd.append('ARCH={}'.format(
-            self.options.project.kernel_arch))
+            self.project.kernel_arch))
         self.make_cmd.append('CROSS_COMPILE={}'.format(
-            self.options.project.cross_compiler_prefix))
+            self.project.cross_compiler_prefix))
 
     def _get_fw_install_targets(self):
         if not self.options.kernel_with_firmware:
@@ -242,7 +242,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _get_build_arch_dir(self):
         return os.path.join(
-            self.builddir, 'arch', self.options.project.kernel_arch, 'boot')
+            self.builddir, 'arch', self.project.kernel_arch, 'boot')
 
     def _copy_vmlinuz(self):
         kernel = '{}-{}'.format(
@@ -287,8 +287,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         super().pull()
         config = load_config()
         storeapi.download(
-            'ubuntu-core/edge', self.os_snap, config,
-            self.options.project.deb_arch)
+            'ubuntu-core/edge', self.os_snap, config, self.project.deb_arch)
 
     def do_install(self):
         super().do_install()

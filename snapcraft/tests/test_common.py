@@ -94,7 +94,7 @@ class CommonMigratedTestCase(tests.TestCase):
         self.assertEqual(
             str(raised.exception),
             "This plugin is outdated, use "
-            "'options.project.parallel_build_count'")
+            "'project.parallel_build_count'")
 
     def test_deb_arch_migration_message(self):
         with self.assertRaises(EnvironmentError) as raised:
@@ -102,7 +102,7 @@ class CommonMigratedTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "This plugin is outdated, use 'options.project.deb_arch'")
+            "This plugin is outdated, use 'project.deb_arch'")
 
     def test_arch_triplet_migration_message(self):
         with self.assertRaises(EnvironmentError) as raised:
@@ -110,4 +110,4 @@ class CommonMigratedTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "This plugin is outdated, use 'options.project.arch_triplet'")
+            "This plugin is outdated, use 'project.arch_triplet'")

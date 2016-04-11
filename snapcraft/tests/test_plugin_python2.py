@@ -18,6 +18,7 @@ import os
 
 from unittest import mock
 
+import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import python2
 
@@ -32,13 +33,15 @@ class Python2PluginTestCase(tests.TestCase):
             python_packages = []
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
     @mock.patch.object(python2.Python2Plugin, 'run')
     @mock.patch.object(python2.Python2Plugin, 'run_output',
                        return_value='python2.7')
     def test_pip_relative_site_packages_symlink(self, run_output_mock,
                                                 run_mock):
-        plugin = python2.Python2Plugin('test-part', self.options)
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
         os.makedirs(plugin.sourcedir)
         os.makedirs(os.path.join(
             plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'))

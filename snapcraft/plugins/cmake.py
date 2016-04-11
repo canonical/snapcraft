@@ -54,8 +54,8 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.append('cmake')
 
     def build(self):
@@ -75,7 +75,7 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
                  self.options.configflags, env=env)
 
         self.run(['make', '-j{}'.format(
-            self.options.project.parallel_build_count)], env=env)
+            self.project.parallel_build_count)], env=env)
 
         self.run(['make', 'install', 'DESTDIR=' + self.installdir], env=env)
 
@@ -86,12 +86,10 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         env['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
              '{0}/usr/include/{1}']).format(
-                common.get_stagedir(),
-                self.options.project.arch_triplet)
+                common.get_stagedir(), self.project.arch_triplet)
         env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
              '{0}/usr/lib/{1}']).format(
-                common.get_stagedir(),
-                self.options.project.arch_triplet)
+                common.get_stagedir(), self.project.arch_triplet)
 
         return env

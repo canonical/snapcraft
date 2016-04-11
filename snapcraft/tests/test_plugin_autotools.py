@@ -32,9 +32,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         class Options:
             configflags = []
             install_via = 'destdir'
-            project = snapcraft.ProjectOptions()
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
@@ -104,13 +104,15 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def test_install_via_invalid_enum(self):
         self.options.install_via = 'invalid'
         with self.assertRaises(RuntimeError) as raised:
-            autotools.AutotoolsPlugin('test-part', self.options)
+            autotools.AutotoolsPlugin('test-part', self.options,
+                                      self.project_options)
 
         self.assertEqual(str(raised.exception),
                          'Unsupported installation method: "invalid"')
 
     def build_with_configure(self):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # Create both configure and autogen.sh.
@@ -148,7 +150,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ])
 
     def build_with_autogen(self):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # No configure-- only autogen.sh. Make sure it's executable.
@@ -188,7 +191,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ])
 
     def build_with_autoreconf(self):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # No configure or autogen.sh.
@@ -226,7 +230,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
     @mock.patch('sys.stdout')
     def test_build_nonexecutable_autogen(self, stdout_mock):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # Make a non-executable autogen.sh

@@ -31,9 +31,9 @@ class MakePluginTestCase(tests.TestCase):
         class Options:
             makefile = None
             make_parameters = []
-            project = snapcraft.ProjectOptions()
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
@@ -70,7 +70,8 @@ class MakePluginTestCase(tests.TestCase):
 
     @mock.patch.object(make.MakePlugin, 'run')
     def test_build(self, run_mock):
-        plugin = make.MakePlugin('test-part', self.options)
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
@@ -85,7 +86,8 @@ class MakePluginTestCase(tests.TestCase):
     @mock.patch.object(make.MakePlugin, 'run')
     def test_build_makefile(self, run_mock):
         self.options.makefile = 'makefile.linux'
-        plugin = make.MakePlugin('test-part', self.options)
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
         os.makedirs(plugin.sourcedir)
 
         plugin.build()

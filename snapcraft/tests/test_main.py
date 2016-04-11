@@ -32,7 +32,7 @@ class TestMain(TestCase):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main([])
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, use_geoip=False)
+                parallel_builds=True, target_deb_arch=None, use_geoip=False)
             self.assertTrue(mock_cmd.called, mock_cmd.called)
 
     @mock.patch('snapcraft.lifecycle.snap')
@@ -41,7 +41,7 @@ class TestMain(TestCase):
             snapcraft.main.main(['--enable-geoip'])
             self.assertTrue(mock_cmd.called, mock_cmd.called)
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, use_geoip=True)
+                parallel_builds=True, target_deb_arch=None, use_geoip=True)
 
     @mock.patch('snapcraft.log.configure')
     def test_command_error(self, mock_log_configure):
@@ -74,14 +74,21 @@ class TestMain(TestCase):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main([])
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, use_geoip=False)
+                parallel_builds=True, target_deb_arch=None, use_geoip=False)
 
     @mock.patch('snapcraft.lifecycle.snap')
     def test_command_disable_parallel_build(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main(['--no-parallel-build'])
             mock_project_options.assert_called_once_with(
-                parallel_builds=False, use_geoip=False)
+                parallel_builds=False, target_deb_arch=None, use_geoip=False)
+
+    @mock.patch('snapcraft.lifecycle.snap')
+    def test_command_with_target_deb_arch(self, mock_cmd):
+        with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
+            snapcraft.main.main(['--target-arch', 'arm64'])
+            mock_project_options.assert_called_once_with(
+                parallel_builds=True, target_deb_arch='arm64', use_geoip=False)
 
     @mock.patch('pkg_resources.require')
     @mock.patch('sys.stdout', new_callable=io.StringIO)

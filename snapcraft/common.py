@@ -121,17 +121,17 @@ def get_schemadir():
 
 def get_arch_triplet():
     raise EnvironmentError(
-        "This plugin is outdated, use 'options.project.arch_triplet'")
+        "This plugin is outdated, use 'project.arch_triplet'")
 
 
 def get_arch():
     raise EnvironmentError(
-        "This plugin is outdated, use 'options.project.deb_arch'")
+        "This plugin is outdated, use 'project.deb_arch'")
 
 
 def get_parallel_build_count():
     raise EnvironmentError(
-        "This plugin is outdated, use 'options.project.parallel_build_count'")
+        "This plugin is outdated, use 'project.parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):

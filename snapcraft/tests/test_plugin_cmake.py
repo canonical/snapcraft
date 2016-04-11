@@ -32,6 +32,8 @@ class CMakeTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.project_options = snapcraft.ProjectOptions()
+
         patcher = mock.patch('snapcraft.common.run')
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -43,9 +45,9 @@ class CMakeTestCase(tests.TestCase):
     def test_build_referencing_sourcedir_if_no_subdir(self):
         class Options:
             configflags = []
-            project = snapcraft.ProjectOptions()
 
-        plugin = cmake.CMakePlugin('test-part', Options())
+        plugin = cmake.CMakePlugin('test-part', Options(),
+                                   self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
 
@@ -61,9 +63,9 @@ class CMakeTestCase(tests.TestCase):
         class Options:
             configflags = []
             source_subdir = 'subdir'
-            project = snapcraft.ProjectOptions()
 
-        plugin = cmake.CMakePlugin('test-part', Options())
+        plugin = cmake.CMakePlugin('test-part', Options(),
+                                   self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
 
@@ -80,9 +82,9 @@ class CMakeTestCase(tests.TestCase):
     def test_build_environment(self):
         class Options:
             configflags = []
-            project = snapcraft.ProjectOptions()
 
-        plugin = cmake.CMakePlugin('test-part', Options())
+        plugin = cmake.CMakePlugin('test-part', Options(),
+                                   self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
 
@@ -94,12 +96,12 @@ class CMakeTestCase(tests.TestCase):
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
              '{0}/usr/include/{1}']).format(
                 common.get_stagedir(),
-                plugin.options.project.arch_triplet)
+                plugin.project.arch_triplet)
         expected['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
              '{0}/usr/lib/{1}']).format(
                 common.get_stagedir(),
-                plugin.options.project.arch_triplet)
+                plugin.project.arch_triplet)
 
         self.assertEqual(3, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:

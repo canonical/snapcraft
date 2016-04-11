@@ -93,8 +93,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
 
         # Get a unique set of packages
         self.catkin_packages = set(options.catkin_packages)
@@ -205,7 +205,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             logger.info('Preparing to fetch package dependencies...')
             ubuntu = repo.Ubuntu(
-                ubuntudir, self.options.project,
+                ubuntudir, self.project,
                 sources=self.PLUGIN_STAGE_SOURCES)
 
             logger.info('Fetching package dependencies...')
@@ -349,7 +349,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 os.path.join(self.installdir, 'usr', 'include', 'c++',
                              self.gcc_version),
                 os.path.join(self.installdir, 'usr', 'include',
-                             self.options.project.arch_triplet, 'c++',
+                             self.project.arch_triplet, 'c++',
                              self.gcc_version)),
             '-DCMAKE_LD_FLAGS="$LDFLAGS"',
             '-DCMAKE_C_COMPILER={}'.format(

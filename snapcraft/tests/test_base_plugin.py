@@ -28,9 +28,14 @@ from snapcraft import (
 
 class TestBasePlugin(tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.project_options = snapcraft.ProjectOptions()
+
     def test_get_source_with_unrecognized_source_must_raise_exception(self):
         options = tests.MockOptions('unrecognized://test_source')
-        plugin = snapcraft.BasePlugin('test_plugin', options)
+        plugin = snapcraft.BasePlugin('test_plugin', options,
+                                      self.project_options)
         with self.assertRaises(ValueError) as raised:
             plugin.pull()
 
@@ -41,7 +46,8 @@ class TestBasePlugin(tests.TestCase):
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
         options = tests.MockOptions('file')
         mock_isdir.return_value = False
-        plugin = snapcraft.BasePlugin('test_plugin', options)
+        plugin = snapcraft.BasePlugin('test_plugin', options,
+                                      self.project_options)
         with self.assertRaises(ValueError) as raised:
             plugin.pull()
 
@@ -52,7 +58,8 @@ class TestBasePlugin(tests.TestCase):
 
     def test_build_with_subdir_copies_sourcedir(self):
         options = tests.MockOptions(source_subdir='src')
-        plugin = snapcraft.BasePlugin('test-part', options)
+        plugin = snapcraft.BasePlugin('test-part', options,
+                                      self.project_options)
 
         subdir = os.path.join(plugin.sourcedir, plugin.options.source_subdir)
         os.makedirs(subdir)

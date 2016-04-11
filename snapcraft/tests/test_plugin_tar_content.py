@@ -16,6 +16,8 @@
 
 import os.path
 import tarfile
+
+import snapcraft
 from snapcraft.plugins.tar_content import TarContentPlugin
 from snapcraft.tests import TestCase
 
@@ -24,6 +26,9 @@ class TestTarContentPlugin(TestCase):
 
     def setUp(self):
         super().setUp()
+
+        self.project_options = snapcraft.ProjectOptions()
+
         # setup the expected target dir in our tempdir
         self.build_prefix = 'parts/tar_content/build/'
         os.makedirs(self.build_prefix)
@@ -37,7 +42,8 @@ class TestTarContentPlugin(TestCase):
         # ensure that a absolute path for a destination directory
         # raises an exception
         with self.assertRaises(ValueError) as raised:
-            TarContentPlugin('tar_content', Options())
+            TarContentPlugin('tar_content', Options(),
+                             self.project_options)
 
         self.assertEqual(raised.exception.__str__(),
                          "path '/destdir1' must be relative")
@@ -55,7 +61,8 @@ class TestTarContentPlugin(TestCase):
         tar.add(file_to_tar)
         tar.close()
 
-        t = TarContentPlugin('tar_content', Options())
+        t = TarContentPlugin('tar_content', Options(),
+                             self.project_options)
         os.mkdir(t.sourcedir)
         t.pull()
         t.build()
@@ -70,7 +77,8 @@ class TestTarContentPlugin(TestCase):
         class Options:
             source = '.'
             destination = None
-        TarContentPlugin('tar_content', Options())
+        TarContentPlugin('tar_content', Options(),
+                         self.project_options)
 
         self.assertTrue(
             os.path.exists(os.path.join(self.build_prefix)))
