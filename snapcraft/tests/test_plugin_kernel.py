@@ -46,11 +46,6 @@ class KernelPluginTestCase(tests.TestCase):
 
         self.options = Options()
 
-        patcher = mock.patch('multiprocessing.cpu_count')
-        self.cpu_count = patcher.start()
-        self.cpu_count.return_value = 2
-        self.addCleanup(patcher.stop)
-
         patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
