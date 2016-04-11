@@ -21,6 +21,7 @@ import builtins
 
 from unittest import mock
 
+import snapcraft
 from snapcraft.plugins import catkin
 from snapcraft import (
     repo,
@@ -60,6 +61,7 @@ class CatkinPluginTestCase(tests.TestCase):
             include_roscore = False
 
         self.properties = props()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
@@ -200,7 +202,8 @@ class CatkinPluginTestCase(tests.TestCase):
                         '"required"')
 
     def test_pull_debian_dependencies(self):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
@@ -229,7 +232,8 @@ class CatkinPluginTestCase(tests.TestCase):
     def test_pull_local_dependencies(self):
         self.properties.catkin_packages.append('package_2')
 
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies (only local)
@@ -255,7 +259,8 @@ class CatkinPluginTestCase(tests.TestCase):
                         self.ubuntu_mock.mock_calls)
 
     def test_pull_invalid_dependency(self):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         self.dependencies_mock.return_value = ['foo']
@@ -272,7 +277,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
     def test_pull_with_roscore(self):
         self.properties.include_roscore = True
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies
@@ -302,7 +308,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
     def test_pull_unable_to_resolve_roscore(self):
         self.properties.include_roscore = True
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies
@@ -317,7 +324,8 @@ class CatkinPluginTestCase(tests.TestCase):
                          'Unable to determine system dependency for roscore')
 
     def test_clean_pull(self):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
@@ -336,7 +344,8 @@ class CatkinPluginTestCase(tests.TestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it contains a 'src' directory, this is a valid Catkin workspace.
         try:
-            plugin = catkin.CatkinPlugin('test-part', self.properties)
+            plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                         self.project_options)
             os.makedirs(os.path.join(plugin.sourcedir, 'src'))
             plugin.pull()
         except FileNotFoundError:
@@ -348,7 +357,8 @@ class CatkinPluginTestCase(tests.TestCase):
         # it does not contain a `src` folder and `source-space` is 'src', this
         # should fail.
         with self.assertRaises(FileNotFoundError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties)
+            plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                         self.project_options)
             plugin.pull()
 
         self.assertEqual(
@@ -363,7 +373,8 @@ class CatkinPluginTestCase(tests.TestCase):
         # Normally this would mean it contained a `src` directory, but it can
         # be remapped via the `source-space` key.
         try:
-            plugin = catkin.CatkinPlugin('test-part', self.properties)
+            plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                         self.project_options)
             os.makedirs(os.path.join(plugin.sourcedir,
                         self.properties.source_space))
             plugin.pull()
@@ -378,7 +389,8 @@ class CatkinPluginTestCase(tests.TestCase):
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
         with self.assertRaises(FileNotFoundError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties)
+            plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                         self.project_options)
             plugin.pull()
 
         self.assertEqual(
@@ -393,7 +405,9 @@ class CatkinPluginTestCase(tests.TestCase):
         # source_space was specified to be the same as the root, this should
         # fail.
         with self.assertRaises(RuntimeError) as raised:
-            catkin.CatkinPlugin('test-part', self.properties).pull()
+            plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                         self.project_options)
+            plugin.pull()
 
         self.assertEqual(str(raised.exception),
                          'source-space cannot be the root of the Catkin '
@@ -406,7 +420,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
     def test_build(self, finish_build_mock, prepare_build_mock,
                    run_output_mock, bashrun_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         plugin.build()
@@ -445,7 +460,8 @@ class CatkinPluginTestCase(tests.TestCase):
                             run_output_mock, bashrun_mock, run_mock):
         self.properties.catkin_packages.append('package_2')
 
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         plugin.build()
@@ -478,7 +494,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_build_runs_in_bash(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         plugin.build()
@@ -491,7 +508,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
     def test_build_encompasses_source_space(self, finish_mock, prepare_mock):
         self.properties.catkin_packages = []
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         plugin.build()
@@ -504,7 +522,8 @@ class CatkinPluginTestCase(tests.TestCase):
                                                      prepare_mock):
         self.properties.catkin_packages = []
         self.properties.source_space = 'foo'
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'foo'))
 
         plugin.build()
@@ -517,7 +536,8 @@ class CatkinPluginTestCase(tests.TestCase):
         self.properties.catkin_packages = []
         self.properties.source_subdir = 'workspace'
         self.properties.source_space = 'foo'
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'workspace', 'foo'))
 
         plugin.build()
@@ -525,7 +545,8 @@ class CatkinPluginTestCase(tests.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
 
     def test_prepare_build(self):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.rosdir, 'test'))
 
         # Place a few .cmake files with incorrect paths, and some files that
@@ -572,7 +593,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_finish_build_python_shebangs(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.rosdir, 'bin'))
 
         # Place a few files with bad shebangs, and some files that shouldn't be
@@ -609,7 +631,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_finish_build_absolute_python(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d'))
 
         ros_profile = os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d',
@@ -630,7 +653,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_finish_build_binary(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         os.makedirs(plugin.rosdir)
 
         # Place a file to be discovered by _finish_build().
@@ -650,7 +674,8 @@ class CatkinPluginTestCase(tests.TestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_finish_build_cmake_prefix_path(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
 
         setup_file = os.path.join(plugin.rosdir, '_setup_util.py')
         os.makedirs(os.path.dirname(setup_file))
@@ -671,7 +696,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment(self, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
 
         python_path = os.path.join(
             plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
@@ -697,7 +723,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment_no_python(self, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties)
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
 
         python_path = os.path.join(
             plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')

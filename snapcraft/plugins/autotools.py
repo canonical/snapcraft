@@ -67,8 +67,8 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.extend([
             'autoconf',
             'automake',
@@ -112,6 +112,5 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             configure_command.append('--prefix=' + self.installdir)
 
         self.run(configure_command + self.options.configflags)
-        self.run(['make', '-j{}'.format(
-            snapcraft.common.get_parallel_build_count())])
+        self.run(['make', '-j{}'.format(self.project.parallel_build_count)])
         self.run(make_install_command)

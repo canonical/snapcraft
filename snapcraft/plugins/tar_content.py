@@ -42,8 +42,8 @@ class TarContentPlugin(snapcraft.BasePlugin):
             ]
         }
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
 
         logger.warning("DEPRECATED: The 'tar-content' plugin's functionality "
                        "has been replaced by the 'copy' plugin, and it will "
@@ -54,7 +54,7 @@ class TarContentPlugin(snapcraft.BasePlugin):
             raise ValueError('path {!r} must be relative'.format(
                 self.options.destination))
 
-    def set_target_machine(self, machine):
+    def enable_cross_compilation(self):
         pass
 
     def pull(self):

@@ -117,7 +117,7 @@ class PluginHandler:
         if not self._ubuntu:
             self._ubuntu = repo.Ubuntu(
                 self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES,
-                use_geoip=self._project_options.use_geoip)
+                project_options=self._project_options)
 
         return self._ubuntu
 
@@ -169,12 +169,30 @@ class PluginHandler:
 
         plugin = _get_plugin(module)
         options = _make_options(part_schema, properties, plugin.schema())
-        self.code = plugin(self.name, options)
-        if common.host_machine != common.target_machine:
+        # For backwards compatibility we add the project to the plugin
+        try:
+            self.code = plugin(self.name, options, self._project_options)
+        except TypeError:
+            logger.warning(
+                'DEPRECATED: the plugin used by part {!r} needs to be updated '
+                'to accept project options in its initializer. See '
+                'https://github.com/ubuntu-core/snapcraft/blob/master/docs/'
+                'plugins.md#initializing-a-plugin for more information'.format(
+                    self.name))
+            self.code = plugin(self.name, options)
+            # This is for plugins that don't inherit from BasePlugin
+            if not hasattr(self.code, 'project'):
+                setattr(self.code, 'project', self._project_options)
+            # This is for plugins that inherit from BasePlugin but don't have
+            # project in init.
+            if not self.code.project:
+                self.code.project = self._project_options
+
+        if self._project_options.is_cross_compiling:
             logger.debug(
                 'Setting {!r} as the compilation target for {!r}'.format(
-                    common.target_machine, plugin_name))
-            self.code.set_target_machine(common.target_machine)
+                    self._project_options.deb_arch, plugin_name))
+            self.code.enable_cross_compilation()
 
     def makedirs(self):
         dirs = [
@@ -581,6 +599,8 @@ def load_plugin(part_name, plugin_name, properties=None,
         properties = {}
     if part_schema is None:
         part_schema = {}
+    if project_options is None:
+        project_options = snapcraft.ProjectOptions()
     return PluginHandler(plugin_name, part_name, properties,
                          project_options, part_schema)
 

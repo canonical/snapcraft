@@ -68,8 +68,8 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.stage_packages.extend([
             'python-dev',
             'python-pkg-resources',

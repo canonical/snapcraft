@@ -19,6 +19,7 @@ from unittest import mock
 
 import fixtures
 
+import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import maven
 
@@ -32,6 +33,7 @@ class MavenPluginTestCase(tests.TestCase):
             maven_options = []
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
@@ -71,7 +73,8 @@ class MavenPluginTestCase(tests.TestCase):
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
     def test_build(self, glob_mock, run_mock):
-        plugin = maven.MavenPlugin('test-part', self.options)
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
         os.makedirs(plugin.sourcedir)
         glob_mock.return_value = [
             os.path.join(plugin.builddir, 'target', 'dummy')]
@@ -93,7 +96,8 @@ class MavenPluginTestCase(tests.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin('test-part', self.options)
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
 
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
         os.makedirs(plugin.sourcedir)
@@ -143,7 +147,8 @@ class MavenPluginTestCase(tests.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin('test-part', self.options)
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
 
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
         os.makedirs(plugin.sourcedir)
@@ -193,7 +198,8 @@ class MavenPluginTestCase(tests.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin('test-part', self.options)
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
 
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
         os.makedirs(plugin.sourcedir)

@@ -116,13 +116,13 @@ class UnpackError(Exception):
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False,
-                 sources=None, use_geoip=True):
+                 sources=None, project_options=None):
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.recommends = recommends
 
         self.apt_cache, self.apt_progress = _setup_apt_cache(
-            rootdir, sources, use_geoip)
+            rootdir, sources, project_options)
 
     def get(self, package_names):
         os.makedirs(self.downloaddir, exist_ok=True)
@@ -219,12 +219,12 @@ def _get_geoip_country_code_prefix():
     return ''
 
 
-def _format_sources_list(sources, use_geoip, arch, release='xenial'):
+def _format_sources_list(sources, project_options, release='xenial'):
     if not sources:
         sources = _DEFAULT_SOURCES
 
-    if arch in ('amd64', 'i386'):
-        if use_geoip:
+    if project_options.deb_arch in ('amd64', 'i386'):
+        if project_options.use_geoip:
             geoip_prefix = _get_geoip_country_code_prefix()
             prefix = '{}.archive'.format(geoip_prefix)
         else:
@@ -244,14 +244,14 @@ def _format_sources_list(sources, use_geoip, arch, release='xenial'):
     })
 
 
-def _setup_apt_cache(rootdir, sources, use_geoip):
+def _setup_apt_cache(rootdir, sources, project_options):
     os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
     srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
 
-    if use_geoip or sources:
+    if project_options.use_geoip or sources:
         release = platform.linux_distribution()[2]
-        arch = common.get_arch()
-        sources = _format_sources_list(sources, use_geoip, arch, release)
+        sources = _format_sources_list(
+            sources, project_options, release)
     else:
         sources = _get_local_sources_list()
 

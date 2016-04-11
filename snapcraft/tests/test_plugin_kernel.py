@@ -17,13 +17,12 @@
 import contextlib
 import logging
 import os
-import platform
 from unittest import mock
 
 import fixtures
 
+import snapcraft
 from snapcraft import tests
-from snapcraft.common import get_machine_info
 from snapcraft.plugins import kernel
 
 
@@ -45,11 +44,7 @@ class KernelPluginTestCase(tests.TestCase):
             kernel_initrd_compression = 'gz'
 
         self.options = Options()
-
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
-        self.addCleanup(patcher.stop)
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
@@ -146,8 +141,7 @@ class KernelPluginTestCase(tests.TestCase):
 
         def create_assets():
             build_arch_path = os.path.join(
-                builddir, 'arch',
-                get_machine_info(platform.machine())['kernel'], 'boot')
+                builddir, 'arch', self.project_options.kernel_arch, 'boot')
 
             initrd_path = os.path.join(
                 installdir, 'initrd-{}.img'.format(kernel_version))
@@ -193,14 +187,14 @@ class KernelPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -233,14 +227,13 @@ class KernelPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(4, self.check_call_mock.call_count)
         self.check_call_mock.assert_has_calls([
@@ -292,14 +285,13 @@ class KernelPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
@@ -340,7 +332,8 @@ ACCEPT=n
             'ACCEPT=n',
         ]
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         config_file = os.path.join(plugin.builddir, '.config')
 
@@ -356,8 +349,6 @@ ACCEPT=n
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
@@ -394,7 +385,8 @@ ACCEPT=n
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ['defconfig', 'defconfig2']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         config_file = os.path.join(plugin.builddir, '.config')
 
@@ -410,8 +402,6 @@ ACCEPT=n
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
@@ -438,14 +428,14 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_device_trees = ['fake-dtb']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True)
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -479,7 +469,8 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_device_trees = ['fake-dtb']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -496,7 +487,8 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_initrd_modules = ['my-fake-module']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -520,7 +512,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -559,7 +550,8 @@ ACCEPT=n
         self.options.kernel_initrd_firmware = [
             'lib/firmware/fake-fw-dir', 'lib/firmware/fake-fw.bin']
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
@@ -575,7 +567,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -609,14 +600,14 @@ ACCEPT=n
             f.write('ACCEPT=y\n')
         self.options.kernel_with_firmware = False
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True)
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -639,7 +630,8 @@ ACCEPT=n
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir,
@@ -651,8 +643,7 @@ ACCEPT=n
         self.assertEqual(
             'kernel build did not output a vmlinux binary in top level dir, '
             'expected {!r}'.format(os.path.join(
-                plugin.builddir, 'arch',
-                get_machine_info(platform.machine())['kernel'],
+                plugin.builddir, 'arch', self.project_options.kernel_arch,
                 'boot', 'bzImage')),
             str(raised.exception))
 
@@ -662,7 +653,8 @@ ACCEPT=n
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir,
@@ -682,7 +674,8 @@ ACCEPT=n
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir,
@@ -695,9 +688,11 @@ ACCEPT=n
             'kernel build did not output a System.map in top level dir',
             str(raised.exception))
 
-    def test_set_target_machine(self):
-        plugin = kernel.KernelPlugin('test-part', self.options)
-        plugin.set_target_machine('aarch64')
+    def test_enable_cross_compilation(self):
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+        plugin.enable_cross_compilation()
 
         self.assertEqual(
             plugin.make_cmd,
@@ -709,9 +704,10 @@ ACCEPT=n
         config = {'config_key': 'config_value'}
         config_mock.return_value = config
 
-        plugin = kernel.KernelPlugin('test-part', self.options)
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
         plugin.pull()
 
         download_mock.assert_called_once_with(
             'ubuntu-core/edge', plugin.os_snap, config,
-            plugin._target_arch['deb'])
+            self.project_options.deb_arch)

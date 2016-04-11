@@ -17,6 +17,7 @@
 import os.path
 from unittest.mock import Mock
 
+import snapcraft
 from snapcraft.plugins.copy import (
     CopyPlugin,
     _recursively_link
@@ -35,6 +36,7 @@ class TestCopyPlugin(TestCase):
         # setup the expected target dir in our tempdir
         self.dst_prefix = 'parts/copy/install/'
         os.makedirs(self.dst_prefix)
+        self.project_options = snapcraft.ProjectOptions()
 
     def test_copy_plugin_any_missing_src_raises_exception(self):
         # ensure that a bad file causes a warning and fails the build even
@@ -44,7 +46,7 @@ class TestCopyPlugin(TestCase):
             'zzz': 'zzz',
         }
         open('zzz', 'w').close()
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
         with self.assertRaises(EnvironmentError) as raised:
@@ -61,7 +63,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src*': 'dst',
         }
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
         with self.assertRaises(EnvironmentError) as raised:
@@ -75,7 +77,7 @@ class TestCopyPlugin(TestCase):
         }
         open('src', 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'dst')))
@@ -86,7 +88,7 @@ class TestCopyPlugin(TestCase):
         }
         open('src', 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'dst')))
@@ -108,7 +110,7 @@ class TestCopyPlugin(TestCase):
         }
         open('src', 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
@@ -122,7 +124,7 @@ class TestCopyPlugin(TestCase):
         file = os.path.join('dirs1', 'f')
         open(file, 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
         self.assertTrue(
@@ -137,7 +139,7 @@ class TestCopyPlugin(TestCase):
             with open(filename, 'w') as datafile:
                 datafile.write(filename)
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
 
@@ -157,7 +159,7 @@ class TestCopyPlugin(TestCase):
         open(os.path.join('foo', 'file1'), 'w').close()
         open(os.path.join('foo', 'directory', 'file2'), 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
 
@@ -170,7 +172,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.source = 'src'
         self.mock_options.files = {'foo/bar': 'baz/qux'}
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         os.makedirs(os.path.join('src', 'foo'))
         open(os.path.join('src', 'foo', 'bar'), 'w').close()
 
@@ -187,7 +189,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.source = 'src'
         self.mock_options.files = {'foo/*': 'baz/'}
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         os.makedirs(os.path.join('src', 'foo'))
         open(os.path.join('src', 'foo', 'bar'), 'w').close()
 
@@ -204,7 +206,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.source = 'src'
         self.mock_options.files = {'foo/bar': 'baz/qux'}
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         os.mkdir('src')
         os.mkdir('foo')
         open(os.path.join('foo', 'bar'), 'w').close()
@@ -222,7 +224,7 @@ class TestCopyPlugin(TestCase):
     def test_copy_symlinks(self):
         self.mock_options.files = {'foo/*': 'baz/'}
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
 
         os.makedirs('foo/bar')
         with open('foo/file', 'w') as f:
@@ -284,7 +286,7 @@ class TestCopyPlugin(TestCase):
     def test_copy_symlinks_that_should_be_followed(self):
         self.mock_options.files = {'foo/*': '.'}
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
 
         os.makedirs('foo/bar')
         with open('foo/file', 'w') as f:
