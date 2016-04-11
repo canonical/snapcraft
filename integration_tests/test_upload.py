@@ -23,11 +23,15 @@ from testtools.matchers import (
 )
 
 import integration_tests
+import snapcraft
 from snapcraft.tests import fixture_setup
-from snapcraft.common import get_arch
 
 
 class UploadTestCase(integration_tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def _update_version(self, project_dir, version=None):
         # Change to a random version.
@@ -46,7 +50,7 @@ class UploadTestCase(integration_tests.TestCase):
     def test_upload_without_login(self):
         project_dir = 'assemble'
         self.run_snapcraft('snap', project_dir)
-        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         os.chdir(project_dir)
         self.assertThat(snap_file_path, FileExists())
 
@@ -72,8 +76,9 @@ class UploadTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
 
         # Upload the snap
-        snap_file_path = 'basic_{}_{}.snap'.format(new_version, get_arch())
-        self.assertThat(os.path.join(project_dir, snap_file_path), FileExists())
+        snap_file_path = 'basic_{}_{}.snap'.format(new_version, self.deb_arch)
+        self.assertThat(
+            os.path.join(project_dir, snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path], project_dir)
         self.assertIn(

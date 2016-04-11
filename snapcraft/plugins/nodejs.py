@@ -71,8 +71,8 @@ class NodePlugin(snapcraft.BasePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self._npm_dir = os.path.join(self.partdir, 'npm')
         self._nodejs_tar = sources.Tar(_get_nodejs_release(), self._npm_dir)
 

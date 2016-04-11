@@ -58,8 +58,8 @@ class MakePlugin(snapcraft.BasePlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.append('make')
 
     def build(self):
@@ -73,6 +73,5 @@ class MakePlugin(snapcraft.BasePlugin):
         if self.options.make_parameters:
             command.extend(self.options.make_parameters)
 
-        self.run(command + ['-j{}'.format(
-            snapcraft.common.get_parallel_build_count())])
+        self.run(command + ['-j{}'.format(self.project.parallel_build_count)])
         self.run(command + ['install', 'DESTDIR=' + self.installdir])

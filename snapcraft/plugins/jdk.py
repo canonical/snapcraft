@@ -19,8 +19,8 @@ import snapcraft
 
 class JdkPlugin(snapcraft.BasePlugin):
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.stage_packages.append('default-jdk')
 
     def env(self, root):

@@ -103,10 +103,8 @@ import textwrap
 from docopt import docopt
 
 import snapcraft
-from snapcraft import (
-    log,
-    common,
-)
+from snapcraft import log
+
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +122,15 @@ def _list_plugins():
         print(modname.replace('_', '-'))
 
 
+def _get_project_options(args):
+    options = {}
+    options['use_geoip'] = args['--enable-geoip']
+    options['parallel_builds'] = not args['--no-parallel-build']
+    options['target_deb_arch'] = args['--target-arch']
+
+    return snapcraft.ProjectOptions(**options)
+
+
 def main(argv=None):
     args = docopt(__doc__, version=_get_version(), argv=argv)
 
@@ -133,18 +140,10 @@ def main(argv=None):
         log_level = logging.DEBUG
 
     log.configure(log_level=log_level)
-
-    common.set_enable_parallel_builds(not args['--no-parallel-build'])
-
-    project_options = snapcraft.ProjectOptions()
-    if args['--enable-geoip']:
-        project_options.use_geoip = True
-
-    if args['--target-arch']:
-        common.set_target_machine(args['--target-arch'])
+    project_options = _get_project_options(args)
 
     try:
-        run(args, project_options)
+        return run(args, project_options)
     except Exception as e:
         if args['--debug']:
             raise
@@ -162,7 +161,6 @@ def _get_lifecycle_command(args):
 
 def _get_command_from_arg(args):
     functions = {
-        'cleanbuild': snapcraft.lifecycle.cleanbuild,
         'init': snapcraft.lifecycle.init,
         'login': snapcraft.login,
         'logout': snapcraft.logout,
@@ -186,12 +184,16 @@ def run(args, project_options):
         snapcraft.lifecycle.clean(args['<part>'], args['--step'])
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
+    elif args['cleanbuild']:
+        snapcraft.lifecycle.cleanbuild(project_options),
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
     else:  # snap by default:
         snapcraft.lifecycle.snap(
             project_options, args['<directory>'], args['--output'])
+
+    return project_options
 
 
 if __name__ == '__main__':  # pragma: no cover

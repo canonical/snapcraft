@@ -17,6 +17,7 @@
 import logging
 import os
 import tempfile
+from unittest import mock
 
 import fixtures
 import testscenarios
@@ -49,12 +50,15 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.addCleanup(common.set_plugindir, common.get_plugindir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
-        self.addCleanup(common.set_enable_parallel_builds,
-                        common.get_enable_parallel_builds())
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
         self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
+
+        patcher = mock.patch('multiprocessing.cpu_count')
+        self.cpu_count = patcher.start()
+        self.cpu_count.return_value = 2
+        self.addCleanup(patcher.stop)
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         tempdir_obj = tempfile.TemporaryDirectory()

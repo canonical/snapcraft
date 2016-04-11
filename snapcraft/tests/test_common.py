@@ -16,12 +16,6 @@
 
 import os
 import re
-from unittest.mock import patch
-
-import testtools
-from testtools.matchers import (
-    Contains,
-)
 
 from snapcraft import (
     common,
@@ -90,57 +84,30 @@ class CommonTestCase(tests.TestCase):
                 with open(file_info['path'], 'r') as f:
                     self.assertEqual(f.read(), file_info['expected'])
 
-    @patch('multiprocessing.cpu_count')
-    def test_get_parallel_build_count(self, mock_cpu_count):
-        mock_cpu_count.return_value = 3
-        self.assertEqual(common.get_parallel_build_count(), 3)
 
-    @patch('multiprocessing.cpu_count')
-    def test_get_parallel_build_count_disabled(self, mock_cpu_count):
-        common.set_enable_parallel_builds(False)
-        mock_cpu_count.return_value = 3
-        self.assertEqual(common.get_parallel_build_count(), 1)
+class CommonMigratedTestCase(tests.TestCase):
 
-    @patch('multiprocessing.cpu_count')
-    def test_get_parallel_build_count_handle_exception(self, mock_cpu_count):
-        mock_cpu_count.side_effect = NotImplementedError
-        self.assertEqual(common.get_parallel_build_count(), 1)
+    def test_parallel_build_count_migration_message(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            common.get_parallel_build_count()
 
-
-class ArchTestCase(testtools.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        # tests will override host_machine, protect it first
-        patcher = patch('snapcraft.common.host_machine',
-                        new=common.host_machine)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = patch('snapcraft.common.target_machine',
-                        new=common.host_machine)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_get_arch_with_no_errors(self):
-        common.get_arch()
-
-    def test_get_arch_raises_exception_on_non_supported_arch(self):
-        common.target_machine = 'badarch'
-        e = self.assertRaises(
-            common.PlatformError, common.get_arch)
         self.assertEqual(
-            'badarch is not supported, please log a bug at '
-            'https://bugs.launchpad.net/snapcraft/+filebug?'
-            'field.title=please+add+support+for+badarch', str(e))
+            str(raised.exception),
+            "This plugin is outdated, use "
+            "'project.parallel_build_count'")
 
-    def test_get_arch_triplet(self):
-        self.assertThat(common.get_arch_triplet(), Contains('linux-gnu'))
+    def test_deb_arch_migration_message(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            common.get_arch()
 
-    def test_get_arch_triple_raises_exception_on_non_supported_arch(self):
-        common.target_machine = 'badarch'
-        e = self.assertRaises(
-            common.PlatformError, common.get_arch_triplet)
         self.assertEqual(
-            'badarch is not supported, please log a bug at '
-            'https://bugs.launchpad.net/snapcraft/+filebug?'
-            'field.title=please+add+support+for+badarch', str(e))
+            str(raised.exception),
+            "This plugin is outdated, use 'project.deb_arch'")
+
+    def test_arch_triplet_migration_message(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            common.get_arch_triplet()
+
+        self.assertEqual(
+            str(raised.exception),
+            "This plugin is outdated, use 'project.arch_triplet'")

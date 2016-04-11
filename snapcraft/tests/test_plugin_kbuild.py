@@ -20,6 +20,7 @@ from unittest import mock
 
 import fixtures
 
+import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import kbuild
 
@@ -36,14 +37,10 @@ class KBuildPluginTestCase(tests.TestCase):
             kconfigs = []
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
@@ -69,13 +66,12 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
@@ -109,13 +105,12 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
@@ -152,13 +147,12 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
@@ -200,7 +194,8 @@ ACCEPT=n
             'ACCEPT=n',
         ]
 
-        plugin = kbuild.KBuildPlugin('test-part', self.options)
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
 
         config_file = os.path.join(plugin.builddir, '.config')
 
@@ -215,8 +210,6 @@ ACCEPT=n
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([

@@ -80,8 +80,8 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         return schema
 
-    def __init__(self, name, options):
-        super().__init__(name, options)
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
         self.build_packages.append('maven')
 
     def _use_proxy(self):

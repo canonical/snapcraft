@@ -54,3 +54,16 @@ parts:
 New part plugins are typically placed in the snap's source directory along
 `snapcraft.yaml` as they mature, then submitted as patches to the Snapcraft
 project for everyone to use.
+
+## Initializing a plugin
+
+For the general plugin, specific initialization code may not be needed. If it
+does need to do more to be setup correctly, it would need to declare
+`__init__` and pass that on to the parent class, like this:
+
+```python
+
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
+        # plugin specific initialization code.
+```

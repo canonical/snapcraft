@@ -19,6 +19,7 @@ import stat
 
 from unittest import mock
 
+import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import autotools
 
@@ -33,14 +34,10 @@ class AutotoolsPluginTestCase(tests.TestCase):
             install_via = 'destdir'
 
         self.options = Options()
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
@@ -107,13 +104,15 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def test_install_via_invalid_enum(self):
         self.options.install_via = 'invalid'
         with self.assertRaises(RuntimeError) as raised:
-            autotools.AutotoolsPlugin('test-part', self.options)
+            autotools.AutotoolsPlugin('test-part', self.options,
+                                      self.project_options)
 
         self.assertEqual(str(raised.exception),
                          'Unsupported installation method: "invalid"')
 
     def build_with_configure(self):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # Create both configure and autogen.sh.
@@ -129,8 +128,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def test_build_configure_with_destdir(self, run_mock):
         plugin = self.build_with_configure()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self.assertEqual(3, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['./configure', '--prefix=']),
@@ -144,8 +141,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.options.install_via = 'prefix'
         plugin = self.build_with_configure()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self.assertEqual(3, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['./configure', '--prefix={}'.format(
@@ -155,7 +150,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ])
 
     def build_with_autogen(self):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # No configure-- only autogen.sh. Make sure it's executable.
@@ -171,8 +167,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def test_build_autogen_with_destdir(self, run_mock):
         plugin = self.build_with_autogen()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
@@ -187,8 +181,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.options.install_via = 'prefix'
         plugin = self.build_with_autogen()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
@@ -199,7 +191,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ])
 
     def build_with_autoreconf(self):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # No configure or autogen.sh.
@@ -211,8 +204,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
     def test_build_autoreconf_with_destdir(self, run_mock):
         plugin = self.build_with_autoreconf()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
@@ -228,8 +219,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.options.install_via = 'prefix'
         plugin = self.build_with_autoreconf()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['autoreconf', '-i']),
@@ -241,7 +230,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
     @mock.patch('sys.stdout')
     def test_build_nonexecutable_autogen(self, stdout_mock):
-        plugin = autotools.AutotoolsPlugin('test-part', self.options)
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # Make a non-executable autogen.sh

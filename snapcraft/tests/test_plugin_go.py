@@ -18,8 +18,8 @@ import os
 
 from unittest import mock
 
+import snapcraft
 from snapcraft.plugins import go
-from snapcraft import common
 from snapcraft import tests
 
 
@@ -27,6 +27,8 @@ class GoPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
+
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.common.run')
         self.run_mock = patcher.start()
@@ -41,20 +43,20 @@ class GoPluginTestCase(tests.TestCase):
             source = 'http://github.com/testplug'
             go_packages = []
 
-        plugin = go.GoPlugin('test', Options())
+        plugin = go.GoPlugin('test', Options(), self.project_options)
         self.assertEqual(plugin.env('myroot'), [
             'GOPATH=myroot/go',
             'CGO_LDFLAGS="$CGO_LDFLAGS -Lmyroot/lib -Lmyroot/usr/lib '
             '-Lmyroot/lib/{0} '
             '-Lmyroot/usr/lib/{0} $LDFLAGS"'.format(
-                common.get_arch_triplet())])
+                plugin.project.arch_triplet)])
 
     def test_pull_local_sources(self):
         class Options:
             source = 'dir'
             go_packages = []
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
@@ -75,7 +77,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = ['github.com/gotools/vet']
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -95,7 +97,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = []
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
         plugin.pull()
 
         self.run_mock.assert_has_calls([])
@@ -109,7 +111,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
@@ -139,7 +141,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = ['github.com/gotools/vet']
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -172,7 +174,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = []
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.sourcedir)
 
@@ -194,7 +196,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
@@ -223,7 +225,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
 
-        plugin = go.GoPlugin('test-part', Options())
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
