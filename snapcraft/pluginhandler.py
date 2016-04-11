@@ -169,14 +169,20 @@ class PluginHandler:
 
         plugin = _get_plugin(module)
         options = _make_options(part_schema, properties, plugin.schema())
-        # For backwards compatibility we add the project options as an option
+        # For backwards compatibility we add the project to the plugin
         try:
             self.code = plugin(self.name, options, self._project_options)
         except TypeError:
+            logger.warning('DEPRECATED: this plugin needs updating to use '
+                           'project options')
             self.code = plugin(self.name, options)
-            setattr(self.code, 'project', self._project_options)
-        if not self.code.project:
-            self.code.project = self._project_options
+            # This is for plugins that don't inherit from BasePlugin
+            if not hasattr(self.code, 'project'):
+                setattr(self.code, 'project', self._project_options)
+            # This is for plugins that inherit from BasePlugin but don't have
+            # project in init.
+            if not self.code.project:
+                self.code.project = self._project_options
 
         if self._project_options.is_cross_compiling:
             logger.debug(

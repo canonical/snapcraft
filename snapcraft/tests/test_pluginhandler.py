@@ -222,6 +222,47 @@ class PluginTestCase(tests.TestCase):
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock')
 
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_without_project(self, plugin_mock,
+                                    local_load_mock, import_mock):
+        class OldPlugin(snapcraft.BasePlugin):
+            def __init__(self, name, options):
+                super().__init__(name, options)
+
+        plugin_mock.return_value = OldPlugin
+        local_load_mock.side_effect = ImportError()
+        plugin = pluginhandler.PluginHandler(
+            'oldplugin', 'fake-part', {'source': '.'},
+            snapcraft.ProjectOptions(),
+            {'properties': {}})
+
+        self.assertTrue(plugin.code.project is not None)
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_without_project_not_from_base(self, plugin_mock,
+                                                  local_load_mock,
+                                                  import_mock):
+        class NonBaseOldPlugin:
+            @classmethod
+            def schema(cls):
+                return {}
+
+            def __init__(self, name, options):
+                pass
+
+        plugin_mock.return_value = NonBaseOldPlugin
+        local_load_mock.side_effect = ImportError()
+        plugin = pluginhandler.PluginHandler(
+            'nonbaseoldplugin', 'fake-part', {'source': '.'},
+            snapcraft.ProjectOptions(),
+            {'properties': {}})
+
+        self.assertTrue(plugin.code.project is not None)
+
     def test_filesets_includes_without_relative_paths(self):
         with self.assertRaises(pluginhandler.PluginError) as raised:
             pluginhandler._get_file_list(['rel', '/abs/include'])
