@@ -21,6 +21,7 @@ import builtins
 
 from unittest import mock
 
+import snapcraft
 from snapcraft.plugins import catkin
 from snapcraft import (
     repo,
@@ -58,6 +59,7 @@ class CatkinPluginTestCase(tests.TestCase):
             source_space = 'src'
             source_subdir = None
             include_roscore = False
+            project = snapcraft.ProjectOptions()
 
         self.properties = props()
 

@@ -18,6 +18,7 @@ import os
 
 from unittest import mock
 
+import snapcraft
 from snapcraft.plugins import go
 from snapcraft import tests
 
@@ -39,6 +40,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'http://github.com/testplug'
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test', Options())
         self.assertEqual(plugin.env('myroot'), [
@@ -52,6 +54,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -73,6 +76,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = ['github.com/gotools/vet']
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -93,6 +97,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
         plugin.pull()
@@ -107,6 +112,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -137,6 +143,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = ['github.com/gotools/vet']
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -170,6 +177,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -192,6 +200,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 
@@ -221,6 +230,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
+            project = snapcraft.ProjectOptions()
 
         plugin = go.GoPlugin('test-part', Options())
 

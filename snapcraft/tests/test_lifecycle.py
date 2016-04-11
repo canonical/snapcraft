@@ -34,6 +34,7 @@ class ExecutionTestCases(tests.TestCase):
 
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
+        self.project_options = snapcraft.ProjectOptions()
 
     def make_snapcraft_yaml(self, parts, snap_type=''):
         yaml = """name: test
@@ -59,7 +60,7 @@ description: test
 
         with self.assertRaises(RuntimeError) as raised:
             snapcraft.lifecycle.execute(
-                'pull', snapcraft.ProjectOptions(), part_names=['part2'])
+                'pull', self.project_options, part_names=['part2'])
 
         self.assertEqual(
             raised.exception.__str__(),
@@ -83,7 +84,7 @@ description: test
                                'should_step_run',
                                _fake_should_step_run):
             snapcraft.lifecycle.execute(
-                'pull', snapcraft.ProjectOptions(), part_names=['part2'])
+                'pull', self.project_options, part_names=['part2'])
 
         self.assertEqual(
             'Preparing to pull part2 \n'
@@ -100,13 +101,12 @@ description: test
       - part1
 """)
 
-        snap_info = snapcraft.lifecycle.execute(
-            'pull', snapcraft.ProjectOptions())
+        snap_info = snapcraft.lifecycle.execute('pull', self.project_options)
 
         expected_snap_info = {
             'name': 'test',
             'version': 0,
-            'arch': [common.get_arch()],
+            'arch': [self.project_options.deb_arch],
             'type': ''
         }
         self.assertEqual(snap_info, expected_snap_info)
@@ -133,13 +133,12 @@ description: test
       - part1
 """, 'type: os')
 
-        snap_info = snapcraft.lifecycle.execute(
-            'pull', snapcraft.ProjectOptions())
+        snap_info = snapcraft.lifecycle.execute('pull', self.project_options)
 
         expected_snap_info = {
             'name': 'test',
             'version': 0,
-            'arch': [common.get_arch()],
+            'arch': [self.project_options.deb_arch],
             'type': 'os'
         }
         self.assertEqual(snap_info, expected_snap_info)

@@ -288,7 +288,7 @@ class BasePlugin:
         """
         return []
 
-    def set_target_machine(self, machine):
+    def set_target_machine(self):
         """Set the target compilation architecture to machine."""
         raise NotImplementedError(
             'Building for a different target architecture requires '

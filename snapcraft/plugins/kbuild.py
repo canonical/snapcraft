@@ -102,7 +102,7 @@ class KBuildPlugin(BasePlugin):
         self.make_targets = []
         self.make_install_targets = ['install']
         self.make_cmd = [
-            'make', '-j{}'.format(common.get_parallel_build_count())]
+            'make', '-j{}'.format(options.project.parallel_build_count)]
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
 

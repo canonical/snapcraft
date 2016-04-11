@@ -18,6 +18,7 @@ import os
 
 from unittest import mock
 
+import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import make
 
@@ -30,16 +31,12 @@ class MakePluginTestCase(tests.TestCase):
         class Options:
             makefile = None
             make_parameters = []
+            project = snapcraft.ProjectOptions()
 
         self.options = Options()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
@@ -78,8 +75,6 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
@@ -94,8 +89,6 @@ class MakePluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([

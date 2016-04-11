@@ -205,7 +205,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
             logger.info('Preparing to fetch package dependencies...')
             ubuntu = repo.Ubuntu(
-                ubuntudir, self.options.project_options,
+                ubuntudir, self.options.project,
                 sources=self.PLUGIN_STAGE_SOURCES)
 
             logger.info('Fetching package dependencies...')

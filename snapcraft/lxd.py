@@ -39,6 +39,7 @@ class Cleanbuilder:
                  server=_DEFAULT_IMAGE_SERVER):
         self._snap_output = snap_output
         self._project = project
+        self._deb_arch = deb_arch
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
         self._server = server
@@ -55,13 +56,13 @@ class Cleanbuilder:
         check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
     @contextmanager
-    def _create_container(self, deb_arch):
+    def _create_container(self):
         try:
             remote_tmp = petname.Generate(2, '-')
             check_call(['lxc', 'remote', 'add', remote_tmp, self._server])
             check_call([
                 'lxc', 'launch',
-                '{}:ubuntu/xenial/{}'.format(remote_tmp, self.deb_arch),
+                '{}:ubuntu/xenial/{}'.format(remote_tmp, self._deb_arch),
                 self._container_name])
             yield
         finally:

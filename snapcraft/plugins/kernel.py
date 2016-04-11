@@ -59,7 +59,6 @@ import subprocess
 import tempfile
 
 from snapcraft import storeapi
-from snapcraft.common import get_machine_info, target_machine
 from snapcraft.config import load_config
 from snapcraft.plugins import kbuild
 
@@ -142,15 +141,14 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self.make_install_targets.extend(self._get_fw_install_targets())
 
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
-        self._target_arch = get_machine_info(target_machine)
 
     def set_target_machine(self):
         logger.info('Cross compiling kernel target {!r}'.format(
-            self._options.project.kernel_arch))
+            self.options.project.kernel_arch))
         self.make_cmd.append('ARCH={}'.format(
-            self._options.project.kernel_arch))
+            self.options.project.kernel_arch))
         self.make_cmd.append('CROSS_COMPILE={}'.format(
-            self._options.project.cross_compiler_prefix))
+            self.options.project.cross_compiler_prefix))
 
     def _get_fw_install_targets(self):
         if not self.options.kernel_with_firmware:
@@ -244,7 +242,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _get_build_arch_dir(self):
         return os.path.join(
-            self.builddir, 'arch', self._target_arch['kernel'], 'boot')
+            self.builddir, 'arch', self.options.project.kernel_arch, 'boot')
 
     def _copy_vmlinuz(self):
         kernel = '{}-{}'.format(
@@ -289,7 +287,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
         super().pull()
         config = load_config()
         storeapi.download(
-            'ubuntu-core/edge', self.os_snap, config, self._target_arch['deb'])
+            'ubuntu-core/edge', self.os_snap, config,
+            self.options.project.deb_arch)
 
     def do_install(self):
         super().do_install()

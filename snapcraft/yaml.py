@@ -99,6 +99,9 @@ class Config:
         return self._part_names
 
     def __init__(self, project_options=None):
+        if project_options is None:
+            project_options = snapcraft.ProjectOptions()
+
         self.build_tools = []
         self.all_parts = []
         self._part_names = []
@@ -117,7 +120,9 @@ class Config:
         self.build_tools.extend(project_options.additional_build_packages)
 
         self._wiki = wiki.Wiki()
+        self._process_parts()
 
+    def _process_parts(self):
         for part_name in self.data.get('parts', []):
             self._part_names.append(part_name)
             properties = self.data['parts'][part_name] or {}
@@ -152,7 +157,7 @@ class Config:
         self.all_parts = self._sort_parts()
 
         if 'architectures' not in self.data:
-            self.data['architectures'] = [project_options.deb_arch]
+            self.data['architectures'] = [self._project_options.deb_arch]
 
     def _remap_skills_to_interfaces(self):
         if 'uses' in self.data:
@@ -273,14 +278,18 @@ class Config:
                 part.bindir, part.installdir, stagedir,
                 self._project_options.arch_triplet)
             env += part.env(part.installdir)
-            env += _runtime_env(part.installdir)
-            env += _runtime_env(stagedir)
+            env += _runtime_env(part.installdir,
+                                self._project_options.arch_triplet)
+            env += _runtime_env(stagedir,
+                                self._project_options.arch_triplet)
             env += _build_env(part.installdir,
                               self._project_options.arch_triplet)
-            env += _build_env_for_stage(stagedir)
+            env += _build_env_for_stage(stagedir,
+                                        self._project_options.arch_triplet)
         else:
             env += part.env(stagedir)
-            env += _runtime_env(stagedir)
+            env += _runtime_env(stagedir,
+                                self._project_options.arch_triplet)
 
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
@@ -292,8 +301,9 @@ class Config:
         stagedir = common.get_stagedir()
         env = []
 
-        env += _runtime_env(stagedir)
-        env += _build_env_for_stage(stagedir)
+        env += _runtime_env(stagedir, self._project_options.arch_triplet)
+        env += _build_env_for_stage(stagedir,
+                                    self._project_options.arch_triplet)
         for part in self.all_parts:
             env += part.env(stagedir)
 
@@ -303,7 +313,7 @@ class Config:
         snapdir = common.get_snapdir()
         env = []
 
-        env += _runtime_env(snapdir)
+        env += _runtime_env(snapdir, self._project_options.arch_triplet)
         dependency_paths = set()
         for part in self.all_parts:
             env += part.env(snapdir)
@@ -322,7 +332,7 @@ class Config:
         return env
 
 
-def _runtime_env(root):
+def _runtime_env(root, arch_triplet):
     """Set the environment variables required for running binaries."""
     env = []
 
@@ -334,7 +344,7 @@ def _runtime_env(root):
 
     # Add the default LD_LIBRARY_PATH
     library_path = _get_library_paths(
-        'LD_LIBRARY_PATH', root, prepend='', sep=':')
+        'LD_LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
     if library_path:
         env.append(library_path)
 
@@ -356,10 +366,10 @@ def _build_env(root, arch_triplet):
     env = []
 
     for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-        include_path_for_env = _get_include_paths(envvar, root)
+        include_path_for_env = _get_include_paths(envvar, root, arch_triplet)
         if include_path_for_env:
             env.append(include_path_for_env)
-    library_path = _get_library_paths('LDFLAGS', root)
+    library_path = _get_library_paths('LDFLAGS', root, arch_triplet)
     if library_path:
         env.append(library_path)
 
@@ -383,13 +393,12 @@ def _get_include_paths(envvar, root, arch_triplet):
             envvar=envvar, include_paths=' '.join(include_paths))
 
 
-def _get_library_paths(envvar, root, prepend='-L', sep=' '):
-    machine_info = common.get_machine_info(common.target_machine)
+def _get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
     paths = [
         os.path.join(root, 'lib'),
         os.path.join(root, 'usr', 'lib'),
-        os.path.join(root, 'lib', machine_info['triplet']),
-        os.path.join(root, 'usr', 'lib', machine_info['triplet']),
+        os.path.join(root, 'lib', arch_triplet),
+        os.path.join(root, 'usr', 'lib', arch_triplet),
     ]
 
     library_paths = ['{}{}'.format(prepend, l)
@@ -402,8 +411,8 @@ def _get_library_paths(envvar, root, prepend='-L', sep=' '):
             envvar=envvar, sep=sep, library_paths=sep.join(library_paths))
 
 
-def _build_env_for_stage(stagedir):
-    env = _build_env(stagedir)
+def _build_env_for_stage(stagedir, arch_triplet):
+    env = _build_env(stagedir, arch_triplet)
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
 
     return env
@@ -527,8 +536,6 @@ def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
 
 
 def load_config(project_options=None):
-    if not project_options:
-        project_options = snapcraft.ProjectOptions()
     try:
         return Config(project_options)
     except SnapcraftYamlFileError as e:

@@ -22,8 +22,8 @@ from unittest import mock
 
 import fixtures
 
+import snapcraft
 from snapcraft import tests
-from snapcraft.common import get_machine_info
 from snapcraft.plugins import kernel
 
 
@@ -43,12 +43,13 @@ class KernelPluginTestCase(tests.TestCase):
             kernel_initrd_firmware = []
             kernel_device_trees = []
             kernel_initrd_compression = 'gz'
+            project = snapcraft.ProjectOptions()
 
         self.options = Options()
 
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
+        patcher = mock.patch('multiprocessing.cpu_count')
+        self.cpu_count = patcher.start()
+        self.cpu_count.return_value = 2
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('subprocess.check_call')
@@ -147,7 +148,7 @@ class KernelPluginTestCase(tests.TestCase):
         def create_assets():
             build_arch_path = os.path.join(
                 builddir, 'arch',
-                get_machine_info(platform.machine())['kernel'], 'boot')
+                self.options.project.kernel_arch, 'boot')
 
             initrd_path = os.path.join(
                 installdir, 'initrd-{}.img'.format(kernel_version))
@@ -200,7 +201,6 @@ class KernelPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -239,8 +239,6 @@ class KernelPluginTestCase(tests.TestCase):
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(4, self.check_call_mock.call_count)
         self.check_call_mock.assert_has_calls([
@@ -299,8 +297,6 @@ class KernelPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -357,8 +353,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -411,8 +405,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
-
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -445,7 +437,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -520,7 +511,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -575,7 +565,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -616,7 +605,6 @@ ACCEPT=n
 
         plugin.build()
 
-        self.get_parallel_build_count_mock.assert_called_with()
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
@@ -651,8 +639,7 @@ ACCEPT=n
         self.assertEqual(
             'kernel build did not output a vmlinux binary in top level dir, '
             'expected {!r}'.format(os.path.join(
-                plugin.builddir, 'arch',
-                get_machine_info(platform.machine())['kernel'],
+                plugin.builddir, 'arch', self.options.project.kernel_arch,
                 'boot', 'bzImage')),
             str(raised.exception))
 
@@ -696,8 +683,10 @@ ACCEPT=n
             str(raised.exception))
 
     def test_set_target_machine(self):
+        self.options.project = snapcraft.ProjectOptions(
+            target_deb_arch='arm64')
         plugin = kernel.KernelPlugin('test-part', self.options)
-        plugin.set_target_machine('aarch64')
+        plugin.set_target_machine()
 
         self.assertEqual(
             plugin.make_cmd,
@@ -714,4 +703,4 @@ ACCEPT=n
 
         download_mock.assert_called_once_with(
             'ubuntu-core/edge', plugin.os_snap, config,
-            plugin._target_arch['deb'])
+            self.options.project.deb_arch)

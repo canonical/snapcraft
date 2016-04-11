@@ -21,6 +21,7 @@ import stat
 import tempfile
 import unittest.mock
 
+import snapcraft
 from snapcraft import repo
 from snapcraft import tests
 
@@ -37,10 +38,11 @@ class UbuntuTestCase(tests.TestCase):
 
     @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):
+        project_options = snapcraft.ProjectOptions(use_geoip=True)
         mock_cc.return_value = 'ar'
 
         self.maxDiff = None
-        sources_list = repo._format_sources_list('', True, 'amd64')
+        sources_list = repo._format_sources_list('', project_options)
 
         expected_sources_list = \
             '''deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -57,7 +59,7 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 
     def test_no_geoip_uses_default_archive(self):
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, False, 'amd64')
+            repo._DEFAULT_SOURCES, snapcraft.ProjectOptions())
 
         expected_sources_list = \
             '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -75,11 +77,12 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 
     @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
+        project_options = snapcraft.ProjectOptions(use_geoip=True)
         self.maxDiff = None
         mock_cc.return_value = 'ar'
 
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, True, 'amd64', 'vivid')
+            repo._DEFAULT_SOURCES, project_options, 'vivid')
 
         expected_sources_list = \
             '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
@@ -96,8 +99,10 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 
     @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
+        project_options = snapcraft.ProjectOptions(
+            use_geoip=True, target_deb_arch='armhf')
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, True, 'armhf', 'trusty')
+            repo._DEFAULT_SOURCES, project_options, 'trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted

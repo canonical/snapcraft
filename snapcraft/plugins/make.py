@@ -74,5 +74,5 @@ class MakePlugin(snapcraft.BasePlugin):
             command.extend(self.options.make_parameters)
 
         self.run(command + ['-j{}'.format(
-            snapcraft.common.get_parallel_build_count())])
+            self.options.project.parallel_build_count)])
         self.run(command + ['install', 'DESTDIR=' + self.installdir])

@@ -127,7 +127,7 @@ def _list_plugins():
 def _get_project_options(args):
     options = {}
     options['use_geoip'] = args['--enable-geoip']
-    options['parallel-builds'] = not args['--no-parallel-build']
+    options['parallel_builds'] = not args['--no-parallel-build']
 
     return snapcraft.ProjectOptions(**options)
 
@@ -147,7 +147,7 @@ def main(argv=None):
         common.set_target_machine(args['--target-arch'])
 
     try:
-        run(args, project_options)
+        return run(args, project_options)
     except Exception as e:
         if args['--debug']:
             raise
@@ -196,6 +196,8 @@ def run(args, project_options):
     else:  # snap by default:
         snapcraft.lifecycle.snap(
             project_options, args['<directory>'], args['--output'])
+
+    return project_options
 
 
 if __name__ == '__main__':  # pragma: no cover

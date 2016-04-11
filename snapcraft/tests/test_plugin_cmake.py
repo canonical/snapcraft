@@ -19,6 +19,7 @@ import os
 
 from unittest import mock
 
+import snapcraft
 from snapcraft.plugins import cmake
 from snapcraft import (
     common,
@@ -39,20 +40,14 @@ class CMakeTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
-        self.addCleanup(patcher.stop)
-
     def test_build_referencing_sourcedir_if_no_subdir(self):
         class Options:
             configflags = []
+            project = snapcraft.ProjectOptions()
 
         plugin = cmake.CMakePlugin('test-part', Options())
         os.makedirs(plugin.builddir)
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.run_mock.assert_has_calls([
             mock.call(['cmake', plugin.sourcedir, '-DCMAKE_INSTALL_PREFIX='],
@@ -66,12 +61,11 @@ class CMakeTestCase(tests.TestCase):
         class Options:
             configflags = []
             source_subdir = 'subdir'
+            project = snapcraft.ProjectOptions()
 
         plugin = cmake.CMakePlugin('test-part', Options())
         os.makedirs(plugin.builddir)
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         sourcedir = os.path.join(
             plugin.sourcedir, plugin.options.source_subdir)
@@ -86,6 +80,7 @@ class CMakeTestCase(tests.TestCase):
     def test_build_environment(self):
         class Options:
             configflags = []
+            project = snapcraft.ProjectOptions()
 
         plugin = cmake.CMakePlugin('test-part', Options())
         os.makedirs(plugin.builddir)
@@ -99,12 +94,12 @@ class CMakeTestCase(tests.TestCase):
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
              '{0}/usr/include/{1}']).format(
                 common.get_stagedir(),
-                self.options.project.arch_triplet)
+                plugin.options.project.arch_triplet)
         expected['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
              '{0}/usr/lib/{1}']).format(
                 common.get_stagedir(),
-                self.options.project.arch_triplet)
+                plugin.options.project.arch_triplet)
 
         self.assertEqual(3, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:

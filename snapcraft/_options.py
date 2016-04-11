@@ -98,7 +98,7 @@ class ProjectOptions:
 
     @property
     def arch_triplet(self):
-        return self.__machine_info['triple']
+        return self.__machine_info['triplet']
 
     @property
     def deb_arch(self):
@@ -112,8 +112,7 @@ class ProjectOptions:
                  target_deb_arch=None):
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds
-        self._set_target_machine(target_deb_arch)
-        self._set_arch_info()
+        self._set_machine(target_deb_arch)
 
     def _set_machine(self, target_deb_arch):
         self.__host_machine = platform.machine()
@@ -130,5 +129,5 @@ def _find_machine(deb_arch):
             logger.info('Setting target machine to {!r}'.format(machine))
             return machine
 
-        raise EnvironmentError(
-            'Cannot set machine from deb_arch {!r}'.format(deb_arch))
+    raise EnvironmentError(
+        'Cannot set machine from deb_arch {!r}'.format(deb_arch))

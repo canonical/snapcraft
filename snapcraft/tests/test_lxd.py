@@ -38,7 +38,7 @@ class LXDTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
-        lxd.Cleanbuilder('snap.snap', 'project.tar').execute()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64').execute()
 
         self.assertEqual(
             'Setting up container with project assets\n'
@@ -79,7 +79,7 @@ class LXDTestCase(tests.TestCase):
     def test_wait_for_network_loops(self, mock_sleep, mock_call):
         mock_call.side_effect = CalledProcessError(-1, ['my-cmd'])
 
-        cb = lxd.Cleanbuilder('snap.snap', 'project.tar')
+        cb = lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64')
 
         with self.assertRaises(CalledProcessError) as raised:
             cb._wait_for_network()

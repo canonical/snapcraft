@@ -19,6 +19,7 @@ import os.path
 
 from unittest import mock
 
+import snapcraft
 from snapcraft.main import main
 from snapcraft import (
     common,
@@ -115,16 +116,18 @@ parts:
 
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
 
+        project_options = mock.Mock(spec=snapcraft.ProjectOptions)
         mock_apt_cache = mock.Mock()
         mock_apt_progress = mock.Mock()
         mock_setup_apt_cache.return_value = (mock_apt_cache, mock_apt_progress)
 
-        main(['pull', 'pull1'])
+        project_options = main(['pull', 'pull1'])
 
+        self.assertFalse(project_options.use_geoip)
         mock_setup_apt_cache.assert_called_once_with(
             os.path.join(common.get_partsdir(), 'pull1', 'ubuntu'),
-            [],     # no sources
-            False,  # use_geoip
+            [],                # no sources
+            project_options,   # use_geoip is False
         )
 
     @mock.patch('snapcraft.repo._setup_apt_cache')
@@ -142,10 +145,11 @@ parts:
         mock_apt_progress = mock.Mock()
         mock_setup_apt_cache.return_value = (mock_apt_cache, mock_apt_progress)
 
-        main(['pull', 'pull1', '--enable-geoip'])
+        project_options = main(['pull', 'pull1', '--enable-geoip'])
 
+        self.assertTrue(project_options.use_geoip)
         mock_setup_apt_cache.assert_called_once_with(
             os.path.join(common.get_partsdir(), 'pull1', 'ubuntu'),
-            [],     # no sources
-            True,   # use_geoip
+            [],                # no sources
+            project_options,   # use_geoip is False
         )

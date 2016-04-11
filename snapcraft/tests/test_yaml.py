@@ -25,6 +25,7 @@ import unittest.mock
 
 import fixtures
 
+import snapcraft
 import snapcraft.common
 import snapcraft.yaml
 from snapcraft import (
@@ -45,6 +46,8 @@ class TestYaml(tests.TestCase):
         self.mock_path_exists.return_value = True
         self.addCleanup(patcher.stop)
         self.part_schema = snapcraft.yaml.Validator().part_schema
+
+        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
@@ -96,7 +99,7 @@ uses:
         self.assertEqual(
             config.data,
             {'apps': {'app1': {'command': 'runme', 'plugs': ['migration']}},
-             'architectures': [snapcraft.common.get_arch()],
+             'architectures': [self.deb_arch],
              'description': 'test',
              'name': 'test',
              'parts': {
@@ -574,10 +577,12 @@ parts:
     plugin: nil
 """)
 
-        self.arch_triplet = 'x86_64-linux-gnu'
-        patcher = unittest.mock.patch('snapcraft.Project.arch_triplet')
-        mock_arch = patcher.start()
-        mock_arch.return_value = self.arch_triplet
+        project_options = snapcraft.ProjectOptions()
+        patcher = unittest.mock.patch('snapcraft.ProjectOptions')
+        mock_project_options = patcher.start()
+        mock_project_options.return_value = project_options
+        self.arch = project_options.deb_arch
+        self.arch_triplet = project_options.arch_triplet
         self.addCleanup(patcher.stop)
 
     @unittest.mock.patch('snapcraft.common.get_snapdir')
@@ -1273,8 +1278,10 @@ Cflags: -I${{includedir}}/{module}
         self.bindir = os.path.join(os.getcwd(), 'bin')
         os.makedirs(self.bindir)
 
+        project_options = snapcraft.ProjectOptions()
         env = snapcraft.yaml._create_pkg_config_override(
-            self.bindir, self.installdir, self.stagedir)
+            self.bindir, self.installdir, self.stagedir,
+            project_options.arch_triplet)
         self.assertEqual(env, ['PATH={}:$PATH'.format(self.bindir)])
 
         self.pkg_config_bin = os.path.join(self.bindir, 'pkg-config')

@@ -27,6 +27,7 @@ from unittest.mock import (
 
 import fixtures
 
+import snapcraft
 from snapcraft import (
     common,
     pluginhandler,
@@ -216,7 +217,8 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
-            'mock', 'mock-part', {}, None, {'properties': {}})
+            'mock', 'mock-part', {}, snapcraft.ProjectOptions(),
+            {'properties': {}})
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock')
 

@@ -20,6 +20,7 @@ from unittest import mock
 
 import fixtures
 
+import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import kbuild
 
@@ -34,16 +35,12 @@ class KBuildPluginTestCase(tests.TestCase):
             kconfigfile = None
             kdefconfig = []
             kconfigs = []
+            project = snapcraft.ProjectOptions()
 
         self.options = Options()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.common.get_parallel_build_count')
-        self.get_parallel_build_count_mock = patcher.start()
-        self.get_parallel_build_count_mock.return_value = 2
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
@@ -74,8 +71,6 @@ class KBuildPluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
@@ -114,8 +109,6 @@ class KBuildPluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
@@ -157,8 +150,6 @@ class KBuildPluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([
@@ -215,8 +206,6 @@ ACCEPT=n
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
-
-        self.get_parallel_build_count_mock.assert_called_with()
 
         self.assertEqual(1, check_call_mock.call_count)
         check_call_mock.assert_has_calls([

@@ -173,7 +173,7 @@ class PluginHandler:
         setattr(options, 'project', self._project_options)
         self.code = plugin(self.name, options)
 
-        if self._project_options.is_cross_compiling():
+        if self._project_options.is_cross_compiling:
             logger.debug(
                 'Setting {!r} as the compilation target for {!r}'.format(
                     self._project_options.target_machine, plugin_name))
@@ -584,6 +584,8 @@ def load_plugin(part_name, plugin_name, properties=None,
         properties = {}
     if part_schema is None:
         part_schema = {}
+    if project_options is None:
+        project_options = snapcraft.ProjectOptions()
     return PluginHandler(plugin_name, part_name, properties,
                          project_options, part_schema)
 
