@@ -51,6 +51,7 @@ setup(
             ['libraries/' + x for x in os.listdir('libraries')]),
     ],
     install_requires=[
+        'file-magic',
         'pyxdg',
         'requests',
         'requests-oauthlib',
