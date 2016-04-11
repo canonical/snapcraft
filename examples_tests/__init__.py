@@ -162,7 +162,7 @@ class ExampleTestCase(testtools.TestCase):
     def assert_command_in_snappy_testbed(self, command, expected_output):
         if not config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(command)
-            self.assertEqual(output, expected_output)
+            self.assertEqual(expected_output, output)
 
     def run_command_in_snappy_testbed(self, command):
         if not config.get('skip-install', False):
