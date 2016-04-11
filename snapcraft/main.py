@@ -103,10 +103,8 @@ import textwrap
 from docopt import docopt
 
 import snapcraft
-from snapcraft import (
-    log,
-    common,
-)
+from snapcraft import log
+
 
 logger = logging.getLogger(__name__)
 
