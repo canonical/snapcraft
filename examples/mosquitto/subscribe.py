@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 
 from paho.mqtt import client as mqtt_client
 
@@ -14,14 +15,22 @@ topic = ''
 def on_connect(client, userdata, unused1, unused2):
     # Ignore the unused arguments.
     del unused1, unused2
-    print('MQTT subscriber connected.')
+    _log('MQTT subscriber connected.')
     client.subscribe(topic)
 
 
 def on_message(unused1, unused2, message):
     # Ignore the unused arguments.
     del unused1, unused2
-    print(message.topic + ' ' + str(message.payload))
+    _log(message.topic + ' ' + str(message.payload))
+
+
+def _log(message):
+    print(message)
+    log_file_path = os.path.join(
+        os.getenv('SNAP_USER_DATA'), 'mosquitto.subscriber.log')
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(message + '\n')
 
 
 def main():
