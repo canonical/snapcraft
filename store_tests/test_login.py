@@ -14,33 +14,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
+import testscenarios
+
 
 import store_tests
 
 
+load_tests = testscenarios.load_tests_apply_scenarios
+
+
 class LoginLogoutTestCase(store_tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
-
-    def test_successful_login(self):
-        self.addCleanup(self.logout)
-        res = self.login()
-        self.assertTrue(res['success'])
-
-    def test_failed_login(self):
-        res = self.login(password='wrongpassword')
-        self.assertFalse(res['success'])
-
-
-class LoginLogoutWithMacaroonsTestCase(store_tests.TestCase):
+    scenarios = (('OAuth', dict(with_macaroons=False)),
+                 ('macaroons', dict(with_macaroons=True)))
 
     def setUp(self):
         super().setUp()
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
+        if self.with_macaroons:
+            self.useFixture(
+                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
+        else:
+            self.useFixture(
+                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_successful_login(self):
         self.addCleanup(self.logout)
