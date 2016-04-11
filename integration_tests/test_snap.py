@@ -25,21 +25,22 @@ from testtools.matchers import (
     Not,
 )
 
+import snapcraft
 import integration_tests
-
-from snapcraft.common import (
-    get_arch,
-)
 
 
 class SnapTestCase(integration_tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_snap(self):
         project_dir = 'assemble'
         self.run_snapcraft('snap', project_dir)
         os.chdir(project_dir)
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
 
         binary1_wrapper_path = os.path.join(
@@ -77,7 +78,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft([], project_dir)
         os.chdir(project_dir)
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
 
     def test_cleanbuild(self):
@@ -89,7 +90,7 @@ class SnapTestCase(integration_tests.TestCase):
         snap_source_path = 'assemble_1.0_source.tar.bz2'
         self.assertThat(snap_source_path, FileExists())
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_directory(self):
@@ -97,7 +98,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
         os.chdir(project_dir)
 
-        snap_file_path = 'assemble_1.0_{}.snap'.format(get_arch())
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         os.remove(snap_file_path)
 
         # Verify that Snapcraft can snap its own snap directory (this will make
