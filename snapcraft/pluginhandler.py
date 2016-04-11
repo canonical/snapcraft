@@ -173,8 +173,12 @@ class PluginHandler:
         try:
             self.code = plugin(self.name, options, self._project_options)
         except TypeError:
-            logger.warning('DEPRECATED: this plugin needs updating to use '
-                           'project options')
+            logger.warning(
+                'DEPRECATED: the plugin used by part {!r} needs to be updated '
+                'to accept project options in its initializer. See '
+                'https://github.com/ubuntu-core/snapcraft/blob/master/docs/'
+                'plugins.md#initializing-a-plugin for more information'.format(
+                    self.name))
             self.code = plugin(self.name, options)
             # This is for plugins that don't inherit from BasePlugin
             if not hasattr(self.code, 'project'):
