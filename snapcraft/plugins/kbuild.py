@@ -61,7 +61,6 @@ import shutil
 import subprocess
 
 from snapcraft import BasePlugin
-from snapcraft import common
 
 
 logger = logging.getLogger(__name__)

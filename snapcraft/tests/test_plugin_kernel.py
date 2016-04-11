@@ -17,7 +17,6 @@
 import contextlib
 import logging
 import os
-import platform
 from unittest import mock
 
 import fixtures

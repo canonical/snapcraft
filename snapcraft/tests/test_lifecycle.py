@@ -21,7 +21,6 @@ from unittest import mock
 
 import snapcraft
 from snapcraft import (
-    common,
     pluginhandler,
     tests,
 )
