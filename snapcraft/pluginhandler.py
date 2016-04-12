@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,6 +31,7 @@ import yaml
 import snapcraft
 from snapcraft import (
     common,
+    internal,
     libraries,
     repo,
 )
@@ -46,60 +47,6 @@ class PluginError(Exception):
 
 class MissingState(Exception):
     pass
-
-
-def _strip_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return StripState(**parameters)
-
-
-def _stage_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return StageState(**parameters)
-
-yaml.add_constructor(u'!StripState', _strip_state_constructor)
-yaml.add_constructor(u'!StageState', _stage_state_constructor)
-
-
-class StripState(yaml.YAMLObject):
-    yaml_tag = u'!StripState'
-
-    def __init__(self, files, directories, dependency_paths=None):
-        self.files = files
-        self.directories = directories
-        self.dependency_paths = set()
-
-        if dependency_paths:
-            self.dependency_paths = dependency_paths
-
-    def __repr__(self):
-        return ('{}(files: {}, directories: {}, dependency_paths: {})').format(
-            self.__class__, self.files, self.directories,
-            self.dependency_paths)
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__dict__ == other.__dict__
-
-        return False
-
-
-class StageState(yaml.YAMLObject):
-    yaml_tag = u'!StageState'
-
-    def __init__(self, files, directories):
-        self.files = files
-        self.directories = directories
-
-    def __repr__(self):
-        return '{}(files: {}, directories: {})'.format(
-            self.__class__, self.files, self.directories)
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__dict__ == other.__dict__
-
-        return False
 
 
 class PluginHandler:
@@ -368,7 +315,8 @@ class PluginHandler:
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
-        self.mark_done('stage', StageState(snap_files, snap_dirs))
+        self.mark_done('stage', internal.states.StageState(
+            snap_files, snap_dirs))
 
     def clean_stage(self, project_staged_state):
         state_file = self._step_state_file('stage')
@@ -429,7 +377,7 @@ class PluginHandler:
 
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
-        self.mark_done('strip', StripState(
+        self.mark_done('strip', internal.states.StripState(
             snap_files, snap_dirs, dependency_paths))
 
     def clean_strip(self, project_stripped_state):
