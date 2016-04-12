@@ -14,5 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.states.strip_state import StripState  # noqa
-from snapcraft.states.stage_state import StageState  # noqa
+from snapcraft.internal import states  # noqa

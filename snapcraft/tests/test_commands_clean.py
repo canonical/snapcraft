@@ -22,8 +22,8 @@ from unittest import mock
 from snapcraft.main import main
 from snapcraft import (
     common,
+    internal,
     pluginhandler,
-    states,
     tests,
 )
 
@@ -153,15 +153,15 @@ parts:
         main(['clean', '--step=foo'])
 
         expected_staged_state = {
-            'clean0': states.StageState({'clean0'}, set()),
-            'clean1': states.StageState({'clean1'}, set()),
-            'clean2': states.StageState({'clean2'}, set()),
+            'clean0': internal.states.StageState({'clean0'}, set()),
+            'clean1': internal.states.StageState({'clean1'}, set()),
+            'clean2': internal.states.StageState({'clean2'}, set()),
         }
 
         expected_stripped_state = {
-            'clean0': states.StripState({'clean0'}, set()),
-            'clean1': states.StripState({'clean1'}, set()),
-            'clean2': states.StripState({'clean2'}, set()),
+            'clean0': internal.states.StripState({'clean0'}, set()),
+            'clean1': internal.states.StripState({'clean1'}, set()),
+            'clean2': internal.states.StripState({'clean2'}, set()),
         }
 
         mock_clean.assert_called_with(

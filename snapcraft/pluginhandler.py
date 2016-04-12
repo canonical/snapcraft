@@ -31,9 +31,9 @@ import yaml
 import snapcraft
 from snapcraft import (
     common,
+    internal,
     libraries,
     repo,
-    states,
 )
 
 _SNAPCRAFT_STAGE = '$SNAPCRAFT_STAGE'
@@ -315,7 +315,8 @@ class PluginHandler:
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
-        self.mark_done('stage', states.StageState(snap_files, snap_dirs))
+        self.mark_done('stage', internal.states.StageState(
+            snap_files, snap_dirs))
 
     def clean_stage(self, project_staged_state):
         state_file = self._step_state_file('stage')
@@ -376,7 +377,7 @@ class PluginHandler:
 
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
-        self.mark_done('strip', states.StripState(
+        self.mark_done('strip', internal.states.StripState(
             snap_files, snap_dirs, dependency_paths))
 
     def clean_strip(self, project_stripped_state):
