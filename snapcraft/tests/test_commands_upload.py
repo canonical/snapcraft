@@ -87,6 +87,7 @@ class UploadCommandTestCase(tests.TestCase):
              'test.snap', '-e', os.path.join('meta', 'snap.yaml')])
         self.assertEqual(
             'Uploading existing test.snap.\n'
+            '\n'
             'Application uploaded successfully\n',
             fake_logger.output)
 

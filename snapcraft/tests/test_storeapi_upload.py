@@ -82,8 +82,10 @@ class UploadTestCase(UploadBaseTestCase):
         result = upload(self.binary_file.name, 'foo')
 
         self.assertFalse(result['success'])
-        self.mock_logger.info.assert_called_once_with(
-            'Upload failed:\n\n%s\n', 'some error')
+        self.assertEqual(
+            [call(''),
+             call('Upload failed:\n\n%s\n', 'some error')],
+            self.mock_logger.info.call_args_list)
 
     def test_upload_app_ok(self):
         # fake upload response
@@ -145,16 +147,6 @@ class UploadTestCase(UploadBaseTestCase):
         result = upload(self.binary_file.name, 'foo')
 
         self.assertFalse(result['success'])
-        # FIXME: The following should be moved to a store_tests
-        # -- vila 2016-04-12
-        return
-        self.assertIn(
-            call('Upload did not complete.'),
-            self.mock_logger.info.call_args_list)
-        self.assertIn(
-            call('Some errors were detected:\n\n%s\n',
-                 'some error'),
-            self.mock_logger.info.call_args_list)
 
 
 class UploadWithScanTestCase(UploadBaseTestCase):
