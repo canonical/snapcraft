@@ -674,7 +674,10 @@ def _find_dependencies(workdir):
     fs_encoding = sys.getfilesystemencoding()
 
     for root, dirs, files in os.walk(workdir.encode(fs_encoding)):
-        for entry in itertools.chain(files, dirs):
+        # Filter out object (*.o) files-- we only care about binaries.
+        entries = (entry for entry in itertools.chain(files, dirs)
+                   if not entry.endswith(b'.o'))
+        for entry in entries:
             path = os.path.join(root, entry)
             if os.path.islink(path):
                 logger.debug('Skipped link {!r} when parsing {!r}'.format(
