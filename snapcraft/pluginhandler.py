@@ -675,6 +675,10 @@ def _find_dependencies(workdir):
 
     for root, dirs, files in os.walk(workdir.encode(fs_encoding)):
         for entry in itertools.chain(files, dirs):
+            # Skip object files
+            if entry.endswith(b'.o'):
+                continue
+
             path = os.path.join(root, entry)
             if os.path.islink(path):
                 logger.debug('Skipped link {!r} when parsing {!r}'.format(
