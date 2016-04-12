@@ -8,7 +8,7 @@ apps:
   server:
     command: bin/shout --home $SNAP_DATA
     daemon: simple
-    plugs: [network-bind]
+    plugs: [network, network-bind]
 
 parts:
   shout:

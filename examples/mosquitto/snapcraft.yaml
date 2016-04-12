@@ -7,7 +7,7 @@ apps:
   mosquitto:
     command: usr/sbin/mosquitto -c $SNAP/mosquitto.conf
     daemon: simple
-    plugs: [network-bind]
+    plugs: [network, network-bind]
   subscribe:
     command: bin/subscribe
     plugs: [network]
