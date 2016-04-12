@@ -3,7 +3,6 @@ version: 1
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
 icon: icon.png
-config: usr/bin/config.py
 
 apps:
   webcam-webui:
@@ -41,6 +40,3 @@ parts:
     plugin: copy
     files:
       webcam-webui: bin/webcam-webui
-  config:
-    plugin: python3
-    source: .

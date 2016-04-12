@@ -215,36 +215,6 @@ class CreateTest(tests.TestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
-    def test_create_meta_with_config(self):
-        os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'config.sh'), 'w').close()
-        self.config_data['config'] = 'config.sh'
-
-        meta.create(self.config_data)
-
-        self.assertTrue(
-            os.path.exists(os.path.join(self.hooks_dir, 'config')),
-            'the config was not setup correctly')
-
-    def test_create_meta_with_config_with_args(self):
-        os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'config.sh'), 'w').close()
-        self.config_data['config'] = 'config.sh something'
-
-        meta.create(self.config_data)
-
-        config_hook = os.path.join(self.hooks_dir, 'config')
-        self.assertTrue(
-            os.path.exists(config_hook), 'the config was not setup correctly')
-
-        with open(config_hook) as f:
-            config_wrapper = f.readlines()
-
-        expected_wrapper = [
-            '#!/bin/sh\n', '\n', '\n',
-            'exec "$SNAP/config.sh" something $*\n']
-        self.assertEqual(config_wrapper, expected_wrapper)
-
     def test_create_meta_with_app(self):
         os.makedirs(self.snap_dir)
         open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
