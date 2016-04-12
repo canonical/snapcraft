@@ -225,7 +225,9 @@ class PluginHandler:
 
         return None
 
-    def is_dirty(self, step):
+    def is_clean(self, step):
+        """Return true if the given step hasn't run (or has been cleaned)."""
+
         last_step = self.last_step()
         if last_step:
             return (common.COMMAND_ORDER.index(step) >
@@ -234,7 +236,7 @@ class PluginHandler:
         return True
 
     def should_step_run(self, step, force=False):
-        return force or self.is_dirty(step)
+        return force or self.is_clean(step)
 
     def mark_done(self, step, state=None):
         if not state:

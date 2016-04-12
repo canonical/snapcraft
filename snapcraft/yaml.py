@@ -240,6 +240,13 @@ class Config:
 
         return dependents
 
+    def get_part(self, part_name):
+        for part in self.all_parts:
+            if part.name == part_name:
+                return part
+
+        return None
+
     def get_project_state(self, step):
         """Returns a dict of states for the given step of each part."""
 

@@ -226,18 +226,70 @@ def _reverse_dependency_tree(config, part_name):
     return dependents
 
 
-def _clean_part_and_all_dependents(config, part, staged_state, stripped_state,
-                                   step):
-    # Clean the part in question
-    part.clean(staged_state, stripped_state, step)
-
-    # Now obtain the reverse dependency tree for this part. Make sure
-    # all dependents are also cleaned.
-    dependents = _reverse_dependency_tree(config, part.name)
+def _clean_part_and_all_dependents(part_name, step, config, staged_state,
+                                   stripped_state):
+    # Obtain the reverse dependency tree for this part. Make sure all
+    # dependents are cleaned.
+    dependents = _reverse_dependency_tree(config, part_name)
     dependent_parts = {p for p in config.all_parts
                        if p.name in dependents}
     for dependent_part in dependent_parts:
         dependent_part.clean(staged_state, stripped_state, step)
+
+    # Finally, clean the part in question
+    config.get_part(part_name).clean(staged_state, stripped_state, step)
+
+
+def _humanize_list(items):
+    if len(items) == 0:
+        return ''
+
+    quoted_items = ['{!r}'.format(item) for item in sorted(items)]
+    if len(items) == 1:
+        return quoted_items[0]
+
+    humanized = ', '.join(quoted_items[:-1])
+
+    if len(items) > 2:
+        humanized += ','
+
+    return '{} and {}'.format(humanized, quoted_items[-1])
+
+
+def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
+                                       config):
+    # Get the name of the parts that depend upon this one
+    dependents = config.part_dependents(part_name)
+
+    # Verify that they're either already clean, or that they will be cleaned.
+    if not dependents.issubset(clean_part_names):
+        for part in config.all_parts:
+            if part.name in dependents and not part.is_clean(step):
+                humanized_parts = _humanize_list(dependents)
+                if len(dependents) == 1:
+                    humanized_parts += ' depends'
+                else:
+                    humanized_parts += ' depend'
+
+                raise RuntimeError(
+                    'Requested clean of {!r} but {} upon it. Please add each '
+                    "to the clean command if that's what you intended.".format(
+                        part_name, humanized_parts))
+
+
+def _clean_parts(part_names, step, config, staged_state, stripped_state):
+    if not step:
+        step = 'pull'
+
+    # Before doing anything, verify that we weren't asked to clean only the
+    # root of a dependency tree (the entire tree must be specified).
+    for part_name in part_names:
+        _verify_dependents_will_be_cleaned(part_name, part_names, step, config)
+
+    # Now we can actually clean.
+    for part_name in part_names:
+        _clean_part_and_all_dependents(
+            part_name, step, config, staged_state, stripped_state)
 
 
 def _remove_directory_if_empty(directory):
@@ -286,15 +338,12 @@ def clean(parts, step=None):
 
     if parts:
         config.validate_parts(parts)
+    else:
+        parts = [part.name for part in config.all_parts]
 
     staged_state = config.get_project_state('stage')
     stripped_state = config.get_project_state('strip')
 
-    for part in config.all_parts:
-        if not parts:
-            part.clean(staged_state, stripped_state, step)
-        elif part.name in parts:
-            _clean_part_and_all_dependents(
-                config, part, staged_state, stripped_state, step)
+    _clean_parts(parts, step, config, staged_state, stripped_state)
 
     _cleanup_common_directories(config)
