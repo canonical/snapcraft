@@ -21,6 +21,7 @@ import testscenarios
 from testtools import matchers
 
 from snapcraft import common
+from snapcraft.storeapi import _upload
 import store_tests
 
 
@@ -92,5 +93,20 @@ class UploadTestCase(store_tests.TestCase):
             'Application uploaded successfully (as revision ', log)
         self.assertIn('Please check out the application at: ', log)
 
-        # MISSINGTEST: See test_upload_app_failed in test_storeapi_upload
-        # -- vila 2016-04-12
+    def test_upload_app_failed(self):
+        # Make upload_app catch an error raised by _upload_files
+        def raise_error(*args, **kwargs):
+            raise Exception('that error')
+        self.addCleanup(
+            setattr, _upload, '_upload_files', _upload._upload_files)
+        _upload._upload_files = raise_error
+
+        self.addCleanup(self.logout)
+        self.login()
+        snap_path, snap_name = self.create_snap('basic')
+
+        resp = self.upload(snap_path, snap_name)
+        self.assertFalse(resp['success'])
+        self.assertEqual(['that error'], resp['errors'])
+        log = self.logger.output
+        self.assertIn('There was an error uploading the application', log)

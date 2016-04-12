@@ -16,7 +16,6 @@
 from __future__ import absolute_import, unicode_literals
 import json
 import os
-import sys
 import tempfile
 import unittest
 from unittest.mock import ANY, call, patch

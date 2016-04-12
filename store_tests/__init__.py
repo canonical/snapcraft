@@ -36,8 +36,11 @@ import fixtures
 import testtools
 from testtools import content
 
+import snapcraft
 from snapcraft import (
+    common,
     config,
+    lifecycle,
     storeapi,
 )
 from snapcraft.tests import fixture_setup
@@ -49,7 +52,10 @@ class TestCase(testtools.TestCase):
         super().setUp()
         # Run snapcraft from sources
         self.snapcraft_command = os.path.join(os.getcwd(), 'bin', 'snapcraft')
-        # Keep track of the snaps used as a base by tests
+        # FIXME: Urgh isolation! -- vila 2016-04-12
+        common.set_schemadir(os.path.join(__file__,
+                             '..', '..', 'schema'))
+        # Where the snap templates are
         self.snaps_dir = os.path.join(
             os.path.dirname(__file__), '..', 'integration_tests', 'snaps')
 
@@ -88,6 +94,42 @@ class TestCase(testtools.TestCase):
     def logout(self):
         # Our setup guarantee we'll clear the expected config file
         config.clear_config()
+
+    def create_snap(self, name, version=None):
+        """Create a test snap from a template.
+
+        :param name: The snap template name in integration_tests/snaps and the
+            directory where it's stored in the test private file system.
+
+        :param version: An optional version for the created snap
+
+        :returns: The path where the binary snap file has been created.
+        """
+        project_dir = os.path.join(self.path, name)
+        shutil.copytree(os.path.join(self.snaps_dir, name), project_dir)
+        if version is None:
+            # Change to a random version. The maximum size is 32 chars.
+            version = str(uuid.uuid4().int)[:32]
+        yaml_path = os.path.join(project_dir, 'snapcraft.yaml')
+        # print() will output to yaml_path (fileinput redirects stdout)
+        for line in fileinput.input(yaml_path, inplace=True):
+            if 'version: ' in line:
+                print('version: ' + version)
+            else:
+                print(line, end='')
+        snap_path = os.path.join(self.path, 'snap.snap')
+
+        real_check_call = subprocess.check_call
+
+        def check_call(*args):
+            # Swallow output as it's only relevant for debug
+            return real_check_call(*args, stdout=subprocess.DEVNULL)
+        self.addCleanup(
+            setattr, subprocess, 'check_call', real_check_call)
+        subprocess.check_call = check_call
+        os.chdir(project_dir)
+        lifecycle.snap(snapcraft.ProjectOptions(), None, snap_path)
+        return snap_path, name
 
     # FIXME: This was copied from integration_tests and need to be refactored
     # to be properly shared. Roughly, we need a way to create a snap on the fly
