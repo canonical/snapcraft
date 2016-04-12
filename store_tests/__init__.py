@@ -25,16 +25,14 @@ As such they are expected to be run locally until proper isolation is achieved
 for registered names on the staging server.
 """
 
-import fileinput
 import logging
 import os
-import shutil
 import subprocess
+import sys
 import uuid
 
 import fixtures
 import testtools
-from testtools import content
 
 import snapcraft
 from snapcraft import (
@@ -43,6 +41,7 @@ from snapcraft import (
     lifecycle,
     storeapi,
 )
+from snapcraft.storeapi import _upload
 from snapcraft.tests import fixture_setup
 
 
@@ -138,4 +137,23 @@ parts:
 
     def upload(self, snap_filename, snap_name):
         conf = config.load_config()
-        return storeapi.upload(snap_filename, snap_name, config=conf)
+        # Diable the progress indications, we don't need them during tests
+        orig = _upload.ProgressBar
+
+        class Silent(orig):
+
+            def start(self):
+                pass
+
+            def update(self, value=None):
+                pass
+
+            def finish(self):
+                pass
+
+        try:
+            _upload.ProgressBar = Silent
+            res = storeapi.upload(snap_filename, snap_name, config=conf)
+        finally:
+            _upload.ProgressBar = orig
+        return res

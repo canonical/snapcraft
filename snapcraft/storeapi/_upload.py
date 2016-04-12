@@ -48,8 +48,6 @@ def _update_progress_bar(progress_bar, maximum_value, monitor):
 def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
            config=None):
     """Create a new upload based on a snap package."""
-    # Print a newline so the progress bar has some breathing room.
-    print('')
 
     data = upload_files(binary_filename, config=config)
     success = data.get('success', False)
@@ -95,7 +93,10 @@ def upload_files(binary_filename, config=None):
         progress_bar = ProgressBar(
             widgets=['Uploading {} '.format(binary_filename),
                      Bar(marker='=', left='[', right=']'), ' ', Percentage()],
-            maxval=os.path.getsize(binary_filename)).start()
+            maxval=os.path.getsize(binary_filename))
+        progress_bar.start()
+        # Print a newline so the progress bar has some breathing room.
+        logger.info('')
 
         # Create a monitor for this upload, so that progress can be displayed
         monitor = MultipartEncoderMonitor(
@@ -164,6 +165,7 @@ def upload_app(name, upload_data, metadata=None, config=None):
             'No valid credentials found. Have you run "snapcraft login"?']
         return result
 
+    files = []
     try:
         data = get_post_data(upload_data, metadata)
         files = get_post_files(metadata)
@@ -191,7 +193,8 @@ def _upload_files(session, upload_url, data, files, result):
         # AnimatedMarker for it.
         progress_indicator = ProgressBar(
             widgets=['Checking package status... ', AnimatedMarker()],
-            maxval=7).start()
+            maxval=7)
+        progress_indicator.start()
 
         # Execute the package scan in another thread so we can update the
         # progress indicator.

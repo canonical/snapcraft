@@ -77,7 +77,7 @@ def upload(snap_filename):
 
     # Print another newline to make sure the user sees the final result of the
     # upload (success/failure).
-    print('')
+    logger.info('')
 
     if success:
         message = 'Application uploaded successfully'
