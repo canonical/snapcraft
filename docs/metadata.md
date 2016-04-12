@@ -47,12 +47,6 @@ While using snapcraft, proper wrappers will be generated for binaries
 declared for your app. Snapcraft will also adjust symlinks to be relative
 and work for your snap.
 
-It's also a nice touch to add a wrapper script to handle receiving and
-dumping the config of your snap as YAML. When run, the config hook reads
-your application's configuration and dumps it in YAML format to stdout. When
-passed a new config YAML on stdin, the config hook updates your application's
-configuration (more about `config` in the section below).
-
 
 ## Adding daemons
 
@@ -84,26 +78,6 @@ complete and all communication channels are set up. The child continues to
 run as the main daemon process. This is the behavior of traditional UNIX
 daemons.
 
-## Snap config
-
-Snappy config is an entry point to configure your snap, in order to have the
-integration with the config system in place, the **config** keyword needs to
-be used. This is a relative path to the binary that will manage the
-configuration for the snap. If *config* is the part that would handle this
-and building its source creates `bin/config`, the extract would look like
-
-```yaml
-config: bin/config
-
-parts:
-  config:
-    plugin: python3
-    source: src/config
-```
-
-To find out more about config command, have a look at the [config section]
-[conf].
-
 
 ## Fixed assets
 
@@ -131,6 +105,5 @@ or
     snapcraft.yaml
 
 
-[conf]: https://developer.ubuntu.com/snappy/guides/config-command/
 [sec]: https://developer.ubuntu.com/snappy/guides/security-policy/
 [syntax]: snapcraft-syntax.md
