@@ -14,13 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import uuid
 
 import fixtures
 import testscenarios
-from testtools import matchers
 
-from snapcraft import common
 from snapcraft.storeapi import _upload
 import store_tests
 
@@ -44,13 +41,9 @@ class UploadTestCase(store_tests.TestCase):
                 fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_upload_without_login(self):
-        project_dir = snap_name = 'assemble'
-        self.run_snapcraft('snap', project_dir)
-        snap_file_path = 'assemble_1.0_{}.snap'.format(common.get_arch())
-        os.chdir(project_dir)
-        self.assertThat(snap_file_path, matchers.FileExists())
+        snap_path, snap_name = self.create_snap('unregsitered')
 
-        resp = self.upload(snap_file_path, snap_name)
+        resp = self.upload(snap_path, snap_name)
         self.assertFalse(resp['success'])
 
         log = self.logger.output
@@ -62,23 +55,9 @@ class UploadTestCase(store_tests.TestCase):
         self.addCleanup(self.logout)
         self.login()
 
-        # Make a snap
-        project_dir = snap_name = 'basic'
+        snap_path, snap_name = self.create_snap('basic')
 
-        # Change to a random version.
-        # The maximum size is 32 chars.
-        new_version = str(uuid.uuid4().int)[:32]
-        project_dir = self._update_version(project_dir, new_version)
-
-        self.run_snapcraft('snap', project_dir)
-
-        # Upload the snap
-        snap_file_path = 'basic_{}_{}.snap'.format(new_version,
-                                                   common.get_arch())
-        os.chdir(project_dir)
-        self.assertThat(snap_file_path, matchers.FileExists())
-
-        resp = self.upload(snap_file_path, snap_name)
+        resp = self.upload(snap_path, snap_name)
         # FIXME: Each test user need his own registered snap names for the test
         # to succeed -- vila 2016-04-12
         registered = (

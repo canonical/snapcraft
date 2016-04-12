@@ -105,20 +105,25 @@ class TestCase(testtools.TestCase):
 
         :returns: The path where the binary snap file has been created.
         """
-        project_dir = os.path.join(self.path, name)
-        shutil.copytree(os.path.join(self.snaps_dir, name), project_dir)
         if version is None:
             # Change to a random version. The maximum size is 32 chars.
             version = str(uuid.uuid4().int)[:32]
-        yaml_path = os.path.join(project_dir, 'snapcraft.yaml')
-        # print() will output to yaml_path (fileinput redirects stdout)
-        for line in fileinput.input(yaml_path, inplace=True):
-            if 'version: ' in line:
-                print('version: ' + version)
-            else:
-                print(line, end='')
-        snap_path = os.path.join(self.path, 'snap.snap')
+        template = '''
+name: {name}
+version: {version}
+summary: Summary of the most simple test snap
+description: Description of the most simple test snap
 
+parts:
+    part1:
+      plugin: nil
+'''
+        snap_dir = os.path.join(self.path, name)
+        os.mkdir(snap_dir)
+        yaml_path = os.path.join(snap_dir, 'snapcraft.yaml')
+        with open(yaml_path, 'w') as f:
+            f.write(template.format(name=name, version=version))
+        snap_path = os.path.join(self.path, 'snap.snap')
         real_check_call = subprocess.check_call
 
         def check_call(*args):
@@ -127,52 +132,9 @@ class TestCase(testtools.TestCase):
         self.addCleanup(
             setattr, subprocess, 'check_call', real_check_call)
         subprocess.check_call = check_call
-        os.chdir(project_dir)
+        os.chdir(snap_dir)
         lifecycle.snap(snapcraft.ProjectOptions(), None, snap_path)
         return snap_path, name
-
-    # FIXME: This was copied from integration_tests and need to be refactored
-    # to be properly shared. Roughly, we need a way to create a snap on the fly
-    # from a minimal template given a registered name and a version. If there
-    # is a way to avoid calling out 'snapcraft' itself but use the internal API
-    # instead, even better.  -- vila 2016-04-12
-    def run_snapcraft(self, command, project_dir=None):
-        if isinstance(command, str):
-            command = [command]
-        if project_dir:
-            if not os.path.exists(project_dir):
-                cwd = self.copy_project_to_tmp(project_dir)
-            else:
-                cwd = os.path.join(self.path, project_dir)
-        else:
-            cwd = None
-        try:
-            return subprocess.check_output(
-                [self.snapcraft_command, '--debug'] + command, cwd=cwd,
-                stderr=subprocess.STDOUT, universal_newlines=True)
-        except subprocess.CalledProcessError as e:
-            self.addDetail('output', content.text_content(e.output))
-            raise
-
-    def copy_project_to_tmp(self, project_dir):
-        tmp_project_dir = os.path.join(self.path, project_dir)
-        shutil.copytree(
-            os.path.join(self.snaps_dir, project_dir), tmp_project_dir)
-        return tmp_project_dir
-
-    def _update_version(self, project_dir, version=None):
-        # Change to a random version.
-        # The maximum size is 32 chars.
-        if version is None:
-            version = str(uuid.uuid4().int)[:32]
-        updated_project_dir = self.copy_project_to_tmp(project_dir)
-        yaml_file = os.path.join(project_dir, 'snapcraft.yaml')
-        for line in fileinput.input(yaml_file, inplace=True):
-            if 'version: ' in line:
-                print('version: ' + version)
-            else:
-                print(line)
-        return updated_project_dir
 
     def upload(self, snap_filename, snap_name):
         conf = config.load_config()
