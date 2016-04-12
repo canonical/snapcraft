@@ -6,12 +6,7 @@ description: Contains talker/listener ROS packages and a .launch file.
 apps:
   launch-project:
     command: roslaunch listener talk_and_listen.launch
-    plugs: [listener]
-
-plugs:
-  listener:
-    interface: old-security
-    caps: [network-listener]
+    plugs: [network-bind]
 
 parts:
   ros-project:

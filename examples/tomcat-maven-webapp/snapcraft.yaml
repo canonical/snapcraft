@@ -10,12 +10,7 @@ apps:
  tomcat:
    command: bin/wrapper
    daemon: simple
-   plugs: [listener-service]
-
-plugs:
-  listener-service:
-    interface: old-security
-    caps: [network-listener, network-service]
+   plugs: [network-bind]
 
 parts:
     webapp:

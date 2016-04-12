@@ -6,6 +6,7 @@ icon: icon.png
 apps:
     test:
         command: bin/test
+        plugs: [network]
 
 parts:
     main:

@@ -9,16 +9,8 @@ apps:
     command: bin/gopaste
     daemon: simple
     plugs:
-      - old-security
-
-plugs:
-  old-security:
-    caps:
-      - network-listener
-      - network-service
-      - network-management
-    security-override:
-      syscalls: [fchown]
+      - network
+      - network-bind
 
 parts:
   gopaste:
