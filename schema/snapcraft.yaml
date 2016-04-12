@@ -141,9 +141,6 @@ properties:
       - explicit
   license-version:
     description: license version (used to re-trigger an agreement action).
-  config:
-    type: string
-    description: path to a configure hook to expose configuration for the package
   apps:
     type: object
     additionalProperties: false

@@ -47,10 +47,6 @@ _OPTIONAL_PACKAGE_KEYS = [
     'slots',
 ]
 
-_OPTIONAL_HOOKS = [
-    'config',
-]
-
 _KERNEL_KEYS = {
     'kernel': 'vmlinuz',
     'initrd': 'initrd.img',
@@ -65,8 +61,8 @@ class CommandError(Exception):
 
 
 def create(config_data):
-    """Create snap.yaml and necessary package hooks.
-    Create  the meta directory and provision it with snap.yaml and hooks
+    """Create snap.yaml and related assets in meta.
+    Create  the meta directory and provision it with snap.yaml
     in the snap dir using information from config_data.
 
     :param dict config_data: project values defined in snapcraft.yaml.
@@ -92,13 +88,6 @@ def _write_snap_yaml(meta_dir, config_data):
 
 
 def _setup_assets(meta_dir, config_data):
-    if any(key in config_data for key in _OPTIONAL_HOOKS):
-        hooks_dir = os.path.join(meta_dir, 'hooks')
-        os.makedirs(hooks_dir, exist_ok=True)
-
-    if 'config' in config_data:
-        _setup_config_hook(hooks_dir, config_data['config'])
-
     if 'license' in config_data:
         logger.warning("DEPRECATED: 'license' defined in snapcraft.yaml")
         license_path = os.path.join(meta_dir, 'license.txt')
@@ -140,13 +129,6 @@ def _setup_from_setup(meta_dir):
         os.unlink(license_dst)
     if os.path.exists(license_src):
         os.link(license_src, license_dst)
-
-
-def _setup_config_hook(hooks_dir, config):
-    config_hook_path = os.path.join(hooks_dir, 'config')
-
-    execwrap = _wrap_exe(config)
-    os.rename(os.path.join(common.get_snapdir(), execwrap), config_hook_path)
 
 
 def _compose_snap_yaml(meta_dir, config_data):

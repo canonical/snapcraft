@@ -22,7 +22,6 @@ class WebcamWebUITestCase(examples_tests.ExampleTestCase):
     example_dir = 'webcam-webui'
 
     def test_webcam_webui(self):
-        self.skipTest('Temporary skip while debugging pip error.')
         self.build_snap(self.example_dir)
         snap_name = 'webcam-webui'
         self.install_snap(self.example_dir, snap_name, '1')
