@@ -10,10 +10,10 @@ apps:
     plugs: [network, network-bind]
   subscribe:
     command: bin/subscribe
-    plugs: [network]
+    plugs: [network, network-bind]
   publish:
     command: bin/publish
-    plugs: [network]
+    plugs: [network, network-bind]
 
 
 parts:
