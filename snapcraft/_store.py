@@ -64,12 +64,37 @@ def logout():
 def upload(snap_filename):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError(snap_filename)
-    else:
-        snap_name = _get_name_from_snap_file(snap_filename)
-        logger.info('Uploading existing {}.'.format(snap_filename))
 
-        conf = config.load_config()
-        storeapi.upload(snap_filename, snap_name, config=conf)
+    snap_name = _get_name_from_snap_file(snap_filename)
+    logger.info('Uploading existing {}.'.format(snap_filename))
+
+    conf = config.load_config()
+    result = storeapi.upload(snap_filename, snap_name, config=conf)
+    success = result.get('success', False)
+    errors = result.get('errors', [])
+    app_url = result.get('application_url', '')
+    revision = result.get('revision')
+
+    # Print another newline to make sure the user sees the final result of the
+    # upload (success/failure).
+    print('')
+
+    if success:
+        message = 'Application uploaded successfully'
+        if revision:
+            message += ' (as revision {})'.format(revision)
+
+        logger.info(message)
+    else:
+        logger.info('Upload did not complete.')
+
+    if errors:
+        logger.info('Some errors were detected:\n\n%s\n',
+                    '\n'.join(str(error) for error in errors))
+
+    if app_url:
+        logger.info('Please check out the application at: %s\n',
+                    app_url)
 
 
 def _get_name_from_snap_file(snap_path):

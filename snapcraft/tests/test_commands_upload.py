@@ -63,6 +63,7 @@ class UploadCommandTestCase(tests.TestCase):
         patcher = mock.patch('snapcraft.storeapi.upload')
         mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
+        mock_upload.return_value = dict(success=True)
 
         patcher = mock.patch('snapcraft.config.load_config')
         mock_load_config = patcher.start()
@@ -85,7 +86,9 @@ class UploadCommandTestCase(tests.TestCase):
             ['unsquashfs', '-d', os.path.join(os.getcwd(), 'squashfs-root'),
              'test.snap', '-e', os.path.join('meta', 'snap.yaml')])
         self.assertEqual(
-            'Uploading existing test.snap.\n', fake_logger.output)
+            'Uploading existing test.snap.\n'
+            'Application uploaded successfully\n',
+            fake_logger.output)
 
         mock_upload.assert_called_once_with(
             'test.snap',

@@ -56,38 +56,12 @@ def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
     errors = data.get('errors', [])
     if not success:
         logger.info('Upload failed:\n\n%s\n', '\n'.join(errors))
-        return False
+        return dict(success=False)
 
     meta = read_metadata(metadata_filename)
     meta.update(metadata or {})
     result = upload_app(snap_name, data, metadata=meta, config=config)
-    success = result.get('success', False)
-    errors = result.get('errors', [])
-    app_url = result.get('application_url', '')
-    revision = result.get('revision')
-
-    # Print another newline to make sure the user sees the final result of the
-    # upload (success/failure).
-    print('')
-
-    if success:
-        message = 'Application uploaded successfully'
-        if revision:
-            message += ' (as revision {})'.format(revision)
-
-        logger.info(message)
-    else:
-        logger.info('Upload did not complete.')
-
-    if errors:
-        logger.info('Some errors were detected:\n\n%s\n',
-                    '\n'.join(str(error) for error in errors))
-
-    if app_url:
-        logger.info('Please check out the application at: %s\n',
-                    app_url)
-
-    return success
+    return result
 
 
 def upload_files(binary_filename, config=None):
