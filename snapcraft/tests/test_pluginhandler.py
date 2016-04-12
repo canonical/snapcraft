@@ -30,6 +30,7 @@ import fixtures
 import snapcraft
 from snapcraft import (
     common,
+    internal,
     pluginhandler,
     tests,
 )
@@ -411,7 +412,7 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
-        self.assertTrue(type(state) is pluginhandler.StageState)
+        self.assertTrue(type(state) is internal.states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertEqual(2, len(state.files))
@@ -432,7 +433,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('build')
 
         self.handler.mark_done(
-            'stage', pluginhandler.StageState({'bin/1', 'bin/2'}, {'bin'}))
+            'stage', internal.states.StageState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_stage({})
 
@@ -450,7 +451,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('build')
 
         self.handler.mark_done(
-            'stage', pluginhandler.StageState({'bin/1', 'bin/2'}, {'bin'}))
+            'stage', internal.states.StageState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_stage({})
 
@@ -471,10 +472,10 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('build')
 
         self.handler.mark_done(
-            'stage', pluginhandler.StageState({'bin/1', 'bin/2'}, {'bin'}))
+            'stage', internal.states.StageState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_stage({
-            'other_part': pluginhandler.StageState({'bin/2'}, {'bin'})
+            'other_part': internal.states.StageState({'bin/2'}, {'bin'})
         })
 
         self.assertEqual('build', self.handler.last_step())
@@ -515,7 +516,7 @@ class StateTestCase(tests.TestCase):
 
         state = self.handler.get_state('strip')
 
-        self.assertTrue(type(state) is pluginhandler.StripState)
+        self.assertTrue(type(state) is internal.states.StripState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -558,7 +559,7 @@ class StateTestCase(tests.TestCase):
 
         state = self.handler.get_state('strip')
 
-        self.assertTrue(type(state) is pluginhandler.StripState)
+        self.assertTrue(type(state) is internal.states.StripState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -582,7 +583,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', pluginhandler.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'strip', internal.states.StripState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_strip({})
 
@@ -600,7 +601,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', pluginhandler.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'strip', internal.states.StripState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_strip({})
 
@@ -621,10 +622,10 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', pluginhandler.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'strip', internal.states.StripState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_strip({
-            'other_part': pluginhandler.StripState({'bin/2'}, {'bin'})
+            'other_part': internal.states.StripState({'bin/2'}, {'bin'})
         })
 
         self.assertEqual('stage', self.handler.last_step())
