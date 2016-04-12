@@ -19,6 +19,7 @@ import glob
 import logging
 import os
 import platform
+import subprocess
 
 from snapcraft import common
 
@@ -84,7 +85,13 @@ def get_dependencies(elf):
     This may include libraries contained within the project.
     """
     logger.debug('Getting dependencies for {!r}'.format(elf))
-    ldd_out = common.run_output(['ldd', elf]).split('\n')
+    ldd_out = ''
+    try:
+        ldd_out = common.run_output(['ldd', elf]).split('\n')
+    except subprocess.CalledProcessError:
+        logger.warning(
+            'Unable to determine library dependencies for {!r}'.format(elf))
+        return []
     ldd_out = [l.split() for l in ldd_out]
     ldd_out = [l[2] for l in ldd_out if len(l) > 2 and os.path.exists(l[2])]
 

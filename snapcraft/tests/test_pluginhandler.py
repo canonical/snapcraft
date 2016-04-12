@@ -1383,6 +1383,30 @@ class FindDependenciesTestCase(tests.TestCase):
 
     @patch('magic.open')
     @patch('snapcraft.libraries.get_dependencies')
+    def test_find_dependencies_skip_object_files(self, mock_dependencies,
+                                                 mock_magic):
+        workdir = os.path.join(os.getcwd(), 'workdir')
+        os.makedirs(workdir)
+        open(os.path.join(workdir, 'object_file.o'), 'w').close()
+
+        mock_ms = Mock()
+        mock_magic.return_value = mock_ms
+        mock_ms.load.return_value = 0
+        mock_ms.file.return_value = (
+            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
+            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped')
+
+        mock_dependencies.return_value = ['/usr/lib/libDepends.so']
+
+        dependencies = pluginhandler._find_dependencies(workdir)
+
+        self.assertFalse(mock_ms.file.called,
+                         'Expected object file to be skipped')
+        self.assertEqual(dependencies, set())
+
+    @patch('magic.open')
+    @patch('snapcraft.libraries.get_dependencies')
     def test_no_find_dependencies_of_non_dynamically_linked(
             self, mock_dependencies, mock_magic):
         workdir = os.path.join(os.getcwd(), 'workdir')
