@@ -18,3 +18,7 @@ parts:
     plugin: make
     source: p3
     after: [p2]
+  p4:
+    plugin: make
+    source: p4
+    after: [p2]
