@@ -1,0 +1,70 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright (C) 2016 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import snapcraft.internal
+from snapcraft import tests
+
+
+class StripStateTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.files = {'foo'}
+        self.directories = {'bar'}
+        self.dependency_paths = {'baz'}
+
+        class Options:
+            def __init__(self):
+                self.snap = ['qux']
+
+        self.options = Options()
+
+        self.state = snapcraft.internal.states.StripState(
+            self.files, self.directories, self.dependency_paths, self.options)
+
+    def test_representation(self):
+        expected = (
+            'StripState(dependency_paths: {}, directories: {}, files: {}, '
+            'properties: {})').format(self.dependency_paths, self.directories,
+                                      self.files, self.options.__dict__)
+        self.assertEqual(expected, repr(self.state))
+
+    def test_comparison(self):
+        other = snapcraft.internal.states.StripState(
+            self.files, self.directories, self.dependency_paths, self.options)
+
+        self.assertTrue(self.state == other, 'Expected states to be identical')
+
+    def test_comparison_not_equal(self):
+        others = [
+            snapcraft.internal.states.StripState(
+                set(), self.directories, self.dependency_paths,
+                self.options),
+            snapcraft.internal.states.StripState(
+                self.files, set(), self.dependency_paths,
+                self.options),
+            snapcraft.internal.states.StripState(
+                self.files, self.directories, set(),
+                self.options),
+            snapcraft.internal.states.StripState(
+                self.files, self.directories, self.dependency_paths,
+                None)
+        ]
+
+        for index, other in enumerate(others):
+            with self.subTest('other #{}'.format(index+1)):
+                self.assertFalse(self.state == other,
+                                 'Expected states to be different')
