@@ -152,7 +152,8 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'strip' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            create_snap_packaging(self.config.data)
+            create_snap_packaging(self.config.data,
+                                  common.get_snapdir(), common.get_partsdir())
 
     def _handle_dirty(self, part, step):
         if step in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:

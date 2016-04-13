@@ -47,7 +47,7 @@ class CreateTest(tests.TestCase):
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
     def test_create_meta(self):
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -67,7 +67,7 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
         self.config_data['license'] = 'LICENSE'
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(os.path.join(self.meta_dir, 'license.txt')),
@@ -90,7 +90,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join('setup', 'license.txt'), 'w') as f:
             f.write(license_text)
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_license = os.path.join(self.meta_dir, 'license.txt')
         self.assertTrue(os.path.exists(expected_license),
@@ -111,7 +111,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join('setup', 'license.txt'), 'w') as f:
             f.write(license_text)
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_license = os.path.join(self.meta_dir, 'license.txt')
         self.assertTrue(os.path.exists(expected_license),
@@ -130,7 +130,7 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
@@ -157,7 +157,7 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -187,10 +187,10 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         # Running again should be good
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -199,7 +199,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
             f.write(icon_content)
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -226,7 +226,7 @@ class CreateTest(tests.TestCase):
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
 
-        create_snap_packaging(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         for app in ['app1', 'app2', 'app3']:
             app_wrapper_path = os.path.join(
@@ -275,13 +275,15 @@ class WrapExeTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.packager = _SnapPackaging({})
+
+        # TODO move to use outer interface
+        self.packager = _SnapPackaging({}, self.snap_dir, self.parts_dir)
 
     @patch('snapcraft.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
-""".format(common.get_partsdir())
+""".format(self.parts_dir)
 
         relative_exe_path = 'test_relexepath'
         open(os.path.join(self.snap_dir, relative_exe_path), 'w').close()
@@ -307,7 +309,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
     def test_wrap_exe_writes_wrapper_with_basename(self, mock_assemble_env):
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
-""".format(common.get_partsdir())
+""".format(self.parts_dir)
 
         relative_exe_path = 'test_relexepath'
         open(os.path.join(self.snap_dir, relative_exe_path), 'w').close()
@@ -339,11 +341,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         it in the wrapper script allows us to use the $SNAP environment
         variable.
         """
-        partsdir = common.get_partsdir()
-
         relative_exe_path = 'test_relexepath'
         shebang_path = os.path.join(
-            partsdir, 'testsnap', 'install', 'snap_exe')
+            self.parts_dir, 'testsnap', 'install', 'snap_exe')
         exe_contents = '#!{}\n'.format(shebang_path)
         with open(os.path.join(self.snap_dir, relative_exe_path), 'w') as exe:
             exe.write(exe_contents)

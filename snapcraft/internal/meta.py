@@ -60,7 +60,7 @@ class CommandError(Exception):
     pass
 
 
-def create_snap_packaging(config_data):
+def create_snap_packaging(config_data, snap_dir, parts_dir):
     """Create snap.yaml and related assets in meta.
     Create  the meta directory and provision it with snap.yaml
     in the snap dir using information from config_data.
@@ -68,7 +68,7 @@ def create_snap_packaging(config_data):
     :param dict config_data: project values defined in snapcraft.yaml.
     :return: meta_dir.
     """
-    packaging = _SnapPackaging(config_data)
+    packaging = _SnapPackaging(config_data, snap_dir, parts_dir)
     packaging.write_snap_yaml()
     packaging.setup_assets()
 
@@ -81,8 +81,9 @@ class _SnapPackaging:
     def meta_dir(self):
         return self._meta_dir
 
-    def __init__(self, config_data):
-        self._snap_dir = common.get_snapdir()
+    def __init__(self, config_data, snap_dir, parts_dir):
+        self._snap_dir = snap_dir
+        self._parts_dir = parts_dir
         self._meta_dir = os.path.join(self._snap_dir, 'meta')
         self._config_data = config_data
 
@@ -179,7 +180,7 @@ class _SnapPackaging:
 
         assembled_env = common.assemble_env().replace(self._snap_dir, '$SNAP')
         replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
-            common.get_partsdir())
+            self._parts_dir)
         assembled_env = re.sub(replace_path, '$SNAP', assembled_env)
         executable = '"{}"'.format(wrapexec)
         if shebang is not None:
