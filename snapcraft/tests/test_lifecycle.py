@@ -334,6 +334,87 @@ description: test
             ],
             part1_output)
 
+    def test_dirty_stage_part_with_built_dependent_raises(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after: [part1]
+""")
+
+        # Stage dependency
+        snapcraft.lifecycle.execute('stage', self.project_options,
+                                    part_names=['part1'])
+        # Build dependent
+        snapcraft.lifecycle.execute('build', self.project_options,
+                                    part_names=['part2'])
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_is_dirty(self, step):
+            return step == 'stage'
+
+        # Should raise a RuntimeError about the fact that stage is dirty but
+        # it has dependents that need it.
+        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
+                               _fake_is_dirty):
+            with self.assertRaises(RuntimeError) as raised:
+                snapcraft.lifecycle.execute('stage', self.project_options,
+                                            part_names=['part1'])
+
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        self.assertEqual(
+            [
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+            ],
+            part1_output)
+
+        self.assertEqual(
+            "Stage step for 'part1' needs to be run again, but 'part2' "
+            "depends upon it. Please clean the build step of 'part2' first.",
+            str(raised.exception))
+
+    def test_dirty_stage_part_with_unbuilt_dependent(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+    after: [part1]
+""")
+
+        # Stage dependency (dependent is unbuilt)
+        snapcraft.lifecycle.execute('stage', self.project_options,
+                                    part_names=['part1'])
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_is_dirty(self, step):
+            return step == 'stage'
+
+        # Should automatically clean and re-stage if that step is dirty
+        # for the part.
+        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
+                               _fake_is_dirty):
+            snapcraft.lifecycle.execute('stage', self.project_options,
+                                        part_names=['part1'])
+
+        self.assertEqual(
+            'Skipping pull part1 (already ran)\n'
+            'Skipping build part1 (already ran)\n'
+            'Skipping cleaning snapping area for part1 (out of date) '
+            '(already clean)\n'
+            'Cleaning staging area for part1 (out of date)\n'
+            'Staging part1 \n',
+            self.fake_logger.output)
+
     def test_dirty_stage_restrips(self):
         self.make_snapcraft_yaml("""parts:
   part1:
