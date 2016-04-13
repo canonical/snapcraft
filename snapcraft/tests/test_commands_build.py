@@ -21,10 +21,7 @@ import os.path
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class BuildCommandTestCase(tests.TestCase):
@@ -47,7 +44,7 @@ parts:
 
         parts = []
         for i in range(n):
-            part_dir = os.path.join(common.get_partsdir(), 'build{}'.format(i))
+            part_dir = os.path.join(self.parts_dir, 'build{}'.format(i))
             state_dir = os.path.join(part_dir, 'state')
             parts.append({
                 'part_dir': part_dir,
@@ -75,7 +72,7 @@ parts:
 
         main(['build'])
 
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')
@@ -89,7 +86,7 @@ parts:
 
         main(['build', 'build1', ])
 
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[1]['part_dir']),
                         'Expected a part directory for the build1 part')

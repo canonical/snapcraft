@@ -82,14 +82,14 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
     def _build_environment(self):
         env = os.environ.copy()
         env['CMAKE_PREFIX_PATH'] = '$CMAKE_PREFIX_PATH:{}'.format(
-            common.get_stagedir())
+            self.project.stage_dir)
         env['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
              '{0}/usr/include/{1}']).format(
-                common.get_stagedir(), self.project.arch_triplet)
+                self.project.stage_dir, self.project.arch_triplet)
         env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
              '{0}/usr/lib/{1}']).format(
-                common.get_stagedir(), self.project.arch_triplet)
+                self.project.stage_dir, self.project.arch_triplet)
 
         return env

@@ -25,14 +25,6 @@ from snapcraft import (
 
 class CommonTestCase(tests.TestCase):
 
-    def test_get_stagedir(self):
-        self.assertEqual(
-            os.path.join(self.path, 'stage'), common.get_stagedir())
-
-    def test_get_snapdir(self):
-        self.assertEqual(
-            os.path.join(self.path, 'snap'), common.get_snapdir())
-
     def test_get_default_plugindir(self):
         self.assertEqual(
             '/usr/share/snapcraft/plugins', common.get_plugindir())
