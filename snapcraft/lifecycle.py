@@ -45,7 +45,7 @@ summary: # 79 char long summary
 description: # A longer description for the snap
 '''
 
-_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'strip'}
+_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'strip'}
 
 
 def init():

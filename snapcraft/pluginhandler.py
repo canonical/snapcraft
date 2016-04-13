@@ -256,10 +256,10 @@ class PluginHandler:
         self.mark_done('pull')
 
     def clean_pull(self, hint=''):
-        state_file = self._step_state_file('pull')
-        if not os.path.isfile(state_file):
+        if self.is_clean('pull'):
+            hint = (hint + ' (already clean)').strip()
             self.notify_part_progress('Skipping cleaning pulled source for',
-                                      '(already clean)')
+                                      hint)
             return
 
         self.notify_part_progress('Cleaning pulled source for', hint)
@@ -284,10 +284,10 @@ class PluginHandler:
         self.mark_done('build')
 
     def clean_build(self, hint=''):
-        state_file = self._step_state_file('build')
-        if not os.path.isfile(state_file):
+        if self.is_clean('build'):
+            hint = (hint + ' (already clean)').strip()
             self.notify_part_progress('Skipping cleaning build for',
-                                      '(already clean)')
+                                      hint)
             return
 
         self.notify_part_progress('Cleaning build for', hint)
@@ -331,19 +331,18 @@ class PluginHandler:
         # dependencies here too
 
         self.mark_done('stage', internal.states.StageState(
-            snap_files, snap_dirs))
+            snap_files, snap_dirs, self.code.options))
 
     def clean_stage(self, project_staged_state, hint=''):
-        state_file = self._step_state_file('stage')
-        if not os.path.isfile(state_file):
+        if self.is_clean('stage'):
+            hint = (hint + ' (already clean)').strip()
             self.notify_part_progress('Skipping cleaning staging area for',
-                                      '(already clean)')
+                                      hint)
             return
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        with open(state_file, 'r') as f:
-            state = yaml.load(f.read())
+        state = self.get_state('stage')
 
         try:
             self._clean_shared_area(self.stagedir, state,
@@ -396,16 +395,15 @@ class PluginHandler:
             snap_files, snap_dirs, dependency_paths, self.code.options))
 
     def clean_strip(self, project_stripped_state, hint=''):
-        state_file = self._step_state_file('strip')
-        if not os.path.isfile(state_file):
+        if self.is_clean('strip'):
+            hint = (hint + ' (already clean)').strip()
             self.notify_part_progress('Skipping cleaning snapping area for',
-                                      '(already clean)')
+                                      hint)
             return
 
         self.notify_part_progress('Cleaning snapping area for', hint)
 
-        with open(state_file, 'r') as f:
-            state = yaml.load(f.read())
+        state = self.get_state('strip')
 
         try:
             self._clean_shared_area(self.snapdir, state,
