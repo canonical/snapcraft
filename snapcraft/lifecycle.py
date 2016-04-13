@@ -26,9 +26,9 @@ import yaml
 import snapcraft
 import snapcraft.yaml
 
+from snapcraft.internal.meta import create_snap_packaging
 from snapcraft import (
     common,
-    meta,
     pluginhandler,
     repo,
 )
@@ -152,7 +152,7 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'strip' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create(self.config.data)
+            create_snap_packaging(self.config.data)
 
     def _handle_dirty(self, part, step):
         if step in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:

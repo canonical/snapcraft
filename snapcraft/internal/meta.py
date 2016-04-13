@@ -83,7 +83,7 @@ class _SnapPackaging:
 
     def __init__(self, config_data):
         self._snap_dir = common.get_snapdir()
-        self._meta_dir = os.path.join(self._meta_dir, 'meta')
+        self._meta_dir = os.path.join(self._snap_dir, 'meta')
         self._config_data = config_data
 
         os.makedirs(self._meta_dir, exist_ok=True)
@@ -97,7 +97,7 @@ class _SnapPackaging:
 
         return snap_yaml
 
-    def _setup_assets(self):
+    def setup_assets(self):
         if 'license' in self._config_data:
             logger.warning("DEPRECATED: 'license' defined in snapcraft.yaml")
             license_path = os.path.join(self.meta_dir, 'license.txt')
@@ -118,7 +118,7 @@ class _SnapPackaging:
                 os.unlink(icon_path)
             os.link(self._config_data['icon'], icon_path)
 
-        self._setup_from_setup(self._meta_dir)
+        self._setup_from_setup()
 
     def _setup_from_setup(self):
         setup_dir = 'setup'
