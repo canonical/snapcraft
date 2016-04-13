@@ -586,6 +586,13 @@ def _migratable_filesets(fileset, srcdir):
                      not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
 
+    # Make sure we also obtain the parent directories of files
+    for snap_file in snap_files:
+        dirname = os.path.dirname(snap_file)
+        while dirname:
+            snap_dirs.add(dirname)
+            dirname = os.path.dirname(dirname)
+
     return snap_files, snap_dirs
 
 
@@ -612,20 +619,9 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
 
-def _remove_empty_tree(directory, barrier):
-    """Remove an empty directory tree up to (not including) a barrier path."""
-
-    while (directory != barrier and os.path.isdir(directory) and
-            not os.listdir(directory)):
-        os.rmdir(directory)
-        directory = os.path.dirname(directory)
-
-
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:
-        migrated_file = os.path.join(directory, snap_file)
-        os.remove(migrated_file)
-        _remove_empty_tree(os.path.dirname(migrated_file), directory)
+        os.remove(os.path.join(directory, snap_file))
 
     # snap_dirs may not be ordered so that subdirectories come before
     # parents, and we want to be able to remove directories if possible, so
@@ -634,7 +630,8 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
 
     for snap_dir in snap_dirs:
         migrated_directory = os.path.join(directory, snap_dir)
-        _remove_empty_tree(migrated_directory, directory)
+        if not os.listdir(migrated_directory):
+            os.rmdir(migrated_directory)
 
 
 def _find_dependencies(workdir):

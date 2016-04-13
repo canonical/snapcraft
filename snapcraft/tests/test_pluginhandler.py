@@ -199,7 +199,7 @@ class PluginTestCase(tests.TestCase):
         with open('install/foo', 'w') as f:
             f.write('installed')
 
-        files, dirs = pluginhandler._migratable_filesets('*', 'install')
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
         pluginhandler._migrate_files(files, dirs, 'install', 'stage')
 
         # Verify that the staged file is the one that was staged last
@@ -207,6 +207,7 @@ class PluginTestCase(tests.TestCase):
             self.assertEqual(f.read(), 'installed',
                              'Expected staging to allow overwriting of '
                              'already-staged files')
+
 
     @patch('importlib.import_module')
     @patch('snapcraft.pluginhandler._load_local')
@@ -277,6 +278,54 @@ class PluginTestCase(tests.TestCase):
 
         self.assertEqual(
             'path "/abs/exclude" must be relative', str(raised.exception))
+
+
+class MigratableFilesetsTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        os.makedirs('install/foo/bar/baz')
+        open('install/1', 'w').close()
+        open('install/foo/2', 'w').close()
+        open('install/foo/bar/3', 'w').close()
+        open('install/foo/bar/baz/4', 'w').close()
+
+    def test_migratable_filesets_everything(self):
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        self.assertEqual({'1', 'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+    def test_migratable_filesets_foo(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo'], 'install')
+        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+    def test_migratable_filesets_everything_in_foo(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/*'], 'install')
+        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+    def test_migratable_filesets_root_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['1'], 'install')
+        self.assertEqual({'1'}, files)
+        self.assertEqual(set(), dirs)
+
+    def test_migratable_filesets_single_nested_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/2'], 'install')
+        self.assertEqual({'foo/2'}, files)
+        self.assertEqual({'foo'}, dirs)
+
+    def test_migratable_filesets_single_really_nested_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/bar/2'],
+                                                         'install')
+        self.assertEqual({'foo/bar/2'}, files)
+        self.assertEqual({'foo', 'foo/bar'}, dirs)
+
+    def test_migratable_filesets_single_really_really_nested_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/bar/baz/3'],
+                                                         'install')
+        self.assertEqual({'foo/bar/baz/3'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
 
 
 class PluginMakedirsTestCase(tests.TestCase):
@@ -610,7 +659,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.properties) is dict)
         self.assertEqual(1, len(state.files))
         self.assertTrue('bin/1' in state.files)
-        self.assertEqual(0, len(state.directories))
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['bin/1'])
