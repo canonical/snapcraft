@@ -108,6 +108,18 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual(
             properties['kernel-initrd-compression']['enum'], ['gz'])
 
+        build_properties = schema['build-properties']
+        self.assertEqual(9, len(build_properties))
+        self.assertTrue('kdefconfig' in build_properties)
+        self.assertTrue('kconfigfile' in build_properties)
+        self.assertTrue('kconfigs' in build_properties)
+        self.assertTrue('kernel-image-target' in build_properties)
+        self.assertTrue('kernel-with-firmware' in build_properties)
+        self.assertTrue('kernel-initrd-modules' in build_properties)
+        self.assertTrue('kernel-initrd-firmware' in build_properties)
+        self.assertTrue('kernel-device-trees' in build_properties)
+        self.assertTrue('kernel-initrd-compression' in build_properties)
+
     def _assert_generic_check_call(self, builddir, installdir, os_snap_path):
         self.assertEqual(4, self.check_call_mock.call_count)
         self.check_call_mock.assert_has_calls([

@@ -163,7 +163,8 @@ class BasePlugin:
             },
             'required': [
                 'source',
-            ]
+            ],
+            'build-properties': []
         }
 
     @property

@@ -68,6 +68,11 @@ class MakePluginTestCase(tests.TestCase):
             'Expected "make-parameters" "type" to be "array", but it '
             'was "{}"'.format(make_parameters_type))
 
+        build_properties = schema['build-properties']
+        self.assertEqual(2, len(build_properties))
+        self.assertTrue('makefile' in build_properties)
+        self.assertTrue('make-parameters' in build_properties)
+
     @mock.patch.object(make.MakePlugin, 'run')
     def test_build(self, run_mock):
         plugin = make.MakePlugin('test-part', self.options,

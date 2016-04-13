@@ -59,6 +59,12 @@ class KBuildPluginTestCase(tests.TestCase):
         self.assertEqual(properties['kconfigs']['items']['type'], 'string')
         self.assertTrue(properties['kconfigs']['uniqueItems'])
 
+        build_properties = schema['build-properties']
+        self.assertEqual(3, len(build_properties))
+        self.assertTrue('kdefconfig' in build_properties)
+        self.assertTrue('kconfigfile' in build_properties)
+        self.assertTrue('kconfigs' in build_properties)
+
     @mock.patch('subprocess.check_call')
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
     def test_build_with_kconfigfile(self, run_mock, check_call_mock):

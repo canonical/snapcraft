@@ -29,8 +29,13 @@ yaml.add_constructor(u'!StageState', _stage_state_constructor)
 class StageState(State):
     yaml_tag = u'!StageState'
 
-    @classmethod
-    def properties_of_interest(cls, options):
+    def __init__(self, files, directories, options=None):
+        super().__init__(options)
+
+        self.files = files
+        self.directories = directories
+
+    def properties_of_interest(self, options):
         """Extract the properties concerning this step from the options.
 
         The only property of interest to the stage step is the `stage` keyword
@@ -38,9 +43,3 @@ class StageState(State):
         """
 
         return {'stage': getattr(options, 'stage', ['*']) or ['*']}
-
-    def __init__(self, files, directories, options=None):
-        super().__init__(options)
-
-        self.files = files
-        self.directories = directories

@@ -44,7 +44,7 @@ class MakePlugin(snapcraft.BasePlugin):
     def schema(cls):
         schema = super().schema()
         schema['properties']['makefile'] = {
-            'type': 'string'
+            'type': 'string',
         }
         schema['properties']['make-parameters'] = {
             'type': 'array',
@@ -55,6 +55,10 @@ class MakePlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'].extend(['makefile', 'make-parameters'])
 
         return schema
 

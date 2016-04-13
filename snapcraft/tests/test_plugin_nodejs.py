@@ -136,13 +136,14 @@ class NodePluginTestCase(tests.TestCase):
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
                 'source-type': {'default': '', 'type': 'string'}},
+            'build-properties': ['node-packages'],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)
 
     @mock.patch('snapcraft.BasePlugin.schema')
     def test_required_not_in_parent_schema(self, schema_mock):
-        schema_mock.return_value = {'properties': {}}
+        schema_mock.return_value = {'properties': {}, 'build-properties': []}
 
         self.assertTrue('required' not in nodejs.NodePlugin.schema())
 

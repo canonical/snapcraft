@@ -375,7 +375,7 @@ description: test
             part1_output)
 
         self.assertEqual(
-            "Stage step for 'part1' needs to be run again, but 'part2' "
+            "The 'stage' step for 'part1' needs to be run again, but 'part2' "
             "depends upon it. Please clean the build step of 'part2' first.",
             str(raised.exception))
 
@@ -445,6 +445,36 @@ description: test
             'Staging part1 \n'
             'Stripping part1 \n',
             self.fake_logger.output)
+
+    def test_dirty_build_raises(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+""")
+
+        # Build it.
+        snapcraft.lifecycle.execute('build', self.project_options)
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_is_dirty(self, step):
+            return self.name == 'part1' and step == 'build'
+
+        # Should catch that the part needs to be rebuilt and raise an error.
+        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
+                               _fake_is_dirty):
+            with self.assertRaises(RuntimeError) as raised:
+                snapcraft.lifecycle.execute('build', self.project_options)
+
+        self.assertEqual(
+            'Skipping pull part1 (already ran)\n',
+            self.fake_logger.output)
+
+        self.assertEqual(
+            "The 'build' step of 'part1' is out of date. Please clean that "
+            "part's build step in order to rebuild", str(raised.exception))
 
 
 class HumanizeListTestCases(tests.TestCase):

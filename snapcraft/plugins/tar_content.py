@@ -39,6 +39,12 @@ class TarContentPlugin(snapcraft.BasePlugin):
             },
             'required': [
                 'source',
+            ],
+            # Inform Snapcraft of the properties associated with building. If
+            # these change in the YAML Snapcraft will consider the build step
+            # dirty.
+            'build-properties': [
+                'destination'
             ]
         }
 

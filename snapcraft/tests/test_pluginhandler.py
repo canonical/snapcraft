@@ -287,6 +287,135 @@ class PluginTestCase(tests.TestCase):
 
         self.assertTrue(plugin.code.project is not None)
 
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_schema_step_hint_pull(self, plugin_mock,
+                                          local_load_mock, import_mock):
+        class Plugin(snapcraft.BasePlugin):
+            @classmethod
+            def schema(cls):
+                schema = super().schema()
+                schema['properties']['foo'] = {
+                    'type': 'string',
+                }
+                schema['pull-properties'] = ['foo']
+
+                return schema
+
+        plugin_mock.return_value = Plugin
+        local_load_mock.side_effect = ImportError()
+        pluginhandler.PluginHandler(
+            'plugin', 'fake-part', {'source': '.'},
+            snapcraft.ProjectOptions(),
+            {'properties': {}})
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_schema_step_hint_build(self, plugin_mock,
+                                           local_load_mock, import_mock):
+        class Plugin(snapcraft.BasePlugin):
+            @classmethod
+            def schema(cls):
+                schema = super().schema()
+                schema['properties']['foo'] = {
+                    'type': 'string',
+                }
+                schema['build-properties'] = ['foo']
+
+                return schema
+
+        plugin_mock.return_value = Plugin
+        local_load_mock.side_effect = ImportError()
+        pluginhandler.PluginHandler(
+            'plugin', 'fake-part', {'source': '.'},
+            snapcraft.ProjectOptions(),
+            {'properties': {}})
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_schema_step_hint_pull_and_build(self, plugin_mock,
+                                                    local_load_mock,
+                                                    import_mock):
+        class Plugin(snapcraft.BasePlugin):
+            @classmethod
+            def schema(cls):
+                schema = super().schema()
+                schema['properties']['foo'] = {
+                    'type': 'string',
+                }
+                schema['pull-properties'] = ['foo']
+                schema['build-properties'] = ['foo']
+
+                return schema
+
+        plugin_mock.return_value = Plugin
+        local_load_mock.side_effect = ImportError()
+        pluginhandler.PluginHandler(
+            'plugin', 'fake-part', {'source': '.'},
+            snapcraft.ProjectOptions(),
+            {'properties': {}})
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_schema_invalid_pull_hint(self, plugin_mock,
+                                             local_load_mock, import_mock):
+        class Plugin(snapcraft.BasePlugin):
+            @classmethod
+            def schema(cls):
+                schema = super().schema()
+                schema['properties']['foo'] = {
+                    'type': 'string',
+                }
+                schema['pull-properties'] = ['bar']
+
+                return schema
+
+        plugin_mock.return_value = Plugin
+        local_load_mock.side_effect = ImportError()
+        with self.assertRaises(pluginhandler.PluginError) as raised:
+            pluginhandler.PluginHandler(
+                'plugin', 'fake-part', {'source': '.'},
+                snapcraft.ProjectOptions(),
+                {'properties': {}})
+
+        self.assertEqual(
+            "properties failed to load for fake-part: Invalid "
+            "pull-properties specified in plugin's schema: ['bar']",
+            str(raised.exception))
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_plugin_schema_invalid_build_hint(self, plugin_mock,
+                                              local_load_mock, import_mock):
+        class Plugin(snapcraft.BasePlugin):
+            @classmethod
+            def schema(cls):
+                schema = super().schema()
+                schema['properties']['foo'] = {
+                    'type': 'string',
+                }
+                schema['build-properties'] = ['bar']
+
+                return schema
+
+        plugin_mock.return_value = Plugin
+        local_load_mock.side_effect = ImportError()
+        with self.assertRaises(pluginhandler.PluginError) as raised:
+            pluginhandler.PluginHandler(
+                'plugin', 'fake-part', {'source': '.'},
+                snapcraft.ProjectOptions(),
+                {'properties': {}})
+
+        self.assertEqual(
+            "properties failed to load for fake-part: Invalid "
+            "build-properties specified in plugin's schema: ['bar']",
+            str(raised.exception))
+
     def test_filesets_includes_without_relative_paths(self):
         with self.assertRaises(pluginhandler.PluginError) as raised:
             pluginhandler._get_file_list(['rel', '/abs/include'])
@@ -446,13 +575,39 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual(None, self.handler.last_step())
 
-    @patch('snapcraft.repo.Ubuntu')
-    def test_build_state(self, ubuntu_mock):
+    def test_build_state(self):
         self.assertEqual(None, self.handler.last_step())
 
         self.handler.build()
 
         self.assertEqual('build', self.handler.last_step())
+        state = self.handler.get_state('build')
+
+        self.assertTrue(state, 'Expected build to save state YAML')
+        self.assertTrue(type(state) is internal.states.BuildState)
+        self.assertTrue(type(state.properties) is dict)
+        self.assertEqual(0, len(state.properties))
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_build_state_with_properties(self, plugin_mock, local_load_mock,
+                                         import_mock):
+        self.handler.build_properties = ['foo']
+        self.handler.code.options.foo = 'bar'
+
+        self.assertEqual(None, self.handler.last_step())
+
+        self.handler.build()
+
+        self.assertEqual('build', self.handler.last_step())
+        state = self.handler.get_state('build')
+
+        self.assertTrue(state, 'Expected build to save state YAML')
+        self.assertTrue(type(state) is internal.states.BuildState)
+        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue('foo' in state.properties)
+        self.assertEqual(state.properties['foo'], 'bar')
 
     @patch.object(nil.NilPlugin, 'clean_build')
     def test_clean_build_state(self, mock_clean_build):
@@ -494,8 +649,6 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['*'])
-
-        self.assertEqual('stage', self.handler.last_step())
 
     def test_stage_state_with_stage_keyword(self):
         self.handler.code.options.stage = ['bin/1']
@@ -847,6 +1000,31 @@ class IsDirtyTestCase(tests.TestCase):
         self.assertFalse(
             self.handler.is_dirty('stage'),
             'Expected vanilla handler to not have a dirty stage step')
+
+    def test_build_is_dirty(self):
+        self.handler.build_properties = ['foo']
+        self.handler.code.options.foo = ['bar']
+        self.handler.mark_done(
+            'build', internal.states.BuildState(self.handler.build_properties,
+                                                self.handler.code.options))
+        self.assertFalse(self.handler.is_clean('build'),
+                         'Build step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('build'),
+                         'Build step was unexpectedly dirty')
+
+        # Change the `foo` keyword-- thereby making the build step dirty.
+        self.handler.code.options.foo = ['baz']
+        self.assertFalse(self.handler.is_clean('build'),
+                         'Build step was unexpectedly clean')
+        self.assertTrue(self.handler.is_dirty('build'),
+                        'Expected build step to be dirty')
+
+    def test_build_not_dirty_if_clean(self):
+        self.assertTrue(self.handler.is_clean('build'),
+                        'Expected vanilla handler to have clean build step')
+        self.assertFalse(
+            self.handler.is_dirty('build'),
+            'Expected vanilla handler to not have a dirty build step')
 
 
 class CleanTestCase(tests.TestCase):
