@@ -45,7 +45,7 @@ summary: # 79 char long summary
 description: # A longer description for the snap
 '''
 
-_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'strip'}
+_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'strip'}
 
 
 def init():
@@ -158,6 +158,23 @@ class _Executor:
         if step in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             staged_state = self.config.get_project_state('stage')
             stripped_state = self.config.get_project_state('strip')
+
+            # We need to clean this step, but if it's the stage step and it
+            # has dependents that have been built, we need to ask for them to
+            # first be cleaned (at least back to the build step).
+            dependents = self.config.part_dependents(part.name)
+            if step == 'stage' and dependents:
+                for dependent in self.config.all_parts:
+                    if (dependent.name in dependents and
+                            not dependent.is_clean('build')):
+                        humanized_parts = _humanize_list(dependents)
+
+                        raise RuntimeError(
+                            'Stage step for {0!r} needs to be run again, but '
+                            '{1} depend{2} upon it. Please clean the build '
+                            'step of {1} first.'.format(
+                                part.name, humanized_parts,
+                                's' if len(dependents) == 1 else ''))
 
             part.clean(staged_state, stripped_state, step, '(out of date)')
 
@@ -278,15 +295,12 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
         for part in config.all_parts:
             if part.name in dependents and not part.is_clean(step):
                 humanized_parts = _humanize_list(dependents)
-                if len(dependents) == 1:
-                    humanized_parts += ' depends'
-                else:
-                    humanized_parts += ' depend'
 
                 raise RuntimeError(
-                    'Requested clean of {!r} but {} upon it. Please add each '
-                    "to the clean command if that's what you intended.".format(
-                        part_name, humanized_parts))
+                    'Requested clean of {!r} but {} depend{} upon it. Please '
+                    "add each to the clean command if that's what you "
+                    'intended.'.format(part_name, humanized_parts,
+                                       's' if len(dependents) == 1 else ''))
 
 
 def _clean_parts(part_names, step, config, staged_state, stripped_state):

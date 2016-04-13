@@ -16,6 +16,8 @@
 
 import yaml
 
+from snapcraft.internal.states._state import State
+
 
 def _stage_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
@@ -24,19 +26,21 @@ def _stage_state_constructor(loader, node):
 yaml.add_constructor(u'!StageState', _stage_state_constructor)
 
 
-class StageState(yaml.YAMLObject):
+class StageState(State):
     yaml_tag = u'!StageState'
 
-    def __init__(self, files, directories):
+    @classmethod
+    def properties_of_interest(cls, options):
+        """Extract the properties concerning this step from the options.
+
+        The only property of interest to the stage step is the `stage` keyword
+        used to filter out files with a white or blacklist.
+        """
+
+        return {'stage': getattr(options, 'stage', ['*']) or ['*']}
+
+    def __init__(self, files, directories, options=None):
+        super().__init__(options)
+
         self.files = files
         self.directories = directories
-
-    def __repr__(self):
-        return '{}(files: {}, directories: {})'.format(
-            self.__class__, self.files, self.directories)
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__dict__ == other.__dict__
-
-        return False

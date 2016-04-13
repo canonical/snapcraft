@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import logging
 import os
 import shutil
@@ -64,6 +65,28 @@ class PluginTestCase(tests.TestCase):
         self.assertEqual(include, ['opt/something', 'usr/bin',
                                    '-everything', r'\a'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+
+    @patch.object(snapcraft.plugins.nil.NilPlugin, 'snap_fileset')
+    def test_migratable_fileset_for_no_options_modification(
+            self, mock_snap_fileset):
+        """Making sure migratable_fileset_for() doesn't modify options"""
+
+        mock_snap_fileset.return_value = ['baz']
+
+        handler = pluginhandler.load_plugin('test-part', 'nil')
+        handler.code.options.snap = ['foo']
+        handler.code.options.stage = ['bar']
+        expected_options = copy.deepcopy(handler.code.options)
+
+        handler.migratable_fileset_for('stage')
+        self.assertEqual(expected_options.__dict__,
+                         handler.code.options.__dict__,
+                         'Expected options to be unmodified')
+
+        handler.migratable_fileset_for('strip')
+        self.assertEqual(expected_options.__dict__,
+                         handler.code.options.__dict__,
+                         'Expected options to be unmodified')
 
     def test_fileset_only_includes(self):
         stage_set = [
@@ -463,11 +486,44 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is internal.states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.properties) is dict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
+        self.assertTrue('stage' in state.properties)
+        self.assertEqual(state.properties['stage'], ['*'])
+
+        self.assertEqual('stage', self.handler.last_step())
+
+    def test_stage_state_with_stage_keyword(self):
+        self.handler.code.options.stage = ['bin/1']
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+
+        self.assertEqual('stage', self.handler.last_step())
+        state = self.handler.get_state('stage')
+
+        self.assertTrue(state, 'Expected stage to save state YAML')
+        self.assertTrue(type(state) is internal.states.StageState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.properties) is dict)
+        self.assertEqual(1, len(state.files))
+        self.assertTrue('bin/1' in state.files)
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
+        self.assertTrue('stage' in state.properties)
+        self.assertEqual(state.properties['stage'], ['bin/1'])
 
         self.assertEqual('stage', self.handler.last_step())
 
@@ -768,16 +824,42 @@ class IsDirtyTestCase(tests.TestCase):
             self.handler.is_dirty('strip'),
             'Expected vanilla handler to not have a dirty strip step')
 
+    def test_stage_is_dirty(self):
+        self.handler.code.options.stage = ['foo']
+        self.handler.mark_done(
+            'stage', internal.states.StageState(
+                set(), set(), self.handler.code.options))
+        self.assertFalse(self.handler.is_clean('stage'),
+                         'Stage step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('stage'),
+                         'Stage step was unexpectedly dirty')
+
+        # Change the `stage` keyword-- thereby making the stage step dirty.
+        self.handler.code.options.stage = ['bar']
+        self.assertFalse(self.handler.is_clean('stage'),
+                         'Stage step was unexpectedly clean')
+        self.assertTrue(self.handler.is_dirty('stage'),
+                        'Expected stage step to be dirty')
+
+    def test_stage_not_dirty_if_clean(self):
+        self.assertTrue(self.handler.is_clean('stage'),
+                        'Expected vanilla handler to have clean stage step')
+        self.assertFalse(
+            self.handler.is_dirty('stage'),
+            'Expected vanilla handler to not have a dirty stage step')
+
 
 class CleanTestCase(tests.TestCase):
 
+    @patch.object(pluginhandler.PluginHandler, 'is_clean')
     @patch('os.rmdir')
     @patch('os.listdir')
     @patch('os.path.exists')
     def test_clean_part_that_exists(self, mock_exists, mock_listdir,
-                                    mock_rmdir):
+                                    mock_rmdir, mock_is_clean):
         mock_exists.return_value = True
         mock_listdir.return_value = False
+        mock_is_clean.return_value = True
 
         part_name = 'test_part'
         p = pluginhandler.load_plugin(part_name, 'nil')
@@ -802,17 +884,19 @@ class CleanTestCase(tests.TestCase):
 
         partdir = os.path.join(
             os.path.abspath(os.curdir), 'parts', part_name)
-        mock_exists.assert_called_once_with(partdir)
+        mock_exists.assert_has_calls([call(partdir)])
         self.assertFalse(mock_listdir.called)
         self.assertFalse(mock_rmdir.called)
 
+    @patch.object(pluginhandler.PluginHandler, 'is_clean')
     @patch('os.rmdir')
     @patch('os.listdir')
     @patch('os.path.exists')
     def test_clean_part_remaining_parts(self, mock_exists, mock_listdir,
-                                        mock_rmdir):
+                                        mock_rmdir, mock_is_clean):
         mock_exists.return_value = True
         mock_listdir.return_value = True
+        mock_is_clean.return_value = True
 
         part_name = 'test_part'
         p = pluginhandler.load_plugin(part_name, 'nil')
