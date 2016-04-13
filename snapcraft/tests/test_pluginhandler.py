@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -199,7 +199,7 @@ class PluginTestCase(tests.TestCase):
         with open('install/foo', 'w') as f:
             f.write('installed')
 
-        files, dirs = pluginhandler._migratable_filesets('*', 'install')
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
         pluginhandler._migrate_files(files, dirs, 'install', 'stage')
 
         # Verify that the staged file is the one that was staged last
@@ -277,6 +277,54 @@ class PluginTestCase(tests.TestCase):
 
         self.assertEqual(
             'path "/abs/exclude" must be relative', str(raised.exception))
+
+
+class MigratableFilesetsTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        os.makedirs('install/foo/bar/baz')
+        open('install/1', 'w').close()
+        open('install/foo/2', 'w').close()
+        open('install/foo/bar/3', 'w').close()
+        open('install/foo/bar/baz/4', 'w').close()
+
+    def test_migratable_filesets_everything(self):
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        self.assertEqual({'1', 'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+    def test_migratable_filesets_foo(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo'], 'install')
+        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+    def test_migratable_filesets_everything_in_foo(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/*'], 'install')
+        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+    def test_migratable_filesets_root_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['1'], 'install')
+        self.assertEqual({'1'}, files)
+        self.assertEqual(set(), dirs)
+
+    def test_migratable_filesets_single_nested_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/2'], 'install')
+        self.assertEqual({'foo/2'}, files)
+        self.assertEqual({'foo'}, dirs)
+
+    def test_migratable_filesets_single_really_nested_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/bar/2'],
+                                                         'install')
+        self.assertEqual({'foo/bar/2'}, files)
+        self.assertEqual({'foo', 'foo/bar'}, dirs)
+
+    def test_migratable_filesets_single_really_really_nested_file(self):
+        files, dirs = pluginhandler._migratable_filesets(['foo/bar/baz/3'],
+                                                         'install')
+        self.assertEqual({'foo/bar/baz/3'}, files)
+        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
 
 
 class PluginMakedirsTestCase(tests.TestCase):
@@ -520,12 +568,15 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
+        self.assertTrue(type(state.properties) is dict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
-        self.assertTrue('bin/1' in state.files)
+        self.assertTrue('bin/2' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
+        self.assertTrue('snap' in state.properties)
+        self.assertEqual(state.properties['snap'], ['*'])
 
     @patch('snapcraft.pluginhandler._find_dependencies')
     @patch('snapcraft.pluginhandler._migrate_files')
@@ -563,15 +614,55 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
+        self.assertTrue(type(state.properties) is dict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
-        self.assertTrue('bin/1' in state.files)
+        self.assertTrue('bin/2' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(3, len(state.dependency_paths))
         self.assertTrue('foo/bar' in state.dependency_paths)
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
+        self.assertTrue('snap' in state.properties)
+        self.assertEqual(state.properties['snap'], ['*'])
+
+    @patch('snapcraft.pluginhandler._find_dependencies')
+    @patch('shutil.copy')
+    def test_strip_state_with_snap_keyword(self, mock_copy,
+                                           mock_find_dependencies):
+        mock_find_dependencies.return_value = set()
+        self.handler.code.options.snap = ['bin/1']
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        self.handler.strip()
+
+        self.assertEqual('strip', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
+        self.assertFalse(mock_copy.called)
+
+        state = self.handler.get_state('strip')
+
+        self.assertTrue(type(state) is internal.states.StripState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.dependency_paths) is set)
+        self.assertTrue(type(state.properties) is dict)
+        self.assertEqual(1, len(state.files))
+        self.assertTrue('bin/1' in state.files)
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
+        self.assertEqual(0, len(state.dependency_paths))
+        self.assertTrue('snap' in state.properties)
+        self.assertEqual(state.properties['snap'], ['bin/1'])
 
     def test_clean_strip_state(self):
         self.assertEqual(None, self.handler.last_step())
@@ -643,6 +734,39 @@ class StateTestCase(tests.TestCase):
             str(raised.exception),
             "Failed to clean step 'strip': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
+
+
+class IsDirtyTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.handler = pluginhandler.load_plugin('test-part', 'nil')
+        self.handler.makedirs()
+
+    def test_strip_is_dirty(self):
+        self.handler.code.options.snap = ['foo']
+        self.handler.mark_done(
+            'strip', internal.states.StripState(
+                set(), set(), set(), self.handler.code.options))
+        self.assertFalse(self.handler.is_clean('strip'),
+                         'Strip step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('strip'),
+                         'Strip step was unexpectedly dirty')
+
+        # Change the `snap` keyword-- thereby making the strip step dirty.
+        self.handler.code.options.snap = ['bar']
+        self.assertFalse(self.handler.is_clean('strip'),
+                         'Strip step was unexpectedly clean')
+        self.assertTrue(self.handler.is_dirty('strip'),
+                        'Expected strip step to be dirty')
+
+    def test_strip_not_dirty_if_clean(self):
+        self.assertTrue(self.handler.is_clean('strip'),
+                        'Expected vanilla handler to have clean strip step')
+        self.assertFalse(
+            self.handler.is_dirty('strip'),
+            'Expected vanilla handler to not have a dirty strip step')
 
 
 class CleanTestCase(tests.TestCase):
@@ -724,6 +848,9 @@ class CleanTestCase(tests.TestCase):
             'onlybase': {
                 'fileset': ['*', '-*/*'],
             },
+            'only1a': {
+                'fileset': ['1/a']
+            },
             'nostara': {
                 'fileset': ['-*/a'],
             },
@@ -733,9 +860,12 @@ class CleanTestCase(tests.TestCase):
             with self.subTest(key=key):
                 self.clear_common_directories()
 
-                handler = pluginhandler.load_plugin('test_part', 'nil', {
-                    'snap': value['fileset']
-                })
+                schema = {'snap': {'type': 'array'}}
+                properties = {'snap': value['fileset']}
+
+                handler = pluginhandler.load_plugin(
+                    'test_part', 'nil', properties, snapcraft.ProjectOptions(),
+                    schema)
                 handler.makedirs()
 
                 installdir = handler.code.installdir
@@ -894,6 +1024,9 @@ class CleanTestCase(tests.TestCase):
             'onlybase': {
                 'fileset': ['*', '-*/*'],
             },
+            'only1a': {
+                'fileset': ['1/a']
+            },
             'nostara': {
                 'fileset': ['-*/a'],
             },
@@ -903,9 +1036,12 @@ class CleanTestCase(tests.TestCase):
             with self.subTest(key=key):
                 self.clear_common_directories()
 
-                handler = pluginhandler.load_plugin('test_part', 'nil', {
-                    'stage': value['fileset']
-                })
+                schema = {'snap': {'type': 'array'}}
+                properties = {'stage': value['fileset']}
+
+                handler = pluginhandler.load_plugin(
+                    'test_part', 'nil', properties, snapcraft.ProjectOptions(),
+                    schema)
                 handler.makedirs()
 
                 installdir = handler.code.installdir
@@ -1066,6 +1202,19 @@ class PerStepCleanTestCase(tests.TestCase):
         self.manager_mock.attach_mock(patcher.start(), 'clean_strip')
         self.addCleanup(patcher.stop)
 
+    def test_clean_with_hint(self):
+        handler = pluginhandler.load_plugin('test_part', 'nil')
+        handler.clean(step='pull', hint='foo')
+
+        # Verify the step cleaning order
+        self.assertEqual(4, len(self.manager_mock.mock_calls))
+        self.manager_mock.assert_has_calls([
+            call.clean_strip({}, 'foo'),
+            call.clean_stage({}, 'foo'),
+            call.clean_build('foo'),
+            call.clean_pull('foo'),
+        ])
+
     def test_clean_pull_order(self):
         handler = pluginhandler.load_plugin('test_part', 'nil')
         handler.clean(step='pull')
@@ -1073,10 +1222,10 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(4, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}),
-            call.clean_stage({}),
-            call.clean_build(),
-            call.clean_pull(),
+            call.clean_strip({}, ''),
+            call.clean_stage({}, ''),
+            call.clean_build(''),
+            call.clean_pull(''),
         ])
 
     def test_clean_build_order(self):
@@ -1086,9 +1235,9 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(3, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}),
-            call.clean_stage({}),
-            call.clean_build(),
+            call.clean_strip({}, ''),
+            call.clean_stage({}, ''),
+            call.clean_build(''),
         ])
 
     def test_clean_stage_order(self):
@@ -1098,8 +1247,8 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(2, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}),
-            call.clean_stage({}),
+            call.clean_strip({}, ''),
+            call.clean_stage({}, ''),
         ])
 
     def test_clean_strip_order(self):
@@ -1109,7 +1258,7 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(1, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}),
+            call.clean_strip({}, ''),
         ])
 
 

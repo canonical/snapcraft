@@ -16,36 +16,29 @@
 
 import yaml
 
-from snapcraft.internal.states._state import State
 
-
-def _strip_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return StripState(**parameters)
-
-yaml.add_constructor(u'!StripState', _strip_state_constructor)
-
-
-class StripState(State):
-    yaml_tag = u'!StripState'
-
+class State(yaml.YAMLObject):
     @classmethod
     def properties_of_interest(cls, options):
         """Extract the properties concerning this step from the options.
 
-        The only property of interest to the strip step is the `snap` keyword
-        used to filter out files with a white or blacklist.
+        Note that these options come from the YAML for a given part.
         """
 
-        return {'snap': getattr(options, 'snap', ['*']) or ['*']}
+        raise NotImplementedError
 
-    def __init__(self, files, directories, dependency_paths=None,
-                 options=None):
-        super().__init__(options)
+    def __init__(self, options):
+        self.properties = self.properties_of_interest(options)
 
-        self.files = files
-        self.directories = directories
-        self.dependency_paths = set()
+    def __repr__(self):
+        items = sorted(self.__dict__.items())
+        strings = (': '.join((key, repr(value))) for key, value in items)
+        representation = ', '.join(strings)
 
-        if dependency_paths:
-            self.dependency_paths = dependency_paths
+        return '{}({})'.format(self.__class__.__name__, representation)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False

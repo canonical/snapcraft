@@ -182,6 +182,21 @@ class PluginHandler:
 
         return True
 
+    def is_dirty(self, step):
+        """Return true if the given step needs to run again."""
+
+        # Retrieve the stored state for this step (assuming it has already run)
+        state = self.get_state(step)
+        with contextlib.suppress(AttributeError):
+            # state.properties contains the old YAML that this step cares
+            # about, and we're comparing it to those same keys in the current
+            # YAML (taken from self.code.options). If they've changed, then
+            # this step is dirty and needs to run again.
+            return state.properties != state.properties_of_interest(
+                self.code.options)
+
+        return False
+
     def should_step_run(self, step, force=False):
         return force or self.is_clean(step)
 
@@ -240,14 +255,14 @@ class PluginHandler:
         self.code.pull()
         self.mark_done('pull')
 
-    def clean_pull(self):
+    def clean_pull(self, hint=''):
         state_file = self._step_state_file('pull')
         if not os.path.isfile(state_file):
             self.notify_part_progress('Skipping cleaning pulled source for',
                                       '(already clean)')
             return
 
-        self.notify_part_progress('Cleaning pulled source for')
+        self.notify_part_progress('Cleaning pulled source for', hint)
         # Remove ubuntu cache (where stage packages are fetched)
         if os.path.exists(self.ubuntudir):
             shutil.rmtree(self.ubuntudir)
@@ -268,14 +283,14 @@ class PluginHandler:
         self.code.build()
         self.mark_done('build')
 
-    def clean_build(self):
+    def clean_build(self, hint=''):
         state_file = self._step_state_file('build')
         if not os.path.isfile(state_file):
             self.notify_part_progress('Skipping cleaning build for',
                                       '(already clean)')
             return
 
-        self.notify_part_progress('Cleaning build for')
+        self.notify_part_progress('Cleaning build for', hint)
         self.code.clean_build()
         self.mark_cleaned('build')
 
@@ -318,14 +333,14 @@ class PluginHandler:
         self.mark_done('stage', internal.states.StageState(
             snap_files, snap_dirs))
 
-    def clean_stage(self, project_staged_state):
+    def clean_stage(self, project_staged_state, hint=''):
         state_file = self._step_state_file('stage')
         if not os.path.isfile(state_file):
             self.notify_part_progress('Skipping cleaning staging area for',
                                       '(already clean)')
             return
 
-        self.notify_part_progress('Cleaning staging area for')
+        self.notify_part_progress('Cleaning staging area for', hint)
 
         with open(state_file, 'r') as f:
             state = yaml.load(f.read())
@@ -378,16 +393,16 @@ class PluginHandler:
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
         self.mark_done('strip', internal.states.StripState(
-            snap_files, snap_dirs, dependency_paths))
+            snap_files, snap_dirs, dependency_paths, self.code.options))
 
-    def clean_strip(self, project_stripped_state):
+    def clean_strip(self, project_stripped_state, hint=''):
         state_file = self._step_state_file('strip')
         if not os.path.isfile(state_file):
             self.notify_part_progress('Skipping cleaning snapping area for',
                                       '(already clean)')
             return
 
-        self.notify_part_progress('Cleaning snapping area for')
+        self.notify_part_progress('Cleaning snapping area for', hint)
 
         with open(state_file, 'r') as f:
             state = yaml.load(f.read())
@@ -434,7 +449,7 @@ class PluginHandler:
         return self.code.env(root)
 
     def clean(self, project_staged_state=None, project_stripped_state=None,
-              step=None):
+              step=None, hint=''):
         if not project_staged_state:
             project_staged_state = {}
 
@@ -443,7 +458,7 @@ class PluginHandler:
 
         try:
             self._clean_steps(project_staged_state, project_stripped_state,
-                              step)
+                              step, hint)
         except MissingState:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
@@ -464,7 +479,7 @@ class PluginHandler:
             os.rmdir(self.code.partdir)
 
     def _clean_steps(self, project_staged_state, project_stripped_state,
-                     step=None):
+                     step=None, hint=None):
         index = None
         if step:
             if step not in common.COMMAND_ORDER:
@@ -475,16 +490,16 @@ class PluginHandler:
             index = common.COMMAND_ORDER.index(step)
 
         if not index or index <= common.COMMAND_ORDER.index('strip'):
-            self.clean_strip(project_stripped_state)
+            self.clean_strip(project_stripped_state, hint)
 
         if not index or index <= common.COMMAND_ORDER.index('stage'):
-            self.clean_stage(project_staged_state)
+            self.clean_stage(project_staged_state, hint)
 
         if not index or index <= common.COMMAND_ORDER.index('build'):
-            self.clean_build()
+            self.clean_build(hint)
 
         if not index or index <= common.COMMAND_ORDER.index('pull'):
-            self.clean_pull()
+            self.clean_pull(hint)
 
 
 def _make_options(part_schema, properties, plugin_schema):
@@ -573,6 +588,13 @@ def _migratable_filesets(fileset, srcdir):
                      not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
 
+    # Make sure we also obtain the parent directories of files
+    for snap_file in snap_files:
+        dirname = os.path.dirname(snap_file)
+        while dirname:
+            snap_dirs.add(dirname)
+            dirname = os.path.dirname(dirname)
+
     return snap_files, snap_dirs
 
 
@@ -609,8 +631,9 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
     snap_dirs = sorted(snap_dirs, reverse=True)
 
     for snap_dir in snap_dirs:
-        if not os.listdir(os.path.join(directory, snap_dir)):
-            os.rmdir(os.path.join(directory, snap_dir))
+        migrated_directory = os.path.join(directory, snap_dir)
+        if not os.listdir(migrated_directory):
+            os.rmdir(migrated_directory)
 
 
 def _find_dependencies(workdir):

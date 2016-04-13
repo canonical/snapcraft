@@ -45,6 +45,8 @@ summary: # 79 char long summary
 description: # A longer description for the snap
 '''
 
+_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'strip'}
+
 
 def init():
     """Initialize a snapcraft project."""
@@ -132,6 +134,9 @@ class _Executor:
                 '{}'.format(part.name, ' '.join(prereqs)))
             self.run('stage', prereqs, recursed=True)
 
+        if part.is_dirty(step):
+            self._handle_dirty(part, step)
+
         if not part.should_step_run(step):
             part.notify_part_progress('Skipping {}'.format(step),
                                       '(already ran)')
@@ -148,6 +153,13 @@ class _Executor:
         if step == 'strip' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create(self.config.data)
+
+    def _handle_dirty(self, part, step):
+        if step in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
+            staged_state = self.config.get_project_state('stage')
+            stripped_state = self.config.get_project_state('strip')
+
+            part.clean(staged_state, stripped_state, step, '(out of date)')
 
 
 def _create_tar_filter(tar_filename):
