@@ -60,6 +60,11 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.cpu_count.return_value = 2
         self.addCleanup(patcher.stop)
 
+        # These are what we expect by default
+        self.snap_dir = os.path.join(os.getcwd(), 'snap')
+        self.stage_dir = os.path.join(os.getcwd(), 'stage')
+        self.parts_dir = os.path.join(os.getcwd(), 'parts')
+
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         tempdir_obj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdir_obj.cleanup)
