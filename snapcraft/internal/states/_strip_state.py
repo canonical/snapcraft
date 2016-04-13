@@ -31,6 +31,12 @@ class StripState(State):
 
     @classmethod
     def properties_of_interest(cls, options):
+        """Extract the properties concerning this step from the options.
+
+        The only property of interest to the strip step is the `snap` keyword
+        used to filter out files with a white or blacklist.
+        """
+
         return {'snap': getattr(options, 'snap', ['*']) or ['*']}
 
     def __init__(self, files, directories, dependency_paths=None,

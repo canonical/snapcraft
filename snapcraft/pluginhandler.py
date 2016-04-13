@@ -185,8 +185,13 @@ class PluginHandler:
     def is_dirty(self, step):
         """Return true if the given step needs to run again."""
 
+        # Retrieve the stored state for this step (assuming it has already run)
         state = self.get_state(step)
         with contextlib.suppress(AttributeError):
+            # state.properties contains the old YAML that this step cares
+            # about, and we're comparing it to those same keys in the current
+            # YAML (taken from self.code.options). If they've changed, then
+            # this step is dirty and needs to run again.
             return state.properties != state.properties_of_interest(
                 self.code.options)
 
@@ -288,9 +293,6 @@ class PluginHandler:
         self.notify_part_progress('Cleaning build for', hint)
         self.code.clean_build()
         self.mark_cleaned('build')
-
-    def fileset_for(self, step):
-        return getattr(self.code.options, step, ['*']) or ['*']
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
