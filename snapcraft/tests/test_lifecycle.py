@@ -142,9 +142,58 @@ description: test
         }
         self.assertEqual(snap_info, expected_snap_info)
 
-    def test_dirty_strip_restrips(self):
+    def test_dirty_strip_restrips_single_part(self):
         self.make_snapcraft_yaml("""parts:
   part1:
+    plugin: nil
+  part2:
+    plugin: nil
+""")
+
+        # Strip it.
+        snapcraft.lifecycle.execute('strip', self.project_options)
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_is_dirty(self, step):
+            return self.name == 'part1' and step == 'strip'
+
+        # Should automatically clean and re-strip if that step is dirty
+        # for the part.
+        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
+                               _fake_is_dirty):
+            snapcraft.lifecycle.execute('strip', self.project_options)
+
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
+
+        self.assertEqual(
+            [
+                'Skipping pull part2 (already ran)',
+                'Skipping build part2 (already ran)',
+                'Skipping stage part2 (already ran)',
+                'Skipping strip part2 (already ran)',
+            ],
+            part2_output)
+
+        self.assertEqual(
+            [
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+                'Skipping stage part1 (already ran)',
+                'Cleaning snapping area for part1 (out of date)',
+                'Stripping part1',
+            ],
+            part1_output)
+
+    def test_dirty_strip_restrips_multiple_part(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+  part2:
     plugin: nil
 """)
 
@@ -164,17 +213,82 @@ description: test
                                _fake_is_dirty):
             snapcraft.lifecycle.execute('strip', self.project_options)
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Skipping stage part1 (already ran)\n'
-            'Cleaning snapping area for part1 (out of date)\n'
-            'Stripping part1 \n',
-            self.fake_logger.output)
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
 
-    def test_dirty_stage_restages(self):
+        self.assertEqual(
+            [
+                'Skipping pull part2 (already ran)',
+                'Skipping build part2 (already ran)',
+                'Skipping stage part2 (already ran)',
+                'Cleaning snapping area for part2 (out of date)',
+                'Stripping part2',
+            ],
+            part2_output)
+
+        self.assertEqual(
+            [
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+                'Skipping stage part1 (already ran)',
+                'Cleaning snapping area for part1 (out of date)',
+                'Stripping part1',
+            ],
+            part1_output)
+
+    def test_dirty_stage_restages_single_part(self):
         self.make_snapcraft_yaml("""parts:
   part1:
+    plugin: nil
+  part2:
+    plugin: nil
+""")
+
+        # Stage it.
+        snapcraft.lifecycle.execute('stage', self.project_options)
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_is_dirty(self, step):
+            return self.name == 'part1' and step == 'stage'
+
+        # Should automatically clean and re-stage if that step is dirty
+        # for the part.
+        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
+                               _fake_is_dirty):
+            snapcraft.lifecycle.execute('stage', self.project_options)
+
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
+
+        self.assertEqual(
+            [
+                'Skipping pull part2 (already ran)',
+                'Skipping build part2 (already ran)',
+                'Skipping stage part2 (already ran)',
+            ],
+            part2_output)
+
+        self.assertEqual(
+            [
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+                'Skipping cleaning snapping area for part1 (out of date) '
+                '(already clean)',
+                'Cleaning staging area for part1 (out of date)',
+                'Staging part1',
+            ],
+            part1_output)
+
+    def test_dirty_stage_restages_multiple_parts(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+  part2:
     plugin: nil
 """)
 
@@ -194,14 +308,31 @@ description: test
                                _fake_is_dirty):
             snapcraft.lifecycle.execute('stage', self.project_options)
 
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
+
         self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Skipping cleaning snapping area for part1 (out of date) '
-            '(already clean)\n'
-            'Cleaning staging area for part1 (out of date)\n'
-            'Staging part1 \n',
-            self.fake_logger.output)
+            [
+                'Skipping pull part2 (already ran)',
+                'Skipping build part2 (already ran)',
+                'Skipping cleaning snapping area for part2 (out of date) '
+                '(already clean)',
+                'Cleaning staging area for part2 (out of date)',
+                'Staging part2',
+            ],
+            part2_output)
+
+        self.assertEqual(
+            [
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+                'Skipping cleaning snapping area for part1 (out of date) '
+                '(already clean)',
+                'Cleaning staging area for part1 (out of date)',
+                'Staging part1',
+            ],
+            part1_output)
 
     def test_dirty_stage_restrips(self):
         self.make_snapcraft_yaml("""parts:
