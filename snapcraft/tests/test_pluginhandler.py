@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import logging
 import os
 import shutil
@@ -64,6 +65,28 @@ class PluginTestCase(tests.TestCase):
         self.assertEqual(include, ['opt/something', 'usr/bin',
                                    '-everything', r'\a'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+
+    @patch.object(snapcraft.plugins.nil.NilPlugin, 'snap_fileset')
+    def test_migratable_fileset_for_no_options_modification(
+            self, mock_snap_fileset):
+        """Making sure migratable_fileset_for() doesn't modify options"""
+
+        mock_snap_fileset.return_value = ['baz']
+
+        handler = pluginhandler.load_plugin('test-part', 'nil')
+        handler.code.options.snap = ['foo']
+        handler.code.options.stage = ['bar']
+        expected_options = copy.deepcopy(handler.code.options)
+
+        handler.migratable_fileset_for('stage')
+        self.assertEqual(expected_options.__dict__,
+                         handler.code.options.__dict__,
+                         'Expected options to be unmodified')
+
+        handler.migratable_fileset_for('strip')
+        self.assertEqual(expected_options.__dict__,
+                         handler.code.options.__dict__,
+                         'Expected options to be unmodified')
 
     def test_fileset_only_includes(self):
         stage_set = [

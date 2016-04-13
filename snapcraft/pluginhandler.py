@@ -296,7 +296,7 @@ class PluginHandler:
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = getattr(self.code.options, step, ['*']) or ['*']
+        fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
