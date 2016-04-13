@@ -21,9 +21,9 @@ from unittest.mock import patch
 import fixtures
 import yaml
 
+from snapcraft.internal.meta import create_snap_packaging, _SnapPackaging
 from snapcraft import (
     common,
-    meta,
     tests
 )
 
@@ -47,7 +47,7 @@ class CreateTest(tests.TestCase):
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
     def test_create_meta(self):
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -67,7 +67,7 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
         self.config_data['license'] = 'LICENSE'
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(os.path.join(self.meta_dir, 'license.txt')),
@@ -90,7 +90,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join('setup', 'license.txt'), 'w') as f:
             f.write(license_text)
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_license = os.path.join(self.meta_dir, 'license.txt')
         self.assertTrue(os.path.exists(expected_license),
@@ -111,7 +111,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join('setup', 'license.txt'), 'w') as f:
             f.write(license_text)
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_license = os.path.join(self.meta_dir, 'license.txt')
         self.assertTrue(os.path.exists(expected_license),
@@ -130,7 +130,7 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
@@ -157,7 +157,7 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -187,10 +187,10 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         # Running again should be good
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -199,7 +199,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
             f.write(icon_content)
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -216,7 +216,7 @@ class CreateTest(tests.TestCase):
                          'icon found in snap.yaml {}'.format(y))
 
     def test_create_meta_with_app(self):
-        os.makedirs(self.snap_dir)
+        os.mkdir(self.snap_dir)
         open(os.path.join(self.snap_dir, 'app.sh'), 'w').close()
         self.config_data['apps'] = {
             'app1': {'command': 'app.sh'},
@@ -226,7 +226,7 @@ class CreateTest(tests.TestCase):
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
 
-        meta.create(self.config_data)
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         for app in ['app1', 'app2', 'app3']:
             app_wrapper_path = os.path.join(
@@ -273,24 +273,27 @@ class CreateTest(tests.TestCase):
 # TODO this needs more tests.
 class WrapExeTestCase(tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+
+        # TODO move to use outer interface
+        self.packager = _SnapPackaging({}, self.snap_dir, self.parts_dir)
+
     @patch('snapcraft.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
-""".format(common.get_partsdir())
-
-        snapdir = common.get_snapdir()
-        os.mkdir(snapdir)
+""".format(self.parts_dir)
 
         relative_exe_path = 'test_relexepath'
-        open(os.path.join(snapdir, relative_exe_path), 'w').close()
+        open(os.path.join(self.snap_dir, relative_exe_path), 'w').close()
 
         # Check that the wrapper is created even if there is already a file
         # with the same name.
         open(os.path.join('snap', 'test_relexepath.wrapper'), 'w').close()
 
-        relative_wrapper_path = meta._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n'
@@ -306,17 +309,14 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
     def test_wrap_exe_writes_wrapper_with_basename(self, mock_assemble_env):
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
-""".format(common.get_partsdir())
-
-        snapdir = common.get_snapdir()
-        os.mkdir(snapdir)
+""".format(self.parts_dir)
 
         relative_exe_path = 'test_relexepath'
-        open(os.path.join(snapdir, relative_exe_path), 'w').close()
+        open(os.path.join(self.snap_dir, relative_exe_path), 'w').close()
 
-        relative_wrapper_path = meta._wrap_exe(
+        relative_wrapper_path = self.packager._wrap_exe(
             relative_exe_path, basename='new-name')
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
 
         self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
 
@@ -341,19 +341,15 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         it in the wrapper script allows us to use the $SNAP environment
         variable.
         """
-        snapdir = common.get_snapdir()
-        partsdir = common.get_partsdir()
-        os.mkdir(snapdir)
-
         relative_exe_path = 'test_relexepath'
         shebang_path = os.path.join(
-            partsdir, 'testsnap', 'install', 'snap_exe')
+            self.parts_dir, 'testsnap', 'install', 'snap_exe')
         exe_contents = '#!{}\n'.format(shebang_path)
-        with open(os.path.join(snapdir, relative_exe_path), 'w') as exe:
+        with open(os.path.join(self.snap_dir, relative_exe_path), 'w') as exe:
             exe.write(exe_contents)
 
-        relative_wrapper_path = meta._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
 
         expected = (
             '#!/bin/sh\n'
@@ -364,7 +360,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
-        with open(os.path.join(snapdir, relative_exe_path), 'r') as exe:
+        with open(os.path.join(self.snap_dir, relative_exe_path), 'r') as exe:
             # The shebang wasn't changed, since we don't know what the
             # path will be on the installed system.
             self.assertEqual(exe_contents, exe.read())
@@ -375,16 +371,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         If the shebang points to a system executable, there's no need to
         interfere.
         """
-        snapdir = common.get_snapdir()
-        os.mkdir(snapdir)
-
         relative_exe_path = 'test_relexepath'
         exe_contents = '#!/bin/bash\necho hello\n'
-        with open(os.path.join(snapdir, relative_exe_path), 'w') as exe:
+        with open(os.path.join(self.snap_dir, relative_exe_path), 'w') as exe:
             exe.write(exe_contents)
 
-        relative_wrapper_path = meta._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
@@ -393,7 +386,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
-        with open(os.path.join(snapdir, relative_exe_path), 'r') as exe:
+        with open(os.path.join(self.snap_dir, relative_exe_path), 'r') as exe:
             self.assertEqual(exe_contents, exe.read())
 
     def test_non_shebang_binaries_ignored(self):
@@ -402,18 +395,15 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         If the executable is a native binary, and thus not have a
         shebang, it's ignored.
         """
-        snapdir = common.get_snapdir()
-        os.mkdir(snapdir)
-
         relative_exe_path = 'test_relexepath'
         # Choose a content which can't be decoded with utf-8, to make
         # sure no decoding errors happen.
         exe_contents = b'\xf0\xf1'
-        with open(os.path.join(snapdir, relative_exe_path), 'wb') as exe:
+        with open(os.path.join(self.snap_dir, relative_exe_path), 'wb') as exe:
             exe.write(exe_contents)
 
-        relative_wrapper_path = meta._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
@@ -422,18 +412,17 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
-        with open(os.path.join(snapdir, relative_exe_path), 'rb') as exe:
+        with open(os.path.join(self.snap_dir, relative_exe_path), 'rb') as exe:
             self.assertEqual(exe_contents, exe.read())
 
     @patch('snapcraft.common.run')
     def test_exe_is_in_path(self, run_mock):
-        snapdir = common.get_snapdir()
-        app_path = os.path.join(snapdir, 'bin', 'app1')
-        os.makedirs(os.path.dirname(app_path))
+        app_path = os.path.join(self.snap_dir, 'bin', 'app1')
+        os.mkdir(os.path.dirname(app_path))
         open(app_path, 'w').close()
 
-        relative_wrapper_path = meta._wrap_exe('app1')
-        wrapper_path = os.path.join(snapdir, relative_wrapper_path)
+        relative_wrapper_path = self.packager._wrap_exe('app1')
+        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
@@ -444,48 +433,44 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertEqual(expected, wrapper_contents)
 
     def test_command_does_not_exist(self):
-        snap_dir = common.get_snapdir()
-        common.env = ['PATH={}/bin:$PATH'.format(snap_dir)]
+        common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
 
-        os.mkdir(snap_dir)
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
         with self.assertRaises(EnvironmentError) as raised:
-            meta._wrap_apps(apps)
+            self.packager._wrap_apps(apps)
         self.assertEqual(
             "The specified command 'command-does-not-exist' defined in 'app1' "
             "does not exist or is not executable",
             str(raised.exception))
 
     def test_command_is_not_executable(self):
-        snap_dir = common.get_snapdir()
-        common.env = ['PATH={}/bin:$PATH'.format(snap_dir)]
+        common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
 
         apps = {'app1': {'command': 'command-not-executable'}}
 
-        cmd_path = os.path.join(snap_dir, 'bin', apps['app1']['command'])
-        os.makedirs(os.path.dirname(cmd_path))
+        cmd_path = os.path.join(self.snap_dir, 'bin', apps['app1']['command'])
+        os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
 
         with self.assertRaises(EnvironmentError) as raised:
-            meta._wrap_apps(apps)
+            self.packager._wrap_apps(apps)
         self.assertEqual(
             "The specified command 'command-not-executable' defined in 'app1' "
             "does not exist or is not executable",
             str(raised.exception))
 
     def test_command_found(self):
-        snap_dir = common.get_snapdir()
-        common.env = ['PATH={}/bin:$PATH'.format(snap_dir)]
+        common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
 
         apps = {'app1': {'command': 'command-executable'}}
 
-        cmd_path = os.path.join(snap_dir, 'bin', apps['app1']['command'])
-        os.makedirs(os.path.dirname(cmd_path))
+        cmd_path = os.path.join(self.snap_dir, 'bin', apps['app1']['command'])
+        os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
         os.chmod(cmd_path, 0o755)
 
-        wrapped_apps = meta._wrap_apps(apps)
+        wrapped_apps = self.packager._wrap_apps(apps)
 
         self.assertEqual(wrapped_apps,
                          {'app1': {'command': 'command-app1.wrapper'}})
