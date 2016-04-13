@@ -217,17 +217,23 @@ class CreateTest(tests.TestCase):
 
     def test_create_meta_with_app(self):
         os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
+        open(os.path.join(self.snap_dir, 'app.sh'), 'w').close()
         self.config_data['apps'] = {
-            'app1': {'command': 'app1.sh'},
+            'app1': {'command': 'app.sh'},
+            'app2': {'command': 'app.sh', 'plugs': ['network']},
+            'app3': {'command': 'app.sh', 'plugs': ['network-server']}
         }
+        self.config_data['plugs'] = {
+            'network-server': {'interface': 'network-bind'}}
 
         meta.create(self.config_data)
 
-        app1_wrapper_path = os.path.join(self.snap_dir, 'command-app1.wrapper')
-        self.assertTrue(
-            os.path.exists(app1_wrapper_path),
-            'the wrapper for app1 was not setup correctly')
+        for app in ['app1', 'app2', 'app3']:
+            app_wrapper_path = os.path.join(
+                self.snap_dir, 'command-{}.wrapper'.format(app))
+            self.assertTrue(
+                os.path.exists(app_wrapper_path),
+                'the wrapper for {!r} was not setup correctly'.format(app))
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -235,232 +241,31 @@ class CreateTest(tests.TestCase):
         with open(self.snap_yaml) as f:
             y = yaml.load(f)
 
-        expected = {'architectures': ['amd64'],
-                    'apps': {
-                        'app1': {
-                            'command': 'command-app1.wrapper',
-                        },
-                    },
-                    'description': 'my description',
-                    'summary': 'my summary',
-                    'name': 'my-package',
-                    'version': '1.0'}
-
-        self.assertEqual(y, expected)
-
-    def test_create_meta_with_app_with_security_policy(self):
-        os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
-        open(os.path.join(os.curdir, 'stub-sec'), 'w').close()
-        self.config_data['apps'] = {
-            'app1': {
-                'command': 'app1.sh',
-                'uses': ['migration'],
-            },
-        }
-        self.config_data['uses'] = {
-            'migration': {
-                'type': 'migration-skill',
-                'security-policy': {
-                    'apparmor': 'stub-sec',
-                    'seccomp': 'stub-sec',
+        expected = {
+            'architectures': ['amd64'],
+            'apps': {
+                'app1': {
+                    'command': 'command-app1.wrapper',
+                },
+                'app2': {
+                    'command': 'command-app2.wrapper',
+                    'plugs': ['network'],
+                },
+                'app3': {
+                    'command': 'command-app3.wrapper',
+                    'plugs': ['network-server'],
                 },
             },
+            'description': 'my description',
+            'summary': 'my summary',
+            'name': 'my-package',
+            'version': '1.0',
+            'plugs': {
+                'network-server': {
+                    'interface': 'network-bind',
+                }
+            }
         }
-
-        meta.create(self.config_data)
-
-        app1_wrapper_path = os.path.join(self.snap_dir, 'command-app1.wrapper')
-        self.assertTrue(
-            os.path.exists(app1_wrapper_path),
-            'the wrapper for app1 was not setup correctly')
-
-        sec_path = os.path.join(self.meta_dir, 'stub-sec')
-        self.assertTrue(
-            os.path.exists(sec_path),
-            'the security-policies for app1 were not setup correctly')
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-
-        expected = {'architectures': ['amd64'],
-                    'apps': {
-                        'app1': {
-                            'command': 'command-app1.wrapper',
-                            'uses': ['migration'],
-                        },
-                    },
-                    'uses': {
-                        'migration': {
-                            'type': 'migration-skill',
-                            'security-policy': {
-                                'apparmor': 'meta/stub-sec',
-                                'seccomp': 'meta/stub-sec',
-                            },
-                        }
-                    },
-                    'description': 'my description',
-                    'summary': 'my summary',
-                    'name': 'my-package',
-                    'version': '1.0'}
-
-        self.assertEqual(y, expected)
-
-    def test_create_meta_with_implicit_migration_skill(self):
-        os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
-        open(os.path.join(os.curdir, 'stub-sec'), 'w').close()
-        self.config_data['apps'] = {
-            'app1': {
-                'command': 'app1.sh',
-                'uses': ['migration-skill'],
-            },
-        }
-        self.config_data['uses'] = {
-            'migration-skill': {
-                'security-policy': {
-                    'apparmor': 'stub-sec',
-                    'seccomp': 'stub-sec',
-                },
-            },
-        }
-
-        meta.create(self.config_data)
-
-        app1_wrapper_path = os.path.join(self.snap_dir, 'command-app1.wrapper')
-        self.assertTrue(
-            os.path.exists(app1_wrapper_path),
-            'the wrapper for app1 was not setup correctly')
-
-        sec_path = os.path.join(self.meta_dir, 'stub-sec')
-        self.assertTrue(
-            os.path.exists(sec_path),
-            'the security-policies for app1 were not setup correctly')
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-
-        expected = {'architectures': ['amd64'],
-                    'apps': {
-                        'app1': {
-                            'command': 'command-app1.wrapper',
-                            'uses': ['migration-skill'],
-                        },
-                    },
-                    'uses': {
-                        'migration-skill': {
-                            'security-policy': {
-                                'apparmor': 'meta/stub-sec',
-                                'seccomp': 'meta/stub-sec',
-                            },
-                        }
-                    },
-                    'description': 'my description',
-                    'summary': 'my summary',
-                    'name': 'my-package',
-                    'version': '1.0'}
-
-        self.assertEqual(y, expected)
-
-    def test_create_no_change_if_not_migration_skill(self):
-        os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
-        open(os.path.join(os.curdir, 'stub-sec'), 'w').close()
-        self.config_data['apps'] = {
-            'app1': {
-                'command': 'app1.sh',
-                'uses': ['migration'],
-            },
-        }
-        self.config_data['uses'] = {
-            'migration': {
-                'type': 'not-a-migration-skillz',
-                'security-policy': {
-                    'apparmor': 'stub-sec',
-                    'seccomp': 'stub-sec',
-                },
-            },
-        }
-
-        meta.create(self.config_data)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-
-        expected = {'architectures': ['amd64'],
-                    'apps': {
-                        'app1': {
-                            'command': 'command-app1.wrapper',
-                            'uses': ['migration'],
-                        },
-                    },
-                    'uses': {
-                        'migration': {
-                            'type': 'not-a-migration-skillz',
-                            'security-policy': {
-                                'apparmor': 'stub-sec',
-                                'seccomp': 'stub-sec',
-                            },
-                        }
-                    },
-                    'description': 'my description',
-                    'summary': 'my summary',
-                    'name': 'my-package',
-                    'version': '1.0'}
-
-        self.assertEqual(y, expected)
-
-    def test_create_with_migration_skill_with_caps(self):
-        os.makedirs(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app1.sh'), 'w').close()
-        open(os.path.join(os.curdir, 'stub-sec'), 'w').close()
-        self.config_data['apps'] = {
-            'app1': {
-                'command': 'app1.sh',
-                'uses': ['migration'],
-            },
-        }
-        self.config_data['uses'] = {
-            'migration': {
-                'type': 'migration-skill',
-                'caps': ['network-listener'],
-            },
-        }
-
-        meta.create(self.config_data)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-
-        expected = {'architectures': ['amd64'],
-                    'apps': {
-                        'app1': {
-                            'command': 'command-app1.wrapper',
-                            'uses': ['migration'],
-                        },
-                    },
-                    'uses': {
-                        'migration': {
-                            'type': 'migration-skill',
-                            'caps': ['network-listener'],
-                        }
-                    },
-                    'description': 'my description',
-                    'summary': 'my summary',
-                    'name': 'my-package',
-                    'version': '1.0'}
 
         self.assertEqual(y, expected)
 

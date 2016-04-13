@@ -8,12 +8,7 @@ apps:
   server:
     command: bin/shout --home $SNAP_DATA
     daemon: simple
-    plugs: [listener]
-
-plugs:
-  listener:
-    interface: old-security
-    caps: [network-listener]
+    plugs: [network, network-bind]
 
 parts:
   shout:

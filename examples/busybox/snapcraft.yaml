@@ -8,19 +8,8 @@ description:
 apps:
   ls:
     command: ls
-    plugs: [rw-all]
   touch:
     command: touch
-    plugs: [rw-all]
-
-plugs:
-  rw-all:
-    interface: old-security
-    security-override:
-      read-paths:
-        - /
-      write-paths:
-        - /
 
 parts:
   busybox:
@@ -33,4 +22,3 @@ parts:
      - CONFIG_HTTPD=n
     snap:
      -  bin/*
-
