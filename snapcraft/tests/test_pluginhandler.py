@@ -208,7 +208,6 @@ class PluginTestCase(tests.TestCase):
                              'Expected staging to allow overwriting of '
                              'already-staged files')
 
-
     @patch('importlib.import_module')
     @patch('snapcraft.pluginhandler._load_local')
     @patch('snapcraft.pluginhandler._get_plugin')
