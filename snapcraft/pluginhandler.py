@@ -257,7 +257,7 @@ class PluginHandler:
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
-            hint = (hint + ' (already clean)').strip()
+            hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning pulled source for',
                                       hint)
             return
@@ -285,7 +285,7 @@ class PluginHandler:
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
-            hint = (hint + ' (already clean)').strip()
+            hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning build for',
                                       hint)
             return
@@ -335,7 +335,7 @@ class PluginHandler:
 
     def clean_stage(self, project_staged_state, hint=''):
         if self.is_clean('stage'):
-            hint = (hint + ' (already clean)').strip()
+            hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning staging area for',
                                       hint)
             return
@@ -396,7 +396,7 @@ class PluginHandler:
 
     def clean_strip(self, project_stripped_state, hint=''):
         if self.is_clean('strip'):
-            hint = (hint + ' (already clean)').strip()
+            hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning snapping area for',
                                       hint)
             return
