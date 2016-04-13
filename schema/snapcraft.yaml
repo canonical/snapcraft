@@ -1,86 +1,5 @@
 $schema: http://json-schema.org/draft-04/schema#
 
-definitions:
-  security-policy:
-    type: object
-    required:
-      - apparmor
-      - seccomp
-    properties:
-      apparmor:
-        type: string
-        format: file-path
-      seccomp:
-        type: string
-        format: file-path
-  security-override:
-      type: object
-      properties:
-        read-paths:
-          type: array
-          description: a list of additional paths that the app can read.
-          minItems: 1
-          uniqueItems: true
-          items:
-              type: string
-        write-paths:
-          type: array
-          description: a list of additional paths that the app can write.
-          minItems: 1
-          uniqueItems: true
-          items:
-              type: string
-        abstractions:
-          type: array
-          description: a list of additional AppArmor abstractions for the app.
-          minItems: 1
-          uniqueItems: true
-          items:
-              type: string
-        syscalls:
-          type: array
-          description: a list of additional syscalls the app can use.
-          minItems: 1
-          uniqueItems: true
-          items:
-              type: string
-  security-caps:
-    type: array
-    description: Security caps.
-    minItems: 1
-    uniqueItems: true
-    items:
-      type: string
-  security-template:
-      type: string
-      description: alternate security template to use instead of default.
-  old-security:
-    type: object
-    additionalProperties: false
-    properties:
-        interface:
-          type: string
-          enum:
-            - old-security
-        security-policy:
-          $ref: "#definitions/security-policy"
-        security-override:
-          $ref: "#definitions/security-override"
-        security-template:
-          $ref: "#definitions/security-template"
-        caps:
-          $ref: "#definitions/security-caps"
-    not:
-      anyOf:
-        - required:
-            - security-policy
-            - security-override
-            - security-template
-            - caps
-        - required: [security-policy, security-override]
-        - required: [security-policy, security-template]
-        - required: [security-policy, caps]
-
 title: snapcraft schema
 type: object
 properties:
@@ -250,20 +169,9 @@ properties:
           slots:
             type: object
             description: used to offer interfaces
-          uses:
-            type: object
-            description: legacy skills, use interfaces and plugs
   plugs:
     type: object
-    additionalProperties: false
-    patternProperties:
-      ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
-        oneOf:
-          - $ref: "#definitions/old-security"
   slots:
-  # TODO: We have no real use case for this now, but when the snappy
-  # functionality comes we don't want to block people from experimenting
-  # with it right away
     type: object
 required:
   - name

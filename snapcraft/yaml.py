@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -110,9 +110,6 @@ class Config:
 
         self.data = _snapcraft_yaml_load()
 
-        # To make the transition less painful
-        self._remap_skills_to_interfaces()
-
         self._validator = Validator(self.data)
         self._validator.validate()
 
@@ -158,26 +155,6 @@ class Config:
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
-
-    def _remap_skills_to_interfaces(self):
-        if 'uses' in self.data:
-            logger.warning(
-                "DEPRECATED: Instances of 'uses' remapped to 'plugs'")
-            self.data['plugs'] = self.data['uses']
-            del self.data['uses']
-
-        for slot in self.data.get('plugs', []):
-            if 'type' in self.data['plugs'][slot]:
-                slot_interface = self.data['plugs'][slot]['type']
-                if slot_interface == 'migration-skill':
-                    slot_interface = 'old-security'
-                self.data['plugs'][slot]['interface'] = slot_interface
-                del self.data['plugs'][slot]['type']
-        for app in self.data.get('apps', []):
-            if 'uses' in self.data['apps'][app]:
-                self.data['apps'][app]['plugs'] = \
-                    self.data['apps'][app]['uses']
-                del self.data['apps'][app]['uses']
 
     def _compute_part_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''

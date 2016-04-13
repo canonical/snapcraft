@@ -8,12 +8,7 @@ apps:
   webcam-webui:
     command: bin/webcam-webui
     daemon: simple
-    plugs: [listener]
-
-plugs:
-  listener:
-    interface: old-security
-    caps: [network-listener]
+    plugs: [network-bind]
 
 parts:
   cam:

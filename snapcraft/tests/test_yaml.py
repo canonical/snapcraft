@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
 import logging
 import os
 import subprocess
@@ -69,49 +68,6 @@ parts:
         })
 
         self.assertFalse(mock_get_part.called)
-
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    def test_config_works_with_skills(self, mock_loadPlugin):
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: test
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-
-apps:
-   app1:
-     command: runme
-     uses:
-       - migration
-
-uses:
-  migration:
-    type: migration-skill
-    caps:
-      - network-listener
-""")
-
-        config = snapcraft.yaml.Config()
-        self.assertEqual(
-            config.data,
-            {'apps': {'app1': {'command': 'runme', 'plugs': ['migration']}},
-             'architectures': [self.deb_arch],
-             'description': 'test',
-             'name': 'test',
-             'parts': {
-                'part1': {
-                    'snap': [], 'stage': [],
-                    'stage-packages': ['fswebcam']}},
-             'plugs': {
-                'migration': {
-                    'caps': ['network-listener'],
-                    'interface': 'old-security'}},
-             'summary': 'test',
-             'version': '1'})
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
@@ -386,41 +342,6 @@ parts:
 
         self.assertEqual(raised.exception.message,
                          "Specified icon 'icon.png' does not exist")
-
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    def test_invalid_yaml_missing_apparmor(self, mock_loadPlugin):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.mock_path_exists.return_value = False
-
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: test
-
-apps:
-  foo:
-    command: bar
-    plugs: [migration]
-
-plugs:
-  migration:
-    interface: old-security
-    security-policy:
-      apparmor: path/profile
-      seccomp: path/profile
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-        with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
-
-        self.assertEqual(raised.exception.message,
-                         "Specified file 'path/profile' does not exist")
 
     @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
@@ -1100,120 +1021,6 @@ class TestValidation(tests.TestCase):
         expected_message = "'license' is a dependency of 'license-version'"
         self.assertEqual(raised.exception.message, expected_message,
                          msg=self.data)
-
-    def test_valid_security_policy_for_apps(self):
-        self.data['apps'] = {
-            'app1': {
-                'command': 'binary',
-                'plugs': ['file-migration'],
-            },
-        }
-        self.data['plugs'] = {
-            'file-migration': {
-                'interface': 'old-security',
-                'security-policy': {
-                    'seccomp': 'file.seccomp',
-                    'apparmor': 'file.apparmor',
-                },
-            },
-        }
-
-        snapcraft.yaml.Validator(self.data).validate()
-
-    def test_valid_security_override_for_apps(self):
-        self.data['apps'] = {
-            'app1': {
-                'command': 'binary',
-                'plugs': ['migration'],
-            },
-        }
-        self.data['plugs'] = {
-            'migration': {
-                'interface': 'old-security',
-                'security-override': {
-                    'read-paths': ['path1', 'path2'],
-                    'write-paths': ['path1', 'path2'],
-                    'abstractions': ['abstraction1', 'abstraction2'],
-                    'syscalls': ['open', 'close'],
-                },
-            },
-        }
-
-        snapcraft.yaml.Validator(self.data).validate()
-
-    def test_valid_security_template_for_apps(self):
-        self.data['apps'] = {
-            'app1': {
-                'command': 'binary',
-                'plugs': ['old-security'],
-            },
-        }
-        self.data['plugs'] = {
-            'migration': {
-                'interface': 'old-security',
-                'security-template': 'unconfined',
-            },
-        }
-
-        snapcraft.yaml.Validator(self.data).validate()
-
-    def test_valid_caps_for_apps(self):
-        self.data['apps'] = {
-            'app1': {
-                'command': 'binary',
-                'plugs': ['migration'],
-            },
-        }
-        self.data['plugs'] = {
-            'migration': {
-                'interface': 'old-security',
-                'caps': ['cap1', 'cap2'],
-            },
-        }
-
-        snapcraft.yaml.Validator(self.data).validate()
-
-    def test_invalid_security_override_combinations(self):
-        self.data['apps'] = {
-            'app1': {
-                'command': 'binary',
-                'plugs': ['migration'],
-            },
-        }
-        self.data['plugs'] = {
-            'migration': {
-                'interface': 'old-security',
-                'security-override': {
-                    'read-paths': ['path1', 'path2'],
-                    'write-paths': ['path1', 'path2'],
-                    'abstractions': ['abstraction1', 'abstraction2'],
-                    'syscalls': ['open', 'close'],
-                },
-                'caps': ['cap1', 'cap2'],
-                'security-policy': {
-                    'seccomp': 'file.seccomp',
-                    'apparmor': 'file.apparmor',
-                },
-                'security-template': 'undefined',
-            },
-        }
-
-        with self.subTest(key='all'):
-            with self.assertRaises(Exception) as r:
-                snapcraft.yaml.Validator(self.data).validate()
-
-            self.assertTrue('is not valid under any of the given schemas'
-                            in str(r.exception), str(r.exception))
-
-        for sec in ['security-override', 'security-template', 'caps']:
-            data = copy.deepcopy(self.data)
-            del data['plugs']['migration'][sec]
-            with self.subTest(key=sec):
-                with self.assertRaises(Exception) as r:
-                    snapcraft.yaml.Validator(data).validate()
-
-                self.assertTrue('is not valid under any of the given schemas'
-                                in str(r.exception), str(r.exception))
 
 
 class TestFilesets(tests.TestCase):

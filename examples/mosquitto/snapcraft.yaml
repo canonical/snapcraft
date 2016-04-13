@@ -7,25 +7,13 @@ apps:
   mosquitto:
     command: usr/sbin/mosquitto -c $SNAP/mosquitto.conf
     daemon: simple
-    plugs: [listener-service]
+    plugs: [network, network-bind]
   subscribe:
     command: bin/subscribe
-    plugs: [listener]
+    plugs: [network, network-bind]
   publish:
     command: bin/publish
-    plugs: [listener]
-
-plugs:
-  listener:
-    interface: old-security
-    caps: [network-listener]
-  listener-service:
-    interface: old-security
-    caps: [network-listener, network-service]
-    security-override:
-      read-paths:
-        - /etc/hosts.deny
-        - /etc/hosts.allow
+    plugs: [network, network-bind]
 
 
 parts:

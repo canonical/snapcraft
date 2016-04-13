@@ -155,10 +155,6 @@ def _compose_snap_yaml(meta_dir, config_data):
     if config_data.get('type', '') == 'kernel':
         snap_yaml.update(_get_kernel_keys())
 
-    if 'uses' in config_data:
-        snap_yaml['uses'] = \
-            _copy_security_profiles(meta_dir, config_data['uses'])
-
     return snap_yaml
 
 
@@ -177,21 +173,6 @@ def _copy(meta_dir, relpath, new_relpath=None):
     shutil.copyfile(relpath, target_path)
 
     return os.path.join('meta', os.path.basename(relpath))
-
-
-def _copy_security_profiles(meta_dir, uses):
-    # TODO: remove once skills are implemented.
-    for slot_name in uses:
-        slot_type = uses[slot_name].get('type', '')
-        if slot_type != 'migration-skill' and slot_name != 'migration-skill':
-            continue
-        if 'security-policy' in uses[slot_name]:
-            uses[slot_name]['security-policy']['apparmor'] = \
-                _copy(meta_dir, uses[slot_name]['security-policy']['apparmor'])
-            uses[slot_name]['security-policy']['seccomp'] = \
-                _copy(meta_dir, uses[slot_name]['security-policy']['seccomp'])
-
-    return uses
 
 
 def _write_wrap_exe(wrapexec, wrappath, shebang=None, args=None, cwd=None):
