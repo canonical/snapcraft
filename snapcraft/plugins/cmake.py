@@ -34,7 +34,6 @@ import os
 import shutil
 
 import snapcraft.plugins.make
-from snapcraft import common
 
 
 class CMakePlugin(snapcraft.plugins.make.MakePlugin):
