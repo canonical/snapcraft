@@ -160,8 +160,8 @@ class _Executor:
     def _handle_dirty(self, part, step):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             raise RuntimeError(
-                'The {!r} step of {!r} is out of date. Please clean that '
-                "part's build step in order to rebuild".format(
+                'The {0!r} step of {1!r} is out of date. Please clean that '
+                "part's {0!r} step in order to rebuild".format(
                     step, part.name))
 
         staged_state = self.config.get_project_state('stage')

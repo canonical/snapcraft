@@ -40,6 +40,12 @@ class TarContentPlugin(snapcraft.BasePlugin):
             'required': [
                 'source',
             ],
+            # Inform Snapcraft of the properties associated with pulling. If
+            # these change in the YAML Snapcraft will consider the pull step
+            # dirty.
+            'pull-properties': [
+                'source'
+            ],
             # Inform Snapcraft of the properties associated with building. If
             # these change in the YAML Snapcraft will consider the build step
             # dirty.

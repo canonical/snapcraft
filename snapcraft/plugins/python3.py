@@ -61,6 +61,10 @@ class Python3Plugin(snapcraft.BasePlugin):
         }
         schema.pop('required')
 
+        # Inform Snapcraft of the properties associated with pulling. If these
+        # change in the YAML Snapcraft will consider the pull step dirty.
+        schema['pull-properties'].extend(['requirements', 'python-packages'])
+
         return schema
 
     def __init__(self, name, options, project):

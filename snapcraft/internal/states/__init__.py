@@ -17,3 +17,4 @@
 from snapcraft.internal.states._strip_state import StripState  # noqa
 from snapcraft.internal.states._stage_state import StageState  # noqa
 from snapcraft.internal.states._build_state import BuildState  # noqa
+from snapcraft.internal.states._pull_state import PullState  # noqa

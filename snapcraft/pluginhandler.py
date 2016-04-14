@@ -257,7 +257,8 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Pulling')
         self.code.pull()
-        self.mark_done('pull')
+        self.mark_done('pull', internal.states.PullState(
+            self.pull_properties, self.code.options))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
