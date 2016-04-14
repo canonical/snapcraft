@@ -54,6 +54,7 @@ The following kernel specific options are provided by this plugin:
 import logging
 import glob
 import os
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -179,9 +180,21 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 'unsquashfs', self.os_snap, os.path.dirname(initrd_path)],
                 cwd=temp_dir)
 
+            tmp_initrd_path = os.path.join(temp_dir, 'squashfs-root', initrd_path)
+            cmd = shlex.split('file -L --mime-type {}'.format(tmp_initrd_path))
+            result = subprocess.check_output(cmd)
+            mime_type = str(result.split()[-1])
+            logger.info('initrd mime_type: {} {}'.format(tmp_initrd_path, mime_type))
+            decompressor = 'gzip'
+            if "gzip" in mime_type:
+                decompressor = 'gzip'
+            elif "x-xz" in mime_type:
+                decompressor = 'xz'
+            elif "x-lzma" in mime_type:
+                decompressor = 'xz'
+
             subprocess.check_call(
-                'cat {} | gzip -dc | cpio -i'.format(
-                    os.path.join(temp_dir, 'squashfs-root', initrd_path)),
+                'cat {0} | {1} -dc | cpio -i'.format(tmp_initrd_path, decompressor),
                 shell=True, cwd=initrd_unpacked_path)
 
         return initrd_unpacked_path
