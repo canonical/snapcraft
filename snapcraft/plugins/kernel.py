@@ -57,6 +57,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 
 from snapcraft import storeapi
@@ -183,7 +184,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
             tmp_initrd_path = os.path.join(
                 temp_dir, 'squashfs-root', initrd_path)
             cmd = shlex.split('file -L --mime-type {}'.format(tmp_initrd_path))
-            result = subprocess.check_output(cmd).decode('utf-8')
+            result = subprocess.check_output(cmd).decode(
+                sys.getfilesystemencoding())
             mime_type = result.split()[-1]
             logger.debug('initrd mime_type: {} {}'.format(
                 tmp_initrd_path, mime_type))
