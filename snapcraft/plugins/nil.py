@@ -33,3 +33,6 @@ class NilPlugin(snapcraft.BasePlugin):
             'type': 'object',
             'properties': {},
         }
+
+    def enable_cross_compilation(self):
+        pass

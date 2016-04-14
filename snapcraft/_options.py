@@ -95,7 +95,11 @@ class ProjectOptions:
 
     @property
     def additional_build_packages(self):
-        return self.__machine_info.get('cross-build-packages', [])
+        packages = []
+        if self.is_cross_compiling:
+            packages.extend(self.__machine_info.get(
+                'cross-build-packages', []))
+        return packages
 
     @property
     def arch_triplet(self):
