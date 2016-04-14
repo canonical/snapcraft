@@ -125,7 +125,8 @@ class ApiCallTestCase(TestCase):
     def test_get_with_session(self):
         session = Mock()
         store_api_call('/path', session=session)
-        session.get.assert_called_once_with('http://example.com/path')
+        session.get.assert_called_once_with('http://example.com/path',
+                                            headers={})
 
     def test_post_with_session(self):
         session = Mock()

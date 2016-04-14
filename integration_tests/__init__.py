@@ -106,3 +106,10 @@ class TestCase(testtools.TestCase):
         expected = ('Clearing credentials for Ubuntu One SSO.\n'
                     'Credentials cleared.\n')
         self.assertEqual(expected, output)
+
+    def register_name(self, name):
+        process = pexpect.spawn(self.snapcraft_command,
+                                ['register-name', name])
+        process.expect_exact('Registering {}.'.format(name))
+        process.expect_exact(
+            'Congrats! You\'re now the publisher for "{}".'.format(name))

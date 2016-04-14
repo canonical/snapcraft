@@ -40,9 +40,16 @@ def get_oauth_session(config):
     return session
 
 
-def store_api_call(path, session=None, method='GET', data=None):
-    """Issue a request for a particular endpoint of the MyApps API."""
-    result = {'success': False, 'errors': [], 'data': None}
+def get_macaroon_auth(config):
+    # FIXME: Check config and errors if expected keys are not there asking to
+    # 'login'. -- vila 2016-04-07
+    auth = 'Macaroon root={}, discharge={}'.format(
+        config['root_macaroon'], config['discharge_macaroon'])
+    return auth
+
+
+def store_raw_api_call(path, session=None, method='GET', data=None,
+                       headers=None):
     if session is not None:
         client = session
     else:
@@ -50,16 +57,27 @@ def store_api_call(path, session=None, method='GET', data=None):
 
     root_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
                               UBUNTU_STORE_API_ROOT_URL)
+    if headers is None:
+        headers = {}
     url = urljoin(root_url, path)
     if method == 'GET':
-        response = client.get(url)
+        response = client.get(url, headers=headers)
     elif method == 'POST':
         if data is not None:
             data = json.dumps(data)
+        headers.update({'Content-Type': 'application/json'})
         response = client.post(url, data=data,
-                               headers={'Content-Type': 'application/json'})
+                               headers=headers)
     else:
         raise ValueError('Method {} not supported'.format(method))
+    return response
+
+
+def store_api_call(path, session=None, method='GET', data=None):
+    """Issue a request for a particular endpoint of the MyApps API."""
+    result = {'success': False, 'errors': [], 'data': None}
+
+    response = store_raw_api_call(path, session, method, data)
 
     if response.ok:
         result['success'] = True

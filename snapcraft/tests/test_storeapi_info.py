@@ -58,4 +58,4 @@ class InfoAPITestCase(TestCase):
         with patch('snapcraft.storeapi.common.os.environ',
                    {'UBUNTU_STORE_API_ROOT_URL': 'http://example.com'}):
             get_info()
-        self.mock_get.assert_called_once_with('http://example.com')
+        self.mock_get.assert_called_once_with('http://example.com', headers={})

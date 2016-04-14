@@ -30,6 +30,7 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] register-name <snap-name>
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -64,12 +65,14 @@ Options specific to snapping:
                                         snap.
 
 The available commands are:
-  help         Obtain help for a certain plugin or topic
-  init         Initialize a snapcraft project.
-  list-plugins List the available plugins that handle different types of part.
-  login        Authenticate session against Ubuntu One SSO.
-  logout       Clear session credentials.
-  upload       Upload a snap to the Ubuntu Store.
+  help           Obtain help for a certain plugin or topic
+  init           Initialize a snapcraft project.
+  list-plugins   List the available plugins that handle different types of
+                 part.
+  login          Authenticate session against Ubuntu One SSO.
+  logout         Clear session credentials.
+  register-name  Register the package name in the store.
+  upload         Upload a snap to the Ubuntu Store.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -182,6 +185,8 @@ def run(args, project_options):
         argless_command()
     elif args['clean']:
         lifecycle.clean(project_options, args['<part>'], args['--step'])
+    elif args['register-name']:
+        snapcraft.register_name(args['<snap-name>'])
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:

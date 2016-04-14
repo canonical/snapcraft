@@ -103,7 +103,7 @@ class ChannelsAPITestCase(TestCase):
                    {'UBUNTU_STORE_API_ROOT_URL': 'http://example.com'}):
             get_channels(self.mock_session, 'package.name')
         self.mock_get.assert_called_once_with(
-            'http://example.com/package-channels/package.name/')
+            'http://example.com/package-channels/package.name/', headers={})
 
     def test_update_channels(self):
         self.set_channels_post_success_response()

@@ -135,6 +135,11 @@ parts:
         lifecycle.snap(snapcraft.ProjectOptions(), None, snap_path)
         return snap_path, name
 
+    def register(self, snap_name):
+        conf = config.load_config()
+        res = storeapi.register_name(conf, snap_name)
+        return res
+
     def upload(self, snap_filename, snap_name):
         conf = config.load_config()
         # Diable the progress indications, we don't need them during tests

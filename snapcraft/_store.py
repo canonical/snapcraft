@@ -61,6 +61,17 @@ def logout():
     logger.info('Credentials cleared.')
 
 
+def register_name(snap_name):
+    logger.info('Registering {}.'.format(snap_name))
+    conf = config.load_config()
+    response = storeapi.register_name(conf, snap_name)
+    if response.ok:
+        logger.info('Congrats! You\'re now the publisher for "{}".'.format(
+            snap_name))
+    else:
+        logger.info('Registration failed.')
+
+
 def upload(snap_filename):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError(snap_filename)
