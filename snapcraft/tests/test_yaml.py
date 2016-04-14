@@ -25,7 +25,6 @@ import unittest.mock
 import fixtures
 
 import snapcraft
-import snapcraft.common
 import snapcraft.yaml
 from snapcraft import (
     dirs,
@@ -506,19 +505,22 @@ parts:
         self.arch_triplet = project_options.arch_triplet
         self.addCleanup(patcher.stop)
 
-    @unittest.mock.patch('snapcraft.common.get_snapdir')
-    def test_config_snap_environment(self, mock_snapdir):
-        mock_snapdir.return_value = 'foo'
+    def test_config_snap_environment(self):
         config = snapcraft.yaml.Config()
 
-        lib_paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
-                        self.arch_triplet),
-                     'foo/usr/lib/{}'.format(self.arch_triplet)]
+        lib_paths = [os.path.join(self.snap_dir, 'lib'),
+                     os.path.join(self.snap_dir, 'usr', 'lib'),
+                     os.path.join(self.snap_dir, 'lib',
+                                  self.arch_triplet),
+                     os.path.join(self.snap_dir, 'usr', 'lib',
+                                  self.arch_triplet)]
         for lib_path in lib_paths:
             os.makedirs(lib_path)
 
         environment = config.snap_env()
-        self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
+        self.assertTrue(
+            'PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(self.snap_dir)
+            in environment)
 
         # Ensure that LD_LIBRARY_PATH is present and it contains only the
         # basics.
@@ -531,33 +533,36 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        for expected in ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
-                            self.arch_triplet),
-                         'foo/usr/lib/{}'.format(self.arch_triplet)]:
+        expected = (os.path.join(self.snap_dir, i) for i in
+                    ['lib', os.path.join('usr', 'lib'),
+                     os.path.join('lib', self.arch_triplet),
+                     os.path.join('usr', 'lib', self.arch_triplet)])
+        for item in expected:
             self.assertTrue(
-                expected in paths,
+                item in paths,
                 'Expected LD_LIBRARY_PATH in {!r} to include {!r}'.format(
-                    paths, expected))
+                    paths, item))
 
-    @unittest.mock.patch('snapcraft.common.get_snapdir')
-    def test_config_snap_environment_with_no_library_paths(self, mock_snapdir):
-        mock_snapdir.return_value = 'foo'
+    def test_config_snap_environment_with_no_library_paths(self):
         config = snapcraft.yaml.Config()
 
         environment = config.snap_env()
-        self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
+        self.assertTrue(
+            'PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(self.snap_dir)
+            in environment,
+            'Current PATH is {!r}'.format(environment))
         for e in environment:
             self.assertFalse('LD_LIBRARY_PATH' in e,
                              'Current environment is {!r}'.format(e))
 
-    @unittest.mock.patch('snapcraft.common.get_snapdir')
     @unittest.mock.patch.object(snapcraft.pluginhandler.PluginHandler,
                                 'get_stripped_dependency_paths')
     def test_config_snap_environment_with_dependencies(self,
-                                                       mock_get_dependencies,
-                                                       mock_snapdir):
-        library_paths = {'foo/lib1', 'foo/lib2'}
-        mock_snapdir.return_value = 'foo'
+                                                       mock_get_dependencies):
+        library_paths = {
+            os.path.join(self.snap_dir, 'lib1'),
+            os.path.join(self.snap_dir, 'lib2'),
+        }
         mock_get_dependencies.return_value = library_paths
         config = snapcraft.yaml.Config()
 
@@ -575,19 +580,21 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        for expected in ['foo/lib1', 'foo/lib2']:
+        expected = (os.path.join(self.snap_dir, i) for i in ['lib1', 'lib2'])
+        for item in expected:
             self.assertTrue(
-                expected in paths,
+                item in paths,
                 'Expected LD_LIBRARY_PATH ({!r}) to include {!r}'.format(
-                    paths, expected))
+                    paths, item))
 
-    @unittest.mock.patch('snapcraft.common.get_snapdir')
     @unittest.mock.patch.object(snapcraft.pluginhandler.PluginHandler,
                                 'get_stripped_dependency_paths')
     def test_config_snap_environment_with_dependencies_but_no_paths(
-            self, mock_get_dependencies, mock_snapdir):
-        library_paths = {'foo/lib1', 'foo/lib2'}
-        mock_snapdir.return_value = 'foo'
+            self, mock_get_dependencies):
+        library_paths = {
+            os.path.join(self.snap_dir, 'lib1'),
+            os.path.join(self.snap_dir, 'lib2'),
+        }
         mock_get_dependencies.return_value = library_paths
         config = snapcraft.yaml.Config()
 
@@ -598,18 +605,19 @@ parts:
                 'LD_LIBRARY_PATH' in variable,
                 'Expected no LD_LIBRARY_PATH (got {!r})'.format(variable))
 
-    @unittest.mock.patch('snapcraft.common.get_snapdir')
-    def test_config_runtime_environment_ld(self, mock_snapdir):
-        mock_snapdir.return_value = 'foo'
-
+    def test_config_runtime_environment_ld(self):
         # Place a few ld.so.conf files in supported locations. We expect the
         # contents of these to make it into the LD_LIBRARY_PATH.
-        os.makedirs('foo/usr/lib/my_arch/mesa/')
-        with open('foo/usr/lib/my_arch/mesa/ld.so.conf', 'w') as f:
+        mesa_dir = os.path.join(
+            self.snap_dir, 'usr', 'lib', 'my_arch', 'mesa')
+        os.makedirs(mesa_dir)
+        with open(os.path.join(mesa_dir, 'ld.so.conf'), 'w') as f:
             f.write('/mesa')
 
-        os.makedirs('foo/usr/lib/my_arch/mesa-egl/')
-        with open('foo/usr/lib/my_arch/mesa-egl/ld.so.conf', 'w') as f:
+        mesa_egl_dir = os.path.join(
+            self.snap_dir, 'usr', 'lib', 'my_arch', 'mesa-egl')
+        os.makedirs(mesa_egl_dir)
+        with open(os.path.join(mesa_egl_dir, 'ld.so.conf'), 'w') as f:
             f.write('# Standalone comment\n')
             f.write('/mesa-egl')
 
@@ -626,60 +634,76 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        for expected in ['foo/mesa', 'foo/mesa-egl']:
-            self.assertTrue(expected in paths,
+        expected = (os.path.join(self.snap_dir, i) for i in
+                    ['mesa', 'mesa-egl'])
+        for item in expected:
+            self.assertTrue(item in paths,
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
-                                expected))
+                                item))
 
-    @unittest.mock.patch('snapcraft.common.get_stagedir')
-    def test_config_stage_environment(self, mock_stagedir):
-        mock_stagedir.return_value = 'foo'
-
-        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
-                    self.arch_triplet),
-                 'foo/usr/lib/{}'.format(self.arch_triplet),
-                 'foo/include', 'foo/usr/include',
-                 'foo/include/{}'.format(self.arch_triplet),
-                 'foo/usr/include/{}'.format(self.arch_triplet)]
+    def test_config_stage_environment(self):
+        paths = [os.path.join(self.stage_dir, 'lib'),
+                 os.path.join(self.stage_dir, 'lib',
+                              self.arch_triplet),
+                 os.path.join(self.stage_dir, 'usr', 'lib'),
+                 os.path.join(self.stage_dir, 'usr', 'lib',
+                              self.arch_triplet),
+                 os.path.join(self.stage_dir, 'include'),
+                 os.path.join(self.stage_dir, 'usr', 'include'),
+                 os.path.join(self.stage_dir, 'include',
+                              self.arch_triplet),
+                 os.path.join(self.stage_dir, 'usr', 'include',
+                              self.arch_triplet)]
         for path in paths:
             os.makedirs(path)
 
         config = snapcraft.yaml.Config()
         environment = config.stage_env()
 
-        self.assertTrue('PATH="foo/bin:foo/usr/bin:$PATH"' in environment)
         self.assertTrue(
-            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:foo/lib:foo/usr/lib:'
-            'foo/lib/x86_64-linux-gnu:foo/usr/lib/x86_64-linux-gnu"'
+            'PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(
+                self.stage_dir) in environment)
+        self.assertTrue(
+            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{stage_dir}/lib:'
+            '{stage_dir}/usr/lib:{stage_dir}/lib/{arch_triplet}:'
+            '{stage_dir}/usr/lib/{arch_triplet}"'.format(
+                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
             in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue(
-            'CFLAGS="$CFLAGS -Ifoo/include -Ifoo/usr/include '
-            '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu"' in environment,
-            'Current environment is {!r}'.format(environment))
-        self.assertTrue(
-            'CPPFLAGS="$CPPFLAGS -Ifoo/include -Ifoo/usr/include '
-            '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu"' in environment,
-            'Current environment is {!r}'.format(environment))
-        self.assertTrue(
-            'CXXFLAGS="$CXXFLAGS -Ifoo/include -Ifoo/usr/include '
-            '-Ifoo/include/x86_64-linux-gnu '
-            '-Ifoo/usr/include/x86_64-linux-gnu"' in environment,
-            'Current environment is {!r}'.format(environment))
-        self.assertTrue(
-            'LDFLAGS="$LDFLAGS -Lfoo/lib -Lfoo/usr/lib '
-            '-Lfoo/lib/x86_64-linux-gnu -Lfoo/usr/lib/x86_64-linux-gnu"'
+            'CFLAGS="$CFLAGS -I{stage_dir}/include -I{stage_dir}/usr/include '
+            '-I{stage_dir}/include/{arch_triplet} '
+            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
             in environment,
             'Current environment is {!r}'.format(environment))
-        self.assertTrue('PERL5LIB=foo/usr/share/perl5/' in environment)
+        self.assertTrue(
+            'CPPFLAGS="$CPPFLAGS -I{stage_dir}/include '
+            '-I{stage_dir}/usr/include '
+            '-I{stage_dir}/include/{arch_triplet} '
+            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
+            in environment,
+            'Current environment is {!r}'.format(environment))
+        self.assertTrue(
+            'CXXFLAGS="$CXXFLAGS -I{stage_dir}/include '
+            '-I{stage_dir}/usr/include '
+            '-I{stage_dir}/include/{arch_triplet} '
+            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
+            in environment,
+            'Current environment is {!r}'.format(environment))
+        self.assertTrue(
+            'LDFLAGS="$LDFLAGS -L{stage_dir}/lib -L{stage_dir}/usr/lib '
+            '-L{stage_dir}/lib/{arch_triplet} '
+            '-L{stage_dir}/usr/lib/{arch_triplet}"'.format(
+                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
+            in environment,
+            'Current environment is {!r}'.format(environment))
+        self.assertTrue('PERL5LIB={}/usr/share/perl5/'.format(
+            self.stage_dir) in environment)
 
-    @unittest.mock.patch('snapcraft.common.get_stagedir')
-    @unittest.mock.patch('snapcraft.common.get_partsdir')
-    def test_parts_build_env_ordering_with_deps(self,
-                                                mock_partsdir,
-                                                mock_stagedir):
+    def test_parts_build_env_ordering_with_deps(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -694,19 +718,28 @@ parts:
 """)
 
         self.useFixture(fixtures.EnvironmentVariable('PATH', '/bin'))
-        mock_partsdir.return_value = 'parts'
-        mock_stagedir.return_value = 'foo'
 
-        paths = ['foo/lib', 'foo/usr/lib', 'foo/lib/{}'.format(
-                    self.arch_triplet),
-                 'foo/usr/lib/{}'.format(self.arch_triplet),
-                 'foo/include', 'foo/usr/include',
-                 'foo/include/{}'.format(self.arch_triplet),
-                 'foo/usr/include/{}'.format(self.arch_triplet),
-                 'parts/part1/install/include',
-                 'parts/part1/install/lib',
-                 'parts/part2/install/include',
-                 'parts/part2/install/lib']
+        self.maxDiff = None
+        paths = [os.path.join(self.stage_dir, 'lib'),
+                 os.path.join(self.stage_dir, 'lib',
+                              self.arch_triplet),
+                 os.path.join(self.stage_dir, 'usr', 'lib'),
+                 os.path.join(self.stage_dir, 'usr', 'lib',
+                              self.arch_triplet),
+                 os.path.join(self.stage_dir, 'include'),
+                 os.path.join(self.stage_dir, 'usr', 'include'),
+                 os.path.join(self.stage_dir, 'include',
+                              self.arch_triplet),
+                 os.path.join(self.stage_dir, 'usr', 'include',
+                              self.arch_triplet),
+                 os.path.join(self.parts_dir, 'part1', 'install',
+                              'include'),
+                 os.path.join(self.parts_dir, 'part1', 'install',
+                              'lib'),
+                 os.path.join(self.parts_dir, 'part2', 'install',
+                              'include'),
+                 os.path.join(self.parts_dir, 'part2', 'install',
+                              'lib')]
         for path in paths:
             os.makedirs(path)
 
@@ -734,9 +767,12 @@ parts:
 
         expected_cflags = (
             '-I/user-provided '
-            '-Iparts/part2/install/include -Ifoo/include -Ifoo/usr/include '
-            '-Ifoo/include/{arch_triplet} '
-            '-Ifoo/usr/include/{arch_triplet}'.format(
+            '-I{parts_dir}/part2/install/include -I{stage_dir}/include '
+            '-I{stage_dir}/usr/include '
+            '-I{stage_dir}/include/{arch_triplet} '
+            '-I{stage_dir}/usr/include/{arch_triplet}'.format(
+                parts_dir=self.parts_dir,
+                stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
         self.assertEqual(get_envvar('CFLAGS'), expected_cflags)
         self.assertEqual(get_envvar('CXXFLAGS'), expected_cflags)
@@ -745,17 +781,27 @@ parts:
         self.assertEqual(
             get_envvar('LDFLAGS'),
             '-L/user-provided '
-            '-Lparts/part2/install/lib -Lfoo/lib -Lfoo/usr/lib '
-            '-Lfoo/lib/{arch_triplet} -Lfoo/usr/lib/{arch_triplet}'.format(
+            '-L{parts_dir}/part2/install/lib -L{stage_dir}/lib '
+            '-L{stage_dir}/usr/lib -L{stage_dir}/lib/{arch_triplet} '
+            '-L{stage_dir}/usr/lib/{arch_triplet}'.format(
+                parts_dir=self.parts_dir,
+                stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
 
         self.assertEqual(
             get_envvar('LD_LIBRARY_PATH'),
             '/user-provided:'
-            'parts/part2/install/lib:foo/lib:foo/usr/lib:'
-            'foo/lib/{arch_triplet}:foo/usr/lib/{arch_triplet}:'
-            'foo/lib:foo/usr/lib:foo/lib/{arch_triplet}:'
-            'foo/usr/lib/{arch_triplet}'.format(
+            '{parts_dir}/part2/install/lib:'
+            '{stage_dir}/lib:'
+            '{stage_dir}/usr/lib:'
+            '{stage_dir}/lib/{arch_triplet}:'
+            '{stage_dir}/usr/lib/{arch_triplet}:'
+            '{stage_dir}/lib:'
+            '{stage_dir}/usr/lib:'
+            '{stage_dir}/lib/{arch_triplet}:'
+            '{stage_dir}/usr/lib/{arch_triplet}'.format(
+                parts_dir=self.parts_dir,
+                stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
 
 
@@ -960,9 +1006,6 @@ class TestValidation(tests.TestCase):
             with self.assertRaises(SnapcraftSchemaError) as raised:
                 snapcraft.yaml.Validator(self.data).validate()
 
-        expected_path = os.path.join(snapcraft.common.get_schemadir(),
-                                     'snapcraft.yaml')
-        mock_the_open.assert_called_once_with(expected_path)
         expected_message = ('snapcraft validation file is missing from '
                             'installation path')
         self.assertEqual(raised.exception.message, expected_message)

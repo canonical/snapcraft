@@ -183,7 +183,12 @@ class BasePlugin:
 
         self.project = project
         self.options = options
-        self.partdir = os.path.join(common.get_partsdir(), self.name)
+
+        if project:
+            self.partdir = os.path.join(project.parts_dir, self.name)
+        else:
+            self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
 

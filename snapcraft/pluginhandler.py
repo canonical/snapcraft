@@ -78,10 +78,10 @@ class PluginHandler:
         self._project_options = project_options
         self.deps = []
 
-        self.stagedir = os.path.join(os.getcwd(), 'stage')
-        self.snapdir = os.path.join(os.getcwd(), 'snap')
+        self.stagedir = project_options.stage_dir
+        self.snapdir = project_options.snap_dir
 
-        parts_dir = common.get_partsdir()
+        parts_dir = project_options.parts_dir
         self.bindir = os.path.join(parts_dir, part_name, 'bin')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.statedir = os.path.join(parts_dir, part_name, 'state')
@@ -99,7 +99,8 @@ class PluginHandler:
         module = None
 
         with contextlib.suppress(ImportError):
-            module = _load_local('x-{}'.format(plugin_name))
+            module = _load_local('x-{}'.format(plugin_name),
+                                 self._project_options.local_plugins_dir)
             logger.info('Loaded local plugin for %s', plugin_name)
 
         if not module:
@@ -110,12 +111,14 @@ class PluginHandler:
         if not module:
             logger.info('Searching for local plugin for %s', plugin_name)
             with contextlib.suppress(ImportError):
-                module = _load_local(module_name)
+                module = _load_local(module_name,
+                                     self._project_options.local_plugins_dir)
             if not module:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
-        options = _make_options(part_schema, properties, plugin.schema())
+        options = _make_options(self._project_options.stage_dir,
+                                part_schema, properties, plugin.schema())
         # For backwards compatibility we add the project to the plugin
         try:
             self.code = plugin(self.name, options, self._project_options)
@@ -500,7 +503,7 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
-def _make_options(part_schema, properties, plugin_schema):
+def _make_options(stage_dir, part_schema, properties, plugin_schema):
     if 'properties' not in plugin_schema:
         plugin_schema['properties'] = {}
     # The base part_schema takes precedense over the plugin.
@@ -512,27 +515,27 @@ def _make_options(part_schema, properties, plugin_schema):
         pass
     options = Options()
 
-    _populate_options(options, properties, plugin_schema)
+    _populate_options(stage_dir, options, properties, plugin_schema)
 
     return options
 
 
-def _populate_options(options, properties, schema):
+def _populate_options(stage_dir, options, properties, schema):
     schema_properties = schema.get('properties', {})
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
-        attr_value = _expand_env(properties.get(key, default_value))
+        attr_value = _expand_env(properties.get(key, default_value), stage_dir)
         setattr(options, attr_name, attr_value)
 
 
-def _expand_env(attr):
+def _expand_env(attr, stage_dir):
     if isinstance(attr, str) and _SNAPCRAFT_STAGE in attr:
-        return attr.replace(_SNAPCRAFT_STAGE, common.get_stagedir())
+        return attr.replace(_SNAPCRAFT_STAGE, stage_dir)
     elif isinstance(attr, list) or isinstance(attr, tuple):
-        return [_expand_env(i) for i in attr]
+        return [_expand_env(i, stage_dir) for i in attr]
     elif isinstance(attr, dict):
-        return {k: _expand_env(attr[k]) for k in attr}
+        return {k: _expand_env(attr[k], stage_dir) for k in attr}
 
     return attr
 
@@ -548,8 +551,8 @@ def _get_plugin(module):
         return attr
 
 
-def _load_local(module_name):
-    sys.path = [common.get_local_plugindir()] + sys.path
+def _load_local(module_name, local_plugin_dir):
+    sys.path = [local_plugin_dir] + sys.path
     module = importlib.import_module(module_name)
     sys.path.pop(0)
 

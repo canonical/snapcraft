@@ -16,6 +16,7 @@
 
 import logging
 import multiprocessing
+import os
 import platform
 
 
@@ -108,8 +109,27 @@ class ProjectOptions:
     def kernel_arch(self):
         return self.__machine_info['kernel']
 
+    @property
+    def local_plugins_dir(self):
+        return os.path.join(self.parts_dir, 'plugins')
+
+    @property
+    def parts_dir(self):
+        return os.path.join(self.__project_dir, 'parts')
+
+    @property
+    def stage_dir(self):
+        return os.path.join(self.__project_dir, 'stage')
+
+    @property
+    def snap_dir(self):
+        return os.path.join(self.__project_dir, 'snap')
+
     def __init__(self, use_geoip=False, parallel_builds=True,
                  target_deb_arch=None):
+        # TODO: allow setting a different project dir and check for
+        #       snapcraft.yaml
+        self.__project_dir = os.getcwd()
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)

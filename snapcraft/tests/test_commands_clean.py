@@ -21,7 +21,6 @@ from unittest import mock
 
 from snapcraft.main import main
 from snapcraft import (
-    common,
     internal,
     pluginhandler,
     tests,
@@ -74,22 +73,22 @@ parts:
 
         main(['clean'])
 
-        self.assertFalse(os.path.exists(common.get_partsdir()))
-        self.assertFalse(os.path.exists(common.get_stagedir()))
-        self.assertFalse(os.path.exists(common.get_snapdir()))
+        self.assertFalse(os.path.exists(self.parts_dir))
+        self.assertFalse(os.path.exists(self.stage_dir))
+        self.assertFalse(os.path.exists(self.snap_dir))
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)
 
-        local_plugin = os.path.join(common.get_local_plugindir(), 'foo.py')
+        local_plugin = os.path.join(self.local_plugins_dir, 'foo.py')
         os.makedirs(os.path.dirname(local_plugin))
         open(local_plugin, 'w').close()
 
         main(['clean'])
 
-        self.assertFalse(os.path.exists(common.get_stagedir()))
-        self.assertFalse(os.path.exists(common.get_snapdir()))
-        self.assertTrue(os.path.exists(common.get_partsdir()))
+        self.assertFalse(os.path.exists(self.stage_dir))
+        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertTrue(os.path.exists(self.parts_dir))
         self.assertTrue(os.path.isfile(local_plugin))
 
     def test_clean_all_when_all_parts_specified(self):
@@ -97,9 +96,9 @@ parts:
 
         main(['clean', 'clean0', 'clean1', 'clean2'])
 
-        self.assertFalse(os.path.exists(common.get_partsdir()))
-        self.assertFalse(os.path.exists(common.get_stagedir()))
-        self.assertFalse(os.path.exists(common.get_snapdir()))
+        self.assertFalse(os.path.exists(self.parts_dir))
+        self.assertFalse(os.path.exists(self.stage_dir))
+        self.assertFalse(os.path.exists(self.snap_dir))
 
     def test_partial_clean(self):
         parts = self.make_snapcraft_yaml(n=3)
@@ -114,9 +113,9 @@ parts:
         self.assertTrue(os.path.exists(parts[1]['part_dir']),
                         'Expected a part directory for the clean1 part')
 
-        self.assertTrue(os.path.exists(common.get_partsdir()))
-        self.assertTrue(os.path.exists(common.get_stagedir()))
-        self.assertTrue(os.path.exists(common.get_snapdir()))
+        self.assertTrue(os.path.exists(self.parts_dir))
+        self.assertTrue(os.path.exists(self.stage_dir))
+        self.assertTrue(os.path.exists(self.snap_dir))
 
         # Now clean it the rest of the way
         main(['clean', 'clean1'])
@@ -126,9 +125,9 @@ parts:
                 os.path.exists(parts[i]['part_dir']),
                 'Expected for {!r} to be wiped'.format(parts[i]['part_dir']))
 
-        self.assertFalse(os.path.exists(common.get_partsdir()))
-        self.assertFalse(os.path.exists(common.get_stagedir()))
-        self.assertFalse(os.path.exists(common.get_snapdir()))
+        self.assertFalse(os.path.exists(self.parts_dir))
+        self.assertFalse(os.path.exists(self.stage_dir))
+        self.assertFalse(os.path.exists(self.snap_dir))
 
     def test_everything_is_clean(self):
         """Don't crash if everything is already clean."""
@@ -195,13 +194,13 @@ parts:
 
         self.part_dirs = {}
         for part in ['main', 'dependent', 'nested-dependent']:
-            self.part_dirs[part] = os.path.join(common.get_partsdir(), part)
+            self.part_dirs[part] = os.path.join(self.parts_dir, part)
             os.makedirs(os.path.join(self.part_dirs[part], 'state'))
             open(os.path.join(self.part_dirs[part], 'state', 'pull'),
                  'w').close()
 
-        os.makedirs(common.get_stagedir())
-        os.makedirs(common.get_snapdir())
+        os.makedirs(self.stage_dir)
+        os.makedirs(self.snap_dir)
 
     def assert_clean(self, parts, common=False):
         for part in parts:
@@ -210,11 +209,11 @@ parts:
                 'Expected part directory for {!r} to be cleaned'.format(part))
 
         if common:
-            self.assertFalse(os.path.exists(common.get_partsdir()),
+            self.assertFalse(os.path.exists(self.parts_dir),
                              'Expected parts/ directory to be removed')
-            self.assertFalse(os.path.exists(common.get_stagedir()),
+            self.assertFalse(os.path.exists(self.stage_dir),
                              'Expected stage/ directory to be removed')
-            self.assertFalse(os.path.exists(common.get_snapdir()),
+            self.assertFalse(os.path.exists(self.snap_dir),
                              'Expected snap/ directory to be removed')
 
     def test_clean_dependent_parts(self):

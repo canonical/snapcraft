@@ -21,10 +21,7 @@ import os.path
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class StripCommandTestCase(tests.TestCase):
@@ -47,7 +44,7 @@ parts:
 
         parts = []
         for i in range(n):
-            part_dir = os.path.join(common.get_partsdir(), 'strip{}'.format(i))
+            part_dir = os.path.join(self.parts_dir, 'strip{}'.format(i))
             state_dir = os.path.join(part_dir, 'state')
             parts.append({
                 'part_dir': part_dir,
@@ -75,15 +72,15 @@ parts:
 
         main(['strip'])
 
-        self.assertTrue(os.path.exists(common.get_snapdir()),
+        self.assertTrue(os.path.exists(self.snap_dir),
                         'Expected a snap directory')
         self.assertTrue(
             os.path.exists(
-                os.path.join(common.get_snapdir(), 'meta', 'snap.yaml')),
+                os.path.join(self.snap_dir, 'meta', 'snap.yaml')),
             'Expected a snap.yaml')
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')
@@ -99,13 +96,13 @@ parts:
 
         self.assertFalse(
             os.path.exists(
-                os.path.join(common.get_snapdir(), 'meta', 'snap.yaml')),
+                os.path.join(self.snap_dir, 'meta', 'snap.yaml')),
             'There should not be a snap.yaml')
-        self.assertTrue(os.path.exists(common.get_snapdir()),
+        self.assertTrue(os.path.exists(self.snap_dir),
                         'Expected a snap directory')
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[1]['part_dir']),
                         'Expected a part directory for the strip1 part')
@@ -134,9 +131,9 @@ parts:
             'Stripping strip0 \n',
             fake_logger.output)
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')

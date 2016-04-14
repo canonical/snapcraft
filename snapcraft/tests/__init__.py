@@ -16,7 +16,6 @@
 
 import logging
 import os
-import tempfile
 from unittest import mock
 
 import fixtures
@@ -64,11 +63,9 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.snap_dir = os.path.join(os.getcwd(), 'snap')
         self.stage_dir = os.path.join(os.getcwd(), 'stage')
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
+        self.local_plugins_dir = os.path.join(self.parts_dir, 'plugins')
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
-        tempdir_obj = tempfile.TemporaryDirectory()
-        self.addCleanup(tempdir_obj.cleanup)
-        os.chdir(tempdir_obj.name)
         with open('snapcraft.yaml', 'w', encoding=encoding) as fp:
             fp.write(content)
 

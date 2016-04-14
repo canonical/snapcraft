@@ -22,10 +22,7 @@ from unittest import mock
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class CleanBuildCommandTestCase(tests.TestCase):
@@ -43,7 +40,7 @@ parts:
 
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
-        self.state_dir = os.path.join(common.get_partsdir(), 'part1', 'state')
+        self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     @mock.patch('snapcraft.lxd.check_call')
     @mock.patch('snapcraft.repo.is_package_installed')
@@ -57,18 +54,18 @@ parts:
         # simulate build artifacts
 
         dirs = [
-            os.path.join(common.get_partsdir(), 'part1', 'src'),
-            common.get_stagedir(),
-            common.get_snapdir(),
-            os.path.join(common.get_partsdir(), 'plugins'),
+            os.path.join(self.parts_dir, 'part1', 'src'),
+            self.stage_dir,
+            self.snap_dir,
+            os.path.join(self.parts_dir, 'plugins'),
         ]
         files_tar = [
-            os.path.join(common.get_partsdir(), 'plugins', 'x-plugin.py'),
+            os.path.join(self.parts_dir, 'plugins', 'x-plugin.py'),
             'main.c',
         ]
         files_no_tar = [
-            os.path.join(common.get_stagedir(), 'binary'),
-            os.path.join(common.get_snapdir(), 'binary'),
+            os.path.join(self.stage_dir, 'binary'),
+            os.path.join(self.snap_dir, 'binary'),
             'snap-test.snap',
             'snap-test_1.0_source.tar.bz2',
         ]
