@@ -10,10 +10,9 @@ snapcraft (2.8) xenial; urgency=medium
   * Clean command: Don't automatically clean reverse dependencies. (#436)
     (LP: #1568004)
   * Library crawling: Make ldd failure non-fatal. (#440) (LP: #1569280)
-  * Extract step state tracking into its own module. (#438) (LP: #1477904)
   * Automatically re-strip if dirty. (#442) (LP: #1477904)
   * Automatically re-stage if dirty. (#443) (LP: #1477904)
-  * Detect dirty build step. (#447) (LP:  #1477904)
+  * Detect dirty build step. (#447) (LP: #1477904)
   * Detect dirty pull step. (#448) (LP: #1477904)
 
   [ Sergio Schvezov ]
@@ -26,10 +25,9 @@ snapcraft (2.8) xenial; urgency=medium
   * Remove `old-security`. Use proper interfaces. (#441) (LP: #1569452)
   * Make meta a class in snapcraft.internal.meta (#444) (LP: #1551849)
   * Move common directories to ProjectOptions (#445) (LP: #1551849)
+  * debian/control: Update Standards-Version.
 
   [ Leo Arias ]
-  * Temporary skip the webcam example while we debug the pip issue.
-    (LP: #1567452)
   * Add a test for the mosquitto example. (#418) (LP: #1564181)
   * Update the snap command in examples tests. (#439) (LP: #1569401)
 
