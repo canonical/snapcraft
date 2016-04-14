@@ -57,6 +57,10 @@ class GoPlugin(snapcraft.BasePlugin):
         if 'required' in schema:
             del schema['required']
 
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'].extend(['source', 'go-packages'])
+
         return schema
 
     def __init__(self, name, options, project):

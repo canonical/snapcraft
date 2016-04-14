@@ -70,6 +70,9 @@ class MavenPluginTestCase(tests.TestCase):
             maven_options['uniqueItems'],
             'Expected "maven-options" "uniqueItems" to be "True"')
 
+        build_properties = schema['build-properties']
+        self.assertEqual(['maven-options'], build_properties)
+
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
     def test_build(self, glob_mock, run_mock):
