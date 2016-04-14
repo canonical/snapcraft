@@ -1,3 +1,42 @@
+snapcraft (2.8) xenial; urgency=medium
+
+  [ Didier Roche ]
+  * Support .git extension detection (LP: #1566153)
+
+  [ Kyle Fazzari ]
+  * Copy plugin: Follow symlinks if outside of snap. (LP: #1532515)
+  * Lifecycle: Check to see if prerequisite is already built. (#431)
+    (LP: #1537790)
+  * Clean command: Don't automatically clean reverse dependencies. (#436)
+    (LP: #1568004)
+  * Library crawling: Make ldd failure non-fatal. (#440) (LP: #1569280)
+  * Automatically re-strip if dirty. (#442) (LP: #1477904)
+  * Automatically re-stage if dirty. (#443) (LP: #1477904)
+  * Detect dirty build step. (#447) (LP: #1477904)
+  * Detect dirty pull step. (#448) (LP: #1477904)
+
+  [ Sergio Schvezov ]
+  * Precedence and library path ordering. (LP: #1548232)
+  * Converge all commands into one (#433) (LP: #1567058, #1567041)
+  * Make geoip optional and local sources a default (#430)
+    (LP: #1536691, #1561068)
+  * Remove global state attributes from snapcraft.common (#434) (LP: #1551849)
+  * Remove support and mentions of the config hook. (#437) (LP: #1568826)
+  * Remove `old-security`. Use proper interfaces. (#441) (LP: #1569452)
+  * Make meta a class in snapcraft.internal.meta (#444) (LP: #1551849)
+  * Move common directories to ProjectOptions (#445) (LP: #1551849)
+  * debian/control: Update Standards-Version.
+
+  [ Leo Arias ]
+  * Add a test for the mosquitto example. (#418) (LP: #1564181)
+  * Update the snap command in examples tests. (#439) (LP: #1569401)
+
+  [ Vincent Ladeuil ]
+  * VCS tools are test dependencies, they should be installed to run the
+    tests or the tests should be skipped. (#427) (LP: #1566882)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 13 Apr 2016 21:37:32 -0300
+
 snapcraft (2.7) xenial; urgency=medium
 
   [ Joe Talbott ]
