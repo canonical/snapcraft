@@ -201,6 +201,15 @@ class CatkinPluginTestCase(tests.TestCase):
                         'Expected "catkin-packages" to be included in '
                         '"required"')
 
+        # Check pull-properties
+        self.assertTrue('pull-properties' in schema,
+                        'Expected schema to include "pull-properties"')
+        pull_properties = schema['pull-properties']
+        self.assertTrue('rosdistro' in pull_properties)
+        self.assertTrue('catkin-packages' in pull_properties)
+        self.assertTrue('source-space' in pull_properties)
+        self.assertTrue('include-roscore' in pull_properties)
+
     def test_pull_debian_dependencies(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)

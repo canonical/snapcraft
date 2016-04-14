@@ -553,14 +553,36 @@ class StateTestCase(tests.TestCase):
     def test_pull_state(self, ubuntu_mock):
         self.assertEqual(None, self.handler.last_step())
 
-        self.handler.code.stage_packages.append('foo')
-        bindir = os.path.join(self.handler.installdir, 'bin')
-        os.makedirs(bindir)
-        open(os.path.join(bindir, '1'), 'w').close()
+        self.handler.pull()
+
+        self.assertEqual('pull', self.handler.last_step())
+        state = self.handler.get_state('pull')
+
+        self.assertTrue(state, 'Expected pull to save state YAML')
+        self.assertTrue(type(state) is internal.states.PullState)
+        self.assertTrue(type(state.properties) is dict)
+        self.assertEqual(0, len(state.properties))
+
+    @patch('importlib.import_module')
+    @patch('snapcraft.pluginhandler._load_local')
+    @patch('snapcraft.pluginhandler._get_plugin')
+    def test_pull_state_with_properties(self, plugin_mock, local_load_mock,
+                                        import_mock):
+        self.handler.pull_properties = ['foo']
+        self.handler.code.options.foo = 'bar'
+
+        self.assertEqual(None, self.handler.last_step())
 
         self.handler.pull()
 
         self.assertEqual('pull', self.handler.last_step())
+        state = self.handler.get_state('pull')
+
+        self.assertTrue(state, 'Expected pull to save state YAML')
+        self.assertTrue(type(state) is internal.states.PullState)
+        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue('foo' in state.properties)
+        self.assertEqual(state.properties['foo'], 'bar')
 
     @patch.object(nil.NilPlugin, 'clean_pull')
     def test_clean_pull_state(self, mock_clean_pull):
@@ -1025,6 +1047,31 @@ class IsDirtyTestCase(tests.TestCase):
         self.assertFalse(
             self.handler.is_dirty('build'),
             'Expected vanilla handler to not have a dirty build step')
+
+    def test_pull_is_dirty(self):
+        self.handler.pull_properties = ['foo']
+        self.handler.code.options.foo = ['bar']
+        self.handler.mark_done(
+            'pull', internal.states.PullState(self.handler.pull_properties,
+                                              self.handler.code.options))
+        self.assertFalse(self.handler.is_clean('pull'),
+                         'Pull step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('pull'),
+                         'Pull step was unexpectedly dirty')
+
+        # Change the `foo` keyword-- thereby making the pull step dirty.
+        self.handler.code.options.foo = ['baz']
+        self.assertFalse(self.handler.is_clean('pull'),
+                         'Pull step was unexpectedly clean')
+        self.assertTrue(self.handler.is_dirty('pull'),
+                        'Expected pull step to be dirty')
+
+    def test_pull_not_dirty_if_clean(self):
+        self.assertTrue(self.handler.is_clean('pull'),
+                        'Expected vanilla handler to have clean pull step')
+        self.assertFalse(
+            self.handler.is_dirty('pull'),
+            'Expected vanilla handler to not have a dirty pull step')
 
 
 class CleanTestCase(tests.TestCase):
