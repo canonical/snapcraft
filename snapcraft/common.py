@@ -85,22 +85,6 @@ def format_snap_name(snap):
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
-def get_partsdir():
-    return os.path.join(os.getcwd(), 'parts')
-
-
-def get_stagedir():
-    return os.path.join(os.getcwd(), 'stage')
-
-
-def get_snapdir():
-    return os.path.join(os.getcwd(), 'snap')
-
-
-def get_local_plugindir():
-    return os.path.abspath(os.path.join(get_partsdir(), 'plugins'))
-
-
 def set_plugindir(plugindir):
     global _plugindir
     _plugindir = plugindir

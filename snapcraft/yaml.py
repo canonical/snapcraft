@@ -26,7 +26,6 @@ import yaml
 
 import snapcraft
 from snapcraft import (
-    common,
     libraries,
     pluginhandler,
     sources,
@@ -254,7 +253,7 @@ class Config:
         """Return a build env of all the part's dependencies."""
 
         env = []
-        stagedir = common.get_stagedir()
+        stagedir = self._project_options.stage_dir
 
         if root_part:
             # this has to come before any {}/usr/bin
@@ -282,25 +281,25 @@ class Config:
         return env
 
     def stage_env(self):
-        stagedir = common.get_stagedir()
+        stage_dir = self._project_options.stage_dir
         env = []
 
-        env += _runtime_env(stagedir, self._project_options.arch_triplet)
-        env += _build_env_for_stage(stagedir,
+        env += _runtime_env(stage_dir, self._project_options.arch_triplet)
+        env += _build_env_for_stage(stage_dir,
                                     self._project_options.arch_triplet)
         for part in self.all_parts:
-            env += part.env(stagedir)
+            env += part.env(stage_dir)
 
         return env
 
     def snap_env(self):
-        snapdir = common.get_snapdir()
+        snap_dir = self._project_options.snap_dir
         env = []
 
-        env += _runtime_env(snapdir, self._project_options.arch_triplet)
+        env += _runtime_env(snap_dir, self._project_options.arch_triplet)
         dependency_paths = set()
         for part in self.all_parts:
-            env += part.env(snapdir)
+            env += part.env(snap_dir)
             dependency_paths |= part.get_stripped_dependency_paths()
 
         # Dependency paths are only valid if they actually exist. Sorting them

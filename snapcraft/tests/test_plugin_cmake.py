@@ -21,10 +21,7 @@ from unittest import mock
 
 import snapcraft
 from snapcraft.plugins import cmake
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class CMakeTestCase(tests.TestCase):
@@ -91,16 +88,16 @@ class CMakeTestCase(tests.TestCase):
         expected = {}
 
         expected['CMAKE_PREFIX_PATH'] = '$CMAKE_PREFIX_PATH:{}'.format(
-            common.get_stagedir())
+            self.stage_dir)
         expected['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
              '{0}/usr/include/{1}']).format(
-                common.get_stagedir(),
+                self.stage_dir,
                 plugin.project.arch_triplet)
         expected['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
              '{0}/usr/lib/{1}']).format(
-                common.get_stagedir(),
+                self.stage_dir,
                 plugin.project.arch_triplet)
 
         self.assertEqual(3, self.run_mock.call_count)

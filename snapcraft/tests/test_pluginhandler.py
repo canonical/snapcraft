@@ -244,7 +244,7 @@ class PluginTestCase(tests.TestCase):
             'mock', 'mock-part', {}, snapcraft.ProjectOptions(),
             {'properties': {}})
         import_mock.assert_called_with('snapcraft.plugins.mock')
-        local_load_mock.assert_called_with('x-mock')
+        local_load_mock.assert_called_with('x-mock', self.local_plugins_dir)
 
     @patch('importlib.import_module')
     @patch('snapcraft.pluginhandler._load_local')
@@ -392,7 +392,7 @@ class StateTestCase(tests.TestCase):
 
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
-            shutil.rmtree(common.get_partsdir())
+            shutil.rmtree(self.parts_dir)
             with self.subTest('{} step'.format(step)):
                 handler = pluginhandler.load_plugin('foo', 'nil')
                 handler.makedirs()
@@ -410,9 +410,9 @@ class StateTestCase(tests.TestCase):
     def test_state_file_migration(self):
         part_name = 'foo'
         for step in common.COMMAND_ORDER:
-            shutil.rmtree(common.get_partsdir())
+            shutil.rmtree(self.parts_dir)
             with self.subTest('{} step'.format(step)):
-                part_dir = os.path.join(common.get_partsdir(), part_name)
+                part_dir = os.path.join(self.parts_dir, part_name)
                 os.makedirs(part_dir)
                 with open(os.path.join(part_dir, 'state'), 'w') as f:
                     f.write(step)
@@ -529,7 +529,7 @@ class StateTestCase(tests.TestCase):
 
     def test_clean_stage_state(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(common.get_stagedir(), 'bin')
+        bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -546,7 +546,7 @@ class StateTestCase(tests.TestCase):
 
     def test_clean_stage_state_multiple_parts(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(common.get_stagedir(), 'bin')
+        bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -568,7 +568,7 @@ class StateTestCase(tests.TestCase):
 
     def test_clean_stage_state_common_files(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(common.get_stagedir(), 'bin')
+        bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -722,7 +722,7 @@ class StateTestCase(tests.TestCase):
 
     def test_clean_strip_state(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(common.get_snapdir(), 'bin')
+        bindir = os.path.join(self.snap_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -739,7 +739,7 @@ class StateTestCase(tests.TestCase):
 
     def test_clean_strip_state_multiple_parts(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(common.get_snapdir(), 'bin')
+        bindir = os.path.join(self.snap_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -761,7 +761,7 @@ class StateTestCase(tests.TestCase):
 
     def test_clean_strip_state_common_files(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(common.get_snapdir(), 'bin')
+        bindir = os.path.join(self.snap_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -909,14 +909,14 @@ class CleanTestCase(tests.TestCase):
         self.assertFalse(mock_rmdir.called)
 
     def clear_common_directories(self):
-        if os.path.exists(common.get_partsdir()):
-            shutil.rmtree(common.get_partsdir())
+        if os.path.exists(self.parts_dir):
+            shutil.rmtree(self.parts_dir)
 
-        if os.path.exists(common.get_stagedir()):
-            shutil.rmtree(common.get_stagedir())
+        if os.path.exists(self.stage_dir):
+            shutil.rmtree(self.stage_dir)
 
-        if os.path.exists(common.get_snapdir()):
-            shutil.rmtree(common.get_snapdir())
+        if os.path.exists(self.snap_dir):
+            shutil.rmtree(self.snap_dir)
 
     def test_clean_strip(self):
         filesets = {
@@ -969,11 +969,11 @@ class CleanTestCase(tests.TestCase):
                 # Now strip them
                 handler.strip()
 
-                self.assertTrue(os.listdir(common.get_snapdir()))
+                self.assertTrue(os.listdir(self.snap_dir))
 
                 handler.clean_strip({})
 
-                self.assertFalse(os.listdir(common.get_snapdir()),
+                self.assertFalse(os.listdir(self.snap_dir),
                                  'Expected snapdir to be completely cleaned')
 
     def test_clean_strip_multiple_independent_parts(self):
@@ -1007,23 +1007,23 @@ class CleanTestCase(tests.TestCase):
 
         # Verify that part1's file has been stripped
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')))
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
 
         # Verify that part2's file has been stripped
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')))
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
 
         # Now clean the strip step for part1
         handler1.clean_strip({})
 
         # Verify that part1's file is no longer stripped
         self.assertFalse(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')),
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
             "Expected part1's stripped files to be cleaned")
 
         # Verify that part2's file is still there
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')),
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
             "Expected part2's stripped files to be untouched")
 
     def test_clean_strip_after_fileset_change(self):
@@ -1042,9 +1042,9 @@ class CleanTestCase(tests.TestCase):
 
         # Verify that both files have been stripped
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')))
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')))
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
 
         # Now update the `snap` fileset to only snap one of these files
         handler.code.options.snap = ['bin/1']
@@ -1054,10 +1054,10 @@ class CleanTestCase(tests.TestCase):
 
         # Verify that part1's file is no longer stripped
         self.assertFalse(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '1')),
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
-            os.path.exists(os.path.join(common.get_snapdir(), 'bin', '2')),
+            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
             'changed since it was stripped.')
 
@@ -1065,7 +1065,7 @@ class CleanTestCase(tests.TestCase):
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
 
-        open(os.path.join(common.get_snapdir(), '1'), 'w').close()
+        open(os.path.join(self.snap_dir, '1'), 'w').close()
 
         handler.mark_done('strip', None)
 
@@ -1079,7 +1079,7 @@ class CleanTestCase(tests.TestCase):
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
 
-        stripped_file = os.path.join(common.get_snapdir(), '1')
+        stripped_file = os.path.join(self.snap_dir, '1')
         open(stripped_file, 'w').close()
 
         handler.mark_done('strip', None)
@@ -1142,11 +1142,11 @@ class CleanTestCase(tests.TestCase):
                 # Stage the installed files
                 handler.stage()
 
-                self.assertTrue(os.listdir(common.get_stagedir()))
+                self.assertTrue(os.listdir(self.stage_dir))
 
                 handler.clean_stage({})
 
-                self.assertFalse(os.listdir(common.get_stagedir()),
+                self.assertFalse(os.listdir(self.stage_dir),
                                  'Expected snapdir to be completely cleaned')
 
     def test_clean_stage_multiple_independent_parts(self):
@@ -1176,23 +1176,23 @@ class CleanTestCase(tests.TestCase):
 
         # Verify that part1's file has been staged
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')))
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '1')))
 
         # Verify that part2's file has been staged
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')))
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '2')))
 
         # Now clean the stage step for part1
         handler1.clean_stage({})
 
         # Verify that part1's file is no longer staged
         self.assertFalse(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')),
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '1')),
             "Expected part1's staged files to be cleaned")
 
         # Verify that part2's file is still there
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')),
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '2')),
             "Expected part2's staged files to be untouched")
 
     def test_clean_stage_after_fileset_change(self):
@@ -1210,9 +1210,9 @@ class CleanTestCase(tests.TestCase):
 
         # Verify that both files have been staged
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')))
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '1')))
         self.assertTrue(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')))
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '2')))
 
         # Now update the `stage` fileset to only snap one of these files
         handler.code.options.stage = ['bin/1']
@@ -1222,10 +1222,10 @@ class CleanTestCase(tests.TestCase):
 
         # Verify that part1's file is no longer staged
         self.assertFalse(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '1')),
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
-            os.path.exists(os.path.join(common.get_stagedir(), 'bin', '2')),
+            os.path.exists(os.path.join(self.stage_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
             'changed since it was staged.')
 
@@ -1233,7 +1233,7 @@ class CleanTestCase(tests.TestCase):
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
 
-        open(os.path.join(common.get_stagedir(), '1'), 'w').close()
+        open(os.path.join(self.stage_dir, '1'), 'w').close()
 
         handler.mark_done('stage', None)
 
@@ -1247,7 +1247,7 @@ class CleanTestCase(tests.TestCase):
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
 
-        staged_file = os.path.join(common.get_stagedir(), '1')
+        staged_file = os.path.join(self.stage_dir, '1')
         open(staged_file, 'w').close()
 
         handler.mark_done('stage', None)
@@ -1401,8 +1401,6 @@ class CollisionTestCase(tests.TestCase):
 class StageEnvTestCase(tests.TestCase):
 
     def test_string_replacements(self):
-        stagedir = common.get_stagedir()
-
         replacements = (
             (
                 'no replacement',
@@ -1412,22 +1410,21 @@ class StageEnvTestCase(tests.TestCase):
             (
                 'replaced start',
                 '$SNAPCRAFT_STAGE/usr/bin',
-                '{}/usr/bin'.format(stagedir),
+                '{}/usr/bin'.format(self.stage_dir),
             ),
             (
                 'replaced between',
                 '--with-swig $SNAPCRAFT_STAGE/usr/swig',
-                '--with-swig {}/usr/swig'.format(stagedir),
+                '--with-swig {}/usr/swig'.format(self.stage_dir),
             ),
         )
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(pluginhandler._expand_env(subject), expected)
+            self.assertEqual(
+                pluginhandler._expand_env(subject, self.stage_dir), expected)
 
     def test_lists_with_string_replacements(self):
-        stagedir = common.get_stagedir()
-
         replacements = (
             (
                 'no replacement',
@@ -1447,7 +1444,7 @@ class StageEnvTestCase(tests.TestCase):
                     '/usr/bin',
                 ],
                 [
-                    '{}/usr/bin'.format(stagedir),
+                    '{}/usr/bin'.format(self.stage_dir),
                     '/usr/bin',
                 ],
             ),
@@ -1459,18 +1456,17 @@ class StageEnvTestCase(tests.TestCase):
                 ],
                 [
                     '--without-python',
-                    '--with-swig {}/usr/swig'.format(stagedir),
+                    '--with-swig {}/usr/swig'.format(self.stage_dir),
                 ],
             ),
         )
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(pluginhandler._expand_env(subject), expected)
+            self.assertEqual(
+                pluginhandler._expand_env(subject, self.stage_dir), expected)
 
     def test_tuples_with_string_replacements(self):
-        stagedir = common.get_stagedir()
-
         replacements = (
             (
                 'no replacement',
@@ -1490,7 +1486,7 @@ class StageEnvTestCase(tests.TestCase):
                     '/usr/bin',
                 ),
                 [
-                    '{}/usr/bin'.format(stagedir),
+                    '{}/usr/bin'.format(self.stage_dir),
                     '/usr/bin',
                 ],
             ),
@@ -1502,18 +1498,17 @@ class StageEnvTestCase(tests.TestCase):
                 ),
                 [
                     '--without-python',
-                    '--with-swig {}/usr/swig'.format(stagedir),
+                    '--with-swig {}/usr/swig'.format(self.stage_dir),
                 ],
             ),
         )
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(pluginhandler._expand_env(subject), expected)
+            self.assertEqual(
+                pluginhandler._expand_env(subject, self.stage_dir), expected)
 
     def test_dict_with_string_replacements(self):
-        stagedir = common.get_stagedir()
-
         replacements = (
             (
                 'no replacement',
@@ -1533,7 +1528,7 @@ class StageEnvTestCase(tests.TestCase):
                     '2': '/usr/bin',
                 },
                 {
-                    '1': '{}/usr/bin'.format(stagedir),
+                    '1': '{}/usr/bin'.format(self.stage_dir),
                     '2': '/usr/bin',
                 },
             ),
@@ -1545,18 +1540,17 @@ class StageEnvTestCase(tests.TestCase):
                 },
                 {
                     '1': '--without-python',
-                    '2': '--with-swig {}/usr/swig'.format(stagedir),
+                    '2': '--with-swig {}/usr/swig'.format(self.stage_dir),
                 },
             ),
         )
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(pluginhandler._expand_env(subject), expected)
+            self.assertEqual(
+                pluginhandler._expand_env(subject, self.stage_dir), expected)
 
     def test_string_replacement_with_complex_data(self):
-        stagedir = common.get_stagedir()
-
         subject = {
             'filesets': {
                 'files': [
@@ -1575,17 +1569,18 @@ class StageEnvTestCase(tests.TestCase):
             'filesets': {
                 'files': [
                     'somefile',
-                    '{}/file1'.format(stagedir),
+                    '{}/file1'.format(self.stage_dir),
                     'SNAPCRAFT_STAGE/really',
                 ]
             },
             'configFlags': [
                 '--with-python',
-                '--with-swig {}/swig'.format(stagedir),
+                '--with-swig {}/swig'.format(self.stage_dir),
             ],
         }
 
-        self.assertEqual(pluginhandler._expand_env(subject), expected)
+        self.assertEqual(
+            pluginhandler._expand_env(subject, self.stage_dir), expected)
 
 
 class FindDependenciesTestCase(tests.TestCase):

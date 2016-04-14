@@ -21,10 +21,7 @@ from unittest import mock
 
 import snapcraft
 from snapcraft.main import main
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class FakeUbuntuRepo:
@@ -56,7 +53,7 @@ parts:
 
         parts = []
         for i in range(n):
-            part_dir = os.path.join(common.get_partsdir(), 'pull{}'.format(i))
+            part_dir = os.path.join(self.parts_dir, 'pull{}'.format(i))
             state_dir = os.path.join(part_dir, 'state')
             parts.append({
                 'part_dir': part_dir,
@@ -80,7 +77,7 @@ parts:
 
         main(['pull'])
 
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the pull0 part')
@@ -92,7 +89,7 @@ parts:
 
         main(['pull', 'pull1'])
 
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[1]['part_dir']),
                         'Expected a part directory for the pull1 part')
@@ -125,7 +122,7 @@ parts:
 
         self.assertFalse(project_options.use_geoip)
         mock_setup_apt_cache.assert_called_once_with(
-            os.path.join(common.get_partsdir(), 'pull1', 'ubuntu'),
+            os.path.join(self.parts_dir, 'pull1', 'ubuntu'),
             [],                # no sources
             project_options,   # use_geoip is False
         )
@@ -149,7 +146,7 @@ parts:
 
         self.assertTrue(project_options.use_geoip)
         mock_setup_apt_cache.assert_called_once_with(
-            os.path.join(common.get_partsdir(), 'pull1', 'ubuntu'),
+            os.path.join(self.parts_dir, 'pull1', 'ubuntu'),
             [],                # no sources
             project_options,   # use_geoip is False
         )

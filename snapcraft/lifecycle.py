@@ -81,7 +81,7 @@ def execute(step, project_options, part_names=None):
     config = snapcraft.yaml.load_config(project_options)
     repo.install_build_packages(config.build_tools)
 
-    _Executor(config).run(step, part_names)
+    _Executor(config, project_options).run(step, part_names)
 
     return {'name': config.data['name'],
             'version': config.data['version'],
@@ -91,8 +91,9 @@ def execute(step, project_options, part_names=None):
 
 class _Executor:
 
-    def __init__(self, config):
+    def __init__(self, config, project_options):
         self.config = config
+        self.project_options = project_options
 
     def run(self, step, part_names=None, recursed=False):
         if part_names:
@@ -153,7 +154,8 @@ class _Executor:
         if step == 'strip' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             create_snap_packaging(self.config.data,
-                                  common.get_snapdir(), common.get_partsdir())
+                                  self.project_options.snap_dir,
+                                  self.project_options.parts_dir)
 
     def _handle_dirty(self, part, step):
         if step in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
@@ -229,7 +231,7 @@ def snap(project_options, directory=None, output=None):
         snap = _snap_data_from_dir(snap_dir)
     else:
         # make sure the full lifecycle is executed
-        snap_dir = common.get_snapdir()
+        snap_dir = project_options.snap_dir
         snap = execute('strip', project_options)
 
     snap_name = output or format_snap_name(snap)
@@ -324,10 +326,10 @@ def _remove_directory_if_empty(directory):
         os.rmdir(directory)
 
 
-def _cleanup_common_directories(config):
-    _remove_directory_if_empty(common.get_partsdir())
-    _remove_directory_if_empty(common.get_stagedir())
-    _remove_directory_if_empty(common.get_snapdir())
+def _cleanup_common_directories(config, project_options):
+    _remove_directory_if_empty(project_options.parts_dir)
+    _remove_directory_if_empty(project_options.stage_dir)
+    _remove_directory_if_empty(project_options.snap_dir)
 
     max_index = -1
     for part in config.all_parts:
@@ -342,25 +344,25 @@ def _cleanup_common_directories(config):
     # case of a failed pull. Note however that the presence of local plugins
     # should prevent this removal.
     if (max_index < common.COMMAND_ORDER.index('pull') and
-            os.path.exists(common.get_partsdir()) and not
-            os.path.exists(common.get_local_plugindir())):
+            os.path.exists(project_options.parts_dir) and not
+            os.path.exists(project_options.local_plugins_dir)):
         logger.info('Cleaning up parts directory')
-        shutil.rmtree(common.get_partsdir())
+        shutil.rmtree(project_options.parts_dir)
 
     # If no parts have been staged, remove staging area.
     should_remove_stagedir = max_index < common.COMMAND_ORDER.index('stage')
-    if should_remove_stagedir and os.path.exists(common.get_stagedir()):
+    if should_remove_stagedir and os.path.exists(project_options.stage_dir):
         logger.info('Cleaning up staging area')
-        shutil.rmtree(common.get_stagedir())
+        shutil.rmtree(project_options.stage_dir)
 
     # If no parts have been stripped, remove snapping area.
     should_remove_snapdir = max_index < common.COMMAND_ORDER.index('strip')
-    if should_remove_snapdir and os.path.exists(common.get_snapdir()):
+    if should_remove_snapdir and os.path.exists(project_options.snap_dir):
         logger.info('Cleaning up snapping area')
-        shutil.rmtree(common.get_snapdir())
+        shutil.rmtree(project_options.snap_dir)
 
 
-def clean(parts, step=None):
+def clean(project_options, parts, step=None):
     config = snapcraft.yaml.load_config()
 
     if parts:
@@ -373,4 +375,4 @@ def clean(parts, step=None):
 
     _clean_parts(parts, step, config, staged_state, stripped_state)
 
-    _cleanup_common_directories(config)
+    _cleanup_common_directories(config, project_options)

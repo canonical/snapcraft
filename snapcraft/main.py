@@ -181,7 +181,8 @@ def run(args, project_options):
     elif argless_command:
         argless_command()
     elif args['clean']:
-        snapcraft.lifecycle.clean(args['<part>'], args['--step'])
+        snapcraft.lifecycle.clean(project_options,
+                                  args['<part>'], args['--step'])
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:

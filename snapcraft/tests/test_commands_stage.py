@@ -21,10 +21,7 @@ import os.path
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class StageCommandTestCase(tests.TestCase):
@@ -47,7 +44,7 @@ parts:
 
         parts = []
         for i in range(n):
-            part_dir = os.path.join(common.get_partsdir(), 'stage{}'.format(i))
+            part_dir = os.path.join(self.parts_dir, 'stage{}'.format(i))
             state_dir = os.path.join(part_dir, 'state')
             parts.append({
                 'part_dir': part_dir,
@@ -75,9 +72,9 @@ parts:
 
         main(['stage'])
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')
@@ -91,9 +88,9 @@ parts:
 
         main(['stage', 'stage1'])
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[1]['part_dir']),
                         'Expected a part directory for the stage1 part')
@@ -121,9 +118,9 @@ parts:
             'Staging stage0 \n',
             fake_logger.output)
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
-        self.assertTrue(os.path.exists(common.get_partsdir()),
+        self.assertTrue(os.path.exists(self.parts_dir),
                         'Expected a parts directory')
         self.assertTrue(os.path.exists(parts[0]['part_dir']),
                         'Expected a part directory for the build0 part')

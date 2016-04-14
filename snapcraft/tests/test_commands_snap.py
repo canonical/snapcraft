@@ -22,10 +22,7 @@ from unittest import mock
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import (
-    common,
-    tests,
-)
+from snapcraft import tests
 
 
 class SnapCommandTestCase(tests.TestCase):
@@ -45,7 +42,7 @@ parts:
     def make_snapcraft_yaml(self, n=1, snap_type='app'):
         snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
-        self.state_dir = os.path.join(common.get_partsdir(), 'part1', 'state')
+        self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     @mock.patch('subprocess.check_call')
     def test_snap_defaults(self, mock_call):
@@ -66,13 +63,13 @@ parts:
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
         self.verify_state('part1', self.state_dir, 'strip')
 
         mock_call.assert_called_once_with([
-            'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
 
     @mock.patch('subprocess.check_call')
@@ -94,13 +91,13 @@ parts:
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
         self.verify_state('part1', self.state_dir, 'strip')
 
         mock_call.assert_called_once_with([
-            'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs'])
 
     @mock.patch('subprocess.check_call')
@@ -125,7 +122,7 @@ parts:
             fake_logger.output)
 
         mock_call.assert_called_once_with([
-            'mksquashfs', common.get_snapdir(), 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
 
     @mock.patch('subprocess.check_call')
@@ -219,11 +216,11 @@ type: os
             'Snapped mysnap.snap\n',
             fake_logger.output)
 
-        self.assertTrue(os.path.exists(common.get_stagedir()),
+        self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
         self.verify_state('part1', self.state_dir, 'strip')
 
         mock_call.assert_called_once_with([
-            'mksquashfs', common.get_snapdir(), 'mysnap.snap',
+            'mksquashfs', self.snap_dir, 'mysnap.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
