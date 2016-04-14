@@ -180,21 +180,22 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 'unsquashfs', self.os_snap, os.path.dirname(initrd_path)],
                 cwd=temp_dir)
 
-            tmp_initrd_path = os.path.join(temp_dir, 'squashfs-root', initrd_path)
+            tmp_initrd_path = os.path.join(
+                temp_dir, 'squashfs-root', initrd_path)
             cmd = shlex.split('file -L --mime-type {}'.format(tmp_initrd_path))
-            result = subprocess.check_output(cmd)
-            mime_type = str(result.split()[-1])
-            logger.info('initrd mime_type: {} {}'.format(tmp_initrd_path, mime_type))
+            result = subprocess.check_output(cmd).decode('utf-8')
+            mime_type = result.split()[-1]
+            logger.debug('initrd mime_type: {} {}'.format(
+                tmp_initrd_path, mime_type))
             decompressor = 'gzip'
-            if "gzip" in mime_type:
+            if 'gzip' in mime_type:
                 decompressor = 'gzip'
-            elif "x-xz" in mime_type:
-                decompressor = 'xz'
-            elif "x-lzma" in mime_type:
+            elif any(x in mime_type for x in ('x-xz', 'x-lzma')):
                 decompressor = 'xz'
 
             subprocess.check_call(
-                'cat {0} | {1} -dc | cpio -i'.format(tmp_initrd_path, decompressor),
+                'cat {0} | {1} -dc | cpio -i'.format(
+                    tmp_initrd_path, decompressor),
                 shell=True, cwd=initrd_unpacked_path)
 
         return initrd_unpacked_path
