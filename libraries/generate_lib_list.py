@@ -10,9 +10,6 @@ from snapcraft.config import load_config
 from snapcraft.storeapi import download
 
 
-_STORE_DETAILS_URL = 'https://search.apps.ubuntu.com/api/v1/package/{}'
-
-
 def generate_list(file_path):
     print('Generating library list')
     output = subprocess.check_output(['unsquashfs', '-l', file_path])
@@ -33,7 +30,7 @@ def main():
     config = load_config()
     with tempfile.NamedTemporaryFile() as temp:
         print('Downloading')
-        download('ubuntu-core', temp.name, config, 'amd64')
+        download('ubuntu-core', 'edge', temp.name, config, 'amd64')
         lib_list = generate_list(temp.name)
 
     lib_list = ('{}\n'.format(l) for l in lib_list)

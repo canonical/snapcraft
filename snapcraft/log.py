@@ -69,5 +69,8 @@ def configure(logger_name=None, log_level=None):
 
     logger.setLevel(log_level)
 
-    # INFO from the requests lib is too noisy
-    logging.getLogger("requests").setLevel(logging.WARNING)
+    # INFO by default for the requests lib as it is too noisy
+    if log_level == logging.DEBUG:
+        logging.getLogger("requests").setLevel(log_level)
+    else:
+        logging.getLogger("requests").setLevel(logging.WARNING)
