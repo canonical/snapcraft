@@ -349,15 +349,13 @@ you'll have a .snap.
 
 ### Take the .snap for a test drive
 
-You can transfer your newly-minted .snap to your Ubuntu Core machine and install
-it at the same time via `snappy-remote`, for example:
+Transfer your newly-minted .snap to your Ubuntu Core machine with `scp`,
+then install it:
 
-    $ snappy-remote --url=ssh://<host>:<port> install \
-      ros-example_1.0_amd64.snap
+    $ sudo snappy install ros-example_1.0_amd64.snap
 
-Now on the Ubuntu Core machine, take a look in `/snaps/bin/`, and you'll see the
-binary you requested, called `ros-example.launch-project`. Test it
-out:
+While on the Ubuntu Core machine, take a look in `/snaps/bin/`, and you'll see
+the binary you requested, called `ros-example.launch-project`. Test it out:
 
     $ ros-example.launch-project
 

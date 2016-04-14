@@ -148,10 +148,9 @@ in `shout.sergiusens` run: `sudo snappy service logs shout`).
 
 ### Installing binaries
 In order to test a new snap on a Snappy system you need to install it first.
-This is called sideloading and it can be done via
-`snappy-remote --url=ssh://ubuntu@webdm.local/ install snapname.snap`.
-Alternatively the snap can be copied via scp into the Snappy system and
-installed via `sudo snappy install snapname.snap`.
+This is called "sideloading" and it can be done by copying the snap onto the
+Snappy system via `scp` and installing it with
+`sudo snappy install snapname.snap`.
 
 Note that you have to use the `--allow-unauthenticated` tag for installing
 unsigned snaps: `sudo snappy install --allow-unauthenticated snapname.snap`.
