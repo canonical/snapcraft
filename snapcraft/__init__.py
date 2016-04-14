@@ -164,6 +164,8 @@ class BasePlugin:
             'required': [
                 'source',
             ],
+            'pull-properties': ['source', 'source-type', 'source-branch',
+                                'source-tag', 'source-subdir'],
             'build-properties': []
         }
 

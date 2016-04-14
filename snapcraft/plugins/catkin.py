@@ -91,6 +91,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         schema['required'].append('catkin-packages')
 
+        # Inform Snapcraft of the properties associated with pulling. If these
+        # change in the YAML Snapcraft will consider the pull step dirty.
+        schema['pull-properties'].extend(
+            ['rosdistro', 'catkin-packages', 'source-space',
+             'include-roscore'])
+
         return schema
 
     def __init__(self, name, options, project):

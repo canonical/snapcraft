@@ -460,7 +460,7 @@ description: test
         self.useFixture(self.fake_logger)
 
         def _fake_is_dirty(self, step):
-            return self.name == 'part1' and step == 'build'
+            return step == 'build'
 
         # Should catch that the part needs to be rebuilt and raise an error.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
@@ -474,7 +474,35 @@ description: test
 
         self.assertEqual(
             "The 'build' step of 'part1' is out of date. Please clean that "
-            "part's build step in order to rebuild", str(raised.exception))
+            "part's 'build' step in order to rebuild", str(raised.exception))
+
+    def test_dirty_pull_raises(self):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+""")
+
+        # Pull it.
+        snapcraft.lifecycle.execute('pull', self.project_options)
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_is_dirty(self, step):
+            return step == 'pull'
+
+        # Should catch that the part needs to be re-pulled and raise an error.
+        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
+                               _fake_is_dirty):
+            with self.assertRaises(RuntimeError) as raised:
+                snapcraft.lifecycle.execute('pull', self.project_options)
+
+        self.assertEqual('', self.fake_logger.output)
+
+        self.assertEqual(
+            "The 'pull' step of 'part1' is out of date. Please clean that "
+            "part's 'pull' step in order to rebuild", str(raised.exception))
 
 
 class HumanizeListTestCases(tests.TestCase):
