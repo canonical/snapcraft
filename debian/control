@@ -26,7 +26,7 @@ Build-Depends: debhelper (>= 9),
                python3-yaml,
 Homepage: https://github.com/ubuntu-core/snapcraft
 Vcs-Git: https://github.com/ubuntu-core/snapcraft
-Standards-Version: 3.9.6
+Standards-Version: 3.9.7
 
 Package: snapcraft
 Architecture: all
