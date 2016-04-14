@@ -117,8 +117,9 @@ class PluginHandler:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
-        options = _make_options(self._project_options.stage_dir,
-                                part_schema, properties, plugin.schema())
+        options, self.pull_properties, self.build_properties = _make_options(
+            self._project_options.stage_dir, part_schema, properties,
+            plugin.schema())
         # For backwards compatibility we add the project to the plugin
         try:
             self.code = plugin(self.name, options, self._project_options)
@@ -284,7 +285,8 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Building')
         self.code.build()
-        self.mark_done('build')
+        self.mark_done('build', internal.states.BuildState(
+            self.build_properties, self.code.options))
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
@@ -503,12 +505,30 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
+def _validate_step_properties(step, plugin_schema):
+    step_properties_key = '{}-properties'.format(step)
+    properties = plugin_schema.get('properties', {})
+    step_properties = plugin_schema.get(step_properties_key, [])
+
+    invalid_properties = set()
+    for step_property in step_properties:
+        if step_property not in properties:
+            invalid_properties.add(step_property)
+
+    if invalid_properties:
+        raise jsonschema.exceptions.ValidationError(
+            "Invalid {} specified in plugin's schema: {}".format(
+                step_properties_key, list(invalid_properties)))
+
+
 def _make_options(stage_dir, part_schema, properties, plugin_schema):
     if 'properties' not in plugin_schema:
         plugin_schema['properties'] = {}
     # The base part_schema takes precedense over the plugin.
     plugin_schema['properties'].update(part_schema)
 
+    _validate_step_properties('pull', plugin_schema)
+    _validate_step_properties('build', plugin_schema)
     jsonschema.validate(properties, plugin_schema)
 
     class Options():
@@ -517,7 +537,8 @@ def _make_options(stage_dir, part_schema, properties, plugin_schema):
 
     _populate_options(stage_dir, options, properties, plugin_schema)
 
-    return options
+    return (options, plugin_schema.get('pull-properties', []),
+            plugin_schema.get('build-properties', []))
 
 
 def _populate_options(stage_dir, options, properties, schema):

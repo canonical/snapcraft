@@ -18,17 +18,16 @@ import yaml
 
 
 class State(yaml.YAMLObject):
-    @classmethod
-    def properties_of_interest(cls, options):
+    def __init__(self, options):
+        self.properties = self.properties_of_interest(options)
+
+    def properties_of_interest(self, options):
         """Extract the properties concerning this step from the options.
 
         Note that these options come from the YAML for a given part.
         """
 
         raise NotImplementedError
-
-    def __init__(self, options):
-        self.properties = self.properties_of_interest(options)
 
     def __repr__(self):
         items = sorted(self.__dict__.items())

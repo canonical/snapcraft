@@ -158,28 +158,35 @@ class _Executor:
                                   self.project_options.parts_dir)
 
     def _handle_dirty(self, part, step):
-        if step in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
-            staged_state = self.config.get_project_state('stage')
-            stripped_state = self.config.get_project_state('strip')
+        if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
+            raise RuntimeError(
+                'The {!r} step of {!r} is out of date. Please clean that '
+                "part's build step in order to rebuild".format(
+                    step, part.name))
 
-            # We need to clean this step, but if it's the stage step and it
-            # has dependents that have been built, we need to ask for them to
-            # first be cleaned (at least back to the build step).
-            dependents = self.config.part_dependents(part.name)
-            if step == 'stage' and dependents:
-                for dependent in self.config.all_parts:
-                    if (dependent.name in dependents and
-                            not dependent.is_clean('build')):
-                        humanized_parts = _humanize_list(dependents)
+        staged_state = self.config.get_project_state('stage')
+        stripped_state = self.config.get_project_state('strip')
 
-                        raise RuntimeError(
-                            'Stage step for {0!r} needs to be run again, but '
-                            '{1} depend{2} upon it. Please clean the build '
-                            'step of {1} first.'.format(
-                                part.name, humanized_parts,
-                                's' if len(dependents) == 1 else ''))
+        # We need to clean this step, but if it involves cleaning the stage
+        # step and it has dependents that have been built, we need to ask for
+        # them to first be cleaned (at least back to the build step).
+        index = common.COMMAND_ORDER.index(step)
+        dependents = self.config.part_dependents(part.name)
+        if (index <= common.COMMAND_ORDER.index('stage') and
+                not part.is_clean('stage') and dependents):
+            for dependent in self.config.all_parts:
+                if (dependent.name in dependents and
+                        not dependent.is_clean('build')):
+                    humanized_parts = _humanize_list(dependents)
 
-            part.clean(staged_state, stripped_state, step, '(out of date)')
+                    raise RuntimeError(
+                        'The {0!r} step for {1!r} needs to be run again, but '
+                        '{2} depend{3} upon it. Please clean the build '
+                        'step of {2} first.'.format(
+                            step, part.name, humanized_parts,
+                            's' if len(dependents) == 1 else ''))
+
+        part.clean(staged_state, stripped_state, step, '(out of date)')
 
 
 def _create_tar_filter(tar_filename):

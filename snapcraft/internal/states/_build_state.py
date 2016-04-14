@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-buildnil; tab-width:4 -*-
 #
 # Copyright (C) 2016 Canonical Ltd
 #
@@ -19,32 +19,32 @@ import yaml
 from snapcraft.internal.states._state import State
 
 
-def _strip_state_constructor(loader, node):
+def _build_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
-    return StripState(**parameters)
+    return BuildState(**parameters)
 
-yaml.add_constructor(u'!StripState', _strip_state_constructor)
+yaml.add_constructor(u'!BuildState', _build_state_constructor)
 
 
-class StripState(State):
-    yaml_tag = u'!StripState'
+class BuildState(State):
+    yaml_tag = u'!BuildState'
 
-    def __init__(self, files, directories, dependency_paths=None,
-                 options=None):
+    def __init__(self, schema_properties, options=None):
+        # Save this off before calling super() since we'll need it
+        self.schema_properties = schema_properties
+
         super().__init__(options)
-
-        self.files = files
-        self.directories = directories
-        self.dependency_paths = set()
-
-        if dependency_paths:
-            self.dependency_paths = dependency_paths
 
     def properties_of_interest(self, options):
         """Extract the properties concerning this step from the options.
 
-        The only property of interest to the strip step is the `snap` keyword
-        used to filter out files with a white or blacklist.
+        The properties of interest to the build step vary depending on the
+        plugin, so we use self.schema_properties.
         """
 
-        return {'snap': getattr(options, 'snap', ['*']) or ['*']}
+        properties = {}
+        for schema_property in self.schema_properties:
+            properties[schema_property] = getattr(options, schema_property,
+                                                  None)
+
+        return properties

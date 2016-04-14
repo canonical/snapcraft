@@ -78,6 +78,10 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             'default': [],
         }
 
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'].append('maven-options')
+
         return schema
 
     def __init__(self, name, options, project):

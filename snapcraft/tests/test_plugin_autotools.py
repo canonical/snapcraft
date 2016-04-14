@@ -101,6 +101,13 @@ class AutotoolsPluginTestCase(tests.TestCase):
                          'Expected "install-via" "default" to be "destdir", '
                          'but it was "{}"'.format(installvia_default))
 
+        self.assertTrue('build-properties' in schema,
+                        'Expected schema to include "build-properties"')
+        build_properties = schema['build-properties']
+        self.assertEqual(2, len(build_properties))
+        self.assertTrue('configflags' in build_properties)
+        self.assertTrue('install-via' in build_properties)
+
     def test_install_via_invalid_enum(self):
         self.options.install_via = 'invalid'
         with self.assertRaises(RuntimeError) as raised:

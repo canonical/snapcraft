@@ -65,6 +65,10 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             'default': 'destdir',
         }
 
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'].extend(['configflags', 'install-via'])
+
         return schema
 
     def __init__(self, name, options, project):
