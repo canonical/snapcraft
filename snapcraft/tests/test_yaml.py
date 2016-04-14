@@ -216,6 +216,45 @@ parts:
                     s[1] in c.build_tools,
                     '{} not found in {}'.format(s[1], c.build_tools))
 
+    def test_config_adds_extra_build_tools_when_cross_compiling(self):
+        with unittest.mock.patch('platform.machine') as machine_mock:
+            machine_mock.return_value = 'x86_64'
+            project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
+
+        yaml = """name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    plugin: nil
+"""
+        self.make_snapcraft_yaml(yaml)
+        config = snapcraft.yaml.Config(project_options)
+
+        self.assertEqual(config.build_tools, ['gcc-arm-linux-gnueabihf'])
+
+    def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
+        class ProjectOptionsFake(snapcraft.ProjectOptions):
+            @property
+            def is_cross_compiling(self):
+                return False
+
+        yaml = """name: test
+version: "1"
+summary: test
+description: test
+
+parts:
+  part1:
+    plugin: nil
+"""
+        self.make_snapcraft_yaml(yaml)
+        config = snapcraft.yaml.Config(ProjectOptionsFake())
+
+        self.assertEqual(config.build_tools, [])
+
     def test_config_raises_on_missing_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
