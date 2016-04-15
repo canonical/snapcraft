@@ -28,6 +28,8 @@ from snapcraft import (
     tests,
 )
 
+from snapcraft._options import ProjectOptions  # noqa
+
 
 class LXDTestCase(tests.TestCase):
 
@@ -38,7 +40,9 @@ class LXDTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
-        lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64').execute()
+
+        project_options = ProjectOptions()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
 
         self.assertEqual(
             'Setting up container with project assets\n'
