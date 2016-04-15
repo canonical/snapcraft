@@ -193,6 +193,7 @@ class _SnapPackaging:
         script = ('#!/bin/sh\n' +
                   '{}\n'.format(assembled_env) +
                   '{}\n'.format(cwd) +
+                  'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                   'exec {} {}\n'.format(executable, args))
 
         with open(wrappath, 'w+') as f:
