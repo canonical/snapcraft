@@ -77,7 +77,7 @@ run_integration(){
         export SNAPCRAFT=snapcraft-coverage
     fi
 
-    python3 -m unittest discover -b -v -s integration_tests
+    SNAPCRAFT_FROM_SOURCE=1 python3 -m unittest discover -b -v -s integration_tests
 }
 
 run_examples(){
@@ -86,7 +86,7 @@ run_examples(){
         export SNAPCRAFT=snapcraft-coverage
     fi
 
-    python3 -m examples_tests "$@"
+    SNAPCRAFT_FROM_SOURCE=1 python3 -m examples_tests "$@"
 }
 
 parseargs "$@"

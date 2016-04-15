@@ -1,2 +1,2 @@
 #!/bin/sh
-./runtests.sh examples --skip-install --filter '^(?!ros$).*$'
+python3 -m examples_tests --skip-install --filter '^(?!ros$).*$'
