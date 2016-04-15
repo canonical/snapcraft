@@ -194,11 +194,12 @@ class KernelPlugin(kbuild.KBuildPlugin):
             logger.debug('initrd mime_type: {} {}'.format(
                 tmp_initrd_path, mime_type))
 
-            # Support gzip (can be gzip or x-gzip)
-            if 'gzip' in mime_type:
+            # Support gzip and lzma/xz
+            gzip_mime_types = ('application/gzip', 'application/x-gzip')
+            xz_mime_types = ('application/x-xz', 'application/x-lzma')
+            if any(x in mime_type for x in gzip_mime_types):
                 decompressor = 'gzip'
-            # Support lzma/xz
-            elif any(x in mime_type for x in ('x-xz', 'x-lzma')):
+            elif any(x in mime_type for x in xz_mime_types):
                 decompressor = 'xz'
             else:
                 raise RuntimeError(
