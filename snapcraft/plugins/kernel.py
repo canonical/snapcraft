@@ -186,7 +186,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
             mime_detector = magic.open(
                 magic.MAGIC_MIME_TYPE | magic.MAGIC_ERROR)
             mime_detector.load()
-            mime_type = mime_detector.file(tmp_initrd_path)
+            # Make sure we're getting the mime type of the actual initrd, not
+            # a symbolic link.
+            mime_type = mime_detector.file(os.path.realpath(tmp_initrd_path))
             if not mime_type:
                 raise RuntimeError(
                     'Unable to determine mime type for {!r}: {}'.format(
