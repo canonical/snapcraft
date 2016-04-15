@@ -68,6 +68,7 @@ class Cleanbuilder:
             yield
         finally:
             check_call(['lxc', 'stop', self._container_name])
+            check_call(['lxc', 'delete', self._container_name])
             check_call(['lxc', 'remote', 'remove', remote_tmp])
 
     def execute(self):

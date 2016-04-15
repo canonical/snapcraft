@@ -76,6 +76,7 @@ class LXDTestCase(tests.TestCase):
                   'snapcraft-my-pet//root/snap.snap',
                   'snap.snap']),
             call(['lxc', 'stop', 'snapcraft-my-pet']),
+            call(['lxc', 'delete', 'snapcraft-my-pet']),
             call(['lxc', 'remote', 'remove', 'my-pet'])])
 
     @patch('snapcraft.lxd.check_call')
