@@ -51,8 +51,9 @@ The following kernel specific options are provided by this plugin:
       list of device trees to build, the format is <device-tree-name>.dts.
 """
 
-import logging
 import glob
+import logging
+import magic
 import os
 import shutil
 import subprocess
@@ -179,9 +180,36 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 'unsquashfs', self.os_snap, os.path.dirname(initrd_path)],
                 cwd=temp_dir)
 
+            tmp_initrd_path = os.path.join(
+                temp_dir, 'squashfs-root', initrd_path)
+
+            mime_detector = magic.open(
+                magic.MAGIC_MIME_TYPE | magic.MAGIC_ERROR)
+            mime_detector.load()
+            # Make sure we're getting the mime type of the actual initrd, not
+            # a symbolic link.
+            mime_type = mime_detector.file(os.path.realpath(tmp_initrd_path))
+            if not mime_type:
+                raise RuntimeError(
+                    'Unable to determine mime type for {!r}: {}'.format(
+                        tmp_initrd_path, os.strerror(mime_detector.errno())))
+            logger.debug('initrd mime_type: {} {}'.format(
+                tmp_initrd_path, mime_type))
+
+            # Support gzip and lzma/xz
+            gzip_mime_types = ('application/gzip', 'application/x-gzip')
+            xz_mime_types = ('application/x-xz', 'application/x-lzma')
+            if any(x in mime_type for x in gzip_mime_types):
+                decompressor = 'gzip'
+            elif any(x in mime_type for x in xz_mime_types):
+                decompressor = 'xz'
+            else:
+                raise RuntimeError(
+                    'initrd file type is unsupported: {!r}'.format(mime_type))
+
             subprocess.check_call(
-                'cat {} | gzip -dc | cpio -i'.format(
-                    os.path.join(temp_dir, 'squashfs-root', initrd_path)),
+                'cat {0} | {1} -dc | cpio -i'.format(
+                    tmp_initrd_path, decompressor),
                 shell=True, cwd=initrd_unpacked_path)
 
         return initrd_unpacked_path

@@ -62,6 +62,11 @@ class KernelPluginTestCase(tests.TestCase):
         self.base_build_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('magic.Magic.file',
+                             return_value='application/gzip')
+        self.file_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         @contextlib.contextmanager
         def tempdir():
             self.tempdir = 'temporary-directory'
@@ -193,6 +198,77 @@ class KernelPluginTestCase(tests.TestCase):
                 open(f, 'w').close()
 
         self.base_build_mock.side_effect = create_assets
+
+    def test_unpack_gzip_initrd(self):
+        self.file_mock.return_value = 'application/gzip'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'gzip -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_xgzip_initrd(self):
+        self.file_mock.return_value = 'application/x-gzip'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'gzip -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_lzma_initrd(self):
+        self.file_mock.return_value = 'application/x-lzma'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'xz -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_xz_initrd(self):
+        self.file_mock.return_value = 'application/x-xz'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'xz -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_unsupported_initrd_type(self):
+        self.file_mock.return_value = 'application/foo'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        with self.assertRaises(RuntimeError) as raised:
+            plugin._unpack_generic_initrd()
+
+        self.assertEqual("initrd file type is unsupported: 'application/foo'",
+                         str(raised.exception))
 
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
