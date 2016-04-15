@@ -45,28 +45,26 @@ def login(email, password, token_name='unused', otp=''):
         'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
     client = V2ApiClient(endpoint=api_endpoint)
 
-    macaroon, error = get_root_macaroon()
+    macaroon, error = get_package_upload_macaroon()
     if macaroon is None:
         result['errors'] = error
     else:
-        result['body'] = dict(root_macaroon=macaroon)
         result['success'] = True
     if result['success']:
-        data = {'email': email, 'password': password,
-                'macaroon': result['body']['root_macaroon']}
+        data = {'email': email, 'password': password, 'macaroon': macaroon}
         if otp:
             data['otp'] = otp
-        macaroon, error = get_discharge_macaroon(client, data)
-        if macaroon is None:
+        discharge, error = get_discharge_macaroon(client, data)
+        if discharge is None:
             result['errors'] = error
             result['success'] = False
         else:
-            result['body']['discharge_macaroon'] = macaroon
+            result['body'] = dict(package_upload=(macaroon, discharge))
     return result
 
 
-def get_root_macaroon():
-    response = store_api_call('../../api/2.0/acl/package_access/',
+def get_package_upload_macaroon():
+    response = store_api_call('../../api/2.0/acl/package_upload/',
                               method='POST', data={})
     if response['success']:
         return response['data']['macaroon'], None

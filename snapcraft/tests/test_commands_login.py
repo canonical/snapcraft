@@ -125,7 +125,7 @@ class LoginWithMacaroonsCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            'snapcraft.storeapi._macaroon_login.get_root_macaroon')
+            'snapcraft.storeapi._macaroon_login.get_package_upload_macaroon')
         self.mock_root_macaroon = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -135,7 +135,7 @@ class LoginWithMacaroonsCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_successful_login_saves_config(self):
-        self.mock_root_macaroon.return_value = ('root', None)
+        self.mock_root_macaroon.return_value = ('macaroon', None)
         self.mock_discharge_macaroon.return_value = ('discharge', None)
 
         main(['login'])
@@ -145,7 +145,7 @@ class LoginWithMacaroonsCommandTestCase(tests.TestCase):
             'Login successful.\n',
             self.fake_logger.output)
         self.mock_save.assert_called_once_with(
-            dict(root_macaroon='root', discharge_macaroon='discharge'))
+            dict(package_upload=('macaroon', 'discharge')))
 
     def test_failed_root_macaroon_does_not_save_config(self):
         self.mock_root_macaroon.return_value = (None, 'Failed')
