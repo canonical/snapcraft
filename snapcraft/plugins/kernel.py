@@ -51,13 +51,12 @@ The following kernel specific options are provided by this plugin:
       list of device trees to build, the format is <device-tree-name>.dts.
 """
 
-import logging
 import glob
+import logging
+import magic
 import os
-import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 
 from snapcraft import storeapi
@@ -183,17 +182,27 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
             tmp_initrd_path = os.path.join(
                 temp_dir, 'squashfs-root', initrd_path)
-            cmd = shlex.split('file -L --mime-type {}'.format(tmp_initrd_path))
-            result = subprocess.check_output(cmd).decode(
-                sys.getfilesystemencoding())
-            mime_type = result.split()[-1]
+
+            mime_detector = magic.open(
+                magic.MAGIC_MIME_TYPE | magic.MAGIC_ERROR)
+            mime_detector.load()
+            mime_type = mime_detector.file(tmp_initrd_path)
+            if not mime_type:
+                raise RuntimeError(
+                    'Unable to determine mime type for {!r}: {}'.format(
+                        tmp_initrd_path, os.strerror(mime_detector.errno())))
             logger.debug('initrd mime_type: {} {}'.format(
                 tmp_initrd_path, mime_type))
-            decompressor = 'gzip'
+
+            # Support gzip (can be gzip or x-gzip)
             if 'gzip' in mime_type:
                 decompressor = 'gzip'
+            # Support lzma/xz
             elif any(x in mime_type for x in ('x-xz', 'x-lzma')):
                 decompressor = 'xz'
+            else:
+                raise RuntimeError(
+                    'initrd file type is unsupported: {!r}'.format(mime_type))
 
             subprocess.check_call(
                 'cat {0} | {1} -dc | cpio -i'.format(
