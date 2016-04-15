@@ -294,7 +294,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         super().pull()
         config = load_config()
         storeapi.download(
-            'ubuntu-core/edge', self.os_snap, config, self.project.deb_arch)
+            'ubuntu-core', 'edge', self.os_snap, config, self.project.deb_arch)
 
     def do_install(self):
         super().do_install()
