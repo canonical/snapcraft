@@ -35,11 +35,11 @@ _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 class Cleanbuilder:
 
-    def __init__(self, snap_output, project, deb_arch,
+    def __init__(self, snap_output, tar_filename, project_options,
                  server=_DEFAULT_IMAGE_SERVER):
         self._snap_output = snap_output
-        self._project = project
-        self._deb_arch = deb_arch
+        self._tar_filename = tar_filename
+        self._project_options = project_options
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
         self._server = server
@@ -62,7 +62,8 @@ class Cleanbuilder:
             check_call(['lxc', 'remote', 'add', remote_tmp, self._server])
             check_call([
                 'lxc', 'launch',
-                '{}:ubuntu/xenial/{}'.format(remote_tmp, self._deb_arch),
+                '{}:ubuntu/xenial/{}'.format(
+                    remote_tmp, self._project_options.deb_arch),
                 self._container_name])
             yield
         finally:
@@ -81,8 +82,8 @@ class Cleanbuilder:
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
-        dst = os.path.join('/root', os.path.basename(self._project))
-        self._push_file(self._project, dst)
+        dst = os.path.join('/root', os.path.basename(self._tar_filename))
+        self._push_file(self._tar_filename, dst)
         self._container_run(['tar', 'xvf', dst])
 
     def _pull_snap(self):
