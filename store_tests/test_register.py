@@ -20,7 +20,7 @@ import fixtures
 import store_tests
 
 
-class LoginLogoutTestCase(store_tests.TestCase):
+class RegisterTestCase(store_tests.TestCase):
 
     def setUp(self):
         super().setUp()
