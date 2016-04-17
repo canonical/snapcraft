@@ -86,7 +86,7 @@ def install_build_packages(packages):
             'DEBIAN_FRONTEND': 'noninteractive',
             'DEBCONF_NONINTERACTIVE_SEEN': 'true',
         })
-        subprocess.check_call(['sudo', 'apt-get', '-o',
+        subprocess.check_call(['sudo', 'apt', '-o',
                                'Dpkg::Progress-Fancy=1',
                                '--no-install-recommends', '-y',
                                'install'] + new_packages, env=env)

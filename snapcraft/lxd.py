@@ -74,8 +74,8 @@ class Cleanbuilder:
         with self._create_container():
             self._setup_project()
             self._wait_for_network()
-            self._container_run(['apt-get', 'update'])
-            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+            self._container_run(['apt', 'update'])
+            self._container_run(['apt', 'install', 'snapcraft', '-y'])
             self._container_run(
                 ['snapcraft', 'snap', '--output', self._snap_output])
             self._pull_snap()
