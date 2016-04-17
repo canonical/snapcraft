@@ -19,8 +19,8 @@ import tempfile
 import unittest.mock
 
 import snapcraft
-from snapcraft.internal import common
-from snapcraft import sources, tests
+from snapcraft.internal import common, sources
+from snapcraft import tests
 
 
 class TestBasePlugin(tests.TestCase):

@@ -18,8 +18,7 @@ import contextlib
 import os
 import shutil
 
-from snapcraft import sources
-from snapcraft.internal import common
+from snapcraft.internal import common, sources
 
 
 class BasePlugin:

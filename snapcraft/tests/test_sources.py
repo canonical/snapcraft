@@ -19,7 +19,7 @@ import http.server
 import threading
 import unittest.mock
 
-from snapcraft import sources
+from snapcraft.internal import sources
 
 from snapcraft import tests
 
