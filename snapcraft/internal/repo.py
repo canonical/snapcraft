@@ -30,7 +30,7 @@ import urllib.request
 import apt
 from xml.etree import ElementTree
 
-from snapcraft import common
+from snapcraft.internal import common
 
 
 _BIN_PATHS = (

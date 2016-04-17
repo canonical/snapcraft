@@ -103,7 +103,7 @@ import textwrap
 from docopt import docopt
 
 import snapcraft
-from snapcraft import log
+from snapcraft.internal import lifecycle, log
 
 
 logger = logging.getLogger(__name__)
@@ -161,7 +161,7 @@ def _get_lifecycle_command(args):
 
 def _get_command_from_arg(args):
     functions = {
-        'init': snapcraft.lifecycle.init,
+        'init': lifecycle.init,
         'login': snapcraft.login,
         'logout': snapcraft.logout,
         'list-plugins': _list_plugins,
@@ -176,23 +176,21 @@ def run(args, project_options):
     lifecycle_command = _get_lifecycle_command(args)
     argless_command = _get_command_from_arg(args)
     if lifecycle_command:
-        snapcraft.lifecycle.execute(
+        lifecycle.execute(
             lifecycle_command, project_options, args['<part>'])
     elif argless_command:
         argless_command()
     elif args['clean']:
-        snapcraft.lifecycle.clean(project_options,
-                                  args['<part>'], args['--step'])
+        lifecycle.clean(project_options, args['<part>'], args['--step'])
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:
-        snapcraft.lifecycle.cleanbuild(project_options),
+        lifecycle.cleanbuild(project_options),
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
     else:  # snap by default:
-        snapcraft.lifecycle.snap(
-            project_options, args['<directory>'], args['--output'])
+        lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
     return project_options
 

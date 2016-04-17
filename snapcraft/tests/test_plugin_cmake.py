@@ -31,7 +31,7 @@ class CMakeTestCase(tests.TestCase):
 
         self.project_options = snapcraft.ProjectOptions()
 
-        patcher = mock.patch('snapcraft.common.run')
+        patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

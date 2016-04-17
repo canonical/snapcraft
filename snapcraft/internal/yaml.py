@@ -25,10 +25,10 @@ import jsonschema
 import yaml
 
 import snapcraft
-from snapcraft import (
+from snapcraft import sources
+from snapcraft.internal import (
     libraries,
     pluginhandler,
-    sources,
     wiki,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError

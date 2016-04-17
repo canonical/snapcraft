@@ -58,7 +58,7 @@ import re
 import subprocess
 import tempfile
 
-import snapcraft.common
+from snapcraft.internal import common
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -180,7 +180,7 @@ class Tar(Base):
                 'can\'t specify a source-branch for a tar source')
 
     def pull(self):
-        if snapcraft.common.isurl(self.source):
+        if common.isurl(self.source):
             self.download()
         else:
             shutil.copy2(self.source, self.source_dir)
@@ -335,7 +335,7 @@ def _get_source_type_from_uri(source, ignore_errors=False):
         source_type = 'git'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
-    elif snapcraft.common.isurl(source) and not ignore_errors:
+    elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
     elif not os.path.isdir(source) and not ignore_errors:
         raise ValueError('local source is not a directory')

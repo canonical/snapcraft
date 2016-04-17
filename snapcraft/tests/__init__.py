@@ -21,7 +21,7 @@ from unittest import mock
 import fixtures
 import testscenarios
 
-from snapcraft import common
+from snapcraft.internal import common
 from snapcraft.tests import fixture_setup
 
 

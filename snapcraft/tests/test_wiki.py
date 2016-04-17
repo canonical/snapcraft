@@ -16,7 +16,7 @@
 
 import unittest.mock
 
-import snapcraft.wiki
+from snapcraft.internal import wiki
 
 from snapcraft.tests import TestCase
 
@@ -40,7 +40,7 @@ class TestYaml(TestCase):
         self.mock_requests.return_value = Content()
         self.addCleanup(patcher.stop)
 
-        self.w = snapcraft.wiki.Wiki()
+        self.w = wiki.Wiki()
 
     def tearDown(self):
         self.mock_requests.assert_called_once_with(

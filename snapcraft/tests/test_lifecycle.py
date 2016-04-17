@@ -20,10 +20,11 @@ import fixtures
 from unittest import mock
 
 import snapcraft
-from snapcraft import (
+from snapcraft.internal import (
     pluginhandler,
-    tests,
+    lifecycle,
 )
+from snapcraft import tests
 
 
 class ExecutionTestCases(tests.TestCase):
@@ -58,8 +59,8 @@ description: test
 """)
 
         with self.assertRaises(RuntimeError) as raised:
-            snapcraft.lifecycle.execute(
-                'pull', self.project_options, part_names=['part2'])
+            lifecycle.execute('pull', self.project_options,
+                              part_names=['part2'])
 
         self.assertEqual(
             raised.exception.__str__(),
@@ -82,8 +83,8 @@ description: test
         with mock.patch.object(pluginhandler.PluginHandler,
                                'should_step_run',
                                _fake_should_step_run):
-            snapcraft.lifecycle.execute(
-                'pull', self.project_options, part_names=['part2'])
+            lifecycle.execute('pull', self.project_options,
+                              part_names=['part2'])
 
         self.assertEqual(
             'Preparing to pull part2 \n'
@@ -100,7 +101,7 @@ description: test
       - part1
 """)
 
-        snap_info = snapcraft.lifecycle.execute('pull', self.project_options)
+        snap_info = lifecycle.execute('pull', self.project_options)
 
         expected_snap_info = {
             'name': 'test',
@@ -132,7 +133,7 @@ description: test
       - part1
 """, 'type: os')
 
-        snap_info = snapcraft.lifecycle.execute('pull', self.project_options)
+        snap_info = lifecycle.execute('pull', self.project_options)
 
         expected_snap_info = {
             'name': 'test',
@@ -151,7 +152,7 @@ description: test
 """)
 
         # Strip it.
-        snapcraft.lifecycle.execute('strip', self.project_options)
+        lifecycle.execute('strip', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -164,7 +165,7 @@ description: test
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
-            snapcraft.lifecycle.execute('strip', self.project_options)
+            lifecycle.execute('strip', self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -198,7 +199,7 @@ description: test
 """)
 
         # Strip it.
-        snapcraft.lifecycle.execute('strip', self.project_options)
+        lifecycle.execute('strip', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -211,7 +212,7 @@ description: test
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
-            snapcraft.lifecycle.execute('strip', self.project_options)
+            lifecycle.execute('strip', self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -246,7 +247,7 @@ description: test
 """)
 
         # Stage it.
-        snapcraft.lifecycle.execute('stage', self.project_options)
+        lifecycle.execute('stage', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -259,7 +260,7 @@ description: test
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
-            snapcraft.lifecycle.execute('stage', self.project_options)
+            lifecycle.execute('stage', self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -293,7 +294,7 @@ description: test
 """)
 
         # Stage it.
-        snapcraft.lifecycle.execute('stage', self.project_options)
+        lifecycle.execute('stage', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -306,7 +307,7 @@ description: test
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
-            snapcraft.lifecycle.execute('stage', self.project_options)
+            lifecycle.execute('stage', self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -344,11 +345,9 @@ description: test
 """)
 
         # Stage dependency
-        snapcraft.lifecycle.execute('stage', self.project_options,
-                                    part_names=['part1'])
+        lifecycle.execute('stage', self.project_options, part_names=['part1'])
         # Build dependent
-        snapcraft.lifecycle.execute('build', self.project_options,
-                                    part_names=['part2'])
+        lifecycle.execute('build', self.project_options, part_names=['part2'])
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -362,8 +361,8 @@ description: test
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
             with self.assertRaises(RuntimeError) as raised:
-                snapcraft.lifecycle.execute('stage', self.project_options,
-                                            part_names=['part1'])
+                lifecycle.execute('stage', self.project_options,
+                                  part_names=['part1'])
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -389,8 +388,7 @@ description: test
 """)
 
         # Stage dependency (dependent is unbuilt)
-        snapcraft.lifecycle.execute('stage', self.project_options,
-                                    part_names=['part1'])
+        lifecycle.execute('stage', self.project_options, part_names=['part1'])
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -403,8 +401,8 @@ description: test
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
-            snapcraft.lifecycle.execute('stage', self.project_options,
-                                        part_names=['part1'])
+            lifecycle.execute('stage', self.project_options,
+                              part_names=['part1'])
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n'
@@ -422,7 +420,7 @@ description: test
 """)
 
         # Strip it.
-        snapcraft.lifecycle.execute('strip', self.project_options)
+        lifecycle.execute('strip', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -435,7 +433,7 @@ description: test
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
-            snapcraft.lifecycle.execute('strip', self.project_options)
+            lifecycle.execute('strip', self.project_options)
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n'
@@ -453,7 +451,7 @@ description: test
 """)
 
         # Build it.
-        snapcraft.lifecycle.execute('build', self.project_options)
+        lifecycle.execute('build', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -466,7 +464,7 @@ description: test
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
             with self.assertRaises(RuntimeError) as raised:
-                snapcraft.lifecycle.execute('build', self.project_options)
+                lifecycle.execute('build', self.project_options)
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n',
@@ -483,7 +481,7 @@ description: test
 """)
 
         # Pull it.
-        snapcraft.lifecycle.execute('pull', self.project_options)
+        lifecycle.execute('pull', self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -496,7 +494,7 @@ description: test
         with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
                                _fake_is_dirty):
             with self.assertRaises(RuntimeError) as raised:
-                snapcraft.lifecycle.execute('pull', self.project_options)
+                lifecycle.execute('pull', self.project_options)
 
         self.assertEqual('', self.fake_logger.output)
 
@@ -509,26 +507,26 @@ class HumanizeListTestCases(tests.TestCase):
 
     def test_no_items(self):
         items = []
-        output = snapcraft.lifecycle._humanize_list(items)
+        output = lifecycle._humanize_list(items)
         self.assertEqual(output, '')
 
     def test_one_item(self):
         items = ['foo']
-        output = snapcraft.lifecycle._humanize_list(items)
+        output = lifecycle._humanize_list(items)
         self.assertEqual(output, "'foo'")
 
     def test_two_items(self):
         items = ['foo', 'bar']
-        output = snapcraft.lifecycle._humanize_list(items)
+        output = lifecycle._humanize_list(items)
         self.assertEqual(output, "'bar' and 'foo'",
                          "Expected 'bar' before 'foo' due to sorting")
 
     def test_three_items(self):
         items = ['foo', 'bar', 'baz']
-        output = snapcraft.lifecycle._humanize_list(items)
+        output = lifecycle._humanize_list(items)
         self.assertEqual(output, "'bar', 'baz', and 'foo'")
 
     def test_four_items(self):
         items = ['foo', 'bar', 'baz', 'qux']
-        output = snapcraft.lifecycle._humanize_list(items)
+        output = lifecycle._humanize_list(items)
         self.assertEqual(output, "'bar', 'baz', 'foo', and 'qux'")

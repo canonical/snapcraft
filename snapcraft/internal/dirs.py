@@ -22,10 +22,10 @@ def setup_dirs():
     Ensure that snapcraft.common plugindir is setup correctly
     and support running out of a development snapshot
     """
-    from snapcraft import common
-    topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
+    from snapcraft.internal import common
+    topdir = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
     # only change the default if we are running from a checkout
     if os.path.exists(os.path.join(topdir, 'setup.py')):
-        common.set_plugindir(os.path.join(topdir, 'plugins'))
+        common.set_plugindir(os.path.join(topdir, 'snapcraft', 'plugins'))
         common.set_schemadir(os.path.join(topdir, 'schema'))
         common.set_librariesdir(os.path.join(topdir, 'libraries'))

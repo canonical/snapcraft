@@ -29,12 +29,12 @@ from unittest.mock import (
 import fixtures
 
 import snapcraft
-from snapcraft import (
+from snapcraft.internal import (
     common,
-    internal,
     pluginhandler,
-    tests,
+    states,
 )
+from snapcraft import tests
 from snapcraft.plugins import nil
 
 
@@ -232,8 +232,8 @@ class PluginTestCase(tests.TestCase):
                              'already-staged files')
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_non_local_plugins(self, plugin_mock,
                                local_load_mock, import_mock):
         mock_plugin = Mock()
@@ -247,8 +247,8 @@ class PluginTestCase(tests.TestCase):
         local_load_mock.assert_called_with('x-mock', self.local_plugins_dir)
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_without_project(self, plugin_mock,
                                     local_load_mock, import_mock):
         class OldPlugin(snapcraft.BasePlugin):
@@ -265,8 +265,8 @@ class PluginTestCase(tests.TestCase):
         self.assertTrue(plugin.code.project is not None)
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_without_project_not_from_base(self, plugin_mock,
                                                   local_load_mock,
                                                   import_mock):
@@ -288,8 +288,8 @@ class PluginTestCase(tests.TestCase):
         self.assertTrue(plugin.code.project is not None)
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_schema_step_hint_pull(self, plugin_mock,
                                           local_load_mock, import_mock):
         class Plugin(snapcraft.BasePlugin):
@@ -311,8 +311,8 @@ class PluginTestCase(tests.TestCase):
             {'properties': {}})
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_schema_step_hint_build(self, plugin_mock,
                                            local_load_mock, import_mock):
         class Plugin(snapcraft.BasePlugin):
@@ -334,8 +334,8 @@ class PluginTestCase(tests.TestCase):
             {'properties': {}})
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_schema_step_hint_pull_and_build(self, plugin_mock,
                                                     local_load_mock,
                                                     import_mock):
@@ -359,8 +359,8 @@ class PluginTestCase(tests.TestCase):
             {'properties': {}})
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_schema_invalid_pull_hint(self, plugin_mock,
                                              local_load_mock, import_mock):
         class Plugin(snapcraft.BasePlugin):
@@ -388,8 +388,8 @@ class PluginTestCase(tests.TestCase):
             str(raised.exception))
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_plugin_schema_invalid_build_hint(self, plugin_mock,
                                               local_load_mock, import_mock):
         class Plugin(snapcraft.BasePlugin):
@@ -549,7 +549,7 @@ class StateTestCase(tests.TestCase):
                 handler = pluginhandler.load_plugin(part_name, 'nil')
                 self.assertEqual(step, handler.last_step())
 
-    @patch('snapcraft.repo.Ubuntu')
+    @patch('snapcraft.internal.repo.Ubuntu')
     def test_pull_state(self, ubuntu_mock):
         self.assertEqual(None, self.handler.last_step())
 
@@ -559,13 +559,13 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
-        self.assertTrue(type(state) is internal.states.PullState)
+        self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is dict)
         self.assertEqual(0, len(state.properties))
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_pull_state_with_properties(self, plugin_mock, local_load_mock,
                                         import_mock):
         self.handler.pull_properties = ['foo']
@@ -579,7 +579,7 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
-        self.assertTrue(type(state) is internal.states.PullState)
+        self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is dict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
@@ -606,13 +606,13 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
-        self.assertTrue(type(state) is internal.states.BuildState)
+        self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is dict)
         self.assertEqual(0, len(state.properties))
 
     @patch('importlib.import_module')
-    @patch('snapcraft.pluginhandler._load_local')
-    @patch('snapcraft.pluginhandler._get_plugin')
+    @patch('snapcraft.internal.pluginhandler._load_local')
+    @patch('snapcraft.internal.pluginhandler._get_plugin')
     def test_build_state_with_properties(self, plugin_mock, local_load_mock,
                                          import_mock):
         self.handler.build_properties = ['foo']
@@ -626,7 +626,7 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
-        self.assertTrue(type(state) is internal.states.BuildState)
+        self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is dict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
@@ -660,7 +660,7 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
-        self.assertTrue(type(state) is internal.states.StageState)
+        self.assertTrue(type(state) is states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is dict)
@@ -689,7 +689,7 @@ class StateTestCase(tests.TestCase):
         state = self.handler.get_state('stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
-        self.assertTrue(type(state) is internal.states.StageState)
+        self.assertTrue(type(state) is states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is dict)
@@ -712,7 +712,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('build')
 
         self.handler.mark_done(
-            'stage', internal.states.StageState({'bin/1', 'bin/2'}, {'bin'}))
+            'stage', states.StageState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_stage({})
 
@@ -730,7 +730,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('build')
 
         self.handler.mark_done(
-            'stage', internal.states.StageState({'bin/1', 'bin/2'}, {'bin'}))
+            'stage', states.StageState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_stage({})
 
@@ -751,10 +751,10 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('build')
 
         self.handler.mark_done(
-            'stage', internal.states.StageState({'bin/1', 'bin/2'}, {'bin'}))
+            'stage', states.StageState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_stage({
-            'other_part': internal.states.StageState({'bin/2'}, {'bin'})
+            'other_part': states.StageState({'bin/2'}, {'bin'})
         })
 
         self.assertEqual('build', self.handler.last_step())
@@ -773,7 +773,7 @@ class StateTestCase(tests.TestCase):
             "Failed to clean step 'stage': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
-    @patch('snapcraft.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
     def test_strip_state(self, mock_copy, mock_find_dependencies):
         mock_find_dependencies.return_value = set()
@@ -795,7 +795,7 @@ class StateTestCase(tests.TestCase):
 
         state = self.handler.get_state('strip')
 
-        self.assertTrue(type(state) is internal.states.StripState)
+        self.assertTrue(type(state) is states.StripState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -809,8 +809,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
 
-    @patch('snapcraft.pluginhandler._find_dependencies')
-    @patch('snapcraft.pluginhandler._migrate_files')
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_strip_state_with_dependencies(self, mock_migrate_files,
                                            mock_find_dependencies):
         mock_find_dependencies.return_value = {
@@ -841,7 +841,7 @@ class StateTestCase(tests.TestCase):
 
         state = self.handler.get_state('strip')
 
-        self.assertTrue(type(state) is internal.states.StripState)
+        self.assertTrue(type(state) is states.StripState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -858,7 +858,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
 
-    @patch('snapcraft.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
     def test_strip_state_with_snap_keyword(self, mock_copy,
                                            mock_find_dependencies):
@@ -882,7 +882,7 @@ class StateTestCase(tests.TestCase):
 
         state = self.handler.get_state('strip')
 
-        self.assertTrue(type(state) is internal.states.StripState)
+        self.assertTrue(type(state) is states.StripState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -905,7 +905,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', internal.states.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'strip', states.StripState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_strip({})
 
@@ -923,7 +923,7 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', internal.states.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'strip', states.StripState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_strip({})
 
@@ -944,10 +944,10 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', internal.states.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'strip', states.StripState({'bin/1', 'bin/2'}, {'bin'}))
 
         self.handler.clean_strip({
-            'other_part': internal.states.StripState({'bin/2'}, {'bin'})
+            'other_part': states.StripState({'bin/2'}, {'bin'})
         })
 
         self.assertEqual('stage', self.handler.last_step())
@@ -978,7 +978,7 @@ class IsDirtyTestCase(tests.TestCase):
     def test_strip_is_dirty(self):
         self.handler.code.options.snap = ['foo']
         self.handler.mark_done(
-            'strip', internal.states.StripState(
+            'strip', states.StripState(
                 set(), set(), set(), self.handler.code.options))
         self.assertFalse(self.handler.is_clean('strip'),
                          'Strip step was unexpectedly clean')
@@ -1002,7 +1002,7 @@ class IsDirtyTestCase(tests.TestCase):
     def test_stage_is_dirty(self):
         self.handler.code.options.stage = ['foo']
         self.handler.mark_done(
-            'stage', internal.states.StageState(
+            'stage', states.StageState(
                 set(), set(), self.handler.code.options))
         self.assertFalse(self.handler.is_clean('stage'),
                          'Stage step was unexpectedly clean')
@@ -1027,8 +1027,8 @@ class IsDirtyTestCase(tests.TestCase):
         self.handler.build_properties = ['foo']
         self.handler.code.options.foo = ['bar']
         self.handler.mark_done(
-            'build', internal.states.BuildState(self.handler.build_properties,
-                                                self.handler.code.options))
+            'build', states.BuildState(self.handler.build_properties,
+                                       self.handler.code.options))
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
         self.assertFalse(self.handler.is_dirty('build'),
@@ -1052,8 +1052,8 @@ class IsDirtyTestCase(tests.TestCase):
         self.handler.pull_properties = ['foo']
         self.handler.code.options.foo = ['bar']
         self.handler.mark_done(
-            'pull', internal.states.PullState(self.handler.pull_properties,
-                                              self.handler.code.options))
+            'pull', states.PullState(self.handler.pull_properties,
+                                     self.handler.code.options))
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
         self.assertFalse(self.handler.is_dirty('pull'),
@@ -1811,7 +1811,7 @@ class StageEnvTestCase(tests.TestCase):
 class FindDependenciesTestCase(tests.TestCase):
 
     @patch('magic.open')
-    @patch('snapcraft.libraries.get_dependencies')
+    @patch('snapcraft.internal.libraries.get_dependencies')
     def test_find_dependencies(self, mock_dependencies, mock_magic):
         workdir = os.path.join(os.getcwd(), 'workdir')
         os.makedirs(workdir)
@@ -1835,7 +1835,7 @@ class FindDependenciesTestCase(tests.TestCase):
         self.assertEqual(dependencies, {'/usr/lib/libDepends.so'})
 
     @patch('magic.open')
-    @patch('snapcraft.libraries.get_dependencies')
+    @patch('snapcraft.internal.libraries.get_dependencies')
     def test_find_dependencies_skip_object_files(self, mock_dependencies,
                                                  mock_magic):
         workdir = os.path.join(os.getcwd(), 'workdir')
@@ -1859,7 +1859,7 @@ class FindDependenciesTestCase(tests.TestCase):
         self.assertEqual(dependencies, set())
 
     @patch('magic.open')
-    @patch('snapcraft.libraries.get_dependencies')
+    @patch('snapcraft.internal.libraries.get_dependencies')
     def test_no_find_dependencies_of_non_dynamically_linked(
             self, mock_dependencies, mock_magic):
         workdir = os.path.join(os.getcwd(), 'workdir')
@@ -1888,7 +1888,7 @@ class FindDependenciesTestCase(tests.TestCase):
         self.assertFalse(dependencies)
 
     @patch('magic.open')
-    @patch('snapcraft.libraries.get_dependencies')
+    @patch('snapcraft.internal.libraries.get_dependencies')
     def test_no_find_dependencies_of_non_elf_files(
             self, mock_dependencies, mock_magic):
         workdir = os.path.join(os.getcwd(), 'workdir')
@@ -1915,7 +1915,7 @@ class FindDependenciesTestCase(tests.TestCase):
             'non elf files should not have library dependencies')
 
     @patch('magic.open')
-    @patch('snapcraft.libraries.get_dependencies')
+    @patch('snapcraft.internal.libraries.get_dependencies')
     def test_no_find_dependencies_of_symlinks(
             self, mock_dependencies, mock_magic):
         workdir = os.path.join(os.getcwd(), 'workdir')

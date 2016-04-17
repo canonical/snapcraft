@@ -42,7 +42,6 @@ import os
 import stat
 
 import snapcraft
-import snapcraft.common
 
 
 class AutotoolsPlugin(snapcraft.BasePlugin):
