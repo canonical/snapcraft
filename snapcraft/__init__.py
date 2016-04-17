@@ -115,5 +115,6 @@ from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
 from snapcraft._store import login, logout, upload  # noqa
-from snapcraft.internal import repo                 # noqa
+from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
+from snapcraft.internal import repo                 # noqa
