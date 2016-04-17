@@ -67,9 +67,9 @@ class LXDTestCase(tests.TestCase):
                   '"http://start.ubuntu.com/connectivity-check.html", '
                   'timeout=5)']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
-                  'apt-get', 'update']),
+                  'apt', 'update']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
+                  'apt', 'install', 'snapcraft', '-y']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
                   'snapcraft', 'snap', '--output', 'snap.snap']),
             call(['lxc', 'file', 'pull',

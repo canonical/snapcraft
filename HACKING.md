@@ -10,7 +10,7 @@ To see all the commands and options, run `snapcraft --help`.
 
 - You'll need to add the following dependencies to run the tests.
 
-    sudo apt-get install python3-flake8 python3-fixtures python3-testscenarios python3-mock python3-responses
+    sudo apt install python3-flake8 python3-fixtures python3-testscenarios python3-mock python3-responses
 
 Simply run the top level testing script:
 
@@ -18,7 +18,7 @@ Simply run the top level testing script:
 
 - If you want to get a test coverage report, install python3-coverage before running the tests:
 
-    sudo apt-get install python3-coverage
+    sudo apt install python3-coverage
 
 
 - If you don't want to run the plainbox integration tests, you can skip them by setting SNAPCRAFT_TESTS_SKIP_PLAINBOX=1 in your environment.

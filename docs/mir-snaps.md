@@ -37,7 +37,7 @@ in a clean environment. Also, make sure Virtual Machine Manager is installed,
 from Ubuntu Software Center or
 
 ```
-apt-get install virt-manager
+apt install virt-manager
 ```
 
 ### Get the Mir Snap running first

@@ -14,8 +14,8 @@ env:
   - TEST_SUITE=static
   - TEST_SUITE=unit
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y python3-coverage python3-distutils-extra
+  - sudo apt -qq update
+  - sudo apt install -y python3-coverage python3-distutils-extra
 install:
   - pip install docopt fixtures flake8 jsonschema lxml mccabe petname pexpect python-apt pyxdg pyyaml py3-progressbar requests requests-oauthlib requests-toolbelt responses setuptools ssoclient testscenarios file-magic
 script:
