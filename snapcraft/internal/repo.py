@@ -30,6 +30,7 @@ import urllib.request
 import apt
 from xml.etree import ElementTree
 
+import snapcraft
 from snapcraft.internal import common
 
 
@@ -121,6 +122,8 @@ class Ubuntu:
         self.rootdir = rootdir
         self.recommends = recommends
 
+        if not project_options:
+            project_options = snapcraft.ProjectOptions()
         self.apt_cache, self.apt_progress = _setup_apt_cache(
             rootdir, sources, project_options)
 
