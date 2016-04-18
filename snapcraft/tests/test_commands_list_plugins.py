@@ -40,7 +40,6 @@ nil
 nodejs
 python2
 python3
-qml
 scons
 tar-content
 '''
