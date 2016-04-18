@@ -30,13 +30,13 @@ class TestLoginLogout(store_tests.TestCase):
                  ('macaroons', dict(with_macaroons=True)))
 
     def setUp(self):
+        super().setUp()
         if self.with_macaroons:
             self.useFixture(
                 fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
         else:
             self.useFixture(
                 fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
-        super().setUp()
 
     def test_successful_login(self):
         self.addCleanup(self.logout)

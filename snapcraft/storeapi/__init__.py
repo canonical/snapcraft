@@ -39,7 +39,6 @@ class V2ApiClient(object):
     def __init__(self, sso_class=None):
         if sso_class is None:
             sso_class = sso.V2ApiClient
-        self.with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
         self.conf = config.Config()
         self.session = requests.Session()
         self.root_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
@@ -49,7 +48,8 @@ class V2ApiClient(object):
         self.sso = sso_class(sso_endpoint)
 
     def login(self, email, password, one_time_password=None):
-        if self.with_macaroons:
+        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
+        if with_macaroons:
             return self.macaroon_login(email, password, one_time_password)
         else:
             return self.oauth_login(email, password, one_time_password)
