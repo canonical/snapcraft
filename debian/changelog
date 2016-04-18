@@ -1,3 +1,11 @@
+snapcraft (2.8.2) xenial; urgency=medium
+
+  * Don't expose broken or fragile APIs to plugins (LP: #1571264)
+  * catkin plugin: use ProjectOptions for repo setup (#468) (LP: #1571446)
+  * qml plugin: remove broken plugin (#469) (LP: #1551343)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 18 Apr 2016 10:06:15 -0300
+
 snapcraft (2.8.1) xenial; urgency=medium
 
   [ Simon Busch ]
