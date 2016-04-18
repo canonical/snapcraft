@@ -99,17 +99,17 @@ class V2ApiClient(object):
 
     def get_macaroon(self, acl):
         response = self.post('../../api/2.0/acl/{}/'.format(acl), data={})
-        if response['success']:
-            return response['data']['macaroon'], None
+        if response.ok:
+            return response.json()['macaroon'], None
         else:
-            return None, response['errors']
+            return None, response.text
 
     def get_discharge(self, email, password, one_time_password, macaroon):
         data = dict(email=email, password=password, macaroon=macaroon)
         if one_time_password:
             data['otp'] = one_time_password
         try:
-            response = self.sso.post(
+            response = self.sso.session.post(
                 '/tokens/discharge', data=data,
                 headers={'Content-Type': 'application/json',
                          'Accept': 'application/json'})

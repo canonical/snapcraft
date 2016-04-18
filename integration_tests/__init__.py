@@ -18,7 +18,6 @@ import os
 import shutil
 import subprocess
 
-import fixtures
 import pexpect
 import testtools
 from testtools import content
