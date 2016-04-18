@@ -13,131 +13,83 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import, unicode_literals
 import os
-import shutil
-import tempfile
-from configparser import ConfigParser
-from unittest.mock import patch
 
-from snapcraft import tests
-from snapcraft.config import clear_config, load_config, save_config
+from xdg import BaseDirectory
+
+import fixtures
+
+from snapcraft import (
+    config,
+    tests,
+)
 
 
-class ConfigTestCase(tests.TestCase):
+class TestConfig(tests.TestCase):
 
     def setUp(self):
-        super(ConfigTestCase, self).setUp()
+        super().setUp()
+        # Tell xdg to look into our private tmp dir
+        self.addCleanup(
+            setattr, BaseDirectory, 'xdg_config_home',
+            BaseDirectory.xdg_config_home)
+        self.addCleanup(
+            setattr, BaseDirectory, 'xdg_config_dirs',
+            BaseDirectory.xdg_config_dirs)
+        BaseDirectory.xdg_config_home = os.path.join(self.path, '.config')
+        BaseDirectory.xdg_config_dirs = [BaseDirectory.xdg_config_home]
 
-        patcher = patch('snapcraft.config.load_first_config')
-        self.mock_load_first_config = patcher.start()
-        self.addCleanup(patcher.stop)
+    def create_config_from_string(self, content):
+        path = config.Config.save_path()
+        with open(path, 'w') as f:
+            f.write(content)
 
-        patcher = patch('snapcraft.config.save_config_path')
-        self.mock_save_config_path = patcher.start()
-        self.addCleanup(patcher.stop)
+    def test_non_existing_file_succeeds(self):
+        conf = config.Config()
+        conf.load()
+        self.assertEqual([], conf.parser.sections())
 
-        cfg_dir = tempfile.mkdtemp()
-        self.addCleanup(lambda: shutil.rmtree(cfg_dir))
-        self.filename = os.path.join(cfg_dir, 'snapcraft.cfg')
-        self.mock_load_first_config.return_value = self.filename
-        self.mock_save_config_path.return_value = cfg_dir
+    def test_existing_file(self):
+        existing_conf = config.Config()
+        existing_conf.set('foo', 'bar')
+        existing_conf.save()
+        # Check we find and use the existing conf
+        conf = config.Config()
+        conf.load()
+        self.assertEqual('bar', conf.get('foo'))
 
-        # make sure env is not overwritten
-        patcher = patch.object(os, 'environ', {})
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    def test_irrelevant_sections_are_ignored(self):
+        self.create_config_from_string('''[example.com]\nfoo=bar''')
+        conf = config.Config()
+        conf.load()
+        self.assertEqual(None, conf.get('foo'))
 
-    def get_temporary_file(self, suffix='.cfg'):
-        return tempfile.NamedTemporaryFile(suffix=suffix)
+    def test_section_from_url(self):
+        self.create_config_from_string('''[example.com]\nfoo=bar''')
+        self.useFixture(fixtures.EnvironmentVariable(
+            'UBUNTU_SSO_API_ROOT_URL', 'http://example.com/api/v2'))
+        conf = config.Config()
+        conf.load()
+        self.assertEqual('bar', conf.get('foo'))
 
+    def test_save_one_option(self):
+        conf = config.Config()
+        conf.set('bar', 'baz')
+        conf.save()
+        new_conf = config.Config()
+        new_conf.load()
+        self.assertEqual('baz', conf.get('bar'))
 
-class LoadConfigTestCase(ConfigTestCase):
-
-    def test_load_config_with_no_existing_file(self):
-        data = load_config()
-        self.assertEqual(data, {})
-
-    def test_load_config_with_no_existing_section(self):
-        cfg = ConfigParser()
-        cfg.add_section('some.domain')
-        cfg.set('some.domain', 'foo', '1')
-        with open(self.filename, 'w') as fd:
-            cfg.write(fd)
-
-        data = load_config()
-        self.assertEqual(data, {})
-
-    def test_load_config(self):
-        cfg = ConfigParser()
-        cfg.add_section('login.ubuntu.com')
-        cfg.set('login.ubuntu.com', 'foo', '1')
-        with open(self.filename, 'w') as fd:
-            cfg.write(fd)
-
-        data = load_config()
-        self.assertEqual(data, {'foo': '1'})
-
-
-class SaveConfigTestCase(ConfigTestCase):
-
-    def test_save_config_with_no_existing_file(self):
-        data = {'key': 'value'}
-
-        save_config(data)
-        self.assertEqual(load_config(), data)
-
-    def test_save_config_with_existing_file(self):
-        cfg = ConfigParser()
-        cfg.add_section('some.domain')
-        cfg.set('some.domain', 'foo', '1')
-        with open(self.filename, 'w') as fd:
-            cfg.write(fd)
-
-        data = {'key': 'value'}
-        save_config(data)
-
-        config = load_config()
-        self.assertEqual(config, data)
-
-
-class ClearConfigTestCase(ConfigTestCase):
-
-    def test_clear_config_with_no_existing_section(self):
-        cfg = ConfigParser()
-        cfg.add_section('some.domain')
-        cfg.set('some.domain', 'foo', '1')
-        with open(self.filename, 'w') as fd:
-            cfg.write(fd)
-
-        config = load_config()
-        assert config == {}
-
-        clear_config()
-
-        config = load_config()
-        self.assertEqual(config, {})
-
-    def test_clear_config_removes_existing_section(self):
-        cfg = ConfigParser()
-        cfg.add_section('login.ubuntu.com')
-        cfg.set('login.ubuntu.com', 'foo', '1')
-        with open(self.filename, 'w') as fd:
-            cfg.write(fd)
-
-        config = load_config()
-        assert config != {}
-
-        clear_config()
-
-        config = load_config()
-        self.assertEqual(config, {})
-
-    def test_clear_config_with_no_existing_file(self):
-        config = load_config()
-        assert config == {}
-
-        clear_config()
-
-        config = load_config()
-        self.assertEqual(config, {})
+    def test_clear_preserver_other_sections(self):
+        self.create_config_from_string('''[keep_me]\nfoo=bar\n''')
+        conf = config.Config()
+        conf.load()
+        conf.set('bar', 'baz')
+        self.assertEqual('baz', conf.get('bar'))
+        conf.clear()
+        conf.save()
+        new_conf = config.Config()
+        new_conf.load()
+        self.assertEqual(None, conf.get('bar'))
+        # Picking behind the curtains
+        self.assertEqual('bar', conf.parser.get('keep_me', 'foo'))

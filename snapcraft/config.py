@@ -14,16 +14,70 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, unicode_literals
+import configparser
 import os
-from configparser import ConfigParser
+
+from xdg import BaseDirectory
+
 from urllib.parse import urlparse
 
+from configparser import ConfigParser
 from xdg.BaseDirectory import load_first_config, save_config_path
 
 from snapcraft.storeapi.constants import UBUNTU_SSO_API_ROOT_URL
 
 
+class Config(object):
+    """Hold configuration options in sections.
+
+    There can be two sections for the sso related credentials: production and
+    staging. This is gouverned by the UBUNTU_SSO_API_ROOT_URL environment
+    variable. Other sections are ignored but preserved.
+    """
+
+    def __init__(self):
+        self.parser = configparser.ConfigParser()
+        self.filename = None
+
+    def _section_name(self):
+        url = os.environ.get('UBUNTU_SSO_API_ROOT_URL',
+                             UBUNTU_SSO_API_ROOT_URL)
+        return urlparse(url).netloc
+
+    def get(self, option_name):
+        try:
+            return self.parser.get(self._section_name(), option_name)
+        except (configparser. NoSectionError, KeyError):
+            return None
+
+    def set(self, option_name, value):
+        section_name = self._section_name()
+        if not self.parser.has_section(section_name):
+            self.parser.add_section(section_name)
+        return self.parser.set(section_name, option_name, value)
+
+    def load(self):
+        self.filename = BaseDirectory.load_first_config(
+            'snapcraft', 'snapcraft.cfg')
+        if self.filename and os.path.exists(self.filename):
+            self.parser.read(self.filename)
+
+    @staticmethod
+    def save_path():
+        return os.path.join(BaseDirectory.save_config_path('snapcraft'),
+                            'snapcraft.cfg')
+
+    def save(self):
+        self.filename = self.save_path()
+        with open(self.filename, 'w') as f:
+            self.parser.write(f)
+
+    def clear(self):
+        self.parser.remove_section(self._section_name())
+
+
 def load_config():
+
     """Read and return configuration from disk."""
     filename = load_first_config('snapcraft', 'snapcraft.cfg') or ''
 
