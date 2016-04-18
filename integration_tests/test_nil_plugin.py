@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
 import integration_tests
 
@@ -27,3 +28,14 @@ class NilPluginTestCase(integration_tests.TestCase):
 
         dirs = os.listdir(os.path.join(project_dir, 'snap'))
         self.assertEqual(['meta'], dirs)
+
+    def test_nil_no_additional_properties(self):
+        project_dir = 'nil-with-additional-properties'
+
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, 'snap',
+            project_dir)
+
+        self.assertTrue(
+            "Additional properties are not allowed ('source' was unexpected)"
+            in exception.output.replace('\n', ' ').strip())

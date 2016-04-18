@@ -14,25 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The nil plugin is useful for parts with no source.
-
-Using this, parts can be defined purely by utilizing properties automatically
-included by Snapcraft, e.g. stage-packages.
-"""
-
-import snapcraft
+from snapcraft.plugins.nil import NilPlugin
+from snapcraft.tests import TestCase
 
 
-class NilPlugin(snapcraft.BasePlugin):
-
-    @classmethod
-    def schema(cls):
-        return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'additionalProperties': False,
-            'properties': {},
-        }
-
-    def enable_cross_compilation(self):
-        pass
+class TestNilPlugin(TestCase):
+    def test_schema(self):
+        schema = NilPlugin.schema()
+        self.assertEqual('http://json-schema.org/draft-04/schema#',
+                         schema['$schema'])
+        self.assertEqual('object', schema['type'])
+        self.assertFalse(schema['additionalProperties'])
+        self.assertFalse(schema['properties'])
