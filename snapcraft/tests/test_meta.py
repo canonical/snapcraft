@@ -22,10 +22,8 @@ import fixtures
 import yaml
 
 from snapcraft.internal.meta import create_snap_packaging, _SnapPackaging
-from snapcraft import (
-    common,
-    tests
-)
+from snapcraft.internal import common
+from snapcraft import tests
 
 
 class CreateTest(tests.TestCase):
@@ -279,7 +277,7 @@ class WrapExeTestCase(tests.TestCase):
         # TODO move to use outer interface
         self.packager = _SnapPackaging({}, self.snap_dir, self.parts_dir)
 
-    @patch('snapcraft.common.assemble_env')
+    @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
@@ -306,7 +304,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         self.assertEqual(expected, wrapper_contents)
 
-    @patch('snapcraft.common.assemble_env')
+    @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_writes_wrapper_with_basename(self, mock_assemble_env):
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
@@ -420,7 +418,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         with open(os.path.join(self.snap_dir, relative_exe_path), 'rb') as exe:
             self.assertEqual(exe_contents, exe.read())
 
-    @patch('snapcraft.common.run')
+    @patch('snapcraft.internal.common.run')
     def test_exe_is_in_path(self, run_mock):
         app_path = os.path.join(self.snap_dir, 'bin', 'app1')
         os.mkdir(os.path.dirname(app_path))

@@ -27,7 +27,7 @@ from snapcraft.tests import TestCase
 
 class TestMain(TestCase):
 
-    @mock.patch('snapcraft.lifecycle.snap')
+    @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_default_command_is_snap(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main([])
@@ -35,7 +35,7 @@ class TestMain(TestCase):
                 parallel_builds=True, target_deb_arch=None, use_geoip=False)
             self.assertTrue(mock_cmd.called, mock_cmd.called)
 
-    @mock.patch('snapcraft.lifecycle.snap')
+    @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_with_geoip(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main(['--enable-geoip'])
@@ -43,7 +43,7 @@ class TestMain(TestCase):
             mock_project_options.assert_called_once_with(
                 parallel_builds=True, target_deb_arch=None, use_geoip=True)
 
-    @mock.patch('snapcraft.log.configure')
+    @mock.patch('snapcraft.internal.log.configure')
     def test_command_error(self, mock_log_configure):
         with mock.patch('snapcraft.topic_help') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
@@ -54,7 +54,7 @@ class TestMain(TestCase):
         self.assertEqual(str(cm.exception), 'some error')
         mock_log_configure.assert_called_once_with(log_level=logging.INFO)
 
-    @mock.patch('snapcraft.log.configure')
+    @mock.patch('snapcraft.internal.log.configure')
     def test_command_error_debug(self, mock_log_configure):
         with mock.patch('snapcraft.topic_help') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
@@ -69,21 +69,21 @@ class TestMain(TestCase):
         mock_log_configure.assert_called_once_with(
             log_level=logging.DEBUG)
 
-    @mock.patch('snapcraft.lifecycle.snap')
+    @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_with_parallel_builds(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main([])
             mock_project_options.assert_called_once_with(
                 parallel_builds=True, target_deb_arch=None, use_geoip=False)
 
-    @mock.patch('snapcraft.lifecycle.snap')
+    @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_disable_parallel_build(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main(['--no-parallel-build'])
             mock_project_options.assert_called_once_with(
                 parallel_builds=False, target_deb_arch=None, use_geoip=False)
 
-    @mock.patch('snapcraft.lifecycle.snap')
+    @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_with_target_deb_arch(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main(['--target-arch', 'arm64'])

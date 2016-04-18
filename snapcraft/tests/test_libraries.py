@@ -22,10 +22,8 @@ import tempfile
 
 from unittest import mock
 
-from snapcraft import (
-    libraries,
-    tests,
-)
+from snapcraft.internal import libraries
+from snapcraft import tests
 
 
 class TestLdLibraryPathParser(tests.TestCase):
@@ -55,7 +53,7 @@ class TestGetLibraries(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.common.run_output')
+        patcher = mock.patch('snapcraft.internal.common.run_output')
         self.run_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -66,7 +64,7 @@ class TestGetLibraries(tests.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        patcher = mock.patch('snapcraft.libraries._get_system_libs')
+        patcher = mock.patch('snapcraft.internal.libraries._get_system_libs')
         self.get_system_libs_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

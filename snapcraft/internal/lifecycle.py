@@ -24,16 +24,14 @@ import tarfile
 import yaml
 
 import snapcraft
-import snapcraft.yaml
-
-from snapcraft.internal.meta import create_snap_packaging
-from snapcraft import (
+import snapcraft.internal
+from snapcraft.internal import (
     common,
+    lxd,
+    meta,
     pluginhandler,
     repo,
 )
-from snapcraft.lxd import Cleanbuilder
-from snapcraft.common import format_snap_name
 
 
 logger = logging.getLogger(__name__)
@@ -78,7 +76,7 @@ def execute(step, project_options, part_names=None):
                           over.
     :returns: A dict with the snap name, version, type and architectures.
     """
-    config = snapcraft.yaml.load_config(project_options)
+    config = snapcraft.internal.load_config(project_options)
     repo.install_build_packages(config.build_tools)
 
     _Executor(config, project_options).run(step, part_names)
@@ -153,9 +151,9 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'strip' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            create_snap_packaging(self.config.data,
-                                  self.project_options.snap_dir,
-                                  self.project_options.parts_dir)
+            meta.create_snap_packaging(self.config.data,
+                                       self.project_options.snap_dir,
+                                       self.project_options.parts_dir)
 
     def _handle_dirty(self, part, step):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
@@ -211,15 +209,15 @@ def cleanbuild(project_options):
             'https://linuxcontainers.org/lxd/getting-started-cli/'
             '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
 
-    config = snapcraft.yaml.load_config(project_options)
+    config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
         config.data['name'], config.data['version'])
 
     with tarfile.open(tar_filename, 'w:bz2') as t:
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
 
-    snap_filename = format_snap_name(config.data)
-    Cleanbuilder(snap_filename, tar_filename, project_options).execute()
+    snap_filename = common.format_snap_name(config.data)
+    lxd.Cleanbuilder(snap_filename, tar_filename, project_options).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -241,7 +239,7 @@ def snap(project_options, directory=None, output=None):
         snap_dir = project_options.snap_dir
         snap = execute('strip', project_options)
 
-    snap_name = output or format_snap_name(snap)
+    snap_name = output or common.format_snap_name(snap)
 
     logger.info('Snapping {}'.format(snap_name))
     # These options need to match the review tools:
@@ -370,7 +368,7 @@ def _cleanup_common_directories(config, project_options):
 
 
 def clean(project_options, parts, step=None):
-    config = snapcraft.yaml.load_config()
+    config = snapcraft.internal.load_config()
 
     if parts:
         config.validate_parts(parts)
