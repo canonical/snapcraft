@@ -1,3 +1,27 @@
+snapcraft (2.8.2) xenial; urgency=medium
+
+  * Don't expose broken or fragile APIs to plugins (LP: #1571264)
+  * catkin plugin: use ProjectOptions for repo setup (#468) (LP: #1571446)
+  * qml plugin: remove broken plugin (#469) (LP: #1551343)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 18 Apr 2016 10:06:15 -0300
+
+snapcraft (2.8.1) xenial; urgency=medium
+
+  [ Simon Busch ]
+  * Correctly pass arguments to Cleanbuilder (#458) (LP: #1570706)
+
+  [ Sergio Schvezov ]
+  * Only add cross build packages when cross compiling. (#451) (LP: #1570414)
+  * Fix store downloading (#452) (LP: #1569734)
+
+  [ Kyle Fazzari ]
+  * Add support for s390x architecture. (#461) (LP: #1570835)
+  * Add SNAP_LIBRARY_PATH to LD_LIBRARY_PATH. (#462) (LP: #1570945)
+  * Kernel plugin: Support lzma/xz-compressed initrd. (#463) (LP: #1569337)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Fri, 15 Apr 2016 23:35:47 +0000
+
 snapcraft (2.8) xenial; urgency=medium
 
   [ Didier Roche ]

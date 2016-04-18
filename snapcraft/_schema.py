@@ -20,7 +20,7 @@ import os
 import jsonschema
 import yaml
 
-from snapcraft import common
+from snapcraft.internal import common
 
 
 class SnapcraftSchemaError(Exception):

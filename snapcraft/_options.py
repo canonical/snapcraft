@@ -54,6 +54,13 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'amd64',
         'triplet': 'x86_64-linux-gnu',
+    },
+    's390x': {
+        'kernel': 's390x',
+        'deb': 's390x',
+        'cross-compiler-prefix': 's390x-linux-gnu-',
+        'cross-build-packages': ['gcc-s390x-linux-gnu'],
+        'triplet': 's390x-linux-gnu',
     }
 }
 

@@ -36,7 +36,6 @@ class ListPluginsTestCase(integration_tests.TestCase):
                     'nodejs\n'
                     'python2\n'
                     'python3\n'
-                    'qml\n'
                     'scons\n'
                     'tar-content\n')
         self.assertEqual(expected, output)
