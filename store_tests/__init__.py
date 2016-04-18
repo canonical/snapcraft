@@ -86,14 +86,12 @@ class TestCase(testtools.TestCase):
 
         # FIXME: Find a way to support one-time-passwords (otp)
         # -- vila 2016-04-11
-        resp = storeapi.login(email, password, token_name='snapcraft', otp='')
-        if resp['success']:
-            conf = config.Config()
-            creds = resp['body']
-            for k in ('consumer_key', 'consumer_secret',
-                      'token_key', 'token_secret'):
-                conf.set(k, creds[k])
-            conf.save()
+        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
+        if with_macaroons:
+            do_login = storeapi.login_with_macaroons
+        else:
+            do_login = storeapi.login
+        resp = do_login(email, password, token_name='snapcraft', otp='')
         return resp
 
     def logout(self):
