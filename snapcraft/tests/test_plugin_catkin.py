@@ -79,7 +79,8 @@ class CatkinPluginTestCase(tests.TestCase):
     def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             sources):
         self.rosdep_mock.assert_has_calls([
-            mock.call(rosdistro, package_path, rosdep_path, sources),
+            mock.call(rosdistro, package_path, rosdep_path, sources,
+                      self.project_options),
             mock.call().setup()])
 
     def test_schema(self):
@@ -820,9 +821,10 @@ class RosdepTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-
+        self.project = snapcraft.ProjectOptions()
         self.rosdep = catkin._Rosdep('ros_distro', 'package_path',
-                                     'rosdep_path', 'sources')
+                                     'rosdep_path', 'sources',
+                                     self.project)
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
@@ -843,7 +845,8 @@ class RosdepTestCase(tests.TestCase):
         self.assertEqual(self.ubuntu_mock.return_value.get.call_count, 1)
         self.assertEqual(self.ubuntu_mock.return_value.unpack.call_count, 1)
         self.ubuntu_mock.assert_has_calls([
-            mock.call(self.rosdep._rosdep_path, sources='sources'),
+            mock.call(self.rosdep._rosdep_path, sources='sources',
+                      project_options=self.project),
             mock.call().get(['python-rosdep']),
             mock.call().unpack(self.rosdep._rosdep_install_path)])
 
