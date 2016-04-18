@@ -25,29 +25,41 @@ from snapcraft import (
 )
 
 
+def isolate_for_config(test):
+    """Isolate a test from xdg so a private temp config is used.
+
+    :param test: A test providing a 'path' attribute pointing to a private
+        removed at the end of the test.
+    """
+    # xdg use module level global vars that need to point under our private
+    # dir.
+    test.addCleanup(
+        setattr, BaseDirectory, 'xdg_config_home',
+        BaseDirectory.xdg_config_home)
+    test.addCleanup(
+        setattr, BaseDirectory, 'xdg_config_dirs',
+        BaseDirectory.xdg_config_dirs)
+    BaseDirectory.xdg_config_home = os.path.join(test.path, '.config')
+    BaseDirectory.xdg_config_dirs = [BaseDirectory.xdg_config_home]
+
+
+def create_config_from_string(content):
+    path = config.Config.save_path()
+    with open(path, 'w') as f:
+        f.write(content)
+
+
 class TestConfig(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        # Tell xdg to look into our private tmp dir
-        self.addCleanup(
-            setattr, BaseDirectory, 'xdg_config_home',
-            BaseDirectory.xdg_config_home)
-        self.addCleanup(
-            setattr, BaseDirectory, 'xdg_config_dirs',
-            BaseDirectory.xdg_config_dirs)
-        BaseDirectory.xdg_config_home = os.path.join(self.path, '.config')
-        BaseDirectory.xdg_config_dirs = [BaseDirectory.xdg_config_home]
-
-    def create_config_from_string(self, content):
-        path = config.Config.save_path()
-        with open(path, 'w') as f:
-            f.write(content)
+        isolate_for_config(self)
 
     def test_non_existing_file_succeeds(self):
         conf = config.Config()
         conf.load()
         self.assertEqual([], conf.parser.sections())
+        self.assertTrue(conf.is_empty())
 
     def test_existing_file(self):
         existing_conf = config.Config()
@@ -57,15 +69,16 @@ class TestConfig(tests.TestCase):
         conf = config.Config()
         conf.load()
         self.assertEqual('bar', conf.get('foo'))
+        self.assertFalse(conf.is_empty())
 
     def test_irrelevant_sections_are_ignored(self):
-        self.create_config_from_string('''[example.com]\nfoo=bar''')
+        create_config_from_string('''[example.com]\nfoo=bar''')
         conf = config.Config()
         conf.load()
         self.assertEqual(None, conf.get('foo'))
 
     def test_section_from_url(self):
-        self.create_config_from_string('''[example.com]\nfoo=bar''')
+        create_config_from_string('''[example.com]\nfoo=bar''')
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_SSO_API_ROOT_URL', 'http://example.com/api/v2'))
         conf = config.Config()
@@ -81,7 +94,7 @@ class TestConfig(tests.TestCase):
         self.assertEqual('baz', conf.get('bar'))
 
     def test_clear_preserver_other_sections(self):
-        self.create_config_from_string('''[keep_me]\nfoo=bar\n''')
+        create_config_from_string('''[keep_me]\nfoo=bar\n''')
         conf = config.Config()
         conf.load()
         conf.set('bar', 'baz')
@@ -93,3 +106,4 @@ class TestConfig(tests.TestCase):
         self.assertEqual(None, conf.get('bar'))
         # Picking behind the curtains
         self.assertEqual('bar', conf.parser.get('keep_me', 'foo'))
+        self.assertTrue(conf.is_empty())

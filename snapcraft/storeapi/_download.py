@@ -19,6 +19,7 @@ import json
 import os
 import logging
 
+from snapcraft import config
 from .common import get_oauth_session
 
 
@@ -27,9 +28,11 @@ _STORE_SEARCH_URL = 'https://search.apps.ubuntu.com/api/v1/search'
 logger = logging.getLogger(__name__)
 
 
-def download(snap_name, channel, download_path, config, arch):
+def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
-    session = get_oauth_session(config)
+    conf = config.Config()
+    conf.load()
+    session = get_oauth_session(conf)
     if session is None:
         raise EnvironmentError(
             'No valid credentials found. Have you run "snapcraft login"?')

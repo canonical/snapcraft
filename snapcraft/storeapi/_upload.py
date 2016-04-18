@@ -25,6 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
+from snapcraft import config
 from .common import (
     get_oauth_session,
     retry,
@@ -49,7 +50,7 @@ def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
            config=None):
     """Create a new upload based on a snap package."""
 
-    data = upload_files(binary_filename, config=config)
+    data = upload_files(binary_filename)
     success = data.get('success', False)
     errors = data.get('errors', [])
     if not success:
@@ -58,11 +59,11 @@ def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
 
     meta = read_metadata(metadata_filename)
     meta.update(metadata or {})
-    result = upload_app(snap_name, data, metadata=meta, config=config)
+    result = upload_app(snap_name, data, metadata=meta)
     return result
 
 
-def upload_files(binary_filename, config=None):
+def upload_files(binary_filename):
     """Upload a binary file to the Store.
 
     Submit a file to the Store upload service and return the
@@ -74,7 +75,9 @@ def upload_files(binary_filename, config=None):
 
     result = {'success': False, 'errors': []}
 
-    session = get_oauth_session(config)
+    conf = config.Config()
+    conf.load()
+    session = get_oauth_session(conf)
     if session is None:
         result['errors'] = [
             'No valid credentials found. Have you run "snapcraft login"?']
@@ -149,7 +152,7 @@ def read_metadata(metadata_filename):
     return metadata
 
 
-def upload_app(name, upload_data, metadata=None, config=None):
+def upload_app(name, upload_data, metadata=None):
     """Request a new upload to be created for a given upload_id."""
     if metadata is None:
         metadata = {}
@@ -159,7 +162,9 @@ def upload_app(name, upload_data, metadata=None, config=None):
     result = {'success': False, 'errors': [],
               'application_url': '', 'revision': None}
 
-    session = get_oauth_session(config)
+    conf = config.Config()
+    conf.load()
+    session = get_oauth_session(conf)
     if session is None:
         result['errors'] = [
             'No valid credentials found. Have you run "snapcraft login"?']

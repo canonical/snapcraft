@@ -21,9 +21,6 @@ from xdg import BaseDirectory
 
 from urllib.parse import urlparse
 
-from configparser import ConfigParser
-from xdg.BaseDirectory import load_first_config, save_config_path
-
 from snapcraft.storeapi.constants import UBUNTU_SSO_API_ROOT_URL
 
 
@@ -40,6 +37,7 @@ class Config(object):
         self.filename = None
 
     def _section_name(self):
+        # The only section we care about is the host from the SSO url
         url = os.environ.get('UBUNTU_SSO_API_ROOT_URL',
                              UBUNTU_SSO_API_ROOT_URL)
         return urlparse(url).netloc
@@ -55,6 +53,14 @@ class Config(object):
         if not self.parser.has_section(section_name):
             self.parser.add_section(section_name)
         return self.parser.set(section_name, option_name, value)
+
+    def is_empty(self):
+        # Only check the current section
+        section_name = self._section_name()
+        if self.parser.has_section(section_name):
+            if self.parser.options(section_name):
+                return False
+        return True
 
     def load(self):
         self.filename = BaseDirectory.load_first_config(
@@ -74,62 +80,3 @@ class Config(object):
 
     def clear(self):
         self.parser.remove_section(self._section_name())
-
-
-def load_config():
-
-    """Read and return configuration from disk."""
-    filename = load_first_config('snapcraft', 'snapcraft.cfg') or ''
-
-    parser = ConfigParser()
-    if os.path.exists(filename):
-        parser.read(filename)
-
-    api_endpoint = os.environ.get(
-        'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-    location = urlparse(api_endpoint).netloc
-
-    config = {}
-    if parser.has_section(location):
-        config.update(dict(parser.items(location)))
-    return config
-
-
-def save_config(data):
-    """Store current configuration to disk."""
-    config_dir = save_config_path('snapcraft')
-    filename = os.path.join(config_dir, 'snapcraft.cfg')
-
-    parser = ConfigParser()
-    if os.path.exists(filename):
-        parser.read(filename)
-
-    api_endpoint = os.environ.get(
-        'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-    location = urlparse(api_endpoint).netloc
-    if not parser.has_section(location):
-        parser.add_section(location)
-
-    for key, value in data.items():
-        parser.set(location, key, str(value))
-
-    with open(filename, 'w') as fd:
-        parser.write(fd)
-
-
-def clear_config():
-    """Remove configuration section from files on disk."""
-    config_dir = save_config_path('snapcraft')
-    filename = os.path.join(config_dir, 'snapcraft.cfg')
-
-    parser = ConfigParser()
-    if os.path.exists(filename):
-        parser.read(filename)
-
-    api_endpoint = os.environ.get(
-        'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-    location = urlparse(api_endpoint).netloc
-    parser.remove_section(location)
-
-    with open(filename, 'w') as fd:
-        parser.write(fd)

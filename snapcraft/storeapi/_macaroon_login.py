@@ -23,6 +23,8 @@ from ssoclient.v2 import (
     V2ApiClient,
 )
 
+from snapcraft import config
+
 from .common import (
     store_api_call,
 )
@@ -59,7 +61,10 @@ def login(email, password, token_name='unused', otp=''):
             result['errors'] = error
             result['success'] = False
         else:
-            result['body'] = dict(package_upload=(macaroon, discharge))
+            conf = config.Config()
+            conf.load()
+            conf.set('package_upload', ','.join([macaroon, discharge]))
+            conf.save()
     return result
 
 

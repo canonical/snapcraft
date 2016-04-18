@@ -25,18 +25,21 @@ from .compat import urljoin
 from .constants import UBUNTU_STORE_API_ROOT_URL
 
 
-def get_oauth_session(config):
+def get_oauth_session(conf):
     """Return a client configured to allow oauth signed requests."""
-    try:
-        session = OAuth1Session(
-            config['consumer_key'],
-            client_secret=config['consumer_secret'],
-            resource_owner_key=config['token_key'],
-            resource_owner_secret=config['token_secret'],
-            signature_method='PLAINTEXT',
-        )
-    except KeyError:
-        session = None
+    consumer_key = conf.get('consumer_key')
+    client_secret = conf.get('consumer_secret')
+    resource_owner_key = conf.get('token_key')
+    resource_owner_secret = conf.get('token_secret')
+    if None in (consumer_key, client_secret,
+                resource_owner_key, resource_owner_secret):
+        return None
+
+    session = OAuth1Session(
+        consumer_key, client_secret=client_secret,
+        resource_owner_key=resource_owner_key,
+        resource_owner_secret=resource_owner_secret,
+        signature_method='PLAINTEXT')
     return session
 
 

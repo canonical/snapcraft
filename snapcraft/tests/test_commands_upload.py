@@ -65,11 +65,6 @@ class UploadCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = dict(success=True)
 
-        patcher = mock.patch('snapcraft.config.load_config')
-        mock_load_config = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_load_config.return_value = 'test config'
-
         patcher = mock.patch('subprocess.check_call')
         mock_check_call = patcher.start()
         self.addCleanup(patcher.stop)
@@ -93,5 +88,4 @@ class UploadCommandTestCase(tests.TestCase):
 
         mock_upload.assert_called_once_with(
             'test.snap',
-            'snaptestname',
-            config='test config')
+            'snaptestname')

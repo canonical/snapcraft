@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from snapcraft import config
+
 
 from .common import (
     get_oauth_session,
@@ -19,13 +21,15 @@ from .common import (
 )
 
 
-def register_name(conf, name):
+def register_name(name):
     """Register a snap name via the store API.
 
     If successful, returns the snap ID.
     """
     # FIXME: Switch to macaroons as soon as register-name/ have support for
     # them. -- vila 2016-04-07
+    conf = config.Config()
+    conf.load()
     session = get_oauth_session(conf)
     data = dict(snap_name=name)
     response = store_raw_api_call('register-name/', method='POST',

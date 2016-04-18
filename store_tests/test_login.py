@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,9 +12,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import fixtures
 import testscenarios
 
+from snapcraft import config
 
 import store_tests
 
@@ -23,7 +24,7 @@ import store_tests
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class LoginLogoutTestCase(store_tests.TestCase):
+class TestLoginLogout(store_tests.TestCase):
 
     scenarios = (('OAuth', dict(with_macaroons=False)),
                  ('macaroons', dict(with_macaroons=True)))
@@ -41,7 +42,20 @@ class LoginLogoutTestCase(store_tests.TestCase):
         self.addCleanup(self.logout)
         res = self.login()
         self.assertTrue(res['success'])
+        # Credentials have been saved
+        self.assertTrue(os.path.exists(config.Config.save_path()))
 
     def test_failed_login(self):
         res = self.login(password='wrongpassword')
         self.assertFalse(res['success'])
+        # Credentials have not been saved
+        self.assertFalse(os.path.exists(config.Config.save_path()))
+
+    def test_logout_clear_config(self):
+        self.addCleanup(self.logout)
+        res = self.login()
+        self.assertTrue(res['success'])
+        res = self.logout()
+        conf = config.Config()
+        conf.load()
+        self.assertTrue(conf.is_empty())

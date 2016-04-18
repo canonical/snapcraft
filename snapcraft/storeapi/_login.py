@@ -23,6 +23,8 @@ from ssoclient.v2 import (
     V2ApiClient,
 )
 
+from snapcraft import config
+
 from .constants import (
     UBUNTU_SSO_API_ROOT_URL,
 )
@@ -52,6 +54,12 @@ def login(email, password, token_name, otp=''):
         response = client.login(data=data)
         result['body'] = response
         result['success'] = True
+        conf = config.Config()
+        conf.load()
+        for k in ('consumer_key', 'consumer_secret',
+                  'token_key', 'token_secret'):
+            conf.set(k, response[k])
+        conf.save()
     except ApiException as err:
         result['body'] = err.body
     except UnexpectedApiError as err:

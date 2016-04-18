@@ -49,7 +49,6 @@ def login():
     success = response.get('success', False)
 
     if success:
-        config.save_config(response['body'])
         logger.info('Login successful.')
     else:
         logger.info('Login failed.')
@@ -57,14 +56,15 @@ def login():
 
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
-    config.clear_config()
+    conf = config.Config()
+    conf.clear()
+    conf.save()
     logger.info('Credentials cleared.')
 
 
 def register_name(snap_name):
     logger.info('Registering {}.'.format(snap_name))
-    conf = config.load_config()
-    response = storeapi.register_name(conf, snap_name)
+    response = storeapi.register_name(snap_name)
     if response.ok:
         logger.info('Congrats! You\'re now the publisher for "{}".'.format(
             snap_name))
@@ -79,8 +79,7 @@ def upload(snap_filename):
     snap_name = _get_name_from_snap_file(snap_filename)
     logger.info('Uploading existing {}.'.format(snap_filename))
 
-    conf = config.load_config()
-    result = storeapi.upload(snap_filename, snap_name, config=conf)
+    result = storeapi.upload(snap_filename, snap_name)
     success = result.get('success', False)
     errors = result.get('errors', [])
     app_url = result.get('application_url', '')
