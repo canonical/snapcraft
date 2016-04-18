@@ -21,7 +21,7 @@ import os
 import platform
 import subprocess
 
-from snapcraft import common
+from snapcraft.internal import common
 
 
 logger = logging.getLogger(__name__)

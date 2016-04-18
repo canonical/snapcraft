@@ -42,8 +42,8 @@ parts:
         super().make_snapcraft_yaml(self.yaml_template)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
-    @mock.patch('snapcraft.lxd.check_call')
-    @mock.patch('snapcraft.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.lxd.check_call')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_cleanbuild(self, mock_installed, mock_call):
         mock_installed.return_value = True
 
@@ -95,7 +95,7 @@ parts:
             self.assertTrue('./{}'.format(f) in tar_members,
                             '{} should be in {}'.format(f, tar_members))
 
-    @mock.patch('snapcraft.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_no_lxd(self, mock_installed):
         mock_installed.return_value = False
         with self.assertRaises(SystemExit) as raised:

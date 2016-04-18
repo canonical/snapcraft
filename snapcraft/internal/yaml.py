@@ -25,7 +25,7 @@ import jsonschema
 import yaml
 
 import snapcraft
-from snapcraft import (
+from snapcraft.internal import (
     libraries,
     pluginhandler,
     sources,

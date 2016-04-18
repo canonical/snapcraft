@@ -42,7 +42,7 @@ setup(
               'snapcraft.internal.states',
               'snapcraft.plugins',
               'snapcraft.storeapi'],
-    package_data={'snapcraft': ['manifest.txt']},
+    package_data={'snapcraft.internal': ['manifest.txt']},
     scripts=['bin/snapcraft'],
     data_files=[
         ('share/snapcraft/schema',

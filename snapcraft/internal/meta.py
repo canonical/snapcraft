@@ -24,9 +24,8 @@ import tempfile
 
 import yaml
 
-from snapcraft import (
-    common,
-)
+from snapcraft.internal import common
+
 
 logger = logging.getLogger(__name__)
 

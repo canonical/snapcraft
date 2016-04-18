@@ -29,11 +29,11 @@ import magic
 import yaml
 
 import snapcraft
-from snapcraft import (
+from snapcraft.internal import (
     common,
-    internal,
     libraries,
     repo,
+    states,
 )
 
 _SNAPCRAFT_STAGE = '$SNAPCRAFT_STAGE'
@@ -257,7 +257,7 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Pulling')
         self.code.pull()
-        self.mark_done('pull', internal.states.PullState(
+        self.mark_done('pull', states.PullState(
             self.pull_properties, self.code.options))
 
     def clean_pull(self, hint=''):
@@ -286,7 +286,7 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Building')
         self.code.build()
-        self.mark_done('build', internal.states.BuildState(
+        self.mark_done('build', states.BuildState(
             self.build_properties, self.code.options))
 
     def clean_build(self, hint=''):
@@ -336,7 +336,7 @@ class PluginHandler:
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
-        self.mark_done('stage', internal.states.StageState(
+        self.mark_done('stage', states.StageState(
             snap_files, snap_dirs, self.code.options))
 
     def clean_stage(self, project_staged_state, hint=''):
@@ -397,7 +397,7 @@ class PluginHandler:
 
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
-        self.mark_done('strip', internal.states.StripState(
+        self.mark_done('strip', states.StripState(
             snap_files, snap_dirs, dependency_paths, self.code.options))
 
     def clean_strip(self, project_stripped_state, hint=''):

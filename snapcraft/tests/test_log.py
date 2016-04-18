@@ -18,10 +18,8 @@ import io
 import logging
 from unittest import mock
 
-from snapcraft import (
-    log,
-    tests
-)
+from snapcraft.internal import log
+from snapcraft import tests
 
 
 @mock.patch('os.isatty', return_value=True)

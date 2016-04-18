@@ -23,17 +23,14 @@ from unittest.mock import (
 
 import fixtures
 
-from snapcraft import (
-    lxd,
-    tests,
-)
-
+from snapcraft.internal import lxd
+from snapcraft import tests
 from snapcraft._options import ProjectOptions  # noqa
 
 
 class LXDTestCase(tests.TestCase):
 
-    @patch('snapcraft.lxd.check_call')
+    @patch('snapcraft.internal.lxd.check_call')
     @patch('petname.Generate')
     def test_cleanbuild(self, mock_pet, mock_call):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -78,8 +75,8 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'stop', 'snapcraft-my-pet']),
             call(['lxc', 'remote', 'remove', 'my-pet'])])
 
-    @patch('snapcraft.lxd.check_call')
-    @patch('snapcraft.lxd.sleep')
+    @patch('snapcraft.internal.lxd.check_call')
+    @patch('snapcraft.internal.lxd.sleep')
     def test_wait_for_network_loops(self, mock_sleep, mock_call):
         mock_call.side_effect = CalledProcessError(-1, ['my-cmd'])
 
