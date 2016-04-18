@@ -1,2 +1,2 @@
 #!/bin/sh
-python3 -m examples_tests --skip-install --filter '^(?!ros$).*$'
+SNAPCRAFT_FROM_INSTALLED=1 python3 -m examples_tests --skip-install --filter '^(?!ros$).*$'
