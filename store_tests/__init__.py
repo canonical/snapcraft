@@ -35,10 +35,11 @@ import testtools
 
 import snapcraft
 from snapcraft import (
-    common,
-    config,
-    lifecycle,
     storeapi,
+)
+from snapcraft.internal import (
+    common,
+    lifecycle,
 )
 from snapcraft.storeapi import _upload
 from snapcraft.tests import (
