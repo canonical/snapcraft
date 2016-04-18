@@ -39,8 +39,7 @@ parts:
 {parts}"""
 
     yaml_part = """  clean{:d}:
-    plugin: nil
-    source: ."""
+    plugin: nil"""
 
     def make_snapcraft_yaml(self, n=1, create=True):
         parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
@@ -180,16 +179,13 @@ description: test clean
 parts:
   main:
     plugin: nil
-    source: .
 
   dependent:
     plugin: nil
-    source: .
     after: [main]
 
   nested-dependent:
     plugin: nil
-    source: .
     after: [dependent]""")
 
         self.part_dirs = {}
