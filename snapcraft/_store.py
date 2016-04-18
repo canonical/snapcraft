@@ -24,7 +24,6 @@ import tempfile
 import yaml
 
 from snapcraft import (
-    config,
     storeapi,
 )
 
@@ -36,16 +35,12 @@ def login():
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
-    otp = input('One-time password (just press enter if you don\'t use '
-                'two-factor authentication): ')
+    one_time_password = input('One-time password (just press enter if you'
+                              ' don\'t use two-factor authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
-    if with_macaroons:
-        do_login = storeapi.login_with_macaroons
-    else:
-        do_login = storeapi.login
-    response = do_login(email, password, token_name='snapcraft', otp=otp)
+    store = storeapi.V2ApiClient()
+    response = store.login(email, password, one_time_password)
     success = response.get('success', False)
 
     if success:
@@ -56,9 +51,8 @@ def login():
 
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
-    conf = config.Config()
-    conf.clear()
-    conf.save()
+    store = storeapi.V2ApiClient()
+    store.logout()
     logger.info('Credentials cleared.')
 
 

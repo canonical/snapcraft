@@ -76,6 +76,7 @@ class TestCase(testtools.TestCase):
         self.useFixture(self.logger)
         # INFO from the requests lib is too noisy
         logging.getLogger("requests").setLevel(logging.WARNING)
+        self.store = storeapi.V2ApiClient()
 
     def login(self, email=None, password=None):
         email = email or os.getenv('TEST_USER_EMAIL',
@@ -86,19 +87,10 @@ class TestCase(testtools.TestCase):
 
         # FIXME: Find a way to support one-time-passwords (otp)
         # -- vila 2016-04-11
-        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
-        if with_macaroons:
-            do_login = storeapi.login_with_macaroons
-        else:
-            do_login = storeapi.login
-        resp = do_login(email, password, token_name='snapcraft', otp='')
-        return resp
+        return self.store.login(email, password, one_time_password='')
 
     def logout(self):
-        # Our setup guarantee we'll clear the expected config file
-        conf = config.Config()
-        conf.clear()
-        conf.save()
+        return self.store.logout()
 
     def create_snap(self, name, version=None):
         """Create a test snap from a template.
