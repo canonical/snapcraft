@@ -25,11 +25,10 @@ import unittest.mock
 import fixtures
 
 import snapcraft
-import snapcraft.yaml
-from snapcraft import (
-    dirs,
-    tests,
-)
+from snapcraft.internal import dirs
+from snapcraft.internal import yaml as internal_yaml
+from snapcraft import tests
+
 from snapcraft._schema import SnapcraftSchemaError
 
 
@@ -43,12 +42,12 @@ class TestYaml(tests.TestCase):
         self.mock_path_exists = patcher.start()
         self.mock_path_exists.return_value = True
         self.addCleanup(patcher.stop)
-        self.part_schema = snapcraft.yaml.Validator().part_schema
+        self.part_schema = internal_yaml.Validator().part_schema
 
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.get_part')
     def test_config_loads_plugins(self, mock_get_part, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -60,7 +59,7 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        snapcraft.yaml.Config()
+        internal_yaml.Config()
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'stage-packages': ['fswebcam'],
             'stage': [], 'snap': [],
@@ -68,8 +67,8 @@ parts:
 
         self.assertFalse(mock_get_part.called)
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.get_part')
     def test_config_loads_with_different_encodings(
             self, mock_get_part, mock_loadPlugin):
         content = """name: test
@@ -85,7 +84,7 @@ parts:
         for enc in ['utf-8', 'utf-8-sig', 'utf-16']:
             with self.subTest(key=enc):
                 self.make_snapcraft_yaml(content, encoding=enc)
-                snapcraft.yaml.Config()
+                internal_yaml.Config()
 
                 mock_loadPlugin.assert_called_with('part1', 'go', {
                     'stage-packages': ['fswebcam'],
@@ -94,8 +93,8 @@ parts:
 
                 self.assertFalse(mock_get_part.called)
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
-    @unittest.mock.patch('snapcraft.wiki.Wiki.compose')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.compose')
     def test_config_loads_part_from_wiki(self, mock_compose, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -111,13 +110,13 @@ parts:
             'source': 'http://source.tar.gz',
         }
 
-        snapcraft.yaml.Config()
+        internal_yaml.Config()
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
 
-    @unittest.mock.patch('snapcraft.pluginhandler.load_plugin')
-    @unittest.mock.patch('snapcraft.wiki.Wiki.get_part')
+    @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.get_part')
     def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -148,7 +147,7 @@ parts:
 
         project_options = snapcraft.ProjectOptions()
 
-        snapcraft.yaml.Config(project_options)
+        internal_yaml.Config(project_options)
 
         call1 = unittest.mock.call('part1', 'go', {
             'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
@@ -181,7 +180,7 @@ parts:
         for s in scenarios:
             with self.subTest(key=(s[1])):
                 self.make_snapcraft_yaml(yaml_t.format(s[0]))
-                c = snapcraft.yaml.Config()
+                c = internal_yaml.Config()
 
                 self.assertTrue(
                     s[1] in c.build_tools,
@@ -210,7 +209,7 @@ parts:
         for s in scenarios:
             with self.subTest(key=(s[1])):
                 self.make_snapcraft_yaml(yaml_t.format(s[0]))
-                c = snapcraft.yaml.Config()
+                c = internal_yaml.Config()
 
                 self.assertTrue(
                     s[1] in c.build_tools,
@@ -231,7 +230,7 @@ parts:
     plugin: nil
 """
         self.make_snapcraft_yaml(yaml)
-        config = snapcraft.yaml.Config(project_options)
+        config = internal_yaml.Config(project_options)
 
         self.assertEqual(config.build_tools, ['gcc-arm-linux-gnueabihf'])
 
@@ -251,7 +250,7 @@ parts:
     plugin: nil
 """
         self.make_snapcraft_yaml(yaml)
-        config = snapcraft.yaml.Config(ProjectOptionsFake())
+        config = internal_yaml.Config(ProjectOptionsFake())
 
         self.assertEqual(config.build_tools, [])
 
@@ -261,8 +260,8 @@ parts:
 
         # no snapcraft.yaml
         with self.assertRaises(
-                snapcraft.yaml.SnapcraftYamlFileError) as raised:
-            snapcraft.yaml.Config()
+                snapcraft.internal.yaml.SnapcraftYamlFileError) as raised:
+            internal_yaml.Config()
 
         self.assertEqual(raised.exception.file, 'snapcraft.yaml')
 
@@ -285,14 +284,15 @@ parts:
     source: .
     after: [p1]
 """)
-        with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
-            snapcraft.yaml.Config()
+        with self.assertRaises(
+                snapcraft.internal.yaml.SnapcraftLogicError) as raised:
+            internal_yaml.Config()
 
         self.assertEqual(
             raised.exception.message,
             'circular dependency chain found in parts definition')
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -308,12 +308,12 @@ parts:
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(raised.exception.message,
                          "'name' is a required property")
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -329,13 +329,13 @@ parts:
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(raised.exception.message,
                          "The 'name' property does not match the required "
                          "schema: 1 is not of type 'string'")
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_icon_extension(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -352,12 +352,12 @@ parts:
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(raised.exception.message,
                          "'icon' must be either a .png or a .svg")
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_icon(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -376,12 +376,12 @@ parts:
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(raised.exception.message,
                          "Specified icon 'icon.png' does not exist")
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -397,14 +397,14 @@ parts:
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(
             raised.exception.message,
             "The 'name' property does not match the required schema: "
             "'myapp@me_1.0' does not match '^[a-z0-9][a-z0-9+-]*$'")
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -419,13 +419,13 @@ parts:
     stage-packages: [fswebcam]
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(
             raised.exception.message,
             "'description' is a required property")
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -441,14 +441,14 @@ parts:
 """)
 
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Config()
+            internal_yaml.Config()
 
         self.assertEqual(
             raised.exception.message,
             'found character \'\\t\' that cannot start any token '
             'on line 2 of snapcraft.yaml')
 
-    @unittest.mock.patch('snapcraft.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -472,7 +472,7 @@ parts:
       - $wget
       - /usr/share/my-icon.png
 """)
-        snapcraft.yaml.Config()
+        internal_yaml.Config()
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'snap': ['/usr/lib/wget.so', '/usr/bin/wget',
@@ -495,7 +495,7 @@ parts:
     plugin: nil
     after: [main]
 """)
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
 
         self.assertFalse(config.part_prereqs('main'))
         self.assertEqual({'main'}, config.part_prereqs('dependent'))
@@ -514,7 +514,7 @@ parts:
     plugin: nil
     after: [main]
 """)
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
 
         self.assertFalse(config.part_dependents('dependent'))
         self.assertEqual({'dependent'}, config.part_dependents('main'))
@@ -545,7 +545,7 @@ parts:
         self.addCleanup(patcher.stop)
 
     def test_config_snap_environment(self):
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
 
         lib_paths = [os.path.join(self.snap_dir, 'lib'),
                      os.path.join(self.snap_dir, 'usr', 'lib'),
@@ -583,7 +583,7 @@ parts:
                     paths, item))
 
     def test_config_snap_environment_with_no_library_paths(self):
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
 
         environment = config.snap_env()
         self.assertTrue(
@@ -594,7 +594,7 @@ parts:
             self.assertFalse('LD_LIBRARY_PATH' in e,
                              'Current environment is {!r}'.format(e))
 
-    @unittest.mock.patch.object(snapcraft.pluginhandler.PluginHandler,
+    @unittest.mock.patch.object(snapcraft.internal.pluginhandler.PluginHandler,
                                 'get_stripped_dependency_paths')
     def test_config_snap_environment_with_dependencies(self,
                                                        mock_get_dependencies):
@@ -603,7 +603,7 @@ parts:
             os.path.join(self.snap_dir, 'lib2'),
         }
         mock_get_dependencies.return_value = library_paths
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
 
         for lib_path in library_paths:
             os.makedirs(lib_path)
@@ -626,7 +626,7 @@ parts:
                 'Expected LD_LIBRARY_PATH ({!r}) to include {!r}'.format(
                     paths, item))
 
-    @unittest.mock.patch.object(snapcraft.pluginhandler.PluginHandler,
+    @unittest.mock.patch.object(snapcraft.internal.pluginhandler.PluginHandler,
                                 'get_stripped_dependency_paths')
     def test_config_snap_environment_with_dependencies_but_no_paths(
             self, mock_get_dependencies):
@@ -635,7 +635,7 @@ parts:
             os.path.join(self.snap_dir, 'lib2'),
         }
         mock_get_dependencies.return_value = library_paths
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
 
         # Ensure that LD_LIBRARY_PATH is present, but is completey empty since
         # no library paths actually exist.
@@ -660,7 +660,7 @@ parts:
             f.write('# Standalone comment\n')
             f.write('/mesa-egl')
 
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
         environment = config.snap_env()
 
         # Ensure that the LD_LIBRARY_PATH includes all the above paths
@@ -696,7 +696,7 @@ parts:
         for path in paths:
             os.makedirs(path)
 
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
         environment = config.stage_env()
 
         self.assertTrue(
@@ -782,7 +782,7 @@ parts:
         for path in paths:
             os.makedirs(path)
 
-        config = snapcraft.yaml.Config()
+        config = internal_yaml.Config()
         part2 = [part for part in config.all_parts if part.name == 'part2'][0]
         env = config.build_env_for_part(part2)
         env_lines = '\n'.join(['export {}\n'.format(e) for e in env])
@@ -874,7 +874,7 @@ class TestValidation(tests.TestCase):
                 del data[key]
 
                 with self.assertRaises(SnapcraftSchemaError) as raised:
-                    snapcraft.yaml.Validator(data).validate()
+                    internal_yaml.Validator(data).validate()
 
                 expected_message = '\'{}\' is a required property'.format(key)
                 self.assertEqual(raised.exception.message, expected_message,
@@ -893,7 +893,7 @@ class TestValidation(tests.TestCase):
                 data['name'] = name
 
                 with self.assertRaises(SnapcraftSchemaError) as raised:
-                    snapcraft.yaml.Validator(data).validate()
+                    internal_yaml.Validator(data).validate()
 
                 expected_message = ("The 'name' property does not match the "
                                     "required schema: '{}' does not match "
@@ -904,7 +904,7 @@ class TestValidation(tests.TestCase):
     def test_summary_too_long(self):
         self.data['summary'] = 'a' * 80
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Validator(self.data).validate()
+            internal_yaml.Validator(self.data).validate()
 
         expected_message = (
             "The 'summary' property does not match the required schema: "
@@ -922,7 +922,7 @@ class TestValidation(tests.TestCase):
         for t in valid_types:
             data = self.data.copy()
             with self.subTest(key=t):
-                snapcraft.yaml.Validator(data).validate()
+                internal_yaml.Validator(data).validate()
 
     def test_invalid_types(self):
         invalid_types = [
@@ -938,7 +938,7 @@ class TestValidation(tests.TestCase):
                 data['type'] = t
 
                 with self.assertRaises(SnapcraftSchemaError) as raised:
-                    snapcraft.yaml.Validator(data).validate()
+                    internal_yaml.Validator(data).validate()
 
                 expected_message = (
                     "The 'type' property does not match the required "
@@ -966,7 +966,7 @@ class TestValidation(tests.TestCase):
             }
         }
 
-        snapcraft.yaml.Validator(self.data).validate()
+        internal_yaml.Validator(self.data).validate()
 
     def test_valid_restart_conditions(self):
         self.data['apps'] = {
@@ -981,7 +981,7 @@ class TestValidation(tests.TestCase):
         for condition in valid_conditions:
             with self.subTest(key=condition):
                 self.data['apps']['service1']['restart-condition'] = condition
-                snapcraft.yaml.Validator(self.data).validate()
+                internal_yaml.Validator(self.data).validate()
 
     def test_invalid_restart_condition(self):
         self.data['apps'] = {
@@ -993,7 +993,7 @@ class TestValidation(tests.TestCase):
         }
 
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Validator(self.data).validate()
+            internal_yaml.Validator(self.data).validate()
 
         self.assertEqual(
             "The 'restart-condition' property does not match the required "
@@ -1015,7 +1015,7 @@ class TestValidation(tests.TestCase):
                 data['apps'] = {t: invalid_names[t]}
 
                 with self.assertRaises(SnapcraftSchemaError) as raised:
-                    snapcraft.yaml.Validator(data).validate()
+                    internal_yaml.Validator(data).validate()
 
                 expected_message = (
                     "The 'apps' property does not match the required "
@@ -1028,7 +1028,7 @@ class TestValidation(tests.TestCase):
         self.data['apps'] = {'service1': {}}
 
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Validator(self.data).validate()
+            internal_yaml.Validator(self.data).validate()
 
         expected_message = ("The 'service1' property does not match the "
                             "required schema: 'command' is a required "
@@ -1043,7 +1043,7 @@ class TestValidation(tests.TestCase):
         with unittest.mock.patch('snapcraft._schema.open',
                                  mock_the_open, create=True):
             with self.assertRaises(SnapcraftSchemaError) as raised:
-                snapcraft.yaml.Validator(self.data).validate()
+                internal_yaml.Validator(self.data).validate()
 
         expected_message = ('snapcraft validation file is missing from '
                             'installation path')
@@ -1052,13 +1052,13 @@ class TestValidation(tests.TestCase):
     def test_icon_missing_is_valid_yaml(self):
         self.mock_path_exists.return_value = False
 
-        snapcraft.yaml.Validator(self.data).validate()
+        internal_yaml.Validator(self.data).validate()
 
     def test_invalid_part_name_plugin_raises_exception(self):
         self.data['parts']['plugins'] = {'type': 'go'}
 
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Validator(self.data).validate()
+            internal_yaml.Validator(self.data).validate()
 
         expected_message = ("The 'parts' property does not match the "
                             "required schema: Additional properties are not "
@@ -1069,26 +1069,26 @@ class TestValidation(tests.TestCase):
     def test_license_hook(self):
         self.data['license'] = 'LICENSE'
 
-        snapcraft.yaml.Validator(self.data).validate()
+        internal_yaml.Validator(self.data).validate()
 
     def test_full_license_use(self):
         self.data['license'] = 'LICENSE'
         self.data['license-agreement'] = 'explicit'
         self.data['license-version'] = '1.0'
 
-        snapcraft.yaml.Validator(self.data).validate()
+        internal_yaml.Validator(self.data).validate()
 
     def test_license_with_license_version(self):
         self.data['license'] = 'LICENSE'
         self.data['license-version'] = '1.0'
 
-        snapcraft.yaml.Validator(self.data).validate()
+        internal_yaml.Validator(self.data).validate()
 
     def test_license_agreement_without_license_raises_exception(self):
         self.data['license-agreement'] = 'explicit'
 
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Validator(self.data).validate()
+            internal_yaml.Validator(self.data).validate()
 
         expected_message = "'license' is a dependency of 'license-agreement'"
         self.assertEqual(raised.exception.message, expected_message,
@@ -1098,7 +1098,7 @@ class TestValidation(tests.TestCase):
         self.data['license-version'] = '1.1'
 
         with self.assertRaises(SnapcraftSchemaError) as raised:
-            snapcraft.yaml.Validator(self.data).validate()
+            internal_yaml.Validator(self.data).validate()
 
         expected_message = "'license' is a dependency of 'license-version'"
         self.assertEqual(raised.exception.message, expected_message,
@@ -1120,20 +1120,20 @@ class TestFilesets(tests.TestCase):
     def test_expand_var(self):
         self.properties['stage'] = ['$1']
 
-        fs = snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        fs = internal_yaml._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1', '2', '3'])
 
     def test_no_expansion(self):
         self.properties['stage'] = ['1']
 
-        fs = snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        fs = internal_yaml._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1'])
 
     def test_invalid_expansion(self):
         self.properties['stage'] = ['$3']
 
-        with self.assertRaises(snapcraft.yaml.SnapcraftLogicError) as raised:
-            snapcraft.yaml._expand_filesets_for('stage', self.properties)
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+            internal_yaml._expand_filesets_for('stage', self.properties)
 
         self.assertEqual(
             raised.exception.message,
@@ -1168,7 +1168,7 @@ Cflags: -I${{includedir}}/{module}
         os.makedirs(self.bindir)
 
         project_options = snapcraft.ProjectOptions()
-        env = snapcraft.yaml._create_pkg_config_override(
+        env = internal_yaml._create_pkg_config_override(
             self.bindir, self.installdir, self.stagedir,
             project_options.arch_triplet)
         self.assertEqual(env, ['PATH={}:$PATH'.format(self.bindir)])

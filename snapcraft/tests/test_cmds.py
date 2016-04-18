@@ -19,12 +19,9 @@ import os
 
 import fixtures
 
-import snapcraft.yaml
-
-from snapcraft import (
-    common,
-    tests
-)
+import snapcraft.internal
+from snapcraft.internal import common
+from snapcraft import tests
 
 
 class TestCommands(tests.TestCase):
@@ -52,7 +49,7 @@ parts:
 ''')
 
         with self.assertRaises(SystemExit) as raised:
-            snapcraft.yaml.load_config()
+            snapcraft.internal.load_config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
         self.assertEqual(

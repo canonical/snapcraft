@@ -187,7 +187,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         # Use rosdep for dependency detection and resolution
         rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
-                         self._rosdep_path, self.PLUGIN_STAGE_SOURCES)
+                         self._rosdep_path, self.PLUGIN_STAGE_SOURCES,
+                         self.project)
         rosdep.setup()
 
         # Parse the Catkin packages to pull out their system dependencies
@@ -212,7 +213,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             logger.info('Preparing to fetch package dependencies...')
             ubuntu = repo.Ubuntu(
                 ubuntudir, self.project,
-                sources=self.PLUGIN_STAGE_SOURCES)
+                sources=self.PLUGIN_STAGE_SOURCES,
+                project_options=self.project)
 
             logger.info('Fetching package dependencies...')
             try:
@@ -421,7 +423,7 @@ class SystemDependencyNotFound(Exception):
 
 class _Rosdep:
     def __init__(self, ros_distro, ros_package_path, rosdep_path,
-                 ubuntu_sources):
+                 ubuntu_sources, project):
         self._ros_distro = ros_distro
         self._ros_package_path = ros_package_path
         self._ubuntu_sources = ubuntu_sources
@@ -430,6 +432,7 @@ class _Rosdep:
         self._rosdep_sources_path = os.path.join(self._rosdep_path,
                                                  'sources.list.d')
         self._rosdep_cache_path = os.path.join(self._rosdep_path, 'cache')
+        self._project = project
 
     def setup(self):
         # Make sure we can run multiple times without error, while leaving the
@@ -445,7 +448,8 @@ class _Rosdep:
         # want to bloat the .snap more than necessary. So we'll unpack it
         # somewhere else, and use it from there.
         logger.info('Preparing to fetch rosdep...')
-        ubuntu = repo.Ubuntu(self._rosdep_path, sources=self._ubuntu_sources)
+        ubuntu = repo.Ubuntu(self._rosdep_path, sources=self._ubuntu_sources,
+                             project_options=self._project)
 
         logger.info('Fetching rosdep...')
         ubuntu.get(['python-rosdep'])
