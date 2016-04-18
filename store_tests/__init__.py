@@ -89,7 +89,6 @@ class TestCase(testtools.TestCase):
         resp = storeapi.login(email, password, token_name='snapcraft', otp='')
         if resp['success']:
             conf = config.Config()
-            conf.load()
             creds = resp['body']
             for k in ('consumer_key', 'consumer_secret',
                       'token_key', 'token_secret'):
@@ -100,7 +99,6 @@ class TestCase(testtools.TestCase):
     def logout(self):
         # Our setup guarantee we'll clear the expected config file
         conf = config.Config()
-        conf.load()
         conf.clear()
         conf.save()
 
@@ -146,14 +144,10 @@ parts:
         return snap_path, name
 
     def register(self, snap_name):
-        conf = config.Config()
-        conf.load()
-        res = storeapi.register_name(conf, snap_name)
+        res = storeapi.register_name(snap_name)
         return res
 
     def upload(self, snap_filename, snap_name):
-        conf = config.Config()
-        conf.load()
         # Diable the progress indications, we don't need them during tests
         orig = _upload.ProgressBar
 
@@ -170,7 +164,7 @@ parts:
 
         try:
             _upload.ProgressBar = Silent
-            res = storeapi.upload(snap_filename, snap_name, config=conf)
+            res = storeapi.upload(snap_filename, snap_name)
         finally:
             _upload.ProgressBar = orig
         return res

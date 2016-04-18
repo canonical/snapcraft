@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
     conf = config.Config()
-    conf.load()
     session = get_oauth_session(conf)
     if session is None:
         raise EnvironmentError(

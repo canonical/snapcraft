@@ -55,7 +55,6 @@ def login(email, password, token_name, otp=''):
         result['body'] = response
         result['success'] = True
         conf = config.Config()
-        conf.load()
         for k in ('consumer_key', 'consumer_secret',
                   'token_key', 'token_secret'):
             conf.set(k, response[k])

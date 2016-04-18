@@ -62,7 +62,6 @@ def login(email, password, token_name='unused', otp=''):
             result['success'] = False
         else:
             conf = config.Config()
-            conf.load()
             conf.set('package_upload', ','.join([macaroon, discharge]))
             conf.save()
     return result

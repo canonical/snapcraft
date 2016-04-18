@@ -76,7 +76,6 @@ def upload_files(binary_filename):
     result = {'success': False, 'errors': []}
 
     conf = config.Config()
-    conf.load()
     session = get_oauth_session(conf)
     if session is None:
         result['errors'] = [
@@ -163,7 +162,6 @@ def upload_app(name, upload_data, metadata=None):
               'application_url': '', 'revision': None}
 
     conf = config.Config()
-    conf.load()
     session = get_oauth_session(conf)
     if session is None:
         result['errors'] = [

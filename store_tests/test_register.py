@@ -42,6 +42,12 @@ class RegisterTestCase(store_tests.TestCase):
         self.login()
         uniq_name = 'delete-me-{}'.format(str(uuid.uuid4().int)[:32])
         response = self.register(uniq_name)
+        # A single user can't register too often, run less tests :-/
+        if response.status_code == 400:
+            json_resp = response.json()
+            all_msg = json_resp['__all__']
+            if all_msg[0].startswith('You must wait'):
+                self.skipTest('Register hits rate limitation.')
         self.assertTrue(response.ok)
         # We get a snap_id back
         self.assertIn('snap_id', response.json())

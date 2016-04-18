@@ -35,6 +35,7 @@ class Config(object):
     def __init__(self):
         self.parser = configparser.ConfigParser()
         self.filename = None
+        self.load()
 
     def _section_name(self):
         # The only section we care about is the host from the SSO url

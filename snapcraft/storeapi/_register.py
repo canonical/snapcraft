@@ -29,7 +29,6 @@ def register_name(name):
     # FIXME: Switch to macaroons as soon as register-name/ have support for
     # them. -- vila 2016-04-07
     conf = config.Config()
-    conf.load()
     session = get_oauth_session(conf)
     data = dict(snap_name=name)
     response = store_raw_api_call('register-name/', method='POST',

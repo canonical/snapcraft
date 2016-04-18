@@ -57,7 +57,6 @@ class TestConfig(tests.TestCase):
 
     def test_non_existing_file_succeeds(self):
         conf = config.Config()
-        conf.load()
         self.assertEqual([], conf.parser.sections())
         self.assertTrue(conf.is_empty())
 
@@ -67,14 +66,12 @@ class TestConfig(tests.TestCase):
         existing_conf.save()
         # Check we find and use the existing conf
         conf = config.Config()
-        conf.load()
         self.assertEqual('bar', conf.get('foo'))
         self.assertFalse(conf.is_empty())
 
     def test_irrelevant_sections_are_ignored(self):
         create_config_from_string('''[example.com]\nfoo=bar''')
         conf = config.Config()
-        conf.load()
         self.assertEqual(None, conf.get('foo'))
 
     def test_section_from_url(self):
@@ -82,7 +79,6 @@ class TestConfig(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_SSO_API_ROOT_URL', 'http://example.com/api/v2'))
         conf = config.Config()
-        conf.load()
         self.assertEqual('bar', conf.get('foo'))
 
     def test_save_one_option(self):
@@ -90,20 +86,17 @@ class TestConfig(tests.TestCase):
         conf.set('bar', 'baz')
         conf.save()
         new_conf = config.Config()
-        new_conf.load()
-        self.assertEqual('baz', conf.get('bar'))
+        self.assertEqual('baz', new_conf.get('bar'))
 
     def test_clear_preserver_other_sections(self):
         create_config_from_string('''[keep_me]\nfoo=bar\n''')
         conf = config.Config()
-        conf.load()
         conf.set('bar', 'baz')
         self.assertEqual('baz', conf.get('bar'))
         conf.clear()
         conf.save()
         new_conf = config.Config()
-        new_conf.load()
-        self.assertEqual(None, conf.get('bar'))
+        self.assertEqual(None, new_conf.get('bar'))
         # Picking behind the curtains
-        self.assertEqual('bar', conf.parser.get('keep_me', 'foo'))
+        self.assertEqual('bar', new_conf.parser.get('keep_me', 'foo'))
         self.assertTrue(conf.is_empty())

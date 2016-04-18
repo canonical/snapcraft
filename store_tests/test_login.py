@@ -57,5 +57,4 @@ class TestLoginLogout(store_tests.TestCase):
         self.assertTrue(res['success'])
         res = self.logout()
         conf = config.Config()
-        conf.load()
         self.assertTrue(conf.is_empty())
