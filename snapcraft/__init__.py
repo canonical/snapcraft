@@ -117,4 +117,5 @@ from snapcraft._help import topic_help              # noqa
 from snapcraft._store import login, logout, upload  # noqa
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
+from snapcraft import sources                       # noqa
 from snapcraft.internal import repo                 # noqa
