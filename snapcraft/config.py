@@ -49,6 +49,11 @@ class Config(object):
         except (configparser. NoSectionError, KeyError):
             return None
 
+    def get_macaroon(self, acl):
+        value = self.get(acl)
+        macaroon, discharge = value.split(',')
+        return macaroon.strip(), discharge.strip()
+
     def set(self, option_name, value):
         section_name = self._section_name()
         if not self.parser.has_section(section_name):

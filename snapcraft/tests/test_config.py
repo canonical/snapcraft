@@ -100,3 +100,33 @@ class TestConfig(tests.TestCase):
         # Picking behind the curtains
         self.assertEqual('bar', new_conf.parser.get('keep_me', 'foo'))
         self.assertTrue(conf.is_empty())
+
+
+class TestOptions(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        isolate_for_config(self)
+
+    def create_config(self, **kwargs):
+        conf = config.Config()
+        for k, v in kwargs.items():
+            conf.set(k, v)
+        return conf
+
+    def test_string(self):
+        conf = self.create_config(foo='bar')
+        self.assertEqual('bar', conf.get('foo'))
+
+    def test_macaroons(self):
+        conf = self.create_config(foo='macaroon,discharge')
+        self.assertEqual(('macaroon', 'discharge'), conf.get_macaroon('foo'))
+
+    def test_wrong_macaroon_format(self):
+        conf = self.create_config(foo='bar')
+        with self.assertRaises(ValueError):
+            conf.get_macaroon('foo')
+
+    def test_macaroon_stripped(self):
+        conf = self.create_config(foo=' mac aroon , dis charge ')
+        self.assertEqual(('mac aroon', 'dis charge'), conf.get_macaroon('foo'))
