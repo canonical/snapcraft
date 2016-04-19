@@ -63,14 +63,14 @@ class UploadTestCase(store_tests.TestCase):
         registered = (
             os.environ.get('TEST_USER_EMAIL')
             == 'u1test+snapcraft@canonical.com')
-        self.expectFailure('basic is registered by someone else',
-                           self.assertTrue, not registered and resp['success'])
+        if not registered:
+            self.expectFailure('basic is registered by someone else',
+                               self.assertTrue, resp['success'])
         self.assertTrue(resp['success'])
-
-        log = self.logger.output
-        self.assertIn(
-            'Application uploaded successfully (as revision ', log)
-        self.assertIn('Please check out the application at: ', log)
+        # The exact content vary but the keys should exist when the upload
+        # succeeds
+        self.assertTrue('application_url' in resp)
+        self.assertTrue('revision' in resp)
 
     def test_upload_app_failed(self):
         # Make upload_app catch an error raised by _upload_files
