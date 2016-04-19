@@ -50,7 +50,7 @@ def run(cmd, **kwargs):
     with tempfile.NamedTemporaryFile(mode='w+') as f:
         f.write(assemble_env())
         f.write('\n')
-        f.write('exec $*')
+        f.write('exec "$@"')
         f.flush()
         subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
 
@@ -61,7 +61,7 @@ def run_output(cmd, **kwargs):
     with tempfile.NamedTemporaryFile(mode='w+') as f:
         f.write(assemble_env())
         f.write('\n')
-        f.write('exec $*')
+        f.write('exec "$@"')
         f.flush()
         output = subprocess.check_output(['/bin/sh', f.name] + cmd, **kwargs)
         try:

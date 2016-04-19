@@ -174,7 +174,7 @@ class _SnapPackaging:
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
-        args = ' '.join(args) + ' $*' if args else '$*'
+        args = ' '.join(args) + ' "$@"' if args else '"$@"'
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
         assembled_env = common.assemble_env().replace(self._snap_dir, '$SNAP')
