@@ -60,7 +60,6 @@ import subprocess
 import tempfile
 
 from snapcraft import (
-    config,
     storeapi,
 )
 from snapcraft.plugins import kbuild

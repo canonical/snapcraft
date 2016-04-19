@@ -23,7 +23,6 @@ import fixtures
 
 import snapcraft
 from snapcraft import (
-    config,
     tests,
 )
 from snapcraft.plugins import kernel
