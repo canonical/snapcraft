@@ -28,14 +28,14 @@ if os.path.exists(os.path.join(topdir, 'setup.py')):
 
 if __name__ == '__main__':
     import snapcraft.main
-    import snapcraft.dirs
+    import snapcraft.internal.dirs
 
     cov = coverage.coverage(
         data_file=os.path.join(topdir, '.coverage'), data_suffix=True,
         branch=True, source=['snapcraft'])
     cov.start()
     try:
-        snapcraft.dirs.setup_dirs()
+        snapcraft.internal.dirs.setup_dirs()
         snapcraft.main.main()
     except:
         cov.stop()
