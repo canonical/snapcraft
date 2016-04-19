@@ -58,7 +58,14 @@ def logout():
 
 def register_name(snap_name):
     logger.info('Registering {}.'.format(snap_name))
-    response = storeapi.register_name(snap_name)
+    store = storeapi.V2ApiClient()
+    if store.conf.get('package_upload') is None:
+        logger.info('Registration failed.')
+        logger.info(
+            'No valid credentials found. Have you run "snapcraft login"?')
+        return
+
+    response = store.register_name(snap_name)
     if response.ok:
         logger.info('Congrats! You\'re now the publisher for "{}".'.format(
             snap_name))

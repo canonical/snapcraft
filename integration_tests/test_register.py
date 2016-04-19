@@ -27,19 +27,23 @@ class RegisterTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.StagingStore())
-        # FIXME: Switch to macaroons as soon as they are available for
-        # register-name -- vila 2016-04-14
         self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
-#        self.useFixture(
-#            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        self.login(expect_success=True)
-        self.addCleanup(self.logout)
+            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
 
     # FIXME: The store doesn't provide a way to unregister a name *and*
     # registrations are rate-limited for a given user. We work around that by
     # creating unique names and assuming we only run against staging or local
     # dev instances -- vila 2016-04-08
     def test_successful_register(self):
+        self.login(expect_success=True)
+        self.addCleanup(self.logout)
         uniq_name = 'delete-me-{}'.format(str(uuid.uuid4().int)[:32])
-        self.register_name(uniq_name)
+        output = self.run_snapcraft(['register-name', uniq_name])
+        self.assertIn('Congrats! You\'re now the publisher'
+                      ' for "{}"'.format(uniq_name), output)
+
+    def test_register_without_login(self):
+        output = self.run_snapcraft(['register-name', 'foobar'])
+        self.assertIn('Registration failed.', output)
+        self.assertIn('No valid credentials found. Have you run "snapcraft '
+                      'login"?', output)

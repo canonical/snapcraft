@@ -29,7 +29,6 @@ from .constants import (
 )
 from .info import get_info  # noqa
 from ._download import download  # noqa
-from ._register import register_name  # noqa
 from ._upload import upload  # noqa
 
 
@@ -57,6 +56,20 @@ class V2ApiClient(object):
     def logout(self):
         self.conf.clear()
         self.conf.save()
+
+    def register_name(self, name):
+        data = dict(snap_name=name)
+        macaroon_auth = self.get_macaroon_auth('package_upload')
+        response = self.post('register-name/',
+                             data=data,
+                             headers=dict(authorization=macaroon_auth))
+        if not response.ok:
+            # if (response['errors'] == ['Authorization Required']
+            #     and (response.headers['WWW-Authenticate']
+            #          == "Macaroon needs_refresh=1":
+            # Refresh the discharge macaroon and retry
+            pass
+        return response
 
     def oauth_login(self, email, password, one_time_password):
         data = dict(email=email, password=password, token_name='snapcraft')
@@ -124,6 +137,12 @@ class V2ApiClient(object):
             return None, err.body
         except sso.UnexpectedApiError as err:
             return None, err.json_body
+
+    def get_macaroon_auth(self, acl):
+        macaroon, discharge = self.conf.get_macaroon(acl)
+        macaroon_auth = 'Macaroon root={}, discharge={}'.format(
+            macaroon, discharge)
+        return macaroon_auth
 
     def get_discharges(self, email, password, one_time_password, macaroons):
         data = dict(email=email, password=password,

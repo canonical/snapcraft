@@ -15,7 +15,7 @@
 """Tests against the store.
 
 Unlike the integration tests, these tests don't use the snapcraft executable
-(FIXME: almost) so they can be used to debug interactively.
+so they can be used to debug interactively.
 
 To achieve isolation, they rely on each user providing credentials via
 TEST_USER_EMAIL and TEST_USER_PASSWORD environment variables (unlike
@@ -86,7 +86,7 @@ class TestCase(testtools.TestCase):
         if not password:
             self.skipTest('No password provided for the test user.')
 
-        # FIXME: Find a way to support one-time-passwords (otp)
+        # FIXME: Find a way to test one-time-passwords (otp)
         # -- vila 2016-04-11
         return self.store.login(email, password, one_time_password='')
 
@@ -135,7 +135,7 @@ parts:
         return snap_path, name
 
     def register(self, snap_name):
-        res = storeapi.register_name(snap_name)
+        res = self.store.register_name(snap_name)
         return res
 
     def upload(self, snap_filename, snap_name):

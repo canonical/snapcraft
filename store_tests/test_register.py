@@ -24,22 +24,18 @@ class RegisterTestCase(store_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        # FIXME: Switch to macaroons as soon as they are available for
-        # register-name -- vila 2016-04-14
-        if False:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
+        self.useFixture(
+            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
+        # Always login, the command fails if the required credentials are not
+        # available (see integration_tests/test_register.py)
+        self.addCleanup(self.logout)
+        self.login()
 
     # FIXME: The store doesn't provide a way to unregister a name *and*
     # registrations are rate-limited for a given user. We work around that by
     # creating unique names and assuming we only run against staging or local
     # dev instances -- vila 2016-04-08
     def test_successful_register(self):
-        self.addCleanup(self.logout)
-        self.login()
         uniq_name = 'delete-me-{}'.format(str(uuid.uuid4().int)[:32])
         response = self.register(uniq_name)
         # A single user can't register too often, run less tests :-/
@@ -51,10 +47,3 @@ class RegisterTestCase(store_tests.TestCase):
         self.assertTrue(response.ok)
         # We get a snap_id back
         self.assertIn('snap_id', response.json())
-
-    def test_failed_login(self):
-        self.addCleanup(self.logout)
-        self.login(password='wrongpassword')
-        uniq_name = 'delete-me-{}'.format(str(uuid.uuid4().int)[:32])
-        response = self.register(uniq_name)
-        self.assertEqual(401, response.status_code)
