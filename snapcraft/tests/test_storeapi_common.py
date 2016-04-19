@@ -153,6 +153,24 @@ class ApiCallTestCase(TestCase):
         self.assertEqual(responses.calls[0].request.body,
                          json.dumps({'request': 'value'}))
 
+    @responses.activate
+    def test_post_with_empty_data(self):
+        response_data = {'response': 'value'}
+        responses.add(responses.POST, 'http://example.com/path',
+                      body=json.dumps(response_data))
+
+        result = store_api_call(
+            '/path', method='POST', data={})
+        self.assertEqual(result, {
+            'success': True,
+            'data': response_data,
+            'errors': [],
+        })
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(responses.calls[0].request.headers['Content-Type'],
+                         'application/json')
+        self.assertEqual(responses.calls[0].request.body, '{}')
+
 
 class RetryDecoratorTestCase(TestCase):
 

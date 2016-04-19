@@ -54,7 +54,9 @@ def store_api_call(path, session=None, method='GET', data=None):
     if method == 'GET':
         response = client.get(url)
     elif method == 'POST':
-        response = client.post(url, data=data and json.dumps(data) or None,
+        if data is not None:
+            data = json.dumps(data)
+        response = client.post(url, data=data,
                                headers={'Content-Type': 'application/json'})
     else:
         raise ValueError('Method {} not supported'.format(method))
