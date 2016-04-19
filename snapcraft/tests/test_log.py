@@ -27,6 +27,14 @@ from snapcraft import tests
 @mock.patch('sys.stderr', new_callable=io.StringIO)
 class LogTestCase(tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+
+        self.info_color = log._ColoredFormatter.LEVEL_COLORS['INFO']
+        self.warning_color = log._ColoredFormatter.LEVEL_COLORS['WARNING']
+        self.error_color = log._ColoredFormatter.LEVEL_COLORS['ERROR']
+        self.critical_color = log._ColoredFormatter.LEVEL_COLORS['CRITICAL']
+
     def test_configure_must_send_messages_to_stdout(
             self, mock_stderr, mock_stdout, mock_isatty):
         logger_name = self.id()
@@ -39,10 +47,10 @@ class LogTestCase(tests.TestCase):
         logger.info('Test info')
         logger.warning('Test warning')
 
-        expected_out = (
-            '\033[1mTest debug\033[0m\n'
-            '\033[1mTest info\033[0m\n'
-            '\033[1mTest warning\033[0m\n')
+        expected_out = ('Test debug\n'
+                        '{}Test info\033[0m\n'
+                        '{}Test warning\033[0m\n').format(
+            self.info_color, self.warning_color)
         self.assertEqual(expected_out, mock_stdout.getvalue())
         self.assertEqual('', mock_stderr.getvalue())
 
@@ -57,9 +65,9 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_err = (
-            '\033[1mTest error\033[0m\n'
-            '\033[1mTest critical\033[0m\n')
+        expected_err = ('{}Test error\033[0m\n'
+                        '{}Test critical\033[0m\n').format(
+            self.error_color, self.critical_color)
         self.assertEqual(expected_err, mock_stderr.getvalue())
         self.assertEqual('', mock_stdout.getvalue())
 
@@ -75,12 +83,12 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_out = (
-            '\033[1mTest info\033[0m\n'
-            '\033[1mTest warning\033[0m\n')
-        expected_err = (
-            '\033[1mTest error\033[0m\n'
-            '\033[1mTest critical\033[0m\n')
+        expected_out = ('{}Test info\033[0m\n'
+                        '{}Test warning\033[0m\n').format(
+            self.info_color, self.warning_color)
+        expected_err = ('{}Test error\033[0m\n'
+                        '{}Test critical\033[0m\n').format(
+            self.error_color, self.critical_color)
         self.assertEqual(expected_out, mock_stdout.getvalue())
         self.assertEqual(expected_err, mock_stderr.getvalue())
 
@@ -96,12 +104,35 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_out = (
-            '\033[1mTest debug\033[0m\n'
-            '\033[1mTest info\033[0m\n'
-            '\033[1mTest warning\033[0m\n')
-        expected_err = (
-            '\033[1mTest error\033[0m\n'
-            '\033[1mTest critical\033[0m\n')
+        expected_out = ('Test debug\n'
+                        '{}Test info\033[0m\n'
+                        '{}Test warning\033[0m\n').format(
+            self.info_color, self.warning_color)
+        expected_err = ('{}Test error\033[0m\n'
+                        '{}Test critical\033[0m\n').format(
+            self.error_color, self.critical_color)
+        self.assertEqual(expected_out, mock_stdout.getvalue())
+        self.assertEqual(expected_err, mock_stderr.getvalue())
+
+    def test_configure_must_support_no_tty(
+            self, mock_stderr, mock_stdout, mock_isatty):
+        mock_isatty.return_value = False
+        logger_name = self.id()
+        log.configure(logger_name, log_level=logging.DEBUG)
+        logger = logging.getLogger(logger_name)
+
+        logger.debug('Test debug')
+        logger.info('Test info')
+        logger.warning('Test warning')
+        logger.error('Test error')
+        logger.critical('Test critical')
+
+        expected_out = ('Test debug\n'
+                        'Test info\n'
+                        'Test warning\n').format(
+            self.info_color, self.warning_color)
+        expected_err = ('Test error\n'
+                        'Test critical\n').format(
+            self.error_color, self.critical_color)
         self.assertEqual(expected_out, mock_stdout.getvalue())
         self.assertEqual(expected_err, mock_stderr.getvalue())
