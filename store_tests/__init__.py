@@ -31,6 +31,7 @@ import subprocess
 import uuid
 
 import fixtures
+import progressbar
 import testtools
 
 import snapcraft
@@ -46,6 +47,18 @@ from snapcraft.tests import (
     fixture_setup,
     test_config,
 )
+
+
+class SilentProgressBar(progressbar.ProgressBar):
+    """A progress bar causing no spurious output during tests."""
+    def start(self):
+        pass
+
+    def update(self, value=None):
+        pass
+
+    def finish(self):
+        pass
 
 
 class TestCase(testtools.TestCase):
@@ -141,20 +154,8 @@ parts:
     def upload(self, snap_filename, snap_name):
         # Diable the progress indications, we don't need them during tests
         orig = _upload.ProgressBar
-
-        class Silent(orig):
-
-            def start(self):
-                pass
-
-            def update(self, value=None):
-                pass
-
-            def finish(self):
-                pass
-
         try:
-            _upload.ProgressBar = Silent
+            _upload.ProgressBar = SilentProgressBar
             res = storeapi.upload(snap_filename, snap_name)
         finally:
             _upload.ProgressBar = orig
