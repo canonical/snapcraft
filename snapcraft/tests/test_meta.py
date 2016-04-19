@@ -297,7 +297,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n'
                     '\n\n'
                     'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" "$@"\n')
 
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -323,7 +323,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n'
                     '\n\n'
                     'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -356,7 +356,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             '\n\n'
             'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
             'exec "$SNAP/snap_exe"'
-            ' "$SNAP/test_relexepath" $*\n')
+            ' "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -383,7 +383,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         expected = ('#!/bin/sh\n'
                     '\n\n'
                     'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -410,7 +410,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         expected = ('#!/bin/sh\n'
                     '\n\n'
                     'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" $*\n')
+                    'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -430,7 +430,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         expected = ('#!/bin/sh\n'
                     '\n\n'
                     'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                    'exec "app1" $*\n')
+                    'exec "app1" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
