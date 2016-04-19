@@ -1,3 +1,19 @@
+snapcraft (2.8.3) xenial; urgency=medium
+
+  [ Kyle Fazzari ]
+  * docs/intro.md: Fix broken developer reference link. (#456) (LP: #1558296)
+  * Nil plugin: Make purpose more clear in documentation. (#455) (LP: #1549691)
+  * Use colors for logging. (#474) (LP: #1572186)
+
+  [ Leo Arias ]
+  * Update the snapcraft-coverage script to use the internal dirs (#471)
+    (LP: #1571696)
+
+  [ Sergio Schvezov ]
+  * Fix shell quoting (#473) (LP: #1572129)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Tue, 19 Apr 2016 17:59:45 -0300
+
 snapcraft (2.8.2) xenial; urgency=medium
 
   * Don't expose broken or fragile APIs to plugins (LP: #1571264)
