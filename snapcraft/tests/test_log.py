@@ -30,10 +30,10 @@ class LogTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.info_color = log._ColoredFormatter.level_colors['INFO']
-        self.warning_color = log._ColoredFormatter.level_colors['WARNING']
-        self.error_color = log._ColoredFormatter.level_colors['ERROR']
-        self.critical_color = log._ColoredFormatter.level_colors['CRITICAL']
+        self.info_color = log._ColoredFormatter.LEVEL_COLORS['INFO']
+        self.warning_color = log._ColoredFormatter.LEVEL_COLORS['WARNING']
+        self.error_color = log._ColoredFormatter.LEVEL_COLORS['ERROR']
+        self.critical_color = log._ColoredFormatter.LEVEL_COLORS['CRITICAL']
 
     def test_configure_must_send_messages_to_stdout(
             self, mock_stderr, mock_stdout, mock_isatty):

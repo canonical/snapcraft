@@ -34,8 +34,8 @@ class _StderrFilter(logging.Filter):
 
 
 class _ColoredFormatter(logging.Formatter):
-    reset = '\033[0m'
-    level_colors = {
+    RESET = '\033[0m'
+    LEVEL_COLORS = {
         'INFO': '\033[0;32m',  # Green
         'WARNING': '\033[1;33m',  # Yellow
         'ERROR': '\033[0;31m',  # Dark red
@@ -43,11 +43,11 @@ class _ColoredFormatter(logging.Formatter):
     }
 
     def format(self, record):
-        color = self.level_colors.get(record.levelname, None)
+        color = self.LEVEL_COLORS.get(record.levelname, None)
         log_message = super().format(record)
         if color:
             return '{color}{message}{reset}'.format(
-                color=color, message=log_message, reset=self.reset)
+                color=color, message=log_message, reset=self.RESET)
 
         return log_message
 
