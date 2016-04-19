@@ -21,10 +21,6 @@ import os
 import sys
 
 
-_COLOR_BOLD = '\033[1m'
-_COLOR_END = '\033[0m'
-
-
 class _StdoutFilter(logging.Filter):
 
     def filter(self, record):
@@ -35,6 +31,25 @@ class _StderrFilter(logging.Filter):
 
     def filter(self, record):
         return record.levelno >= logging.ERROR
+
+
+class _ColoredFormatter(logging.Formatter):
+    reset = '\033[0m'
+    level_colors = {
+        'INFO': '\033[0;32m',  # Green
+        'WARNING': '\033[1;33m',  # Yellow
+        'ERROR': '\033[0;31m',  # Dark red
+        'CRITICAL': '\033[1;31m',  # Light red
+    }
+
+    def format(self, record):
+        color = self.level_colors.get(record.levelname, None)
+        log_message = super().format(record)
+        if color:
+            return '{color}{message}{reset}'.format(
+                color=color, message=log_message, reset=self.reset)
+
+        return log_message
 
 
 def configure(logger_name=None, log_level=None):
@@ -58,10 +73,10 @@ def configure(logger_name=None, log_level=None):
     stderr_handler.addFilter(_StderrFilter())
     handlers = [stdout_handler, stderr_handler]
 
-    fmt = '{message}'
     if os.isatty(1):
-        fmt = _COLOR_BOLD + fmt + _COLOR_END
-    formatter = logging.Formatter(fmt, style='{')
+        formatter = _ColoredFormatter(style='{')
+    else:
+        formatter = logging.Formatter(style='{')
     logger = logging.getLogger(logger_name)
     for handler in handlers:
         handler.setFormatter(formatter)
