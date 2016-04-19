@@ -80,21 +80,27 @@ class V2ApiClient(object):
 
     def macaroon_login(self, email, password, one_time_password):
         result = dict(success=False, body=None)
-        macaroon, error = self.get_macaroon('package_upload')
-        if macaroon is None:
-            result['errors'] = error
-        else:
-            result['success'] = True
-        if result['success']:
-            discharge, error = self.get_discharge(email, password,
-                                                  one_time_password, macaroon)
-            if discharge is None:
+        acls = ('store_read', 'store_write',
+                'package_access', 'package_upload')
+        macaroons = {}
+        for acl in acls:
+            macaroon, error = self.get_macaroon(acl)
+            if error:
                 result['errors'] = error
-                result['success'] = False
+                break
+            macaroons[acl] = macaroon
+        else:
+            discharges, error = self.get_discharges(
+                email, password, one_time_password, macaroons)
+            if error:
+                result['errors'] = error
             else:
-                conf = config.Config()
-                conf.set('package_upload', ','.join([macaroon, discharge]))
-                conf.save()
+                # All macaroons have been discharged, save them in the config
+                for acl in acls:
+                    self.conf.set(acl, ','.join([macaroons[acl],
+                                                 discharges[acl]]))
+                self.conf.save()
+                result['success'] = True
         return result
 
     def get_macaroon(self, acl):
@@ -114,6 +120,22 @@ class V2ApiClient(object):
                 headers={'Content-Type': 'application/json',
                          'Accept': 'application/json'})
             return response.content['discharge_macaroon'], None
+        except sso.ApiException as err:
+            return None, err.body
+        except sso.UnexpectedApiError as err:
+            return None, err.json_body
+
+    def get_discharges(self, email, password, one_time_password, macaroons):
+        data = dict(email=email, password=password,
+                    macaroons=[(k, v) for k, v in macaroons.items()])
+        if one_time_password:
+            data['otp'] = one_time_password
+        try:
+            response = self.sso.session.post(
+                '/tokens/discharge', data=data,
+                headers={'Content-Type': 'application/json',
+                         'Accept': 'application/json'})
+            return dict(response.content['discharge_macaroons']), None
         except sso.ApiException as err:
             return None, err.body
         except sso.UnexpectedApiError as err:
