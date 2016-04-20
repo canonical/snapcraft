@@ -1345,7 +1345,7 @@ class CleanTestCase(tests.TestCase):
             with self.subTest(key=key):
                 self.clear_common_directories()
 
-                schema = {'snap': {'type': 'array'}}
+                schema = {'stage': {'type': 'array'}}
                 properties = {'stage': value['fileset']}
 
                 handler = pluginhandler.load_plugin(

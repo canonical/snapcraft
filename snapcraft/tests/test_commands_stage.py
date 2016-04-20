@@ -35,8 +35,7 @@ parts:
 {parts}"""
 
     yaml_part = """  stage{:d}:
-    plugin: nil
-    source: ."""
+    plugin: nil"""
 
     def make_snapcraft_yaml(self, n=1):
         parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])

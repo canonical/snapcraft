@@ -2,4 +2,4 @@
 export PATH="$SNAP/bin:$SNAP/usr/bin:$PATH"
 
 LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-exec "$SNAP/binary1" $*
+exec "$SNAP/binary1" "$@"
