@@ -226,7 +226,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             modprobe_out = self.run_output([
                 'modprobe', '-n', '--show-depends', '-d', self.installdir,
                 '-S', self.kernel_release, module])
-            modprobe_outs = modprobe_out.split(os.linesep)
+            modprobe_outs.append(modprobe_out.split(os.linesep))
 
         modules_path = os.path.join('lib', 'modules', self.kernel_release)
         for src in modprobe_outs:
