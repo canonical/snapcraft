@@ -297,10 +297,9 @@ class KernelPluginTestCase(tests.TestCase):
         modprobe_cmd = ['modprobe', '-n', '--show-depends', '-d',
                         plugin.installdir, '-S', '4.4', ]
         self.run_output_mock.assert_has_calls([
-            mock.call(modprobe_cmd + ['squashfs']),
-            mock.call().split('\n'),
-            mock.call(modprobe_cmd + ['vfat']),
-        ])
+            mock.call(modprobe_cmd + ['squashfs'])])
+        self.run_output_mock.assert_has_calls([
+            mock.call(modprobe_cmd + ['vfat'])])
 
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
