@@ -231,6 +231,45 @@ class PluginTestCase(tests.TestCase):
                              'Expected staging to allow overwriting of '
                              'already-staged files')
 
+    def test_migrate_files_supports_no_follow_symlinks(self):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        with open(os.path.join('install', 'foo'), 'w') as f:
+            f.write('installed')
+
+        os.symlink('foo', os.path.join('install', 'bar'))
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=False)
+
+        # Verify that the symlink was preserved
+        self.assertTrue(os.path.islink(os.path.join('stage', 'bar')),
+                        "Expected migrated 'bar' to still be a symlink.")
+        self.assertEqual('foo', os.readlink(os.path.join('stage', 'bar')),
+                         "Expected migrated 'bar' to point to 'foo'")
+
+    def test_migrate_files_supports_follow_symlinks(self):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        with open(os.path.join('install', 'foo'), 'w') as f:
+            f.write('installed')
+
+        os.symlink('foo', os.path.join('install', 'bar'))
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        # Verify that the symlink was preserved
+        self.assertFalse(os.path.islink(os.path.join('stage', 'bar')),
+                         "Expected migrated 'bar' to no longer be a symlink.")
+        with open(os.path.join('stage', 'bar'), 'r') as f:
+            self.assertEqual(f.read(), 'installed',
+                             "Expected migrated 'bar' to be a copy of 'foo'")
+
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
     @patch('snapcraft.internal.pluginhandler._get_plugin')
