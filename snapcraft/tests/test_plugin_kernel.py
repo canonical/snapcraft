@@ -270,6 +270,38 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual("initrd file type is unsupported: 'application/foo'",
                          str(raised.exception))
 
+    def test_pack_initrd_modules(self):
+        self.options.kernel_initrd_modules = [
+            'squashfs',
+            'vfat'
+        ]
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        # Fake some assets
+        plugin.kernel_release = '4.4'
+        modules_path = os.path.join(plugin.installdir, 'lib', 'modules', '4.4')
+        initrd_modules_staging_path = os.path.join(
+            'staging', 'lib', 'modules', '4.4')
+        os.makedirs(modules_path)
+        open(os.path.join(modules_path, 'modules.dep'), 'w').close()
+        open(os.path.join(modules_path, 'modules.dep.bin'), 'w').close()
+        os.makedirs(initrd_modules_staging_path)
+        open(os.path.join(plugin.installdir, 'initrd-4.4.img'), 'w').close()
+
+        with mock.patch.object(plugin, '_unpack_generic_initrd') as m_unpack:
+            m_unpack.return_value = 'staging'
+            plugin._make_initrd()
+
+        modprobe_cmd = ['modprobe', '-n', '--show-depends', '-d',
+                        plugin.installdir, '-S', '4.4', ]
+        self.run_output_mock.assert_has_calls([
+            mock.call(modprobe_cmd + ['squashfs']),
+            mock.call().split('\n'),
+            mock.call(modprobe_cmd + ['vfat']),
+        ])
+
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
         with open(self.options.kconfigfile, 'w') as f:

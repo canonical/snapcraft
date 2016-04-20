@@ -149,6 +149,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self.make_install_targets.extend(self._get_fw_install_targets())
 
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
+        self.kernel_release = ''
 
     def enable_cross_compilation(self):
         logger.info('Cross compiling kernel target {!r}'.format(
@@ -220,14 +221,12 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
         initrd_unpacked_path = self._unpack_generic_initrd()
 
-        if self.options.kernel_initrd_modules:
+        modprobe_outs = []
+        for module in self.options.kernel_initrd_modules:
             modprobe_out = self.run_output([
                 'modprobe', '-n', '--show-depends', '-d', self.installdir,
-                '-S', self.kernel_release] +
-                self.options.kernel_initrd_modules)
+                '-S', self.kernel_release, module])
             modprobe_outs = modprobe_out.split(os.linesep)
-        else:
-            modprobe_outs = []
 
         modules_path = os.path.join('lib', 'modules', self.kernel_release)
         for src in modprobe_outs:
