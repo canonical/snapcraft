@@ -1,3 +1,14 @@
+snapcraft (2.8.4) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Use series 16 by default instead of rolling-core (#477) (LP: #1572602)
+  * kernel plugin: iterate over modules to add to initrd (#476) (LP: #1572118)
+
+  [ Kyle Fazzari ]
+  * Follow symlinks while hard-linking migrated files. (#478) (LP: #1572664)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 20 Apr 2016 19:15:32 -0300
+
 snapcraft (2.8.3) xenial; urgency=medium
 
   [ Kyle Fazzari ]
