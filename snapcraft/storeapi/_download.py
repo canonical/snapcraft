@@ -38,7 +38,7 @@ def download(snap_name, channel, download_path, config, arch):
     session.headers.update({
         'accept': 'application/hal+json',
         'X-Ubuntu-Architecture': arch,
-        'X-Ubuntu-Release': 'rolling-core',
+        'X-Ubuntu-Release': '16',
         'X-Ubuntu-Device-Channel': channel,
     })
     session.params = {
