@@ -156,7 +156,7 @@ parts:
         orig = _upload.ProgressBar
         try:
             _upload.ProgressBar = SilentProgressBar
-            res = storeapi.upload(snap_filename, snap_name)
+            res = self.store.upload(snap_filename, snap_name)
         finally:
             _upload.ProgressBar = orig
         return res

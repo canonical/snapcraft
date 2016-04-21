@@ -23,13 +23,18 @@ from ssoclient import v2 as sso
 
 from snapcraft import config
 from .channels import get_channels, update_channels  # noqa
+from .common import get_oauth_session
 from .constants import (
     UBUNTU_SSO_API_ROOT_URL,
     UBUNTU_STORE_API_ROOT_URL,
 )
 from .info import get_info  # noqa
 from ._download import download  # noqa
-from ._upload import upload  # noqa
+from ._upload import upload_files, upload_app  # noqa
+
+
+class InvalidCredentials(Exception):
+    pass
 
 
 class V2ApiClient(object):
@@ -42,9 +47,13 @@ class V2ApiClient(object):
         self.session = requests.Session()
         self.root_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
                                        UBUNTU_STORE_API_ROOT_URL)
-        sso_endpoint = os.environ.get(
+        sso_url = os.environ.get(
             'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-        self.sso = sso_class(sso_endpoint)
+        self.sso = sso_class(sso_url)
+        # Will be set by upload()
+        self.updown = None
+
+    # API for snapcraft
 
     def login(self, email, password, one_time_password=None):
         with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
@@ -61,8 +70,9 @@ class V2ApiClient(object):
         data = dict(snap_name=name)
         macaroon_auth = self.get_macaroon_auth('package_upload')
         response = self.post('register-name/',
-                             data=data,
-                             headers=dict(authorization=macaroon_auth))
+                             data=json.dumps(data),
+                             headers={'Authorization': macaroon_auth,
+                                      'Content-Type': 'application/json'})
         if not response.ok:
             # if (response['errors'] == ['Authorization Required']
             #     and (response.headers['WWW-Authenticate']
@@ -70,6 +80,24 @@ class V2ApiClient(object):
             # Refresh the discharge macaroon and retry
             pass
         return response
+
+    def upload(self, binary_path, snap_name):
+        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
+        if with_macaroons:
+            if self.conf.get('package_upload') is None:
+                raise InvalidCredentials()
+        else:
+            self.session = get_oauth_session(self.conf)
+            if self.session is None:
+                raise InvalidCredentials()
+        self.updown = requests.Session()
+        data = upload_files(binary_path, self.updown)
+        success = data.get('success', False)
+        if not success:
+            return data
+
+        result = upload_app(self, snap_name, data)
+        return result
 
     def oauth_login(self, email, password, one_time_password):
         data = dict(email=email, password=password, token_name='snapcraft')
@@ -117,7 +145,9 @@ class V2ApiClient(object):
         return result
 
     def get_macaroon(self, acl):
-        response = self.post('../../api/2.0/acl/{}/'.format(acl), data={})
+        response = self.post('../../api/2.0/acl/{}/'.format(acl),
+                             data=json.dumps({}),
+                             headers={'Content-Type': 'application/json'})
         if response.ok:
             return response.json()['macaroon'], None
         else:
@@ -160,12 +190,31 @@ class V2ApiClient(object):
         except sso.UnexpectedApiError as err:
             return None, err.json_body
 
+    def upload_snap(self, upload_path, data):
+        headers = {}
+        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
+        if with_macaroons:
+            macaroon_auth = self.get_macaroon_auth('package_upload')
+            # data = json.dumps(data)
+            headers = {'Content-Type': 'application/json',
+                       'Authorization': macaroon_auth}
+            # FIXME: A different endpoint will be defined server-side for
+            # macaroons -- vila 2016-04-20
+        response = self.post(upload_path, data=data, headers=headers)
+        return response
+
+    # Low level helpers
+
     def post(self, path, data, headers=None):
         if headers is None:
             headers = {}
-        if data is not None:
-            data = json.dumps(data)
-        headers.update({'Content-Type': 'application/json'})
         url = parse.urljoin(self.root_url, path)
         response = self.session.post(url, data=data, headers=headers)
+        return response
+
+    def get(self, path, headers=None):
+        if headers is None:
+            headers = {}
+        url = parse.urljoin(self.root_url, path)
+        response = self.session.get(url, headers=headers)
         return response

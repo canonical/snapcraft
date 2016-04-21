@@ -18,6 +18,7 @@ import os
 import fixtures
 import testscenarios
 
+from snapcraft import storeapi
 from snapcraft.storeapi import _upload
 import store_tests
 
@@ -43,13 +44,8 @@ class UploadTestCase(store_tests.TestCase):
     def test_upload_without_login(self):
         snap_path, snap_name = self.create_snap('unregsitered')
 
-        resp = self.upload(snap_path, snap_name)
-        self.assertFalse(resp['success'])
-
-        log = self.logger.output
-        self.assertIn('Upload failed', log)
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?', log)
+        self.assertRaises(storeapi.InvalidCredentials,
+                          self.upload, snap_path, snap_name)
 
     def test_upload_with_login(self):
         self.addCleanup(self.logout)

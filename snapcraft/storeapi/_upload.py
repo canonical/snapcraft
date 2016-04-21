@@ -23,6 +23,7 @@ import os
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
+import requests
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from snapcraft import config
@@ -63,7 +64,7 @@ def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
     return result
 
 
-def upload_files(binary_filename):
+def upload_files(binary_filename, session):
     """Upload a binary file to the Store.
 
     Submit a file to the Store upload service and return the
@@ -74,14 +75,6 @@ def upload_files(binary_filename):
     unscanned_upload_url = urljoin(updown_url, 'unscanned-upload/')
 
     result = {'success': False, 'errors': []}
-
-    conf = config.Config()
-    session = get_oauth_session(conf)
-    if session is None:
-        result['errors'] = [
-            'No valid credentials found. Have you run "snapcraft login"?']
-        return result
-
     try:
         binary_file_size = os.path.getsize(binary_filename)
         binary_file = open(binary_filename, 'rb')
@@ -151,43 +144,29 @@ def read_metadata(metadata_filename):
     return metadata
 
 
-def upload_app(name, upload_data, metadata=None):
+def upload_app(store, name, upload_data):
     """Request a new upload to be created for a given upload_id."""
-    if metadata is None:
-        metadata = {}
+    upload_path = 'click-package-upload/{}/'.format(quote_plus(name))
 
-    upload_url = get_upload_url(name)
+    result = dict(success=False)
 
-    result = {'success': False, 'errors': [],
-              'application_url': '', 'revision': None}
-
-    conf = config.Config()
-    session = get_oauth_session(conf)
-    if session is None:
-        result['errors'] = [
-            'No valid credentials found. Have you run "snapcraft login"?']
-        return result
-
-    files = []
     try:
-        data = get_post_data(upload_data, metadata)
-        files = get_post_files(metadata)
-
-        result = _upload_files(session, upload_url, data, files, result)
+        data = {
+            'updown_id': upload_data['upload_id'],
+            'binary_filesize': upload_data['binary_filesize'],
+            'source_uploaded': upload_data['source_uploaded'],
+        }
+        result = _upload_files(store, upload_path, data, result)
     except Exception as err:
         logger.exception(
             'There was an error uploading the application.')
         result['errors'] = [str(err)]
-    finally:
-        # make sure to close any open files used for request
-        for fname, fd in files:
-            fd.close()
 
     return result
 
 
-def _upload_files(session, upload_url, data, files, result):
-    response = session.post(upload_url, data=data, files=files)
+def _upload_files(store, upload_path, data, result):
+    response = store.upload_snap(upload_path, data=data)
     if response.ok:
         response_data = response.json()
         status_url = response_data['status_url']
@@ -202,7 +181,7 @@ def _upload_files(session, upload_url, data, files, result):
         # Execute the package scan in another thread so we can update the
         # progress indicator.
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(get_scan_data, session, status_url)
+            future = executor.submit(get_scan_data, store.session, status_url)
 
             count = 0
             while not future.done():
