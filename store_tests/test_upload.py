@@ -28,6 +28,28 @@ import store_tests
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
+class TestUploadNoLogin(store_tests.TestCase):
+
+    scenarios = (('OAuth', dict(with_macaroons=False)),
+                 # ('macaroons', dict(with_macaroons=True)),
+                 )
+
+    def setUp(self):
+        super().setUp()
+        if self.with_macaroons:
+            self.useFixture(
+                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
+        else:
+            self.useFixture(
+                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
+
+    def test_upload_without_login(self):
+        snap_path, snap_name = self.create_snap('unregsitered')
+
+        self.assertRaises(storeapi.InvalidCredentials,
+                          self.upload, snap_path, snap_name)
+
+
 class UploadTestCase(store_tests.TestCase):
 
     scenarios = (('OAuth', dict(with_macaroons=False)),
@@ -50,17 +72,10 @@ class UploadTestCase(store_tests.TestCase):
         self.preserved__upload_files = _upload._upload_files
         self.addCleanup(
             setattr, _upload, '_upload_files', self.preserved__upload_files)
-
-    def test_upload_without_login(self):
-        snap_path, snap_name = self.create_snap('unregsitered')
-
-        self.assertRaises(storeapi.InvalidCredentials,
-                          self.upload, snap_path, snap_name)
-
-    def test_upload_with_login(self):
         self.addCleanup(self.logout)
         self.login()
 
+    def test_upload_works(self):
         snap_path, snap_name = self.create_snap('basic')
 
         resp = self.upload(snap_path, snap_name)
@@ -84,8 +99,6 @@ class UploadTestCase(store_tests.TestCase):
             raise Exception('that error')
         _upload._upload_files = raise_error
 
-        self.addCleanup(self.logout)
-        self.login()
         snap_path, snap_name = self.create_snap('basic')
 
         resp = self.upload(snap_path, snap_name)
@@ -116,8 +129,6 @@ class UploadTestCase(store_tests.TestCase):
 
         _upload.upload_files = self.inject_response(raise_error)
 
-        self.addCleanup(self.logout)
-        self.login()
         snap_path, snap_name = self.create_snap('basic')
 
         resp = self.upload(snap_path, snap_name)
@@ -133,8 +144,6 @@ class UploadTestCase(store_tests.TestCase):
 
         _upload.upload_files = self.inject_response(failed)
 
-        self.addCleanup(self.logout)
-        self.login()
         snap_path, snap_name = self.create_snap('basic')
 
         resp = self.upload(snap_path, snap_name)
