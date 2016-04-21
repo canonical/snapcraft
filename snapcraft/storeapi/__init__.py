@@ -28,9 +28,10 @@ from .constants import (
     UBUNTU_SSO_API_ROOT_URL,
     UBUNTU_STORE_API_ROOT_URL,
 )
+
+from . import _upload
 from .info import get_info  # noqa
 from ._download import download  # noqa
-from ._upload import upload_files, upload_app  # noqa
 
 
 class InvalidCredentials(Exception):
@@ -91,12 +92,12 @@ class V2ApiClient(object):
             if self.session is None:
                 raise InvalidCredentials()
         self.updown = requests.Session()
-        data = upload_files(binary_path, self.updown)
+        data = _upload.upload_files(binary_path, self.updown)
         success = data.get('success', False)
         if not success:
             return data
 
-        result = upload_app(self, snap_name, data)
+        result = _upload.upload_app(self, snap_name, data)
         return result
 
     def oauth_login(self, email, password, one_time_password):

@@ -14,8 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import unittest
 
 import fixtures
+import requests
 import testscenarios
 
 from snapcraft import storeapi
@@ -40,6 +42,14 @@ class UploadTestCase(store_tests.TestCase):
         else:
             self.useFixture(
                 fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
+        # Some tests will override the following internals
+        self.preserved_upload_files = _upload.upload_files
+        self.addCleanup(
+            setattr, _upload, 'upload_files', self.preserved_upload_files)
+
+        self.preserved__upload_files = _upload._upload_files
+        self.addCleanup(
+            setattr, _upload, '_upload_files', self.preserved__upload_files)
 
     def test_upload_without_login(self):
         snap_path, snap_name = self.create_snap('unregsitered')
@@ -72,8 +82,6 @@ class UploadTestCase(store_tests.TestCase):
         # Make upload_app catch an error raised by _upload_files
         def raise_error(*args, **kwargs):
             raise Exception('that error')
-        self.addCleanup(
-            setattr, _upload, '_upload_files', _upload._upload_files)
         _upload._upload_files = raise_error
 
         self.addCleanup(self.logout)
@@ -85,3 +93,79 @@ class UploadTestCase(store_tests.TestCase):
         self.assertEqual(['that error'], resp['errors'])
         log = self.logger.output
         self.assertIn('There was an error uploading the application', log)
+
+    def inject_response(self, response):
+        """Inject a predefined response when upload_files calls updown."""
+
+        class FakeUpdown(requests.Session):
+
+            def post(self, url, data=None, json=None, **kwargs):
+                if callable(response):
+                    return response()
+                else:
+                    return response
+
+        def failing_upload_files(binary_filename, session):
+            return self.preserved_upload_files(binary_filename, FakeUpdown())
+
+        return failing_upload_files
+
+    def test_upload_files_failed_unexpectedly(self):
+        def raise_error(*args, **kwargs):
+            raise Exception('this error')
+
+        _upload.upload_files = self.inject_response(raise_error)
+
+        self.addCleanup(self.logout)
+        self.login()
+        snap_path, snap_name = self.create_snap('basic')
+
+        resp = self.upload(snap_path, snap_name)
+        self.assertFalse(resp['success'])
+        self.assertEqual(['this error'], resp['errors'])
+        self.assertIn('An unexpected error was found while uploading files.',
+                      self.logger.output)
+
+    def test_upload_files_failed_from_server(self):
+        failed = requests.Response()
+        failed.status_code = 500
+        failed.reason = 'Bad Reason'
+
+        _upload.upload_files = self.inject_response(failed)
+
+        self.addCleanup(self.logout)
+        self.login()
+        snap_path, snap_name = self.create_snap('basic')
+
+        resp = self.upload(snap_path, snap_name)
+        self.assertFalse(resp['success'])
+        self.assertEqual([''], resp['errors'])
+        self.assertIn('There was an error uploading the package.',
+                      self.logger.output)
+        self.assertIn('Bad Reason',
+                      self.logger.output)
+
+
+class FakeSession(object):
+
+    def __init__(self, exc):
+        self.exc = exc
+
+    def get(self, url):
+        raise self.exc()
+
+
+class ScanStatusTestCase(unittest.TestCase):
+
+    def test_is_scan_complete_for_none(self):
+        self.assertFalse(_upload.is_scan_completed(None))
+
+    def get_scan_status(self, exc):
+        raiser = FakeSession(exc)
+        return _upload.get_scan_status(raiser, 'foo')
+
+    def test_get_status_connection_error(self):
+        self.assertIsNone(self.get_scan_status(requests.ConnectionError))
+
+    def test_get_status_http_error(self):
+        self.assertIsNone(self.get_scan_status(requests.HTTPError))

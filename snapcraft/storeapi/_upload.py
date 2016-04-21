@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, unicode_literals
-import json
 import logging
 import functools
 import time
@@ -23,17 +22,11 @@ import os
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
-import requests
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
-from snapcraft import config
-from .common import (
-    get_oauth_session,
-    retry,
-)
+from .common import retry
 from .compat import open, quote_plus, urljoin
 from .constants import (
-    UBUNTU_STORE_API_ROOT_URL,
     UBUNTU_STORE_UPLOAD_ROOT_URL,
     SCAN_STATUS_POLL_DELAY,
     SCAN_STATUS_POLL_RETRIES,
@@ -45,23 +38,6 @@ logger = logging.getLogger(__name__)
 def _update_progress_bar(progress_bar, maximum_value, monitor):
     if monitor.bytes_read <= maximum_value:
         progress_bar.update(monitor.bytes_read)
-
-
-def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
-           config=None):
-    """Create a new upload based on a snap package."""
-
-    data = upload_files(binary_filename)
-    success = data.get('success', False)
-    errors = data.get('errors', [])
-    if not success:
-        logger.info('Upload failed:\n\n%s\n', '\n'.join(errors))
-        return dict(success=False)
-
-    meta = read_metadata(metadata_filename)
-    meta.update(metadata or {})
-    result = upload_app(snap_name, data, metadata=meta)
-    return result
 
 
 def upload_files(binary_filename, session):
@@ -130,18 +106,6 @@ def upload_files(binary_filename, session):
         binary_file.close()
 
     return result
-
-
-def read_metadata(metadata_filename):
-    """Return a dictionary of metadata as read from a json file."""
-    if metadata_filename:
-        with open(metadata_filename, 'r') as metadata_file:
-            # file is automatically closed by context manager
-            metadata = json.load(metadata_file)
-    else:
-        metadata = {}
-
-    return metadata
 
 
 def upload_app(store, name, upload_data):
@@ -228,53 +192,6 @@ def _upload_files(store, upload_path, data, result):
             'Text: {}'.format(response.reason, response.text))
         result['errors'] = [response.text]
     return result
-
-
-def get_upload_url(name):
-    """Return the url of the uploaded package."""
-    store_api_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
-                                   UBUNTU_STORE_API_ROOT_URL)
-    upload_url = urljoin(store_api_url, 'click-package-upload/')
-    upload_url += "%s/" % quote_plus(name)
-    return upload_url
-
-
-def get_post_data(upload_data, metadata):
-    """Return the data to be posted in order to create the upload."""
-    data = {
-        'updown_id': upload_data['upload_id'],
-        'binary_filesize': upload_data['binary_filesize'],
-        'source_uploaded': upload_data['source_uploaded'],
-    }
-    data.update({
-        key: value
-        for (key, value) in metadata.items()
-        if key not in (
-            # make sure not to override upload_id, binary_filesize and
-            # source_uploaded
-            'upload_id', 'binary_filesize', 'source_uploaded',
-            # skip files as they will be added to the files argument
-            'icon_256', 'icon', 'screenshots',
-        )
-    })
-    return data
-
-
-def get_post_files(metadata):
-    """Return data about files to upload during the package upload request."""
-    files = []
-
-    icon = metadata.get('icon', metadata.get('icon_256', ''))
-    if icon:
-        icon_file = open(icon, 'rb')
-        files.append(('icon_256', icon_file))
-
-    screenshots = metadata.get('screenshots', [])
-    for screenshot in screenshots:
-        screenshot_file = open(screenshot, 'rb')
-        files.append(('screenshots', screenshot_file))
-
-    return files
 
 
 def is_scan_completed(response):
