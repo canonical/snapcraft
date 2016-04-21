@@ -101,6 +101,8 @@ class ExampleTestCase(testtools.TestCase):
             ip = config.get('ip', None)
             if not ip:
                 self.snappy_testbed = self._set_up_qemu_testbed()
+            elif ip in ('localhost', '127.0.0.1'):
+                self.snappy_testbed = testbed.LocalTestbed()
             else:
                 port = config.get('port', None) or '22'
                 self.snappy_testbed = testbed.SshTestbed(

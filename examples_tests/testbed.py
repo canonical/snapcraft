@@ -17,6 +17,7 @@
 import logging
 import os
 import platform
+import shutil
 import subprocess
 import time
 
@@ -33,6 +34,22 @@ def create_snappy_image(output_directory):
          'core', '15.04', '--channel', 'stable',
          '--output', image_path, '--developer-mode'])
     return image_path
+
+
+class LocalTestbed:
+
+    def wait(self):
+        pass
+
+    def run_command(self, command):
+        return subprocess.check_output(
+            command, stderr=subprocess.STDOUT).decode('utf-8')
+
+    def run_command_in_background(self, command):
+        return subprocess.Popen(command)
+
+    def copy_file(self, src, dst):
+        shutil.copy(src, dst)
 
 
 class SshTestbed:
