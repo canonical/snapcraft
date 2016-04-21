@@ -1,2 +1,2 @@
 #!/bin/sh
-./runtests.sh integration
+SNAPCRAFT_FROM_INSTALLED=1 python3 -m unittest discover -b -v -s integration_tests
