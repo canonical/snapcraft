@@ -156,21 +156,6 @@ class V2ApiClient(object):
         else:
             return None, response.text
 
-    def get_discharge(self, email, password, one_time_password, macaroon):
-        data = dict(email=email, password=password, macaroon=macaroon)
-        if one_time_password:
-            data['otp'] = one_time_password
-        try:
-            response = self.sso.session.post(
-                '/tokens/discharge', data=data,
-                headers={'Content-Type': 'application/json',
-                         'Accept': 'application/json'})
-            return response.content['discharge_macaroon'], None
-        except sso.ApiException as err:
-            return None, err.body
-        except sso.UnexpectedApiError as err:
-            return None, err.json_body
-
     def get_macaroon_auth(self, acl):
         macaroon, discharge = self.conf.get_macaroon(acl)
         macaroon_auth = 'Macaroon root={}, discharge={}'.format(
@@ -217,13 +202,6 @@ class V2ApiClient(object):
             headers = {}
         url = parse.urljoin(self.root_url, path)
         response = self.session.post(url, data=data, headers=headers)
-        return response
-
-    def get(self, path, headers=None):
-        if headers is None:
-            headers = {}
-        url = parse.urljoin(self.root_url, path)
-        response = self.session.get(url, headers=headers)
         return response
 
     def close(self):
