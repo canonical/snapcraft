@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import os
+import urllib
 
 from urllib import parse
 
@@ -191,16 +192,22 @@ class V2ApiClient(object):
         except sso.UnexpectedApiError as err:
             return None, err.json_body
 
-    def upload_snap(self, upload_path, data):
+    def upload_snap(self, name, data):
+
         headers = {}
         with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
         if with_macaroons:
             macaroon_auth = self.get_macaroon_auth('package_upload')
-            # data = json.dumps(data)
+            del data['binary_filesize']
+            del data['source_uploaded']
+            data = json.dumps(data)
             headers = {'Content-Type': 'application/json',
                        'Authorization': macaroon_auth}
-            # FIXME: A different endpoint will be defined server-side for
-            # macaroons -- vila 2016-04-20
+            upload_path = 'snap-upload/'
+        else:
+            upload_path = 'click-package-upload/{}/'.format(
+                urllib.quote_plus(name))
+
         response = self.post(upload_path, data=data, headers=headers)
         return response
 

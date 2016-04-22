@@ -25,7 +25,7 @@ from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from .common import retry
-from .compat import open, quote_plus, urljoin
+from .compat import open, urljoin
 from .constants import (
     UBUNTU_STORE_UPLOAD_ROOT_URL,
     SCAN_STATUS_POLL_DELAY,
@@ -110,8 +110,6 @@ def upload_files(binary_filename, session):
 
 def upload_app(store, name, upload_data):
     """Request a new upload to be created for a given upload_id."""
-    upload_path = 'click-package-upload/{}/'.format(quote_plus(name))
-
     result = dict(success=False)
 
     try:
@@ -120,7 +118,7 @@ def upload_app(store, name, upload_data):
             'binary_filesize': upload_data['binary_filesize'],
             'source_uploaded': upload_data['source_uploaded'],
         }
-        result = _upload_files(store, upload_path, data, result)
+        result = _upload_files(store, name, data, result)
     except Exception as err:
         logger.exception(
             'There was an error uploading the application.')
@@ -129,8 +127,8 @@ def upload_app(store, name, upload_data):
     return result
 
 
-def _upload_files(store, upload_path, data, result):
-    response = store.upload_snap(upload_path, data=data)
+def _upload_files(store, name, data, result):
+    response = store.upload_snap(name, data=data)
     if response.ok:
         response_data = response.json()
         status_url = response_data['status_url']

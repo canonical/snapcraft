@@ -31,7 +31,7 @@ load_tests = testscenarios.load_tests_apply_scenarios
 class TestUploadNoLogin(store_tests.TestCase):
 
     scenarios = (('OAuth', dict(with_macaroons=False)),
-                 # ('macaroons', dict(with_macaroons=True)),
+                 ('macaroons', dict(with_macaroons=True)),
                  )
 
     def setUp(self):
@@ -53,7 +53,7 @@ class TestUploadNoLogin(store_tests.TestCase):
 class UploadTestCase(store_tests.TestCase):
 
     scenarios = (('OAuth', dict(with_macaroons=False)),
-                 # ('macaroons', dict(with_macaroons=True)),
+                 ('macaroons', dict(with_macaroons=True)),
                  )
 
     def setUp(self):
