@@ -147,19 +147,19 @@ class ExampleTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
-            output = self.snappy_testbed.run_command([
+            self.snappy_testbed.run_command([
                 'sudo', 'snap', 'install', snap_file_name])
             # Uninstall the snap from the testbed.
             snap_name = snap_file_name[:snap_file_name.index('_')]
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['sudo', 'snap', 'remove', snap_name])
-            expected = (
-                'Installing {}\n'.format(snap_file_name) +
-                '.*' +
-                '{} +.* +.* +sideload *\n'.format(snap_name) +
-                '.*')
-            self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+            list_output = self.snappy_testbed.run_command(
+                ['snap', 'list'])
+            expected = '.*{}.*'.format(snap_name)
+            self.assertThat(
+                list_output, MatchesRegex(expected, flags=re.DOTALL))
 
     def assert_command_in_snappy_testbed(self, command, expected_output):
         if not config.get('skip-install', False):
