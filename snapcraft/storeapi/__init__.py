@@ -69,7 +69,9 @@ class V2ApiClient(object):
         self.conf.save()
 
     def register_name(self, name):
-        data = dict(snap_name=name)
+        # snapcraft targets the '16' series, hardcode it until more choices
+        # become available server side -- vila 2016-04-22
+        data = dict(snap_name=name, series='16')
         macaroon_auth = self.get_macaroon_auth('package_upload')
         response = self.post('register-name/',
                              data=json.dumps(data),
