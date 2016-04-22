@@ -44,7 +44,7 @@ class TestUploadNoLogin(store_tests.TestCase):
                 fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_upload_without_login(self):
-        snap_path, snap_name = self.create_snap('unregsitered')
+        snap_path, snap_name = self.create_snap('unregistered')
 
         self.assertRaises(storeapi.InvalidCredentials,
                           self.upload, snap_path, snap_name)
