@@ -68,7 +68,7 @@ class TestCase(testtools.TestCase):
         # Run snapcraft from sources
         self.snapcraft_command = os.path.join(os.getcwd(), 'bin', 'snapcraft')
         # FIXME: Urgh isolation! -- vila 2016-04-12
-        common.set_schemadir(os.path.join(__file__,
+        common.set_schemadir(os.path.join(snapcraft.__file__,
                              '..', '..', 'schema'))
         # Where the snap templates are
         self.snaps_dir = os.path.join(

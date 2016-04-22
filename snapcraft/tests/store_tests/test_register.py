@@ -17,7 +17,7 @@ import uuid
 import fixtures
 
 
-import store_tests
+from snapcraft.tests import store_tests
 
 
 class RegisterTestCase(store_tests.TestCase):

@@ -17,8 +17,7 @@ import fixtures
 import testscenarios
 
 from snapcraft import config
-
-import store_tests
+from snapcraft.tests import store_tests
 
 
 load_tests = testscenarios.load_tests_apply_scenarios

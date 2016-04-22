@@ -22,7 +22,7 @@ import testscenarios
 
 from snapcraft import storeapi
 from snapcraft.storeapi import _upload
-import store_tests
+from snapcraft.tests import store_tests
 
 
 load_tests = testscenarios.load_tests_apply_scenarios
