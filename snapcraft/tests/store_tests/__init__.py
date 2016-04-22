@@ -66,8 +66,6 @@ class TestCase(testtools.TestCase):
 
     def setUp(self):
         super().setUp()
-        # Run snapcraft from sources
-        self.snapcraft_command = os.path.join(os.getcwd(), 'bin', 'snapcraft')
         # FIXME: Urgh isolation! -- vila 2016-04-12
         common.set_schemadir(os.path.join(snapcraft.__file__,
                              '..', '..', 'schema'))
