@@ -95,9 +95,10 @@ class TestCase(testtools.TestCase):
     def login(self, email=None, password=None):
         email = email or os.getenv('TEST_USER_EMAIL',
                                    'u1test+snapcraft@canonical.com')
-        password = password or os.getenv('TEST_USER_PASSWORD', None)
-        if not password:
+        env_password = os.getenv('TEST_USER_PASSWORD', None)
+        if not env_password:
             self.skipTest('No password provided for the test user.')
+        password = password or env_password
 
         # FIXME: Find a way to test one-time-passwords (otp)
         # -- vila 2016-04-11
