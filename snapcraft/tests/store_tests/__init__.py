@@ -27,6 +27,7 @@ for registered names on the staging server.
 
 import logging
 import os
+import shutil
 import subprocess
 import uuid
 
@@ -117,6 +118,10 @@ class TestCase(testtools.TestCase):
 
         :returns: The path where the binary snap file has been created.
         """
+        # CI envs may not provide the right packages
+        if shutil.which('mksquashfs') is None:
+            self.skipTest('mksquashfs (provided by squashfs-tools)'
+                          ' is not installed')
         if version is None:
             # Change to a random version. The maximum size is 32 chars.
             version = str(uuid.uuid4().int)[:32]
