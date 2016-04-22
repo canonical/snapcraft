@@ -225,3 +225,11 @@ class V2ApiClient(object):
         url = parse.urljoin(self.root_url, path)
         response = self.session.get(url, headers=headers)
         return response
+
+    def close(self):
+        if self.session is not None:
+            self.session.close()
+        if self.sso.session is not None:
+            self.sso.session.close()
+        if self.updown is not None:
+            self.updown.close()
