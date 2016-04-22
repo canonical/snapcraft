@@ -25,9 +25,9 @@ class BusyBoxTestCase(examples_tests.ExampleTestCase):
         self.build_snap(self.example_dir)
         self.install_snap(self.example_dir, 'busybox', '1.0')
         self.assert_command_in_snappy_testbed(
-            ['/snaps/bin/busybox.touch', 'busybox.test'], '')
+            ['/snap/bin/busybox.touch', 'busybox.test'], '')
         self.addCleanup(
             self.run_command_in_snappy_testbed, ['rm', 'busybox.test'])
         self.assert_command_in_snappy_testbed(
-            '/snaps/bin/busybox.ls',
+            '/snap/bin/busybox.ls',
             'busybox.test\nbusybox_1.0_amd64.snap\nsnaps\n')

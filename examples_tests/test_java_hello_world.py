@@ -25,4 +25,4 @@ class JavaHelloWorldTestCase(examples_tests.ExampleTestCase):
         self.build_snap(self.example_dir)
         self.install_snap(self.example_dir, 'java-hello-world', '0')
         self.assert_command_in_snappy_testbed(
-            '/snaps/bin/java-hello-world.hello', 'Hello World\n')
+            '/snap/bin/java-hello-world.hello', 'Hello World\n')
