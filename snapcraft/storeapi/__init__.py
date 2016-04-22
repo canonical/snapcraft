@@ -200,13 +200,11 @@ class V2ApiClient(object):
             macaroon_auth = self.get_macaroon_auth('package_upload')
             del data['binary_filesize']
             del data['source_uploaded']
-            data = json.dumps(data)
-            headers = {'Content-Type': 'application/json',
-                       'Authorization': macaroon_auth}
+            headers = {'Authorization': macaroon_auth}
             upload_path = 'snap-upload/'
         else:
             upload_path = 'click-package-upload/{}/'.format(
-                urllib.quote_plus(name))
+                parse.quote_plus(name))
 
         response = self.post(upload_path, data=data, headers=headers)
         return response

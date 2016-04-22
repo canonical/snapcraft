@@ -87,7 +87,8 @@ class UploadTestCase(store_tests.TestCase):
         if not registered:
             self.expectFailure('basic is registered by someone else',
                                self.assertTrue, resp['success'])
-        self.assertTrue(resp['success'])
+        self.assertTrue(resp['success'],
+                        'upload failed with: {}'.format(resp['errors']))
         # The exact content vary but the keys should exist when the upload
         # succeeds
         self.assertTrue('application_url' in resp)
