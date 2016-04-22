@@ -148,8 +148,7 @@ class ExampleTestCase(testtools.TestCase):
                 self.snappy_testbed.run_command,
                 ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
             output = self.snappy_testbed.run_command([
-                'sudo', 'snap', 'install', '--allow-unauthenticated',
-                snap_file_name])
+                'sudo', 'snap', 'install', snap_file_name])
             # Uninstall the snap from the testbed.
             snap_name = snap_file_name[:snap_file_name.index('_')]
             self.addCleanup(
