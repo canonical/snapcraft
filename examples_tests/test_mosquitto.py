@@ -30,13 +30,13 @@ class MosquittoTestCase(examples_tests.ExampleTestCase):
         self.assert_service_running(snap_name, 'mosquitto')
         if not examples_tests.config.get('skip-install', False):
             self.snappy_testbed.run_command_in_background(
-                ['/snaps/bin/mosquitto.subscribe', 'test-mosquitto-topic'])
+                ['/snap/bin/mosquitto.subscribe', 'test-mosquitto-topic'])
             self.addCleanup(
                 self.run_command_in_snappy_testbed,
                 ['pkill', '-9', '-f', 'test-mosquitto-topic'])
             time.sleep(5)
             self.assert_command_in_snappy_testbed(
-                ['/snaps/bin/mosquitto.publish', 'test-mosquitto-topic',
+                ['/snap/bin/mosquitto.publish', 'test-mosquitto-topic',
                  'test-message'], '')
             self.assert_command_in_snappy_testbed(
                 ['cat', '/home/ubuntu/snaps/mosquitto/*/'
