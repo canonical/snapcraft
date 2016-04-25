@@ -81,9 +81,9 @@ class UploadTestCase(store_tests.TestCase):
         resp = self.upload(snap_path, snap_name)
         # FIXME: Each test user need his own registered snap names for the test
         # to succeed -- vila 2016-04-12
-        registered = (
-            os.environ.get('TEST_USER_EMAIL') ==
-            'u1test+snapcraft@canonical.com')
+        test_user = os.environ.get('TEST_USER_EMAIL',
+                                   'u1test+snapcraft@canonical.com')
+        registered = (test_user == 'u1test+snapcraft@canonical.com')
         if not registered:
             self.expectFailure('basic is registered by someone else',
                                self.assertTrue, resp['success'])
