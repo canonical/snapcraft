@@ -39,7 +39,7 @@ class MosquittoTestCase(examples_tests.ExampleTestCase):
                 ['/snap/bin/mosquitto.publish', 'test-mosquitto-topic',
                  'test-message'], '')
             self.assert_command_in_snappy_testbed(
-                ['cat', '/home/ubuntu/snaps/mosquitto/*/'
+                ['cat', '/home/ubuntu/snap/mosquitto/*/'
                  'mosquitto.subscriber.log'],
                 'MQTT subscriber connected.\n'
                 "test-mosquitto-topic b'test-message'\n")
