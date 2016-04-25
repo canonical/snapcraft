@@ -25,7 +25,10 @@ import subprocess
 import fixtures
 import testtools
 from testtools import content
-from testtools.matchers import MatchesRegex
+from testtools.matchers import (
+    Contains,
+    MatchesRegex
+)
 
 from examples_tests import testbed
 
@@ -178,9 +181,7 @@ class ExampleTestCase(testtools.TestCase):
     def assert_service_running(self, snap, service):
         if not config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(
-                ['sudo', 'snap', 'service', 'status', snap])
-            expected = (
-                'Snap\t+Service\t+State\n'
-                '{}\t+{}\t+enabled; loaded; active \(running\)\n'.format(
-                    snap, service))
-            self.assertThat(output, MatchesRegex(expected))
+                ['systemctl', '--no-pager', 'status',
+                 'snap.{}.{}'.format(snap, service)])
+            expected = 'Active: active (running)'
+            self.assertThat(output, Contains(expected))
