@@ -16,9 +16,9 @@
 from __future__ import absolute_import, unicode_literals
 
 
-# FIXME: snapcraft targets the '16' release, hardcode it until more choices
+# FIXME: snapcraft targets the '16' series, hardcode it until more choices
 # become available server side -- vila 2016-04-22
-DEFAULT_RELEASE = '16'
+DEFAULT_SERIES = '16'
 SCAN_STATUS_POLL_DELAY = 5
 SCAN_STATUS_POLL_RETRIES = 5
 UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'

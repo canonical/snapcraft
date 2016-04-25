@@ -25,7 +25,7 @@ from snapcraft import config
 from .channels import get_channels, update_channels  # noqa
 from .common import get_oauth_session
 from .constants import (
-    DEFAULT_RELEASE,
+    DEFAULT_SERIES,
     UBUNTU_SSO_API_ROOT_URL,
     UBUNTU_STORE_API_ROOT_URL,
 )
@@ -69,7 +69,7 @@ class ScaClient(object):
         self.conf.save()
 
     def register_name(self, name):
-        data = dict(snap_name=name, series=DEFAULT_RELEASE)
+        data = dict(snap_name=name, series=DEFAULT_SERIES)
         macaroon_auth = self.get_macaroon_auth('package_upload')
         response = self.post('register-name/',
                              data=json.dumps(data),

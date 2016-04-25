@@ -21,7 +21,7 @@ import logging
 
 from snapcraft import config
 from .common import get_oauth_session
-from .constants import DEFAULT_RELEASE
+from .constants import DEFAULT_SERIES
 
 
 _STORE_SEARCH_URL = 'https://search.apps.ubuntu.com/api/v1/search'
@@ -37,11 +37,10 @@ def download(snap_name, channel, download_path, arch):
         raise EnvironmentError(
             'No valid credentials found. Have you run "snapcraft login"?')
 
-    # TODO add release header
     session.headers.update({
         'accept': 'application/hal+json',
         'X-Ubuntu-Architecture': arch,
-        'X-Ubuntu-Release': DEFAULT_RELEASE,
+        'X-Ubuntu-Release': DEFAULT_SERIES,
         'X-Ubuntu-Device-Channel': channel,
     })
     session.params = {
