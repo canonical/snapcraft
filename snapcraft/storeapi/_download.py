@@ -21,6 +21,7 @@ import logging
 
 from snapcraft import config
 from .common import get_oauth_session
+from .constants import DEFAULT_RELEASE
 
 
 _STORE_SEARCH_URL = 'https://search.apps.ubuntu.com/api/v1/search'
@@ -40,7 +41,7 @@ def download(snap_name, channel, download_path, arch):
     session.headers.update({
         'accept': 'application/hal+json',
         'X-Ubuntu-Architecture': arch,
-        'X-Ubuntu-Release': '16',
+        'X-Ubuntu-Release': DEFAULT_RELEASE,
         'X-Ubuntu-Device-Channel': channel,
     })
     session.params = {
