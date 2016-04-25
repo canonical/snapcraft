@@ -38,7 +38,7 @@ class InvalidCredentials(Exception):
     pass
 
 
-class V2ApiClient(object):
+class ScaClient(object):
     """High-level client for the V2.0 API SCA resources."""
 
     def __init__(self, sso_class=None):

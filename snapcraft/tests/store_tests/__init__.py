@@ -89,7 +89,7 @@ class TestCase(testtools.TestCase):
         self.useFixture(self.logger)
         # INFO from the requests lib is too noisy
         logging.getLogger("requests").setLevel(logging.WARNING)
-        self.store = storeapi.V2ApiClient()
+        self.store = storeapi.ScaClient()
         self.addCleanup(self.store.close)
 
     def login(self, email=None, password=None):
