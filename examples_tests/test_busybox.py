@@ -28,11 +28,11 @@ class BusyBoxTestCase(examples_tests.ExampleTestCase):
         self.run_command_in_snappy_testbed('/snap/bin/busybox.touch')
         self.assert_command_in_snappy_testbed(
             ['/snap/bin/busybox.touch',
-             'snap/busybox/$(ls snap/busybox/)/busybox.test'],
+             '~/snap/busybox/$(ls ~/snap/busybox)/busybox.test'],
             '')
         self.addCleanup(
             self.run_command_in_snappy_testbed,
-            ['rm', 'snap/busybox/*/busybox.test'])
+            ['rm', '~/snap/busybox/*/busybox.test'])
         self.assert_command_in_snappy_testbed(
-            ['/snap/bin/busybox.ls', 'snap/busybox/*/'],
+            ['/snap/bin/busybox.ls', '~/snap/busybox/*/'],
             'busybox.test\n')
