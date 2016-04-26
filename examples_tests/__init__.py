@@ -145,13 +145,15 @@ class ExampleTestCase(testtools.TestCase):
             snap_local_path = os.path.join(
                 'examples', example_dir, snap_file_name)
             self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
+            snap_path_in_testbed = os.path.join(
+                '/home/ubuntu/', snap_file_name)
             # Remove the snap file from the testbed.
             self.addCleanup(
                 self.snappy_testbed.run_command,
-                ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
+                ['rm', snap_path_in_testbed])
             try:
                 self.snappy_testbed.run_command([
-                    'sudo', 'snap', 'install', snap_file_name])
+                    'sudo', 'snap', 'install', snap_path_in_testbed])
             except subprocess.CalledProcessError as e:
                 self.addDetail(
                     'ssh output', content.text_content(str(e.output)))
