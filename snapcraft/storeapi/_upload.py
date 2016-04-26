@@ -113,6 +113,7 @@ def upload_app(store, name, upload_data):
     result = dict(success=False)
 
     try:
+        # FIXME: series is missing for macaroons -- vila 2016-04-26
         data = {
             'updown_id': upload_data['upload_id'],
             'binary_filesize': upload_data['binary_filesize'],

@@ -165,3 +165,6 @@ parts:
         finally:
             _upload.ProgressBar = orig
         return res
+
+    def download(self, snap_name, channel='stable', path='downloaded.snap'):
+        return self.store.download(snap_name, channel, path)

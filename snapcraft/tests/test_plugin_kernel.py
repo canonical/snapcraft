@@ -819,7 +819,7 @@ ACCEPT=n
             plugin.make_cmd,
             ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
 
-    @mock.patch('snapcraft.storeapi.download')
+    @mock.patch('snapcraft.download')
     def test_pull(self, download_mock):
 
         plugin = kernel.KernelPlugin('test-part', self.options,

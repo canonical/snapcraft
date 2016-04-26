@@ -111,11 +111,17 @@ be used in any part irrespective of the plugin, these are
       key, which will expand with the value of such key.
 """
 
-from snapcraft._baseplugin import BasePlugin                       # noqa
-from snapcraft._options import ProjectOptions                      # noqa
-from snapcraft._help import topic_help                             # noqa
-from snapcraft._store import login, logout, upload, register_name  # noqa
-from snapcraft import common                                       # noqa
-from snapcraft import plugins                                      # noqa
-from snapcraft import sources                                      # noqa
-from snapcraft.internal import repo                                # noqa
+from snapcraft._baseplugin import BasePlugin   # noqa
+from snapcraft._options import ProjectOptions  # noqa
+from snapcraft._help import topic_help         # noqa
+from snapcraft._store import (                 # noqa
+    download,
+    login,
+    logout,
+    upload,
+    register_name,
+)
+from snapcraft import common                   # noqa
+from snapcraft import plugins                  # noqa
+from snapcraft import sources                  # noqa
+from snapcraft.internal import repo            # noqa

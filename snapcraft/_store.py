@@ -115,6 +115,25 @@ def upload(snap_filename):
                     app_url)
 
 
+def download(snap_name, channel, download_path, arch):
+    """Download snap from the store to download_path"""
+    try:
+        store = storeapi.ScaClient()
+        store.download(snap_name, channel, download_path, arch)
+    except storeapi.InvalidCredentials:
+        logger.info('No valid credentials found.'
+                    ' Have you run "snapcraft login"?')
+    except storeapi.SnapNotFound:
+        raise RuntimeError(
+            'Snap {name} for {arch} cannot be found'
+            ' in the {chanel} channel'.format(name=snap_name, arch=arch,
+                                              channel=channel))
+    except storeapi.SHAMismatch:
+        raise RuntimeError(
+            'Failed to download {} at {} (mismatched SHA)'.format(
+                snap_name, download_path))
+
+
 def _get_name_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         subprocess.check_call(
