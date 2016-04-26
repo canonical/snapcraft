@@ -33,9 +33,8 @@ class TestCase(testtools.TestCase):
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_command = 'snapcraft'
         else:
-            snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
             self.snapcraft_command = os.path.join(
-                os.getcwd(), 'bin', snapcraft_bin)
+                os.getcwd(), 'bin', 'snapcraft')
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
         temp_cwd_fixture = fixture_setup.TempCWD()
