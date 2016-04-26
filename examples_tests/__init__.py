@@ -149,8 +149,13 @@ class ExampleTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
-            self.snappy_testbed.run_command([
-                'sudo', 'snap', 'install', snap_file_name])
+            try:
+                self.snappy_testbed.run_command([
+                    'sudo', 'snap', 'install', snap_file_name])
+            except subprocess.CalledProcessError as e:
+                self.addDetail(
+                    'ssh output', content.text_content(str(e.output)))
+                raise
             # Uninstall the snap from the testbed.
             snap_name = snap_file_name[:snap_file_name.index('_')]
             self.addCleanup(
