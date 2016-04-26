@@ -90,11 +90,8 @@ class ExampleTestCase(testtools.TestCase):
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_command = 'snapcraft'
         else:
-            # To measure coverage, a wrapper for the snapcraft binary might be
-            # set in the environment variable.
-            snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
             self.snapcraft_command = os.path.join(
-                os.getcwd(), 'bin', snapcraft_bin)
+                os.getcwd(), 'bin', 'snapcraft')
 
         self.useFixture(
             fixtures.EnvironmentVariable('SNAPCRAFT_SETUP_PROXIES', '1'))
