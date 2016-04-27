@@ -166,13 +166,9 @@ class SCAClient(object):
             arch = snapcraft.ProjectOptions().deb_arch
         self.cpi = CPIClient(self.conf)
         logger.info('Getting details for {}'.format(snap_name))
-        results = self.cpi.search_package(snap_name, channel, arch)
-        if not results:
+        package = self.cpi.search_package(snap_name, channel, arch)
+        if package is None:
             raise SnapNotFound(snap_name, channel, arch)
-        # MISSINGTEST: Although cpi should never return more than one result,
-        # we should raise a specific exception to be future-proof. Or use the
-        # 'size=1' query parameter ? -- vila 2016-04-26
-        package = results[0]
         return self.download_snap(snap_name, channel, arch,
                                   download_path, package['download_url'],
                                   package['download_sha512'])
@@ -202,7 +198,8 @@ class SCAClient(object):
         except sso.UnexpectedApiError as err:
             return None, err.json_body
 
-    def upload_snap(self, data):
+    def upload_snap(self, name, data):
+        data['name'] = name
         headers = {'Authorization': macaroon_auth(self.conf, 'package_upload')}
         response = self.post('snap-upload/', data=data, headers=headers)
         return response
@@ -281,13 +278,14 @@ class CPIClient(object):
         params = {
             'q': 'package_name:"{}"'.format(snap_name),
             'fields': 'status,download_url,anon_download_url,download_sha512',
+            'size': 1,
         }
         resp = self.get('api/v1/search', headers, params=params)
         embedded = resp.json().get('_embedded', None)
         if embedded is None:
-            return []
+            return None
         else:
-            return embedded['clickindex:package']
+            return embedded['clickindex:package'][0]
 
     def get(self, path, headers=None, params=None):
         if headers is None:

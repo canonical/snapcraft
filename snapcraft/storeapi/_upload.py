@@ -130,7 +130,7 @@ def upload_app(store, name, upload_data):
 
 
 def _upload_files(store, name, data, result):
-    response = store.upload_snap(data)
+    response = store.upload_snap(name, data)
     if response.ok:
         response_data = response.json()
         status_url = response_data['status_url']

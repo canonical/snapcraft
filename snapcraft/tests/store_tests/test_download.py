@@ -40,12 +40,13 @@ class TestSearchPackage(store_tests.TestCase):
 
     def test_search_known_package(self):
         # We rely on a package that has been published for TEST_USER_EMAIL
-        pkgs = self.cpi.search_package('femto', 'stable', 'amd64')
-        self.assertEqual(1, len(pkgs))
+        pkg = self.cpi.search_package('femto', 'stable', 'amd64')
+        self.assertIn('download_url', pkg)
+        self.assertIn('download_sha512', pkg)
 
     def test_search_unknown_package(self):
-        pkgs = self.cpi.search_package('dont-exist', 'dont-exist', 'amd64')
-        self.assertEqual(0, len(pkgs))
+        self.assertIsNone(self.cpi.search_package('dont-exist', 'dont-exist',
+                                                  'amd64'))
 
 
 class TestDownload(store_tests.TestCase):
