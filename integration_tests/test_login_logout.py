@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
-
 import integration_tests
 from snapcraft.tests import fixture_setup
 
@@ -25,24 +23,6 @@ class LoginLogoutTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.StagingStore())
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
-
-    def test_successful_login(self):
-        self.addCleanup(self.logout)
-        self.login(expect_success=True)
-
-    def test_failed_login(self):
-        self.login(password='wrongpassword', expect_success=False)
-
-
-class LoginLogoutWithMacaroonsTestCase(integration_tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixture_setup.StagingStore())
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
 
     def test_successful_login(self):
         self.addCleanup(self.logout)

@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import uuid
-import fixtures
 
 
 from snapcraft.tests import store_tests
@@ -24,8 +23,6 @@ class RegisterTestCase(store_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
         # Always login, the command fails if the required credentials are not
         # available (see integration_tests/test_register.py)
         self.addCleanup(self.logout)

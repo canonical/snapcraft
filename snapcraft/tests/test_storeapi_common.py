@@ -18,44 +18,11 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import responses
-from requests_oauthlib import OAuth1Session
 
 from snapcraft.storeapi.common import (
-    get_oauth_session,
     store_api_call,
     retry,
 )
-
-
-class GetOAuthSessionTestCase(TestCase):
-
-    def test_get_oauth_session_when_no_config(self):
-        config = {}
-        session = get_oauth_session(config)
-        self.assertIsNone(session)
-
-    def test_get_oauth_session_when_partial_config(self):
-        config = {
-            'consumer_key': 'consumer-key',
-            'consumer_secret': 'consumer-secret',
-        }
-        session = get_oauth_session(config)
-        self.assertIsNone(session)
-
-    def test_get_oauth_session(self):
-        config = {
-            'consumer_key': 'consumer-key',
-            'consumer_secret': 'consumer-secret',
-            'token_key': 'token-key',
-            'token_secret': 'token-secret',
-        }
-        session = get_oauth_session(config)
-        self.assertIsInstance(session, OAuth1Session)
-        self.assertEqual(session.auth.client.client_key, 'consumer-key')
-        self.assertEqual(session.auth.client.client_secret, 'consumer-secret')
-        self.assertEqual(session.auth.client.resource_owner_key, 'token-key')
-        self.assertEqual(session.auth.client.resource_owner_secret,
-                         'token-secret')
 
 
 class ApiCallTestCase(TestCase):

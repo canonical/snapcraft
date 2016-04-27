@@ -19,36 +19,9 @@ import time
 from functools import wraps
 
 import requests
-from requests_oauthlib import OAuth1Session
 
 from .compat import urljoin
 from .constants import UBUNTU_STORE_API_ROOT_URL
-
-
-def get_oauth_session(conf):
-    """Return a client configured to allow oauth signed requests."""
-    consumer_key = conf.get('consumer_key')
-    client_secret = conf.get('consumer_secret')
-    resource_owner_key = conf.get('token_key')
-    resource_owner_secret = conf.get('token_secret')
-    if None in (consumer_key, client_secret,
-                resource_owner_key, resource_owner_secret):
-        return None
-
-    session = OAuth1Session(
-        consumer_key, client_secret=client_secret,
-        resource_owner_key=resource_owner_key,
-        resource_owner_secret=resource_owner_secret,
-        signature_method='PLAINTEXT')
-    return session
-
-
-def get_macaroon_auth(config):
-    # FIXME: Check config and errors if expected keys are not there asking to
-    # 'login'. -- vila 2016-04-07
-    auth = 'Macaroon root={}, discharge={}'.format(
-        config['root_macaroon'], config['discharge_macaroon'])
-    return auth
 
 
 def store_raw_api_call(path, session=None, method='GET', data=None,

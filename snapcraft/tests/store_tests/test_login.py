@@ -13,29 +13,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import fixtures
-import testscenarios
 
 from snapcraft import config
 from snapcraft.tests import store_tests
 
 
-load_tests = testscenarios.load_tests_apply_scenarios
-
-
 class TestLoginLogout(store_tests.TestCase):
-
-    scenarios = (('OAuth', dict(with_macaroons=False)),
-                 ('macaroons', dict(with_macaroons=True)))
-
-    def setUp(self):
-        super().setUp()
-        if self.with_macaroons:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_successful_login(self):
         self.addCleanup(self.logout)
@@ -43,8 +26,6 @@ class TestLoginLogout(store_tests.TestCase):
         self.assertTrue(res['success'])
         # Credentials have been saved
         self.assertTrue(os.path.exists(config.Config.save_path()))
-        if not self.with_macaroons:
-            return
         conf = self.store.conf
         self.assertIsNotNone(conf.get('store_read'))
         self.assertIsNotNone(conf.get('store_write'))

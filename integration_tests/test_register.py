@@ -16,8 +16,6 @@
 
 import uuid
 
-import fixtures
-
 import integration_tests
 from snapcraft.tests import fixture_setup
 
@@ -27,8 +25,6 @@ class RegisterTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.StagingStore())
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
 
     # FIXME: The store doesn't provide a way to unregister a name *and*
     # registrations are rate-limited for a given user. We work around that by

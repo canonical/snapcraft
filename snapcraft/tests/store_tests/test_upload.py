@@ -16,32 +16,14 @@
 import os
 import unittest
 
-import fixtures
 import requests
-import testscenarios
 
 from snapcraft import storeapi
 from snapcraft.storeapi import _upload
 from snapcraft.tests import store_tests
 
 
-load_tests = testscenarios.load_tests_apply_scenarios
-
-
 class TestUploadNoLogin(store_tests.TestCase):
-
-    scenarios = (('OAuth', dict(with_macaroons=False)),
-                 ('macaroons', dict(with_macaroons=True)),
-                 )
-
-    def setUp(self):
-        super().setUp()
-        if self.with_macaroons:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_upload_without_credentials(self):
         snap_path, snap_name = self.create_snap('notevenregistered')
@@ -52,18 +34,8 @@ class TestUploadNoLogin(store_tests.TestCase):
 
 class UploadTestCase(store_tests.TestCase):
 
-    scenarios = (('OAuth', dict(with_macaroons=False)),
-                 ('macaroons', dict(with_macaroons=True)),
-                 )
-
     def setUp(self):
         super().setUp()
-        if self.with_macaroons:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
         # Some tests will override the following internals
         self.preserved_upload_files = _upload.upload_files
         self.addCleanup(

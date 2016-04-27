@@ -25,8 +25,6 @@ from ssoclient import v2 as sso
 
 import snapcraft
 from snapcraft import config
-from .channels import get_channels, update_channels  # noqa
-from .common import get_oauth_session
 from .constants import (
     DEFAULT_SERIES,
     UBUNTU_SSO_API_ROOT_URL,
@@ -36,7 +34,6 @@ from .constants import (
 
 from . import _upload
 from .info import get_info  # noqa
-# from ._download import download  # noqa
 
 
 logger = logging.getLogger(__name__)
@@ -110,11 +107,29 @@ class ScaClient(object):
     # API for snapcraft
 
     def login(self, email, password, one_time_password=None):
-        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
-        if with_macaroons:
-            return self.macaroon_login(email, password, one_time_password)
+        result = dict(success=False, body=None)
+        acls = ('store_read', 'store_write',
+                'package_access', 'package_upload')
+        macaroons = {}
+        for acl in acls:
+            macaroon, error = self.get_macaroon(acl)
+            if error:
+                result['errors'] = error
+                break
+            macaroons[acl] = macaroon
         else:
-            return self.oauth_login(email, password, one_time_password)
+            discharges, error = self.get_discharges(
+                email, password, one_time_password, macaroons)
+            if error:
+                result['errors'] = error
+            else:
+                # All macaroons have been discharged, save them in the config
+                for acl in acls:
+                    self.conf.set(acl, ','.join([macaroons[acl],
+                                                 discharges[acl]]))
+                self.conf.save()
+                result['success'] = True
+        return result
 
     def logout(self):
         self.conf.clear()
@@ -136,13 +151,7 @@ class ScaClient(object):
         return response
 
     def upload(self, binary_path, snap_name):
-        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
-        if with_macaroons:
-            if self.conf.get('package_upload') is None:
-                raise InvalidCredentials()
-        else:
-            self.session = get_oauth_session(self.conf)
-            if self.session is None:
+        if self.conf.get('package_upload') is None:
                 raise InvalidCredentials()
         self.updown = requests.Session()
         data = _upload.upload_files(binary_path, self.updown)
@@ -168,51 +177,6 @@ class ScaClient(object):
         return self.download_snap(snap_name, channel, arch,
                                   download_path, package['download_url'],
                                   package['download_sha512'])
-
-    def oauth_login(self, email, password, one_time_password):
-        data = dict(email=email, password=password, token_name='snapcraft')
-        result = dict(success=False, body=None)
-        if one_time_password:
-            data['otp'] = one_time_password
-        try:
-            response = self.sso.login(data=data)
-            result['body'] = response
-            result['success'] = True
-            # Save the credentials for later reuse
-            for k in ('consumer_key', 'consumer_secret',
-                      'token_key', 'token_secret'):
-                self.conf.set(k, response[k])
-            self.conf.save()
-        except sso.ApiException as err:
-            result['body'] = err.body
-        except sso.UnexpectedApiError as err:
-            result['body'] = err.json_body
-        return result
-
-    def macaroon_login(self, email, password, one_time_password):
-        result = dict(success=False, body=None)
-        acls = ('store_read', 'store_write',
-                'package_access', 'package_upload')
-        macaroons = {}
-        for acl in acls:
-            macaroon, error = self.get_macaroon(acl)
-            if error:
-                result['errors'] = error
-                break
-            macaroons[acl] = macaroon
-        else:
-            discharges, error = self.get_discharges(
-                email, password, one_time_password, macaroons)
-            if error:
-                result['errors'] = error
-            else:
-                # All macaroons have been discharged, save them in the config
-                for acl in acls:
-                    self.conf.set(acl, ','.join([macaroons[acl],
-                                                 discharges[acl]]))
-                self.conf.save()
-                result['success'] = True
-        return result
 
     def get_macaroon(self, acl):
         response = self.post('../../api/2.0/acl/{}/'.format(acl),
@@ -242,16 +206,10 @@ class ScaClient(object):
     def upload_snap(self, name, data):
 
         headers = {}
-        with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
-        if with_macaroons:
-            auth = macaroon_auth(self.conf, 'package_upload')
-            del data['binary_filesize']
-            del data['source_uploaded']
-            headers = {'Authorization': auth}
-            upload_path = 'snap-upload/'
-        else:
-            upload_path = 'click-package-upload/{}/'.format(
-                parse.quote_plus(name))
+        del data['binary_filesize']
+        del data['source_uploaded']
+        headers = {'Authorization': macaroon_auth(self.conf, 'package_upload')}
+        upload_path = 'snap-upload/'
 
         response = self.post(upload_path, data=data, headers=headers)
         return response
@@ -316,15 +274,9 @@ class CPIClient(object):
         self.conf = conf
         self.root_url = os.environ.get('UBUNTU_STORE_SEARCH_ROOT_URL',
                                        UBUNTU_STORE_SEARCH_ROOT_URL)
-        self.with_macaroons = os.environ.get('SNAPCRAFT_WITH_MACAROONS', False)
-        if self.with_macaroons:
-            if self.conf.get('package_access') is None:
-                raise InvalidCredentials()
-            self.session = requests.Session()
-        else:
-            self.session = get_oauth_session(self.conf)
-            if self.session is None:
-                raise InvalidCredentials()
+        if self.conf.get('package_access') is None:
+            raise InvalidCredentials()
+        self.session = requests.Session()
 
     def search_package(self, snap_name, channel, arch):
         headers = {
@@ -350,9 +302,8 @@ class CPIClient(object):
     def get(self, path, headers=None, params=None):
         if headers is None:
             headers = {}
-        if self.with_macaroons:
-                headers.update({'Authorization':
-                                macaroon_auth(self.conf, 'package_access')})
+        headers.update({'Authorization':
+                        macaroon_auth(self.conf, 'package_access')})
         url = parse.urljoin(self.root_url, path)
         response = self.session.get(url, headers=headers, params=params)
         return response

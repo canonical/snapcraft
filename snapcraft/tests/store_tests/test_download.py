@@ -15,9 +15,6 @@
 
 import os
 
-import fixtures
-import testscenarios
-
 from snapcraft import (
     config,
     storeapi,
@@ -25,23 +22,7 @@ from snapcraft import (
 from snapcraft.tests import store_tests
 
 
-load_tests = testscenarios.load_tests_apply_scenarios
-
-
 class TestDownloadLogin(store_tests.TestCase):
-
-    scenarios = (('OAuth', dict(with_macaroons=False)),
-                 ('macaroons', dict(with_macaroons=True)),
-                 )
-
-    def setUp(self):
-        super().setUp()
-        if self.with_macaroons:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_download_without_credentials(self):
         self.assertRaises(storeapi.InvalidCredentials,
@@ -50,18 +31,8 @@ class TestDownloadLogin(store_tests.TestCase):
 
 class TestSearchPackage(store_tests.TestCase):
 
-    scenarios = (('OAuth', dict(with_macaroons=False)),
-                 ('macaroons', dict(with_macaroons=True)),
-                 )
-
     def setUp(self):
         super().setUp()
-        if self.with_macaroons:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
         self.addCleanup(self.logout)
         self.login()
         self.conf = config.Config()
@@ -82,18 +53,8 @@ class TestSearchPackage(store_tests.TestCase):
 
 class TestDownload(store_tests.TestCase):
 
-    scenarios = (('OAuth', dict(with_macaroons=False)),
-                 ('macaroons', dict(with_macaroons=True)),
-                 )
-
     def setUp(self):
         super().setUp()
-        if self.with_macaroons:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', '1'))
-        else:
-            self.useFixture(
-                fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
         self.addCleanup(self.logout)
         self.login()
 
