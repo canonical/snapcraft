@@ -90,7 +90,7 @@ class TestCase(testtools.TestCase):
         # INFO from the requests lib is too noisy
         logging.getLogger("requests").setLevel(logging.WARNING)
 
-        self.store = storeapi.ScaClient()
+        self.store = storeapi.SCAClient()
         self.addCleanup(self.store.close)
 
     def login(self, email=None, password=None):

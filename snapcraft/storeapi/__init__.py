@@ -85,8 +85,7 @@ def macaroon_auth(conf, acl):
     return auth
 
 
-# FIXME: Rename to SCAClient -- vila 2016-04-25
-class ScaClient(object):
+class SCAClient(object):
     """High-level client for the V2.0 API SCA resources."""
 
     def __init__(self, sso_class=None):

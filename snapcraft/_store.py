@@ -39,7 +39,7 @@ def login():
                               ' don\'t use two-factor authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    store = storeapi.ScaClient()
+    store = storeapi.SCAClient()
     response = store.login(email, password, one_time_password)
     success = response.get('success', False)
 
@@ -51,14 +51,14 @@ def login():
 
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
-    store = storeapi.ScaClient()
+    store = storeapi.SCAClient()
     store.logout()
     logger.info('Credentials cleared.')
 
 
 def register_name(snap_name):
     logger.info('Registering {}.'.format(snap_name))
-    store = storeapi.ScaClient()
+    store = storeapi.SCAClient()
     if store.conf.get('package_upload') is None:
         logger.info('Registration failed.')
         logger.info(
@@ -81,7 +81,7 @@ def upload(snap_filename):
     logger.info('Uploading existing {}.'.format(snap_filename))
 
     try:
-        store = storeapi.ScaClient()
+        store = storeapi.SCAClient()
         result = store.upload(snap_filename, snap_name)
     except storeapi.InvalidCredentials:
         logger.info('No valid credentials found.'
@@ -118,7 +118,7 @@ def upload(snap_filename):
 def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
     try:
-        store = storeapi.ScaClient()
+        store = storeapi.SCAClient()
         store.download(snap_name, channel, download_path, arch)
     except storeapi.InvalidCredentials:
         logger.info('No valid credentials found.'
