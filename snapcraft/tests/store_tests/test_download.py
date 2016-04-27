@@ -39,11 +39,8 @@ class TestSearchPackage(store_tests.TestCase):
         self.cpi = storeapi.CPIClient(self.conf)
 
     def test_search_known_package(self):
-        # Rely on ubuntu-core as it must exists at all times (or we have other
-        # problems than a failing test).
-        # response = self.cpi.search_package('ubuntu-core', 'stable', 'amd64')
-        # FIXME: Doh, no 'ubuntu-core' on staging... -- vila 2016-04-26
-        pkgs = self.cpi.search_package('test-package', 'stable', 'amd64')
+        # We rely on a package that has been published for TEST_USER_EMAIL
+        pkgs = self.cpi.search_package('femto', 'stable', 'amd64')
         self.assertEqual(1, len(pkgs))
 
     def test_search_unknown_package(self):
@@ -58,14 +55,8 @@ class TestDownload(store_tests.TestCase):
         self.addCleanup(self.logout)
         self.login()
 
-    def test_download_works(self):
-        self.download('test-package', 'stable', 'downloaded.snap')
-        self.assertTrue(os.path.exists('downloaded.snap'))
-        self.assertEqual('''Getting details for test-package
-Downloading test-package
-Successfully downloaded test-package at downloaded.snap
-''',
-                         self.logger.output)
+    def assertLog(self, expected):
+        self.assertEqual(expected, self.logger.output)
 
     def test_download_unknwon_package(self):
         exc = self.assertRaises(
@@ -75,38 +66,49 @@ Successfully downloaded test-package at downloaded.snap
         self.assertEqual('bee', exc.channel)
         self.assertEqual('amd64', exc.arch)  # default value
 
-    def test_download_twice_reuse_existing(self):
-        self.download('test-package', 'stable', 'downloaded.snap')
+    def test_download_works(self):
+        pkg_name = 'femto'
+        self.download(pkg_name, 'stable', 'downloaded.snap')
         self.assertTrue(os.path.exists('downloaded.snap'))
-        self.assertIn('Successfully downloaded test-package'
-                      ' at downloaded.snap',
-                      self.logger.output)
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
+
+    def test_download_twice_reuse_existing(self):
+        pkg_name = 'femto'
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertTrue(os.path.exists('downloaded.snap'))
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
         # Try downloading again
-        self.download('test-package', 'stable', 'downloaded.snap')
-        self.assertEqual('''Getting details for test-package
-Downloading test-package
-Successfully downloaded test-package at downloaded.snap
-Getting details for test-package
-Already downloaded test-package at downloaded.snap
-''',
-                         self.logger.output)
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+Getting details for {pkg_name}
+Already downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
 
     def test_redownload_on_mismatch(self):
-        self.download('test-package', 'stable', 'downloaded.snap')
+        pkg_name = 'femto'
+        self.download(pkg_name, 'stable', 'downloaded.snap')
         self.assertTrue(os.path.exists('downloaded.snap'))
-        self.assertIn('Successfully downloaded test-package'
-                      ' at downloaded.snap',
-                      self.logger.output)
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
         # Clobber the downloaded file
         with open('downloaded.snap', 'w') as f:
             f.write('Sabotage !')
         # Try downloading again
-        self.download('test-package', 'stable', 'downloaded.snap')
-        self.assertEqual('''Getting details for test-package
-Downloading test-package
-Successfully downloaded test-package at downloaded.snap
-Getting details for test-package
-Downloading test-package
-Successfully downloaded test-package at downloaded.snap
-''',
-                         self.logger.output)
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))

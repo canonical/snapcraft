@@ -281,10 +281,7 @@ class CPIClient(object):
         headers = {
             'Accept': 'application/hal+json',
             'X-Ubuntu-Architecture': arch,
-            # FIXME: Staging doesn't seem to know about '16'. Investigate and
-            # deal with the outcome -- vila 2016-04-26
-            'X-Ubuntu-Release': 'rolling-core',
-            # 'X-Ubuntu-Release': DEFAULT_SERIES,
+            'X-Ubuntu-Release': DEFAULT_SERIES,
             'X-Ubuntu-Device-Channel': channel,
         }
         params = {
