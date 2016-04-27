@@ -25,7 +25,7 @@ from snapcraft.tests import store_tests
 class TestDownloadLogin(store_tests.TestCase):
 
     def test_download_without_credentials(self):
-        self.assertRaises(storeapi.InvalidCredentials,
+        self.assertRaises(storeapi.InvalidCredentialsError,
                           self.download, 'basic')
 
 
@@ -61,7 +61,7 @@ class TestDownload(store_tests.TestCase):
 
     def test_download_unknwon_package(self):
         exc = self.assertRaises(
-            storeapi.SnapNotFound,
+            storeapi.SnapNotFoundError,
             self.download, 'gloo', 'bee')
         self.assertEqual('gloo', exc.name)
         self.assertEqual('bee', exc.channel)

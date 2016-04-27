@@ -39,7 +39,7 @@ from .info import get_info  # noqa
 logger = logging.getLogger(__name__)
 
 
-class InvalidCredentials(Exception):
+class InvalidCredentialsError(Exception):
     pass
 
 
@@ -59,7 +59,7 @@ class StoreError(Exception):
         return self.fmt.format([], **self.__dict__)
 
 
-class SnapNotFound(StoreError):
+class SnapNotFoundError(StoreError):
 
     fmt = 'The  "{name}" for {arch} was not found in {channel}.'
 
@@ -67,7 +67,7 @@ class SnapNotFound(StoreError):
         super().__init__(name=name, channel=channel, arch=arch)
 
 
-class SHAMismatch(StoreError):
+class SHAMismatchError(StoreError):
 
     fmt = 'SHA512 checksum for {path} is not {expected_sha}.'
 
@@ -151,7 +151,7 @@ class SCAClient(object):
 
     def upload(self, binary_path, snap_name):
         if self.conf.get('package_upload') is None:
-                raise InvalidCredentials()
+            raise InvalidCredentialsError()
         self.updown = requests.Session()
         data = _upload.upload_files(binary_path, self.updown)
         success = data.get('success', False)
@@ -168,7 +168,7 @@ class SCAClient(object):
         logger.info('Getting details for {}'.format(snap_name))
         package = self.cpi.search_package(snap_name, channel, arch)
         if package is None:
-            raise SnapNotFound(snap_name, channel, arch)
+            raise SnapNotFoundError(snap_name, channel, arch)
         return self.download_snap(snap_name, channel, arch,
                                   download_path, package['download_url'],
                                   package['download_sha512'])
@@ -220,7 +220,7 @@ class SCAClient(object):
             logger.info('Successfully downloaded {} at {}'.format(
                 name, download_path))
         else:
-            raise SHAMismatch(download_path, expected_sha512)
+            raise SHAMismatchError(download_path, expected_sha512)
 
     def matching_sha512(self, path, expected_sha512):
         if not os.path.exists(path):
@@ -265,7 +265,7 @@ class CPIClient(object):
         self.root_url = os.environ.get('UBUNTU_STORE_SEARCH_ROOT_URL',
                                        UBUNTU_STORE_SEARCH_ROOT_URL)
         if self.conf.get('package_access') is None:
-            raise InvalidCredentials()
+            raise InvalidCredentialsError()
         self.session = requests.Session()
 
     def search_package(self, snap_name, channel, arch):

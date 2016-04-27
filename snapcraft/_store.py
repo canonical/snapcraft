@@ -83,7 +83,7 @@ def upload(snap_filename):
     try:
         store = storeapi.SCAClient()
         result = store.upload(snap_filename, snap_name)
-    except storeapi.InvalidCredentials:
+    except storeapi.InvalidCredentialsError:
         logger.info('No valid credentials found.'
                     ' Have you run "snapcraft login"?')
         return
@@ -120,15 +120,15 @@ def download(snap_name, channel, download_path, arch):
     try:
         store = storeapi.SCAClient()
         store.download(snap_name, channel, download_path, arch)
-    except storeapi.InvalidCredentials:
+    except storeapi.InvalidCredentialsError:
         logger.info('No valid credentials found.'
                     ' Have you run "snapcraft login"?')
-    except storeapi.SnapNotFound:
+    except storeapi.SnapNotFoundError:
         raise RuntimeError(
             'Snap {name} for {arch} cannot be found'
             ' in the {chanel} channel'.format(name=snap_name, arch=arch,
                                               channel=channel))
-    except storeapi.SHAMismatch:
+    except storeapi.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
                 snap_name, download_path))

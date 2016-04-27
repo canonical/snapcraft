@@ -28,7 +28,7 @@ class TestUploadNoLogin(store_tests.TestCase):
     def test_upload_without_credentials(self):
         snap_path, snap_name = self.create_snap('notevenregistered')
 
-        self.assertRaises(storeapi.InvalidCredentials,
+        self.assertRaises(storeapi.InvalidCredentialsError,
                           self.upload, snap_path, snap_name)
 
 
