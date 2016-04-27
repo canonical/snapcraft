@@ -75,7 +75,7 @@ class SHAMismatchError(StoreError):
         super().__init__(path=path, expected_sha=expected_sha)
 
 
-def macaroon_auth(conf, acl):
+def _macaroon_auth(conf, acl):
     """Format a macaroon and its associated discharge.
 
     :return: A string suitable to use in an Authorization header.
@@ -136,7 +136,7 @@ class SCAClient(object):
 
     def register_name(self, name):
         data = dict(snap_name=name, series=DEFAULT_SERIES)
-        auth = macaroon_auth(self.conf, 'package_upload')
+        auth = _macaroon_auth(self.conf, 'package_upload')
         response = self.post('register-name/',
                              data=json.dumps(data),
                              headers={'Authorization': auth,
@@ -200,7 +200,8 @@ class SCAClient(object):
 
     def upload_snap(self, name, data):
         data['name'] = name
-        headers = {'Authorization': macaroon_auth(self.conf, 'package_upload')}
+        headers = {'Authorization':
+                   _macaroon_auth(self.conf, 'package_upload')}
         response = self.post('snap-upload/', data=data, headers=headers)
         return response
 
@@ -291,7 +292,7 @@ class CPIClient(object):
         if headers is None:
             headers = {}
         headers.update({'Authorization':
-                        macaroon_auth(self.conf, 'package_access')})
+                        _macaroon_auth(self.conf, 'package_access')})
         url = parse.urljoin(self.root_url, path)
         response = self.session.get(url, headers=headers, params=params)
         return response
