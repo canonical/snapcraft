@@ -26,4 +26,4 @@ class OpenCVTestCase(examples_tests.ExampleTestCase):
         self.install_snap(self.example_dir, 'opencv-example', '1.0')
         expected = '[1, 3;\n  2, 4]\n'
         self.assert_command_in_snappy_testbed(
-            '/snaps/bin/opencv-example.example', expected)
+            '/snap/bin/opencv-example.example', expected)

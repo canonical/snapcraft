@@ -149,10 +149,19 @@ def reset_env():
 
 def link_or_copy(source, destination, follow_symlinks=False):
     # Hard-link this file to the source. It's possible for this to
-    # fail (e.g. a cross-device link), so as a backup plan we'll
-    # just copy it.
+    # fail (e.g. a cross-device link, or permission denied), so as a backup
+    # plan we'll just copy it.
     try:
-        os.link(source, destination, follow_symlinks=follow_symlinks)
+        # Note that follow_symlinks doesn't seem to work for os.link, so we'll
+        # implement this logic ourselves using realpath.
+        source_path = source
+        if follow_symlinks:
+            source_path = os.path.realpath(source)
+
+        # Setting follow_symlinks=False in case this bug is ever fixed
+        # upstream-- we want this function to continue supporting NOT following
+        # symlinks.
+        os.link(source_path, destination, follow_symlinks=False)
     except OSError:
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
 
