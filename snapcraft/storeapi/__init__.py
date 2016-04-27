@@ -202,15 +202,9 @@ class SCAClient(object):
         except sso.UnexpectedApiError as err:
             return None, err.json_body
 
-    def upload_snap(self, name, data):
-
-        headers = {}
-        del data['binary_filesize']
-        del data['source_uploaded']
+    def upload_snap(self, data):
         headers = {'Authorization': macaroon_auth(self.conf, 'package_upload')}
-        upload_path = 'snap-upload/'
-
-        response = self.post(upload_path, data=data, headers=headers)
+        response = self.post('snap-upload/', data=data, headers=headers)
         return response
 
     def download_snap(self, name, channel, arch, download_path,

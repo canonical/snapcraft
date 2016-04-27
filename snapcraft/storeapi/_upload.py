@@ -27,6 +27,7 @@ from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 from .common import retry
 from .compat import open, urljoin
 from .constants import (
+    DEFAULT_SERIES,
     UBUNTU_STORE_UPLOAD_ROOT_URL,
     SCAN_STATUS_POLL_DELAY,
     SCAN_STATUS_POLL_RETRIES,
@@ -113,8 +114,8 @@ def upload_app(store, name, upload_data):
     result = dict(success=False)
 
     try:
-        # FIXME: series is missing for macaroons -- vila 2016-04-26
         data = {
+            'series': DEFAULT_SERIES,
             'updown_id': upload_data['upload_id'],
             'binary_filesize': upload_data['binary_filesize'],
             'source_uploaded': upload_data['source_uploaded'],
@@ -129,7 +130,7 @@ def upload_app(store, name, upload_data):
 
 
 def _upload_files(store, name, data, result):
-    response = store.upload_snap(name, data=data)
+    response = store.upload_snap(data)
     if response.ok:
         response_data = response.json()
         status_url = response_data['status_url']
