@@ -14,10 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import unittest
 
 import fixtures
-import requests
 import testscenarios
 
 from snapcraft import (
@@ -46,7 +44,6 @@ class TestDownloadLogin(store_tests.TestCase):
                 fixtures.EnvironmentVariable('SNAPCRAFT_WITH_MACAROONS', None))
 
     def test_download_without_credentials(self):
-
         self.assertRaises(storeapi.InvalidCredentials,
                           self.download, 'basic')
 
@@ -78,11 +75,15 @@ class TestSearchPackage(store_tests.TestCase):
         pkgs = self.cpi.search_package('test-package', 'stable', 'amd64')
         self.assertEqual(1, len(pkgs))
 
+    def test_search_unknown_package(self):
+        pkgs = self.cpi.search_package('dont-exist', 'dont-exist', 'amd64')
+        self.assertEqual(0, len(pkgs))
+
 
 class TestDownload(store_tests.TestCase):
 
     scenarios = (('OAuth', dict(with_macaroons=False)),
-                 # ('macaroons', dict(with_macaroons=True)),
+                 ('macaroons', dict(with_macaroons=True)),
                  )
 
     def setUp(self):
@@ -99,11 +100,11 @@ class TestDownload(store_tests.TestCase):
     def test_download_works(self):
         self.download('test-package', 'stable', 'downloaded.snap')
         self.assertTrue(os.path.exists('downloaded.snap'))
-        self.assertIn('Downloading test-package',
-                      self.logger.output)
-        self.assertIn('Successfully downloaded test-package'
-                      ' at downloaded.snap',
-                      self.logger.output)
+        self.assertEqual('''Getting details for test-package
+Downloading test-package
+Successfully downloaded test-package at downloaded.snap
+''',
+                         self.logger.output)
 
     def test_download_unknwon_package(self):
         exc = self.assertRaises(
@@ -112,3 +113,39 @@ class TestDownload(store_tests.TestCase):
         self.assertEqual('gloo', exc.name)
         self.assertEqual('bee', exc.channel)
         self.assertEqual('amd64', exc.arch)  # default value
+
+    def test_download_twice_reuse_existing(self):
+        self.download('test-package', 'stable', 'downloaded.snap')
+        self.assertTrue(os.path.exists('downloaded.snap'))
+        self.assertIn('Successfully downloaded test-package'
+                      ' at downloaded.snap',
+                      self.logger.output)
+        # Try downloading again
+        self.download('test-package', 'stable', 'downloaded.snap')
+        self.assertEqual('''Getting details for test-package
+Downloading test-package
+Successfully downloaded test-package at downloaded.snap
+Getting details for test-package
+Already downloaded test-package at downloaded.snap
+''',
+                         self.logger.output)
+
+    def test_redownload_on_mismatch(self):
+        self.download('test-package', 'stable', 'downloaded.snap')
+        self.assertTrue(os.path.exists('downloaded.snap'))
+        self.assertIn('Successfully downloaded test-package'
+                      ' at downloaded.snap',
+                      self.logger.output)
+        # Clobber the downloaded file
+        with open('downloaded.snap', 'w') as f:
+            f.write('Sabotage !')
+        # Try downloading again
+        self.download('test-package', 'stable', 'downloaded.snap')
+        self.assertEqual('''Getting details for test-package
+Downloading test-package
+Successfully downloaded test-package at downloaded.snap
+Getting details for test-package
+Downloading test-package
+Successfully downloaded test-package at downloaded.snap
+''',
+                         self.logger.output)

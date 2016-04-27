@@ -75,7 +75,7 @@ class SHAMismatch(StoreError):
     fmt = 'SHA512 checksum for {path} is not {expected_sha}.'
 
     def __init__(self, path, expected_sha):
-        super().__init__(name=name, channel=channel, arch=arch)
+        super().__init__(path=path, expected_sha=expected_sha)
 
 
 def macaroon_auth(conf, acl):
@@ -157,6 +157,7 @@ class ScaClient(object):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
         self.cpi = CPIClient(self.conf)
+        logger.info('Getting details for {}'.format(snap_name))
         results = self.cpi.search_package(snap_name, channel, arch)
         if not results:
             raise SnapNotFound(snap_name, channel, arch)
@@ -260,8 +261,8 @@ class ScaClient(object):
         if self.matching_sha512(download_path, expected_sha512):
             logger.info('Already downloaded {} at {}'.format(
                 name, download_path))
-        else:
-            logger.info('Downloading {}'.format(name, download_path))
+            return
+        logger.info('Downloading {}'.format(name, download_path))
         download = self.cpi.get(download_url)
         with open(download_path, 'wb') as f:
             # FIXME: Cough, we may want to buffer here (and a progress bar
@@ -335,9 +336,6 @@ class CPIClient(object):
             # 'X-Ubuntu-Release': DEFAULT_SERIES,
             'X-Ubuntu-Device-Channel': channel,
         }
-        if self.with_macaroons:
-            auth = macaroon_auth(self.conf, 'package_access')
-            headers.update({'Authorization': auth})
         params = {
             'q': 'package_name:"{}"'.format(snap_name),
             'fields': 'status,download_url,anon_download_url,download_sha512',
@@ -352,6 +350,9 @@ class CPIClient(object):
     def get(self, path, headers=None, params=None):
         if headers is None:
             headers = {}
+        if self.with_macaroons:
+                headers.update({'Authorization':
+                                macaroon_auth(self.conf, 'package_access')})
         url = parse.urljoin(self.root_url, path)
         response = self.session.get(url, headers=headers, params=params)
         return response
