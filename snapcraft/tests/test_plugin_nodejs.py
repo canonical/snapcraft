@@ -81,7 +81,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(
                 nodejs._get_nodejs_release(),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
-            mock.call().provision(plugin.installdir)])
+            mock.call().provision(plugin.installdir, clean_target=False)])
 
     def test_pull_and_build_node_packages_sources(self):
         class Options:
@@ -104,7 +104,7 @@ class NodePluginTestCase(tests.TestCase):
                 nodejs._get_nodejs_release(),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download(),
-            mock.call().provision(plugin.installdir)])
+            mock.call().provision(plugin.installdir, clean_target=False)])
 
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
