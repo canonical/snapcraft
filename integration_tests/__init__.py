@@ -18,14 +18,12 @@ import os
 import shutil
 import subprocess
 
+import fixtures
 import pexpect
 import testtools
 from testtools import content
 
-from snapcraft.tests import (
-    fixture_setup,
-    test_config,
-)
+from snapcraft.tests import fixture_setup
 
 
 class TestCase(testtools.TestCase):
@@ -43,7 +41,8 @@ class TestCase(testtools.TestCase):
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
 
-        test_config.isolate_for_config(self)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
 
     def run_snapcraft(self, command, project_dir=None):
         if isinstance(command, str):

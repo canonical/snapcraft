@@ -34,7 +34,7 @@ class StagingStore(fixtures.Fixture):
     def setUp(self):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
-            'UBUNTU_SSO__API_ROOT_URL',
+            'UBUNTU_SSO_API_ROOT_URL',
             'https://login.staging.ubuntu.com/api/v2/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
