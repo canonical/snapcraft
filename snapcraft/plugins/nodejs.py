@@ -94,7 +94,7 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self._nodejs_tar.provision(self.installdir)
+        self._nodejs_tar.provision(self.installdir, clean_target=False)
         for pkg in self.options.node_packages:
             self.run(['npm', 'install', '-g', pkg])
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
