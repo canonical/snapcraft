@@ -90,6 +90,10 @@ class TestCase(testtools.TestCase):
         # INFO from the requests lib is too noisy
         logging.getLogger("requests").setLevel(logging.WARNING)
 
+        # Disable the progress indications, we don't need them during tests
+        self.addCleanup(setattr, _upload, 'ProgressBar', _upload.ProgressBar)
+        _upload.ProgressBar = SilentProgressBar
+
         self.store = storeapi.SCAClient()
         self.addCleanup(self.store.close)
 
@@ -158,13 +162,7 @@ parts:
         return res
 
     def upload(self, snap_filename, snap_name):
-        # Diable the progress indications, we don't need them during tests
-        orig = _upload.ProgressBar
-        try:
-            _upload.ProgressBar = SilentProgressBar
-            res = self.store.upload(snap_filename, snap_name)
-        finally:
-            _upload.ProgressBar = orig
+        res = self.store.upload(snap_filename, snap_name)
         return res
 
     def download(self, snap_name, channel='stable', path='downloaded.snap'):

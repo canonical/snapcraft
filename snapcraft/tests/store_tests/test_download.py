@@ -16,6 +16,7 @@
 import os
 
 from snapcraft import (
+    _store,
     config,
     storeapi,
 )
@@ -113,3 +114,37 @@ Getting details for {pkg_name}
 Downloading {pkg_name}
 Successfully downloaded {pkg_name} at downloaded.snap
 '''.format(pkg_name=pkg_name))
+
+
+class TestDownload_store(store_tests.TestCase):
+
+    def test_download_without_login(self):
+        pkg_name = 'femto'
+        _store.download(pkg_name, 'stable', 'downloaded.snap', 'amd64')
+        self.assertIn('No valid credentials found', self.logger.output)
+
+    def test_download_works(self):
+        self.login()
+        self.addCleanup(self.logout)
+        exc = self.assertRaises(
+            RuntimeError,
+            _store.download, 'gloo', 'bee', 'downloaded.snap', 'amd64')
+        self.assertEqual(
+            'Snap gloo for amd64 cannot be found in the bee channel',
+            str(exc))
+
+    def test_download_mismatch(self):
+        self.login()
+        self.addCleanup(self.logout)
+        self.addCleanup(setattr, storeapi.SCAClient, 'download',
+                        storeapi.SCAClient.download)
+
+        def raise_not_a_sha(*args):
+            raise storeapi.SHAMismatchError('downloaded.snap', 'not-a-sha')
+        storeapi.SCAClient.download = raise_not_a_sha
+        exc = self.assertRaises(
+            RuntimeError,
+            _store.download, 'femto', 'stable', 'downloaded.snap', 'amd64')
+        self.assertEqual(
+            'Failed to download femto at downloaded.snap (mismatched SHA)',
+            str(exc))

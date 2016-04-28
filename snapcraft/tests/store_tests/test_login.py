@@ -45,3 +45,16 @@ class TestLoginLogout(store_tests.TestCase):
         res = self.logout()
         conf = config.Config()
         self.assertTrue(conf.is_empty())
+
+
+class TestLoginErrors(store_tests.TestCase):
+
+    def test_get_macarron_error(self):
+        def cookie(url, data, headers):
+            class Response(object):
+                ok = False
+                text = 'No macaroon, want a cookie ?'
+            return Response
+        self.store.post = cookie
+        response = self.login('email@example.com', 'secret')
+        self.assertEqual('No macaroon, want a cookie ?', response['errors'])

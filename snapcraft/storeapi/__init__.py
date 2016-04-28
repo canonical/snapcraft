@@ -88,16 +88,14 @@ def _macaroon_auth(conf, acl):
 class SCAClient(object):
     """High-level client for the V2.0 API SCA resources."""
 
-    def __init__(self, sso_class=None):
-        if sso_class is None:
-            sso_class = sso.V2ApiClient
+    def __init__(self):
         self.conf = config.Config()
         self.session = requests.Session()
         self.root_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
                                        UBUNTU_STORE_API_ROOT_URL)
         sso_url = os.environ.get(
             'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-        self.sso = sso_class(sso_url)
+        self.sso = sso.V2ApiClient(sso_url)
         # Will be set by upload()
         self.updown = None
         # Will be set by download()
@@ -236,9 +234,7 @@ class SCAClient(object):
 
     # Low level helpers
 
-    def post(self, path, data, headers=None):
-        if headers is None:
-            headers = {}
+    def post(self, path, data, headers):
         url = parse.urljoin(self.root_url, path)
         response = self.session.post(url, data=data, headers=headers)
         return response

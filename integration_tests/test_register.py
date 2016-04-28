@@ -43,3 +43,9 @@ class RegisterTestCase(integration_tests.TestCase):
         self.assertIn('Registration failed.', output)
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', output)
+
+    def test_register_registered_name(self):
+        self.login(expect_success=True)
+        self.addCleanup(self.logout)
+        output = self.run_snapcraft(['register-name', 'femto'])
+        self.assertIn('Registration failed.', output)

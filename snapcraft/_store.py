@@ -126,8 +126,8 @@ def download(snap_name, channel, download_path, arch):
     except storeapi.SnapNotFoundError:
         raise RuntimeError(
             'Snap {name} for {arch} cannot be found'
-            ' in the {chanel} channel'.format(name=snap_name, arch=arch,
-                                              channel=channel))
+            ' in the {channel} channel'.format(name=snap_name, arch=arch,
+                                               channel=channel))
     except storeapi.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
