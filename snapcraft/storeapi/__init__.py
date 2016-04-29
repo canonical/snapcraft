@@ -61,7 +61,7 @@ class StoreError(Exception):
 
 class SnapNotFoundError(StoreError):
 
-    fmt = 'The  "{name}" for {arch} was not found in {channel}.'
+    fmt = 'The "{name}" for {arch} was not found in {channel}.'
 
     def __init__(self, name, channel, arch):
         super().__init__(name=name, channel=channel, arch=arch)

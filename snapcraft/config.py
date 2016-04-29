@@ -28,7 +28,7 @@ class Config(object):
     """Hold configuration options in sections.
 
     There can be two sections for the sso related credentials: production and
-    staging. This is gouverned by the UBUNTU_SSO_API_ROOT_URL environment
+    staging. This is governed by the UBUNTU_SSO_API_ROOT_URL environment
     variable. Other sections are ignored but preserved.
     """
 

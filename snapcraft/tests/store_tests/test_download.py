@@ -123,7 +123,7 @@ class TestDownload_store(store_tests.TestCase):
         _store.download(pkg_name, 'stable', 'downloaded.snap', 'amd64')
         self.assertIn('No valid credentials found', self.logger.output)
 
-    def test_download_works(self):
+    def test_download_not_found(self):
         self.login()
         self.addCleanup(self.logout)
         exc = self.assertRaises(
