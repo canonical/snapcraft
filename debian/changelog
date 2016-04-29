@@ -17,7 +17,7 @@ snapcraft (2.8.5) xenial; urgency=medium
   * Don't delete the nodejs download on build. (#490) (LP: #1575882)
 
   [ Vincent Ladeuil ]
-  * Make upload more robust by ignoring suprious errors while polling the
+  * Make upload more robust by ignoring spurious errors while polling the
     scan status. (#480) (LP: #1572963)
 
   [ Kyle Fazzari ]
