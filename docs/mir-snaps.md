@@ -76,8 +76,8 @@ user is "ubuntu" and password is "ubuntu". Check your ip with ipconfig.
 
 Copy your snap over to your running core image & install.
 ```
-$ scp *.snap ubuntu@x.x.x.x:/home/ubuntu
-ubuntu# sudo snappy install mir*.snap --allow-unauthenticated
+$ scp *.snap ubuntu@x.x.x.x:
+ubuntu# sudo snap install mir*.snap
 ```
 
 The `mir-server` should launch, resulting in a black screen with a mouse.
@@ -86,12 +86,12 @@ The `mir-server` should launch, resulting in a black screen with a mouse.
 
 You may stop the `mir-server` if you want or have need by `Ctl+delete` or
 ```
-ubuntu# sudo snappy service stop mir
+ubuntu# sudo snap service stop mir
 ```
 
 Likewise, you may restart by
 ```
-ubuntu# sudo snappy service start mir
+ubuntu# sudo snap service start mir
 ```
 
 ## Get the Mir-Client snap Running
@@ -108,12 +108,12 @@ $ snapcraft snap
 
 Copy your snap over to your running core image and install.
 ```
-$ scp *.snap ubuntu@x.x.x.x:/home/ubuntu
+$ scp *.snap ubuntu@x.x.x.x:
 ```
 
 Quickly double-check Mir server is running, if not just start the service.
 ```
-ubuntu# sudo snappy install mir-client*.snap --allow-unauthenticated
+ubuntu# sudo snap install mir-client*.snap
 ```
 
 At this point you should see some Qml clocks.
