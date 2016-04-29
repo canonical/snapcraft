@@ -42,8 +42,10 @@ class LocalTestbed:
         pass
 
     def run_command(self, command):
+        if isinstance(command, list):
+            command = ' '.join(command)
         return subprocess.check_output(
-            ' '.join(command), shell=True,
+            command, shell=True,
             stderr=subprocess.STDOUT).decode('utf-8')
 
     def run_command_in_background(self, command):
