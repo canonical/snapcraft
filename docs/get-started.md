@@ -2,7 +2,7 @@
 
 Ubuntu is an excellent OS for developers. The Snappy developer tools are
 readily available in Ubuntu, so porting and writing new software to target a
-Snappy-based system is particularly easy.
+Snap-based system is particularly easy.
 
 For app developers that want the latest stable tools to work on Snappy
 technology, we recommend using the latest classic Ubuntu Long-Term Support

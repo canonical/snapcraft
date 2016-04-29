@@ -11,7 +11,7 @@ following command:
 ```
 $ sudo -s
 # ulimit -c unlimited
-# echo "/home/ubuntu/apps/hello-world.canonical/1.0.18/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern
+# echo "/home/ubuntu/snap/hello-world.canonical/1.0.18/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern
 ```
 
 Make sure you substitute the pattern above with the right snap name and
@@ -33,7 +33,7 @@ You can customize the core dump pattern with the following options
 
 There is a debug snap that can be installed with:
 
-    $ sudo snappy install snappy-debug
+    $ sudo snap install snappy-debug
 
 As of 2016-01-26, the snappy-debug snap only contains the
 **snappy-debug.security** tool for working with snappy security policy.
@@ -136,24 +136,14 @@ The syslog is particularly useful since kernel logs, launcher output, service
 status, system logs and confinement violations (these are covered in depth
 elsewhere) all get logged there.
 
-Further, systemd has log dump facility to look at all system and snap
-services. The "snappy service" command provides an easy way to monitor and
-inspect snap services. To get the status of all snap services run "snappy
-service status". To inspect the logs run "snappy service logs". Both commands
-can take a snap name to limit to a specific snap (e.g. for the service
-in `shout.sergiusens` run: `sudo snappy service logs shout`).
-
 
 ## Debugging binaries
 
 ### Installing binaries
-In order to test a new snap on a Snappy system you need to install it first.
-This is called "sideloading" and it can be done by copying the snap onto the
-Snappy system via `scp` and installing it with
-`sudo snappy install snapname.snap`.
+In order to test a new snap on a Snap-based system you need to install it first.
+This is called "sideloading" and it can be done with:
 
-Note that you have to use the `--allow-unauthenticated` tag for installing
-unsigned snaps: `sudo snappy install --allow-unauthenticated snapname.snap`.
+    sudo snap install <local-file.snap>
 
 ### Binary names on CLI
 
@@ -164,8 +154,8 @@ on disk will be called `pastebinit.pastebinit`.
 
 ### Find a binary in the file system hierarchy
 
-All binary names can be found in `/snaps/bin/`. The snappy tool will generate
-small wrapper script that ensures that the binary in the snap is called with
+All binary names can be found in `/snaps/bin/`. The `snap` tool will generate
+a small wrapper script that ensures that the binary in the snap is called with
 the right confinement and environment.
 
 ### Testing if a binary is running
@@ -194,25 +184,23 @@ get the debug snap.
 
 ## Testing a service
 
-To test a service it must be installed first. See the section "Testing a
-binary" for the various ways to do that. Once it is installed the
-`snappy service status` command can be used to see if the service starts and
-runs as expected. The `snappy service logs` command is available to inspect
-the messages that the service send to `stdout`/`stderr`.
+To test a service it must be installed first. See the section "Testing a binary"
+for the various ways to do that. Once it is installed systemd's `systemctl`
+command can be used to see if the service starts and runs as expected, for
+example:
+
+    systemctl status snap.<name>.<service>
 
 ### Finding the logs
 
-To see the log output of a daemon the `snappy service logs` command can be
-used. The same logs are available via the `systemctl`/`journalctl` low-level
-commands. Services may log additional data to syslog (`/var/log/syslog`) or
-to custom log directories. Note that custom log directories must be in a path
-that the service can write to (usually `SNAP_DATA`).
+The `journalctl` command can be used to inspect the messages that the service
+sends to `stdout`/`stderr`, for example:
 
-### Reading the logs
+    journalctl -u snap.<name>.<service>
 
-The `snappy service logs` command should be used to read the logs. The
-standard unix tools like `less`/`more`/`grep` are available for inspecting
-service specific logs that are stores in `SNAP_DATA`.
+Services may log additional data to syslog (`/var/log/syslog`) or to custom log
+directories. Note that custom log directories must be in a path that the service
+can write to (usually `SNAP_DATA`).
 
 
 ### Getting a core dump
@@ -235,9 +223,7 @@ debugging security policy:
 * **snappy-debug.security list**: used for listing available policy
 * **snappy-debug.security scanlog**: used for scanning /var/log/syslog for
   policy violations in an easier to read format
-* **snappy list**: lists installed snaps
-* **snappy service**: tool to manipulate services and view logs. See `sudo
-  snappy service` for details
+* **snap list**: lists installed snaps
 * **sudo aa-status**: shows AppArmor policy that is loaded in the kernel
 
 In addition to the above, it is sometimes useful to work with the raw syslog
@@ -263,7 +249,7 @@ app include:
 * app doesn't start
 
 It is easy to see if the app is being blocked by security policy by looking
-at the logs (be sure to run `sudo snappy install snappy-debug` first):
+at the logs (be sure to run `sudo snap install snappy-debug` first):
 
 ```
 $ sudo snappy-debug.security scanlog
@@ -322,29 +308,28 @@ The most common culprits for sandbox issues are:
 * Attempting to use `/var/tmp`'. The program should be adjusted to use
   `TMPDIR` or `/tmp`
 * Attempting to use `/run`. The program should be adjusted to use
-  `SNAP_DATA` or `/run/shm/snaps/SNAP_FULLNAME/SNAP_VERSION`
-* Access denied to hardware. To fix for development, use
-  `snappy hw-assign <name> /dev/...`. When ready for production, consider
-  using a gadget snap.
-* Not specifying the correct `caps` for your snap (eg, not using
-  `network-service` for server software or declaring the cap to use a
-  particular framework service)
-* Trying to execute programs on the system or programs in `/snaps/bin`. Except
-  for a few common programs (eg, that are useful for shell programming),
+  `SNAP_DATA` or `/run/shm/snaps/SNAP_NAME/SNAP_REVISION`
+* Access denied to hardware. Such access is granted via interfaces-- make sure
+  you're using the correct one, and log a bug if an interface is missing
+  something you need.
+* Not specifying the correct interfaces for your snap (eg, not using
+  `network-bind` for server software)
+* Trying to execute programs on the system or programs in `/snap/bin`. Except
+  for a few common programs (e.g., that are useful for shell programming),
   apps should run programs from their application directory, not the system.
   In addition, apps should not try to run their programs installed in
-  `/snaps/bin`, but instead simply call them directly from `SNAP/...`
-  (executing from `/snaps/bin` doesn't work because they use the privileged
+  `/snap/bin`, but instead simply call them directly from `SNAP/...`
+  (executing from `/snap/bin` doesn't work because they use the privileged
   launcher to setup the sandbox, and apps aren't allowed to change their
   sandbox once they start)
 * A snap uses `setuid`/`setgid` or `chown` family of syscalls. Ubuntu Core
-  15.04 does not provide a mechanism of assigning users and groups to snaps,
-  so the `setuid`/`setgid` and `chown` family of syscalls are blocked (since
-  there is no appropriate user to change to. Optionally assigning
-  users/groups to snaps is a planned feature). For example,
+  16 does not provide a mechanism of assigning users and groups to snaps, so the
+  `setuid`/`setgid` and `chown` family of syscalls are blocked (since there is
+  no appropriate user to change to. Optionally assigning users/groups to snaps
+  is a planned feature). For example,
     * sometimes an existing application is designed to start as root and drop
-      privileges to an unprivileged user (eg, to bind to a port). This
-      applications will need to be adjusted to not drop privileges (at least
+      privileges to an unprivileged user (e.g., to bind to a port). This
+      application will need to be adjusted to not drop privileges (at least
       until Ubuntu Core supports it)
     * the developer is trying to copy files from `SNAP` to
       `SNAP_DATA` (eg, for write access of a configuration files) and
@@ -399,7 +384,7 @@ kernel rate limiting, otherwise the kernel may choose to not log important
 information needed for debugging (even with this, the kernel may still drop
 log messages (rarely)-- if you feel this is the case, reboot and try again):
 
-    $ sudo snappy install snappy-debug
+    $ sudo snap install snappy-debug
     $ sudo snappy-debug.security disable-rate-limiting
 
 This rest of this section discusses how to debug sandbox issues for an
@@ -435,15 +420,15 @@ It is very convenient for debugging to login to your device and launch
 snap. For example, in one console:
 
 ```
-$ sudo snappy install snappy-debug
+$ sudo snap install snappy-debug
 $ sudo snappy-debug.security scanlog
 ```
 
 Now, login to another console and try to start a service:
 
 ```
-$ sudo snappy service start xkcd-webserver
-$ sudo snappy service status xkcd-webserver
+$ sudo snap service start xkcd-webserver
+$ sudo systemctl status snap.xkcd-webserver.xkcd-webserver
 Snap        Service        State
 xkcd-webserver    xkcd-webserver    enabled; loaded; failed (failed)
 ```
@@ -463,23 +448,23 @@ Recommendation:
 ```
 
 Ah, `xkcd-webserver` is a web server and we apparently forgot to include the
-`network-service` in our 'caps' in the yaml. At this point, you could simply
-add it to the `caps` for that service, rebuild the snap, remove the old snap
-and install the new one. Eg, after adding the `network-service` cap:
+`network-bind` in our 'plugs' in the yaml. At this point, you could simply
+add it to the `plugs` for that service, rebuild the snap, remove the old snap
+and install the new one. Eg, after adding the `network-bind` interface:
 
 ```
-$ sudo snappy service start xkcd-webserver
-$ sudo snappy service status xkcd-webserver
+$ sudo systemctl start snap.xkcd-webserver.xkcd-webserver
+$ sudo systemctl status snap.xkcd-webserver.xkcd-webserver
 Snap        Service        State
 xkcd-webserver    xkcd-webserver    enabled; loaded; active (running)
 ```
 
-For simple things like forgetting a cap, rebuilding and reinstalling the snap
-is enough. Other times you might be developing custom policy for a specialized
-snap or want to simply allow some accesses temporarily. In these cases it is
-usually easier to modify policy in place on the device to get everything
-working (and if working on custom policy, copying this back to your packaging
-files).
+For simple things like forgetting an interface, rebuilding and reinstalling the
+snap is enough. Other times you might be developing custom policy for a
+specialized snap or want to simply allow some accesses temporarily. In these
+cases it is usually easier to modify policy in place on the device to get
+everything working (and if working on custom policy, copying this back to your
+packaging files).
 
 IMPORTANT: whether you are using templated policy, `security-override` or
 `security-policy`, the actual security policy that is applied at runtime is
@@ -641,5 +626,5 @@ use `security-policy` in your yaml and follow the guidelines in
 and copy these new rules in, and retest. Remember that store policies may
 trigger a manual review for uploads of snaps specifying `security-policy`.
 Notice in many of the above logs, the recommendation was to use various
-`caps`. It is recommended that templated policy with caps be used whenever
-possible rather than generating your own custom policy.
+interfaces. It is recommended that templated policy with interfaces be used
+whenever possible rather than generating your own custom policy.
