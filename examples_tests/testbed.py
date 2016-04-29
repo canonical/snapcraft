@@ -43,7 +43,8 @@ class LocalTestbed:
 
     def run_command(self, command):
         return subprocess.check_output(
-            command, stderr=subprocess.STDOUT).decode('utf-8')
+            ' '.join(command), shell=True,
+            stderr=subprocess.STDOUT).decode('utf-8')
 
     def run_command_in_background(self, command):
         return subprocess.Popen(command)
