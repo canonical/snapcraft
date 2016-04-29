@@ -19,15 +19,9 @@ inside the parts entry.
 
 ## Sideloading your snap
 
-Consider the `downloader-with-wiki-parts` example and a Snappy Ubuntu Core
-on 192.168.10.10. In order to install the built snap, you need to first get the
-snap on the device and then install it. From the host machine:
+Consider the `downloader-with-wiki-parts` example. To install the built snap:
 
-    $ scp downloader_1.0_amd64.snap ubuntu@192.168.10.10:
-
-Now from the home directory of the ubuntu user on the Snappy machine:
-
-	$ sudo snappy install downloader_1.0_amd64.snap --allow-unauthenticated
+	$ sudo snap install downloader_1.0_amd64.snap
 
 After installing, a summary of installed snaps will be presented, on a vanilla
 x86-64 bit system it would look a lot like this:
