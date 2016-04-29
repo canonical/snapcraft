@@ -76,7 +76,7 @@ is allowed to write to.
 ## Testing a service
 
 To test a service it must be installed first. See the section "Testing a binary"
-for the various ways to do that. Once it is installed systemd's `systemctl`
+for the various ways to do that. Once it is installed, systemd's `systemctl`
 command can be used to see if the service starts and runs as expected, for
 example:
 
@@ -176,7 +176,7 @@ The most common culprits for sandbox issues are:
       app to write to `$SNAP_DATA/run` or `$SNAP_DATA/log`
       or similar
     * improperly evaluating or typoing `SNAP_` variables so the program
-      uses the wrong path. Eg, using `$SNAP_DATA/foo` instead of
+      uses the wrong path. For example, using `$SNAP_DATA/foo` instead of
       `$SNAP/foo` (`SNAP_DATA` is non-existent so it would evaluate to
       `/foo` which is disallowed by security policy)
     * hard coded paths in the program. The program should be adjusted ideally
@@ -184,8 +184,8 @@ The most common culprits for sandbox issues are:
 * Attempting to read files outside of `SNAP`, `SNAP_DATA` and
   `SNAP_USER_DATA`. This usually happens if your program is looking for
   something that isn't shipped by your snap or it is trying to look for it in
-  the wrong place (eg, typing a `SNAP_` variable, evaluating `PATH` or hardcoded
-  path). Fixes are similar to the above.
+  the wrong place (e.g., typing a `SNAP_` variable, evaluating `PATH` or
+  hardcoded path). Fixes are similar to the above.
 * Attempting to use `/var/tmp`'. The program should be adjusted to use
   `TMPDIR` or `/tmp`
 * Attempting to use `/run`. The program should be adjusted to use
@@ -204,16 +204,16 @@ The most common culprits for sandbox issues are:
   launcher to setup the sandbox, and apps aren't allowed to change their
   sandbox once they start)
 * A snap uses `setuid`/`setgid` or `chown` family of syscalls. Ubuntu Core
-  16 does not provide a mechanism of assigning users and groups to snaps, so the
-  `setuid`/`setgid` and `chown` family of syscalls are blocked (since there is
-  no appropriate user to change to. Optionally assigning users/groups to snaps
-  is a planned feature). For example,
+  16 does not provide a mechanism for assigning users and groups to snaps, so
+  the `setuid`/`setgid` and `chown` family of syscalls are blocked (since there
+  is no appropriate user to change to. Optionally assigning users/groups to
+  snaps is a planned feature). For example,
     * sometimes an existing application is designed to start as root and drop
       privileges to an unprivileged user (e.g., to bind to a port). This
       application will need to be adjusted to not drop privileges (at least
       until Ubuntu Core supports it)
     * the developer is trying to copy files from `SNAP` to
-      `SNAP_DATA` (eg, for write access of a configuration files) and
+      `SNAP_DATA` (e.g., for write access of a configuration files) and
       attempts to use a `cp -a`. This results in a `seccomp` failure when the
       command is run as root because '-a' attempts to copy the ownership
       (`chown`) of the files in `SNAP`, but these are owned by an
@@ -238,7 +238,7 @@ The most common culprits for sandbox issues are:
       security policy. Use `snappy config ubuntu-core` and add/adjust the
       `load-kernel-modules` line accordingly when developing your snap. When
       ready for production with a gadget snap, make sure the modules you need
-      are loaded there. Eg:
+      are loaded there. For example:
       ```yaml
       config:
         ubuntu-core:
