@@ -1,3 +1,30 @@
+snapcraft (2.8.5) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * autopkgtests: run the tests using the installed package (#464)
+    (LP: #1570992)
+  * Remove --allow-unauthenticated from examples tests (#482) (LP: #1573211)
+  * Update the assertion of the example install (#483) (LP: #1573243)
+  * Examples tests: Update the path to the snaps binaries (#484) (LP: #1573349)
+  * Examples tests: use systemctl instead of the removed snap service (#485)
+    (LP: #1573697)
+  * Update the mosquitto example SNAP_USER_DATA path. (#486) (LP: #1574857)
+  * Update the busybox test to use the snap data path. (LP: #1574901)
+  * Remove the integration tests coverage. (#488) (LP: #1575383)
+
+  [ Sergio Schvezov ]
+  * Don't clean target before extracting npm (#489) (LP: #1575876)
+  * Don't delete the nodejs download on build. (#490) (LP: #1575882)
+
+  [ Vincent Ladeuil ]
+  * Make upload more robust by ignoring suprious errors while polling the
+    scan status. (#480) (LP: #1572963)
+
+  [ Kyle Fazzari ]
+  * docs/get-started.md: Stop discussing snappy-tools. (#454) (LP: #1568113)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 29 Apr 2016 14:59:47 -0300
+
 snapcraft (2.8.4) xenial; urgency=medium
 
   [ Sergio Schvezov ]
