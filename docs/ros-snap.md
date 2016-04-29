@@ -349,22 +349,21 @@ you'll have a .snap.
 
 ### Take the .snap for a test drive
 
-Transfer your newly-minted .snap to your Ubuntu Core machine with `scp`,
-then install it:
+Install your newly-minted .snap with:
 
-    $ sudo snappy install ros-example_1.0_amd64.snap
+    $ sudo snap install ros-example_1.0_amd64.snap
 
-While on the Ubuntu Core machine, take a look in `/snaps/bin/`, and you'll see
-the binary you requested, called `ros-example.launch-project`. Test it out:
+Take a look in `/snap/bin/`, and you'll see the binary you requested, called
+`ros-example.launch-project`. Test it out:
 
     $ ros-example.launch-project
 
 And you should see the talker and listener communicating like before. As usual,
 ctrl+c will stop it. Note also that, since ROS is running in a confined
 environment, its log isn't in `$HOME/.ros` as usual, but in
-`$HOME/snaps/ros-example.sideload/<version>/ros`. Note: if you make the app a
+`$HOME/snap/ros-example.sideload/<version>/ros`. Note: if you make the app a
 service, `$HOME` will be `/root`, so the logs will be in
-`/root/snaps/ros-example.sideload/<version>/ros`.
+`/root/snap/ros-example.sideload/<version>/ros`.
 
 [1]: http://www.ros.org/
 [2]: get-started.md
