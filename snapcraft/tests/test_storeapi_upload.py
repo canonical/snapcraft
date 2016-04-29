@@ -17,13 +17,20 @@ from __future__ import absolute_import, unicode_literals
 import json
 import os
 import tempfile
+import unittest
 
 from mock import ANY, call, patch
-from requests import Response
+from requests import (
+    ConnectionError,
+    HTTPError,
+    Response,
+)
 
 from snapcraft import tests
 from snapcraft.storeapi._upload import (
     get_upload_url,
+    get_scan_status,
+    is_scan_completed,
     upload_app,
     upload_files,
     upload,
@@ -650,3 +657,28 @@ class UploadAppTestCase(UploadBaseTestCase):
             upload_url = "http://example.com/click-package-upload/app.dev/"
             url = get_upload_url('app.dev')
             self.assertEqual(url, upload_url)
+
+
+class FakeSession(object):
+
+    def __init__(self, exc):
+        self.exc = exc
+
+    def get(self, url):
+        raise self.exc()
+
+
+class ScanStatusTestCase(unittest.TestCase):
+
+    def test_is_scan_complete_for_none(self):
+        self.assertFalse(is_scan_completed(None))
+
+    def get_scan_status(self, exc):
+        raiser = FakeSession(exc)
+        return get_scan_status(raiser, 'foo')
+
+    def test_get_status_connection_error(self):
+        self.assertIsNone(self.get_scan_status(ConnectionError))
+
+    def test_get_status_http_error(self):
+        self.assertIsNone(self.get_scan_status(HTTPError))

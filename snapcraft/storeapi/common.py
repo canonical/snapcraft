@@ -67,13 +67,6 @@ def store_api_call(path, session=None, method='GET', data=None):
     return result
 
 
-def is_scan_completed(response):
-    """Return True if the response indicates the scan process completed."""
-    if response.ok:
-        return response.json().get('completed', False)
-    return False
-
-
 def retry(terminator=None, retries=3, delay=3, backoff=2, logger=None):
     """Decorate a function to automatically retry calling it on failure.
 
