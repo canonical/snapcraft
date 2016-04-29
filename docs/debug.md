@@ -80,14 +80,14 @@ for the various ways to do that. Once it is installed systemd's `systemctl`
 command can be used to see if the service starts and runs as expected, for
 example:
 
-    systemctl status snap.<name>.<service>
+    systemctl status snap.<name>.<appname>
 
 ### Finding the logs
 
 The `journalctl` command can be used to inspect the messages that the service
 sends to `stdout`/`stderr`, for example:
 
-    journalctl -u snap.<name>.<service>
+    journalctl -u snap.<name>.<appname>
 
 Services may log additional data to syslog (`/var/log/syslog`) or to custom log
 directories. Note that custom log directories must be in a path that the service
