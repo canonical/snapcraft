@@ -18,8 +18,8 @@ import json
 import os
 import tempfile
 import unittest
+from unittest.mock import ANY, call, patch
 
-from mock import ANY, call, patch
 from requests import (
     ConnectionError,
     HTTPError,
