@@ -17,8 +17,8 @@
 from __future__ import absolute_import, unicode_literals
 import json
 from unittest import TestCase
+from unittest.mock import patch
 
-from mock import patch
 from requests import Response
 
 from snapcraft.storeapi._login import login

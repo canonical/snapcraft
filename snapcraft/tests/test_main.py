@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
-import mock
 import logging
 import pkg_resources
 import sys
+from unittest import mock
 
 import snapcraft.main
 

@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
 from unittest import TestCase
+from unittest.mock import Mock, call, patch
 
 import responses
-from mock import Mock, call, patch
 from requests_oauthlib import OAuth1Session
 
 from snapcraft.storeapi.common import (

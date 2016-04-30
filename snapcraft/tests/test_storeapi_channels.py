@@ -17,8 +17,7 @@
 from __future__ import absolute_import, unicode_literals
 import json
 from unittest import TestCase
-
-from mock import patch
+from unittest.mock import patch
 
 from snapcraft.storeapi.channels import get_channels, update_channels
 
