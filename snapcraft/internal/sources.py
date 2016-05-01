@@ -198,7 +198,7 @@ class Tar(Base):
             for chunk in req.iter_content(1024):
                 f.write(chunk)
 
-    def provision(self, dst, clean_target=True):
+    def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
@@ -210,7 +210,9 @@ class Tar(Base):
             shutil.move(tmp_tarball, tarball)
 
         self._extract(tarball, dst)
-        os.remove(tarball)
+
+        if not keep_tarball:
+            os.remove(tarball)
 
     def _extract(self, tarball, dst):
         with tarfile.open(tarball) as tar:
