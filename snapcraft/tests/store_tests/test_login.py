@@ -14,11 +14,16 @@
 
 import os
 
+import testscenarios
+
 from snapcraft import config
 from snapcraft.tests import store_tests
 
 
-class TestLoginLogout(store_tests.TestCase):
+load_tests = testscenarios.load_tests_apply_scenarios
+
+
+class TestLoginLogout(store_tests.RecordedTestCase):
 
     def test_successful_login(self):
         self.addCleanup(self.logout)

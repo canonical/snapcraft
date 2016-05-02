@@ -21,7 +21,6 @@ import os
 from urllib import parse
 
 import requests
-from ssoclient import v2 as sso
 
 import snapcraft
 from snapcraft import config
@@ -85,17 +84,45 @@ def _macaroon_auth(conf, acl):
     return auth
 
 
-class SCAClient(object):
+class Client(object):
+    """A base class to define clients for the ols servers.
+
+    This is a simple wrapper around requests.Session so we inherit all good
+    bits while providing a simple point for tests to override when needed.
+    """
+
+    def __init__(self, conf, root_url):
+        self.conf = conf
+        self.root_url = root_url
+        self.session = requests.Session()
+
+    def request(self, method, url, params=None, headers=None, **kwargs):
+        """Overriding base class to handle the root url."""
+        # Note that url may be absolute in which case 'root_url' is ignored by
+        # urljoin.
+        final_url = parse.urljoin(self.root_url, url)
+        response = self.session.request(method, final_url, headers=headers,
+                                        params=params, **kwargs)
+        return response
+
+    def get(self, url, **kwargs):
+        return self.request('GET', url, **kwargs)
+
+    def post(self, url, **kwargs):
+        return self.request('POST', url, **kwargs)
+
+    def close(self):
+        self.session.close()
+
+
+class SCAClient(Client):
     """High-level client for the V2.0 API SCA resources."""
 
     def __init__(self):
-        self.conf = config.Config()
-        self.session = requests.Session()
-        self.root_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
-                                       UBUNTU_STORE_API_ROOT_URL)
-        sso_url = os.environ.get(
-            'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-        self.sso = sso.V2ApiClient(sso_url)
+        super().__init__(config.Config(),
+                         os.environ.get('UBUNTU_STORE_API_ROOT_URL',
+                                        UBUNTU_STORE_API_ROOT_URL))
+        self.sso = SSOClient(self.conf)
         # Will be set by upload()
         self.updown = None
         # Will be set by download()
@@ -185,16 +212,14 @@ class SCAClient(object):
                     macaroons=[(k, v) for k, v in macaroons.items()])
         if one_time_password:
             data['otp'] = one_time_password
-        try:
-            response = self.sso.session.post(
-                '/tokens/discharge', data=data,
-                headers={'Content-Type': 'application/json',
-                         'Accept': 'application/json'})
-            return dict(response.content['discharge_macaroons']), None
-        except sso.ApiException as err:
-            return None, err.body
-        except sso.UnexpectedApiError as err:
-            return None, err.json_body
+        response = self.sso.post(
+            'tokens/discharge', data=json.dumps(data),
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if response.ok:
+            return dict(response.json()['discharge_macaroons']), None
+        else:
+            return None, response.text
 
     def upload_snap(self, name, data):
         data['name'] = name
@@ -232,25 +257,27 @@ class SCAClient(object):
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
-    # Low level helpers
-
-    def post(self, path, data, headers):
-        url = parse.urljoin(self.root_url, path)
-        response = self.session.post(url, data=data, headers=headers)
-        return response
-
     def close(self):
-        if self.session is not None:
-            self.session.close()
-        if self.sso.session is not None:
-            self.sso.session.close()
+        if self.cpi is not None:
+            self.cpi.close()
         if self.updown is not None:
             self.updown.close()
+        self.sso.close()
+        super().close()
 
 
-# FIXME: Refactor as a base for all clients using requests.Session() (sca,
-# updown, cpi) with (conf, root_url) to build from -- vila 2016-04-27
-class CPIClient(object):
+class SSOClient(Client):
+    """The Single Sign On server deals with authentification.
+
+    It is used directly or indirectly by other servers.
+    """
+
+    def __init__(self, conf):
+        super().__init__(conf, os.environ.get('UBUNTU_SSO_API_ROOT_URL',
+                                              UBUNTU_SSO_API_ROOT_URL))
+
+
+class CPIClient(Client):
     """The Click Package Index knows everything about existing snaps.
 
     https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex is the
@@ -258,12 +285,10 @@ class CPIClient(object):
     """
 
     def __init__(self, conf):
-        self.conf = conf
-        self.root_url = os.environ.get('UBUNTU_STORE_SEARCH_ROOT_URL',
-                                       UBUNTU_STORE_SEARCH_ROOT_URL)
+        super().__init__(conf, os.environ.get('UBUNTU_STORE_SEARCH_ROOT_URL',
+                                              UBUNTU_STORE_SEARCH_ROOT_URL))
         if self.conf.get('package_access') is None:
             raise InvalidCredentialsError()
-        self.session = requests.Session()
 
     def search_package(self, snap_name, channel, arch):
         headers = {
@@ -277,18 +302,17 @@ class CPIClient(object):
             'fields': 'status,download_url,anon_download_url,download_sha512',
             'size': 1,
         }
-        resp = self.get('api/v1/search', headers, params=params)
+        resp = self.get('api/v1/search', headers=headers, params=params)
         embedded = resp.json().get('_embedded', None)
         if embedded is None:
             return None
         else:
             return embedded['clickindex:package'][0]
 
-    def get(self, path, headers=None, params=None):
+    def get(self, url, headers=None, params=None):
         if headers is None:
             headers = {}
         headers.update({'Authorization':
                         _macaroon_auth(self.conf, 'package_access')})
-        url = parse.urljoin(self.root_url, path)
-        response = self.session.get(url, headers=headers, params=params)
+        response = self.request('GET', url, headers=headers, params=params)
         return response

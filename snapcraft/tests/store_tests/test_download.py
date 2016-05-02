@@ -15,12 +15,16 @@
 
 import os
 
+import testscenarios
+
 from snapcraft import (
     _store,
-    config,
     storeapi,
 )
 from snapcraft.tests import store_tests
+
+
+load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class TestDownloadLogin(store_tests.TestCase):
@@ -30,14 +34,13 @@ class TestDownloadLogin(store_tests.TestCase):
                           self.download, 'basic')
 
 
-class TestSearchPackage(store_tests.TestCase):
+class TestSearchPackage(store_tests.RecordedTestCase):
 
     def setUp(self):
         super().setUp()
         self.addCleanup(self.logout)
         self.login()
-        self.conf = config.Config()
-        self.cpi = storeapi.CPIClient(self.conf)
+        self.cpi = storeapi.CPIClient(self.store.conf)
 
     def test_search_known_package(self):
         # We rely on a package that has been published for TEST_USER_EMAIL
@@ -50,7 +53,7 @@ class TestSearchPackage(store_tests.TestCase):
                                                   'amd64'))
 
 
-class TestDownload(store_tests.TestCase):
+class TestDownload(store_tests.RecordedTestCase):
 
     def setUp(self):
         super().setUp()
@@ -116,7 +119,7 @@ Successfully downloaded {pkg_name} at downloaded.snap
 '''.format(pkg_name=pkg_name))
 
 
-class TestDownload_store(store_tests.TestCase):
+class TestDownload_store(store_tests.RecordedTestCase):
 
     def test_download_without_login(self):
         pkg_name = 'femto'

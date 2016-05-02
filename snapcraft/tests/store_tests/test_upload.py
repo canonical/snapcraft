@@ -18,6 +18,7 @@ import os
 import unittest
 
 import requests
+import testscenarios
 
 from snapcraft import (
     _store,
@@ -25,6 +26,9 @@ from snapcraft import (
 )
 from snapcraft.storeapi import _upload
 from snapcraft.tests import store_tests
+
+
+load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class TestUploadNoLogin(store_tests.TestCase):
@@ -36,7 +40,7 @@ class TestUploadNoLogin(store_tests.TestCase):
                           self.upload, snap_path, snap_name)
 
 
-class UploadTestCase(store_tests.TestCase):
+class UploadTestCase(store_tests.RecordedTestCase):
 
     def setUp(self):
         super().setUp()
@@ -88,7 +92,7 @@ class UploadTestCase(store_tests.TestCase):
     def inject_response(self, response):
         """Inject a predefined response when upload_files calls updown."""
 
-        class FakeUpdown(requests.Session):
+        class FakeUpdown(self.preserved_session_class):
 
             def post(self, url, data=None, json=None, **kwargs):
                 if callable(response):
