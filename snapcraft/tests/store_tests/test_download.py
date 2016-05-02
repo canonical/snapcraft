@@ -41,6 +41,7 @@ class TestSearchPackage(store_tests.RecordedTestCase):
         self.addCleanup(self.logout)
         self.login()
         self.cpi = storeapi.CPIClient(self.store.conf)
+        self.addCleanup(self.cpi.close)
 
     def test_search_known_package(self):
         # We rely on a package that has been published for TEST_USER_EMAIL
