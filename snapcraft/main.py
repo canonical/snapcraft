@@ -123,9 +123,10 @@ def _list_plugins():
             snapcraft.plugins.__path__):
         print(modname.replace('_', '-'))
 
+
 def _list_parts():
-     for part in yaml.Config().all_parts:
-         print(part.name)
+    for part in yaml.Config().all_parts:
+        print(part.name)
 
 
 def _get_project_options(args):
