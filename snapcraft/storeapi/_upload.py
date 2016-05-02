@@ -20,13 +20,13 @@ import functools
 import time
 import os
 
+import requests
 from concurrent.futures import ThreadPoolExecutor
 from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from .common import (
     get_oauth_session,
-    is_scan_completed,
     retry,
 )
 from .compat import open, quote_plus, urljoin
@@ -318,6 +318,30 @@ def get_post_files(metadata=None):
     return files
 
 
+def is_scan_completed(response):
+    """Return True if the response indicates the scan process completed."""
+    if response is None:
+        # To cope with spurious connection failures lacking a proper response:
+        # either we'll retry and succeed or we fail for all retries and report
+        # an error.
+        return False
+    if response.ok:
+        return response.json().get('completed', False)
+    return False
+
+
+def get_scan_status(session, url):
+    try:
+        resp = session.get(url)
+        return resp
+    except (requests.ConnectionError, requests.HTTPError):
+        # Something went wrong and we couldn't acquire the status. Upper
+        # level (is_scan_completed) will deal with the None response
+        # meaning we don't know the status. This avoid a spurious
+        # connection error breaking an upload for a wrong reason.
+        return None
+
+
 def get_scan_data(session, status_url):
     """Return metadata about the state of the upload scan process."""
     # initial retry after 5 seconds
@@ -328,7 +352,7 @@ def get_scan_data(session, status_url):
            delay=SCAN_STATUS_POLL_DELAY,
            backoff=1)
     def get_status():
-        return session.get(status_url)
+        return get_scan_status(session, status_url)
 
     response, aborted = get_status()
 
