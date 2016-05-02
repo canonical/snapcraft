@@ -3,9 +3,7 @@ examples/*/parts/
 examples/*/snap/
 examples/*/stage/
 examples/**/*.snap
-tests/unit/parts/
-tests/unit/snap/
-tests/unit/stage/
+snapcraft/tests/store_tests/tapes/
 build
 dist
 *.egg-info
