@@ -19,17 +19,11 @@ inside the parts entry.
 
 ## Sideloading your snap
 
-Consider the `downloader-with-wiki-parts` example and a Snappy Ubuntu Core
-on 192.168.10.10, to install the built snap by following Trying snapcraft
-and run:
+Consider the `downloader-with-wiki-parts` example. To install the built snap:
 
-	snappy-remote --url ssh://192.168.10.10 install downloader_1.0_amd64.snap
+	$ sudo snap install downloader_1.0_amd64.snap
 
-If this is the first time connecting to the system, snappy-remote will try
-and use existing ssh keys for the user to avoid the necessity of password
-prompts.
-
-After installing a summary of installed snaps will be presented, on vanilla
+After installing, a summary of installed snaps will be presented, on a vanilla
 x86-64 bit system it would look a lot like this:
 
 	Name          Date       Version      Developer

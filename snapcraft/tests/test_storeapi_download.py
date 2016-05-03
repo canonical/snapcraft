@@ -16,8 +16,8 @@
 from __future__ import absolute_import, unicode_literals
 import json
 import os
+from unittest.mock import call, patch
 
-from mock import call, patch
 from requests import Response
 
 from snapcraft import tests
