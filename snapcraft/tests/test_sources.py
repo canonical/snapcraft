@@ -19,7 +19,7 @@ import http.server
 import threading
 import unittest.mock
 
-import snapcraft.sources
+from snapcraft.internal import sources
 
 from snapcraft import tests
 
@@ -58,7 +58,7 @@ class TestTar(tests.TestCase):
         tar_file_name = 'test.tar'
         source = 'http://{}:{}/{file_name}'.format(
             *server.server_address, file_name=tar_file_name)
-        tar_source = snapcraft.sources.Tar(source, dest_dir)
+        tar_source = sources.Tar(source, dest_dir)
 
         tar_source.pull()
 
@@ -90,7 +90,7 @@ class SourceTestCase(tests.TestCase):
 class TestBazaar(SourceTestCase):
 
     def test_pull(self):
-        bzr = snapcraft.sources.Bazaar('lp:my-source', 'source_dir')
+        bzr = sources.Bazaar('lp:my-source', 'source_dir')
 
         bzr.pull()
 
@@ -99,7 +99,7 @@ class TestBazaar(SourceTestCase):
             ['bzr', 'branch', 'lp:my-source', 'source_dir'])
 
     def test_pull_tag(self):
-        bzr = snapcraft.sources.Bazaar(
+        bzr = sources.Bazaar(
             'lp:my-source', 'source_dir', source_tag='tag')
         bzr.pull()
 
@@ -110,7 +110,7 @@ class TestBazaar(SourceTestCase):
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
 
-        bzr = snapcraft.sources.Bazaar(
+        bzr = sources.Bazaar(
             'lp:my-source', 'source_dir', source_tag='tag')
         bzr.pull()
 
@@ -120,9 +120,8 @@ class TestBazaar(SourceTestCase):
 
     def test_init_with_source_branch_raises_exception(self):
         with self.assertRaises(
-                snapcraft.sources.IncompatibleOptionsError) as raised:
-            snapcraft.sources.Bazaar('lp:mysource', 'source_dir',
-                                     source_branch='branch')
+                sources.IncompatibleOptionsError) as raised:
+            sources.Bazaar('lp:mysource', 'source_dir', source_branch='branch')
 
         expected_message = 'can\'t specify a source-branch for a bzr source'
         self.assertEqual(raised.exception.message, expected_message)
@@ -131,7 +130,7 @@ class TestBazaar(SourceTestCase):
 class TestGit(SourceTestCase):
 
     def test_pull(self):
-        git = snapcraft.sources.Git('git://my-source', 'source_dir')
+        git = sources.Git('git://my-source', 'source_dir')
 
         git.pull()
 
@@ -140,8 +139,8 @@ class TestGit(SourceTestCase):
              'source_dir'])
 
     def test_pull_branch(self):
-        git = snapcraft.sources.Git('git://my-source', 'source_dir',
-                                    source_branch='my-branch')
+        git = sources.Git('git://my-source', 'source_dir',
+                          source_branch='my-branch')
         git.pull()
 
         self.mock_run.assert_called_once_with(
@@ -149,8 +148,7 @@ class TestGit(SourceTestCase):
              'my-branch', 'git://my-source', 'source_dir'])
 
     def test_pull_tag(self):
-        git = snapcraft.sources.Git('git://my-source', 'source_dir',
-                                    source_tag='tag')
+        git = sources.Git('git://my-source', 'source_dir', source_tag='tag')
         git.pull()
 
         self.mock_run.assert_called_once_with(
@@ -160,7 +158,7 @@ class TestGit(SourceTestCase):
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
 
-        git = snapcraft.sources.Git('git://my-source', 'source_dir')
+        git = sources.Git('git://my-source', 'source_dir')
         git.pull()
 
         self.mock_run.assert_has_calls([
@@ -174,8 +172,7 @@ class TestGit(SourceTestCase):
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
 
-        git = snapcraft.sources.Git('git://my-source', 'source_dir',
-                                    source_tag='tag')
+        git = sources.Git('git://my-source', 'source_dir', source_tag='tag')
         git.pull()
 
         self.mock_run.assert_has_calls([
@@ -189,8 +186,8 @@ class TestGit(SourceTestCase):
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
 
-        git = snapcraft.sources.Git('git://my-source', 'source_dir',
-                                    source_branch='my-branch')
+        git = sources.Git('git://my-source', 'source_dir',
+                          source_branch='my-branch')
         git.pull()
 
         self.mock_run.assert_has_calls([
@@ -202,10 +199,9 @@ class TestGit(SourceTestCase):
         ])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
-        with self.assertRaises(
-                snapcraft.sources.IncompatibleOptionsError) as raised:
-            snapcraft.sources.Git('git://mysource', 'source_dir',
-                                  source_tag='tag', source_branch='branch')
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Git('git://mysource', 'source_dir',
+                        source_tag='tag', source_branch='branch')
 
         expected_message = \
             'can\'t specify both source-tag and source-branch for a git source'
@@ -215,15 +211,15 @@ class TestGit(SourceTestCase):
 class TestMercurial(SourceTestCase):
 
     def test_pull(self):
-        hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir')
+        hg = sources.Mercurial('hg://my-source', 'source_dir')
         hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', 'hg://my-source', 'source_dir'])
 
     def test_pull_branch(self):
-        hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir',
-                                         source_branch='my-branch')
+        hg = sources.Mercurial('hg://my-source', 'source_dir',
+                               source_branch='my-branch')
         hg.pull()
 
         self.mock_run.assert_called_once_with(
@@ -231,8 +227,8 @@ class TestMercurial(SourceTestCase):
              'source_dir'])
 
     def test_pull_tag(self):
-        hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir',
-                                         source_tag='tag')
+        hg = sources.Mercurial('hg://my-source', 'source_dir',
+                               source_tag='tag')
         hg.pull()
 
         self.mock_run.assert_called_once_with(
@@ -242,7 +238,7 @@ class TestMercurial(SourceTestCase):
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
 
-        hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir')
+        hg = sources.Mercurial('hg://my-source', 'source_dir')
         hg.pull()
 
         self.mock_run.assert_called_once_with(
@@ -251,8 +247,8 @@ class TestMercurial(SourceTestCase):
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
 
-        hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir',
-                                         source_tag='tag')
+        hg = sources.Mercurial('hg://my-source', 'source_dir',
+                               source_tag='tag')
         hg.pull()
 
         self.mock_run.assert_called_once_with(
@@ -261,17 +257,16 @@ class TestMercurial(SourceTestCase):
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
 
-        hg = snapcraft.sources.Mercurial('hg://my-source', 'source_dir',
-                                         source_branch='my-branch')
+        hg = sources.Mercurial('hg://my-source', 'source_dir',
+                               source_branch='my-branch')
         hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', '-b', 'my-branch', 'hg://my-source'])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
-        with self.assertRaises(
-                snapcraft.sources.IncompatibleOptionsError) as raised:
-            snapcraft.sources.Mercurial(
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial(
                 'hg://mysource', 'source_dir', source_tag='tag',
                 source_branch='branch')
 
@@ -285,7 +280,7 @@ class TestLocal(tests.TestCase):
 
     def test_pull_with_existing_source_dir_creates_symlink(self):
         os.mkdir('source_dir')
-        local = snapcraft.sources.Local('.', 'source_dir')
+        local = sources.Local('.', 'source_dir')
         local.pull()
 
         self.assertTrue(os.path.islink('source_dir'))
@@ -293,7 +288,7 @@ class TestLocal(tests.TestCase):
 
     def test_pull_with_existing_source_link_creates_symlink(self):
         os.symlink('dummy', 'source_dir')
-        local = snapcraft.sources.Local('.', 'source_dir')
+        local = sources.Local('.', 'source_dir')
         local.pull()
 
         self.assertTrue(os.path.islink('source_dir'))
@@ -301,7 +296,7 @@ class TestLocal(tests.TestCase):
 
     def test_pull_with_existing_source_file_fails(self):
         open('source_dir', 'w').close()
-        local = snapcraft.sources.Local('.', 'source_dir')
+        local = sources.Local('.', 'source_dir')
 
         with self.assertRaises(EnvironmentError) as raised:
             local.pull()
@@ -312,7 +307,7 @@ class TestLocal(tests.TestCase):
     def test_pull_with_source_dir_with_content_fails(self):
         os.mkdir('source_dir')
         open(os.path.join('source_dir', 'file'), 'w').close()
-        local = snapcraft.sources.Local('.', 'source_dir')
+        local = sources.Local('.', 'source_dir')
 
         with self.assertRaises(EnvironmentError) as raised:
             local.pull()
@@ -322,7 +317,7 @@ class TestLocal(tests.TestCase):
 
     def test_pulling_twice_with_existing_source_dir_creates_symlink(self):
         os.mkdir('source_dir')
-        local = snapcraft.sources.Local('.', 'source_dir')
+        local = sources.Local('.', 'source_dir')
         local.pull()
         local.pull()
 
@@ -333,7 +328,7 @@ class TestLocal(tests.TestCase):
 class TestUri(tests.TestCase):
 
     def test_get_tar_source_from_uri(self):
-        sources = [
+        test_sources = [
             'https://golang.tar.gz',
             'https://golang.tar.xz',
             'https://golang.tar.bz2',
@@ -341,23 +336,23 @@ class TestUri(tests.TestCase):
             'https://golang.tar',
         ]
 
-        for source in sources:
+        for source in test_sources:
             with self.subTest(key=source):
                 self.assertEqual(
-                    snapcraft.sources._get_source_type_from_uri(source), 'tar')
+                    sources._get_source_type_from_uri(source), 'tar')
 
     @unittest.mock.patch('snapcraft.sources.Git.pull')
     def test_get_git_source_from_uri(self, mock_pull):
-        sources = [
+        test_sources = [
             'git://github.com:ubuntu-core/snapcraft.git',
             'git@github.com:ubuntu-core/snapcraft.git',
             'https://github.com:ubuntu-core/snapcraft.git',
         ]
 
-        for source in sources:
+        for source in test_sources:
             with self.subTest(key=source):
                 options = tests.MockOptions(source=source)
-                snapcraft.sources.get(
+                sources.get(
                     sourcedir='dummy',
                     builddir='dummy',
                     options=options)
@@ -367,15 +362,15 @@ class TestUri(tests.TestCase):
 
     @unittest.mock.patch('snapcraft.sources.Bazaar.pull')
     def test_get_bzr_source_from_uri(self, mock_pull):
-        sources = [
+        test_sources = [
             'lp:snapcraft_test_source',
             'bzr:dummy-source'
         ]
 
-        for source in sources:
+        for source in test_sources:
             with self.subTest(key=source):
                 options = tests.MockOptions(source=source)
-                snapcraft.sources.get(
+                sources.get(
                     sourcedir='dummy',
                     builddir='dummy',
                     options=options)

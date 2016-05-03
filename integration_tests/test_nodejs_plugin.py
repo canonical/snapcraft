@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,19 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import os
+import subprocess
+
+import integration_tests
 
 
-class LibPipelineTestCase(examples_tests.ExampleTestCase):
+class NodeJSPluginTestCase(integration_tests.TestCase):
 
-    example_dir = 'libpipeline'
-
-    def test_libpipeline(self):
-        self.build_snap(self.example_dir)
-        self.install_snap(self.example_dir, 'pipelinetest', '1.0')
-        expected = (
-            'running echo test | grep s | grep t\n'
-            'custom libpipeline called\n'
-            'test\n')
-        self.assert_command_in_snappy_testbed(
-            '/snap/bin/pipelinetest', expected)
+    def test_rebuilding_possible(self):
+        project_dir = 'simple-nodejs'
+        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft(['clean', '-s', 'build'], project_dir)
+        self.run_snapcraft('build', project_dir)

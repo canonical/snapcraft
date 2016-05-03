@@ -62,6 +62,11 @@ class KernelPluginTestCase(tests.TestCase):
         self.base_build_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('magic.Magic.file',
+                             return_value='application/gzip')
+        self.file_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         @contextlib.contextmanager
         def tempdir():
             self.tempdir = 'temporary-directory'
@@ -193,6 +198,108 @@ class KernelPluginTestCase(tests.TestCase):
                 open(f, 'w').close()
 
         self.base_build_mock.side_effect = create_assets
+
+    def test_unpack_gzip_initrd(self):
+        self.file_mock.return_value = 'application/gzip'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'gzip -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_xgzip_initrd(self):
+        self.file_mock.return_value = 'application/x-gzip'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'gzip -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_lzma_initrd(self):
+        self.file_mock.return_value = 'application/x-lzma'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'xz -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_xz_initrd(self):
+        self.file_mock.return_value = 'application/x-xz'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        plugin._unpack_generic_initrd()
+
+        self.check_call_mock.assert_has_calls([
+            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
+                      'ubuntu-core-generic-initrd/initrd.img-core | '
+                      'xz -dc | cpio -i',
+                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
+                      shell=True)
+        ])
+
+    def test_unpack_unsupported_initrd_type(self):
+        self.file_mock.return_value = 'application/foo'
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        with self.assertRaises(RuntimeError) as raised:
+            plugin._unpack_generic_initrd()
+
+        self.assertEqual("initrd file type is unsupported: 'application/foo'",
+                         str(raised.exception))
+
+    def test_pack_initrd_modules(self):
+        self.options.kernel_initrd_modules = [
+            'squashfs',
+            'vfat'
+        ]
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        # Fake some assets
+        plugin.kernel_release = '4.4'
+        modules_path = os.path.join(plugin.installdir, 'lib', 'modules', '4.4')
+        initrd_modules_staging_path = os.path.join(
+            'staging', 'lib', 'modules', '4.4')
+        os.makedirs(modules_path)
+        open(os.path.join(modules_path, 'modules.dep'), 'w').close()
+        open(os.path.join(modules_path, 'modules.dep.bin'), 'w').close()
+        os.makedirs(initrd_modules_staging_path)
+        open(os.path.join(plugin.installdir, 'initrd-4.4.img'), 'w').close()
+
+        with mock.patch.object(plugin, '_unpack_generic_initrd') as m_unpack:
+            m_unpack.return_value = 'staging'
+            plugin._make_initrd()
+
+        modprobe_cmd = ['modprobe', '-n', '--show-depends', '-d',
+                        plugin.installdir, '-S', '4.4', ]
+        self.run_output_mock.assert_has_calls([
+            mock.call(modprobe_cmd + ['squashfs'])])
+        self.run_output_mock.assert_has_calls([
+            mock.call(modprobe_cmd + ['vfat'])])
 
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
@@ -721,5 +828,5 @@ ACCEPT=n
         plugin.pull()
 
         download_mock.assert_called_once_with(
-            'ubuntu-core/edge', plugin.os_snap, config,
+            'ubuntu-core', 'edge', plugin.os_snap, config,
             self.project_options.deb_arch)

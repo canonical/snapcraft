@@ -16,8 +16,8 @@
 from __future__ import absolute_import, unicode_literals
 import json
 import os
+from unittest.mock import call, patch
 
-from mock import call, patch
 from requests import Response
 
 from snapcraft import tests
@@ -47,7 +47,7 @@ class DownloadTestCase(DownloadBaseTestCase):
         self.mock_get.side_effect = Exception('some error')
 
         with self.assertRaises(Exception) as raised:
-            download('os', 'os.snap', None, 'amd64')
+            download('os', 'edge', 'os.snap', None, 'amd64')
 
         self.assertEqual('some error', str(raised.exception))
 
@@ -63,8 +63,13 @@ class DownloadTestCase(DownloadBaseTestCase):
         mock_details = self.mock_get.return_value
         mock_details.ok = True
         mock_details.content = json.dumps({
-            'download_url': 'http://localhost',
-            'download_sha512': snap_sha512,
+            '_embedded': {
+                    'clickindex:package': [{
+                        'download_url': 'http://localhost',
+                        'anon_download_url': 'http://localhost',
+                        'download_sha512': snap_sha512,
+                    }],
+            }
         }).encode('utf-8')
         mock_snap = Response()
         mock_snap.status_code = 200
@@ -72,7 +77,7 @@ class DownloadTestCase(DownloadBaseTestCase):
 
         self.mock_get.side_effect = [mock_details, mock_snap]
 
-        download('os', 'os.snap', None, 'amd64')
+        download('os', 'edge', 'os.snap', None, 'amd64')
 
         self.mock_logger.info.assert_has_calls([
             call("Getting details for 'os'"),
@@ -91,8 +96,13 @@ class DownloadTestCase(DownloadBaseTestCase):
         mock_details = self.mock_get.return_value
         mock_details.ok = True
         mock_details.content = json.dumps({
-            'download_url': 'http://localhost',
-            'download_sha512': snap_sha512,
+            '_embedded': {
+                    'clickindex:package': [{
+                        'download_url': 'http://localhost',
+                        'anon_download_url': 'http://localhost',
+                        'download_sha512': snap_sha512,
+                    }],
+            }
         }).encode('utf-8')
         mock_snap = Response()
         mock_snap.status_code = 200
@@ -100,7 +110,7 @@ class DownloadTestCase(DownloadBaseTestCase):
 
         self.mock_get.side_effect = [mock_details, mock_snap]
 
-        download('os', 'os.snap', None, 'amd64')
+        download('os', 'edge', 'os.snap', None, 'amd64')
 
         self.mock_logger.info.assert_has_calls([
             call("Getting details for 'os'"),
@@ -113,8 +123,13 @@ class DownloadTestCase(DownloadBaseTestCase):
         mock_details = self.mock_get.return_value
         mock_details.ok = True
         mock_details.content = json.dumps({
-            'download_url': 'http://localhost',
-            'download_sha512': '12345',
+            '_embedded': {
+                    'clickindex:package': [{
+                        'download_url': 'http://localhost',
+                        'anon_download_url': 'http://localhost',
+                        'download_sha512': '12345',
+                    }],
+            }
         }).encode('utf-8')
         mock_snap = Response()
         mock_snap.status_code = 200
@@ -123,7 +138,7 @@ class DownloadTestCase(DownloadBaseTestCase):
         self.mock_get.side_effect = [mock_details, mock_snap]
 
         with self.assertRaises(RuntimeError) as raised:
-            download('os', 'os.snap', None, 'amd64')
+            download('os', 'edge', 'os.snap', None, 'amd64')
 
         self.assertEqual("Failed to download 'os'", str(raised.exception))
         self.mock_logger.info.assert_has_calls([
@@ -143,8 +158,13 @@ class DownloadTestCase(DownloadBaseTestCase):
         mock_details = self.mock_get.return_value
         mock_details.ok = True
         mock_details.content = json.dumps({
-            'download_url': 'http://localhost',
-            'download_sha512': snap_sha512,
+            '_embedded': {
+                    'clickindex:package': [{
+                        'download_url': 'http://localhost',
+                        'anon_download_url': 'http://localhost',
+                        'download_sha512': snap_sha512,
+                    }],
+            }
         }).encode('utf-8')
         mock_snap = Response()
         mock_snap.status_code = 200
@@ -152,7 +172,7 @@ class DownloadTestCase(DownloadBaseTestCase):
 
         self.mock_get.side_effect = [mock_details, mock_snap]
 
-        download('os', 'os.snap', None, 'amd64')
+        download('os', 'edge', 'os.snap', None, 'amd64')
 
         self.mock_logger.info.assert_has_calls([
             call("Getting details for 'os'"),
@@ -163,7 +183,7 @@ class DownloadTestCase(DownloadBaseTestCase):
         self.mock_get_oauth_session.return_value = None
 
         with self.assertRaises(EnvironmentError) as raised:
-            download('os', 'os.snap', None, 'amd64')
+            download('os', 'edge', 'os.snap', None, 'amd64')
 
         self.assertEqual(
             'No valid credentials found. Have you run "snapcraft login"?',

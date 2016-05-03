@@ -17,10 +17,8 @@
 import os
 import re
 
-from snapcraft import (
-    common,
-    tests
-)
+from snapcraft.internal import common
+from snapcraft import tests
 
 
 class CommonTestCase(tests.TestCase):

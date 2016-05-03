@@ -21,7 +21,7 @@ import os
 import platform
 import subprocess
 
-from snapcraft import common
+from snapcraft.internal import common
 
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,8 @@ def _get_system_libs():
     lib_path = os.path.join(common.get_librariesdir(), release)
 
     if not os.path.exists(lib_path):
-        logger.debug('No libraries to exclude from this release')
+        logger.warning('No libraries to exclude from this release')
+        return frozenset()
 
     with open(lib_path) as fn:
         _libraries = frozenset(fn.read().split())

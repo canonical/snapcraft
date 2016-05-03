@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015 Canonical Ltd
@@ -15,29 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-
-import coverage
-
-# make running from bzr snapshot easy
-topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
-if os.path.exists(os.path.join(topdir, 'setup.py')):
-    sys.path = [topdir] + sys.path
+from snapcraft.plugins.nil import NilPlugin
+from snapcraft.tests import TestCase
 
 
-if __name__ == '__main__':
-    import snapcraft.main
-    import snapcraft.dirs
-
-    cov = coverage.coverage(
-        data_file=os.path.join(topdir, '.coverage'), data_suffix=True,
-        branch=True, source=['snapcraft'])
-    cov.start()
-    try:
-        snapcraft.dirs.setup_dirs()
-        snapcraft.main.main()
-    except:
-        cov.stop()
-        cov.save()
-        raise
+class TestNilPlugin(TestCase):
+    def test_schema(self):
+        schema = NilPlugin.schema()
+        self.assertEqual('http://json-schema.org/draft-04/schema#',
+                         schema['$schema'])
+        self.assertEqual('object', schema['type'])
+        self.assertFalse(schema['additionalProperties'])
+        self.assertFalse(schema['properties'])

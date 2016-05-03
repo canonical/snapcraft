@@ -18,7 +18,7 @@
 import importlib
 
 import snapcraft
-from snapcraft import sources
+from snapcraft.internal import sources
 
 _TOPICS = {
     'sources': sources,

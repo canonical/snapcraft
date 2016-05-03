@@ -20,11 +20,11 @@ import shutil
 from unittest import mock
 
 from snapcraft.main import main
-from snapcraft import (
-    internal,
+from snapcraft.internal import (
     pluginhandler,
-    tests,
+    states,
 )
+from snapcraft import tests
 
 
 class CleanCommandTestCase(tests.TestCase):
@@ -39,8 +39,7 @@ parts:
 {parts}"""
 
     yaml_part = """  clean{:d}:
-    plugin: nil
-    source: ."""
+    plugin: nil"""
 
     def make_snapcraft_yaml(self, n=1, create=True):
         parts = '\n'.join([self.yaml_part.format(i) for i in range(n)])
@@ -152,15 +151,15 @@ parts:
         main(['clean', '--step=foo'])
 
         expected_staged_state = {
-            'clean0': internal.states.StageState({'clean0'}, set()),
-            'clean1': internal.states.StageState({'clean1'}, set()),
-            'clean2': internal.states.StageState({'clean2'}, set()),
+            'clean0': states.StageState({'clean0'}, set()),
+            'clean1': states.StageState({'clean1'}, set()),
+            'clean2': states.StageState({'clean2'}, set()),
         }
 
         expected_stripped_state = {
-            'clean0': internal.states.StripState({'clean0'}, set()),
-            'clean1': internal.states.StripState({'clean1'}, set()),
-            'clean2': internal.states.StripState({'clean2'}, set()),
+            'clean0': states.StripState({'clean0'}, set()),
+            'clean1': states.StripState({'clean1'}, set()),
+            'clean2': states.StripState({'clean2'}, set()),
         }
 
         mock_clean.assert_called_with(
@@ -180,16 +179,13 @@ description: test clean
 parts:
   main:
     plugin: nil
-    source: .
 
   dependent:
     plugin: nil
-    source: .
     after: [main]
 
   nested-dependent:
     plugin: nil
-    source: .
     after: [dependent]""")
 
         self.part_dirs = {}

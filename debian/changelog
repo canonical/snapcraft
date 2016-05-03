@@ -1,3 +1,97 @@
+snapcraft (2.8.7) xenial; urgency=medium
+
+  * Don't fail if there is no system library list (#496) (LP: #1577750)
+
+ -- Sergio Schvezov <sergiusens@gmail.com>  Tue, 03 May 2016 10:58:57 -0300
+
+snapcraft (2.8.6) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * Import mock from unittest. (#492) (LP: #1576998)
+
+  [ Sergio Schvezov ]
+  * Remove missing replacement for unittest.mock (#494) (LP: #1576998)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Sat, 30 Apr 2016 18:44:44 -0300
+
+snapcraft (2.8.5) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * autopkgtests: run the tests using the installed package (#464)
+    (LP: #1570992)
+  * Remove --allow-unauthenticated from examples tests (#482) (LP: #1573211)
+  * Update the assertion of the example install (#483) (LP: #1573243)
+  * Examples tests: Update the path to the snaps binaries (#484) (LP: #1573349)
+  * Examples tests: use systemctl instead of the removed snap service (#485)
+    (LP: #1573697)
+  * Update the mosquitto example SNAP_USER_DATA path. (#486) (LP: #1574857)
+  * Update the busybox test to use the snap data path. (LP: #1574901)
+  * Remove the integration tests coverage. (#488) (LP: #1575383)
+
+  [ Sergio Schvezov ]
+  * Don't clean target before extracting npm (#489) (LP: #1575876)
+  * Don't delete the nodejs download on build. (#490) (LP: #1575882)
+
+  [ Vincent Ladeuil ]
+  * Make upload more robust by ignoring spurious errors while polling the
+    scan status. (#480) (LP: #1572963)
+
+  [ Kyle Fazzari ]
+  * docs/get-started.md: Stop discussing snappy-tools. (#454) (LP: #1568113)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 29 Apr 2016 14:59:47 -0300
+
+snapcraft (2.8.4) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Use series 16 by default instead of rolling-core (#477) (LP: #1572602)
+  * kernel plugin: iterate over modules to add to initrd (#476) (LP: #1572118)
+
+  [ Kyle Fazzari ]
+  * Follow symlinks while hard-linking migrated files. (#478) (LP: #1572664)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 20 Apr 2016 19:15:32 -0300
+
+snapcraft (2.8.3) xenial; urgency=medium
+
+  [ Kyle Fazzari ]
+  * docs/intro.md: Fix broken developer reference link. (#456) (LP: #1558296)
+  * Nil plugin: Make purpose more clear in documentation. (#455) (LP: #1549691)
+  * Use colors for logging. (#474) (LP: #1572186)
+
+  [ Leo Arias ]
+  * Update the snapcraft-coverage script to use the internal dirs (#471)
+    (LP: #1571696)
+
+  [ Sergio Schvezov ]
+  * Fix shell quoting (#473) (LP: #1572129)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Tue, 19 Apr 2016 17:59:45 -0300
+
+snapcraft (2.8.2) xenial; urgency=medium
+
+  * Don't expose broken or fragile APIs to plugins (LP: #1571264)
+  * catkin plugin: use ProjectOptions for repo setup (#468) (LP: #1571446)
+  * qml plugin: remove broken plugin (#469) (LP: #1551343)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 18 Apr 2016 10:06:15 -0300
+
+snapcraft (2.8.1) xenial; urgency=medium
+
+  [ Simon Busch ]
+  * Correctly pass arguments to Cleanbuilder (#458) (LP: #1570706)
+
+  [ Sergio Schvezov ]
+  * Only add cross build packages when cross compiling. (#451) (LP: #1570414)
+  * Fix store downloading (#452) (LP: #1569734)
+
+  [ Kyle Fazzari ]
+  * Add support for s390x architecture. (#461) (LP: #1570835)
+  * Add SNAP_LIBRARY_PATH to LD_LIBRARY_PATH. (#462) (LP: #1570945)
+  * Kernel plugin: Support lzma/xz-compressed initrd. (#463) (LP: #1569337)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Fri, 15 Apr 2016 23:35:47 +0000
+
 snapcraft (2.8) xenial; urgency=medium
 
   [ Didier Roche ]

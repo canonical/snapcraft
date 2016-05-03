@@ -38,7 +38,6 @@ class MainTestCase(integration_tests.TestCase):
             'nodejs',
             'python2',
             'python3',
-            'qml',
             'scons',
             'tar-content',
         ]

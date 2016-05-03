@@ -25,7 +25,10 @@ import subprocess
 import fixtures
 import testtools
 from testtools import content
-from testtools.matchers import MatchesRegex
+from testtools.matchers import (
+    Contains,
+    MatchesRegex
+)
 
 from examples_tests import testbed
 
@@ -84,11 +87,11 @@ class ExampleTestCase(testtools.TestCase):
                         self.example_dir, filter_))
 
         super().setUp()
-        # To measure coverage, a wrapper for the snapcraft binary might be set
-        # in the environment variable.
-        snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
-        self.snapcraft_command = os.path.join(
-            os.getcwd(), 'bin', snapcraft_bin)
+        if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
+            self.snapcraft_command = 'snapcraft'
+        else:
+            self.snapcraft_command = os.path.join(
+                os.getcwd(), 'bin', 'snapcraft')
 
         self.useFixture(
             fixtures.EnvironmentVariable('SNAPCRAFT_SETUP_PROXIES', '1'))
@@ -144,20 +147,19 @@ class ExampleTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
-            output = self.snappy_testbed.run_command([
-                'sudo', 'snap', 'install', '--allow-unauthenticated',
-                snap_file_name])
+            self.snappy_testbed.run_command([
+                'sudo', 'snap', 'install', snap_file_name])
             # Uninstall the snap from the testbed.
             snap_name = snap_file_name[:snap_file_name.index('_')]
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['sudo', 'snap', 'remove', snap_name])
-            expected = (
-                'Installing {}\n'.format(snap_file_name) +
-                '.*' +
-                '{} +.* +.* +sideload *\n'.format(snap_name) +
-                '.*')
-            self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+            list_output = self.snappy_testbed.run_command(
+                ['snap', 'list'])
+            expected = '.*{}.*'.format(snap_name)
+            self.assertThat(
+                list_output, MatchesRegex(expected, flags=re.DOTALL))
 
     def assert_command_in_snappy_testbed(self, command, expected_output):
         if not config.get('skip-install', False):
@@ -176,9 +178,7 @@ class ExampleTestCase(testtools.TestCase):
     def assert_service_running(self, snap, service):
         if not config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(
-                ['sudo', 'snap', 'service', 'status', snap])
-            expected = (
-                'Snap\t+Service\t+State\n'
-                '{}\t+{}\t+enabled; loaded; active \(running\)\n'.format(
-                    snap, service))
-            self.assertThat(output, MatchesRegex(expected))
+                ['systemctl', '--no-pager', 'status',
+                 'snap.{}.{}'.format(snap, service)])
+            expected = 'Active: active (running)'
+            self.assertThat(output, Contains(expected))

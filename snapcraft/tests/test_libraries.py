@@ -22,10 +22,8 @@ import tempfile
 
 from unittest import mock
 
-from snapcraft import (
-    libraries,
-    tests,
-)
+from snapcraft.internal import libraries
+from snapcraft import tests
 
 
 class TestLdLibraryPathParser(tests.TestCase):
@@ -55,7 +53,7 @@ class TestGetLibraries(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.common.run_output')
+        patcher = mock.patch('snapcraft.internal.common.run_output')
         self.run_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -66,7 +64,7 @@ class TestGetLibraries(tests.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        patcher = mock.patch('snapcraft.libraries._get_system_libs')
+        patcher = mock.patch('snapcraft.internal.libraries._get_system_libs')
         self.get_system_libs_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -99,3 +97,28 @@ class TestGetLibraries(tests.TestCase):
         self.assertEqual(
             "Unable to determine library dependencies for 'foo'\n",
             self.fake_logger.output)
+
+
+class TestSystemLibsOnNewRelease(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('platform.linux_distribution')
+        distro_mock = patcher.start()
+        distro_mock.return_value = ('Ubuntu', '16.05', 'xenial')
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.common.run_output')
+        self.run_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        lines = [
+            'foo.so.1 => /lib/foo.so.1 (0xdead)',
+            'bar.so.2 => /usr/lib/bar.so.2 (0xbeef)',
+            '/lib/baz.so.2 (0x1234)',
+        ]
+        self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
+
+    def test_fail_gracefully_if_system_libs_not_found(self):
+        self.assertEqual(libraries.get_dependencies('foo'), [])

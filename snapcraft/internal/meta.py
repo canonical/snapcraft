@@ -24,9 +24,8 @@ import tempfile
 
 import yaml
 
-from snapcraft import (
-    common,
-)
+from snapcraft.internal import common
+
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +174,7 @@ class _SnapPackaging:
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
-        args = ' '.join(args) + ' $*' if args else '$*'
+        args = ' '.join(args) + ' "$@"' if args else '"$@"'
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
         assembled_env = common.assemble_env().replace(self._snap_dir, '$SNAP')
@@ -193,6 +192,7 @@ class _SnapPackaging:
         script = ('#!/bin/sh\n' +
                   '{}\n'.format(assembled_env) +
                   '{}\n'.format(cwd) +
+                  'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                   'exec {} {}\n'.format(executable, args))
 
         with open(wrappath, 'w+') as f:

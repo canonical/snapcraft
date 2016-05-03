@@ -18,8 +18,7 @@ import os
 import shutil
 import tempfile
 from configparser import ConfigParser
-
-from mock import patch
+from unittest.mock import patch
 
 from snapcraft import tests
 from snapcraft.config import clear_config, load_config, save_config

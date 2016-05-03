@@ -17,7 +17,7 @@
 from __future__ import absolute_import, unicode_literals
 from unittest import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from snapcraft.storeapi.info import get_info
 

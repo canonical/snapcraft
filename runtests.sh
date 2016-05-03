@@ -65,27 +65,16 @@ run_unit_tests(){
     if which python3-coverage >/dev/null 2>&1; then
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s snapcraft -t .
-        mv .coverage .coverage.unit
     else
         python3 -m unittest discover -b -v -s snapcraft -t .
     fi
 }
 
 run_integration(){
-    if which python3-coverage >/dev/null 2>&1; then
-        python3 -m coverage erase
-        export SNAPCRAFT=snapcraft-coverage
-    fi
-
     python3 -m unittest discover -b -v -s integration_tests
 }
 
 run_examples(){
-    if which python3-coverage >/dev/null 2>&1; then
-        python3 -m coverage erase
-        export SNAPCRAFT=snapcraft-coverage
-    fi
-
     python3 -m examples_tests "$@"
 }
 
@@ -112,9 +101,8 @@ if [ ! -z "$RUN_EXAMPLES" ]; then
     run_examples "$@"
 fi
 
-if [ ! -z "$RUN_UNIT" -o ! -z "$RUN_INTEGRATION" ]; then
+if [ ! -z "$RUN_UNIT" ]; then
     if which python3-coverage >/dev/null 2>&1; then
-        python3 -m coverage combine
         python3 -m coverage report
 
         echo

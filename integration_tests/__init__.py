@@ -30,11 +30,13 @@ class TestCase(testtools.TestCase):
 
     def setUp(self):
         super().setUp()
-        snapcraft_bin = os.getenv('SNAPCRAFT', 'snapcraft')
-        self.snapcraft_command = os.path.join(
-            os.getcwd(), 'bin', snapcraft_bin)
-        self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
+        if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
+            self.snapcraft_command = 'snapcraft'
+        else:
+            self.snapcraft_command = os.path.join(
+                os.getcwd(), 'bin', 'snapcraft')
 
+        self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
@@ -93,17 +95,9 @@ class TestCase(testtools.TestCase):
             "One-time password (just press enter if you don't use two-factor "
             "authentication): ")
         process.sendline('')
-        process.expect_exact(
-            # bold.
-            '\r\n\x1b[1m'
-            'Authenticating against Ubuntu One SSO.'
-            '\x1b[0m\r\n')
+        process.expect_exact('Authenticating against Ubuntu One SSO.')
         result = 'successful' if expect_success else 'failed'
-        process.expect_exact(
-            # bold.
-            '\x1b[1m'
-            'Login {}.'.format(result) +
-            '\x1b[0m\r\n')
+        process.expect_exact('Login {}.'.format(result))
 
     def logout(self):
         output = self.run_snapcraft('logout')
