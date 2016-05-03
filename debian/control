@@ -2,7 +2,8 @@ Source: snapcraft
 Section: utils
 Priority: extra
 Maintainer: Snapcraft Team <snappy-devel@lists.ubuntu.com>
-Build-Depends: debhelper (>= 9),
+Build-Depends: bash-completion,
+               debhelper (>= 9),
                dh-python,
                pkg-config,
                python3 (>= 3.4),
@@ -24,7 +25,6 @@ Build-Depends: debhelper (>= 9),
                python3-testscenarios,
                python3-xdg,
                python3-yaml,
-               bash-completion,
 Homepage: https://github.com/ubuntu-core/snapcraft
 Vcs-Git: https://github.com/ubuntu-core/snapcraft
 Standards-Version: 3.9.7
