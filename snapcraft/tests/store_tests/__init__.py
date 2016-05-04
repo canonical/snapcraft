@@ -31,6 +31,7 @@ import logging
 import os
 import shutil
 import subprocess
+import tempfile
 import uuid
 
 import fixtures
@@ -51,8 +52,6 @@ from snapcraft.tests import (
     fixture_setup,
     test_config,
 )
-
-TAPES_DIR = os.path.join(os.path.dirname(__file__), 'tapes')
 
 
 class SilentProgressBar(progressbar.ProgressBar):
@@ -237,10 +236,16 @@ class Tape(object):
     def close(self):
         if self.recording:
             # Ensure the directory containing the tape exist
-            os.makedirs(os.path.dirname(self.path), exist_ok=True)
-            # Record all the collected responses
-            with open(self.path, 'w') as tape:
-                tape.write(json.dumps(self.records, indent=4))
+            tapes_dir = os.path.dirname(self.path)
+            os.makedirs(tapes_dir, exist_ok=True)
+            # Record all the collected responses, using a temp file to avoid a
+            # race if the replaying test attempts to read the file while the
+            # recording one is writing it (the rename is atomic, the write is
+            # not).
+            with tempfile.NamedTemporaryFile(mode='w', delete=False,
+                                             dir=tapes_dir) as f:
+                f.write(json.dumps(self.records, indent=4))
+            os.rename(f.name, self.path)
 
 
 class SessionRecorder(requests.Session):

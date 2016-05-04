@@ -41,7 +41,7 @@ def _update_progress_bar(progress_bar, maximum_value, monitor):
         progress_bar.update(monitor.bytes_read)
 
 
-def upload_files(binary_filename, session):
+def upload_files(binary_filename, updown):
     """Upload a binary file to the Store.
 
     Submit a file to the Store upload service and return the
@@ -76,7 +76,7 @@ def upload_files(binary_filename, session):
                                        binary_file_size))
 
         # Begin upload
-        response = session.post(
+        response = updown.post(
             unscanned_upload_url,
             data=monitor, headers={'Content-Type': monitor.content_type})
 
@@ -145,7 +145,7 @@ def _upload_files(store, name, data, result):
         # Execute the package scan in another thread so we can update the
         # progress indicator.
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(get_scan_data, store.session, status_url)
+            future = executor.submit(get_scan_data, store, status_url)
 
             count = 0
             while not future.done():
@@ -206,9 +206,9 @@ def is_scan_completed(response):
     return False
 
 
-def get_scan_status(session, url):
+def get_scan_status(store, url):
     try:
-        resp = session.get(url)
+        resp = store.get(url)
         return resp
     except (requests.ConnectionError, requests.HTTPError):
         # Something went wrong and we couldn't acquire the status. Upper
@@ -218,7 +218,7 @@ def get_scan_status(session, url):
         return None
 
 
-def get_scan_data(session, status_url):
+def get_scan_data(store, status_url):
     """Return metadata about the state of the upload scan process."""
     # initial retry after 5 seconds
     # linear backoff after that
@@ -228,7 +228,7 @@ def get_scan_data(session, status_url):
            delay=SCAN_STATUS_POLL_DELAY,
            backoff=1)
     def get_status():
-        return get_scan_status(session, status_url)
+        return get_scan_status(store, status_url)
 
     response, aborted = get_status()
 
