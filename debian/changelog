@@ -1,3 +1,9 @@
+snapcraft (2.8.8) xenial; urgency=medium
+
+  * Create the 'partial' directory for apt. (#499) (LP: #1578007)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 04 May 2016 14:22:58 -0300
+
 snapcraft (2.8.7) xenial; urgency=medium
 
   * Don't fail if there is no system library list (#496) (LP: #1577750)
