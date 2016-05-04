@@ -128,7 +128,8 @@ class Ubuntu:
             rootdir, sources, project_options)
 
     def get(self, package_names):
-        os.makedirs(self.downloaddir, exist_ok=True)
+        # Create the 'partial' subdir too (LP: #1578007).
+        os.makedirs(os.path.join(self.downloaddir, 'partial'), exist_ok=True)
 
         manifest_dep_names = self._manifest_dep_names()
 
