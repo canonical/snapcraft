@@ -23,7 +23,7 @@ from snapcraft.tests import store_tests
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class RegisterTestCase(store_tests.RecordedTestCase):
+class TestRegister(store_tests.RecordedTestCase):
 
     def setUp(self):
         super().setUp()

@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 def login():
-    print('Enter your Ubuntu One SSO credentials.')
+    logger.info('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
     one_time_password = input('One-time password (just press enter if you'
@@ -47,6 +47,7 @@ def login():
         logger.info('Login successful.')
     else:
         logger.info('Login failed.')
+    return success
 
 
 def logout():
@@ -71,6 +72,7 @@ def register_name(snap_name):
             snap_name))
     else:
         logger.info('Registration failed.')
+    return response.ok
 
 
 def upload(snap_filename):
@@ -113,6 +115,7 @@ def upload(snap_filename):
     if app_url:
         logger.info('Please check out the application at: %s\n',
                     app_url)
+    return success
 
 
 def download(snap_name, channel, download_path, arch):
