@@ -211,20 +211,30 @@ class Tape(object):
             content = response.content.decode('utf8')
         except UnicodeDecodeError:
             b64_content = base64.b64encode(response.content).decode('utf8')
-        recorded = dict(status_code=response.status_code,
-                        encoding=response.encoding)
+        recorded = dict(status_code=response.status_code)
         if content is not None:
-            recorded['content'] = content
+            recorded['content'] = self.sanitize(content)
         if b64_content is not None:
             recorded['b64_content'] = b64_content
         self.records.append(recorded)
+
+    def sanitize(self, content):
+        """Sanitize response so it can be exposed."""
+        jcont = json.loads(content)
+        # Replace macaroon related data by placeholders
+        if 'macaroon' in jcont:
+            jcont['macaroon'] = 'macaroon'
+        elif 'discharge_macaroons' in jcont:
+            jcont['discharge_macaroons'] = [
+                [acl, 'discharge']
+                for acl, discharge in jcont['discharge_macaroons']]
+        return json.dumps(jcont)
 
     def replay(self):
         """Replay a response for a given request."""
         record = self.records.pop(0)
         response = requests.Response()
-        decoded = dict(status_code=record['status_code'],
-                       encoding=record['encoding'])
+        decoded = dict(status_code=record['status_code'])
         if 'content' in record:
             decoded['_content'] = record['content'].encode('utf8')
         if 'b64_content' in record:

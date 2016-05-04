@@ -45,7 +45,7 @@ class TestTape(testtools.TestCase):
         self.assertFalse(os.path.exists(path))
         tape = store_tests.Tape(path, True)
         response = requests.Response()
-        response.__setstate__(dict(_content=bytes('bar', 'utf8')))
+        response.__setstate__(dict(_content=b'[]'))
         tape.record(response)
         self.assertEqual(1, len(tape.records))
         record = tape.records[0]
