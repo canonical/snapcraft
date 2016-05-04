@@ -187,12 +187,11 @@ class Tape(object):
     This handles both recording the responses for all requests and replaying
     them afterwards. The same test can be used to record against the set of
     needed servers and can be replayed from there even if the servers are no
-    more available.
-
+    longer available.
     """
 
-    def __init__(self, uniq, recording):
-        self.path = os.path.join(TAPES_DIR, uniq)
+    def __init__(self, path, recording):
+        self.path = path
         self.recording = recording
         # Responses are recorded in the received order so they can replayed in
         # the same order.
@@ -237,9 +236,9 @@ class Tape(object):
 
     def close(self):
         if self.recording:
+            # Ensure the directory containing the tape exist
+            os.makedirs(os.path.dirname(self.path), exist_ok=True)
             # Record all the collected responses
-            if not os.path.exists(TAPES_DIR):
-                os.mkdir(TAPES_DIR)
             with open(self.path, 'w') as tape:
                 tape.write(json.dumps(self.records, indent=4))
 
@@ -277,15 +276,16 @@ class RecordedTestCase(TestCase):
         env_password = os.getenv('TEST_USER_PASSWORD', None)
         if self.recording and not env_password:
             self.skipTest('No password provided for the test user.')
-        tape_path = '{}.{}.{}'.format(self.__class__.__module__,
+        tape_name = '{}.{}.{}'.format(self.__class__.__module__,
                                       self.__class__.__name__,
                                       self._testMethodName)
+        # Keep all the tapes in the same place
+        tape_path = os.path.join(os.path.dirname(__file__), 'tapes', tape_name)
         try:
             self.tape = Tape(tape_path, self.recording)
             self.addCleanup(self.tape.close)
         except FileNotFoundError:
             self.skip('No record available, run the recording tests first')
-            self.addCleanup(self.tape.close)
         self.preserved_session_class = requests.Session
         self.addCleanup(setattr, requests, 'Session', requests.Session)
         requests.Session = functools.partial(SessionRecorder, self.tape)
