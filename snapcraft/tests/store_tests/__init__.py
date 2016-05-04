@@ -156,8 +156,14 @@ parts:
         self.addCleanup(
             setattr, subprocess, 'check_call', real_check_call)
         subprocess.check_call = check_call
-        os.chdir(snap_dir)
-        lifecycle.snap(snapcraft.ProjectOptions(), None, snap_path)
+        here = os.getcwd()
+        try:
+            # snapcraft wants the current directory to be the snap one
+            os.chdir(snap_dir)
+            lifecycle.snap(snapcraft.ProjectOptions(), None, snap_path)
+        finally:
+            # come back in any case
+            os.chdir(here)
         return snap_path, name
 
     def register(self, snap_name):
