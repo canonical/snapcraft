@@ -235,6 +235,7 @@ class SCAClient(Client):
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
+        # FIXME: Check the status code ! -- vila 2016-05-04
         download = self.cpi.get(download_url)
         with open(download_path, 'wb') as f:
             # FIXME: Cough, we may want to buffer here (and a progress bar
