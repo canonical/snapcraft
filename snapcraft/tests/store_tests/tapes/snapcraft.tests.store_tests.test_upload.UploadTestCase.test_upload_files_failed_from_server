@@ -1,0 +1,22 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "status_code": 200
+    }
+]

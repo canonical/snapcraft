@@ -1,0 +1,26 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"_links\": {\"self\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22dont-exist%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}, \"last\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22dont-exist%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}, \"curies\": [{\"name\": \"clickindex\", \"templated\": true, \"href\": \"https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex#reltype_{rel}\"}], \"first\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22dont-exist%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}}}",
+        "status_code": 200
+    }
+]

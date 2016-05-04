@@ -1,0 +1,22 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"extra\": {}, \"message\": \"Provided email/password is not correct.\", \"code\": \"INVALID_CREDENTIALS\"}",
+        "status_code": 401
+    }
+]

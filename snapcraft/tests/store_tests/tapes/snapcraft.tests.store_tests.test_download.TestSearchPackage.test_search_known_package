@@ -1,0 +1,26 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"_embedded\": {\"clickindex:package\": [{\"download_sha512\": \"e758ab316a7abf6e96cb7a4ee13422bbaf4feb63f83f1721a789c3a314f97c6716504a91b512c601aae44dc6c3c5319cfee79d61cbd004115aa2e4e685353db6\", \"anon_download_url\": \"https://public.apps.staging.ubuntu.com/anon/download-snap/RrsrrxzfRhNuixelGp5vWyGyDDHE0m2r_1.snap\", \"download_url\": \"https://public.apps.staging.ubuntu.com/download-snap/RrsrrxzfRhNuixelGp5vWyGyDDHE0m2r_1.snap\", \"status\": \"Published\", \"_links\": {\"self\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/package/RrsrrxzfRhNuixelGp5vWyGyDDHE0m2r\"}}}]}, \"_links\": {\"self\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22femto%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}, \"last\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22femto%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=2&size=1\"}, \"curies\": [{\"name\": \"clickindex\", \"templated\": true, \"href\": \"https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex#reltype_{rel}\"}], \"first\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22femto%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}}}",
+        "status_code": 200
+    }
+]

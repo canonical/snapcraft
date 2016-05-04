@@ -1,0 +1,26 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"snap_id\": \"1kSUy4EsqL63khvsRhbZKzVRTWwyGovx\", \"state\": \"Approved\", \"status_url\": \"/dev/click-apps/register-name/\"}",
+        "status_code": 201
+    }
+]

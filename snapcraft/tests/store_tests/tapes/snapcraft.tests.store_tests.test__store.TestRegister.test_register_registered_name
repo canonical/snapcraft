@@ -1,0 +1,26 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"__all__\": [\"femto is already registered for 16.\"]}",
+        "status_code": 400
+    }
+]

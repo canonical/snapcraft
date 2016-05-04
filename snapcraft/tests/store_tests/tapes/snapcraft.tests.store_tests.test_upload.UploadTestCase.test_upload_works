@@ -1,0 +1,38 @@
+[
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"macaroon\": \"macaroon\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"upload_id\": \"96ecd401-f48b-467e-a3ef-1db2f96329dd\", \"successful\": true}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"success\": true, \"status_url\": \"https://myapps.developer.staging.ubuntu.com/dev/api/click-scan-complete/updown/96ecd401-f48b-467e-a3ef-1db2f96329dd/\"}",
+        "status_code": 202
+    },
+    {
+        "content": "{\"application_url\": \"\", \"message\": \"Task state is unknown.\", \"completed\": false, \"revision\": null}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"application_url\": \"https://myapps.developer.staging.ubuntu.com/dev/click-apps/577/\", \"message\": \"\", \"completed\": true, \"revision\": 604}",
+        "status_code": 200
+    }
+]
