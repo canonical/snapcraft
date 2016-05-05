@@ -24,15 +24,15 @@
         "status_code": 200
     },
     {
-        "content": "{\"status_url\": \"https://myapps.developer.staging.ubuntu.com/dev/api/click-scan-complete/updown/57d2c782-b4b2-4a20-b3b0-66c4f4b7a480/\", \"success\": true}",
+        "content": "{\"status_url\": \"https://myapps.developer.staging.ubuntu.com/dev/api/click-scan-complete/updown/a-snap-id/\", \"success\": true}",
         "status_code": 202
     },
     {
-        "content": "{\"application_url\": \"\", \"completed\": false, \"message\": \"Task state is unknown.\", \"revision\": null}",
+        "content": "{\"application_url\": \"\", \"completed\": false, \"message\": \"Task state is unknown.\", \"revision\": 42}",
         "status_code": 200
     },
     {
-        "content": "{\"application_url\": \"https://myapps.developer.staging.ubuntu.com/dev/click-apps/577/\", \"completed\": true, \"message\": \"\", \"revision\": 622}",
+        "content": "{\"application_url\": \"https://myapps.developer.staging.ubuntu.com/dev/click-apps/577/\", \"completed\": true, \"message\": \"\", \"revision\": 42}",
         "status_code": 200
     }
 ]

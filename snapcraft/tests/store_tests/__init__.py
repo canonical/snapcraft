@@ -219,7 +219,15 @@ class Tape(object):
         self.records.append(recorded)
 
     def sanitize(self, content):
-        """Sanitize response so it can be exposed."""
+        """Sanitize response so it can be exposed.
+
+        Some parts are inherently random (uuids) and need to be replaced with
+        placeholders.
+
+        Since the namespace for these values is small and has no collisions
+        across all the usage, we just apply simple rules to all reponses.
+
+        """
         jcont = json.loads(content)
         # Replace macaroon related data by placeholders
         if 'macaroon' in jcont:
@@ -233,6 +241,18 @@ class Tape(object):
             jcont['upload_id'] = 'an-upload-id'
         elif 'snap_id' in jcont:
             jcont['snap_id'] = 'a-snap-id'
+        # status url is snap dependent, hence random
+        elif 'status_url' in jcont:
+            jcont['status_url'] = (
+                'https://myapps.developer.staging.ubuntu.com/dev/api/'
+                'click-scan-complete/updown/'
+                'a-snap-id/')
+        # uploaded snaps get increasing revisions
+        elif 'revision' in jcont:
+            jcont['revision'] = 42
+        # scan tasks ids are uuids generated at run time
+        elif 'application_url' in jcont and 'message' in jcont:
+            jcont['message'] = 'Task a-task-id is waiting for execution.'
         return json.dumps(jcont, sort_keys=True)
 
     def replay(self):
