@@ -209,7 +209,7 @@ class SCAClient(Client):
 
     def get_discharges(self, email, password, one_time_password, macaroons):
         data = dict(email=email, password=password,
-                    macaroons=[(k, v) for k, v in macaroons.items()])
+                    macaroons=[(k, v) for k, v in sorted(macaroons.items())])
         if one_time_password:
             data['otp'] = one_time_password
         response = self.sso.post(

@@ -228,7 +228,12 @@ class Tape(object):
             jcont['discharge_macaroons'] = [
                 [acl, 'discharge']
                 for acl, discharge in jcont['discharge_macaroons']]
-        return json.dumps(jcont)
+        # snap and upload ids are uuids generated at run time
+        elif 'upload_id' in jcont:
+            jcont['upload_id'] = 'an-upload-id'
+        elif 'snap_id' in jcont:
+            jcont['snap_id'] = 'a-snap-id'
+        return json.dumps(jcont, sort_keys=True)
 
     def replay(self):
         """Replay a response for a given request."""
@@ -254,7 +259,7 @@ class Tape(object):
             # not).
             with tempfile.NamedTemporaryFile(mode='w', delete=False,
                                              dir=tapes_dir) as f:
-                f.write(json.dumps(self.records, indent=4))
+                f.write(json.dumps(self.records, indent=4, sort_keys=True))
             os.rename(f.name, self.path)
 
 

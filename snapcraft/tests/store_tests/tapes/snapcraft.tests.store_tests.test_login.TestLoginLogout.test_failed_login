@@ -16,7 +16,7 @@
         "status_code": 200
     },
     {
-        "content": "{\"extra\": {}, \"message\": \"Provided email/password is not correct.\", \"code\": \"INVALID_CREDENTIALS\"}",
+        "content": "{\"code\": \"INVALID_CREDENTIALS\", \"extra\": {}, \"message\": \"Provided email/password is not correct.\"}",
         "status_code": 401
     }
 ]

@@ -16,11 +16,11 @@
         "status_code": 200
     },
     {
-        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"package_upload\", \"discharge\"], [\"store_read\", \"discharge\"], [\"store_write\", \"discharge\"]]}",
         "status_code": 200
     },
     {
-        "content": "{\"snap_id\": \"1kSUy4EsqL63khvsRhbZKzVRTWwyGovx\", \"state\": \"Approved\", \"status_url\": \"/dev/click-apps/register-name/\"}",
+        "content": "{\"snap_id\": \"a-snap-id\", \"state\": \"Approved\", \"status_url\": \"/dev/click-apps/register-name/\"}",
         "status_code": 201
     }
 ]

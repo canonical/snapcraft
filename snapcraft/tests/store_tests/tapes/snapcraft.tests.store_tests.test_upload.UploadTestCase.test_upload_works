@@ -16,23 +16,23 @@
         "status_code": 200
     },
     {
-        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"store_write\", \"discharge\"], [\"store_read\", \"discharge\"], [\"package_upload\", \"discharge\"]]}",
+        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"package_upload\", \"discharge\"], [\"store_read\", \"discharge\"], [\"store_write\", \"discharge\"]]}",
         "status_code": 200
     },
     {
-        "content": "{\"upload_id\": \"96ecd401-f48b-467e-a3ef-1db2f96329dd\", \"successful\": true}",
+        "content": "{\"successful\": true, \"upload_id\": \"an-upload-id\"}",
         "status_code": 200
     },
     {
-        "content": "{\"success\": true, \"status_url\": \"https://myapps.developer.staging.ubuntu.com/dev/api/click-scan-complete/updown/96ecd401-f48b-467e-a3ef-1db2f96329dd/\"}",
+        "content": "{\"status_url\": \"https://myapps.developer.staging.ubuntu.com/dev/api/click-scan-complete/updown/5e85877d-7ac2-486c-bdfc-59d363443b31/\", \"success\": true}",
         "status_code": 202
     },
     {
-        "content": "{\"application_url\": \"\", \"message\": \"Task state is unknown.\", \"completed\": false, \"revision\": null}",
+        "content": "{\"application_url\": \"\", \"completed\": false, \"message\": \"Task state is unknown.\", \"revision\": null}",
         "status_code": 200
     },
     {
-        "content": "{\"application_url\": \"https://myapps.developer.staging.ubuntu.com/dev/click-apps/577/\", \"message\": \"\", \"completed\": true, \"revision\": 604}",
+        "content": "{\"application_url\": \"https://myapps.developer.staging.ubuntu.com/dev/click-apps/577/\", \"completed\": true, \"message\": \"\", \"revision\": 623}",
         "status_code": 200
     }
 ]
