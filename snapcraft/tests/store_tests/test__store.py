@@ -103,15 +103,6 @@ class TestUpload(TestStore):
         snap_path, snap_name = self.create_snap('basic')
         self.assertTrue(_store.upload(snap_path))
 
-
-class TestUploadWithFakes(store_tests.TestCase):
-    """Tests with fakes to complete coverage."""
-
-    def test_upload_without_login(self):
-        path, name = self.create_snap('basic')
-        _store.upload(path)
-        self.assertIn('No valid credentials found', self.logger.output)
-
     def test_upload_unknwon_file(self):
         self.login()
         self.addCleanup(self.logout)
@@ -134,6 +125,15 @@ class TestUploadWithFakes(store_tests.TestCase):
         self.assertIn('Upload did not complete', self.logger.output)
         self.assertIn('Some errors were detected:\n\nYou failed\n',
                       self.logger.output)
+
+
+class TestUploadWithFakes(store_tests.TestCase):
+    """Tests with fakes to complete coverage."""
+
+    def test_upload_without_login(self):
+        path, name = self.create_snap('basic')
+        _store.upload(path)
+        self.assertIn('No valid credentials found', self.logger.output)
 
     def test__upload_files_fails_review(self):
         # Pretend the binary upload succeeded
