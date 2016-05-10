@@ -26,3 +26,5 @@ class WebchatTestCase(examples_tests.ExampleTestCase):
         snap_name = 'webchat'
         self.install_snap(self.example_dir, snap_name, '0.0.1')
         self.assert_service_running(snap_name, 'webchat')
+        expected = '.*<html.*>.*<title>Snappy example chat</title>.*</html>.*'
+        self.assert_http_get(3000, expected)

@@ -26,3 +26,5 @@ class ShoutTestCase(examples_tests.ExampleTestCase):
         snap_name = 'shout'
         self.install_snap(self.example_dir, snap_name, '0.52.0')
         self.assert_service_running(snap_name, 'server')
+        expected = '.*<html>.*<title>Shout</title>.*</html>.*'
+        self.assert_http_get(9000, expected)
