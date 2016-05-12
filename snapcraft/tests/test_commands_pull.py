@@ -37,6 +37,7 @@ class PullCommandTestCase(tests.TestCase):
 version: 1.0
 summary: test pull
 description: if the pull is succesful the state file will be updated
+confinement: enabled
 
 parts:
 {parts}"""

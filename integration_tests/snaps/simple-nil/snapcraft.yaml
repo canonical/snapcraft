@@ -3,6 +3,7 @@ version: 0.1
 summary: Create the empty snap
 description: Create an empty snap with nothing to pull
 icon: icon.png
+confinement: enabled
 
 parts:
     nil-part:

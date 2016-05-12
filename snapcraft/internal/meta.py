@@ -35,6 +35,7 @@ _MANDATORY_PACKAGE_KEYS = [
     'version',
     'description',
     'summary',
+    'confinement'
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [

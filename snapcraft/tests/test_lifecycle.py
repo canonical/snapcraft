@@ -41,6 +41,7 @@ class ExecutionTestCases(tests.TestCase):
 version: 0
 summary: test
 description: test
+confinement: enabled
 {type}
 
 {parts}

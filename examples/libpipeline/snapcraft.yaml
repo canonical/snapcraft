@@ -5,6 +5,7 @@ description: |
   This is an example package of an autotools project built with snapcraft
   using a remote source.
 icon: icon.png
+confinement: enabled
 
 apps:
   pipelinetest:

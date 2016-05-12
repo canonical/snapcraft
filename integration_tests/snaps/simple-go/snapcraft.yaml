@@ -6,6 +6,7 @@ description: |
   The name of the binary will be that of the directory containing it,
   just like it is seen when using `go build` or `go install`.
 icon: icon.png
+confinement: enabled
 
 parts:
   simple-go:

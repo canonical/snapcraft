@@ -60,6 +60,12 @@ properties:
       - explicit
   license-version:
     description: license version (used to re-trigger an agreement action).
+  confinement:
+    type: string
+    description: the type of confinement supported by the snap
+    enum:
+      - devmode
+      - enabled
   apps:
     type: object
     additionalProperties: false
@@ -178,6 +184,7 @@ required:
   - version
   - summary
   - description
+  - confinement
   - parts
 dependencies:
   license-agreement: ["license"]

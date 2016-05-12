@@ -3,6 +3,7 @@ version: 0
 summary: A python sha3 implementation
 description: A python2 project using snapcraft
 icon: icon.png
+confinement: enabled
 
 apps:
   sha3sum:

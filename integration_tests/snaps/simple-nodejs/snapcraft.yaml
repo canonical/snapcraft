@@ -3,6 +3,7 @@ version: 0.1
 summary: A simple nodejs project.
 description: |
   Proves that it is possible to build a snap using local nodejs sources.
+confinement: enabled
 
 parts:
   simple-nodejs:

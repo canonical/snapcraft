@@ -4,6 +4,7 @@ summary: try out $SNAPCRAFT_STAGE
 description: |
   The cmake-project expects to have a copied directory in the stage directory
   to consume during its build time.
+confinement: enabled
 
 parts:
   cmake-project:

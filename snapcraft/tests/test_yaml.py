@@ -53,6 +53,7 @@ class TestYaml(tests.TestCase):
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -75,6 +76,7 @@ parts:
 version: "1"
 summary: test
 description: ñoño test
+confinement: enabled
 
 parts:
   part1:
@@ -100,6 +102,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -122,6 +125,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -170,6 +174,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -198,6 +203,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -224,6 +230,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -244,6 +251,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -273,6 +281,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   p1:
@@ -301,6 +310,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
+confinement: enabled
 
 parts:
   part1:
@@ -322,6 +332,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
+confinement: enabled
 
 parts:
   part1:
@@ -345,6 +356,7 @@ version: "1"
 summary: test
 description: test
 icon: icon.foo
+confinement: enabled
 
 parts:
   part1:
@@ -369,6 +381,7 @@ version: "1"
 summary: test
 description: test
 icon: icon.png
+confinement: enabled
 
 parts:
   part1:
@@ -390,6 +403,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
+confinement: enabled
 
 parts:
   part1:
@@ -412,6 +426,7 @@ parts:
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
+confinement: enabled
 
 parts:
   part1:
@@ -426,13 +441,96 @@ parts:
             "'description' is a required property")
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_invalid_yaml_missing_confinement(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            internal_yaml.Config()
+
+        self.assertEqual(
+            raised.exception.message,
+            "'confinement' is a required property")
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_invalid_yaml_invalid_confinement_types(self, mock_loadPlugin):
+        invalid_confinement_types = [
+            'foo',
+            'enabled-',
+            '_devmode',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for confinement_type in invalid_confinement_types:
+            with self.subTest(key=confinement_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(confinement_type))
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    internal_yaml.Config()
+
+                self.assertEqual(
+                    raised.exception.message,
+                    "The 'confinement' property does not match the required "
+                    "schema: '{}' is not one of ['devmode', 'enabled']".format(
+                        confinement_type))
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_yaml_valid_confinement_types(self, mock_loadPlugin):
+        valid_confinement_types = [
+            'enabled',
+            'devmode',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for confinement_type in valid_confinement_types:
+            with self.subTest(key=confinement_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(confinement_type))
+                c = internal_yaml.Config()
+                self.assertEqual(c.data['confinement'], confinement_type)
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
-\tsummary: test
+summary: test
+description: nothing
+\tconfinement: enabled
 
 parts:
   part1:
@@ -446,7 +544,7 @@ parts:
         self.assertEqual(
             raised.exception.message,
             'found character \'\\t\' that cannot start any token '
-            'on line 2 of snapcraft.yaml')
+            'on line 4 of snapcraft.yaml')
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
@@ -454,6 +552,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -486,6 +585,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   main:
@@ -505,6 +605,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   main:
@@ -530,6 +631,7 @@ class TestYamlEnvironment(tests.TestCase):
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -747,6 +849,7 @@ parts:
 version: "1"
 summary: test
 description: test
+confinement: enabled
 
 parts:
   part1:
@@ -860,6 +963,7 @@ class TestValidation(tests.TestCase):
             'version': '1.0-snapcraft1~ppa1',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
+            'confinement': 'enabled',
             'parts': {
                 'part1': {
                     'plugin': 'project',

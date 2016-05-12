@@ -37,6 +37,7 @@ class CreateTest(tests.TestCase):
             'version': '1.0',
             'description': 'my description',
             'summary': 'my summary',
+            'confinement': 'enabled',
         }
 
         self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
@@ -54,6 +55,7 @@ class CreateTest(tests.TestCase):
             y = yaml.load(f)
 
         expected = {'architectures': ['amd64'],
+                    'confinement': 'enabled',
                     'description': 'my description',
                     'summary': 'my summary',
                     'name': 'my-package',
@@ -258,6 +260,7 @@ class CreateTest(tests.TestCase):
             'summary': 'my summary',
             'name': 'my-package',
             'version': '1.0',
+            'confinement': 'enabled',
             'plugs': {
                 'network-server': {
                     'interface': 'network-bind',

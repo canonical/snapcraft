@@ -6,6 +6,7 @@ description: |
   as a requirements.txt file with the list of packages
   that will be downloaded using pip.
 icon: icon.svg
+confinement: enabled
 
 parts:
   python2:
