@@ -5,7 +5,7 @@ description: |
  Test maven builds and options. If the tests aren't skipped we will run into
  the assertTrue ( false ) statement and the build will fail.
 icon: icon.png
-confinement: enabled
+confinement: strict
 
 parts:
   m:

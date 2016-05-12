@@ -6,7 +6,7 @@ description: |
     code in Snapcraft.
 version: 1.0
 icon: icon.svg
-confinement: enabled
+confinement: strict
 
 parts:
     root:

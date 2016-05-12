@@ -65,7 +65,7 @@ properties:
     description: the type of confinement supported by the snap
     enum:
       - devmode
-      - enabled
+      - strict
   apps:
     type: object
     additionalProperties: false

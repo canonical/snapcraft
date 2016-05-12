@@ -2,7 +2,7 @@ name: independent-parts
 version: 1
 summary: Two independent parts
 description: Two independent parts
-confinement: enabled
+confinement: strict
 
 parts:
   part1:

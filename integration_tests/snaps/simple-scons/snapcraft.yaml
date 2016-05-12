@@ -3,7 +3,7 @@ version: 0.1
 summary: test a simple scons project
 description: a longer description
 icon: icon.png
-confinement: enabled
+confinement: strict
 
 build-packages: [gcc, libc6-dev]
 

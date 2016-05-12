@@ -42,7 +42,7 @@ version: 1
 summary: test
 description: test
 icon: my-icon.png
-confinement: enabled
+confinement: strict
 
 parts:
   part1:

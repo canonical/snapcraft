@@ -6,7 +6,7 @@ description: |
  network-manager is staged and then whitelist filtered for the files required
  in the snap.
 icon: icon.png
-confinement: enabled
+confinement: strict
 
 parts:
     nm-tools:

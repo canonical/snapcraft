@@ -53,7 +53,7 @@ class TestYaml(tests.TestCase):
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -76,7 +76,7 @@ parts:
 version: "1"
 summary: test
 description: ñoño test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -102,7 +102,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -125,7 +125,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -174,7 +174,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -203,7 +203,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -230,7 +230,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -251,7 +251,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -281,7 +281,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   p1:
@@ -310,7 +310,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -332,7 +332,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -356,7 +356,7 @@ version: "1"
 summary: test
 description: test
 icon: icon.foo
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -381,7 +381,7 @@ version: "1"
 summary: test
 description: test
 icon: icon.png
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -403,7 +403,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -426,7 +426,7 @@ parts:
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -492,13 +492,13 @@ parts:
                 self.assertEqual(
                     raised.exception.message,
                     "The 'confinement' property does not match the required "
-                    "schema: '{}' is not one of ['devmode', 'enabled']".format(
+                    "schema: '{}' is not one of ['devmode', 'strict']".format(
                         confinement_type))
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_yaml_valid_confinement_types(self, mock_loadPlugin):
         valid_confinement_types = [
-            'enabled',
+            'strict',
             'devmode',
         ]
 
@@ -530,7 +530,7 @@ parts:
 version: "1"
 summary: test
 description: nothing
-\tconfinement: enabled
+\tconfinement: strict
 
 parts:
   part1:
@@ -552,7 +552,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -585,7 +585,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   main:
@@ -605,7 +605,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   main:
@@ -631,7 +631,7 @@ class TestYamlEnvironment(tests.TestCase):
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -849,7 +849,7 @@ parts:
 version: "1"
 summary: test
 description: test
-confinement: enabled
+confinement: strict
 
 parts:
   part1:
@@ -963,7 +963,7 @@ class TestValidation(tests.TestCase):
             'version': '1.0-snapcraft1~ppa1',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
-            'confinement': 'enabled',
+            'confinement': 'strict',
             'parts': {
                 'part1': {
                     'plugin': 'project',

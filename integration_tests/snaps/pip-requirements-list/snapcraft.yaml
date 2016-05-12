@@ -6,7 +6,7 @@ description: |
   as a list of package names that will be downloaded
   using pip.
 icon: icon.svg
-confinement: enabled
+confinement: strict
 
 parts:
   python2:

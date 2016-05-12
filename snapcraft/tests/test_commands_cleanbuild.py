@@ -32,7 +32,7 @@ version: 1.0
 summary: test strip
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']
-confinement: enabled
+confinement: strict
 
 parts:
     part1:

@@ -34,7 +34,7 @@ version: 1.0
 summary: test clean
 description: if the clean is succesful the state file will be updated
 icon: icon.png
-confinement: enabled
+confinement: strict
 
 parts:
 {parts}"""
@@ -176,7 +176,7 @@ class CleanCommandReverseDependenciesTestCase(tests.TestCase):
 version: 1.0
 summary: test clean
 description: test clean
-confinement: enabled
+confinement: strict
 
 parts:
   main:

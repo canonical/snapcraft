@@ -3,7 +3,7 @@ version: 1.0
 summary: Simple pasting tool
 description: Runs a service that allows you to paste to and share.
 icon: icon.png
-confinement: enabled
+confinement: strict
 
 apps:
   gopaste:

@@ -30,7 +30,7 @@ class StripCommandTestCase(tests.TestCase):
 version: 1.0
 summary: test strip
 description: if the strip is succesful the state file will be updated
-confinement: enabled
+confinement: strict
 
 parts:
 {parts}"""
