@@ -466,7 +466,7 @@ parts:
     def test_invalid_yaml_invalid_confinement_types(self, mock_loadPlugin):
         invalid_confinement_types = [
             'foo',
-            'enabled-',
+            'strict-',
             '_devmode',
         ]
 
