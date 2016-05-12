@@ -44,6 +44,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     'license-version',
     'plugs',
     'slots',
+    'epoch'
 ]
 
 _KERNEL_KEYS = {
