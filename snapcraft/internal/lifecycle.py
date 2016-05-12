@@ -41,7 +41,7 @@ _TEMPLATE_YAML = r'''name: # the name of the snap
 version: # the version of the snap
 summary: # 79 char long summary
 description: # a longer description for the snap
-confinement: devmode # devmode means no confinement is supported
+confinement: devmode # devmode means the snap doesn't support confinement
 '''
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'strip'}
