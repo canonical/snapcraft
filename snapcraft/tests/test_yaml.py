@@ -442,7 +442,7 @@ parts:
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_missing_confinement(self, mock_loadPlugin):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 
         self.make_snapcraft_yaml("""name: test
@@ -455,12 +455,41 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(SnapcraftSchemaError) as raised:
-            internal_yaml.Config()
+        c = internal_yaml.Config()
 
-        self.assertEqual(
-            raised.exception.message,
-            "'confinement' is a required property")
+        # Verify the default is "strict"
+        self.assertTrue('confinement' in c.data,
+                        'Expected "confinement" property to be in snap.yaml')
+        self.assertEqual(c.data['confinement'], 'strict')
+        self.assertTrue(
+            '"confinement" property not specified: defaulting to "strict"'
+            in fake_logger.output, 'Missing confinement hint in output')
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_yaml_valid_confinement_types(self, mock_loadPlugin):
+        valid_confinement_types = [
+            'strict',
+            'devmode',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for confinement_type in valid_confinement_types:
+            with self.subTest(key=confinement_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(confinement_type))
+                c = internal_yaml.Config()
+                self.assertEqual(c.data['confinement'], confinement_type)
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_confinement_types(self, mock_loadPlugin):
@@ -494,32 +523,6 @@ parts:
                     "The 'confinement' property does not match the required "
                     "schema: '{}' is not one of ['devmode', 'strict']".format(
                         confinement_type))
-
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
-    def test_yaml_valid_confinement_types(self, mock_loadPlugin):
-        valid_confinement_types = [
-            'strict',
-            'devmode',
-        ]
-
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        for confinement_type in valid_confinement_types:
-            with self.subTest(key=confinement_type):
-                self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: nothing
-confinement: {}
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-""".format(confinement_type))
-                c = internal_yaml.Config()
-                self.assertEqual(c.data['confinement'], confinement_type)
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
@@ -963,7 +966,6 @@ class TestValidation(tests.TestCase):
             'version': '1.0-snapcraft1~ppa1',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
-            'confinement': 'strict',
             'parts': {
                 'part1': {
                     'plugin': 'project',

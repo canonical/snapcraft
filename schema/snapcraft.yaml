@@ -63,6 +63,7 @@ properties:
   confinement:
     type: string
     description: the type of confinement supported by the snap
+    default: strict
     enum:
       - devmode
       - strict
@@ -184,7 +185,6 @@ required:
   - version
   - summary
   - description
-  - confinement
   - parts
 dependencies:
   license-agreement: ["license"]

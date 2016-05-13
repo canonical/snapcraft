@@ -42,7 +42,7 @@ class Validator:
 
     @property
     def part_schema(self):
-        sub = self._schema['properties']['parts']['patternProperties']
+        sub = self.schema['properties']['parts']['patternProperties']
         properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-]*$']['properties']
         return properties.copy()
 
@@ -51,7 +51,7 @@ class Validator:
             common.get_schemadir(), 'snapcraft.yaml'))
         try:
             with open(schema_file) as fp:
-                self._schema = yaml.load(fp)
+                self.schema = yaml.load(fp)
         except FileNotFoundError:
             raise SnapcraftSchemaError(
                 'snapcraft validation file is missing from installation path')
@@ -60,7 +60,7 @@ class Validator:
         format_check = jsonschema.FormatChecker()
         try:
             jsonschema.validate(
-                self._snapcraft, self._schema, format_checker=format_check)
+                self._snapcraft, self.schema, format_checker=format_check)
         except jsonschema.ValidationError as e:
             messages = [e.message]
             if e.path:
