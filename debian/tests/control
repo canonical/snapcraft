@@ -2,7 +2,7 @@ Tests: unittests
 Restrictions: allow-stderr
 Depends: @builddeps@
 
-Tests: integrationtests examplestests
+Tests: integrationtests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,
@@ -17,3 +17,11 @@ Depends: @,
          python3-mccabe,
          python3-pexpect,
          python3-testscenarios
+
+Tests: examplestests
+Restrictions: allow-stderr, isolation-container, rw-build-tree
+Depends: @,
+         git,
+         python3-fixtures,
+         python3-testscenarios,
+         snapd
