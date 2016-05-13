@@ -61,7 +61,7 @@ class TestDownload(store_tests.RecordedTestCase):
     def assertLog(self, expected):
         self.assertEqual(expected, self.logger.output)
 
-    def test_download_unknwon_package(self):
+    def test_download_unknown_package(self):
         exc = self.assertRaises(
             storeapi.SnapNotFoundError,
             self.download, 'gloo', 'bee')
