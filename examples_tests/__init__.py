@@ -101,6 +101,8 @@ class ExampleTestCase(testtools.TestCase):
             ip = config.get('ip', None)
             if not ip:
                 self.snappy_testbed = self._set_up_qemu_testbed()
+            elif ip in ('localhost', '127.0.0.1'):
+                self.snappy_testbed = testbed.LocalTestbed()
             else:
                 port = config.get('port', None) or '22'
                 self.snappy_testbed = testbed.SshTestbed(
@@ -143,12 +145,19 @@ class ExampleTestCase(testtools.TestCase):
             snap_local_path = os.path.join(
                 'examples', example_dir, snap_file_name)
             self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
+            snap_path_in_testbed = os.path.join(
+                '/home/ubuntu/', snap_file_name)
             # Remove the snap file from the testbed.
             self.addCleanup(
                 self.snappy_testbed.run_command,
-                ['rm', os.path.join('/home/ubuntu/', snap_file_name)])
-            self.snappy_testbed.run_command([
-                'sudo', 'snap', 'install', snap_file_name])
+                ['rm', snap_path_in_testbed])
+            try:
+                self.snappy_testbed.run_command([
+                    'sudo', 'snap', 'install', snap_path_in_testbed])
+            except subprocess.CalledProcessError as e:
+                self.addDetail(
+                    'ssh output', content.text_content(str(e.output)))
+                raise
             # Uninstall the snap from the testbed.
             snap_name = snap_file_name[:snap_file_name.index('_')]
             self.addCleanup(
