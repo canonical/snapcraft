@@ -117,16 +117,3 @@ class TestOptions(tests.TestCase):
     def test_string(self):
         conf = self.create_config(foo='bar')
         self.assertEqual('bar', conf.get('foo'))
-
-    def test_macaroons(self):
-        conf = self.create_config(foo='macaroon,discharge')
-        self.assertEqual(('macaroon', 'discharge'), conf.get_macaroon('foo'))
-
-    def test_wrong_macaroon_format(self):
-        conf = self.create_config(foo='bar')
-        with self.assertRaises(ValueError):
-            conf.get_macaroon('foo')
-
-    def test_macaroon_stripped(self):
-        conf = self.create_config(foo=' mac aroon , dis charge ')
-        self.assertEqual(('mac aroon', 'dis charge'), conf.get_macaroon('foo'))

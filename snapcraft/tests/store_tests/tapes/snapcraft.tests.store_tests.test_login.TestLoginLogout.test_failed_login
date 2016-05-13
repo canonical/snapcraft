@@ -4,18 +4,6 @@
         "status_code": 200
     },
     {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
         "content": "{\"code\": \"INVALID_CREDENTIALS\", \"extra\": {}, \"message\": \"Provided email/password is not correct.\"}",
         "status_code": 401
     }

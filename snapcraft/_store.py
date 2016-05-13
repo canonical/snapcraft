@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 def login():
-    logger.info('Enter your Ubuntu One SSO credentials.')
+    print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
     one_time_password = input('One-time password (just press enter if you'
@@ -60,7 +60,7 @@ def logout():
 def register_name(snap_name):
     logger.info('Registering {}.'.format(snap_name))
     store = storeapi.SCAClient()
-    if store.conf.get('package_upload') is None:
+    if store.conf.get('macaroon') is None:
         logger.info('Registration failed.')
         logger.info(
             'No valid credentials found. Have you run "snapcraft login"?')

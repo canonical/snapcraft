@@ -4,23 +4,11 @@
         "status_code": 200
     },
     {
-        "content": "{\"macaroon\": \"macaroon\"}",
+        "content": "{\"discharge_macaroon\": \"discharge\"}",
         "status_code": 200
     },
     {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"package_upload\", \"discharge\"], [\"store_read\", \"discharge\"], [\"store_write\", \"discharge\"]]}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"__all__\": [\"femto is already registered for 16.\"]}",
+        "content": "{\"__all__\": [{\"code\": \"REGISTER_WINDOW_ERROR\", \"message\": \"You must wait 1\\u00a0minute before the next snap-name registration for 16.\"}]}",
         "status_code": 400
     }
 ]

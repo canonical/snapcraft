@@ -4,23 +4,11 @@
         "status_code": 200
     },
     {
-        "content": "{\"macaroon\": \"macaroon\"}",
+        "content": "{\"discharge_macaroon\": \"discharge\"}",
         "status_code": 200
     },
     {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"macaroon\": \"macaroon\"}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"discharge_macaroons\": [[\"package_access\", \"discharge\"], [\"package_upload\", \"discharge\"], [\"store_read\", \"discharge\"], [\"store_write\", \"discharge\"]]}",
-        "status_code": 200
-    },
-    {
-        "content": "{\"_links\": {\"curies\": [{\"href\": \"https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex#reltype_{rel}\", \"name\": \"clickindex\", \"templated\": true}], \"first\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22gloo%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}, \"last\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22gloo%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}, \"self\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22gloo%22&fields=status%2Cdownload_url%2Canon_download_url%2Cdownload_sha512&page=1&size=1\"}}}",
+        "content": "{\"_links\": {\"curies\": [{\"href\": \"https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex#reltype_{rel}\", \"name\": \"clickindex\", \"templated\": true}], \"first\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22gloo%22&fields=status%2Cdownload_url%2Cdownload_sha512&page=1&size=1\"}, \"last\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22gloo%22&fields=status%2Cdownload_url%2Cdownload_sha512&page=1&size=1\"}, \"self\": {\"href\": \"https://search.apps.staging.ubuntu.com/api/v1/search?q=package_name%3A%22gloo%22&fields=status%2Cdownload_url%2Cdownload_sha512&page=1&size=1\"}}}",
         "status_code": 200
     }
 ]

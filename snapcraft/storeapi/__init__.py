@@ -74,12 +74,13 @@ class SHAMismatchError(StoreError):
         super().__init__(path=path, expected_sha=expected_sha)
 
 
-def _macaroon_auth(conf, acl):
+def _macaroon_auth(conf):
     """Format a macaroon and its associated discharge.
 
     :return: A string suitable to use in an Authorization header.
     """
-    macaroon, discharge = conf.get_macaroon(acl)
+    macaroon = conf.get('macaroon')
+    discharge = conf.get('discharge_macaroon')
     auth = 'Macaroon root={}, discharge={}'.format(macaroon, discharge)
     return auth
 
@@ -115,6 +116,9 @@ class Client(object):
         self.session.close()
 
 
+# FIXME: This should be a store client and SCAClient can then be an attribute,
+# making the methods split across them and clarifying the purposes for both of
+# them -- vila 2016-05-13
 class SCAClient(Client):
     """High-level client for the V2.0 API SCA resources."""
 
@@ -132,25 +136,22 @@ class SCAClient(Client):
 
     def login(self, email, password, one_time_password=None):
         result = dict(success=False, body=None)
-        acls = ('store_read', 'store_write',
-                'package_access', 'package_upload')
-        macaroons = {}
-        for acl in acls:
-            macaroon, error = self.get_macaroon(acl)
-            if error:
-                result['errors'] = error
-                break
-            macaroons[acl] = macaroon
+        # Ask the store for the needed capabalities to be associated with the
+        # macaroon.
+        macaroon, error = self.get_macaroon(
+            ['package_upload',
+             'package_access'])
+        if error:
+            result['errors'] = error
         else:
-            discharges, error = self.get_discharges(
-                email, password, one_time_password, macaroons)
+            discharge, error = self.get_discharge(
+                email, password, one_time_password, macaroon)
             if error:
                 result['errors'] = error
             else:
-                # All macaroons have been discharged, save them in the config
-                for acl in acls:
-                    self.conf.set(acl, ','.join([macaroons[acl],
-                                                 discharges[acl]]))
+                # The macaroon has been discharged, save it in the config
+                self.conf.set('macaroon', macaroon)
+                self.conf.set('discharge_macaroon', discharge)
                 self.conf.save()
                 result['success'] = True
         return result
@@ -161,7 +162,7 @@ class SCAClient(Client):
 
     def register_name(self, name):
         data = dict(snap_name=name, series=DEFAULT_SERIES)
-        auth = _macaroon_auth(self.conf, 'package_upload')
+        auth = _macaroon_auth(self.conf)
         response = self.post('register-name/',
                              data=json.dumps(data),
                              headers={'Authorization': auth,
@@ -175,7 +176,7 @@ class SCAClient(Client):
         return response
 
     def upload(self, binary_path, snap_name):
-        if self.conf.get('package_upload') is None:
+        if self.conf.get('discharge_macaroon') is None:
             raise InvalidCredentialsError()
         self.updown = requests.Session()
         data = _upload.upload_files(binary_path, self.updown)
@@ -198,18 +199,18 @@ class SCAClient(Client):
                                   download_path, package['download_url'],
                                   package['download_sha512'])
 
-    def get_macaroon(self, acl):
-        response = self.post('../../api/2.0/acl/{}/'.format(acl),
-                             data=json.dumps({}),
+    def get_macaroon(self, acls):
+        response = self.post('acl/',
+                             data=json.dumps({'permissions': acls}),
                              headers={'Content-Type': 'application/json'})
         if response.ok:
             return response.json()['macaroon'], None
         else:
             return None, response.text
 
-    def get_discharges(self, email, password, one_time_password, macaroons):
+    def get_discharge(self, email, password, one_time_password, macaroon):
         data = dict(email=email, password=password,
-                    macaroons=[(k, v) for k, v in sorted(macaroons.items())])
+                    macaroon=macaroon)
         if one_time_password:
             data['otp'] = one_time_password
         response = self.sso.post(
@@ -217,14 +218,13 @@ class SCAClient(Client):
             headers={'Content-Type': 'application/json',
                      'Accept': 'application/json'})
         if response.ok:
-            return dict(response.json()['discharge_macaroons']), None
+            return response.json()['discharge_macaroon'], None
         else:
             return None, response.text
 
     def upload_snap(self, name, data):
         data['name'] = name
-        headers = {'Authorization':
-                   _macaroon_auth(self.conf, 'package_upload')}
+        headers = {'Authorization': _macaroon_auth(self.conf)}
         response = self.post('snap-upload/', data=data, headers=headers)
         return response
 
@@ -288,7 +288,7 @@ class CPIClient(Client):
     def __init__(self, conf):
         super().__init__(conf, os.environ.get('UBUNTU_STORE_SEARCH_ROOT_URL',
                                               UBUNTU_STORE_SEARCH_ROOT_URL))
-        if self.conf.get('package_access') is None:
+        if self.conf.get('discharge_macaroon') is None:
             raise InvalidCredentialsError()
 
     def search_package(self, snap_name, channel, arch):
@@ -300,7 +300,7 @@ class CPIClient(Client):
         }
         params = {
             'q': 'package_name:"{}"'.format(snap_name),
-            'fields': 'status,download_url,anon_download_url,download_sha512',
+            'fields': 'status,download_url,download_sha512',
             'size': 1,
         }
         resp = self.get('api/v1/search', headers=headers, params=params)
@@ -313,7 +313,6 @@ class CPIClient(Client):
     def get(self, url, headers=None, params=None):
         if headers is None:
             headers = {}
-        headers.update({'Authorization':
-                        _macaroon_auth(self.conf, 'package_access')})
+        headers.update({'Authorization': _macaroon_auth(self.conf)})
         response = self.request('GET', url, headers=headers, params=params)
         return response

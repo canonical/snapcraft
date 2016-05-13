@@ -232,10 +232,8 @@ class Tape(object):
         # Replace macaroon related data by placeholders
         if 'macaroon' in jcont:
             jcont['macaroon'] = 'macaroon'
-        elif 'discharge_macaroons' in jcont:
-            jcont['discharge_macaroons'] = [
-                [acl, 'discharge']
-                for acl, discharge in jcont['discharge_macaroons']]
+        elif 'discharge_macaroon' in jcont:
+            jcont['discharge_macaroon'] = 'discharge'
         # snap and upload ids are uuids generated at run time
         elif 'upload_id' in jcont:
             jcont['upload_id'] = 'an-upload-id'
@@ -295,6 +293,12 @@ class SessionRecorder(requests.Session):
         # friends (we ony use GET and POST though).
         if self.tape.recording:
             response = super().request(method, url, *args, **kwargs)
+            # store API debug point: all http requests/responses are available
+            # here (response.request for the corresponding request).
+            # if response.status_code/100 > 2:
+            # if response.status_code == 401:
+            # if response.status_code == 404:
+            #   import pdb ; pdb.set_trace()
             self.tape.record(response)
         else:
             response = self.tape.replay()

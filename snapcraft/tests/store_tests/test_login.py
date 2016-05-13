@@ -32,10 +32,8 @@ class TestLoginLogout(store_tests.RecordedTestCase):
         # Credentials have been saved
         self.assertTrue(os.path.exists(config.Config.save_path()))
         conf = self.store.conf
-        self.assertIsNotNone(conf.get('store_read'))
-        self.assertIsNotNone(conf.get('store_write'))
-        self.assertIsNotNone(conf.get('package_access'))
-        self.assertIsNotNone(conf.get('package_upload'))
+        self.assertIsNotNone(conf.get('macaroon'))
+        self.assertIsNotNone(conf.get('discharge_macaroon'))
 
     def test_failed_login(self):
         res = self.login(password='wrongpassword')
