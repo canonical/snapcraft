@@ -8,7 +8,7 @@
         "status_code": 200
     },
     {
-        "content": "{\"__all__\": [{\"code\": \"REGISTER_WINDOW_ERROR\", \"message\": \"You must wait 1\\u00a0minute before the next snap-name registration for 16.\"}]}",
+        "content": "{\"__all__\": [{\"code\": \"ALREADY_REGISTERED_ERROR\", \"message\": \"\\\"femto\\\" is already registered for 16.\"}]}",
         "status_code": 400
     }
 ]
