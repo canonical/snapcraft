@@ -47,7 +47,10 @@ from snapcraft.internal import (
     common,
     lifecycle,
 )
-from snapcraft.storeapi import _upload
+from snapcraft.storeapi import (
+    macaroons,
+    _upload,
+)
 from snapcraft.tests import (
     fixture_setup,
     test_config,
@@ -225,15 +228,28 @@ class Tape(object):
         placeholders.
 
         Since the namespace for these values is small and has no collisions
-        across all the usage, we just apply simple rules to all reponses.
+        across all the usages, we just apply simple rules to all reponses.
 
         """
         jcont = json.loads(content)
         # Replace macaroon related data by placeholders
         if 'macaroon' in jcont:
-            jcont['macaroon'] = 'macaroon'
+            # We need a valid macaroon with an sso third-party caveat
+            caveat = macaroons.Caveat('id', 'secret key',
+                                      location='login.staging.ubuntu.com')
+            macaroon = macaroons.Macaroon(
+                'myapps.developer.staging.ubuntu.com',
+                'id', 'super secret key', caveats=[caveat])
+            jcont['macaroon'] = macaroon.serialize()
+        elif 'caveat_id' in jcont:
+            jcont['caveat_id'] = 'caveat_id'
         elif 'discharge_macaroon' in jcont:
-            jcont['discharge_macaroon'] = 'discharge'
+            # We need a valid macaroon
+            caveat = macaroons.Caveat('id', 'secret key')
+            macaroon = macaroons.Macaroon(
+                'myapps.developer.staging.ubuntu.com',
+                'id_discharge', 'super secret key too', caveats=[caveat])
+            jcont['discharge_macaroon'] = macaroon.serialize()
         # snap and upload ids are uuids generated at run time
         elif 'upload_id' in jcont:
             jcont['upload_id'] = 'an-upload-id'

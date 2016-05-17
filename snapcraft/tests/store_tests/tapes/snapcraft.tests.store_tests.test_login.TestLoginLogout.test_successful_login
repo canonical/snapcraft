@@ -1,10 +1,10 @@
 [
     {
-        "content": "{\"macaroon\": \"macaroon\"}",
+        "content": "{\"macaroon\": \"MDAzMWxvY2F0aW9uIG15YXBwcy5kZXZlbG9wZXIuc3RhZ2luZy51YnVudHUuY29tCjAwMTJpZGVudGlmaWVyIGlkCjAwMGJjaWQgaWQKMDAxM3ZpZCBzZWNyZXQga2V5CjAwMjBjbCBsb2dpbi5zdGFnaW5nLnVidW50dS5jb20KMDAyZnNpZ25hdHVyZSCCUJidnYHIeAWJg_5m7JQhRcvK5DVkvLp5ilTn2qYyEwo\"}",
         "status_code": 200
     },
     {
-        "content": "{\"discharge_macaroon\": \"discharge\"}",
+        "content": "{\"discharge_macaroon\": \"MDAzMWxvY2F0aW9uIG15YXBwcy5kZXZlbG9wZXIuc3RhZ2luZy51YnVudHUuY29tCjAwMWNpZGVudGlmaWVyIGlkX2Rpc2NoYXJnZQowMDBiY2lkIGlkCjAwMmZzaWduYXR1cmUgeJaVf0I_aRMnSATsPMEv_YthKrmu7Z66Maj9US-G-JYK\"}",
         "status_code": 200
     }
 ]

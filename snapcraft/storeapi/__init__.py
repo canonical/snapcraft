@@ -32,6 +32,7 @@ from .constants import (
     UBUNTU_STORE_UPLOAD_ROOT_URL,
 )
 
+from . import macaroons
 from . import _upload
 from .info import get_info  # noqa
 
@@ -80,9 +81,13 @@ def _macaroon_auth(conf):
 
     :return: A string suitable to use in an Authorization header.
     """
-    macaroon = conf.get('macaroon')
-    discharge = conf.get('discharge_macaroon')
-    auth = 'Macaroon root={}, discharge={}'.format(macaroon, discharge)
+    root_macaroon_raw = conf.get('macaroon')
+    unbound_raw = conf.get('unbound_discharge')
+    root_macaroon = macaroons.Macaroon.deserialize(root_macaroon_raw)
+    unbound = macaroons.Macaroon.deserialize(unbound_raw)
+    bound = root_macaroon.prepare_for_request(unbound)
+    auth = 'Macaroon root={}, discharge={}'.format(root_macaroon_raw,
+                                                   bound.serialize())
     return auth
 
 
@@ -137,17 +142,31 @@ class StoreClient(object):
         if error:
             result['errors'] = error
         else:
-            discharge, error = self.sso.get_discharge(
-                email, password, one_time_password, macaroon)
+            caveat_id = self.extract_caveat_id(macaroon)
+            if caveat_id is None:
+                error = 'Invalid macaroon'
+            else:
+                unbound_discharge, error = self.sso.get_unbound_discharge(
+                    email, password, one_time_password, caveat_id)
             if error:
                 result['errors'] = error
             else:
                 # The macaroon has been discharged, save it in the config
                 self.conf.set('macaroon', macaroon)
-                self.conf.set('discharge_macaroon', discharge)
+                self.conf.set('unbound_discharge', unbound_discharge)
                 self.conf.save()
                 result['success'] = True
         return result
+
+    def extract_caveat_id(self, root_macaroon):
+        macaroon = macaroons.Macaroon.deserialize(root_macaroon)
+        # macaroons are all bytes, never strings
+        sso_host = macaroons.convert_to_bytes(
+            parse.urlparse(self.sso.root_url).hostname)
+        for caveat in macaroon.caveats:
+            if caveat.location == sso_host:
+                return macaroons.convert_to_string(caveat.caveat_id)
+        return None
 
     def logout(self):
         self.conf.clear()
@@ -157,7 +176,7 @@ class StoreClient(object):
         return self.sca.register_name(name, DEFAULT_SERIES)
 
     def upload(self, binary_path, snap_name):
-        if self.conf.get('discharge_macaroon') is None:
+        if self.conf.get('unbound_discharge') is None:
             raise InvalidCredentialsError()
         data = _upload.upload_files(binary_path, self.updown)
         success = data.get('success', False)
@@ -264,9 +283,10 @@ class SSOClient(Client):
         super().__init__(conf, os.environ.get('UBUNTU_SSO_API_ROOT_URL',
                                               UBUNTU_SSO_API_ROOT_URL))
 
-    def get_discharge(self, email, password, one_time_password, macaroon):
+    def get_unbound_discharge(self, email, password, one_time_password,
+                              caveat_id):
         data = dict(email=email, password=password,
-                    macaroon=macaroon)
+                    caveat_id=caveat_id)
         if one_time_password:
             data['otp'] = one_time_password
         response = self.post(
@@ -291,7 +311,7 @@ class CPIClient(Client):
                                               UBUNTU_STORE_SEARCH_ROOT_URL))
 
     def search_package(self, snap_name, channel, arch):
-        if self.conf.get('discharge_macaroon') is None:
+        if self.conf.get('unbound_discharge') is None:
             raise InvalidCredentialsError()
 
         headers = {

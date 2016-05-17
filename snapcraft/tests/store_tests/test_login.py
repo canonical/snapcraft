@@ -17,6 +17,7 @@ import os
 import testscenarios
 
 from snapcraft import config
+from snapcraft.storeapi import macaroons
 from snapcraft.tests import store_tests
 
 
@@ -33,7 +34,7 @@ class TestLoginLogout(store_tests.RecordedTestCase):
         self.assertTrue(os.path.exists(config.Config.save_path()))
         conf = self.store.conf
         self.assertIsNotNone(conf.get('macaroon'))
-        self.assertIsNotNone(conf.get('discharge_macaroon'))
+        self.assertIsNotNone(conf.get('unbound_discharge'))
 
     def test_failed_login(self):
         res = self.login(password='wrongpassword')
@@ -61,3 +62,14 @@ class TestLoginErrors(store_tests.TestCase):
         self.store.sca.post = cookie
         response = self.login('email@example.com', 'secret')
         self.assertEqual('No macaroon, want a cookie ?', response['errors'])
+
+    def test_get_macarron_without_sso_caveat(self):
+        macaroon = macaroons.Macaroon(
+            'myapps.developer.staging.ubuntu.com',
+            'id_discharge', 'super secret key too')
+
+        def broken_macaroon(acls):
+            return macaroon.serialize(), None
+        self.store.sca.get_macaroon = broken_macaroon
+        response = self.login('email@example.com', 'secret')
+        self.assertEqual('Invalid macaroon', response['errors'])
