@@ -161,7 +161,9 @@ class ScanStatusTestCase(unittest.TestCase):
 
     def get_scan_status(self, exc):
         raiser = FakeSession(exc)
-        return _upload.get_scan_status(raiser, 'foo')
+        store = storeapi.StoreClient()
+        store.sca = raiser
+        return _upload.get_scan_status(store, 'foo')
 
     def test_get_status_connection_error(self):
         self.assertIsNone(self.get_scan_status(requests.ConnectionError))

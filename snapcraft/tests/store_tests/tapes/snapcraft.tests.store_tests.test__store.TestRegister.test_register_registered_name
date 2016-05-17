@@ -8,7 +8,7 @@
         "status_code": 200
     },
     {
-        "content": "{\"__all__\": [{\"code\": \"ALREADY_REGISTERED_ERROR\", \"message\": \"\\\"femto\\\" is already registered for 16.\"}]}",
+        "content": "{\"__all__\": [{\"code\": \"ALREADY_REGISTERED_ERROR\", \"message\": \"Whoops! The name \\\"femto\\\" is already taken. If you own the rights to it you can contact us at https://myapps.developer.staging.ubuntu.com/dev/click-apps/register-name/?series=16&name=femto to register it.\"}]}",
         "status_code": 400
     }
 ]

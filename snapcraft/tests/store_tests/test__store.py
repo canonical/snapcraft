@@ -119,8 +119,9 @@ class TestUpload(TestStore):
         def you_failed(*args):
             return dict(success=False, errors=['You failed'])
         self.addCleanup(
-            setattr, storeapi.SCAClient, 'upload', storeapi.SCAClient.upload)
-        storeapi.SCAClient.upload = you_failed
+            setattr, storeapi.StoreClient, 'upload',
+            storeapi.StoreClient.upload)
+        storeapi.StoreClient.upload = you_failed
         _store.upload(path)
         self.assertIn('Upload did not complete', self.logger.output)
         self.assertIn('Some errors were detected:\n\nYou failed\n',
@@ -249,12 +250,12 @@ class TestDownload(TestStore):
     def test_download_mismatch(self):
         self.login()
         self.addCleanup(self.logout)
-        self.addCleanup(setattr, storeapi.SCAClient, 'download',
-                        storeapi.SCAClient.download)
+        self.addCleanup(setattr, storeapi.StoreClient, 'download',
+                        storeapi.StoreClient.download)
 
         def raise_not_a_sha(*args):
             raise storeapi.SHAMismatchError('downloaded.snap', 'not-a-sha')
-        storeapi.SCAClient.download = raise_not_a_sha
+        storeapi.StoreClient.download = raise_not_a_sha
         exc = self.assertRaises(
             RuntimeError,
             _store.download, 'femto', 'stable', 'downloaded.snap', 'amd64')

@@ -58,6 +58,6 @@ class TestLoginErrors(store_tests.TestCase):
                 ok = False
                 text = 'No macaroon, want a cookie ?'
             return Response
-        self.store.post = cookie
+        self.store.sca.post = cookie
         response = self.login('email@example.com', 'secret')
         self.assertEqual('No macaroon, want a cookie ?', response['errors'])

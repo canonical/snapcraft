@@ -25,10 +25,8 @@ from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from .common import retry
-from .compat import open, urljoin
 from .constants import (
     DEFAULT_SERIES,
-    UBUNTU_STORE_UPLOAD_ROOT_URL,
     SCAN_STATUS_POLL_DELAY,
     SCAN_STATUS_POLL_RETRIES,
 )
@@ -47,10 +45,6 @@ def upload_files(binary_filename, updown):
     Submit a file to the Store upload service and return the
     corresponding upload_id.
     """
-    updown_url = os.environ.get('UBUNTU_STORE_UPLOAD_ROOT_URL',
-                                UBUNTU_STORE_UPLOAD_ROOT_URL)
-    unscanned_upload_url = urljoin(updown_url, 'unscanned-upload/')
-
     result = {'success': False, 'errors': []}
     try:
         binary_file_size = os.path.getsize(binary_filename)
@@ -77,7 +71,7 @@ def upload_files(binary_filename, updown):
 
         # Begin upload
         response = updown.post(
-            unscanned_upload_url,
+            'unscanned-upload/',
             data=monitor, headers={'Content-Type': monitor.content_type})
 
         # Make sure progress bar shows 100% complete
@@ -208,7 +202,7 @@ def is_scan_completed(response):
 
 def get_scan_status(store, url):
     try:
-        resp = store.get(url)
+        resp = store.sca.get(url)
         return resp
     except (requests.ConnectionError, requests.HTTPError):
         # Something went wrong and we couldn't acquire the status. Upper

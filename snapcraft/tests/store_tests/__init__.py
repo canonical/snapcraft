@@ -98,7 +98,7 @@ class TestCase(testtools.TestCase):
         self.addCleanup(setattr, _upload, 'ProgressBar', _upload.ProgressBar)
         _upload.ProgressBar = SilentProgressBar
 
-        self.store = storeapi.SCAClient()
+        self.store = storeapi.StoreClient()
         self.addCleanup(self.store.close)
 
     def login(self, email=None, password=None):
@@ -336,5 +336,5 @@ class RecordedTestCase(TestCase):
 
         # The store created in the base class has not been used yet, replace it
         # so it takes the SessionRecorder into account
-        self.store = storeapi.SCAClient()
+        self.store = storeapi.StoreClient()
         self.addCleanup(self.store.close)
