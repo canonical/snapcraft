@@ -41,17 +41,25 @@ class Validator:
         self._load_schema()
 
     @property
+    def schema(self):
+        """Return all schema properties."""
+
+        return self._schema['properties'].copy()
+
+    @property
     def part_schema(self):
-        sub = self.schema['properties']['parts']['patternProperties']
+        """Return part-specific schema properties."""
+
+        sub = self.schema['parts']['patternProperties']
         properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-]*$']['properties']
-        return properties.copy()
+        return properties
 
     def _load_schema(self):
         schema_file = os.path.abspath(os.path.join(
             common.get_schemadir(), 'snapcraft.yaml'))
         try:
             with open(schema_file) as fp:
-                self.schema = yaml.load(fp)
+                self._schema = yaml.load(fp)
         except FileNotFoundError:
             raise SnapcraftSchemaError(
                 'snapcraft validation file is missing from installation path')
@@ -60,7 +68,7 @@ class Validator:
         format_check = jsonschema.FormatChecker()
         try:
             jsonschema.validate(
-                self._snapcraft, self.schema, format_checker=format_check)
+                self._snapcraft, self._schema, format_checker=format_check)
         except jsonschema.ValidationError as e:
             messages = [e.message]
             if e.path:

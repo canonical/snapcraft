@@ -441,7 +441,7 @@ parts:
             "'description' is a required property")
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
-    def test_invalid_yaml_missing_confinement(self, mock_loadPlugin):
+    def test_yaml_missing_confinement_must_log(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 

@@ -552,5 +552,4 @@ def _ensure_confinement_default(yaml_data, schema):
     if 'confinement' not in yaml_data:
         logger.warning('"confinement" property not specified: defaulting '
                        'to "strict"')
-        properties = schema['properties']['confinement']
-        yaml_data['confinement'] = properties['default']
+        yaml_data['confinement'] = schema['confinement']['default']
