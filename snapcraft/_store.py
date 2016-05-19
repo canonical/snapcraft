@@ -57,7 +57,7 @@ def logout():
     logger.info('Credentials cleared.')
 
 
-def register_name(snap_name):
+def register(snap_name):
     logger.info('Registering {}.'.format(snap_name))
     store = storeapi.StoreClient()
     if store.conf.get('macaroon') is None:

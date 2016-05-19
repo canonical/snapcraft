@@ -84,15 +84,15 @@ class TestRegister(TestStore):
         self.login()
         self.addCleanup(self.logout)
         uniq_name = 'delete-me-{}'.format(str(uuid.uuid4().int)[:32])
-        self.assertTrue(_store.register_name(uniq_name))
+        self.assertTrue(_store.register(uniq_name))
 
     def test_register_without_login(self):
-        self.assertFalse(_store.register_name('foobar'))
+        self.assertFalse(_store.register('foobar'))
 
     def test_register_registered_name(self):
         self.login()
         self.addCleanup(self.logout)
-        self.assertFalse(_store.register_name('femto'))
+        self.assertFalse(_store.register('femto'))
 
 
 class TestUpload(TestStore):

@@ -119,7 +119,7 @@ from snapcraft._store import (                 # noqa
     login,
     logout,
     upload,
-    register_name,
+    register,
 )
 from snapcraft import common                   # noqa
 from snapcraft import plugins                  # noqa

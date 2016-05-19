@@ -34,12 +34,12 @@ class RegisterTestCase(integration_tests.TestCase):
         self.login(expect_success=True)
         self.addCleanup(self.logout)
         uniq_name = 'delete-me-{}'.format(str(uuid.uuid4().int)[:32])
-        output = self.run_snapcraft(['register-name', uniq_name])
+        output = self.run_snapcraft(['register', uniq_name])
         self.assertIn('Congrats! You\'re now the publisher'
                       ' for "{}"'.format(uniq_name), output)
 
     def test_register_without_login(self):
-        output = self.run_snapcraft(['register-name', 'foobar'])
+        output = self.run_snapcraft(['register', 'foobar'])
         self.assertIn('Registration failed.', output)
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', output)
@@ -47,5 +47,5 @@ class RegisterTestCase(integration_tests.TestCase):
     def test_register_registered_name(self):
         self.login(expect_success=True)
         self.addCleanup(self.logout)
-        output = self.run_snapcraft(['register-name', 'femto'])
+        output = self.run_snapcraft(['register', 'femto'])
         self.assertIn('Registration failed.', output)
