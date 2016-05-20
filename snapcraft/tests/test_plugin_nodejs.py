@@ -47,6 +47,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+            node_engine = '4'
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -58,7 +59,7 @@ class NodePluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(),
+                nodejs._get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -66,6 +67,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+            node_engine = '4'
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -79,7 +81,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(),
+                nodejs._get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
@@ -88,6 +90,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = ['my-pkg']
+            node_engine = '4'
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -102,7 +105,7 @@ class NodePluginTestCase(tests.TestCase):
                       cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(),
+                nodejs._get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download(),
             mock.call().provision(
@@ -115,6 +118,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = []
+            node_engine = '4'
 
         with self.assertRaises(EnvironmentError) as raised:
             nodejs.NodePlugin('test-part', Options(),
@@ -124,10 +128,12 @@ class NodePluginTestCase(tests.TestCase):
                          'architecture not supported (fantasy-arch)')
 
     def test_schema(self):
+        self.maxDiff = None
         plugin_schema = {
             '$schema': 'http://json-schema.org/draft-04/schema#',
             'additionalProperties': False,
             'properties': {
+                'node-engine': {'default': '4.2.2', 'type': 'string'},
                 'node-packages': {'default': [],
                                   'items': {'type': 'string'},
                                   'minitems': 1,
@@ -140,7 +146,7 @@ class NodePluginTestCase(tests.TestCase):
                 'source-type': {'default': '', 'type': 'string'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir'],
-            'build-properties': ['node-packages'],
+            'build-properties': [['node-packages', 'node-engine']],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)
@@ -159,6 +165,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+            node_engine = '4'
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
