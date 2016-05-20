@@ -64,9 +64,17 @@ class NodePlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['node-engine'] = {
+            'type': 'string',
+            'default': _NODEJS_VERSION
+        }
 
         if 'required' in schema:
             del schema['required']
+        
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'].append(['node-packages', 'node-engine'])
 
         return schema
 
