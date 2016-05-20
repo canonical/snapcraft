@@ -80,7 +80,7 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self._nodejs_tar = sources.Tar(_get_nodejs_release(),
+        self._nodejs_tar = sources.Tar(_get_nodejs_release(self.options.node-engine),
                                        os.path.join(self.partdir, 'npm'))
 
     def pull(self):
@@ -97,15 +97,15 @@ class NodePlugin(snapcraft.BasePlugin):
             self.run(['npm', 'install', '-g'])
 
 
-def _get_nodejs_base():
+def _get_nodejs_base(node-engine):
     machine = platform.machine()
     if machine not in _NODEJS_ARCHES:
         raise EnvironmentError('architecture not supported ({})'.format(
             machine))
-    return _NODEJS_BASE.format(version=_NODEJS_VERSION,
+    return _NODEJS_BASE.format(version=node-engine,
                                arch=_NODEJS_ARCHES[machine])
 
 
-def _get_nodejs_release():
-    return _NODEJS_TMPL.format(version=_NODEJS_VERSION,
-                               base=_get_nodejs_base())
+def _get_nodejs_release(node-engine):
+    return _NODEJS_TMPL.format(version=node-engine,
+                               base=_get_nodejs_base(node-engine))
