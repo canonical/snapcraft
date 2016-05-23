@@ -64,25 +64,23 @@ class NodePlugin(snapcraft.BasePlugin):
             'items': {
                 'type': 'string'
             },
-            'default': [],
+            'default': []
         }
         schema['properties']['node-engine'] = {
             'type': 'string'
         }
-
-        if 'required' in schema:
-            del schema['required']
+        # `node-engine` keyword is required, but `node-packages` is not.
+        schema['required'].append('node-engine')
+        schema['required'].remove('source')
+        schema['properties']['source']['default'] = '.'
 
         return schema
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        try:
-            self._nodejs_tar = sources.Tar(
-                    _get_nodejs_release(self.options.node_engine),
-                    os.path.join(self.partdir, 'npm'))
-        except AttributeError:
-            raise AttributeError('node-engine not defined in snapcraft.yaml')
+        self._nodejs_tar = sources.Tar(
+                _get_nodejs_release(self.options.node_engine),
+                os.path.join(self.partdir, 'npm'))
 
     def pull(self):
         super().pull()

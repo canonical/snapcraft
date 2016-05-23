@@ -112,7 +112,7 @@ class NodePluginTestCase(tests.TestCase):
             nodejs.NodePlugin('test-part', Options())
 
         self.assertEqual(raised.exception.__str__(),
-                         "node-engine not defined in snapcraft.yaml")
+                         "'Options' object has no attribute 'node_engine'")
 
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
@@ -140,15 +140,24 @@ class NodePluginTestCase(tests.TestCase):
                                    'type': 'array',
                                    'uniqueItems': True},
                  'node-engine': {'type': 'string'},
-                 'source': {'type': 'string'},
+                 'source': {'default': '.', 'type': 'string'},
                  'source-branch': {'default': '', 'type': 'string'},
                  'source-subdir': {'default': None, 'type': 'string'},
                  'source-tag': {'default': '', 'type:': 'string'},
                  'source-type': {'default': '', 'type': 'string'}},
-             'type': 'object'})
+             'type': 'object',
+             'required': ['node-engine']
+             })
 
     @mock.patch('snapcraft.BasePlugin.schema')
-    def test_required_not_in_parent_schema(self, schema_mock):
-        schema_mock.return_value = {'properties': {}}
+    def test_node_packages_not_required_in_parent_schema(self, schema_mock):
+        schema_mock.return_value = {
+                'properties': {
+                    'source': {
+                        'default': ''
+                        }
+                    },
+                'required': ['source']}
 
-        self.assertTrue('required' not in nodejs.NodePlugin.schema())
+        self.assertTrue(
+                'node-packages' not in nodejs.NodePlugin.schema()['required'])
