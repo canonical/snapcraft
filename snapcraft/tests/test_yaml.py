@@ -16,6 +16,7 @@
 
 import logging
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -451,11 +452,54 @@ parts:
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_yaml_valid_epochs(self, mock_loadPlugin):
         valid_epochs = [
-            0,
-            '1*',
-            1,
-            '400*',
-            1234,
+            {
+                'yaml': 0,
+                'expected': 0,
+            },
+            {
+                'yaml': '"0"',
+                'expected': '0',
+            },
+            {
+                'yaml': '1*',
+                'expected': '1*',
+            },
+            {
+                'yaml': '"1*"',
+                'expected': '1*',
+            },
+            {
+                'yaml': 1,
+                'expected': 1,
+            },
+            {
+                'yaml': '"1"',
+                'expected': '1',
+            },
+            {
+                'yaml': '400*',
+                'expected': '400*',
+            },
+            {
+                'yaml': '"400*"',
+                'expected': '400*',
+            },
+            {
+                'yaml': 1234,
+                'expected': 1234,
+            },
+            {
+                'yaml': '"1234"',
+                'expected': '1234',
+            },
+            {
+                'yaml': '0001',
+                'expected': 1,
+            },
+            {
+                'yaml': 1.0,
+                'expected': 1,
+            },
         ]
 
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -472,9 +516,9 @@ parts:
   part1:
     plugin: go
     stage-packages: [fswebcam]
-""".format(epoch))
+""".format(epoch['yaml']))
                 c = internal_yaml.Config()
-                self.assertEqual(c.data['epoch'], epoch)
+                self.assertEqual(c.data['epoch'], epoch['expected'])
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_invalid_yaml_invalid_epochs(self, mock_loadPlugin):
@@ -488,6 +532,9 @@ parts:
             'a',
             '1a',
             '1**',
+            '"01"',
+            '1.2',
+            '"1.2"',
         ]
 
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -509,17 +556,21 @@ parts:
                     internal_yaml.Config()
 
                 if 'less than' in raised.exception.message:
-                    self.assertEqual(
+                    self.assertRegex(
                         raised.exception.message,
                         "The 'epoch' property does not match the required "
-                        "schema: {} is less than the minimum of 0".format(
-                            epoch))
+                        "schema:.*is less than the minimum of 0")
+                elif 'not a multiple' in raised.exception.message:
+                    self.assertRegex(
+                        raised.exception.message,
+                        "The 'epoch' property does not match the required "
+                        "schema:.*is not a multiple of 1.0")
                 else:
-                    self.assertEqual(
+                    self.assertRegex(
                         raised.exception.message,
                         "The 'epoch' property does not match the required "
-                        "schema: '{}' does not match '^[1-9][0-9]*[*]?$'"
-                        .format(epoch))
+                        "schema:.*does not match '{}'".format(
+                            re.escape('^(?:0|[1-9][0-9]*[*]?)$')))
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
