@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - node-packages:
       (list)
       A list of dependencies to fetch using npm.
+    - node-engine:
+      (string)
+      The version of nodejs you want the snap to run on.
 """
 
 import logging
