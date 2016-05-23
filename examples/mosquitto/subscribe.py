@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 
 from paho.mqtt import client as mqtt_client
 
@@ -23,6 +24,9 @@ def on_message(unused1, unused2, message):
     # Ignore the unused arguments.
     del unused1, unused2
     _log(message.topic + ' ' + str(message.payload))
+    # XXX Exit on first message simplifyies the tests a lot, so this
+    # subscriber can get only one message. --elopio - 2016-05-02
+    sys.exit(0)
 
 
 def _log(message):
