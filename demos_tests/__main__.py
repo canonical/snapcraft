@@ -14,20 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft examples tests.
+"""Snapcraft demos tests.
 
 Usage:
-  examples_tests [--skip-install] [--ip IP_OR_HOSTNAME]
-                 [--port PORT_NUMBER] [--filter REGEXP]
-                 [--subunit]
+  demos_tests [--skip-install] [--ip IP_OR_HOSTNAME]
+              [--port PORT_NUMBER] [--filter REGEXP]
+              [--subunit]
 
 Options:
-  --skip-install       skip the tests that install the example snaps into a
+  --skip-install       skip the tests that install the demo snaps into a
                        snapp test bed.
   --ip IP_OR_HOSTNAME  IP of the testbed. If no IP is passed, a virtual
                        machine will be created for the test.
   --port PORT_NUMBER   SSH port of the testbed. Defaults to use port 22.
-  --filter REGEXP      a regular expression to filter the examples to test.
+  --filter REGEXP      a regular expression to filter the demos to test.
   --subunit            generate subunit results.
 
 """
@@ -37,7 +37,7 @@ import sys
 
 import docopt
 
-import examples_tests
+import demos_tests
 
 
 def main():
@@ -45,10 +45,10 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    examples_tests.config['skip-install'] = arguments['--skip-install']
-    examples_tests.config['ip'] = arguments['--ip']
-    examples_tests.config['port'] = arguments['--port']
-    examples_tests.config['filter'] = arguments['--filter']
+    demos_tests.config['skip-install'] = arguments['--skip-install']
+    demos_tests.config['ip'] = arguments['--ip']
+    demos_tests.config['port'] = arguments['--port']
+    demos_tests.config['filter'] = arguments['--filter']
 
     if arguments['--subunit']:
         from subunit import run
@@ -67,7 +67,7 @@ def main():
     # them again.
     argv = [sys.argv[0]]
     argv.append('discover')
-    argv.append('examples_tests')
+    argv.append('demos_tests')
     runner(module=None, verbosity=2, stdout=stdout,
            testRunner=test_runner, exit=exit, argv=argv)
 
