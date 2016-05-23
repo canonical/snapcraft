@@ -8,7 +8,7 @@
         "status_code": 200
     },
     {
-        "content": "{\"__all__\": [{\"code\": \"ALREADY_REGISTERED_ERROR\", \"message\": \"Whoops! The name \\\"femto\\\" is already taken. If you own the rights to it you can contact us at https://myapps.developer.staging.ubuntu.com/dev/click-apps/register-name/?series=16&name=femto to register it.\"}]}",
+        "content": "{\"__all__\": [{\"code\": \"ALREADY_REGISTERED_ERROR\", \"message\": \"The name 'femto' is taken. We can rename snaps to ensure their names match the expectations of most users. If you feel that needs to happen here please let us know at https://myapps.developer.staging.ubuntu.com/dev/click-apps/register-name/?series=16&name=femto\\n\\nMeanwhile, let's find a name you can use to get started. You should try to pick a name that people will associate with you, for example 'snappy-test-femto'.\"}]}",
         "status_code": 400
     }
 ]
