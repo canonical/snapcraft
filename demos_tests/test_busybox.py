@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import demos_tests
 
 
-class BusyBoxTestCase(examples_tests.ExampleTestCase):
+class BusyBoxTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'busybox'
+    demo_dir = 'busybox'
 
     def test_busybox(self):
-        self.build_snap(self.example_dir)
-        self.install_snap(self.example_dir, 'busybox', '1.0')
+        self.build_snap(self.demo_dir)
+        self.install_snap(self.demo_dir, 'busybox', '1.0')
         # Run the binary once to create the data dir.
         self.run_command_in_snappy_testbed([
             '/snap/bin/busybox.touch', '/tmp/'])
