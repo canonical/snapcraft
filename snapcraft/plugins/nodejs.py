@@ -40,7 +40,6 @@ from snapcraft import sources
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '4.2.2'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
     'i686': 'x86',
@@ -65,8 +64,7 @@ class NodePlugin(snapcraft.BasePlugin):
             'default': [],
         }
         schema['properties']['node-engine'] = {
-            'type': 'string',
-            'default': _NODEJS_VERSION
+            'type': 'string'
         }
 
         if 'required' in schema:
@@ -76,8 +74,12 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options):
         super().__init__(name, options)
-        self._nodejs_tar = sources.Tar(_get_nodejs_release(self.options.node-engine),
-                                       os.path.join(self.partdir, 'npm'))
+        try:
+            self._nodejs_tar = sources.Tar(
+                    _get_nodejs_release(self.options.node_engine),
+                    os.path.join(self.partdir, 'npm'))
+        except AttributeError:
+            raise AttributeError('node-engine not defined in snapcraft.yaml')
 
     def pull(self):
         super().pull()
@@ -93,15 +95,15 @@ class NodePlugin(snapcraft.BasePlugin):
             self.run(['npm', 'install', '-g'])
 
 
-def _get_nodejs_base(node-engine):
+def _get_nodejs_base(node_engine):
     machine = platform.machine()
     if machine not in _NODEJS_ARCHES:
         raise EnvironmentError('architecture not supported ({})'.format(
             machine))
-    return _NODEJS_BASE.format(version=node-engine,
+    return _NODEJS_BASE.format(version=node_engine,
                                arch=_NODEJS_ARCHES[machine])
 
 
-def _get_nodejs_release(node-engine):
-    return _NODEJS_TMPL.format(version=node-engine,
-                               base=_get_nodejs_base(node-engine))
+def _get_nodejs_release(node_engine):
+    return _NODEJS_TMPL.format(version=node_engine,
+                               base=_get_nodejs_base(node_engine))

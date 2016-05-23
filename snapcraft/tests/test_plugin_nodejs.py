@@ -44,6 +44,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+            node_engine = '4.4.4'
 
         plugin = nodejs.NodePlugin('test-part', Options())
 
@@ -54,7 +55,7 @@ class NodePluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(),
+                nodejs._get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().pull()])
 
@@ -62,6 +63,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+            node_engine = '4.4.4'
 
         plugin = nodejs.NodePlugin('test-part', Options())
 
@@ -74,7 +76,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(),
+                nodejs._get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(plugin.installdir)])
 
@@ -82,6 +84,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = ['my-pkg']
+            node_engine = '4.4.4'
 
         plugin = nodejs.NodePlugin('test-part', Options())
 
@@ -95,10 +98,21 @@ class NodePluginTestCase(tests.TestCase):
                       cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(),
+                nodejs._get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().pull(),
             mock.call().provision(plugin.installdir)])
+
+    def test_missing_node_engine_raises_exception(self):
+        class Options:
+            source = None
+            node_packages = []
+
+        with self.assertRaises(AttributeError) as raised:
+            nodejs.NodePlugin('test-part', Options())
+
+        self.assertEqual(raised.exception.__str__(),
+                         "node-engine not defined in snapcraft.yaml")
 
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
@@ -107,6 +121,7 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = []
+            node_engine = '4.4.4'
 
         with self.assertRaises(EnvironmentError) as raised:
             nodejs.NodePlugin('test-part', Options())
@@ -124,6 +139,7 @@ class NodePluginTestCase(tests.TestCase):
                                    'minitems': 1,
                                    'type': 'array',
                                    'uniqueItems': True},
+                 'node-engine': {'type': 'string'},
                  'source': {'type': 'string'},
                  'source-branch': {'default': '', 'type': 'string'},
                  'source-subdir': {'default': None, 'type': 'string'},
