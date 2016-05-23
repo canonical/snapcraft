@@ -18,8 +18,8 @@ apps:
     command: bin/app1
   app2:
     command: opt/bin/app2
-    caps:
-      - network-listener
+    plugs:
+      - network
 ```
 
 So in the example, *app1* will declare its **command** to the relative path

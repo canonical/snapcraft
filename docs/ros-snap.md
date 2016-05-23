@@ -276,7 +276,7 @@ apps:
 uses:
   listener:
     type: migration-skill
-    caps: [network-listener]
+    plugs: [network]
 
 parts:
   ros-project:
