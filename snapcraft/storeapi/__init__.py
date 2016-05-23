@@ -199,8 +199,7 @@ class StoreClient(object):
 
     def upload_snap(self, name, data):
         data['name'] = name
-        headers = {'Authorization': _macaroon_auth(self.conf)}
-        response = self.sca.post('snap-upload/', data=data, headers=headers)
+        response = self.sca.snap_upload(data)
         return response
 
     def download_snap(self, name, channel, arch, download_path,
@@ -270,6 +269,13 @@ class SCAClient(Client):
             #          == "Macaroon needs_refresh=1":
             # Refresh the discharge macaroon and retry
             pass
+        return response
+
+    def snap_upload(self, data):
+        auth = _macaroon_auth(self.conf)
+        response = self.post('snap-upload/', data=json.dumps(data),
+                             headers={'Authorization': auth,
+                                      'Content-Type': 'application/json'})
         return response
 
 
