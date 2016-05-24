@@ -2,6 +2,7 @@ name: test-package
 version: 0.1
 summary: Use source with nil
 description: Use source with nil (which should error out)
+confinement: strict
 
 parts:
     nil-part:

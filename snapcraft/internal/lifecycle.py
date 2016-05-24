@@ -37,11 +37,13 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = r'''name: # the name of the snap
+_TEMPLATE_YAML = """name: # the name of the snap
 version: # the version of the snap
 summary: # 79 char long summary
-description: # A longer description for the snap
-'''
+description: # a longer description for the snap
+confinement: devmode # use "strict" to enforce system access only via \
+declared interfaces
+"""
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'strip'}
 

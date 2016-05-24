@@ -3,6 +3,7 @@ version: 0.1
 summary: one line summary
 description: a longer description
 icon: icon.png
+confinement: strict
 
 parts:
     x-local-plugin:

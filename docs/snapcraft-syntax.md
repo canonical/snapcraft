@@ -17,9 +17,10 @@ contain.
 * `description` (string)
   The description for the snap, this can and is expected to be a longer
   explanation for the snap.
-* `config` (string)
-  Path to the runnable in snap that will be used as the [Snappy config
-  interface](https://developer.ubuntu.com/snappy/guides/config-command/).
+* `confinement` (string)
+  The type of confinement supported by the snap. Can be either "devmode" (i.e.
+  this snap doesn't support running under confinement) or "strict" (i.e. full
+  confinement supported via interfaces).
 * `apps` (yaml subsection)
   A map of keys for applications. These are either daemons or command line
   accessible binaries.
