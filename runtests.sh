@@ -104,6 +104,8 @@ if [ ! -z "$RUN_EXAMPLES" ]; then
         shift
     fi
     run_examples "$@"
+    # Temporary: until CI add "runtests demo" target
+    run_demos "$@"
 fi
 
 if [ ! -z "$RUN_DEMOS" ]; then
