@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import integration_tests
 from snapcraft.tests import fixture_setup
 
@@ -22,7 +24,10 @@ class LoginLogoutTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.StagingStore())
+        if os.getenv('TEST_USER_PASSWORD', None) is None:
+            self.useFixture(fixture_setup.FakeStore())
+        else:
+            self.useFixture(fixture_setup.StagingStore())
 
     def test_successful_login(self):
         self.addCleanup(self.logout)
