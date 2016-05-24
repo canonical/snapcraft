@@ -1,3 +1,25 @@
+snapcraft (2.8.9) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * autopkgtests: run the install examples tests in classic. (#481)
+    (LP: #1572764)
+
+  [ Matteo Bertini ]
+  * Fix typo in description: python2 -> python3. (#504)
+
+  [ Jamie Bennett ]
+  * Documentation: Use plugs instead of caps. (#507)
+
+  [ Chris Wayne ]
+  * Add in bash completion. (#453) (LP: #1570506)
+
+  [ Kyle Fazzari ]
+  * Make pull and build steps dirty if target arch changes. (#450)
+    (LP: #1564192)
+  * Add support for confinement property. (#501) (LP: #1580819)
+
+ -- Leonardo Arias Fonseca <leo.arias@canonical.com>  Tue, 24 May 2016 19:58:56 +0000
+
 snapcraft (2.8.8) xenial; urgency=medium
 
   * Create the 'partial' directory for apt. (#499) (LP: #1578007)
