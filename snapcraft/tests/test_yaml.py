@@ -550,6 +550,115 @@ parts:
             'on line 4 of snapcraft.yaml')
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_yaml_valid_epochs(self, mock_loadPlugin):
+        valid_epochs = [
+            {
+                'yaml': 0,
+                'expected': 0,
+            },
+            {
+                'yaml': '"0"',
+                'expected': '0',
+            },
+            {
+                'yaml': '1*',
+                'expected': '1*',
+            },
+            {
+                'yaml': '"1*"',
+                'expected': '1*',
+            },
+            {
+                'yaml': 1,
+                'expected': 1,
+            },
+            {
+                'yaml': '"1"',
+                'expected': '1',
+            },
+            {
+                'yaml': '400*',
+                'expected': '400*',
+            },
+            {
+                'yaml': '"400*"',
+                'expected': '400*',
+            },
+            {
+                'yaml': 1234,
+                'expected': 1234,
+            },
+            {
+                'yaml': '"1234"',
+                'expected': '1234',
+            },
+            {
+                'yaml': '0001',
+                'expected': 1,
+            },
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for epoch in valid_epochs:
+            with self.subTest(key=epoch):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+epoch: {}
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(epoch['yaml']))
+                c = internal_yaml.Config()
+                self.assertEqual(c.data['epoch'], epoch['expected'])
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_invalid_yaml_invalid_epochs(self, mock_loadPlugin):
+        invalid_epochs = [
+            '0*',
+            '_',
+            '1-',
+            '1+',
+            '-1',
+            '-1*',
+            'a',
+            '1a',
+            '1**',
+            '"01"',
+            '1.2',
+            '"1.2"',
+            '[1]'
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for epoch in invalid_epochs:
+            with self.subTest(key=epoch):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+epoch: {}
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(epoch))
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    internal_yaml.Config()
+
+                self.assertRegex(
+                    raised.exception.message,
+                    "The 'epoch' property does not match the required "
+                    "schema:.*is not a 'epoch' \(epochs are positive integers "
+                    "followed by an optional asterisk\)")
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"

@@ -45,6 +45,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     'plugs',
     'slots',
     'confinement',
+    'epoch',
 ]
 
 _KERNEL_KEYS = {
