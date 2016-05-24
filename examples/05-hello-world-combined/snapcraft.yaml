@@ -1,0 +1,42 @@
+name: hello-world-combined
+version: 0.1
+summary: All hello world examples using various technologies
+description:
+  A combination of multiple hello-world examples app in one single snap.
+  This code is part the snapcraft example tour at
+  https://snapcraft.io/create-snaps
+
+apps:
+  hello-world-cli:
+    command: hello
+
+  hello-service:
+    command: hello-world
+    daemon: simple
+    plugs: [network-bind]
+
+  hello-world-desktop:
+    command: qt5-launch hello-world-desktop
+    plugs: [x11]
+
+parts:
+  cli:
+    plugin: cmake
+    source: https://github.com/ubuntu-core/snapcraft-examples.git
+    source-subdir: 01-hello-world-cli/src
+
+  service:
+    plugin: nodejs
+    source: https://github.com/ubuntu-core/snapcraft-examples.git
+    source-subdir: 02-hello-world-service
+
+  desktop:
+    plugin: cmake
+    source: https://github.com/ubuntu-core/snapcraft-examples.git
+    source-subdir: 04-hello-world-desktop/src
+    build-packages:
+      - qtbase5-dev
+    stage-packages:
+      # Here for the plugins-- they're not linked in automatically.
+      - libqt5gui5
+    after: [qt5conf] # A wiki part
