@@ -502,6 +502,37 @@ description: test
             "The 'pull' step of 'part1' is out of date. Please clean that "
             "part's 'pull' step in order to rebuild", str(raised.exception))
 
+    @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
+    @mock.patch('snapcraft.repo.install_build_packages')
+    def test_pull_is_dirty_if_target_arch_changes(
+            self, mock_install_build_packages, mock_enable_cross_compilation):
+        self.make_snapcraft_yaml("""parts:
+  part1:
+    plugin: nil
+""")
+
+        # Pull it with amd64
+        lifecycle.execute('pull', snapcraft.ProjectOptions(
+            target_deb_arch='amd64'))
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        # Pull it again with armhf. Should catch that the part needs to be
+        # re-pulled due to the change in target architecture and raise an
+        # error.
+        with self.assertRaises(RuntimeError) as raised:
+            lifecycle.execute('pull', snapcraft.ProjectOptions(
+                target_deb_arch='armhf'))
+
+        self.assertEqual("Setting target machine to 'armhf'\n",
+                         self.fake_logger.output)
+
+        self.assertEqual(
+            "The 'pull' step of 'part1' is out of date. Please clean that "
+            "part's 'pull' step in order to rebuild", str(raised.exception))
+
 
 class HumanizeListTestCases(tests.TestCase):
 

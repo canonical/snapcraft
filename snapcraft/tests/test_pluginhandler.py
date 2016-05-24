@@ -601,6 +601,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is dict)
         self.assertEqual(0, len(state.properties))
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue('deb_arch' in state.project_options)
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
@@ -622,6 +624,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.properties) is dict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_pull')
     def test_clean_pull_state(self, mock_clean_pull):
@@ -648,6 +652,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is dict)
         self.assertEqual(0, len(state.properties))
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue('deb_arch' in state.project_options)
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
@@ -669,6 +675,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.properties) is dict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_build')
     def test_clean_build_state(self, mock_clean_build):
@@ -710,6 +718,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['*'])
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertEqual(0, len(state.project_options))
 
     def test_stage_state_with_stage_keyword(self):
         self.handler.code.options.stage = ['bin/1']
@@ -738,6 +748,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['bin/1'])
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertEqual(0, len(state.project_options))
 
         self.assertEqual('stage', self.handler.last_step())
 
@@ -847,6 +859,8 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
@@ -896,6 +910,8 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('lib2' in state.dependency_paths)
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
@@ -933,6 +949,8 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['bin/1'])
+        self.assertTrue(type(state.project_options) is dict)
+        self.assertEqual(0, len(state.project_options))
 
     def test_clean_strip_state(self):
         self.assertEqual(None, self.handler.last_step())
@@ -1011,7 +1029,9 @@ class IsDirtyTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.handler = pluginhandler.load_plugin('test-part', 'nil')
+        self.handler = pluginhandler.load_plugin(
+            'test-part', 'nil', project_options=snapcraft.ProjectOptions(
+                target_deb_arch='amd64'))
         self.handler.makedirs()
 
     def test_strip_is_dirty(self):
@@ -1062,12 +1082,13 @@ class IsDirtyTestCase(tests.TestCase):
             self.handler.is_dirty('stage'),
             'Expected vanilla handler to not have a dirty stage step')
 
-    def test_build_is_dirty(self):
+    def test_build_is_dirty_from_options(self):
         self.handler.build_properties = ['foo']
         self.handler.code.options.foo = ['bar']
         self.handler.mark_done(
             'build', states.BuildState(self.handler.build_properties,
-                                       self.handler.code.options))
+                                       self.handler.code.options,
+                                       snapcraft.ProjectOptions()))
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
         self.assertFalse(self.handler.is_dirty('build'),
@@ -1080,6 +1101,27 @@ class IsDirtyTestCase(tests.TestCase):
         self.assertTrue(self.handler.is_dirty('build'),
                         'Expected build step to be dirty')
 
+    @patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
+    def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
+        self.handler.mark_done(
+            'build', states.BuildState(self.handler.build_properties,
+                                       self.handler.code.options,
+                                       snapcraft.ProjectOptions()))
+        self.assertFalse(self.handler.is_clean('build'),
+                         'Build step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('build'),
+                         'Build step was unexpectedly dirty')
+
+        # Reload the plugin with new project options arch, thereby making it
+        # dirty.
+        self.handler = pluginhandler.load_plugin(
+            'test-part', 'nil', project_options=snapcraft.ProjectOptions(
+                target_deb_arch='armhf'))
+        self.assertFalse(self.handler.is_clean('build'),
+                         'Build step was unexpectedly clean')
+        self.assertTrue(self.handler.is_dirty('build'),
+                        'Expected build step to be dirty')
+
     def test_build_not_dirty_if_clean(self):
         self.assertTrue(self.handler.is_clean('build'),
                         'Expected vanilla handler to have clean build step')
@@ -1087,12 +1129,13 @@ class IsDirtyTestCase(tests.TestCase):
             self.handler.is_dirty('build'),
             'Expected vanilla handler to not have a dirty build step')
 
-    def test_pull_is_dirty(self):
+    def test_pull_is_dirty_from_options(self):
         self.handler.pull_properties = ['foo']
         self.handler.code.options.foo = ['bar']
         self.handler.mark_done(
             'pull', states.PullState(self.handler.pull_properties,
-                                     self.handler.code.options))
+                                     self.handler.code.options,
+                                     snapcraft.ProjectOptions()))
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
         self.assertFalse(self.handler.is_dirty('pull'),
@@ -1100,6 +1143,27 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Change the `foo` keyword-- thereby making the pull step dirty.
         self.handler.code.options.foo = ['baz']
+        self.assertFalse(self.handler.is_clean('pull'),
+                         'Pull step was unexpectedly clean')
+        self.assertTrue(self.handler.is_dirty('pull'),
+                        'Expected pull step to be dirty')
+
+    @patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
+    def test_pull_is_dirty_from_project(self, mock_enable_cross_compilation):
+        self.handler.mark_done(
+            'pull', states.PullState(self.handler.pull_properties,
+                                     self.handler.code.options,
+                                     snapcraft.ProjectOptions()))
+        self.assertFalse(self.handler.is_clean('pull'),
+                         'Pull step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('pull'),
+                         'Pull step was unexpectedly dirty')
+
+        # Reload the plugin with new project options arch, thereby making it
+        # dirty.
+        self.handler = pluginhandler.load_plugin(
+            'test-part', 'nil', project_options=snapcraft.ProjectOptions(
+                target_deb_arch='armhf'))
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('pull'),

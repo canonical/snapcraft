@@ -30,8 +30,8 @@ class StripState(State):
     yaml_tag = u'!StripState'
 
     def __init__(self, files, directories, dependency_paths=None,
-                 options=None):
-        super().__init__(options)
+                 options=None, project=None):
+        super().__init__(options, project)
 
         self.files = files
         self.directories = directories
@@ -48,3 +48,11 @@ class StripState(State):
         """
 
         return {'snap': getattr(options, 'snap', ['*']) or ['*']}
+
+    def project_options_of_interest(self, project):
+        """Extract the options concerning this step from the project.
+
+        The strip step doesn't care about any project options.
+        """
+
+        return {}
