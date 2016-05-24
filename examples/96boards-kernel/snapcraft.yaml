@@ -3,6 +3,7 @@ version: 4.4.0
 summary: A 96boards kernel built from source
 description: This is the reference kernel from 96boards
 type: kernel
+confinement: strict
 
 parts:
   kernel:

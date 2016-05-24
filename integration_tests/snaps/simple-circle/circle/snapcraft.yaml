@@ -6,6 +6,7 @@ description: |
     accept this snapcraft.yaml.
 version: 1.0
 icon: icon.svg
+confinement: strict
 
 parts:
     a:

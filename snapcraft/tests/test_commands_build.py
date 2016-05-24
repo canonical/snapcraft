@@ -30,6 +30,7 @@ class BuildCommandTestCase(tests.TestCase):
 version: 1.0
 summary: test build
 description: if the build is succesful the state file will be updated
+confinement: strict
 
 parts:
 {parts}"""

@@ -9,6 +9,7 @@ description:
  In this case the wiki defines it wants curl 7.44.0 and we are telling
  it to use 7.45.0
 icon: icon.png
+confinement: strict
 
 build-packages: [gcc]
 

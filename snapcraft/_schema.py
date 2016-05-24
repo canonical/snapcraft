@@ -41,10 +41,18 @@ class Validator:
         self._load_schema()
 
     @property
+    def schema(self):
+        """Return all schema properties."""
+
+        return self._schema['properties'].copy()
+
+    @property
     def part_schema(self):
-        sub = self._schema['properties']['parts']['patternProperties']
+        """Return part-specific schema properties."""
+
+        sub = self.schema['parts']['patternProperties']
         properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-]*$']['properties']
-        return properties.copy()
+        return properties
 
     def _load_schema(self):
         schema_file = os.path.abspath(os.path.join(

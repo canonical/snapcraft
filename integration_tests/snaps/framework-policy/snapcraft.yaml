@@ -4,6 +4,7 @@ summary: one line summary
 description: a longer description
 icon: icon.png
 framework-policy: dir
+confinement: strict
 
 parts:
     framework-project:
