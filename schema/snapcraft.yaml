@@ -120,6 +120,7 @@ properties:
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
         type: object
+        minProperties: 1
         properties:
           plugin:
             type: string
