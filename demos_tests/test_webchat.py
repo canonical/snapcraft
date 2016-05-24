@@ -19,10 +19,10 @@ import demos_tests
 
 class WebchatTestCase(demos_tests.ExampleTestCase):
 
-    demo_dir = 'webchat'
+    snap_content_dir = 'webchat'
 
     def test_webchat(self):
-        self.build_snap(self.demo_dir)
+        self.build_snap(self.snap_content_dir)
         snap_name = 'webchat'
-        self.install_snap(self.demo_dir, snap_name, '0.0.1')
+        self.install_snap(self.snap_content_dir, snap_name, '0.0.1')
         self.assert_service_running(snap_name, 'webchat')
