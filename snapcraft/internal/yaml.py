@@ -111,6 +111,7 @@ class Config:
 
         self._validator = Validator(self.data)
         self._validator.validate()
+        _ensure_confinement_default(self.data, self._validator.schema)
 
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
@@ -543,3 +544,12 @@ def load_config(project_options=None):
     except pluginhandler.PluginError as e:
         logger.error('Issue while loading plugin: {}'.format(e))
         sys.exit(1)
+
+
+def _ensure_confinement_default(yaml_data, schema):
+    # Provide hint if the confinement property is missing, and add the
+    # default. We use the schema here so we don't have to hard-code defaults.
+    if 'confinement' not in yaml_data:
+        logger.warning('"confinement" property not specified: defaulting '
+                       'to "strict"')
+        yaml_data['confinement'] = schema['confinement']['default']
