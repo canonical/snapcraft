@@ -5,6 +5,7 @@ description:
   This test will grab the defined license and set it up appropriately
   as a hook.
 license: LICENSE
+confinement: strict
 
 parts:
     nothing:

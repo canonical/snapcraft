@@ -3,6 +3,7 @@ version: 1.0
 summary: one line summary
 description: a longer description
 icon: icon.png
+confinement: strict
 
 apps:
   assemble-bin:

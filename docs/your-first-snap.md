@@ -79,6 +79,7 @@ name: webcam-webui
 version: 1
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
+confinement: strict
 ```
 
 If you run `snapcraft snap` now, it will complain about not having any `parts`.
@@ -263,6 +264,7 @@ version: 1
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
 icon: icon.png
+confinement: strict
 
 apps:
   webcam-webui:

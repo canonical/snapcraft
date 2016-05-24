@@ -3,6 +3,7 @@ version: 1
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
 icon: icon.png
+confinement: strict
 
 apps:
   webcam-webui:

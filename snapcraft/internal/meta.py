@@ -44,6 +44,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     'license-version',
     'plugs',
     'slots',
+    'confinement',
 ]
 
 _KERNEL_KEYS = {
