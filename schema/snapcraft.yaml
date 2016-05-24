@@ -67,6 +67,9 @@ properties:
     enum:
       - devmode
       - strict
+  epoch:
+    description: the snap epoch, used to specify upgrade paths
+    format: epoch
   apps:
     type: object
     additionalProperties: false
