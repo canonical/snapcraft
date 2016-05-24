@@ -18,57 +18,48 @@ import snapcraft.internal
 from snapcraft import tests
 
 
-class StripStateTestCase(tests.TestCase):
+class PullStateTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.files = {'foo'}
-        self.directories = {'bar'}
-        self.dependency_paths = {'baz'}
+        self.schema_properties = ['foo']
 
         class Options:
             def __init__(self):
-                self.snap = ['qux']
+                self.foo = ['bar']
 
         self.options = Options()
 
         class Project:
-            pass
+            def __init__(self):
+                self.deb_arch = 'amd64'
 
         self.project = Project()
 
-        self.state = snapcraft.internal.states.StripState(
-            self.files, self.directories, self.dependency_paths, self.options,
-            self.project)
+        self.state = snapcraft.internal.states.PullState(
+            self.schema_properties, self.options, self.project)
 
     def test_representation(self):
-        expected = ('StripState(dependency_paths: {}, directories: {}, '
-                    'files: {}, project_options: {}, properties: {})').format(
-            self.dependency_paths, self.directories, self.files,
-            self.project.__dict__, self.options.__dict__)
+        expected = ('PullState(project_options: {}, properties: {}, '
+                    'schema_properties: {})').format(
+            self.project.__dict__, self.options.__dict__,
+            self.schema_properties)
         self.assertEqual(expected, repr(self.state))
 
     def test_comparison(self):
-        other = snapcraft.internal.states.StripState(
-            self.files, self.directories, self.dependency_paths, self.options,
-            self.project)
+        other = snapcraft.internal.states.PullState(
+            self.schema_properties, self.options, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
     def test_comparison_not_equal(self):
         others = [
-            snapcraft.internal.states.StripState(
-                set(), self.directories, self.dependency_paths,
-                self.options, self.project),
-            snapcraft.internal.states.StripState(
-                self.files, set(), self.dependency_paths,
-                self.options, self.project),
-            snapcraft.internal.states.StripState(
-                self.files, self.directories, set(),
-                self.options, self.project),
-            snapcraft.internal.states.StripState(
-                self.files, self.directories, self.dependency_paths,
-                None, self.project)
+            snapcraft.internal.states.PullState(
+                [], self.options, self.project),
+            snapcraft.internal.states.PullState(
+                self.schema_properties, None, self.project),
+            snapcraft.internal.states.PullState(
+                self.schema_properties, self.options, None)
         ]
 
         for index, other in enumerate(others):
