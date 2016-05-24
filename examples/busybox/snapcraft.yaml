@@ -4,6 +4,7 @@ summary: busybox example to showcase the snapcraft kbuild plugin
 description:
    this is a snapcraft example package that contains the output of the
    snapcraft busybox example.
+confinement: strict
 
 apps:
   ls:

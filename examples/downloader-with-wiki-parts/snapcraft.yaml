@@ -3,6 +3,7 @@ version: 1.0
 summary: curl based downloader
 description: this is an example package
 icon: icon.png
+confinement: strict
 apps:
     test:
         command: bin/test

@@ -30,24 +30,36 @@ class BuildStateTestCase(tests.TestCase):
 
         self.options = Options()
 
+        class Project:
+            def __init__(self):
+                self.deb_arch = 'amd64'
+
+        self.project = Project()
+
         self.state = snapcraft.internal.states.BuildState(
-            self.schema_properties, self.options)
+            self.schema_properties, self.options, self.project)
 
     def test_representation(self):
-        expected = 'BuildState(properties: {}, schema_properties: {})'.format(
-            self.options.__dict__, self.schema_properties)
+        expected = ('BuildState(project_options: {}, properties: {}, '
+                    'schema_properties: {})').format(
+            self.project.__dict__, self.options.__dict__,
+            self.schema_properties)
         self.assertEqual(expected, repr(self.state))
 
     def test_comparison(self):
         other = snapcraft.internal.states.BuildState(
-            self.schema_properties, self.options)
+            self.schema_properties, self.options, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
     def test_comparison_not_equal(self):
         others = [
-            snapcraft.internal.states.BuildState([], self.options),
-            snapcraft.internal.states.BuildState(self.schema_properties, None)
+            snapcraft.internal.states.BuildState(
+                [], self.options, self.project),
+            snapcraft.internal.states.BuildState(
+                self.schema_properties, None, self.project),
+            snapcraft.internal.states.BuildState(
+                self.schema_properties, self.options, None)
         ]
 
         for index, other in enumerate(others):

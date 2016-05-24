@@ -29,8 +29,8 @@ yaml.add_constructor(u'!StageState', _stage_state_constructor)
 class StageState(State):
     yaml_tag = u'!StageState'
 
-    def __init__(self, files, directories, options=None):
-        super().__init__(options)
+    def __init__(self, files, directories, options=None, project=None):
+        super().__init__(options, project)
 
         self.files = files
         self.directories = directories
@@ -43,3 +43,11 @@ class StageState(State):
         """
 
         return {'stage': getattr(options, 'stage', ['*']) or ['*']}
+
+    def project_options_of_interest(self, project):
+        """Extract the options concerning this step from the project.
+
+        The stage step doesn't care about any project options.
+        """
+
+        return {}

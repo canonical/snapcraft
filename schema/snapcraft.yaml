@@ -60,6 +60,13 @@ properties:
       - explicit
   license-version:
     description: license version (used to re-trigger an agreement action).
+  confinement:
+    type: string
+    description: the type of confinement supported by the snap
+    default: strict
+    enum:
+      - devmode
+      - strict
   epoch:
     # epoch has no type since 1 is parsed as an int but 1* is a string
     description: the snap epoch, used to specify upgrade paths

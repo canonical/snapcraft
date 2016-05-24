@@ -2,6 +2,7 @@ name: opencv-example
 version: 1.0
 summary: Use OpenCV and OpenGL
 description: A simple OpenCV example
+confinement: strict
 
 build-packages: [gcc, g++, libc6-dev, libopencv-dev]
 

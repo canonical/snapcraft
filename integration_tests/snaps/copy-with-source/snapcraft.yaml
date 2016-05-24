@@ -4,6 +4,7 @@ summary: A test of the copy plugin
 description: |
     Copies a file and a directory into our final output using the source
     keyword. The test verifies they're there.
+confinement: strict
 
 parts:
   copy-example:

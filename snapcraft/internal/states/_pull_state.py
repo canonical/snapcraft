@@ -29,11 +29,11 @@ yaml.add_constructor(u'!PullState', _pull_state_constructor)
 class PullState(State):
     yaml_tag = u'!PullState'
 
-    def __init__(self, schema_properties, options=None):
+    def __init__(self, schema_properties, options=None, project=None):
         # Save this off before calling super() since we'll need it
         self.schema_properties = schema_properties
 
-        super().__init__(options)
+        super().__init__(options, project)
 
     def properties_of_interest(self, options):
         """Extract the properties concerning this step from the options.
@@ -48,3 +48,11 @@ class PullState(State):
                                                   None)
 
         return properties
+
+    def project_options_of_interest(self, project):
+        """Extract the options concerning this step from the project.
+
+        The pull step only cares about the target architecture.
+        """
+
+        return {'deb_arch': getattr(project, 'deb_arch', None)}

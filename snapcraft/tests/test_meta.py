@@ -61,6 +61,30 @@ class CreateTest(tests.TestCase):
 
         self.assertEqual(y, expected)
 
+    def test_create_meta_with_confinement(self):
+        confinement_types = [
+            'strict',
+            'devmode',
+        ]
+
+        for confinement_type in confinement_types:
+            with self.subTest(key=confinement_type):
+                self.config_data['confinement'] = confinement_type
+
+                create_snap_packaging(
+                    self.config_data, self.snap_dir, self.parts_dir)
+
+                self.assertTrue(
+                    os.path.exists(self.snap_yaml),
+                    'snap.yaml was not created')
+
+                with open(self.snap_yaml) as f:
+                    y = yaml.load(f)
+                self.assertTrue(
+                    'confinement' in y,
+                    'Expected "confinement" property to be in snap.yaml')
+                self.assertEqual(y['confinement'], confinement_type)
+
     def test_create_meta_with_declared_license(self):
         open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
         self.config_data['license'] = 'LICENSE'
