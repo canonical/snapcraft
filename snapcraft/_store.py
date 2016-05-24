@@ -23,7 +23,7 @@ import tempfile
 
 import yaml
 
-from snapcraft.config import clear_config, load_config, save_config
+from snapcraft.config import load_config, save_config
 from snapcraft import storeapi
 
 
@@ -34,11 +34,13 @@ def login():
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
-    otp = input('One-time password (just press enter if you don\'t use '
-                'two-factor authentication): ')
+    one_time_password = input(
+        'One-time password (just press enter if you don\'t use two-factor '
+        'authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    response = storeapi.login(email, password, token_name='snapcraft', otp=otp)
+    store = storeapi.StoreClient()
+    response = store.login(email, password, one_time_password)
     success = response.get('success', False)
 
     if success:
@@ -46,11 +48,13 @@ def login():
         logger.info('Login successful.')
     else:
         logger.info('Login failed.')
+    return success
 
 
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
-    clear_config()
+    store = storeapi.StoreClient()
+    store.logout()
     logger.info('Credentials cleared.')
 
 
