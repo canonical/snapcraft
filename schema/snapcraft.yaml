@@ -120,6 +120,7 @@ properties:
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
         type: object
+        minProperties: 1
         properties:
           plugin:
             type: string
@@ -170,12 +171,6 @@ properties:
             items:
               type: string
             default: ['*']
-          plugs:
-            type: object
-            description: used to connect to interfaces
-          slots:
-            type: object
-            description: used to offer interfaces
   plugs:
     type: object
   slots:
