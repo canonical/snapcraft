@@ -38,30 +38,28 @@ class PythonPluginTestCase(integration_tests.TestCase):
             FileExists())
         self.assertThat(
             glob.glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3*', 'argparse.py'))[0],
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
 
     def test_pull_with_pip_requirements_list(self):
         project_dir = 'pip-requirements-list'
         self.run_snapcraft('pull', project_dir)
+        python2_lib_dir = os.path.join(
+            project_dir, 'parts', 'python2', 'install', 'usr', 'lib', 
+            'python2.7')
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
-                'python2.7', 'argparse.py'),
+            os.path.join(python2_lib_dir, 'argparse.py'),
             FileExists())
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
-                'python2.7', 'dist-packages', 'jsonschema'),
+            os.path.join(python2_lib_dir, 'dist-packages', 'jsonschema'),
             DirExists())
+        python3_lib_dir = glob.glob(os.path.join(
+            project_dir, 'parts', 'python3', 'install', 'lib',
+            'python3*', 'site-packages'))[0]
         self.assertThat(
-            glob.glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3*', 'argparse.py'))[0],
+            os.path.join(python3_lib_dir, 'argparse.py'),
             FileExists())
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3', 'dist-packages', 'jsonschema'),
+            os.path.join(python3_lib_dir, 'jsonschema'),
             DirExists())
