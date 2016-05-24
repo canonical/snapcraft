@@ -196,8 +196,18 @@ class PluginHandler:
             # about, and we're comparing it to those same keys in the current
             # YAML (taken from self.code.options). If they've changed, then
             # this step is dirty and needs to run again.
-            return state.properties != state.properties_of_interest(
-                self.code.options)
+            if state.properties != state.properties_of_interest(
+                    self.code.options):
+                return True
+
+        with contextlib.suppress(AttributeError):
+            # state.project_options contains the old project options that this
+            # step cares about, and we're comparing it to those same options in
+            # the current project. If they've changed, then this step is dirty
+            # and needs to run again.
+            if state.project_options != state.project_options_of_interest(
+                    self._project_options):
+                return True
 
         return False
 
@@ -258,7 +268,7 @@ class PluginHandler:
         self.notify_part_progress('Pulling')
         self.code.pull()
         self.mark_done('pull', states.PullState(
-            self.pull_properties, self.code.options))
+            self.pull_properties, self.code.options, self._project_options))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
@@ -287,7 +297,7 @@ class PluginHandler:
         self.notify_part_progress('Building')
         self.code.build()
         self.mark_done('build', states.BuildState(
-            self.build_properties, self.code.options))
+            self.build_properties, self.code.options, self._project_options))
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
@@ -337,7 +347,7 @@ class PluginHandler:
         # dependencies here too
 
         self.mark_done('stage', states.StageState(
-            snap_files, snap_dirs, self.code.options))
+            snap_files, snap_dirs, self.code.options, self._project_options))
 
     def clean_stage(self, project_staged_state, hint=''):
         if self.is_clean('stage'):
@@ -398,7 +408,8 @@ class PluginHandler:
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
         self.mark_done('strip', states.StripState(
-            snap_files, snap_dirs, dependency_paths, self.code.options))
+            snap_files, snap_dirs, dependency_paths, self.code.options,
+            self._project_options))
 
     def clean_strip(self, project_stripped_state, hint=''):
         if self.is_clean('strip'):
