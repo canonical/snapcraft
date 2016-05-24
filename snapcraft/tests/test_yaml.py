@@ -1211,6 +1211,49 @@ class TestValidation(tests.TestCase):
                          msg=self.data)
 
 
+class TestPluginLoadingProperties(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        dirs.setup_dirs()
+
+        self.data = """name: my-package-1
+version: 1.0-snapcraft1~ppa1
+summary: my summary less that 79 chars
+description: description which can be pretty long
+parts:
+    part1:
+        plugin: nil
+"""
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(self.fake_logger)
+        self.expected_message_template = (
+            "Issue while loading plugin: properties failed to load for "
+            "part1: Additional properties are not allowed ('{}' was "
+            "unexpected)\n")
+
+    def test_slots_as_properties_should_fail(self):
+        self.data += '        slots: [slot1]'
+        self.make_snapcraft_yaml(self.data)
+
+        with self.assertRaises(SystemExit):
+            internal_yaml.load_config()
+
+        expected_message = self.expected_message_template.format('slots')
+        self.assertEqual(expected_message, self.fake_logger.output)
+
+    def test_plugs_as_properties_should_fail(self):
+        self.data += '        plugs: [plug1]'
+        self.make_snapcraft_yaml(self.data)
+
+        with self.assertRaises(SystemExit):
+            internal_yaml.load_config()
+
+        expected_message = self.expected_message_template.format('plugs')
+        self.assertEqual(expected_message, self.fake_logger.output)
+
+
 class TestFilesets(tests.TestCase):
 
     def setUp(self):
