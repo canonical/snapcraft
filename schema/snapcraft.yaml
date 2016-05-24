@@ -68,13 +68,8 @@ properties:
       - devmode
       - strict
   epoch:
-    # epoch has no type since 1 is parsed as an int but 1* is a string
     description: the snap epoch, used to specify upgrade paths
-    pattern: "^(?:0|[1-9][0-9]*[*]?)$"
-    # This only affects numeric values. Strings will be caught by pattern.
-    minimum: 0
-    # This only affects numeric values. Strings will be caught by pattern.
-    multipleOf: 1.0
+    format: epoch
   apps:
     type: object
     additionalProperties: false

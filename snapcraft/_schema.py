@@ -74,5 +74,7 @@ class Validator:
             if e.path:
                 messages.insert(0, "The '{}' property does not match the "
                                    "required schema:".format(e.path.pop()))
+            if e.cause:
+                messages.append('({})'.format(e.cause))
 
             raise SnapcraftSchemaError(' '.join(messages))

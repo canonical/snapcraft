@@ -16,7 +16,6 @@
 
 import logging
 import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -597,10 +596,6 @@ parts:
                 'yaml': '0001',
                 'expected': 1,
             },
-            {
-                'yaml': 1.0,
-                'expected': 1,
-            },
         ]
 
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -636,6 +631,7 @@ parts:
             '"01"',
             '1.2',
             '"1.2"',
+            '[1]'
         ]
 
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -656,22 +652,11 @@ parts:
                 with self.assertRaises(SnapcraftSchemaError) as raised:
                     internal_yaml.Config()
 
-                if 'less than' in raised.exception.message:
-                    self.assertRegex(
-                        raised.exception.message,
-                        "The 'epoch' property does not match the required "
-                        "schema:.*is less than the minimum of 0")
-                elif 'not a multiple' in raised.exception.message:
-                    self.assertRegex(
-                        raised.exception.message,
-                        "The 'epoch' property does not match the required "
-                        "schema:.*is not a multiple of 1.0")
-                else:
-                    self.assertRegex(
-                        raised.exception.message,
-                        "The 'epoch' property does not match the required "
-                        "schema:.*does not match '{}'".format(
-                            re.escape('^(?:0|[1-9][0-9]*[*]?)$')))
+                self.assertRegex(
+                    raised.exception.message,
+                    "The 'epoch' property does not match the required "
+                    "schema:.*is not a 'epoch' \(epochs are positive integers "
+                    "followed by an optional asterisk\)")
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):

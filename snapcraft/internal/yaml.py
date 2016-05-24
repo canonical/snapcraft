@@ -19,6 +19,7 @@ import contextlib
 import logging
 import os
 import os.path
+import re
 import sys
 
 import jsonschema
@@ -57,6 +58,21 @@ def _validate_icon(instance):
     if not os.path.exists(instance):
         raise jsonschema.exceptions.ValidationError(
             "Specified icon '{}' does not exist".format(instance))
+
+    return True
+
+
+class InvalidEpochError(Exception):
+    pass
+
+
+@jsonschema.FormatChecker.cls_checks('epoch', raises=InvalidEpochError)
+def _validate_epoch(instance):
+    str_instance = str(instance)
+    pattern = re.compile('^(?:0|[1-9][0-9]*[*]?)$')
+    if not pattern.match(str_instance):
+        raise InvalidEpochError(
+            "epochs are positive integers followed by an optional asterisk")
 
     return True
 
