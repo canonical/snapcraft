@@ -34,7 +34,7 @@ parseargs(){
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
         elif [ "$1" == "examples" ] ; then
-            export RUN_DEMOS="true"
+            export RUN_EXAMPLES="true"
         elif [ "$1" == "demos" ] ; then
             export RUN_DEMOS="true"
         else
@@ -76,6 +76,10 @@ run_integration(){
     python3 -m unittest discover -b -v -s integration_tests
 }
 
+run_examples(){
+    python3 -m examples_tests "$@"
+}
+
 run_demos(){
     python3 -m demos_tests "$@"
 }
@@ -93,13 +97,16 @@ fi
 if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration
 fi
-
-if [ ! -z "$RUN_DEMOS" ]; then
+if [ ! -z "$RUN_EXAMPLES" ]; then
     if [ "$1" == "examples" ] ; then
         # shift to remove the test suite name and be able to pass the rest
         # to the examples suite.
         shift
     fi
+    run_examples "$@"
+fi
+
+if [ ! -z "$RUN_DEMOS" ]; then
     if [ "$1" == "demos" ] ; then
         # shift to remove the test suite name and be able to pass the rest
         # to the demos suite.
