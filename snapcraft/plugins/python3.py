@@ -78,7 +78,7 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def env(self, root):
         return [
-            'PYTHONPATH={0}'.format(os.path.join(
+            'PYTHONPATH={}'.format(os.path.join(
                 root, 'usr', 'lib', self.python_version, 'dist-packages')),
             'PYTHONUSERBASE={}'.format(root),
             # This is until we figure out how to get pip to download only
