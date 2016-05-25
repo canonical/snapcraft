@@ -14,42 +14,45 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
-from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import responses
 from requests_oauthlib import OAuth1Session
 
+from snapcraft import (
+    config,
+    tests
+)
 from snapcraft.storeapi.common import (
     get_oauth_session,
-    store_api_call,
     retry,
+    store_api_call,
 )
 
 
-class GetOAuthSessionTestCase(TestCase):
+class GetOAuthSessionTestCase(tests.TestCase):
 
     def test_get_oauth_session_when_no_config(self):
-        config = {}
-        session = get_oauth_session(config)
+        conf = config.Config()
+        session = get_oauth_session(conf)
         self.assertIsNone(session)
 
     def test_get_oauth_session_when_partial_config(self):
-        config = {
-            'consumer_key': 'consumer-key',
-            'consumer_secret': 'consumer-secret',
-        }
-        session = get_oauth_session(config)
+        conf = config.Config()
+        conf.set('consumer_key', 'consumer-key')
+        conf.set('consumer_secret', 'consumer-secret')
+        conf.save()
+        session = get_oauth_session(conf)
         self.assertIsNone(session)
 
     def test_get_oauth_session(self):
-        config = {
-            'consumer_key': 'consumer-key',
-            'consumer_secret': 'consumer-secret',
-            'token_key': 'token-key',
-            'token_secret': 'token-secret',
-        }
-        session = get_oauth_session(config)
+        conf = config.Config()
+        conf.set('consumer_key', 'consumer-key')
+        conf.set('consumer_secret', 'consumer-secret')
+        conf.set('token_key', 'token-key')
+        conf.set('token_secret', 'token-secret')
+        conf.save()
+        session = get_oauth_session(conf)
         self.assertIsInstance(session, OAuth1Session)
         self.assertEqual(session.auth.client.client_key, 'consumer-key')
         self.assertEqual(session.auth.client.client_secret, 'consumer-secret')
@@ -58,7 +61,7 @@ class GetOAuthSessionTestCase(TestCase):
                          'token-secret')
 
 
-class ApiCallTestCase(TestCase):
+class ApiCallTestCase(tests.TestCase):
 
     def setUp(self):
         super(ApiCallTestCase, self).setUp()
@@ -154,7 +157,7 @@ class ApiCallTestCase(TestCase):
                          json.dumps({'request': 'value'}))
 
 
-class RetryDecoratorTestCase(TestCase):
+class RetryDecoratorTestCase(tests.TestCase):
 
     def target(self, *args, **kwargs):
         return dict(args=args, kwargs=kwargs)

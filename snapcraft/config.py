@@ -13,69 +13,73 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import, unicode_literals
+
+import configparser
 import os
-from configparser import ConfigParser
-from urllib.parse import urlparse
+import urllib.parse
 
-from xdg.BaseDirectory import load_first_config, save_config_path
+from xdg import BaseDirectory
 
-from snapcraft.storeapi.constants import UBUNTU_SSO_API_ROOT_URL
-
-
-def load_config():
-    """Read and return configuration from disk."""
-    filename = load_first_config('snapcraft', 'snapcraft.cfg') or ''
-
-    parser = ConfigParser()
-    if os.path.exists(filename):
-        parser.read(filename)
-
-    api_endpoint = os.environ.get(
-        'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-    location = urlparse(api_endpoint).netloc
-
-    config = {}
-    if parser.has_section(location):
-        config.update(dict(parser.items(location)))
-    return config
+from snapcraft.storeapi import constants
 
 
-def save_config(data):
-    """Store current configuration to disk."""
-    config_dir = save_config_path('snapcraft')
-    filename = os.path.join(config_dir, 'snapcraft.cfg')
+class Config(object):
+    """Hold configuration options in sections.
 
-    parser = ConfigParser()
-    if os.path.exists(filename):
-        parser.read(filename)
+    There can be two sections for the sso related credentials: production and
+    staging. This is governed by the UBUNTU_SSO_API_ROOT_URL environment
+    variable. Other sections are ignored but preserved.
 
-    api_endpoint = os.environ.get(
-        'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-    location = urlparse(api_endpoint).netloc
-    if not parser.has_section(location):
-        parser.add_section(location)
+    """
 
-    for key, value in data.items():
-        parser.set(location, key, str(value))
+    def __init__(self):
+        self.parser = configparser.ConfigParser()
+        self.filename = None
+        self.load()
 
-    with open(filename, 'w') as fd:
-        parser.write(fd)
+    def _section_name(self):
+        # The only section we care about is the host from the SSO url
+        url = os.environ.get('UBUNTU_SSO_API_ROOT_URL',
+                             constants.UBUNTU_SSO_API_ROOT_URL)
+        return urllib.parse.urlparse(url).netloc
 
+    def get(self, option_name):
+        try:
+            return self.parser.get(self._section_name(), option_name)
+        except (configparser.NoSectionError,
+                configparser.NoOptionError,
+                KeyError):
+            return None
 
-def clear_config():
-    """Remove configuration section from files on disk."""
-    config_dir = save_config_path('snapcraft')
-    filename = os.path.join(config_dir, 'snapcraft.cfg')
+    def set(self, option_name, value):
+        section_name = self._section_name()
+        if not self.parser.has_section(section_name):
+            self.parser.add_section(section_name)
+        return self.parser.set(section_name, option_name, value)
 
-    parser = ConfigParser()
-    if os.path.exists(filename):
-        parser.read(filename)
+    def is_empty(self):
+        # Only check the current section
+        section_name = self._section_name()
+        if self.parser.has_section(section_name):
+            if self.parser.options(section_name):
+                return False
+        return True
 
-    api_endpoint = os.environ.get(
-        'UBUNTU_SSO_API_ROOT_URL', UBUNTU_SSO_API_ROOT_URL)
-    location = urlparse(api_endpoint).netloc
-    parser.remove_section(location)
+    def load(self):
+        self.filename = BaseDirectory.load_first_config(
+            'snapcraft', 'snapcraft.cfg')
+        if self.filename and os.path.exists(self.filename):
+            self.parser.read(self.filename)
 
-    with open(filename, 'w') as fd:
-        parser.write(fd)
+    @staticmethod
+    def save_path():
+        return os.path.join(BaseDirectory.save_config_path('snapcraft'),
+                            'snapcraft.cfg')
+
+    def save(self):
+        self.filename = self.save_path()
+        with open(self.filename, 'w') as f:
+            self.parser.write(f)
+
+    def clear(self):
+        self.parser.remove_section(self._section_name())

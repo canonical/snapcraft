@@ -20,12 +20,15 @@ from unittest import mock
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import tests
+from snapcraft import (
+    config,
+    tests
+)
 
 
 class LogoutCommandTestCase(tests.TestCase):
 
-    @mock.patch('snapcraft.config.clear_config')
+    @mock.patch.object(config.Config, 'clear')
     def test_logout_clears_config(self, mock_clear):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)

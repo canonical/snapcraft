@@ -17,8 +17,10 @@
 import os
 import threading
 import urllib.parse
+from unittest import mock
 
 import fixtures
+import xdg
 
 from snapcraft.tests import fake_servers
 
@@ -31,6 +33,27 @@ class TempCWD(fixtures.TempDir):
         current_dir = os.getcwd()
         self.addCleanup(os.chdir, current_dir)
         os.chdir(self.path)
+
+
+class TempConfig(fixtures.Fixture):
+    """Isolate a test from xdg so a private temp config is used."""
+
+    def __init__(self, path):
+        super().setUp()
+        self.path = path
+
+    def setUp(self):
+        super().setUp()
+        patcher_home = mock.patch(
+            'xdg.BaseDirectory.xdg_config_home',
+            new=os.path.join(self.path, '.config'))
+        patcher_home.start()
+        self.addCleanup(patcher_home.stop)
+        patcher_dirs = mock.patch(
+            'xdg.BaseDirectory.xdg_config_dirs',
+            new=[xdg.BaseDirectory.xdg_config_home])
+        patcher_dirs.start()
+        self.addCleanup(patcher_dirs.stop)
 
 
 class FakeStore(fixtures.Fixture):

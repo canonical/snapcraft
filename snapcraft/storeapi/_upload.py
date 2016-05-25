@@ -36,6 +36,8 @@ from .constants import (
     SCAN_STATUS_POLL_DELAY,
     SCAN_STATUS_POLL_RETRIES,
 )
+from snapcraft import config
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +47,13 @@ def _update_progress_bar(progress_bar, maximum_value, monitor):
         progress_bar.update(monitor.bytes_read)
 
 
-def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
-           config=None):
+def upload(binary_filename, snap_name, metadata_filename='', metadata=None):
     """Create a new upload based on a snap package."""
     # Print a newline so the progress bar has some breathing room.
     print('')
 
-    data = upload_files(binary_filename, config=config)
+    conf = config.Config()
+    data = upload_files(binary_filename, config=conf)
     success = data.get('success', False)
     errors = data.get('errors', [])
     if not success:
@@ -60,7 +62,7 @@ def upload(binary_filename, snap_name, metadata_filename='', metadata=None,
 
     meta = read_metadata(metadata_filename)
     meta.update(metadata or {})
-    result = upload_app(snap_name, data, metadata=meta, config=config)
+    result = upload_app(snap_name, data, metadata=meta, config=conf)
     success = result.get('success', False)
     errors = result.get('errors', [])
     app_url = result.get('application_url', '')
