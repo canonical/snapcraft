@@ -47,7 +47,11 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+<<<<<<< HEAD
             node_engine = '4'
+=======
+            node_engine = '4.4.4'
+>>>>>>> c140dcad8011a00e5bded54dd76f04c2e38745c8
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -67,7 +71,11 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             node_packages = []
+<<<<<<< HEAD
             node_engine = '4'
+=======
+            node_engine = '4.4.4'
+>>>>>>> c140dcad8011a00e5bded54dd76f04c2e38745c8
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -90,7 +98,11 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = ['my-pkg']
+<<<<<<< HEAD
             node_engine = '4'
+=======
+            node_engine = '4.4.4'
+>>>>>>> c140dcad8011a00e5bded54dd76f04c2e38745c8
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -118,7 +130,11 @@ class NodePluginTestCase(tests.TestCase):
         class Options:
             source = None
             node_packages = []
+<<<<<<< HEAD
             node_engine = '4'
+=======
+            node_engine = '4.4.4'
+>>>>>>> c140dcad8011a00e5bded54dd76f04c2e38745c8
 
         with self.assertRaises(EnvironmentError) as raised:
             nodejs.NodePlugin('test-part', Options(),
@@ -129,6 +145,7 @@ class NodePluginTestCase(tests.TestCase):
 
     def test_schema(self):
         self.maxDiff = None
+<<<<<<< HEAD
         plugin_schema = {
             '$schema': 'http://json-schema.org/draft-04/schema#',
             'additionalProperties': False,
@@ -158,6 +175,30 @@ class NodePluginTestCase(tests.TestCase):
             'pull-properties': [],
             'build-properties': []
         }
+=======
+        self.assertEqual(
+            nodejs.NodePlugin.schema(),
+            {'$schema': 'http://json-schema.org/draft-04/schema#',
+             'properties': {
+                 'node-packages': {'default': [],
+                                   'items': {'type': 'string'},
+                                   'minitems': 1,
+                                   'type': 'array',
+                                   'uniqueItems': True},
+                 'node-engine': {'default': '4.4.4', 'type': 'string'},
+                 'source': {'type': 'string'},
+                 'source-branch': {'default': '', 'type': 'string'},
+                 'source-subdir': {'default': None, 'type': 'string'},
+                 'source-tag': {'default': '', 'type:': 'string'},
+                 'source-type': {'default': '', 'type': 'string'}},
+             'type': 'object'
+             })
+
+    @mock.patch('snapcraft.BasePlugin.schema')
+    def test_node_packages_not_required_in_parent_schema(self, schema_mock):
+
+        schema_mock.return_value = {'properties': {}}
+>>>>>>> c140dcad8011a00e5bded54dd76f04c2e38745c8
 
         self.assertTrue('required' not in nodejs.NodePlugin.schema())
 

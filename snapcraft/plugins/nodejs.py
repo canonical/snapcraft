@@ -44,7 +44,6 @@ from snapcraft import sources
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '4.2.2'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
     'i686': 'x86',
@@ -66,7 +65,11 @@ class NodePlugin(snapcraft.BasePlugin):
             'items': {
                 'type': 'string'
             },
-            'default': [],
+            'default': []
+        }
+        schema['properties']['node-engine'] = {
+            'type': 'string',
+            'default': '4.4.4'
         }
         schema['properties']['node-engine'] = {
             'type': 'string',
