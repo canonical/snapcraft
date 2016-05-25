@@ -70,10 +70,6 @@ class NodePlugin(snapcraft.BasePlugin):
         }
         schema['properties']['node-engine'] = {
             'type': 'string',
-            'default': '4.4.4'
-        }
-        schema['properties']['node-engine'] = {
-            'type': 'string',
             'default': _NODEJS_VERSION
         }
 
