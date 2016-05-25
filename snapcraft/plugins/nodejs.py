@@ -67,12 +67,12 @@ class NodePlugin(snapcraft.BasePlugin):
             'default': []
         }
         schema['properties']['node-engine'] = {
-            'type': 'string'
+            'type': 'string',
+            'default': '4.4.4'
         }
-        # `node-engine` keyword is required, but `node-packages` is not.
-        schema['required'].append('node-engine')
-        schema['required'].remove('source')
-        schema['properties']['source']['default'] = '.'
+
+        if 'required' in schema:
+            del schema['required']
 
         return schema
 

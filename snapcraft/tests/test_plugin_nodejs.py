@@ -103,17 +103,6 @@ class NodePluginTestCase(tests.TestCase):
             mock.call().pull(),
             mock.call().provision(plugin.installdir)])
 
-    def test_missing_node_engine_raises_exception(self):
-        class Options:
-            source = None
-            node_packages = []
-
-        with self.assertRaises(AttributeError) as raised:
-            nodejs.NodePlugin('test-part', Options())
-
-        self.assertEqual(raised.exception.__str__(),
-                         "'Options' object has no attribute 'node_engine'")
-
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
         machine_mock.return_value = 'fantasy-arch'
@@ -130,6 +119,7 @@ class NodePluginTestCase(tests.TestCase):
                          'architecture not supported (fantasy-arch)')
 
     def test_schema(self):
+        self.maxDiff = None
         self.assertEqual(
             nodejs.NodePlugin.schema(),
             {'$schema': 'http://json-schema.org/draft-04/schema#',
@@ -139,25 +129,18 @@ class NodePluginTestCase(tests.TestCase):
                                    'minitems': 1,
                                    'type': 'array',
                                    'uniqueItems': True},
-                 'node-engine': {'type': 'string'},
-                 'source': {'default': '.', 'type': 'string'},
+                 'node-engine': {'default': '4.4.4', 'type': 'string'},
+                 'source': {'type': 'string'},
                  'source-branch': {'default': '', 'type': 'string'},
                  'source-subdir': {'default': None, 'type': 'string'},
                  'source-tag': {'default': '', 'type:': 'string'},
                  'source-type': {'default': '', 'type': 'string'}},
-             'type': 'object',
-             'required': ['node-engine']
+             'type': 'object'
              })
 
     @mock.patch('snapcraft.BasePlugin.schema')
     def test_node_packages_not_required_in_parent_schema(self, schema_mock):
-        schema_mock.return_value = {
-                'properties': {
-                    'source': {
-                        'default': ''
-                        }
-                    },
-                'required': ['source']}
 
-        self.assertTrue(
-                'node-packages' not in nodejs.NodePlugin.schema()['required'])
+        schema_mock.return_value = {'properties': {}}
+
+        self.assertTrue('required' not in nodejs.NodePlugin.schema())
