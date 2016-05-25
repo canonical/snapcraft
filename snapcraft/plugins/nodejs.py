@@ -78,7 +78,8 @@ class NodePlugin(snapcraft.BasePlugin):
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append(['node-packages', 'node-engine'])
+        schema['build-properties'].append('node-packages')
+        schema['build-properties'].append('node-engine')
 
         return schema
 
