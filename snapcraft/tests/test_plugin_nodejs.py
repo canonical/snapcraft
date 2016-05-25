@@ -146,7 +146,7 @@ class NodePluginTestCase(tests.TestCase):
                 'source-type': {'default': '', 'type': 'string'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir'],
-            'build-properties': [['node-packages', 'node-engine']],
+            'build-properties': ['node-packages', 'node-engine'],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)
