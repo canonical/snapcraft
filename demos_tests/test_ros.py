@@ -14,15 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import demos_tests
 
 import os
 import subprocess
 
 
-class ROSTestCase(examples_tests.ExampleTestCase):
+class ROSTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'ros'
+    demo_dir = 'ros'
 
     def test_ros(self):
         self.build_snap(self.example_dir)
@@ -32,5 +32,5 @@ class ROSTestCase(examples_tests.ExampleTestCase):
         expected = b'#!/usr/bin/env python\n'
         output = subprocess.check_output(
             "sed -n '/env/p;1q' snap/usr/bin/rosversion",
-            cwd=os.path.join('examples', self.example_dir), shell=True)
+            cwd=os.path.join('demos', self.demo_dir), shell=True)
         self.assertEqual(output, expected)
