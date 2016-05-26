@@ -61,7 +61,10 @@ class UploadTestCase(integration_tests.TestCase):
                       'login"?', output)
 
     def test_upload_with_login(self):
-        self.useFixture(fixture_setup.StagingStore())
+        if os.getenv('TEST_USER_PASSWORD', None) is None:
+            self.useFixture(fixture_setup.FakeStore())
+        else:
+            self.useFixture(fixture_setup.StagingStore())
 
         # Make a snap
         project_dir = 'basic'
