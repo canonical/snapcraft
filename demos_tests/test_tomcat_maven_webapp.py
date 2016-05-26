@@ -14,15 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import demos_tests
 
 
-class TomcatMavenWebappTestCase(examples_tests.ExampleTestCase):
+class TomcatMavenWebappTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'tomcat-maven-webapp'
+    demo_dir = 'tomcat-maven-webapp'
 
     def test_tomcat_maven_webapp(self):
-        self.build_snap(self.example_dir)
+        self.build_snap(self.demo_dir)
         snap_name = 'tomcat-webapp-demo'
-        self.install_snap(self.example_dir, snap_name, '1.0')
+        self.install_snap(self.demo_dir, snap_name, '1.0')
         self.assert_service_running(snap_name, 'tomcat')

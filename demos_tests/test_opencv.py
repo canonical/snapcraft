@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import demos_tests
 
 
-class WebcamWebUITestCase(examples_tests.ExampleTestCase):
+class OpenCVTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'webcam-webui'
+    demo_dir = 'opencv'
 
-    def test_webcam_webui(self):
-        self.build_snap(self.example_dir)
-        snap_name = 'webcam-webui'
-        self.install_snap(self.example_dir, snap_name, '1')
-        self.assert_service_running(snap_name, 'webcam-webui')
+    def test_opencv(self):
+        self.build_snap(self.demo_dir)
+        self.install_snap(self.demo_dir, 'opencv-example', '1.0')
+        expected = '[1, 3;\n  2, 4]\n'
+        self.assert_command_in_snappy_testbed(
+            '/snap/bin/opencv-example.example', expected)

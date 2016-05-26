@@ -14,15 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import demos_tests
+
+import os
+import subprocess
 
 
-class JavaHelloWorldTestCase(examples_tests.ExampleTestCase):
+class ROSTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'java-hello-world'
+    demo_dir = 'ros'
 
-    def test_java_hello_world(self):
+    def test_ros(self):
         self.build_snap(self.example_dir)
-        self.install_snap(self.example_dir, 'java-hello-world', '0')
-        self.assert_command_in_snappy_testbed(
-            '/snap/bin/java-hello-world.hello', 'Hello World\n')
+        self.install_snap(self.example_dir, 'ros-example', '1.0')
+        # check that the hardcoded /usr/bin/python in rosversion
+        # is changed to using /usr/bin/env python
+        expected = b'#!/usr/bin/env python\n'
+        output = subprocess.check_output(
+            "sed -n '/env/p;1q' snap/usr/bin/rosversion",
+            cwd=os.path.join('demos', self.demo_dir), shell=True)
+        self.assertEqual(output, expected)

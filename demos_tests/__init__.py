@@ -30,7 +30,7 @@ from testtools.matchers import (
     MatchesRegex
 )
 
-from examples_tests import testbed
+from demos_tests import testbed
 
 logger = logging.getLogger(__name__)
 
@@ -76,15 +76,15 @@ def _get_latest_ssh_private_key():
 
 class ExampleTestCase(testtools.TestCase):
 
-    example_dir = None
+    demo_dir = None
 
     def setUp(self):
         filter_ = config.get('filter', None)
         if filter_:
-            if not re.match(filter_, self.example_dir):
+            if not re.match(filter_, self.demo_dir):
                 self.skipTest(
                     '{} does not match the filter {}'.format(
-                        self.example_dir, filter_))
+                        self.demo_dir, filter_))
 
         super().setUp()
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
@@ -126,8 +126,8 @@ class ExampleTestCase(testtools.TestCase):
         self.addCleanup(snappy_testbed.delete)
         return snappy_testbed
 
-    def build_snap(self, example_dir):
-        working_dir = os.path.join('examples', example_dir)
+    def build_snap(self, demo_dir):
+        working_dir = os.path.join('demos', demo_dir)
         subprocess.check_call(
             [self.snapcraft_command, 'clean'], cwd=working_dir)
         try:
@@ -138,12 +138,12 @@ class ExampleTestCase(testtools.TestCase):
             self.addDetail('output', content.text_content(str(e.output)))
             raise
 
-    def install_snap(self, example_dir, snap_name, version):
+    def install_snap(self, demo_dir, snap_name, version):
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(
                 snap_name, version)
             snap_local_path = os.path.join(
-                'examples', example_dir, snap_file_name)
+                'demos', demo_dir, snap_file_name)
             self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
             snap_path_in_testbed = os.path.join(
                 '/home/ubuntu/', snap_file_name)
