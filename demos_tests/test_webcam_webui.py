@@ -14,23 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
-
-import os
-import subprocess
+import demos_tests
 
 
-class ROSTestCase(examples_tests.ExampleTestCase):
+class WebcamWebUITestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'ros'
+    demo_dir = 'webcam-webui'
 
-    def test_ros(self):
-        self.build_snap(self.example_dir)
-        self.install_snap(self.example_dir, 'ros-example', '1.0')
-        # check that the hardcoded /usr/bin/python in rosversion
-        # is changed to using /usr/bin/env python
-        expected = b'#!/usr/bin/env python\n'
-        output = subprocess.check_output(
-            "sed -n '/env/p;1q' snap/usr/bin/rosversion",
-            cwd=os.path.join('examples', self.example_dir), shell=True)
-        self.assertEqual(output, expected)
+    def test_webcam_webui(self):
+        self.build_snap(self.demo_dir)
+        snap_name = 'webcam-webui'
+        self.install_snap(self.demo_dir, snap_name, '1')
+        self.assert_service_running(snap_name, 'webcam-webui')

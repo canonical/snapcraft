@@ -22,8 +22,8 @@ an interesting app.
 Namely, we'll combine a web server with a webcam program and combine
 them to serve a new frame every ten seconds.
 
-> The resulting package is also part of the examples directory in the
-> [snapcraft sources](https://github.com/ubuntu-core/snapcraft/tree/master/examples/webcam-webui)
+> The resulting package is also part of the demos directory in the
+> [snapcraft sources](https://github.com/ubuntu-core/snapcraft/tree/master/demos/webcam-webui)
 
 ### The Web Server
 
@@ -294,13 +294,13 @@ directory (assuming you are running on amd64). Congratulations!
 ## Next steps
 
 Well done, your first snap using snapcraft is ready. If you want to check out
-a few examples for reference or to get inspired, have a look at the
-`examples` directory in the source directory of snapcraft:
+a few demos for reference or to get inspired, have a look at the
+`demos` directory in the source directory of snapcraft:
 
     git clone https://github.com/ubuntu-core/snapcraft
-    cd snapcraft/examples
+    cd snapcraft/demos
 
-In `examples/` you can find a diverse set of examples which should help you
+In `demos/` you can find a diverse set of examples which should help you
 get started on your own projects. To get a good overview of the snapcraft
 features used in these examples, check out
 [this article](snapcraft-advanced-features.md).
