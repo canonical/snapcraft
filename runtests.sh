@@ -25,7 +25,7 @@ parseargs(){
         export RUN_STATIC="true"
         export RUN_UNIT="true"
         export RUN_INTEGRATION="true"
-        export RUN_EXAMPLES="true"
+        export RUN_DEMOS="true"
     else
         if [ "$1" == "static" ] ; then
             export RUN_STATIC="true"
@@ -34,16 +34,18 @@ parseargs(){
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
         elif [ "$1" == "examples" ] ; then
-            export RUN_EXAMPLES="true"
+            export RUN_DEMOS="true"
+        elif [ "$1" == "demos" ] ; then
+            export RUN_DEMOS="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration or examples"
+            echo "Not recognized option, should be one of all, static, unit, integration, examples or demos"
             exit 1
         fi
     fi
 }
 
 run_static_tests(){
-    SRC_PATHS="bin snapcraft snapcraft/tests examples_tests"
+    SRC_PATHS="bin snapcraft snapcraft/tests demos_tests"
     python3 -m flake8 $SRC_PATHS
 
     mccabe_list=
@@ -74,8 +76,8 @@ run_integration(){
     python3 -m unittest discover -b -v -s integration_tests
 }
 
-run_examples(){
-    python3 -m examples_tests "$@"
+run_demos(){
+    python3 -m demos_tests "$@"
 }
 
 parseargs "$@"
@@ -92,13 +94,18 @@ if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration
 fi
 
-if [ ! -z "$RUN_EXAMPLES" ]; then
+if [ ! -z "$RUN_DEMOS" ]; then
     if [ "$1" == "examples" ] ; then
         # shift to remove the test suite name and be able to pass the rest
         # to the examples suite.
         shift
     fi
-    run_examples "$@"
+    if [ "$1" == "demos" ] ; then
+        # shift to remove the test suite name and be able to pass the rest
+        # to the demos suite.
+        shift
+    fi
+    run_demos "$@"
 fi
 
 if [ ! -z "$RUN_UNIT" ]; then

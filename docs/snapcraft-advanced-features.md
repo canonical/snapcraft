@@ -2,7 +2,7 @@
 
 Once you have built [your first snap](your-first-snap.md), you will probably
 want to learn more about snapcraft's more advanced features. Having a look at
-our selection of examples is a good idea, as we want it to be a good showcase
+our selection of demos is a good idea, as we want it to be a good showcase
 of what is possible and generally relevant.
 
 ## Examples
@@ -11,16 +11,16 @@ Our showcase can be found in the actual source of `snapcraft` itself. Check
 it out by simply running:
 
 	git clone https://github.com/ubuntu-core/snapcraft
-	cd snapcraft/examples
+	cd snapcraft/demos
 
-Inspecting the source locally will make easier to build the examples and
+Inspecting the source locally will make easier to build the demos and
 play around with them. (You can
-[view them online](https://github.com/ubuntu-core/snapcraft/tree/master/examples)
+[view them online](https://github.com/ubuntu-core/snapcraft/tree/master/demos)
 as well.)
 
-### Playing around with the examples
+### Playing around with the demos
 
-If you just cloned the `snapcraft` source and inspect the examples, you
+If you just cloned the `snapcraft` source and inspect the demos, you
 can start off your explorations by reading the accompanying `snapcraft.yaml`
 file and running:
 

@@ -14,15 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+import demos_tests
 
 
-class JavaHelloWorldTestCase(examples_tests.ExampleTestCase):
+class GopasteTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'java-hello-world'
+    demo_dir = 'gopaste'
 
-    def test_java_hello_world(self):
-        self.build_snap(self.example_dir)
-        self.install_snap(self.example_dir, 'java-hello-world', '0')
-        self.assert_command_in_snappy_testbed(
-            '/snap/bin/java-hello-world.hello', 'Hello World\n')
+    def test_gopaste(self):
+        self.build_snap(self.demo_dir)
+        snap_name = 'gopaste'
+        self.install_snap(self.demo_dir, snap_name, '1.0')
+        self.assert_service_running(snap_name, 'gopaste')
