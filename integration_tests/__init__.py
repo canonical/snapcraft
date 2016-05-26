@@ -78,13 +78,15 @@ class TestCase(testtools.TestCase):
             output = exception.output
         return output
 
-    def login(self, email='u1test+snapcraft@canonical.com',
+    def login(self, email=None,
               password=None, expect_success=True):
-        password = password or os.getenv('TEST_USER_PASSWORD', None)
-        if not password:
-            self.skipTest('No password provided for the test user.')
+        email = email or os.getenv(
+            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        password = password or os.getenv(
+            'TEST_USER_PASSWORD', 'test correct password')
 
         process = pexpect.spawn(self.snapcraft_command, ['login'])
+
         process.expect_exact(
             'Enter your Ubuntu One SSO credentials.\r\n'
             'Email: ')
