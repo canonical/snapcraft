@@ -59,8 +59,7 @@ import shutil
 import subprocess
 import tempfile
 
-from snapcraft import storeapi
-from snapcraft.config import load_config
+import snapcraft
 from snapcraft.plugins import kbuild
 
 logger = logging.getLogger(__name__)
@@ -319,9 +318,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def pull(self):
         super().pull()
-        config = load_config()
-        storeapi.download(
-            'ubuntu-core', 'edge', self.os_snap, config, self.project.deb_arch)
+        snapcraft.download(
+            'ubuntu-core', 'edge', self.os_snap, self.project.deb_arch)
 
     def do_install(self):
         super().do_install()

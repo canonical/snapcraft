@@ -18,44 +18,11 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import responses
-from requests_oauthlib import OAuth1Session
 
 from snapcraft.storeapi.common import (
-    get_oauth_session,
     store_api_call,
     retry,
 )
-
-
-class GetOAuthSessionTestCase(TestCase):
-
-    def test_get_oauth_session_when_no_config(self):
-        config = {}
-        session = get_oauth_session(config)
-        self.assertIsNone(session)
-
-    def test_get_oauth_session_when_partial_config(self):
-        config = {
-            'consumer_key': 'consumer-key',
-            'consumer_secret': 'consumer-secret',
-        }
-        session = get_oauth_session(config)
-        self.assertIsNone(session)
-
-    def test_get_oauth_session(self):
-        config = {
-            'consumer_key': 'consumer-key',
-            'consumer_secret': 'consumer-secret',
-            'token_key': 'token-key',
-            'token_secret': 'token-secret',
-        }
-        session = get_oauth_session(config)
-        self.assertIsInstance(session, OAuth1Session)
-        self.assertEqual(session.auth.client.client_key, 'consumer-key')
-        self.assertEqual(session.auth.client.client_secret, 'consumer-secret')
-        self.assertEqual(session.auth.client.resource_owner_key, 'token-key')
-        self.assertEqual(session.auth.client.resource_owner_secret,
-                         'token-secret')
 
 
 class ApiCallTestCase(TestCase):
@@ -125,7 +92,8 @@ class ApiCallTestCase(TestCase):
     def test_get_with_session(self):
         session = Mock()
         store_api_call('/path', session=session)
-        session.get.assert_called_once_with('http://example.com/path')
+        session.get.assert_called_once_with('http://example.com/path',
+                                            headers={})
 
     def test_post_with_session(self):
         session = Mock()
@@ -152,6 +120,24 @@ class ApiCallTestCase(TestCase):
                          'application/json')
         self.assertEqual(responses.calls[0].request.body,
                          json.dumps({'request': 'value'}))
+
+    @responses.activate
+    def test_post_with_empty_data(self):
+        response_data = {'response': 'value'}
+        responses.add(responses.POST, 'http://example.com/path',
+                      body=json.dumps(response_data))
+
+        result = store_api_call(
+            '/path', method='POST', data={})
+        self.assertEqual(result, {
+            'success': True,
+            'data': response_data,
+            'errors': [],
+        })
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(responses.calls[0].request.headers['Content-Type'],
+                         'application/json')
+        self.assertEqual(responses.calls[0].request.body, '{}')
 
 
 class RetryDecoratorTestCase(TestCase):

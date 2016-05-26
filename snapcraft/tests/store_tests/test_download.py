@@ -1,0 +1,117 @@
+#
+# Copyright (C) 2016 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+
+import testscenarios
+
+from snapcraft import storeapi
+from snapcraft.tests import store_tests
+
+
+load_tests = testscenarios.load_tests_apply_scenarios
+
+
+class TestDownloadLogin(store_tests.TestCase):
+
+    def test_download_without_credentials(self):
+        self.assertRaises(storeapi.InvalidCredentialsError,
+                          self.download, 'basic')
+
+
+class TestSearchPackage(store_tests.RecordedTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(self.logout)
+        self.login()
+        self.cpi = storeapi.CPIClient(self.store.conf)
+        self.addCleanup(self.cpi.close)
+
+    def test_search_known_package(self):
+        # We rely on a package that has been published for TEST_USER_EMAIL
+        pkg = self.cpi.search_package('femto', 'stable', 'amd64')
+        self.assertIn('download_url', pkg)
+        self.assertIn('download_sha512', pkg)
+
+    def test_search_unknown_package(self):
+        self.assertIsNone(self.cpi.search_package('dont-exist', 'dont-exist',
+                                                  'amd64'))
+
+
+class TestDownload(store_tests.RecordedTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(self.logout)
+        self.login()
+
+    def assertLog(self, expected):
+        self.assertEqual(expected, self.logger.output)
+
+    def test_download_unknown_package(self):
+        exc = self.assertRaises(
+            storeapi.SnapNotFoundError,
+            self.download, 'gloo', 'bee')
+        self.assertEqual('gloo', exc.name)
+        self.assertEqual('bee', exc.channel)
+        self.assertEqual('amd64', exc.arch)  # default value
+
+    def test_download_works(self):
+        pkg_name = 'femto'
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertTrue(os.path.exists('downloaded.snap'))
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
+
+    def test_download_twice_reuse_existing(self):
+        pkg_name = 'femto'
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertTrue(os.path.exists('downloaded.snap'))
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
+        # Try downloading again
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+Getting details for {pkg_name}
+Already downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
+
+    def test_redownload_on_mismatch(self):
+        pkg_name = 'femto'
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertTrue(os.path.exists('downloaded.snap'))
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))
+        # Clobber the downloaded file
+        with open('downloaded.snap', 'w') as f:
+            f.write('Sabotage !')
+        # Try downloading again
+        self.download(pkg_name, 'stable', 'downloaded.snap')
+        self.assertLog('''Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+Getting details for {pkg_name}
+Downloading {pkg_name}
+Successfully downloaded {pkg_name} at downloaded.snap
+'''.format(pkg_name=pkg_name))

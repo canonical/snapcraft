@@ -19,30 +19,13 @@ import time
 from functools import wraps
 
 import requests
-from requests_oauthlib import OAuth1Session
 
 from .compat import urljoin
 from .constants import UBUNTU_STORE_API_ROOT_URL
 
 
-def get_oauth_session(config):
-    """Return a client configured to allow oauth signed requests."""
-    try:
-        session = OAuth1Session(
-            config['consumer_key'],
-            client_secret=config['consumer_secret'],
-            resource_owner_key=config['token_key'],
-            resource_owner_secret=config['token_secret'],
-            signature_method='PLAINTEXT',
-        )
-    except KeyError:
-        session = None
-    return session
-
-
-def store_api_call(path, session=None, method='GET', data=None):
-    """Issue a request for a particular endpoint of the MyApps API."""
-    result = {'success': False, 'errors': [], 'data': None}
+def store_raw_api_call(path, session=None, method='GET', data=None,
+                       headers=None):
     if session is not None:
         client = session
     else:
@@ -50,14 +33,27 @@ def store_api_call(path, session=None, method='GET', data=None):
 
     root_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
                               UBUNTU_STORE_API_ROOT_URL)
+    if headers is None:
+        headers = {}
     url = urljoin(root_url, path)
     if method == 'GET':
-        response = client.get(url)
+        response = client.get(url, headers=headers)
     elif method == 'POST':
-        response = client.post(url, data=data and json.dumps(data) or None,
-                               headers={'Content-Type': 'application/json'})
+        if data is not None:
+            data = json.dumps(data)
+        headers.update({'Content-Type': 'application/json'})
+        response = client.post(url, data=data,
+                               headers=headers)
     else:
         raise ValueError('Method {} not supported'.format(method))
+    return response
+
+
+def store_api_call(path, session=None, method='GET', data=None):
+    """Issue a request for a particular endpoint of the MyApps API."""
+    result = {'success': False, 'errors': [], 'data': None}
+
+    response = store_raw_api_call(path, session, method, data)
 
     if response.ok:
         result['success'] = True

@@ -16,6 +16,7 @@
 
 import fileinput
 import os
+import subprocess
 import uuid
 
 from testtools.matchers import (
@@ -32,6 +33,7 @@ class UploadTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
+        self.useFixture(fixture_setup.StagingStore())
 
     def _update_version(self, project_dir, version=None):
         # Change to a random version.
@@ -47,6 +49,11 @@ class UploadTestCase(integration_tests.TestCase):
                 print(line)
         return updated_project_dir
 
+    def test_upload_without_snap(self):
+        raised = self.assertRaises(subprocess.CalledProcessError,
+                                   self.run_snapcraft, ['upload'])
+        self.assertTrue(raised.output.startswith('Usage:\n'))
+
     def test_upload_without_login(self):
         project_dir = 'assemble'
         self.run_snapcraft('snap', project_dir)
@@ -56,13 +63,10 @@ class UploadTestCase(integration_tests.TestCase):
 
         output = self.run_snapcraft(['upload', snap_file_path])
 
-        self.assertIn('Upload failed', output)
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', output)
 
     def test_upload_with_login(self):
-        self.useFixture(fixture_setup.StagingStore())
-
         # Make a snap
         project_dir = 'basic'
         self.addCleanup(self.logout)

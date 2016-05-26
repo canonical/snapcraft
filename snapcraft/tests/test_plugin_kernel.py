@@ -22,7 +22,9 @@ from unittest import mock
 import fixtures
 
 import snapcraft
-from snapcraft import tests
+from snapcraft import (
+    tests,
+)
 from snapcraft.plugins import kernel
 
 
@@ -817,16 +819,13 @@ ACCEPT=n
             plugin.make_cmd,
             ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
 
-    @mock.patch.object(kernel, 'load_config')
-    @mock.patch('snapcraft.storeapi.download')
-    def test_pull(self, download_mock, config_mock):
-        config = {'config_key': 'config_value'}
-        config_mock.return_value = config
+    @mock.patch('snapcraft.download')
+    def test_pull(self, download_mock):
 
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
         plugin.pull()
 
         download_mock.assert_called_once_with(
-            'ubuntu-core', 'edge', plugin.os_snap, config,
+            'ubuntu-core', 'edge', plugin.os_snap,
             self.project_options.deb_arch)

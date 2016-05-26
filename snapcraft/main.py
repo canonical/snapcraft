@@ -30,6 +30,7 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] register <snap-name>
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -69,6 +70,7 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  register     Register the package name in the store.
   upload       Upload a snap to the Ubuntu Store.
 
 The available lifecycle commands are:
@@ -182,6 +184,8 @@ def run(args, project_options):
         argless_command()
     elif args['clean']:
         lifecycle.clean(project_options, args['<part>'], args['--step'])
+    elif args['register']:
+        snapcraft.register(args['<snap-name>'])
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:

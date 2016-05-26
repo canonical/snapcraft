@@ -1,0 +1,14 @@
+[
+    {
+        "content": "{\"macaroon\": \"MDAzMWxvY2F0aW9uIG15YXBwcy5kZXZlbG9wZXIuc3RhZ2luZy51YnVudHUuY29tCjAwMTJpZGVudGlmaWVyIGlkCjAwMGJjaWQgaWQKMDAxM3ZpZCBzZWNyZXQga2V5CjAwMjBjbCBsb2dpbi5zdGFnaW5nLnVidW50dS5jb20KMDAyZnNpZ25hdHVyZSCCUJidnYHIeAWJg_5m7JQhRcvK5DVkvLp5ilTn2qYyEwo\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"discharge_macaroon\": \"MDAzMWxvY2F0aW9uIG15YXBwcy5kZXZlbG9wZXIuc3RhZ2luZy51YnVudHUuY29tCjAwMWNpZGVudGlmaWVyIGlkX2Rpc2NoYXJnZQowMDBiY2lkIGlkCjAwMmZzaWduYXR1cmUgeJaVf0I_aRMnSATsPMEv_YthKrmu7Z66Maj9US-G-JYK\"}",
+        "status_code": 200
+    },
+    {
+        "content": "{\"__all__\": [{\"code\": \"ALREADY_REGISTERED_ERROR\", \"message\": \"The name 'femto' is taken. We can rename snaps to ensure their names match the expectations of most users. If you feel that needs to happen here please let us know at https://myapps.developer.staging.ubuntu.com/dev/click-apps/register-name/?series=16&name=femto\\n\\nMeanwhile, let's find a name you can use to get started. You should try to pick a name that people will associate with you, for example 'snappy-test-femto'.\"}]}",
+        "status_code": 400
+    }
+]
