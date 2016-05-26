@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - node-packages:
       (list)
       A list of dependencies to fetch using npm.
+    - node-engine:
+      (string)
+      The version of nodejs you want the snap to run on.
 """
 
 import logging
@@ -41,7 +44,7 @@ from snapcraft import sources
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '4.2.2'
+_NODEJS_VERSION = '4.4.4'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
     'i686': 'x86',
@@ -63,7 +66,11 @@ class NodePlugin(snapcraft.BasePlugin):
             'items': {
                 'type': 'string'
             },
-            'default': [],
+            'default': []
+        }
+        schema['properties']['node-engine'] = {
+            'type': 'string',
+            'default': _NODEJS_VERSION
         }
 
         if 'required' in schema:
@@ -71,14 +78,15 @@ class NodePlugin(snapcraft.BasePlugin):
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append('node-packages')
+        schema['build-properties'].extend(['node-packages', 'node-engine'])
 
         return schema
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self._npm_dir = os.path.join(self.partdir, 'npm')
-        self._nodejs_tar = sources.Tar(_get_nodejs_release(), self._npm_dir)
+        self._nodejs_tar = sources.Tar(_get_nodejs_release(
+            self.options.node_engine), self._npm_dir)
 
     def pull(self):
         super().pull()
@@ -102,15 +110,15 @@ class NodePlugin(snapcraft.BasePlugin):
             self.run(['npm', 'install', '-g'])
 
 
-def _get_nodejs_base():
+def _get_nodejs_base(node_engine):
     machine = platform.machine()
     if machine not in _NODEJS_ARCHES:
         raise EnvironmentError('architecture not supported ({})'.format(
             machine))
-    return _NODEJS_BASE.format(version=_NODEJS_VERSION,
+    return _NODEJS_BASE.format(version=node_engine,
                                arch=_NODEJS_ARCHES[machine])
 
 
-def _get_nodejs_release():
-    return _NODEJS_TMPL.format(version=_NODEJS_VERSION,
-                               base=_get_nodejs_base())
+def _get_nodejs_release(node_engine):
+    return _NODEJS_TMPL.format(version=node_engine,
+                               base=_get_nodejs_base(node_engine))
