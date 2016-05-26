@@ -16,42 +16,42 @@
 
 import testscenarios
 
-import examples_tests
+import demos_tests
 
 
 class TestSnapcraftExamples(
-        testscenarios.WithScenarios, examples_tests.ExampleTestCase):
+        testscenarios.WithScenarios, demos_tests.ExampleTestCase):
 
     scenarios = [
         ('downloader-with-wiki-parts', {
-            'example_dir': 'downloader-with-wiki-parts',
+            'demo_dir': 'downloader-with-wiki-parts',
             'name': 'downloader',
             'version': '1.0',
             }),
         ('godd', {
-            'example_dir': 'godd',
+            'demo_dir': 'godd',
             'name': 'godd',
             'version': '1.0',
             }),
         ('git', {
-            'example_dir': 'git',
+            'demo_dir': 'git',
             'name': 'git',
             'version': '2.8.0',
             }),
         ('py2-project', {
-            'example_dir': 'py2-project',
+            'demo_dir': 'py2-project',
             'name': 'spongeshaker',
             'version': '0',
             }),
         ('py3-project', {
-            'example_dir': 'py3-project',
+            'demo_dir': 'py3-project',
             'name': 'spongeshaker',
             'version': '0',
             }),
     ]
 
-    def test_example(self):
+    def test_demo(self):
         # Build snap will raise an exception in case of error.
-        self.build_snap(self.example_dir)
+        self.build_snap(self.demo_dir)
         # Install snap will raise an exception in case of error.
-        self.install_snap(self.example_dir, self.name, self.version)
+        self.install_snap(self.demo_dir, self.name, self.version)

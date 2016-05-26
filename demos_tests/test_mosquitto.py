@@ -16,19 +16,19 @@
 
 import time
 
-import examples_tests
+import demos_tests
 
 
-class MosquittoTestCase(examples_tests.ExampleTestCase):
+class MosquittoTestCase(demos_tests.ExampleTestCase):
 
-    example_dir = 'mosquitto'
+    demo_dir = 'mosquitto'
 
     def test_mosquitto(self):
-        self.build_snap(self.example_dir)
+        self.build_snap(self.demo_dir)
         snap_name = 'mosquitto'
-        self.install_snap(self.example_dir, snap_name, '0.1')
+        self.install_snap(self.demo_dir, snap_name, '0.1')
         self.assert_service_running(snap_name, 'mosquitto')
-        if not examples_tests.config.get('skip-install', False):
+        if not demos_tests.config.get('skip-install', False):
             # No need to cleanup, the subscriber will exit after the first
             # message.
             self.snappy_testbed.run_command_in_background(
