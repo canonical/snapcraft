@@ -27,7 +27,7 @@ from snapcraft import tests
 class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
-        data = 'Test fake tarball file'
+        data = 'Test fake compressed file'
         self.send_response(200)
         self.send_header('Content-Length', len(data))
         self.send_header('Content-type', 'text/html')
@@ -64,7 +64,52 @@ class TestTar(tests.TestCase):
 
         mock_prov.assert_called_once_with(dest_dir)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
-            self.assertEqual('Test fake tarball file', tar_file.read())
+            self.assertEqual('Test fake compressed file', tar_file.read())
+
+
+class TestZip(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        os.environ['no_proxy'] = '127.0.0.1'
+        self.server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+        server_thread.start()
+
+    @unittest.mock.patch('zipfile.ZipFile')
+    def test_pull_zipfile_must_download_and_extract(self, mock_zip):
+        dest_dir = 'src'
+        os.makedirs(dest_dir)
+        zip_file_name = 'test.zip'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=zip_file_name)
+        zip_source = sources.Zip(source, dest_dir)
+
+        zip_source.pull()
+
+        mock_zip.assert_called_once_with(
+            os.path.join(zip_source.source_dir, zip_file_name))
+
+    @unittest.mock.patch('zipfile.ZipFile')
+    def test_extract_and_keep_zipfile(self, mock_zip):
+        zip_file_name = 'test.zip'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=zip_file_name)
+        dest_dir = os.path.abspath(os.curdir)
+        zip_source = sources.Zip(source, dest_dir)
+
+        zip_source.download()
+        zip_source.provision(dst=dest_dir, keep_zip=True)
+
+        zip_download = os.path.join(zip_source.source_dir, zip_file_name)
+        mock_zip.assert_called_once_with(zip_download)
+
+        with open(zip_download, 'r') as zip_file:
+            self.assertEqual('Test fake compressed file', zip_file.read())
 
 
 class SourceTestCase(tests.TestCase):

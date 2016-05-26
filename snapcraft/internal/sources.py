@@ -33,6 +33,7 @@ A part that uses common source options can have these keyword entries:
                    - hg
                    - git
                    - tar
+                   - zip
 
     - source-branch:
       (string)
@@ -57,6 +58,7 @@ import tarfile
 import re
 import subprocess
 import tempfile
+import zipfile
 
 from snapcraft.internal import common
 
@@ -78,6 +80,28 @@ class Base:
         self.source_dir = source_dir
         self.source_tag = source_tag
         self.source_branch = source_branch
+
+
+class FileBase(Base):
+
+    def pull(self):
+        if common.isurl(self.source):
+            self.download()
+        else:
+            shutil.copy2(self.source, self.source_dir)
+
+        self.provision(self.source_dir)
+
+    def download(self):
+        req = requests.get(self.source, stream=True, allow_redirects=True)
+        if req.status_code is not 200:
+            raise EnvironmentError('unexpected http status code when '
+                                   'downloading {}'.format(req.status_code))
+
+        file = os.path.join(self.source_dir, os.path.basename(self.source))
+        with open(file, 'wb') as f:
+            for chunk in req.iter_content(1024):
+                f.write(chunk)
 
 
 class Bazaar(Base):
@@ -167,7 +191,7 @@ class Mercurial(Base):
         subprocess.check_call(cmd)
 
 
-class Tar(Base):
+class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,
                  source_branch=None):
@@ -178,25 +202,6 @@ class Tar(Base):
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
-
-    def pull(self):
-        if common.isurl(self.source):
-            self.download()
-        else:
-            shutil.copy2(self.source, self.source_dir)
-
-        self.provision(self.source_dir)
-
-    def download(self):
-        req = requests.get(self.source, stream=True, allow_redirects=True)
-        if req.status_code is not 200:
-            raise EnvironmentError('unexpected http status code when '
-                                   'downloading {}'.format(req.status_code))
-
-        file = os.path.join(self.source_dir, os.path.basename(self.source))
-        with open(file, 'wb') as f:
-            for chunk in req.iter_content(1024):
-                f.write(chunk)
 
     def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
@@ -247,6 +252,34 @@ class Tar(Base):
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)
+
+
+class Zip(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+        if source_tag:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-tag for a zip source')
+        elif source_branch:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a zip source')
+
+    def provision(self, dst, clean_target=True, keep_zip=False):
+        zip = os.path.join(self.source_dir, os.path.basename(self.source))
+
+        if clean_target:
+            tmp_zip = tempfile.NamedTemporaryFile().name
+            shutil.move(zip, tmp_zip)
+            shutil.rmtree(dst)
+            os.makedirs(dst)
+            shutil.move(tmp_zip, zip)
+
+        zipfile.ZipFile(zip).extractall(path=dst)
+
+        if not keep_zip:
+            os.remove(zip)
 
 
 class Local(Base):
@@ -315,6 +348,7 @@ _source_handler = {
     'hg': Mercurial,
     'mercurial': Mercurial,
     'tar': Tar,
+    'zip': Zip,
 }
 
 
@@ -337,6 +371,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
         source_type = 'git'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
+    elif source.endswith('.zip'):
+        source_type = 'zip'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
     elif not os.path.isdir(source) and not ignore_errors:
