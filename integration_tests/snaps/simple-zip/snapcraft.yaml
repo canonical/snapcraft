@@ -1,0 +1,12 @@
+name: test-package
+version: 0.1
+summary: zip file integration test
+description: use zip as a source.
+confinement: strict
+
+parts:
+  file1:
+    plugin: copy
+    source: simple.zip
+    files:
+        "*": .
