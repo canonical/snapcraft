@@ -137,7 +137,7 @@ parts:
     my-part:
         plugin: autotools
         source: .
-        configFlags:
+        configflags:
             - --with-swig $SNAPCRAFT_STAGE/swig
         after:
             - swig

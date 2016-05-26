@@ -1887,7 +1887,7 @@ class StageEnvTestCase(tests.TestCase):
                     'SNAPCRAFT_STAGE/really',
                 ]
             },
-            'configFlags': [
+            'configflags': [
                 '--with-python',
                 '--with-swig $SNAPCRAFT_STAGE/swig',
             ],
@@ -1901,7 +1901,7 @@ class StageEnvTestCase(tests.TestCase):
                     'SNAPCRAFT_STAGE/really',
                 ]
             },
-            'configFlags': [
+            'configflags': [
                 '--with-python',
                 '--with-swig {}/swig'.format(self.stage_dir),
             ],
