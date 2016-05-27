@@ -39,6 +39,7 @@ _MANDATORY_PACKAGE_KEYS = [
 
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
+    'assumes',
     'type',
     'license-agreement',
     'license-version',

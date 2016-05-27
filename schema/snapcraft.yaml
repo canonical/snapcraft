@@ -37,6 +37,13 @@ properties:
   description:
     type: string
     description: long description of the package
+  assumes:
+    type: array
+    description: featureset the snap requires in order to work.
+    minItems: 1
+    uniqueItems: true
+    items:
+      - type: string
   type:
     type: string
     description: the snap type, the implicit type is 'app'
