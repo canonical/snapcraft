@@ -20,7 +20,10 @@ from unittest import mock
 import fixtures
 
 from snapcraft.main import main
-from snapcraft import tests
+from snapcraft import (
+    storeapi,
+    tests
+)
 
 
 class LoginCommandTestCase(tests.TestCase):
@@ -46,7 +49,7 @@ class LoginCommandTestCase(tests.TestCase):
         self.mock_save = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.storeapi.login')
+        patcher = mock.patch.object(storeapi.StoreClient, 'login')
         self.mock_login = patcher.start()
         self.addCleanup(patcher.stop)
 

@@ -34,6 +34,9 @@ class FakeSSORequestHandler(http.server.BaseHTTPRequestHandler):
 
     _API_PATH = '/api/v2/'
 
+    def log_message(*args):
+        logger.debug(args)
+
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
         oauth_path = self._API_PATH + 'tokens/oauth'
@@ -50,7 +53,9 @@ class FakeSSORequestHandler(http.server.BaseHTTPRequestHandler):
         logger.debug(
             'Handling tokens discharge request with content {}'.format(
                 data))
-        if data['password'] == 'test correct password':
+        if (data['password'] == 'test correct password' and
+            ('otp' not in data or
+             data['otp'] == 'test correct one-time password')):
             self._send_success()
         else:
             self._send_invalid_credentials_error()
