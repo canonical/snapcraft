@@ -1911,6 +1911,40 @@ class StageEnvTestCase(tests.TestCase):
             pluginhandler._expand_env(subject, self.stage_dir), expected)
 
 
+class StagePackagesTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = patch('snapcraft.internal.repo._setup_apt_cache')
+        self.setup_apt_mock = patcher.start()
+        self.setup_apt_mock.return_value = ({}, None)
+        self.addCleanup(patcher.stop)
+
+    def test_missing_stage_package_displays_nice_error(self):
+        part_schema = {
+            'stage-packages': {
+                'minitems': 1,
+                'uniqueItems': True,
+                'default': [],
+                'type': 'array',
+                'items': {'type': 'string'}},
+            'plugin': {'description': 'plugin name', 'type': 'string'}
+        }
+
+        part = pluginhandler.load_plugin('stage-test', 'nil',
+                                         {'stage-packages': ['non-existing']},
+                                         part_schema=part_schema)
+
+        with self.assertRaises(RuntimeError) as raised:
+            part.prepare_pull()
+
+        self.assertEqual(
+            str(raised.exception),
+            "Error downloading stage packages for part 'stage-test': "
+            "no such package 'non-existing'")
+
+
 class FindDependenciesTestCase(tests.TestCase):
 
     @patch('magic.open')

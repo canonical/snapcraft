@@ -250,8 +250,15 @@ class PluginHandler:
         return os.path.join(self.statedir, step)
 
     def _fetch_stage_packages(self):
-        if self.code.stage_packages:
+        if not self.code.stage_packages:
+            return
+
+        try:
             self.ubuntu.get(self.code.stage_packages)
+        except repo.PackageNotFoundError as e:
+            raise RuntimeError("Error downloading stage packages for part "
+                               "{!r}: no such package {!r}".format(
+                                   self.name, e.package_name))
 
     def _unpack_stage_packages(self):
         if self.code.stage_packages:
