@@ -37,12 +37,21 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = """name: # the name of the snap
-version: # the version of the snap
-summary: # 79 char long summary
-description: # a longer description for the snap
-confinement: devmode # use "strict" to enforce system access only via \
+_TEMPLATE_YAML = """name: my-snap  # the name of the snap
+version: 0  # the version of the snap
+summary: This is my-snap's summary  # 79 char long summary
+description: This is my-snap's description  # a longer description for the snap
+confinement: devmode  # use "strict" to enforce system access only via \
 declared interfaces
+
+parts:
+    my-part:  # Replace with a part name of your liking
+        # Get more information about plugins by running
+        # snapcraft help plugins
+        # and more information about the available plugins
+        # by running
+        # snapcraft list-plugins
+        plugin: nil
 """
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'strip'}
@@ -57,6 +66,8 @@ def init():
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
     logger.info('Created snapcraft.yaml.')
+    logger.info(
+        'Edit the file to your liking or run `snapcraft` to get started')
 
 
 def execute(step, project_options, part_names=None):

@@ -37,16 +37,27 @@ class InitCommandTestCase(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        expected_yaml = """name: # the name of the snap
-version: # the version of the snap
-summary: # 79 char long summary
-description: # a longer description for the snap
-confinement: devmode # use "strict" to enforce system access only via \
-declared interfaces"""
+        expected_yaml = """name: my-snap  # the name of the snap
+version: 0  # the version of the snap
+summary: This is my-snap's summary  # 79 char long summary
+description: This is my-snap's description  # a longer description for the snap
+confinement: devmode  # use "strict" to enforce system access only via declared interfaces
+
+parts:
+    my-part:  # Replace with a part name of your liking
+        # Get more information about plugins by running
+        # snapcraft help plugins
+        # and more information about the available plugins
+        # by running
+        # snapcraft list-plugins
+        plugin: nil"""
 
         main(['init'])
 
-        self.assertEqual('Created snapcraft.yaml.\n', fake_logger.output)
+        self.assertEqual(
+            'Created snapcraft.yaml.\nEdit the file to your '
+            'liking or run `snapcraft` to get started\n',
+            fake_logger.output)
 
         # Verify the generated yaml
         with open('snapcraft.yaml', 'r') as f:
