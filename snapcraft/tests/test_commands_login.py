@@ -18,10 +18,11 @@ import logging
 from unittest import mock
 
 import fixtures
+import ssoclient.v2 as sso
 
 from snapcraft.main import main
 from snapcraft import (
-    storeapi,
+    config,
     tests
 )
 
@@ -45,23 +46,21 @@ class LoginCommandTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft._store.save_config')
-        self.mock_save = patcher.start()
-        self.addCleanup(patcher.stop)
+#        patcher = mock.patch('snapcraft._store.save_config')
+#        self.mock_save = patcher.start()
+#        self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.object(storeapi.StoreClient, 'login')
+        patcher = mock.patch.object(sso.V2ApiClient, 'login')
         self.mock_login = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_successful_login_saves_config(self):
         response = {
             'success': True,
-            'body': {
-                'consumer_key': 'consumer_key',
-                'consumer_secret': 'consumer_secret',
-                'token_key': 'token_key',
-                'token_secret': 'token_secret',
-            }
+            'consumer_key': 'test_consumer_key',
+            'consumer_secret': 'test_consumer_secret',
+            'token_key': 'test_token_key',
+            'token_secret': 'test_token_secret',
         }
         self.mock_login.return_value = response
 
@@ -71,14 +70,16 @@ class LoginCommandTestCase(tests.TestCase):
             'Authenticating against Ubuntu One SSO.\n'
             'Login successful.\n',
             self.fake_logger.output)
-        self.mock_save.assert_called_once_with(response['body'])
+
+        conf = config.Config()
+        self.assertEqual('test_consumer_key', conf.get('consumer_key'))
+        self.assertEqual('test_consumer_secret', conf.get('consumer_secret'))
+        self.assertEqual('test_token_key', conf.get('token_key'))
+        self.assertEqual('test_token_secret', conf.get('token_secret'))
 
     def test_failed_login_does_not_save_config(self):
-        response = {
-            'success': False,
-            'body': {},
-        }
-        self.mock_login.return_value = response
+        self.mock_login.side_effect = sso.ApiException(
+            response=type('obj', (object,),  {'status_code': 401}))
 
         main(['login'])
 
@@ -86,4 +87,4 @@ class LoginCommandTestCase(tests.TestCase):
             'Authenticating against Ubuntu One SSO.\n'
             'Login failed.\n',
             self.fake_logger.output)
-        self.assertFalse(self.mock_save.called)
+        self.assertTrue(config.Config().is_empty())

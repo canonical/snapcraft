@@ -23,7 +23,6 @@ import tempfile
 
 import yaml
 
-from snapcraft.config import load_config, save_config
 from snapcraft import storeapi
 
 
@@ -44,7 +43,6 @@ def login():
     success = response.get('success', False)
 
     if success:
-        save_config(response['body'])
         logger.info('Login successful.')
     else:
         logger.info('Login failed.')
@@ -65,8 +63,7 @@ def upload(snap_filename):
         snap_name = _get_name_from_snap_file(snap_filename)
         logger.info('Uploading existing {}.'.format(snap_filename))
 
-        config = load_config()
-        storeapi.upload(snap_filename, snap_name, config=config)
+        storeapi.upload(snap_filename, snap_name)
 
 
 def _get_name_from_snap_file(snap_path):

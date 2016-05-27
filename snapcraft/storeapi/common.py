@@ -27,17 +27,21 @@ from .constants import UBUNTU_STORE_API_ROOT_URL
 
 def get_oauth_session(config):
     """Return a client configured to allow oauth signed requests."""
-    try:
-        session = OAuth1Session(
-            config['consumer_key'],
-            client_secret=config['consumer_secret'],
-            resource_owner_key=config['token_key'],
-            resource_owner_secret=config['token_secret'],
+    consumer_key = config.get('consumer_key')
+    consumer_secret = config.get('consumer_secret')
+    token_key = config.get('token_key')
+    token_secret = config.get('token_secret')
+    if (consumer_key is not None and
+            consumer_secret is not None and
+            token_key is not None and
+            token_secret is not None):
+        return OAuth1Session(
+            consumer_key,
+            client_secret=consumer_secret,
+            resource_owner_key=token_key,
+            resource_owner_secret=token_secret,
             signature_method='PLAINTEXT',
         )
-    except KeyError:
-        session = None
-    return session
 
 
 def store_api_call(path, session=None, method='GET', data=None):

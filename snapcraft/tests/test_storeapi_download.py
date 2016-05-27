@@ -47,7 +47,7 @@ class DownloadTestCase(DownloadBaseTestCase):
         self.mock_get.side_effect = Exception('some error')
 
         with self.assertRaises(Exception) as raised:
-            download('os', 'edge', 'os.snap', None, 'amd64')
+            download('os', 'edge', 'os.snap', 'amd64')
 
         self.assertEqual('some error', str(raised.exception))
 
@@ -77,7 +77,7 @@ class DownloadTestCase(DownloadBaseTestCase):
 
         self.mock_get.side_effect = [mock_details, mock_snap]
 
-        download('os', 'edge', 'os.snap', None, 'amd64')
+        download('os', 'edge', 'os.snap', 'amd64')
 
         self.mock_logger.info.assert_has_calls([
             call("Getting details for 'os'"),
@@ -110,7 +110,7 @@ class DownloadTestCase(DownloadBaseTestCase):
 
         self.mock_get.side_effect = [mock_details, mock_snap]
 
-        download('os', 'edge', 'os.snap', None, 'amd64')
+        download('os', 'edge', 'os.snap', 'amd64')
 
         self.mock_logger.info.assert_has_calls([
             call("Getting details for 'os'"),
@@ -138,7 +138,7 @@ class DownloadTestCase(DownloadBaseTestCase):
         self.mock_get.side_effect = [mock_details, mock_snap]
 
         with self.assertRaises(RuntimeError) as raised:
-            download('os', 'edge', 'os.snap', None, 'amd64')
+            download('os', 'edge', 'os.snap', 'amd64')
 
         self.assertEqual("Failed to download 'os'", str(raised.exception))
         self.mock_logger.info.assert_has_calls([
@@ -172,7 +172,7 @@ class DownloadTestCase(DownloadBaseTestCase):
 
         self.mock_get.side_effect = [mock_details, mock_snap]
 
-        download('os', 'edge', 'os.snap', None, 'amd64')
+        download('os', 'edge', 'os.snap', 'amd64')
 
         self.mock_logger.info.assert_has_calls([
             call("Getting details for 'os'"),
@@ -183,7 +183,7 @@ class DownloadTestCase(DownloadBaseTestCase):
         self.mock_get_oauth_session.return_value = None
 
         with self.assertRaises(EnvironmentError) as raised:
-            download('os', 'edge', 'os.snap', None, 'amd64')
+            download('os', 'edge', 'os.snap', 'amd64')
 
         self.assertEqual(
             'No valid credentials found. Have you run "snapcraft login"?',
