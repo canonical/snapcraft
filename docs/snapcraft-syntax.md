@@ -21,6 +21,8 @@ contain.
   The type of confinement supported by the snap. Can be either "devmode" (i.e.
   this snap doesn't support running under confinement) or "strict" (i.e. full
   confinement supported via interfaces).
+* `assumes` (list of strings)
+  A feature tag list that the core needs to support for this snap to be run.
 * `epoch` (string)
   The epoch to which this revision of the snap belongs. This is used to specify
   upgrade paths. For example, `0` is epoch 0; `1*` is the upgrade path from 0 to
