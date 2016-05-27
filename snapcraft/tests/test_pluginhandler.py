@@ -1941,8 +1941,8 @@ class StagePackagesTestCase(tests.TestCase):
 
         self.assertEqual(
             str(raised.exception),
-            "Cannot find 'non-existing' defined as 'stage-packages' for "
-            "'stage-test'")
+            "Error downloading stage packages for part 'stage-test': "
+            "no such package 'non-existing'")
 
 
 class FindDependenciesTestCase(tests.TestCase):
