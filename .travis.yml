@@ -3,8 +3,6 @@ dist: trusty
 language: python
 python:
   - 3.5
-virtualenv:
-  system_site_packages: true
 env:
   global:
   # Encrypted test user password. Generated with the travis gem:
