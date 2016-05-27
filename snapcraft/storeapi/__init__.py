@@ -29,6 +29,10 @@ from snapcraft import config
 class StoreClient():
     """High-level client for the V2.0 API SCA resources."""
 
+    def __init__(self):
+        super().__init__()
+        self.conf = config.Config()
+
     def login(self, email, password, token_name, one_time_password=None):
         """Log in via the Ubuntu One SSO API.
 
@@ -57,7 +61,14 @@ class StoreClient():
             result['body'] = err.body
         except sso.UnexpectedApiError as err:
             result['body'] = err.json_body
+
+        if result['success']:
+            for key, value in result['body'].items():
+                self.conf.set(key, str(value))
+            self.conf.save()
+
         return result
 
     def logout(self):
-        config.clear_config()
+        self.conf.clear()
+        self.conf.save()

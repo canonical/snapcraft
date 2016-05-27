@@ -43,6 +43,7 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
+        self.useFixture(fixture_setup.TempConfig(self.path))
         # Some tests will directly or indirectly change the plugindir, which
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
