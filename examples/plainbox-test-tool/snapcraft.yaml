@@ -1,0 +1,32 @@
+name: plainbox-test-tool
+summary: A Plainbox Test Tool
+description: >
+  The Plainbox tool itself coupled with a Provider which contains the test
+  definitions
+version: 0.1
+
+apps:
+    plainbox:
+        command: bin/plainbox-wrapper
+        plugs: [dont-confine]
+
+plugs:
+    dont-confine:
+        interface: old-security
+        security-template: unconfined
+
+parts:
+    # The testing framework
+    plainbox:
+        plugin: nil
+        stage-packages:
+            - plainbox
+    # The test definitions
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2016.com.example:simple
+    # A wrapper script
+    launchers:
+        plugin: copy
+        files:
+            launchers/plainbox-wrapper: bin/plainbox-wrapper

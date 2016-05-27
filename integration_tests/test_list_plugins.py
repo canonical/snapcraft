@@ -34,6 +34,7 @@ class ListPluginsTestCase(integration_tests.TestCase):
                     'maven\n'
                     'nil\n'
                     'nodejs\n'
+                    'plainbox-provider\n'
                     'python2\n'
                     'python3\n'
                     'scons\n'

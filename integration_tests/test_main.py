@@ -36,6 +36,7 @@ class MainTestCase(integration_tests.TestCase):
             'maven',
             'nil',
             'nodejs',
+            'plainbox-provider',
             'python2',
             'python3',
             'scons',
