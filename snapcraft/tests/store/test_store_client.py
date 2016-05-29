@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import logging
+import os
 from unittest import mock
 
+import fixtures
 import requests
 
 from snapcraft import (
@@ -136,3 +139,79 @@ class SSOClientLoginTestCase(tests.TestCase):
         result = self.client.login(self.email, self.password, self.token_name)
         expected = {'success': False, 'body': error_data}
         self.assertEqual(result, expected)
+
+
+class DownloadTestCase(tests.TestCase):
+
+    # sha512 of snapcraft/tests/data/test-snap.snap
+    EXPECTED_SHA512 = (
+        '69D57DCACF4F126592D4E6FF689AD8BB8A083C7B9FE44F6E738EF'
+        'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
+        'fda4128234e4c201f28fe9')
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_download_without_login_raises_exception(self):
+        with self.assertRaises(storeapi.InvalidCredentialsError):
+            self.client.download('dummy', 'dummy', 'dummy')
+
+    def test_download_unexisting_snap_raises_exception(self):
+        self.client.login('dummy', 'test correct password', 'dummy')
+        with self.assertRaises(storeapi.SnapNotFoundError) as e:
+            self.client.download(
+                'unexisting-snap', 'test-channel', 'dummy', 'test-arch')
+        self.assertEqual(
+            'The "unexisting-snap" for test-arch was not found in '
+            'test-channel.',
+            str(e.exception))
+
+    def test_download_snap(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+        self.client.login('dummy', 'test correct password', 'dummy')
+        download_path = os.path.join(self.path, 'test-snap.snap')
+        self.client.download(
+            'test-snap', 'test-channel', download_path)
+        self.assertIn(
+            'Successfully downloaded test-snap at {}'.format(download_path),
+            self.fake_logger.output)
+
+    def test_download_already_downloaded_snap(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+        self.client.login('dummy', 'test correct password', 'dummy')
+        download_path = os.path.join(self.path, 'test-snap.snap')
+        # download first time.
+        self.client.download(
+            'test-snap', 'test-channel', download_path)
+        with mock.patch.object(storeapi.CPIClient, 'get') as mock_get:
+            # download again.
+            self.client.download(
+                'test-snap', 'test-channel', download_path)
+        self.assertFalse(mock_get.called)
+        self.assertIn(
+            'Already downloaded test-snap at {}'.format(download_path),
+            self.fake_logger.output)
+
+    def test_download_on_sha_mismatch(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+        self.client.login('dummy', 'test correct password', 'dummy')
+        download_path = os.path.join(self.path, 'test-snap.snap')
+        # Write a wrong file in the download path.
+        open(download_path, 'w').close()
+        self.client.download(
+            'test-snap', 'test-channel', download_path)
+        self.assertIn(
+            'Successfully downloaded test-snap at {}'.format(download_path),
+            self.fake_logger.output)
+
+    def test_download_with_hash_mismatch_raises_exception(self):
+        self.client.login('dummy', 'test correct password', 'dummy')
+        download_path = os.path.join(self.path, 'test-snap.snap')
+        with self.assertRaises(storeapi.SHAMismatchError):
+            self.client.download(
+                'test-snap-with-wrong-sha', 'test-channel', download_path)

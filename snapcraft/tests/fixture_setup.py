@@ -81,6 +81,12 @@ class FakeStore(fixtures.Fixture):
             urllib.parse.urljoin(
                 self.fake_store_api_server_fixture.url, 'dev/api')))
 
+        self.fake_store_search_server_fixture = FakeStoreSearchServerRunning()
+        self.useFixture(self.fake_store_search_server_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'UBUNTU_STORE_SEARCH_ROOT_URL',
+            self.fake_store_search_server_fixture.url))
+
 
 class _FakeServerRunning(fixtures.Fixture):
 
@@ -120,6 +126,11 @@ class FakeStoreAPIServerRunning(_FakeServerRunning):
     fake_server = fake_servers.FakeStoreAPIServer
 
 
+class FakeStoreSearchServerRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakeStoreSearchServer
+
+
 class StagingStore(fixtures.Fixture):
 
     def setUp(self):
@@ -133,3 +144,6 @@ class StagingStore(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_SSO_API_ROOT_URL',
             'https://login.staging.ubuntu.com/api/v2/'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'UBUNTU_STORE_SEARCH_ROOT_URL',
+            'https://search.apps.staging.ubuntu.com/'))

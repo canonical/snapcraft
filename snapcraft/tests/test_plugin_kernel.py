@@ -22,7 +22,10 @@ from unittest import mock
 import fixtures
 
 import snapcraft
-from snapcraft import tests
+from snapcraft import (
+    storeapi,
+    tests
+)
 from snapcraft.plugins import kernel
 
 
@@ -817,7 +820,7 @@ ACCEPT=n
             plugin.make_cmd,
             ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
 
-    @mock.patch('snapcraft.storeapi.download')
+    @mock.patch.object(storeapi.StoreClient, 'download')
     def test_pull(self, download_mock):
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
