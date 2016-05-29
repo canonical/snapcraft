@@ -39,7 +39,9 @@ def login():
 
     logger.info('Authenticating against Ubuntu One SSO.')
     store = storeapi.StoreClient()
-    response = store.login(email, password, one_time_password)
+    response = store.login(
+        email, password, token_name='snapcraft',
+        one_time_password=one_time_password)
     success = response.get('success', False)
 
     if success:
