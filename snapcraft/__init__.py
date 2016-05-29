@@ -114,7 +114,12 @@ be used in any part irrespective of the plugin, these are
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
-from snapcraft._store import login, logout, upload  # noqa
+from snapcraft._store import (                      # noqa
+    download,
+    login,
+    logout,
+    upload
+)
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa

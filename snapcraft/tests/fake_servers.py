@@ -17,10 +17,19 @@
 import json
 import logging
 import http.server
+import os
 import urllib.parse
+
+import snapcraft.tests
 
 
 logger = logging.getLogger(__name__)
+
+
+class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+
+    def log_message(*args):
+        logger.debug(args)
 
 
 class FakeSSOServer(http.server.HTTPServer):
@@ -30,12 +39,9 @@ class FakeSSOServer(http.server.HTTPServer):
             server_address, FakeSSORequestHandler)
 
 
-class FakeSSORequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeSSORequestHandler(BaseHTTPRequestHandler):
 
     _API_PATH = '/api/v2/'
-
-    def log_message(*args):
-        logger.debug(args)
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
@@ -90,7 +96,7 @@ class FakeStoreUploadServer(http.server.HTTPServer):
             server_address, FakeStoreUploadRequestHandler)
 
 
-class FakeStoreUploadRequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
@@ -98,7 +104,7 @@ class FakeStoreUploadRequestHandler(http.server.BaseHTTPRequestHandler):
             self._handle_upload_request()
         else:
             logger.error(
-                'Not implemented path in fake Store Search server: {}'.format(
+                'Not implemented path in fake Store Upload server: {}'.format(
                     self.path))
             raise NotImplementedError(self.path)
 
@@ -121,7 +127,7 @@ class FakeStoreAPIServer(http.server.HTTPServer):
             server_address, FakeStoreAPIRequestHandler)
 
 
-class FakeStoreAPIRequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
     _DEV_API_PATH = '/dev/'
 
@@ -173,3 +179,83 @@ class FakeStoreAPIRequestHandler(http.server.BaseHTTPRequestHandler):
             'completed': True
         }
         self.wfile.write(json.dumps(response).encode())
+
+
+class FakeStoreSearchServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakeStoreSearchRequestHandler)
+
+
+class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
+
+    # XXX This fake server as reused as download server, to avoid passing a
+    # port as an argument. --elopio - 2016-05-01
+
+    _API_PATH = '/api/v1/'
+
+    def do_GET(self):
+        parsed_path = urllib.parse.urlparse(self.path)
+        search_path = self._API_PATH + 'search'
+        download_path = '/download-snap/'
+        if parsed_path.path.startswith(search_path):
+            self._handle_search_request(
+                urllib.parse.parse_qs(parsed_path.query)['q'])
+        elif parsed_path.path.startswith(download_path):
+            self._handle_download_request(parsed_path[len(download_path):])
+        else:
+            logger.error(
+                'Not implemented path in fake Store Search server: {}'.format(
+                    self.path))
+            raise NotImplementedError(self.path)
+
+    def _handle_search_request(self, query):
+        if len(query) > 1 or 'package_name:' not in query[0]:
+            logger.error(
+                'Not implemented query in fake Store Search server: {}'.format(
+                    query))
+            raise NotImplementedError(query)
+        query = query[0]
+        package = query.split('package_name:')[1].strip('"')
+        logger.debug(
+            'Handling search request for package {}, with headers {}'.format(
+                package, self.headers))
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/hal+json')
+        self.end_headers()
+        response = self._get_search_response(package)
+        self.wfile.write(json.dumps(response).encode())
+
+    def _get_search_response(self, package):
+        # ubuntu-core is used in integration tests with fake servers.
+        if package in ('test-snap', 'ubuntu-core'):
+            # sha512sum snapcraft/tests/data/test-snap.snap
+            sha512 = (
+                '69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef'
+                'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
+                'fda4128234e4c201f28fe9')
+        elif package == 'test-snap-with-wrong-sha':
+            sha512 = 'wrong sha'
+        else:
+            return {}
+        response = {'_embedded': {
+            'clickindex:package': [
+                {'download_url': urllib.parse.urljoin(
+                    'http://localhost:{}'.format(self.server.server_port),
+                    'download-snap/test-snap.snap'),
+                 'download_sha512': sha512}]}}
+        return response
+
+    def _handle_download_request(self, snap):
+        logger.debug('Handling download request for snap {}'.format(snap))
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/octet-stream')
+        self.end_headers()
+        # TODO create a test snap during the test instead of hardcoding it.
+        # --elopio - 2016-05-01
+        snap_path = os.path.join(
+            os.path.dirname(snapcraft.tests.__file__), 'data',
+            'test-snap.snap')
+        with open(snap_path, 'rb') as snap_file:
+            self.wfile.write(snap_file.read())
