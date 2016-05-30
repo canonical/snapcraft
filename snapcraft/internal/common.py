@@ -35,6 +35,8 @@ _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
 _librariesdir = _DEFAULT_LIBRARIESDIR
 
+MAX_CHARACTERS_WRAP = 120
+
 env = []
 
 logger = logging.getLogger(__name__)
