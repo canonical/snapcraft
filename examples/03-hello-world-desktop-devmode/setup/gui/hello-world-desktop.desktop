@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=Qt Hello World example
-Comment=This code is part the snapcraft example tour at https://snapcraft.io/create-snaps
-Exec=hello-world-desktop
-Icon=${SNAP}/meta/gui/icon.png
-Type=Application
