@@ -41,7 +41,8 @@ class InitCommandTestCase(tests.TestCase):
 version: 0  # the version of the snap
 summary: This is my-snap's summary  # 79 char long summary
 description: This is my-snap's description  # a longer description for the snap
-confinement: devmode  # use "strict" to enforce system access only via declared interfaces
+confinement: devmode  # use "strict" to enforce system access only via \
+declared interfaces
 
 parts:
     my-part:  # Replace with a part name of your liking
