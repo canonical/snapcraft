@@ -36,8 +36,8 @@ _DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_EXAMPLESDIR = '/usr/share/snapcraft/examples'
-_examplesdir = _DEFAULT_EXAMPLESDIR
+_DEFAULT_TOURDIR = '/usr/share/snapcraft/tour'
+_tourdir = _DEFAULT_TOURDIR
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -133,13 +133,13 @@ def get_librariesdir():
     return _librariesdir
 
 
-def set_examplesdir(examplesdir):
-    global _examplesdir
-    _examplesdir = examplesdir
+def set_tourdir(tourdir):
+    global _tourdir
+    _tourdir = tourdir
 
 
-def get_examplesdir():
-    return _examplesdir
+def get_tourdir():
+    return _tourdir
 
 
 def get_python2_path(root):

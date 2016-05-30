@@ -32,7 +32,7 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
-  snapcraft [options] examples [<directory>]
+  snapcraft [options] tour [<directory>]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -65,13 +65,13 @@ Options specific to snapping:
                                         snap.
 
 The available commands are:
-  examples     Setup the snapcraft examples in the specified directory,
-               or ./snapcraft-tour/.
   help         Obtain help for a certain plugin or topic
   init         Initialize a snapcraft project.
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  tour         Setup the snapcraft examples tour in the specified directory,
+               or ./snapcraft-tour/.
   upload       Upload a snap to the Ubuntu Store.
 
 The available lifecycle commands are:
@@ -112,7 +112,7 @@ from docopt import docopt
 import snapcraft
 from snapcraft.internal import lifecycle, log
 from snapcraft.internal.common import (
-    format_output_in_columns, MAX_CHARACTERS_WRAP, get_examplesdir)
+    format_output_in_columns, MAX_CHARACTERS_WRAP, get_tourdir)
 
 
 logger = logging.getLogger(__name__)
@@ -127,20 +127,20 @@ def _get_version():
 
 
 def _scaffold_examples(directory):
-    logger.debug("Copying examples to {}".format(directory))
+    logger.debug("Copying examples tour to {}".format(directory))
     dest_dir = os.path.abspath(directory)
 
     # If dest_dir doesn't exist, we dump all examples in it.
     # If it does exist, we dump them into a subdirectory
     try:
-        shutil.copytree(get_examplesdir(), dest_dir)
+        shutil.copytree(get_tourdir(), dest_dir)
     except FileExistsError:
         # don't event try to copy if the dest exists already
         if not os.path.isdir(dest_dir):
             raise NotADirectoryError("{} is a file, can't be used as a "
                                      "destination".format(dest_dir))
         dest_dir = os.path.join(dest_dir, _SNAPCRAFT_TOUR_DIR)
-        shutil.copytree(get_examplesdir(), dest_dir)
+        shutil.copytree(get_tourdir(), dest_dir)
 
     print("Snapcraft tour initialized in {}.\n"
           "Instructions are in the README, or "
@@ -232,7 +232,7 @@ def run(args, project_options):
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:
         lifecycle.cleanbuild(project_options),
-    elif args['examples']:
+    elif args['tour']:
         _scaffold_examples(args['<directory>'] or _SNAPCRAFT_TOUR_DIR)
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
