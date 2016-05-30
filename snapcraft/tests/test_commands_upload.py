@@ -23,11 +23,19 @@ import docopt
 import fixtures
 
 import snapcraft._store
-from snapcraft import tests
+from snapcraft import (
+    storeapi,
+    tests
+)
 from snapcraft.main import main
 
 
 class UploadCommandTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
 
     def _patch_snap_yaml(self, snap_name):
         meta_path = os.path.join(os.getcwd(), 'squashfs-root', 'meta')
@@ -35,7 +43,7 @@ class UploadCommandTestCase(tests.TestCase):
         with open(os.path.join(meta_path, 'snap.yaml'), 'w') as yaml_file:
             yaml_file.write('name: {}\n'.format(snap_name))
 
-        temp_dir = snapcraft._store.tempfile.TemporaryDirectory
+        temp_dir = snapcraft.storeapi.tempfile.TemporaryDirectory
 
         def create_patch(method, return_value):
             patcher = mock.patch.object(temp_dir, method)
@@ -53,35 +61,25 @@ class UploadCommandTestCase(tests.TestCase):
 
         self.assertTrue('Usage:' in str(raised.exception))
 
-    def test_upload_nonexisting_snap_must_raise_exception(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['upload', 'unexisting.snap'])
-
-        self.assertEqual('unexisting.snap', str(raised.exception))
-
-    def test_upload_existing_snap(self):
-        patcher = mock.patch('snapcraft.storeapi.upload')
+    def test_upload_snap(self):
+        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
         mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('subprocess.check_call')
-        mock_check_call = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
+        mock_upload.return_value = {
+            'success': True,
+            'revision': 'test-revision',
+            'application_url': 'test-url'
+        }
 
         open('test.snap', 'w').close()
 
         self._patch_snap_yaml('snaptestname')
         main(['upload', 'test.snap'])
 
-        mock_check_call.assert_called_once_with(
-            ['unsquashfs', '-d', os.path.join(os.getcwd(), 'squashfs-root'),
-             'test.snap', '-e', os.path.join('meta', 'snap.yaml')])
         self.assertEqual(
-            'Uploading existing test.snap.\n', fake_logger.output)
+            'Uploading existing test.snap.\n\n'
+            'Application uploaded successfully (as revision test-revision)\n'
+            'Please check out the application at: test-url\n\n',
+            self.fake_logger.output)
 
-        mock_upload.assert_called_once_with(
-            'test.snap',
-            'snaptestname')
+        mock_upload.assert_called_once_with('test.snap')

@@ -17,11 +17,6 @@
 
 import getpass
 import logging
-import os
-import subprocess
-import tempfile
-
-import yaml
 
 from snapcraft import storeapi
 
@@ -57,25 +52,42 @@ def logout():
 
 
 def upload(snap_filename):
-    if not os.path.exists(snap_filename):
-        raise FileNotFoundError(snap_filename)
+    logger.info('Uploading existing {}.'.format(snap_filename))
+
+    try:
+        store = storeapi.StoreClient()
+        result = store.upload(snap_filename)
+    except storeapi.InvalidCredentialsError:
+        logger.info('No valid credentials found.'
+                    ' Have you run "snapcraft login"?')
+        return
+
+    success = result.get('success', False)
+    errors = result.get('errors', [])
+    app_url = result.get('application_url', '')
+    revision = result.get('revision')
+
+    # Print another newline to make sure the user sees the final result of the
+    # upload (success/failure).
+    logger.info('')
+
+    if success:
+        message = 'Application uploaded successfully'
+        if revision:
+            message += ' (as revision {})'.format(revision)
+        logger.info(message)
     else:
-        snap_name = _get_name_from_snap_file(snap_filename)
-        logger.info('Uploading existing {}.'.format(snap_filename))
+        logger.info('Upload did not complete.')
 
-        storeapi.upload(snap_filename, snap_name)
+    if errors:
+        logger.info('Some errors were detected:\n\n%s\n',
+                    '\n'.join(str(error) for error in errors))
 
+    if app_url:
+        logger.info('Please check out the application at: %s\n',
+                    app_url)
 
-def _get_name_from_snap_file(snap_path):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        subprocess.check_call(
-            ['unsquashfs', '-d', os.path.join(temp_dir, 'squashfs-root'),
-             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
-        with open(os.path.join(
-                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')) as yaml_file:
-            snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
+    return success
 
 
 def download(snap_name, channel, download_path, arch):

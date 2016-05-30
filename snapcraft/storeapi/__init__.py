@@ -18,18 +18,19 @@ import hashlib
 import json
 import logging
 import os
+import subprocess
+import tempfile
 import urllib.parse
 
 import ssoclient.v2 as sso
+import yaml
 
 import snapcraft
-from .channels import get_channels, update_channels  # noqa
-from .info import get_info  # noqa
-from ._upload import upload  # noqa
 from snapcraft import config
 from snapcraft.storeapi import (
     common,
-    constants
+    constants,
+    _upload,
 )
 
 
@@ -93,6 +94,8 @@ class StoreClient():
         super().__init__()
         self.conf = config.Config()
         self.cpi = CPIClient(self.conf)
+        self.updown = UpDownClient(self.conf)
+        self.sca = SCAClient(self.conf)
 
     def login(self, email, password, token_name, one_time_password=None):
         """Log in via the Ubuntu One SSO API.
@@ -133,6 +136,36 @@ class StoreClient():
     def logout(self):
         self.conf.clear()
         self.conf.save()
+
+    def upload(self, snap_filename):
+        if not os.path.exists(snap_filename):
+            raise FileNotFoundError(snap_filename)
+        snap_name = self._get_name_from_snap_file(snap_filename)
+
+        session = common.get_oauth_session(config.Config())
+        if session is None:
+            raise InvalidCredentialsError()
+        data = _upload.upload_files(snap_filename, self.updown)
+        success = data.get('success', False)
+        if not success:
+            return data
+
+        result = _upload.upload_app(self.sca, snap_name, data)
+        return result
+
+    def _get_name_from_snap_file(self, snap_path):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = subprocess.check_output(
+                ['unsquashfs', '-d',
+                 os.path.join(temp_dir, 'squashfs-root'),
+                 snap_path, '-e', os.path.join('meta', 'snap.yaml')])
+            logger.debug(output)
+            with open(os.path.join(
+                    temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
+            ) as yaml_file:
+                snap_yaml = yaml.load(yaml_file)
+
+        return snap_yaml['name']
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
@@ -215,6 +248,45 @@ class CPIClient(Client):
             return None
         else:
             return embedded['clickindex:package'][0]
+
+    def get(self, download_url):
+        session = common.get_oauth_session(config.Config())
+        return session.get(download_url)
+
+
+class UpDownClient(Client):
+    """The Up/Down server provide upload/download snap capabilities."""
+
+    def __init__(self, conf):
+        super().__init__(conf, os.environ.get(
+            'UBUNTU_STORE_UPLOAD_ROOT_URL',
+            constants.UBUNTU_STORE_UPLOAD_ROOT_URL))
+
+    def upload(self, monitor):
+        session = common.get_oauth_session(config.Config())
+        if session is None:
+            raise InvalidCredentialsError()
+        return session.post(
+            urllib.parse.urljoin(self.root_url, 'unscanned-upload/'),
+            data=monitor, headers={'Content-Type': monitor.content_type})
+
+
+class SCAClient(Client):
+    """The software center agent deals with managing snaps."""
+
+    def __init__(self, conf):
+        super().__init__(conf, os.environ.get(
+            'UBUNTU_STORE_API_ROOT_URL',
+            constants.UBUNTU_STORE_API_ROOT_URL))
+
+    def snap_upload(self, data):
+        session = common.get_oauth_session(config.Config())
+        if session is None:
+            raise InvalidCredentialsError()
+        url = urllib.parse.urljoin(
+            self.root_url, 'click-package-upload/{}/'.format(
+                urllib.parse.quote_plus(data['name'])))
+        return session.post(url, data)
 
     def get(self, download_url):
         session = common.get_oauth_session(config.Config())

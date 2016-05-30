@@ -56,7 +56,6 @@ class UploadTestCase(integration_tests.TestCase):
 
         output = self.run_snapcraft(['upload', snap_file_path])
 
-        self.assertIn('Upload failed', output)
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', output)
 
