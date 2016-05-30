@@ -19,10 +19,10 @@ import demos_tests
 
 class ShoutTestCase(demos_tests.ExampleTestCase):
 
-    demo_dir = 'shout'
+    snap_content_dir = 'shout'
 
     def test_shout(self):
-        self.build_snap(self.demo_dir)
+        self.build_snap(self.snap_content_dir)
         snap_name = 'shout'
-        self.install_snap(self.demo_dir, snap_name, '0.52.0')
+        self.install_snap(self.snap_content_dir, snap_name, '0.52.0')
         self.assert_service_running(snap_name, 'server')

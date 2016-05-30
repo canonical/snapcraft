@@ -43,7 +43,7 @@ setup(
               'snapcraft.plugins',
               'snapcraft.storeapi'],
     package_data={'snapcraft.internal': ['manifest.txt']},
-    scripts=['bin/snapcraft'],
+    scripts=['bin/snapcraft', 'bin/snapcraft-examples'],
     data_files=[
         ('share/snapcraft/schema',
             ['schema/' + x for x in os.listdir('schema')]),

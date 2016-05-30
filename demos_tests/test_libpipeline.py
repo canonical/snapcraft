@@ -19,11 +19,11 @@ import demos_tests
 
 class LibPipelineTestCase(demos_tests.ExampleTestCase):
 
-    demo_dir = 'libpipeline'
+    snap_content_dir = 'libpipeline'
 
     def test_libpipeline(self):
-        self.build_snap(self.demo_dir)
-        self.install_snap(self.demo_dir, 'pipelinetest', '1.0')
+        self.build_snap(self.snap_content_dir)
+        self.install_snap(self.snap_content_dir, 'pipelinetest', '1.0')
         expected = (
             'running echo test | grep s | grep t\n'
             'custom libpipeline called\n'

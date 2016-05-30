@@ -34,11 +34,11 @@ parseargs(){
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
         elif [ "$1" == "examples" ] ; then
-            export RUN_DEMOS="true"
+            export RUN_TOUR="true"
         elif [ "$1" == "demos" ] ; then
             export RUN_DEMOS="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration, examples or demos"
+            echo "Not recognized option, should be one of all, static, unit, integration, tour examples or demos"
             exit 1
         fi
     fi
@@ -76,6 +76,10 @@ run_integration(){
     python3 -m unittest discover -b -v -s integration_tests
 }
 
+run_tour(){
+    python3 -m tour_tests "$@"
+}
+
 run_demos(){
     python3 -m demos_tests "$@"
 }
@@ -93,13 +97,18 @@ fi
 if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration
 fi
-
-if [ ! -z "$RUN_DEMOS" ]; then
+if [ ! -z "$RUN_TOUR" ]; then
     if [ "$1" == "examples" ] ; then
         # shift to remove the test suite name and be able to pass the rest
-        # to the examples suite.
+        # to the tour suite.
         shift
     fi
+    run_tour "$@"
+    # Temporary: until CI add "runtests demo" target
+    run_demos "$@"
+fi
+
+if [ ! -z "$RUN_DEMOS" ]; then
     if [ "$1" == "demos" ] ; then
         # shift to remove the test suite name and be able to pass the rest
         # to the demos suite.

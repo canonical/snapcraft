@@ -1,0 +1,15 @@
+name: hello
+version: 2.10
+summary: GNU Hello, the "hello world" snap
+description: GNU hello prints a friendly greeting.
+  This is part of the snapcraft tour at https://snapcraft.io/create/
+
+apps:
+  hello:
+    command: hello
+
+parts:
+  hello-src:
+    plugin: autotools
+    source: http://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz
+

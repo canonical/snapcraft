@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import demos_tests
+
+import os
+
+import tour_tests
 
 
-class TomcatMavenWebappTestCase(demos_tests.ExampleTestCase):
+class EasyStartTestCase(tour_tests.TourTestCase):
 
-    snap_content_dir = 'tomcat-maven-webapp'
+    snap_content_dir = '01-easy-start'
 
-    def test_tomcat_maven_webapp(self):
+    def test_hello(self):
         self.build_snap(self.snap_content_dir)
-        snap_name = 'tomcat-webapp-demo'
-        self.install_snap(self.snap_content_dir, snap_name, '1.0')
-        self.assert_service_running(snap_name, 'tomcat')
+        self.install_snap(self.snap_content_dir, 'hello', '2.1')
+        self.assert_command_in_snappy_testbed(
+            '/snap/bin/hello', 'Hello world!\n')

@@ -19,10 +19,10 @@ import demos_tests
 
 class GopasteTestCase(demos_tests.ExampleTestCase):
 
-    demo_dir = 'gopaste'
+    snap_content_dir = 'gopaste'
 
     def test_gopaste(self):
-        self.build_snap(self.demo_dir)
+        self.build_snap(self.snap_content_dir)
         snap_name = 'gopaste'
-        self.install_snap(self.demo_dir, snap_name, '1.0')
+        self.install_snap(self.snap_content_dir, snap_name, '1.0')
         self.assert_service_running(snap_name, 'gopaste')

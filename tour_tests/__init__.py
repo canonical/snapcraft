@@ -14,15 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import inspect
+import os
+import sys
+
+topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
+sys.path = [topdir] + sys.path
+
 import demos_tests
 
 
-class TomcatMavenWebappTestCase(demos_tests.ExampleTestCase):
+class TourTestCase(demos_tests.ExampleTestCase):
 
-    snap_content_dir = 'tomcat-maven-webapp'
+    def __init__(self, *args, **kwargs):
+        relative_path = os.path.relpath(
+            os.path.dirname(inspect.getfile(self.__class__)),
+            os.path.dirname(__file__))
+        self.src_dir = os.path.join("tour", relative_path)
+        super().__init__(*args, **kwargs)
 
-    def test_tomcat_maven_webapp(self):
-        self.build_snap(self.snap_content_dir)
-        snap_name = 'tomcat-webapp-demo'
-        self.install_snap(self.snap_content_dir, snap_name, '1.0')
-        self.assert_service_running(snap_name, 'tomcat')

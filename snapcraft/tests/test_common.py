@@ -32,6 +32,15 @@ class CommonTestCase(tests.TestCase):
         common.set_plugindir(plugindir)
         self.assertEqual(plugindir, common.get_plugindir())
 
+    def test_get_default_tourdir(self):
+        self.assertEqual(
+            '/usr/share/snapcraft/tour', common.get_tourdir())
+
+    def test_set_tourdir(self):
+        tourdir = os.path.join(self.path, 'testtour')
+        common.set_tourdir(tourdir)
+        self.assertEqual(tourdir, common.get_tourdir())
+
     def test_isurl(self):
         self.assertTrue(common.isurl('git://'))
         self.assertTrue(common.isurl('bzr://'))
