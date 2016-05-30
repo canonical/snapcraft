@@ -1,0 +1,30 @@
+Additional contributors to GNU Hello.
+
+  Copyright (C) 1999, 2005, 2014 Free Software Foundation, Inc.
+
+  Copying and distribution of this file, with or without modification,
+  are permitted in any medium without royalty provided the copyright
+  notice and this notice are preserved.
+
+Thanks to:
+
+    François Pinard for assistance and good ideas.
+
+    Jochen Hein for pre-testing and bug reports.
+
+    Ulrich Drepper who never hesitates to answer questions concerning
+    i18n/l10n (gettext 0.10.35) and Autoconf/Makefile nitty gritties.
+
+    Tom Tromey for Automake support.
+
+    Kaveh R. Ghazi for reporting and solving compilation problems.
+
+    Bruno Haible for gettext help (0.10.36 and later).
+
+    Paul Eggert for feedback and patches.
+
+    Fabrice Bauzac and Thomas Bushnell.
+
+    All the translators (run 'grep -e ^\"Last-Translator: po/*.po').
+
+See also the AUTHORS and ChangeLog files.

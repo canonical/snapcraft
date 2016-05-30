@@ -1,0 +1,230 @@
+# Korean messages for GNU hello.
+#
+# This file is distributed under the same license as the hello package.
+#
+# Copyright (C) 1996-1997, 1999, 2001, 2002 Free Software Foundation, Inc.
+#
+# Bang Jun-Young <bangjy@geocities.com>, 1996-1997
+# Changwoo Ryu <cwryu@debian.org> 1999-2002, 2007, 2009
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GNU hello 2.3.91\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2009-01-13 11:45+0900\n"
+"Last-Translator: Changwoo Ryu <cwryu@debian.org>\n"
+"Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "안녕하세요, 여러분!"
+
+#: src/hello.c:84
+#, fuzzy
+msgid "hello, world"
+msgstr "안녕, 여러분\n"
+
+#: src/hello.c:94
+#, fuzzy
+msgid "extra operand"
+msgstr "%s: 추가 오퍼렌드: %s\n"
+
+#: src/hello.c:100
+#, c-format
+msgid "conversion to a multibyte string failed"
+msgstr ""
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "사용법: %s [옵션]...\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr "반가운 인사말을 (인사말은 설정할 수 있음) 출력합니다.\n"
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          이 도움말을 표시하고 마칩니다\n"
+"  -v, --version       버전 정보를 표시하고 마칩니다\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t, --traditional       전통적인 인사말 형식을 사용합니다\n"
+"  -n, --next-generation   신세대 인사말 형식을 사용합니다\n"
+"  -g, --greeting=<텍스트> <텍스트>를 인사말로 사용합니다\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, fuzzy, c-format
+msgid "Report bugs to: %s\n"
+msgstr "버그는 %s 주소로 알려 주십시오.\n"
+
+#: src/hello.c:152
+#, fuzzy, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr "버그는 %s 주소로 알려 주십시오.\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr ""
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr ""
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+
+#: src/hello.c:179
+#, fuzzy, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+"Copyright (C) %s Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr "알 수 없는 시스템 오류"
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, fuzzy, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: `%s' 옵션은 모호한 옵션입니다\n"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, fuzzy, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: `--%s' 옵션은 인수가 필요 없습니다\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, fuzzy, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: `%c%s' 옵션은 인수가 필요 없습니다\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, fuzzy, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: `%s' 옵션은 인수가 필요합니다\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, fuzzy, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: 인식할 수 없는 옵션 `--%s'\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, fuzzy, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: 인식할 수 없는 옵션 `%c%s'\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, fuzzy, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: 틀린 옵션 -- %c\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, fuzzy, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: 인수가 필요한 옵션입니다 -- %c\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, fuzzy, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: `-W %s' 옵션은 모호한 옵션입니다\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, fuzzy, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: `-W %s' 옵션은 인수를 허용하지 않습니다\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, fuzzy, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: `%s' 옵션은 인수가 필요합니다\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr "쓰기 오류"
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr "“"
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr "”"
+
+#: lib/xalloc-die.c:34
+msgid "memory exhausted"
+msgstr "메모리가 바닥남"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "더 많이 알아 보려면 `%s --help' 옵션을 사용하십시오.\n"
+
+#~ msgid ""
+#~ "+---------------+\n"
+#~ "| Hello, world! |\n"
+#~ "+---------------+\n"
+#~ msgstr ""
+#~ "┌───────────────┐\n"
+#~ "│ 안녕, 여러분! │\n"
+#~ "└───────────────┘\n"
+
+#~ msgid "%s: illegal option -- %c\n"
+#~ msgstr "%s: 잘못된 옵션 -- %c\n"

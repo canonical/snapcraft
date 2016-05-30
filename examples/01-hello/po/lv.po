@@ -1,0 +1,293 @@
+# Latvian translation for hello.
+# This file is distributed under the same license as the hello package.
+# Copyright (C) 1999 Free Software Foundation, Inc.
+#
+# Ilya Ketris <ilya@gde.to>, 1999.
+# Rihards Prieditis <rprieditis@gmail.com>,2009, 2010,2011.
+# Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>, 2014.
+msgid ""
+msgstr ""
+"Project-Id-Version: GNU hello 2.9\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2014-04-20 16:48+0300\n"
+"Last-Translator: Rihards Prieditis <rprieditis@gmail.com>\n"
+"Language-Team: Latvian <translation-team-lv@lists.sourceforge.net>\n"
+"Language: lv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : "
+"2);\n"
+"X-Generator: Lokalize 1.5\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "Sveika, pasaule!"
+
+#: src/hello.c:84
+msgid "hello, world"
+msgstr "sveika, pasaule"
+
+#: src/hello.c:94
+#, fuzzy
+msgid "extra operand"
+msgstr "%s: papildus operands: %s\n"
+
+#: src/hello.c:100
+#, fuzzy, c-format
+msgid "conversion to a multibyte string failed"
+msgstr "%s: neizdevās konvertēt uz vairāku baitu virkni\n"
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Lietošana: %s [OPCIJAS]...\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr "Drukāt draudzīgu, pielāgojamu sveicienu.\n"
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          attēlo šo palīdzības ziņu un iziet\n"
+"  -v, --version       attēlo versijas informāciju un iziet\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t, --traditional       izmantot tradicionālu sveikšanu\n"
+"  -n, --next-generation   izmantot nākamās paaudzēs sveikšanu\n"
+"  -g, --greeting=TEKST    izmantot TEKSTU, kā sveiciena ziņojumu\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, c-format
+msgid "Report bugs to: %s\n"
+msgstr "Ziņojiet par kļūdas uz: %s.\n"
+
+#: src/hello.c:152
+#, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr "Ziņojiet %s kļūdas uz: %s.\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s mājas lapa: <%s>\n"
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr "%s mājas lapa: <http://www.gnu.org/software/%s/>\n"
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+"Vispārējā palīdzība lietojot GNU programmatūru: <http://www.gnu.org/gethelp/"
+">\n"
+
+#: src/hello.c:179
+#, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+"Autortiesības (C) %d Free Software Foundation, Inc.\n"
+"Licence GPLv3+: GNU GPL v. 3 vai jaunāka <http://gnuorg/licenses/gpl.html>.\n"
+"Šī ir brīva programmatūra: jums ir brīvība to mainīt un izplatīt.\n"
+"NAV GARANTIJAS, līdz likuma atļautajām robežām.\n"
+"\n"
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr "Nezināma sistēmas kļūda"
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: opcija “%s” nav viennozīmīga, iespējas:"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: opcija “--%s” neatļauj argumentu\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: opcija “%c%s” neatļauj argumentu\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: opcijai “--%s” nepieciešams arguments\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: neatpazīta opcija “--%s”\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: neatpazīta opcija “%c%s”\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: nederīga opcija -- “%c”\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: opcijai nepieciešams arguments -- “%c”\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: opcija “-W %s” ir divdomīga\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: opcija “-W %s” neatļauj argumentu\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: opcijai “-W %s” nepieciešams arguments\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr "rakstīšanas kļūda"
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr "“"
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr "”"
+
+#: lib/xalloc-die.c:34
+msgid "memory exhausted"
+msgstr "atmiņa izsmelta"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "Lietojiet “%s --help”, lai uzzinātu vairāk.\n"
+
+#~ msgid ""
+#~ "+---------------+\n"
+#~ "| Hello, world! |\n"
+#~ "+---------------+\n"
+#~ msgstr ""
+#~ "+----------------------+\n"
+#~ "| Sveika, pasaule!    |\n"
+#~ "+----------------------+\n"
+
+#~ msgid "%s: illegal option -- %c\n"
+#~ msgstr "%s: opcija -- %c nav atļauta.\n"
+
+#~ msgid "Too many arguments\n"
+#~ msgstr "Par daudz argumentu.\n"
+
+#~ msgid ""
+#~ "This is GNU Hello, THE greeting printing program.\n"
+#~ "Usage: %s [OPTION]\n"
+#~ "  -h, --help          display this help and exit\n"
+#~ "  -v, --version       display version information and exit\n"
+#~ "  -t, --traditional   use traditional greeting format\n"
+#~ "  -m, --mail          print your mail\n"
+#~ "\n"
+#~ "Report bugs to bug-gnu-hello@prep.ai.mit.edu.\n"
+#~ msgstr ""
+#~ "Tas ir GNU Hello, sveicinājuma programma.\n"
+#~ "Izsaukums: %s [ATSLĒGA]\n"
+#~ "  -h, --help          izvadīt palīdzību\n"
+#~ "  -v, --version       izvadīt versiju\n"
+#~ "  -t, --traditional   izmantot tradicionālo sveicinājuma formātu\n"
+#~ "  -m, --mail          drukāt jūsu pastu\n"
+#~ "\n"
+#~ "Ziņojiet kļudas uz bug-gnu-hello@gnu.ai.mit.edu.\n"
+
+#~ msgid ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+#~ "PARTICULAR PURPOSE.  You may redistribute copies of GNU %s under the "
+#~ "terms\n"
+#~ "of the GNU General Public License.\n"
+#~ "For more information about these matters, see the file named COPYING.\n"
+#~ msgstr ""
+#~ "Copyright © %s Free Software Foundation, Inc.\n"
+#~ "Nekādu garantiju; ne pat KOMERCIZMANTOŠANAI vai DERĪGUMAM\n"
+#~ "JEBKURAM NOLŪKAM.  Jūs varat izplatīt GNU %s kopijas saskaņā ar\n"
+#~ "GNU General Public License.\n"
+#~ "Tālākai informācijai skatieties failu COPYING.\n"
+
+#~ msgid "%s: incompatible flags: -m and -t\n"
+#~ msgstr "%s: nesavietojamas atslēgas: -m un -t\n"
+
+#~ msgid "%s: Who are you?\n"
+#~ msgstr "%s: Kas jūs esat?\n"
+
+#~ msgid "%s: cannot find your mail spool file.\n"
+#~ msgstr "%s: nevar atrast jūsu pasta failu.\n"
+
+#~ msgid "Nothing happens here."
+#~ msgstr "Šeit nekas nenotiek."
+
+#~ msgid ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "This is free software; see the source for copying conditions.  There is "
+#~ "NO\n"
+#~ "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR "
+#~ "PURPOSE.\n"
+#~ msgstr ""
+#~ "Copyright © %s Free Software Foundation, Inc.\n"
+#~ "Šī prgrammatūra ir brīva; skatieties izplatīšanas noteikumus "
+#~ "izejtekstos.\n"
+#~ "Nekādu garantiju; ne pat KOMERCIZMANTOŠANAI vai DERĪGUMAM\n"
+#~ "JEBKURAM NOLŪKAM.\n"

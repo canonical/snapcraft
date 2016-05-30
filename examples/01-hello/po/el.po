@@ -1,0 +1,288 @@
+# Greek messages for GNU hello.
+# This file is distributed under the same license as the hello package.
+# Copyright (C) 1999 Free Software Foundation, Inc.
+# Simos Xenitellis <S.Xenitellis@rhbnc.ac.uk>, 1999.
+# Savvas Radevic <vicedar@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hello 2.8\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2012-04-23 13:50+0100\n"
+"Last-Translator: Savvas Radevic <vicedar@gmail.com>\n"
+"Language-Team: Greek <team@lists.gnome.gr>\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "Γεια σου, κόσμε!"
+
+#: src/hello.c:84
+#, fuzzy
+msgid "hello, world"
+msgstr "γειά σου, κόσμε\n"
+
+#: src/hello.c:94
+#, fuzzy
+msgid "extra operand"
+msgstr "%s: επιπλέον τελεστής: %s\n"
+
+#: src/hello.c:100
+#, c-format
+msgid "conversion to a multibyte string failed"
+msgstr ""
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Χρήση: %s [ΕΠΙΛΟΓΗ]...\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr "Εκτύπωσε ένα φιλικό, προσαρμόσιμο χαιρετισμό.\n"
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          εμφάνιση αυτής της βοήθειας και τερματισμός\n"
+"  -v, --version       εμφάνιση πληροφοριών έκδοσης και τερματισμός\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t, --traditional       χρήση παραδοσιακής μορφής χαιρετισμού\n"
+"  -n, --next-generation   χρήση μορφής χαιρετισμού επόμενης γενεάς\n"
+"  -g, --greeting=TEXT     χρήση κειμένου TEXT ως μήνυμα χαιρετισμού\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, c-format
+msgid "Report bugs to: %s\n"
+msgstr "Αναφορά σφαλμάτων στο: %s\n"
+
+#: src/hello.c:152
+#, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr "Αναφορά %s σφαλμάτων στο: %s\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s ιστοσελίδα: <%s>\n"
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr "%s ιστοσελίδα: <http://www.gnu.org/software/%s/>\n"
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+"Γενική βοήθεια για να χρησιμοποιήσετε το λογισμικό GNU: <http://www.gnu.org/"
+"gethelp/>\n"
+
+#: src/hello.c:179
+#, fuzzy, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+"Copyright (C) %s Free Software Foundation, Inc.\n"
+"Άδεια χρήσης GPLv3+: GNU GPL έκδοση 3 ή μεταγενέστερη <http://gnu.org/"
+"licenses/gpl.html>\n"
+"Αυτό είναι ελεύθερο λογισμικό: Είστε ελεύθεροι να το αλλάξετε και να το "
+"αναδιανέμετε.\n"
+"Δεν υπάρχει ΚΑΜΙΑ ΕΓΓΥΗΣΗ στην έκταση που επιτρέπεται από το νόμο.\n"
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr "Άγνωστο σφάλμα συστήματος"
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: η επιλογή «%s» είναι διφορούμενη· πιθανότητες:"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: η επιλογή «--%s» δεν δέχεται ορίσματα\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: η επιλογή «%c%s» δεν δέχεται ορίσματα\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: η επιλογή «--%s» απαιτεί όρισμα\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: μη αναγνωρίσιμη επιλογή «--%s»\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: μη αναγνωρίσιμη επιλογή «%c%s»\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: μη έγκυρη επιλογή -- «%c»\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: η επιλογή απαιτεί ένα όρισμα -- «%c»\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: η επιλογή «-W %s» είναι δοφορούμενη\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: η επιλογή «-W %s» δεν δέχεται ορίσματα\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: η επιλογή «-W %s» απαιτεί όρισμα\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr "σφάλμα εγγραφής"
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr "«"
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr "»"
+
+#: lib/xalloc-die.c:34
+msgid "memory exhausted"
+msgstr "η ιδεατή μνήμη εξαντλήθηκε"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+
+#~ msgid ""
+#~ "+---------------+\n"
+#~ "| Hello, world! |\n"
+#~ "+---------------+\n"
+#~ msgstr ""
+#~ "+------------------+\n"
+#~ "| Γεια σου, κόσμε! |\n"
+#~ "+------------------+\n"
+
+#~ msgid "%s: illegal option -- %c\n"
+#~ msgstr "%s: μη έγκυρη επιλογή -- %c\n"
+
+#~ msgid "Too many arguments\n"
+#~ msgstr "Πάρα πολλά ορίσματα\n"
+
+# Please check "ΔΕΝ υπάρχει εγγύηση?..."; msgmerge compleain about an invalid
+# multibyte sequence.
+# 2001-03-19 06:33:58 CET -ke-
+#
+# With the new gettext, it works.
+# 2001-05-24 22:07:42 CEST -ke-
+#, fuzzy
+#~ msgid ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+#~ "PARTICULAR PURPOSE.  You may redistribute copies of GNU %s\n"
+#~ "under the terms of the GNU General Public License.\n"
+#~ "For more information about these matters, see the file named COPYING.\n"
+#~ msgstr ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "ΔΕΝ υπάρχει εγγύηση? ούτε ακόμη για ΛΕΙΤΟΥΡΓIΚΟΤΗΤΑ ή ΚΑΤΑΛΛΗΛΟΤΗΤΑ\n"
+#~ "ΓΙΑ ΚΑΠΟΙΟ ΣΥΓΚΕΚΡΙΜΕΝΟ ΣΚΟΠΟ. Μπορείτε να αναδιανείμετε αντίγραφα\n"
+#~ "του GNU προγράμματος %s κάτω από τη GNU Γενική Δημόσια Άδεια.\n"
+
+#, fuzzy
+#~ msgid "%s: Incompatible flags: -m and -t\n"
+#~ msgstr "%s: μη συμβατές σημαίες: -m και -t \n"
+
+#~ msgid "%s: Who are you?\n"
+#~ msgstr "%s: Ποιός είστε\n"
+
+#, fuzzy
+#~ msgid "%s: Cannot find your mail spool file.\n"
+#~ msgstr "%s: αδυνατώ να βρω το αρχείο της αλληλογραφίας σας.\n"
+
+#~ msgid "Nothing happens here."
+#~ msgstr "Δεν συμβαίνει τίποτα εδώ."
+
+#, fuzzy
+#~ msgid ""
+#~ "GNU hello, THE greeting printing program.\n"
+#~ "\n"
+#~ "Usage: %s [OPTION]\n"
+#~ "\n"
+#~ "  -h, --help          display this help and exit\n"
+#~ "  -v, --version       display version information and exit\n"
+#~ "  -t, --traditional   use traditional greeting format\n"
+#~ "  -m, --mail          print your mail\n"
+#~ "\n"
+#~ "Report bugs to bug-gnu-hello@prep.ai.mit.edu.\n"
+#~ msgstr ""
+#~ "Αυτό είναι το GNU Hello, το πρόγραμμα εμφάνισης χαιρετισμού.\n"
+#~ "Χρήση: %s [ΕΠΙΛΟΓΗ]\n"
+#~ "  -h, --help          εμφάνιση αυτής της βοήθειας και έξοδος\n"
+#~ "  -v, --version       εμφάνιση πληροφοριών έκδοσης και έξοδος\n"
+#~ "  -t, --traditional   χρήση της παραδοσιακής μορφής χαιρετισμού\n"
+#~ "  -m, --mail          εμφάνιση της αλληλογραφίας\n"
+#~ "\n"
+#~ "Αναφερατε σφάλματα στο bug-gnu-hello@prep.ai.mit.edu.\n"

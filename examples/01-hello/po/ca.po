@@ -1,0 +1,225 @@
+# Catalan translation of hello.
+# Copyright © 2010, 2011, 2013 Free Software Foundation, Inc.
+# This file is distributed under the same license as the hello package.
+# Jordi Mallach <jordi@sindominio.net>, 2010, 2011, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hello 2.8\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2013-01-02 18:29+0100\n"
+"Last-Translator: Jordi Mallach <jordi@sindominio.net>\n"
+"Language-Team: Catalan <ca@dodds.net>\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "Hola, món!"
+
+#: src/hello.c:84
+#, fuzzy
+msgid "hello, world"
+msgstr "hola, món\n"
+
+#: src/hello.c:94
+#, fuzzy
+msgid "extra operand"
+msgstr "%s: sobra l'operand: %s\n"
+
+#: src/hello.c:100
+#, c-format
+msgid "conversion to a multibyte string failed"
+msgstr ""
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Forma d'ús: %s [OPCIÓ]…\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr "Imprimeix una salutació agradable i personalitzable.\n"
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          mostra aquest missatge d'ajuda i surt\n"
+"  -v, --version       mostra informació sobre la versió i surt\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t,  --traditional      empra el format de salutació tradicional\n"
+"  -n,  --next-generation  empra el format de salutació de nova generació\n"
+"  -g,  --greeting=TEXT    empra TEXT com a missatge de salutació\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, c-format
+msgid "Report bugs to: %s\n"
+msgstr "Informeu dels errors a: %s\n"
+
+#: src/hello.c:152
+#, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr "Informeu dels errors de %s a: %s\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Pàgina inicial de %s: <%s>\n"
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr "Pàgina inicial de %s: <http://www.gnu.org/software/%s/>\n"
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+"Ajuda general sobre l'ús de programari GNU: <http://www.gnu.org/gethelp/>\n"
+
+#: src/hello.c:179
+#, fuzzy, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+"Copyright © %s Free Software Foundation, Inc.\n"
+"GPLv3+: llicència GNU GPL ver. 3 o posterior <http://gnu.org/licenses/gpl."
+"html>\n"
+"Aquest és programari lliure: podeu modificar‐lo i redistribuir‐lo si voleu.\n"
+"No hi ha CAP GARANTIA, en la mesura que ho permeta la llei.\n"
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr "S'ha produït un error del sistema desconegut"
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: l'opció «%s» és ambigua; possibilitats:"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: l'opció «--%s» no admet arguments\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: l'opció «%c%s» no admet arguments\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: l'opció «--%s» necessita un argument\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: l'opció «--%s» no és reconeguda\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: l'opció «%c%s» no és reconeguda\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: l'opció «%c» no és vàlida\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s l'opció «%c» necessita un argument\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: l'opció «-W %s» és ambigua\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: l'opció «-W %s» no admet arguments\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: l'opció «-W %s» necessita un argument\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr "s'ha produït un error d'escriptura"
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr "«"
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr "»"
+
+#: lib/xalloc-die.c:34
+msgid "memory exhausted"
+msgstr "la memòria s'ha exhaurit"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "Proveu «%s --help» per obtenir més informació.\n"
+
+#~ msgid ""
+#~ "+---------------+\n"
+#~ "| Hello, world! |\n"
+#~ "+---------------+\n"
+#~ msgstr ""
+#~ "┌────────────┐\n"
+#~ "│ Hola, món! │\n"
+#~ "└────────────┘\n"
+#~ "[Nota: Per a una visualització correcta, empreu un locale UTF-8]\n"

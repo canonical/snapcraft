@@ -1,0 +1,458 @@
+2014-11-16  Sami Kerola  <kerolasa@iki.fi>
+
+	version 2.10
+	* NEWS: Record release date.
+
+	Add NEWS for release 2.10
+
+2014-10-29  Sami Kerola  <kerolasa@iki.fi>
+
+	update bootstrap from gnulib
+	* bootstrap: print more diagnostics for missing programs
+
+	update gnulib
+	* gnulib: jump 120 commits a head
+
+2014-08-20  Sami Kerola  <kerolasa@iki.fi>
+
+	build: revert AM_TESTS_ENVIRONMENT to TESTS_ENVIRONMENT
+	* Makefile.am: prefer TESTS_ENVIRONMENT rather than AM_TESTS_ENVIRONMENT
+	  to avoid problems with older automake versions.  For example Travis-CI
+	  is not working because of this issue, or Debian stable cannot be used
+	  to build upstream GNU Hello.
+	* configure.ac: automake 1.12 or newer will not allow combination of
+	  parallel-tests and TESTS_ENVIRONMENT.
+
+	Reference:
+	http://lists.gnu.org/archive/html/bug-hello/2014-07/msg00003.html
+
+2014-07-26  A. Gordon  <assafgordon@gmail.com>
+
+	build: generate man-page only when appropriate
+	* configure.ac: detect compilation under git (vs tarball), and
+	cross-compilation.
+	* Makefile.am:
+	1) re-generate (and clean) man-page only when building from git.
+	2) if building from git AND cross-compiling, don't add target for
+	   man-page - there's no way to generate it.
+
+	Possible future improvement: If cross-compliing from git, AND user have
+	'binfmt' configured to run non-native binaries, then the man-page can be
+	generated.
+
+	Reference:
+	http://lists.gnu.org/archive/html/bug-hello/2014-07/msg00001.html
+
+2014-05-04  Jim Meyering  <meyering@fb.com>
+
+	maint: add gnulib's update-copyright module
+	* bootstrap.conf (gnulib_modules): Add update-copyright, so
+	that each year we can run "make update-copyright".
+	Otherwise, that rule fails due to the absence of the file
+	in build-aux.
+
+	maint: don't let envvar setting break ChangeLog generation
+	* Makefile.am (gen-ChangeLog): Clear amend_git_log when we
+	don't set it, so that an envvar setting cannot cause trouble.
+
+2014-04-20  Sami Kerola  <kerolasa@iki.fi>
+
+	maint: add an example how to use git-log-fix file
+	* build-aux/git-log-fix: ditto
+
+2014-04-20  Pádraig Brady  <P@draigBrady.com>
+
+	build: make git-log-fix optional in make dist
+	* Makefile.am (gen_changelog): Make git-log-fix optional.
+	Also only remove existing Changelog on successful completion
+	of gitlog-to-changelog and propogate exit status appropriately.
+
+2014-04-20  Sami Kerola  <kerolasa@iki.fi>
+
+	Revert "maint: make ChangeLog generation more robust"
+	I should have used patch sent by Pádraig Brady to GNU Hello maillist.
+
+	This reverts commit fb1c5fbd5eee3ab6e3270b6aaf4037bca8ab20bd.
+
+2014-04-20  Sami Kerola  <kerolasa@iki.fi>
+
+	update gnulib
+	* gnulib: jump 56 commits a head
+
+	maint: make ChangeLog generation more robust
+	* Makefile.am (gen-ChangeLog): Check the git-log-fix file is present
+	before trying to use it.  This change was made to coreutils by Pádraig
+	Brady and copied to GNU Hello as-is.
+	* build-aux/git-log-fix: Add example how to use git-log-fix file.
+
+2014-03-13  Jim Meyering  <meyering@fb.com>
+
+	maint: accommodate "make syntax-check"
+	* doc/hello.texi: Replace itemized copyright year numbers with an
+	equivalent range, to placate a "make syntax-check" rule.
+
+	maint: make po/POTFILES.in consistent
+	* po/POTFILES.in: Remove src/system.c: it no longer contains any
+	translatable strings.
+
+	maint: update all copyright dates via "make update-copyright"
+
+	build: do not fail due to an existing read-only hello.1
+	* Makefile.am (hello.1): In Makefile rules, never redirect directly
+	to the target.  Instead, redirect to a temporary, $@-t, and once
+	that succeeds, rename to target using "mv -f".
+	Also, since this is a generated file, explicitly make it read-only,
+	so one is less likely to think it is an editable primary source.
+	Reported by Assaf Gordon.
+
+2014-01-13  Sami Kerola  <kerolasa@iki.fi>
+
+	update NLS file sources
+	* .gitignore: ignore 'make po-check' files
+	* Makefile.am: ignore gnulib/ directory contents when po-check'ing
+	* po/POTFILES.in: add file po-check found not to be part of translations
+
+	update gnulib
+	* gnulib: jump 319 commits a head
+
+	demonstrate how to add information to a manual page
+	* man/hello.x: ditto
+
+	use standard error printing facilities
+	* bootstrap.conf: add error module
+	* src/hello.c: use error() where needed
+
+2013-12-31  Sami Kerola  <kerolasa@iki.fi>
+
+	make none-recursive build commit 714f2a2 complete
+	* .gitignore: ignore test-suite.log
+	* tests/Makefile.am: remove unnecessary file
+
+2013-12-29  Sami Kerola  <kerolasa@iki.fi>
+
+	remove unnecessary code from GNU Hello
+	* src/hello.c: remove --next-generation print out format
+	* man/hello.x: remove --next-generation related BUG item
+	* Makefile.am: remove --next-generation test
+	* doc/hello.texi: remove --next-generation documentation
+	* tests/multiline-box-1: removal
+	* tests/last-1: remove use of -n option
+
+	Karl Berry proposed the removal.
+
+2013-12-25  Sami Kerola  <kerolasa@iki.fi>
+
+	update copyright years
+	Makefile.am: this file was updated in 2013
+	README: likewise
+	cfg.mk: likewise
+	src/system.h: likewise
+	tests/last-1: likewise
+
+	clean up translation related files
+	* po/.gitignore: ignore generated po files
+	* po/<various>: remove generated files
+
+2013-12-12  Sami Kerola  <kerolasa@iki.fi>
+
+	add bugs section to manual page
+	* Makefile.am: make help2man to use include file
+	* man/hello.x: description of the issue
+
+2013-12-12  Reuben Thomas  <rrt@sc3d.org>
+
+	Fix i18n of default message: don't initialise it before we set up gettext
+
+2013-12-04  Sami Kerola  <kerolasa@iki.fi>
+
+	fix new format when printing multiple lines
+	* Makefile.am: add test
+	* src/hello.c: add new function print_box()
+	* tests/multiline-box-1: test multiline printing
+
+2013-11-30  Sami Kerola  <kerolasa@iki.fi>
+
+	document patching process
+	* README: add patching process segment
+
+2013-11-20  Reuben Thomas  <rrt@sc3d.org>
+
+	Update translations from Translation Project.
+
+2013-11-20  Sami Kerola  <kerolasa@iki.fi>
+
+	generate ChangeLog from git log
+	* .gitignore: ignore generated file
+	* ChangeLog.O: move contents of old ChangeLog to archive file
+	* Makefile.am: add generation of ChangeLog to dist-hook
+	* bootstrap.conf: add gitlog-to-changelog module
+	* build-aux/.gitignore: ignore gitlog-to-changelog
+	* build-aux/git-log-fix: add filter file
+
+	remove README-alpha
+	* README-alpha: remove file as asked in TODO file
+	* TODO: update file
+
+	be specific when .gitignoring files
+	* .gitignore: use absolute repository paths when possible
+
+	use none-recursive make
+	* .gitignore: update paths
+	* Makefile.am: collect build rules to this file
+	* bootstrap.conf: use new module
+	* build-aux/.gitignore: ignore new module
+	* configure.ac: remove old Makefiles
+	* contrib/Makefile.am: remove
+	* doc/Makefile.am: remove
+	* doc/local.mk: add texi rules
+	* lib/local.mk: add phony target
+	* src/Makefile.am: remove
+
+	update bootstrap script and configuration
+	* bootstrap: copy from gnulib upstream
+	* bootstrap.conf: copy from gnulib upstream
+
+	add git-version-gen from gnulib/build-aux
+	* configure.ac: change AC_INIT version to call a script
+	* git-version-gen: add version determinator script
+
+2013-10-10  Reuben Thomas  <rrt@sc3d.org>
+
+	Update Thai strings.
+
+	Update Ukrainian strings.
+
+	Update Brazilian strings.
+
+	Fix web-manual-update.
+	* Makefile.am: don't quote manual_title's value
+
+	Update Dutch translation.
+
+	Update Slovak translation.
+
+	Update instructions for posting bugs, patches &c.
+	* README: mention Savannah, copyright assignment. (Thanks to Sami
+	  Kerola for suggesting the change.)
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.9
+	* NEWS: Record release date.
+
+	Add NEWS for release 2.9.
+
+	Update translations.
+
+	hello.texi: adjust now that new-style greeting can be user text; update copyright year.
+
+	Bump version to 2.9.
+
+2013-10-10  Sami Kerola  <kerolasa@iki.fi>
+
+	make hello unicode aware
+	* bootstrap.conf: add necessary gnulib modules for unicode support.
+	* hello.c: allow user message, or translated, greeting to have unicode
+	  characters.
+
+	make copyright year pseudo dynamic
+	configure.ac: Add macro to determine what year is it, and add the value
+	to config.h.
+	hello.c: Use copyright year from config.h.
+
+	re-indent to match with gnu coding style
+	* Done with 'indent -gnu -l80 src/*.{c,h}'
+
+	use PACKAGE_NAME from config.h
+
+	clean up configure.ac syntax
+	* Add hello project web url.
+	* Use dnl for comments.
+	* Prefer AS_IF() instead of shell 'if'.
+
+	reuse AM_INIT_AUTOMAKE bug-email address
+
+	bootstrap: update from gnulib
+	* bootstrap: new version will allow use of URL parameter in AC_INIT
+	macro.
+
+2013-10-10  Reuben Thomas  <rrt@sc3d.org>
+
+	allow user message to use new-generation greeting format (patch from Sami Kerola)
+
+2013-05-04  Reuben Thomas  <rrt@sc3d.org>
+
+	gnulib has fixed a TODO for us (patch from Sami Kerola)
+
+	Add some more patterns to .gitignore files (thanks, Sami Kerola)
+
+	tests/Makefile.am: add a missing backslash
+
+2013-05-01  Reuben Thomas  <rrt@sc3d.org>
+
+	Use parallel tests harness, to fix make check with newer automake.
+	* configure.ac (AM_INIT_AUTOMAKE): Add the 'parallel-tests' option.
+	Also, require Automake >= 1.11.1, since that option was only introduced
+	in the 1.11.x, and Automake 1.11 should not be used because it suffered
+	from few serious bugs.
+	(AC_PREREQ): Require Autoconf 2.62, since that is the minimal version
+	required by Automake 1.11 anyway.
+	* tests/Makefile.am (TESTS_ENVIRONMENT): Split into ...
+	(AM_TESTS_ENVIRONMENT, LOG_COMPILER): ... these two, and adjust to the
+	slightly different APIs.
+
+	bootstrap: fix to work with latest autotools
+	Patch from Stefano Lattarini <stefano.lattarini@gmail.com>
+
+2013-03-17  Reuben Thomas  <rrt@sc3d.org>
+
+	Update Turkish strings from translation project.
+
+2013-02-12  Reuben Thomas  <rrt@sc3d.org>
+
+	Update Chinese (traditional) strings from translation project.
+
+2013-01-08  Reuben Thomas  <rrt@sc3d.org>
+
+	hello.c: clarify help text
+
+	Remove generated files
+
+	Update gnulib
+
+2013-01-03  Reuben Thomas  <rrt@sc3d.org>
+
+	Update Catalan strings.
+
+2012-12-05  Reuben Thomas  <rrt@sc3d.org>
+
+	Update Croatian strings.
+
+2012-11-11  Reuben Thomas  <rrt@sc3d.org>
+
+	Update Galician translations.
+
+2012-10-08  Reuben Thomas  <rrt@sc3d.org>
+
+	translations: update
+
+2012-05-27  Reuben Thomas  <rrt@sc3d.org>
+
+	Makefile.am: Distribute README-dev, to avoid a missing cross-ref from README (thanks, Santiago Vila).
+
+2012-05-26  Reuben Thomas  <rrt@sc3d.org>
+
+	Update translations.
+
+2012-04-23  Reuben Thomas  <rrt@sc3d.org>
+
+	Update translations.
+
+2012-04-21  Reuben Thomas  <rrt@sc3d.org>
+
+	Update translations.
+
+2012-04-20  Reuben Thomas  <rrt@sc3d.org>
+
+	gnulib: add gnu-web-doc-update.
+
+2012-04-19  Reuben Thomas  <rrt@sc3d.org>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	NEWS: add for 2.8.
+
+	gnulib: add announce-gen.
+
+	version 2.8
+	* NEWS: Record release date.
+
+	Gettext update.
+
+	NEWS: reformat to work with do-release-commit-and-tag.
+
+	Bump version to 2.8: build system changes warrant it.
+
+	git: ignore some generated files.
+
+	gnulib: add .prev-version for do-release-commit-and-tag.
+
+	gnulib: add do-release-commit-and-tag.
+
+	Remove some generated files.
+
+	Update gettext.
+
+	Fix various nits found by make syntax-check, and remove more generated files.
+
+2012-04-18  Reuben Thomas  <rrt@sc3d.org>
+
+	Remove generated file po/Makefile.in.in.
+
+	Update gettext.
+
+	Switch to a more standard way of using gnulib, as a git submodule.
+
+	Remove checked-in gnulib files.
+
+	VCS admin: move .bzrignore to .gitignore and update for git.
+
+2012-04-15  Reuben Thomas  <rrt@sc3d.org>
+
+	gnulib: Remove erroneously-commited files.
+
+2012-04-14  Reuben Thomas  <rrt@sc3d.org>
+
+	README-dev: neaten up and refer to Bazaar, not CVS.
+
+	gnulib: add tight-scope.mk.
+
+	.bzrignore: Add .sc-start-*.
+
+	Add some more gnulib modules to help with releases.
+
+	Makefile.am: genericize some CVS-specific references.
+
+	Update .po files with respect to sources and tools.
+
+	Makefile.am: remove diff and diffcheck targets, as we don't plan to distribute diffs any more.
+
+	configure.ac: Remove dist-xz option from AM_INIT_AUTOMAKE: stick to defaults where possible.
+
+2012-04-13  Reuben Thomas  <rrt@sc3d.org>
+
+	autogen.sh: Give correct VCS name.
+
+	Update zh_TW.po from translationproject.org; previously checked in a bogus file.
+
+	Merge from head.
+
+	Update gnulib.
+
+	configure.ac: bump version to 2.7.1.
+
+2012-04-11  Reuben Thomas  <rrt@sc3d.org>
+
+	Update zh_TW.po from translationproject.org.
+
+2012-03-02  Reuben Thomas  <rrt@sc3d.org>
+
+	Update vi.po from translationproject.org.
+
+	Bump version.
+
+	Update sr.po from translationproject.org; second attempt.
+
+2012-03-01  Reuben Thomas  <rrt@sc3d.org>
+
+	i18n: update vi.po from translationproject.org.
+
+2012-01-07  Reuben Thomas  <rrt@sc3d.org>
+
+	Update sr.po from translationproject.org.

@@ -1,0 +1,580 @@
+2011-03-22  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.18.1.
+	* Rules-quot: Upgrade to gettext-0.18.1.
+
+2010-02-26  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.17.
+
+2007-11-02  Karl Berry  <karl@gnu.org>
+
+	* LINGUAS: remove de_DE and es_AR, add ms and ro.
+
+2007-07-11  Karl Berry  <karl@gnu.org>
+
+	* LINGUAS: add en@quot and en@boldquot, as recommended by the
+	gettext manual.
+
+2006-11-08  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.16.
+	* ORIG: New file, from gettext-0.16.
+
+2006-08-13  Karl Berry	<karl@gnu.org>
+
+	* POTFILES.in: update for gnulib, new source structure.
+
+2006-08-13  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.15.
+	* ORIG: New file, from gettext-0.15.
+
+2005-05-28  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* ORIG: New file, from gettext-0.14.5.
+
+2005-05-28  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.14.5.
+	* ORIG: New file, from gettext-0.14.5.
+
+2005-03-27  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.14.3.
+	* ORIG: New file, from gettext-0.14.3.
+
+2005-01-29  Karl Berry	<karl@gnu.org>
+
+	* vi.po: new file (Clytie Siddall).
+
+2004-05-16  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.14.1.
+	* Rules-quot: Upgrade to gettext-0.14.1.
+
+2004-03-21  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* zh_CN.po: Update (Meng Jie).
+
+	* uk.po: Update (Igor Sachko)
+	* nb.po: Update (Eivind Tagseth).
+
+	* zh_CN.po: New file (Meng Jie).
+	* sr.po: New file (Aleksandar Jelenak).
+	* eu.po: New file (Mikel Olasagasti).
+	* LINGUAS: Add eu, sr, and zh_CN.
+
+2003-05-06  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* ga.po: New file (Kevin Patrick Scannell)
+	* LINGUAS: Add ga
+
+2003-05-01  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* ro.po: New file (Eugen Hoanca).
+	* LINGUAS: Add ro.
+
+2003-02-26  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* ka.po: New file (Nugzar Nebieridze).
+	* LINGUAS: Add ka.
+
+2002-12-07  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* fa.po: New file (Behdad Esfahbod).
+	* LINGUAS: Add fa.
+
+2002-11-03  Karl Eichwalder  <keichwa@gmx.net>
+
+	* es_AR.po: New file (Cesar H. Roldan).
+	* LINGUAS: Add es_AR.
+
+	* 2002-07 - 2002-11:
+	* fi.po: Update (Tommi Vainikainen).
+	* fr.po: Update (Michel Robitaille).
+	* pt_BR.po: Update (Alexandre Folle de Menezes).
+
+2002-07-20  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Makevars (XGETTEXT_OPTIONS): Add --no-wrap.
+
+2002-07-20  Karl Eichwalder  <keichwa@gmx.net>
+
+	* 2002-06:
+	* es.po: Update (Santiago Vila Doncel).
+	* ru.po: Update (Oleg S. Tihonov).
+	* sk.po: Update (Marcel Telka).
+
+2002-05-29  Karl Eichwalder  <keichwa@gmx.net>
+
+	* 2002-05:
+	* sk.po: Update (Marcel Telka).
+
+2002-05-22  Karl Eichwalder  <keichwa@gmx.net>
+
+	* 2002-05:
+	* ca.po: New file (Jordi Valverde).
+	* LINGUAS: Add 'ca'.
+
+	* 2002-04:
+	* hr.po: New file (Mirsad Todorovac).
+	* LINGUAS: Add 'hr'.
+
+	* 2002-03:
+	* fr.po: Update (Michel Robitaille).
+	* gl.po: Update (Jacobo Tarrio).
+	* hu.po: Update (Emese Kovacs).
+	* id.po: Update (Tedi Heriyanto).
+	* ru.po: Update (Oleg S. Tihonov).
+
+	* 2002-02:
+	* da.po: Update (Keld Simonsen).
+	* de.po: Update (Karl Eichwalder).
+	* eo.po: Update (Edmund GRIMLEY EVANS).
+	* et.po: Update (Toomas Soome).
+	* he.po: Update (Eli Zaretskii).
+	* ja.po: Update (IIDA Yosiaki).
+	* nl.po: Update (Ivo Timmermans).
+	* nn.po: Update (Kjetil Torgrim Homme).
+	* sk.po: Update (Marcel Telka).
+	* tr.po: Update (NilgÃ¼n Belma BugÃ¼ner).
+
+2002-05-22  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.11.2.
+	* remove-potcdate.sin: New file, from gettext-0.11.2.
+
+2002-02-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* he.po: New file (Eli Zaretskii).
+	* LINGUAS: Add 'he'.
+
+	* de.po: Update (Karl Eichwalder).
+	* es.po: Update (Santiago Vila Doncel).
+	* fr.po: Update (Michel Robitaille).
+	* it.po: Update (Marco d'Itri).
+	* ko.po: Update (Changwoo Ryu).
+	* sv.po: Update (Christian Rose).
+
+	* LINGUAS: New file.  Add values from ALL_LINGUAS of
+	../configure.ac.
+
+2002-01-31  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Makevars: New file, use Makevars.template from
+	gettext-0.11.
+
+2002-01-31  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.11.
+	* boldquot.sed: New file, from gettext-0.11.
+	* en@boldquot.header: New file, from gettext-0.11.
+	* en@quot.header: New file, from gettext-0.11.
+	* insert-header.sin: New file, from gettext-0.11.
+	* quot.sed: New file, from gettext-0.11.
+	* Rules-quot: New file, from gettext-0.11.
+
+2001-12-29  Karl Eichwalder  <keichwa@gmx.net>
+
+	* gl.po: Update (Jacobo Tarrio).
+
+2001-11-01  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.11-pre1.
+
+2001-10-08  Karl Eichwalder  <keichwa@gmx.net>
+
+	* hu.po: New file (Emese KovÃ¡cs).
+
+2001-08-29  Karl Eichwalder  <keichwa@gmx.net>
+
+	* da.po: Update (Keld Simonsen).
+
+2001-08-16  Karl Eichwalder  <keichwa@gmx.net>
+
+	* tr.po: Update (NilgÃ¼n Belma BugÃ¼ner).
+	* ru.po: Update (Oleg S. Tihonov).
+	* fr.po: Update (Michel Robitaille).
+	* et.po: Update (Toomas Soome).
+
+2001-08-11  Karl Eichwalder  <keichwa@gmx.net>
+
+	* it.po: Update (Marco d'Itri).
+
+2001-07-31  Karl Eichwalder  <keichwa@gmx.net>
+
+	* nn.po: New file (Kjetil Torgrim Homme).
+	* nb.po: Rename (was no.po).
+
+2001-07-30  Karl Eichwalder  <keichwa@gmx.net>
+
+	* fr.po: Update (Michel Robitaille).
+
+2001-07-27  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.39.
+
+2001-07-23  Karl Eichwalder  <keichwa@gmx.net>
+
+	* it.po: Update (Marco d'Itri).
+
+2001-06-30  Karl Eichwalder  <keichwa@gmx.net>
+
+	* eo.po: Update (Edmund GRIMLEY EVANS).
+
+2001-06-25  Karl Eichwalder  <keichwa@gmx.net>
+
+	* et.po: Update (Toomas Soome).
+	* fi.po: Ditto (Tommi Vainikainen).
+	* ko.po: Ditto (Changwoo Ryu).
+	* ru.po: Ditto (Oleg S. Tihonov).
+	* sk.po: Ditto (Stanislav Meduna).
+
+2001-06-24  Karl Eichwalder  <keichwa@gmx.net>
+
+	* de_DE.po: Update.
+
+	* de.po: Update.
+	* es.po: Ditto (Santiago Vila Doncel).
+	* gl.po: Ditto (Jacobo Tarrio).
+	* pl.po: Ditto (RafaÅ‚ Maszkowski).
+	* sv.po: Ditto (Christian Rose).
+	* tr.po: Ditto (Nilgün Belma Bugüner).
+
+2001-06-18  Karl Eichwalder  <keichwa@gmx.net>
+
+	* da.po: Update (Keld Simonsen).
+	* fr.po: Ditto (Michel Robitaille).
+	* it.po: Ditto (Marco d'Itri).
+
+2001-06-09  Karl Eichwalder  <keichwa@gmx.net>
+
+	* es.po: Update (Santiago Vila Doncel).
+
+	* sk.po: Update (Stanislav Meduna).
+
+2001-06-06  Karl Eichwalder  <keichwa@gmx.net>
+
+	* es.po: Update (Santiago Vila Doncel).
+
+2001-06-05  Karl Eichwalder  <keichwa@gmx.net>
+
+	* fi.po: Update (Tommi Vainikainen).
+
+	* eo.po: Update (Edmund GRIMLEY EVANS).
+	* sv.po: Update (Christian Rose).
+
+2001-06-04  Karl Eichwalder  <keichwa@gmx.net>
+
+	* pl.po: Update (RafaÅ‚ Maszkowski).
+
+	* gl.po: New file (Jacobo Tarrio).
+
+	* ru.po: Update (Oleg S. Tihonov).
+
+	* de.po: Update (Karl Eichwalder).
+	* et.po: Update (Toomas Soome).
+	* ko.po: Update (Changwoo Ryu).
+	* tr.po: Update (Nilgün Belma Bugüner).
+
+2001-06-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* tr.po: New file (Nilgün Belma Bugüner).
+
+2001-05-30  Karl Eichwalder  <keichwa@gmx.net>
+
+	* fr.po: Update (Michel Robitaille).
+
+2001-05-29  Karl Eichwalder  <keichwa@gmx.net>
+
+	* uk.po: New file (Igor Sachko).
+
+2001-05-24  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.38.
+
+2001-05-16  Karl Eichwalder  <keichwa@gmx.net>
+
+	* eo.po: New file (Edmund GRIMLEY EVANS).
+
+2001-05-14  Karl Eichwalder  <keichwa@gmx.net>
+
+	* ko.po: Update (Changwoo Ryu).
+
+2001-05-10  Karl Eichwalder  <keichwa@gmx.net>
+
+	* ru.po: Update (Oleg S. Tihonov).
+
+2001-04-28  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.37.
+
+2001-04-28  Karl Eichwalder  <keichwa@gmx.net>
+
+	* ja.po: Update (IIDA Yosiaki).
+
+2001-04-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* fi.po: Update (Tommi Vainikainen).
+
+2001-03-31  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Makefile.in.in (.po.gmo): Add --check switch.
+
+2001-03-31  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.36.
+
+2001-03-22  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.36.
+
+2001-03-19  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.36.
+	* cat-id-tbl.c, stamp-cat-id: Remove files.
+
+2001-03-19  Karl Eichwalder  <keichwa@gmx.net>
+
+	* el.po: Replace one char with '?' to please msgmerge (invalid
+	multibyte sequence).
+
+2001-03-19  gettextize	<bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.36.
+	* cat-id-tbl.c, stamp-cat-id: Remove files.
+
+2000-12-11  Karl Eichwalder  <ke@suse.de>
+
+	* da.po: Update (Keld Simonsen).
+
+2000-11-18  Karl Eichwalder  <keichwa@gmx.net>
+
+	* de_DE.po: New file (utf-8).
+
+2000-07-21  Karl Eichwalder  <keichwa@gmx.net>
+
+	* es.po: Update (Santiago Vila Doncel).
+
+2000-06-22  Karl Eichwalder  <keichwa@gmx.net>
+
+	* sv.po: Update (Christian Rose).
+
+2000-06-15  Karl Eichwalder  <keichwa@gmx.net>
+
+	* ja.po: Update (IIDA Yosiaki).
+
+2000-06-11  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* it.po: Update (Giovanni Bortolozzo).
+
+2000-06-10  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* sk.po: Update (Miroslav Vasko).
+
+2000-06-06  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* nl.po: Update (Ivo Timmermans).
+	* fr.po: Update (Michel Robitaille).
+	* pl.po: Update (Rafal Maszkowski).
+	* et.po: Update (Toomas Soome).
+	* fi.po: Update (Tommi Vainikainen).
+
+	* fi.po: New file (Tommi Vainikainen).
+
+2000-05-21  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* nl.po: Update (Ivo Timmermans).
+
+2000-03-24  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* ru.po: Remove "fuzzy" from header entry.
+
+2000-03-20  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* pl.po: Update.
+
+2000-03-13  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* de.po: Translate all strings.	 Resolve fuzzy marks.
+
+2000-02-16  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* et.po: New file.
+
+2000-02-14  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* es.po: Update.
+
+2000-01-09  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* sk.po: Update.
+
+1999-10-23  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* ja.po: New file.
+
+1999-10-09  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* fr.po, it.po, ko.po, lv.po, ru.po: Update.
+
+1999-10-04  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* fr.po, pt_BR.po: New files.
+
+1999-10-02  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* lv.po: New file.
+	* ru.po: Update.
+
+1999-08-15  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* pt_BR.po: New file.
+
+1999-08-14  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* fr.po: Update.
+
+1999-08-06  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* ru.po: Update.
+
+1999-08-03  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* ko.po: Update.
+
+1999-07-12  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* pl.po: Update.
+
+	* el.po, sk.po: New files.
+
+1999-01-09  Karl Eichwalder  <ke@suse.de>
+
+	* da.po: Update.
+
+1998-12-15  Karl Eichwalder  <ke@suse.de>
+
+	* da.po, de.po, es.po, fr.po, ru.po: Update.
+
+1998-12-12  Karl Eichwalder  <ke@suse.de>
+
+	* de.po: Update.
+
+1998-12-11  Karl Eichwalder  <ke@suse.de>
+
+	* ru.po: New file.
+
+1998-06-15  Karl Eichwalder  <ke@suse.de>
+
+	* it.po: New file.
+
+1998-04-30  Karl Eichwalder  <ke@suse.de>
+
+	* da.po: New file.
+
+1998-02-14  Karl Eichwalder  <ke@suse.de>
+
+	* no.po: Update.
+
+Sun May 25 19:19:51 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* de.po: Update.
+
+Mon Apr 28 17:38:54 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* es.po: Update.
+
+Wed Mar 26 09:58:18 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* de.po: Update.
+
+Sun Mar 23 18:28:18 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* sv.po: Update.
+
+Fri Feb 14 08:24:07 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* pl.po: Update.
+
+Sun Feb	 2 18:42:04 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* de.po es.po fr.po sv.po: Update.
+
+Sat Jan 11 16:51:45 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* nl.po: Update.
+
+Fri Jan 10 13:09:59 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* fr.po: Update.
+
+Wed Jan	 8 08:53:41 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* no.po: Update.
+
+Tue Jan	 7 18:34:57 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* es.po: Update.
+
+Sun Jan	 5 09:58:47 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* de.po fr.po: Updates.
+
+Sat Jan	 4 17:49:59 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* es.po: Update.
+
+Thu Dec 12 18:58:01 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* it.po: Remove.
+
+Wed Dec 11 20:05:00 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* mailshar gnu-translation@prep.ai.mit.edu
+	hello-1.3.6/po/hello.pot.
+
+	* POTFILES.in: remove `src/getopt1.c'.
+
+	* de.po es.po fr.po ko.po nl.po no.po pl.po pt.po sl.po sv.po: new
+	files from alpha.gnu.ai.mit.edu:/gnu/po/maint/hello.
+
+Fri Mar 15 12:43:14 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* fr.po: New (version 1.3.2).
+
+Tue Mar 12 10:15:26 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* mailshar gnu-translation@prep.ai.mit.edu
+	hello-1.3.4/po/hello.pot.
+
+Fri Mar	 8 20:40:50 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* de.po: New.
+
+Tue Mar	 5 09:58:14 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* de.po: New.  Reflect current version 1.3.2; now 1.3.3.
+
+Sun Mar	 3 21:06:15 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.in.in ($(PACKAGE).pot): Add POTFILES.
+
+	* POTFILES.in: remove `src/version.c'.
+
+Tue Dec 19 10:16:39 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* POTFILES.in: Reflect, that source files now in ../src/.
+
+Fri Dec 15 11:59:51 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* POTFILES.in: New file.  Lists `getopt.c', `getopt1.c',
+	`hello.c', and `version.c'.
+
+Copyright (C) 1995, 1996, 1997, 1998, 1999, 2002, 2003, 2004, 2005,
+2006, 2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

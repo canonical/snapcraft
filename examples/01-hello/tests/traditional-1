@@ -1,0 +1,36 @@
+#! /bin/sh
+# Test traditional greeting.
+#
+# Copyright (C) 2001, 2006, 2014 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
+
+trap 'rm -fr $tmpfiles' 1 2 3 15
+
+# We force the C locale here, since we are checking normal output,
+# which will be translated.
+
+LANGUAGE=
+LC_ALL=C
+LC_MESSAGES=
+LANG=
+export LANGUAGE LC_ALL LC_MESSAGES LANG
+
+tmpfiles="traditional-test1.ok"
+cat <<EOF > traditional-test1.ok
+hello, world
+EOF
+
+tmpfiles="$tmpfiles traditional-test1.out"
+: ${HELLO=hello}
+${HELLO} --traditional | tr -d '\r' >traditional-test1.out
+
+: ${DIFF=diff}
+${DIFF} traditional-test1.ok traditional-test1.out
+result=$?
+
+rm -fr $tmpfiles
+
+exit $result

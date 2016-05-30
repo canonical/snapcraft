@@ -1,0 +1,256 @@
+# Basque translation of hello.
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# This file is distributed under the same license as the hello package.
+# Mikel Olasagasti <hey_neken@euskal.org>, 2003.
+# , fuzzy
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hello 2.1.1\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2003-12-02 14:36+0100\n"
+"Last-Translator: Mikel Olasagasti <hey_neken@euskal.org>\n"
+"Language-Team: Basque <linux-eu@chanae.alphanet.ch>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-15\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "Kaixo, mundu!"
+
+#: src/hello.c:84
+#, fuzzy
+msgid "hello, world"
+msgstr "kaixo, mundu\n"
+
+#: src/hello.c:94
+msgid "extra operand"
+msgstr ""
+
+#: src/hello.c:100
+#, c-format
+msgid "conversion to a multibyte string failed"
+msgstr ""
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, fuzzy, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Erabilpena: %s [AUKERA]\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr ""
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          laguntza hau erakutsi eta irten egiten da\n"
+"  -v, --version       bertsioari buruzko informazioa erakutsi eta irten "
+"egiten da\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t, --traditional       ongi etorri formatu tradizionala erabili\n"
+"  -n, --next-generation   hurrengo generazioko ongi etorri formatua erabili\n"
+"  -m, --mail              zure mail-a erakutsi\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, fuzzy, c-format
+msgid "Report bugs to: %s\n"
+msgstr "Bug-ak <%s>ra bidali.\n"
+
+#: src/hello.c:152
+#, fuzzy, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr "Bug-ak <%s>ra bidali.\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr ""
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr ""
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+
+#: src/hello.c:179
+#, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr ""
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, fuzzy, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: `%s' aukera anbiguoa da\n"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, fuzzy, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: `--%s' aukerak ez du argudiorik onartzen\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, fuzzy, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: `%c%s' aukerak ez du argudiorik onartzen\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, fuzzy, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: `%s' aukerak argudio bat behar du\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, fuzzy, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: aukera ezezaguna `--%s'\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, fuzzy, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: aukera ezezaguna `%c%s'\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, fuzzy, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: legez kanpoko aukera -- %c\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, fuzzy, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: aukerak argudio bat behar du -- %c\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, fuzzy, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: `-W %s' aukera anbiguoa da\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, fuzzy, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: `-W %s' aukerak ez du argudiorik onartzen\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, fuzzy, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: `%s' aukerak argudio bat behar du\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr ""
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr ""
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr ""
+
+#: lib/xalloc-die.c:34
+#, fuzzy
+msgid "memory exhausted"
+msgstr "%s: Memori birtuala agortua\n"
+
+#~ msgid "%s: illegal option -- %c\n"
+#~ msgstr "%s: legez kanpoko aukera -- %c\n"
+
+#~ msgid "Too many arguments\n"
+#~ msgstr "Argumentu gehiegi\n"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "Saiatu `%s --help' -rekin informazio gehiagorako.\n"
+
+#~ msgid "GNU hello, THE greeting printing program.\n"
+#~ msgstr "GNU hello, ongietorri programa.\n"
+
+#~ msgid ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+#~ "PARTICULAR PURPOSE.  You may redistribute copies of GNU %s under the "
+#~ "terms\n"
+#~ "of the GNU General Public License.\n"
+#~ "For more information about these matters, see the file named COPYING.\n"
+#~ msgstr ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "EZ dago inolako bermerik, ez MERKATARITZA ezta ASMO BEREZI BATEN\n"
+#~ "EGOKITASUNERAKO.  GNU %sren kopiak GNUren GPL baldintzapean egini behar "
+#~ "duzu.\n"
+#~ "Gai honi buruz informazio gehiago nahi baduzu, ikusi COPYING fitxategia.\n"
+
+#~ msgid "%s: Incompatible flags: -m and -t\n"
+#~ msgstr "%s: Bandera bateraezina: -m eta -t\n"
+
+#~ msgid "%s: Who are you?\n"
+#~ msgstr "%s: Nor zara zu?\n"
+
+#~ msgid "%s: Cannot find your mail spool file.\n"
+#~ msgstr "%s: Ezin da zure mail spool fitxategia aurkitu.\n"
+
+#~ msgid "Nothing happens here."
+#~ msgstr "Ez da ezer gertatzen hemen."
+
+#~ msgid ""
+#~ "+---------------+\n"
+#~ "| Hello, world! |\n"
+#~ "+---------------+\n"
+#~ msgstr ""
+#~ "+---------------+\n"
+#~ "| Kaixo, mundu! |\n"
+#~ "+---------------+\n"
