@@ -1,8 +1,8 @@
 name: hello
 version: 2.10
-summary: Example “hello world” snap of GNU Hello
-description: GNU hello prints a friendly greeting
-  This is part of the snapcraft.io tour athttps://snapcraft.io/create/#begin
+summary: GNU Hello, the "hello world" snap
+description: GNU hello prints a friendly greeting.
+  This is part of the snapcraft tour at https://snapcraft.io/create/
 
 apps:
   hello:
