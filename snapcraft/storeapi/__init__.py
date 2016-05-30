@@ -92,7 +92,7 @@ class StoreClient():
     def __init__(self):
         super().__init__()
         self.conf = config.Config()
-        self.cpi = CPIClient(self.conf)
+        self.cpi = SnapIndexClient(self.conf)
 
     def login(self, email, password, token_name, one_time_password=None):
         """Log in via the Ubuntu One SSO API.
@@ -175,7 +175,7 @@ class StoreClient():
         return expected_sha512 == file_sum.hexdigest()
 
 
-class CPIClient(Client):
+class SnapIndexClient(Client):
     """The Click Package Index knows everything about existing snaps.
 
     https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex is the
