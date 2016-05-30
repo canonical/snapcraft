@@ -17,12 +17,12 @@
 import examples_tests
 
 
-class HelloWorldCliTestCase(examples_tests.ExampleTestCase):
+class HelloTestCase(examples_tests.ExampleTestCase):
 
-    snap_content_dir = '01-hello-world-cli'
+    snap_content_dir = '01-hello'
 
-    def test_hello_world_cli(self):
+    def test_hello(self):
         self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'hello-world-cli', '0.1')
+        self.install_snap(self.snap_content_dir, 'hello', '2.1')
         self.assert_command_in_snappy_testbed(
-            '/snap/bin/hello-world-cli', 'Hello World\n')
+            '/snap/bin/hello', 'Hello world!\n')
