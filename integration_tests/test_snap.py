@@ -147,3 +147,10 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(project_dir, 'snap', 'usr', 'bin', 'nmtui'),
             Not(FileExists()))
+
+    def test_snap_from_snapcraft_init(self):
+        self.assertThat('snapcraft.yaml', Not(FileExists()))
+        self.run_snapcraft('init')
+        self.assertThat('snapcraft.yaml', FileExists())
+
+        self.run_snapcraft('snap')
