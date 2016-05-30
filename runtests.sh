@@ -33,7 +33,7 @@ parseargs(){
             export RUN_UNIT="true"
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
-        elif [ "$1" == "tour" ] ; then
+        elif [ "$1" == "examples" ] ; then
             export RUN_TOUR="true"
         elif [ "$1" == "demos" ] ; then
             export RUN_DEMOS="true"
@@ -98,7 +98,7 @@ if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration
 fi
 if [ ! -z "$RUN_TOUR" ]; then
-    if [ "$1" == "tour" ] ; then
+    if [ "$1" == "examples" ] ; then
         # shift to remove the test suite name and be able to pass the rest
         # to the tour suite.
         shift
