@@ -22,15 +22,15 @@ import subprocess
 import tempfile
 import urllib.parse
 
-import ssoclient.v2 as sso
+import requests
 import yaml
 
 import snapcraft
 from snapcraft import config
 from snapcraft.storeapi import (
-    common,
-    constants,
     _upload,
+    constants,
+    macaroons
 )
 
 
@@ -74,6 +74,22 @@ class SHAMismatchError(StoreError):
         super().__init__(path=path, expected_sha=expected_sha)
 
 
+def _macaroon_auth(conf):
+    """Format a macaroon and its associated discharge.
+
+    :return: A string suitable to use in an Authorization header.
+
+    """
+    root_macaroon_raw = conf.get('macaroon')
+    unbound_raw = conf.get('unbound_discharge')
+    root_macaroon = macaroons.Macaroon.deserialize(root_macaroon_raw)
+    unbound = macaroons.Macaroon.deserialize(unbound_raw)
+    bound = root_macaroon.prepare_for_request(unbound)
+    auth = 'Macaroon root={}, discharge={}'.format(root_macaroon_raw,
+                                                   bound.serialize())
+    return auth
+
+
 class Client():
     """A base class to define clients for the ols servers.
 
@@ -83,8 +99,25 @@ class Client():
     """
 
     def __init__(self, conf, root_url):
-        self.conf = config
+        self.conf = conf
         self.root_url = root_url
+        self.session = requests.Session()
+
+    def request(self, method, url, params=None, headers=None, **kwargs):
+        """Overriding base class to handle the root url."""
+        # Note that url may be absolute in which case 'root_url' is ignored by
+        # urljoin.
+        final_url = urllib.parse.urljoin(self.root_url, url)
+        response = self.session.request(
+            method, final_url, headers=headers,
+            params=params, **kwargs)
+        return response
+
+    def get(self, url, **kwargs):
+        return self.request('GET', url, **kwargs)
+
+    def post(self, url, **kwargs):
+        return self.request('POST', url, **kwargs)
 
 
 class StoreClient():
@@ -93,45 +126,46 @@ class StoreClient():
     def __init__(self):
         super().__init__()
         self.conf = config.Config()
+        self.sso = SSOClient(self.conf)
         self.cpi = CPIClient(self.conf)
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, token_name, one_time_password=None):
-        """Log in via the Ubuntu One SSO API.
-
-        If successful, returns the oauth token data.
-        """
-        result = {
-            'success': False,
-            'body': None,
-        }
-
-        api_endpoint = os.environ.get(
-            'UBUNTU_SSO_API_ROOT_URL', constants.UBUNTU_SSO_API_ROOT_URL)
-        client = sso.V2ApiClient(endpoint=api_endpoint)
-        data = {
-            'email': email,
-            'password': password,
-            'token_name': token_name,
-        }
-        if one_time_password:
-            data['otp'] = one_time_password
-        try:
-            response = client.login(data=data)
-            result['body'] = response
-            result['success'] = True
-        except sso.ApiException as err:
-            result['body'] = err.body
-        except sso.UnexpectedApiError as err:
-            result['body'] = err.json_body
-
-        if result['success']:
-            for key, value in result['body'].items():
-                self.conf.set(key, str(value))
-            self.conf.save()
-
+    def login(self, email, password, one_time_password=None):
+        """Log in via the Ubuntu One SSO API."""
+        result = dict(success=False, body=None)
+        # Ask the store for the needed capabalities to be associated with the
+        # macaroon.
+        macaroon, error = self.sca.get_macaroon(
+            ['package_upload', 'package_access'])
+        if error:
+            result['errors'] = error
+        else:
+            caveat_id = self._extract_caveat_id(macaroon)
+            if caveat_id is None:
+                error = 'Invalid macaroon'
+            else:
+                unbound_discharge, error = self.sso.get_unbound_discharge(
+                    email, password, one_time_password, caveat_id)
+            if error:
+                result['errors'] = error
+            else:
+                # The macaroon has been discharged, save it in the config
+                self.conf.set('macaroon', macaroon)
+                self.conf.set('unbound_discharge', unbound_discharge)
+                self.conf.save()
+                result['success'] = True
         return result
+
+    def _extract_caveat_id(self, root_macaroon):
+        macaroon = macaroons.Macaroon.deserialize(root_macaroon)
+        # macaroons are all bytes, never strings
+        sso_host = macaroons.convert_to_bytes(
+            urllib.parse.urlparse(self.sso.root_url).hostname)
+        for caveat in macaroon.caveats:
+            if caveat.location == sso_host:
+                return macaroons.convert_to_string(caveat.caveat_id)
+        return None
 
     def logout(self):
         self.conf.clear()
@@ -142,8 +176,7 @@ class StoreClient():
             raise FileNotFoundError(snap_filename)
         snap_name = self._get_name_from_snap_file(snap_filename)
 
-        session = common.get_oauth_session(config.Config())
-        if session is None:
+        if self.conf.get('unbound_discharge') is None:
             raise InvalidCredentialsError()
         data = _upload.upload_files(snap_filename, self.updown)
         success = data.get('success', False)
@@ -185,6 +218,7 @@ class StoreClient():
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
+        # FIXME: Check the status code ! -- vila 2016-05-04
         download = self.cpi.get(download_url)
         with open(download_path, 'wb') as f:
             # FIXME: Cough, we may want to buffer here (and a progress bar
@@ -208,6 +242,33 @@ class StoreClient():
         return expected_sha512 == file_sum.hexdigest()
 
 
+class SSOClient(Client):
+    """The Single Sign On server deals with authentification.
+
+    It is used directly or indirectly by other servers.
+
+    """
+    def __init__(self, conf):
+        super().__init__(conf, os.environ.get(
+            'UBUNTU_SSO_API_ROOT_URL',
+            constants.UBUNTU_SSO_API_ROOT_URL))
+
+    def get_unbound_discharge(self, email, password, one_time_password,
+                              caveat_id):
+        data = dict(email=email, password=password,
+                    caveat_id=caveat_id)
+        if one_time_password:
+            data['otp'] = one_time_password
+        response = self.post(
+            'tokens/discharge', data=json.dumps(data),
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if response.ok:
+            return response.json()['discharge_macaroon'], None
+        else:
+            return None, response.text
+
+
 class CPIClient(Client):
     """The Click Package Index knows everything about existing snaps.
 
@@ -221,37 +282,34 @@ class CPIClient(Client):
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
     def search_package(self, snap_name, channel, arch):
-        session = common.get_oauth_session(config.Config())
-        if session is None:
+        if self.conf.get('unbound_discharge') is None:
             raise InvalidCredentialsError()
 
-        session.headers.update({
-            'accept': 'application/hal+json',
+        headers = {
+            'Accept': 'application/hal+json',
             'X-Ubuntu-Architecture': arch,
             'X-Ubuntu-Release': constants.DEFAULT_SERIES,
             'X-Ubuntu-Device-Channel': channel,
-        })
-        session.params = {
+        }
+        params = {
             'q': 'package_name:"{}"'.format(snap_name),
-            'fields': 'download_url,anon_download_url,download_sha512',
+            'fields': 'status,download_url,download_sha512',
             'size': 1,
         }
         logger.info('Getting details for {}'.format(snap_name))
-        search = session.get(
-            urllib.parse.urljoin(
-                self.root_url, 'api/v1/search')).content.decode('utf-8')
-        search_results = json.loads(search)
-        logger.debug('search results {!r}'.format(search_results))
-
-        embedded = search_results.get('_embedded', None)
+        resp = self.get('api/v1/search', headers=headers, params=params)
+        embedded = resp.json().get('_embedded', None)
         if embedded is None:
             return None
         else:
             return embedded['clickindex:package'][0]
 
-    def get(self, download_url):
-        session = common.get_oauth_session(config.Config())
-        return session.get(download_url)
+    def get(self, url, headers=None, params=None):
+        if headers is None:
+            headers = {}
+        headers.update({'Authorization': _macaroon_auth(self.conf)})
+        response = self.request('GET', url, headers=headers, params=params)
+        return response
 
 
 class UpDownClient(Client):
@@ -263,10 +321,7 @@ class UpDownClient(Client):
             constants.UBUNTU_STORE_UPLOAD_ROOT_URL))
 
     def upload(self, monitor):
-        session = common.get_oauth_session(config.Config())
-        if session is None:
-            raise InvalidCredentialsError()
-        return session.post(
+        return self.post(
             urllib.parse.urljoin(self.root_url, 'unscanned-upload/'),
             data=monitor, headers={'Content-Type': monitor.content_type})
 
@@ -279,15 +334,20 @@ class SCAClient(Client):
             'UBUNTU_STORE_API_ROOT_URL',
             constants.UBUNTU_STORE_API_ROOT_URL))
 
-    def snap_upload(self, data):
-        session = common.get_oauth_session(config.Config())
-        if session is None:
-            raise InvalidCredentialsError()
-        url = urllib.parse.urljoin(
-            self.root_url, 'click-package-upload/{}/'.format(
-                urllib.parse.quote_plus(data['name'])))
-        return session.post(url, data)
+    def get_macaroon(self, acls):
+        response = self.post(
+            'acl/',
+            data=json.dumps({'permissions': acls}),
+            headers={'Content-Type': 'application/json'})
+        if response.ok:
+            return response.json()['macaroon'], None
+        else:
+            return None, response.text
 
-    def get(self, download_url):
-        session = common.get_oauth_session(config.Config())
-        return session.get(download_url)
+    def snap_upload(self, data):
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'snap-upload/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json'})
+        return response
