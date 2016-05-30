@@ -14,12 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import examples_tests
+
+import os
+
+import tour_tests
 
 
-class HelloTestCase(examples_tests.ExampleTestCase):
+class EasyStartTestCase(tour_tests.TourTestCase):
 
-    snap_content_dir = '01-hello'
+    snap_content_dir = '01-easy-start'
 
     def test_hello(self):
         self.build_snap(self.snap_content_dir)
