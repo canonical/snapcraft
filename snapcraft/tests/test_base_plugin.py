@@ -189,21 +189,27 @@ class BuildTestCase(tests.TestCase):
     def test_build_ignores_snapcraft_files_in_source_dir(self):
         plugin = snapcraft.BasePlugin('test-part', options=None)
 
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.sourcedir = tmpdir.name
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
         for file_ in common.SNAPCRAFT_FILES:
             open(os.path.join(plugin.sourcedir, file_), 'w').close()
-
-        tmpdir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmpdir.cleanup)
-        plugin.builddir = tmpdir.name
+        open(os.path.join(plugin.sourcedir, 'my-snap.snap'), 'w').close()
+        open(os.path.join(plugin.sourcedir, 'my-snap'), 'w').close()
 
         plugin.build()
 
         for file_ in common.SNAPCRAFT_FILES:
             self.assertFalse(
                 os.path.exists(os.path.join(plugin.builddir, file_)))
+        self.assertFalse(
+            os.path.exists(os.path.join(plugin.builddir, 'my-snap.snap')),
+            os.listdir(plugin.builddir))
+
+        # Make sure we don't filter things out incorrectly
+        self.assertTrue(
+            os.path.exists(os.path.join(plugin.builddir, 'my-snap')),
+            os.listdir(plugin.builddir))
 
 
 class CleanBuildTestCase(tests.TestCase):
