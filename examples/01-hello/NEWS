@@ -1,0 +1,110 @@
+* Noteworthy changes in release ?.? (????-??-??) [?]
+
+* Noteworthy changes in release 2.10 (2014-11-16) [stable]
+
+Most importantly this release include the 'Hello, World' message to be
+part of translations.  The translation bug was introduced in release 2.9.
+
+Other changes in this release include; Make use of none-recursive build.
+Removal of user-defined new-style.  Include an example how to add a
+section to a manual page, such as BUGS.  Rather than 'fprintf (stderr'
+use libc 'error()' reporting facility.  Start using 'make
+update-copyright' facility.  Generate ChangeLog from git commit logs.
+Avoid manual page generation errors when cross-compiling.
+
+* Noteworthy changes in release 2.9 (2013-10-10) [stable]
+
+A series of patches from Sami Kerola has modernized and improved the
+build system, added the possibility of user-defined new-style
+greetings, and added support for Unicode.
+
+Various translations have been updated (thanks to the Translation Project).
+
+* Noteworthy changes in release 2.8 (2012-04-19) [stable]
+
+The build system has been overhauled to be more in line with
+mainstream modern GNU practice, and various translations have been
+updated (thanks to the Translation Project!).
+
+Version 2.7 (28 March 2011)
+* Distribution:
+  . gettext 0.18.1.
+  . help2man 1.39.2.
+  . updated -translations.
+
+ Version 2.6 (7 April 2010)
+* Distribution:
+  . make distribution of .tar.xz as well as .tar.gz.
+  . gettext 0.17.
+  . gnulib updates.
+  . use gnulib's srclist-update to keep other common files in sync.
+  . updated translations.
+
+ Version 2.5 (7 February 2010)
+* Distribution:
+  . gnulib updates.
+  . autoconf 2.65, automake 1.11.1.
+    (Especially including the make dist security fix.)
+  . follow latest recommendations for --help and --version.
+  . updated translations.
+
+ Version 2.4 (9 December 2008)
+* last greeting option wins; before, the precedence was randomly hardwired.
+* FDL version 1.3+ for the documentation.
+* Distribution:
+  . gnulib updates.
+  . automake 1.10.2.
+  . Include en@quot and en@boldquot support.
+  . Remove obsolete translations de_DE and es_AR.
+  . new (old) translations: ms (Malay), ro (Romansh), th (Thai).
+
+ Version 2.3 (29 June 2007)
+* GPL version 3.
+
+ Version 2.2 (23 November 2006)
+* Remove creeping non-feature of reading mail; simplify code accordingly.
+* Many improvements to the tests to make them more useful examples.
+* --help and --version exit immediately, as specified by GNU standards.
+* Distribution:
+  . use gnulib for shared source files, such as texinfo.tex and getopt.c.
+  . update for automake 1.10, autoconf 2.61, gettext 0.16.
+  . new bg (Bulgarian) translation; many updated translations.
+
+ Version 2.1.2 (20 July 2002)
+* Updated translations: es, fr, fi, nb, pt_BR, ru, sk, uk.
+* New translations: eu, fa, es_AR, ga, ka, ro, sr, zh_CN.
+
+ Version 2.1.1 (9 June 2002)
+* Bugfixes:
+  . Display the bug reporting address.
+
+ Version 2.1.0 (22 May 2002)
+* Automake support.
+* Experimental NLS ("Native Language Support").
+* Translations for ca, da, de, el, eo, es, et, fi, fr, gl, he, hr, hu,
+  id, it, ja, ko, lv, nb, nl, nn, pl, pt, pt_BR, ru, sk, sl, sv, tr, and uk.
+* Test suite.
+* Add a contrib directory.
+* Manual page, produced with 'help2man'.
+* Create proper copyright statement for all output formats.
+* New greeting message ('-n', '--next-generation').
+* Bugfixes:
+  . GNU hello ('-m') does not loop forever if MAIL environment variable is
+    not set.
+
+ Version 1.3 (22 May 1993)
+* GNU hello now exits immediately and successfully after printing its
+  version number and/or usage message under the `--version' (or `-v') and
+  `--help' (or `-h') options.
+
+ Version 1.2 (21 May 1993)
+* GNU hello can now read your mail with the `-m' (or `--mail') option.
+
+ Version 1.1 (16 September 1992)
+* There is a new, improved greeting message.
+  You can use the new `--traditional' option to get the old behavior.
+
+* Zork output compatibility has been added.
+
+* There is now a `NEWS' file (this one), giving a history of
+  user-visible changes.

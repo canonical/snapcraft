@@ -1,0 +1,17 @@
+# Copyright (C) 2005, 2006, 2014 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
+#
+# List of source files containing translatable strings.
+
+# Package source files.
+src/hello.c
+
+# Gnulib source files.
+lib/error.c
+lib/getopt.c
+lib/closeout.c
+lib/quotearg.c
+lib/xalloc-die.c

@@ -1,0 +1,1115 @@
+2011-12-17  Reuben Thomas  <rrt@sc3d.org>
+
+	* gnulib: Update.
+	* .bzrignore: Add.
+	* .cvsignore: Remove.
+	* contrib/.cvsignore: Likewise.
+	* doc/.cvsignore: Likewise.
+	* man/.cvsignore: Likewise.
+	* po/.cvsignore: Likewise.
+	* src/.cvsignore: Likewise.
+	* tests/.cvsignore: Likewise.
+	* build/mkinstalldirs: Remove: no longer needed.
+	* po: Update.
+
+2011-10-27  Reuben Thomas  <rrt@sc3d.org>
+
+	* doc/hello.texi: Small whitespace fix from Patrice Dumas.
+
+2011-03-22  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* gnulib/m4/gettext.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/iconv.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/lib-ld.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/lib-link.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/lib-prefix.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/nls.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/po.m4: Upgrade to gettext-0.18.1.
+	* gnulib/m4/progtest.m4: Upgrade to gettext-0.18.1.
+	* configure.ac (AM_GNU_GETTEXT_VERSION): Bump to 0.18.1.
+
+2010-09-06  Karl Berry  <karl@gnu.org>
+
+	* README-dev: gnulib-tool invocation would now be --add-import.
+	From Bruno.
+
+2010-04-07  Karl Berry  <karl@gnu.org>
+
+	* Version 2.6.
+
+2010-04-05  Karl Berry  <karl@gnu.org>
+
+	* build-aux/srclist.txt: new file, input to (Gnulib's) srclist-update.
+
+2010-02-26  Karl Berry  <karl@gnu.org>
+
+	* configure.ac (AM_INIT_AUTOMAKE): enable dist-xz.
+
+2010-02-26  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* gnulib/m4/gettext.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/iconv.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/lib-ld.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/lib-link.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/lib-prefix.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/nls.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/po.m4: Upgrade to gettext-0.17.
+	* gnulib/m4/progtest.m4: Upgrade to gettext-0.17.
+	* configure.ac (AM_GNU_GETTEXT_VERSION): Bump to 0.17.
+
+2010-02-07  Karl Berry  <karl@gnu.org>
+
+	* Version 2.5.
+
+2010-01-31  Karl Berry  <karl@gnu.org>
+
+	* pretest version 2.4.90.
+
+	* gnulib/m4/gnulib-cache.m4 (gl_MODULES): explicitly remove getopt,
+	since it has been declared obsolete.
+	gnulib-tool --import getopt-gnu.  Other gnulib updates.
+
+2009-01-01  Karl Berry  <karl@gnu.org>
+
+	* Makefile.am (wwwdoc, email): pass --email to gendocs.sh.
+
+2008-12-14  Karl Berry  <karl@gnu.org>
+
+	* Makefile.am (wwwdoc): doc fix.
+
+2008-12-09  Karl Berry  <karl@gnu.org>
+
+	* Version 2.4.
+
+2008-11-28  Karl Berry  <karl@tug.org>
+
+	* pretest version 2.3.92.
+
+2008-11-27  Karl Berry  <karl@gnu.org>
+
+	* Makefile.am, and all other source files: use new GPLv3 notice
+	without physical FSF address.
+
+2008-11-07  Karl Berry  <karl@tug.org>
+
+	* pretest version 2.3.91.
+
+2008-02-26  Karl Berry  <karl@gnu.org>
+
+	* autogen.sh: autoconf before autoheader, per autoreconf.
+
+2007-07-26  Karl Berry  <karl@gnu.org>
+
+	* configure.ac (AC_INIT_AUTOMAKE): let's skip dist-bzip2.
+
+2007-06-29  Karl Berry  <karl@gnu.org>
+
+	* Version 2.3.
+
+2007-06-26  Karl Berry  <karl@gnu.org>
+
+	* pretest version 2.2.90.
+
+2006-11-23  Karl Berry  <karl@gnu.org>
+
+	* Version 2.2.
+
+	* Makefile.am (po-check): add utility target (from coreutils).
+
+2006-11-09  Karl Berry  <karl@gnu.org>
+
+	* pretest version 2.1.96.
+
+2006-11-08  Karl Berry	<karl@gnu.org>
+
+	* pretest version 2.1.95.
+	* configure.ac (AM_GNU_GETTEXT_VERSION): bump to 0.16.
+	update gnulib, too.
+	* gnulib/lib/.cvsignore: ignore .deps.
+
+2006-10-18  Karl Berry	<karl@gnu.org>
+
+	* pretest version 2.1.94.
+
+2006-10-15  Bob Proulx	<bob@proulx.com>  (tiny change)
+
+	Remove trailing whitespace from files.
+	Using 'diff -w' afterward shows no changes.
+	* AUTHORS: Run Emacs function 'nuke-trailing-whitespace' on file.
+	* ChangeLog.O: Likewise.
+	* ChangeLog: Likewise.
+	* Makefile.am: Likewise.
+	* NEWS: Likewise.
+	* THANKS: Likewise.
+	* doc/ChangeLog: Likewise.
+	* doc/Makefile.am: Likewise.
+	* doc/hello.texi: Likewise.
+	* man/ChangeLog: Likewise.
+	* man/Makefile.am: Likewise.
+	* po/POTFILES.in: Likewise.
+	* src/ChangeLog: Likewise.
+	* src/Makefile.am: Likewise.
+	* src/hello.c: Likewise.
+	* tests/greeting-1: Likewise.
+	* tests/greeting-2: Likewise.
+	* tests/hello-1: Likewise.
+	* tests/traditional-1: Likewise.
+
+2006-10-15  Karl Berry	<karl@gnu.org>
+
+	* pretest version 2.1.93.
+
+	* tests/*: try to remove \r from the output, so as not to fail on
+	Windows systems.
+
+2006-08-28  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Set HELP2MAN to a dummy when cross-compiling.
+
+2006-08-23  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>  (tiny change)
+
+	* configure.ac (AC_CONFIG_FILES): Drop backslashes.
+
+	* Makefile.am (diff): Do not use `echo -e'.
+
+2006-08-23  Karl Berry	<karl@gnu.org>
+
+	* Pretest version 2.1.92.
+
+2006-08-20  Karl Berry	<karl@gnu.org>
+
+	* Pretest version 2.1.91.
+
+2006-08-13  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* gnulib/m4/longlong.m4: Upgrade to gettext-0.15.
+	* gnulib/m4/ulonglong.m4: Upgrade to gettext-0.15.
+	* configure.ac (AM_GNU_GETTEXT_VERSION): Bump to 0.15.
+
+2006-08-09  Karl Berry	<karl@gnu.org>
+
+	* configure.ac (AC_PROG_RANLIB): not needed, it's done in gl_EARLY.
+	From Bruno.
+
+2006-07-16  Karl Berry	<karl@gnu.org>
+
+	* configure.ac (AC_HEADER_STDC): autoconf doc says no longer needed.
+
+	* configure.ac (AM_INIT_AUTOMAKE): remove check-news.
+	* Makefile.am (EXTRA_DIST): no more bugs; simplfy other ex
+
+2006-05-08  Karl Berry	<karl@gnu.org>
+
+	* autogen.sh: rename from bootstrap and change msg.
+	Suggestion from Bruno Haible.
+
+2006-02-14  Karl Berry	<karl@gnu.org>
+
+	* configure.ac (gl_SOURCE_BASE,gl_M4_BASE): delete, these are
+	passed only on the cmdline now (and cached).
+
+2005-05-28  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (EXTRA_DIST): Add build-aux/mkinstalldirs.
+	* configure.ac (AM_GNU_GETTEXT_VERSION): Bump to 0.14.5.
+
+2005-04-23  Karl Berry	<karl@gnu.org>
+
+	* po/Makevars (MSGID_BUGS_ADDRESS): change to bug-hello@gnu.org.
+
+	* src/hello.c (locale.h): unconditionally include, everything has
+	this now.
+	* m4/Makefile.am: remove, no longer needed.
+	* intl/*: remove, we'll use [external] gettext.
+	* configure.ac (AC_FUNC_ALLOCA): add.
+	(AC_CONFIG_FILES): no m4 or intl.
+	* Makefile.am (SUBDIRS): no m4 or intl.
+
+2005-03-27  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* configure.ac (AC_CONFIG_FILES): Add intl/Makefile.
+
+2005-03-20  Karl Berry	<karl@gnu.org>
+
+	* README, README-alpha, NEWS, THANKS, AUTHORS: text updates.
+	* README.dev: new file.
+
+2004-05-16  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* configure.ac (AM_GNU_GETTEXT_VERSION): Add.
+
+2002-07-20  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Makefile.am (DISTCLEANFILES): New variable, add stamp-h created
+	by configure.
+
+	* Upgrade to gettext-0.11.3.
+	* Upgrade to autoconf-2.53b.
+	* Upgrade to automake-1.6.2.
+
+	* configure.ac: 2.1.2, ke_PRE: 2.1.1.
+
+2002-06-09  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 2.1.1.
+
+2002-06-08  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac (AC_INIT): Replace use of the zero-arg form of
+	AC_INIT with a use of the 3-arg form.
+	* configure.ac (AM_INIT_AUTOMAKE): Use zero-arg form of this
+	macro.
+
+	* configure.ac: 2.1.1, ke_PRE: 2.1.0.
+
+2002-05-22  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 2.1.0.
+
+2002-05-25  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* configure.ac: Set official bug report address.
+	* configure.ac: 2.1.0, ke_PRE: 2.0.60.
+	* README-alpha: Remove on account of the official release.
+
+2002-05-22  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Run 'gettextize --intl -f -c' (GNU gettext 0.11.2) to update
+	files provided by gettext.
+
+	* Run aclocal and automake (1.6.1).
+	Reported by Paul Eggert.
+
+	* configure.ac: 2.0.60, ke_PRE: 2.0.50.
+
+2002-02-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 2.0.50.
+
+2002-02-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac (ALL_LINGUAS): Move contents to po/LINGUAS and
+	delete it.
+
+2002-02-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac: 2.0.50, ke_PRE: 1.3.37.
+
+2002-01-31  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 1.3.37.
+
+	* Run 'gettextize --intl -f -c' (GNU gettext 0.11) to update
+	files provided by gettext.
+
+	* configure.ac: remove	superfluous comment (AC_OUTPUT).
+
+2002-01-27  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac: 1.3.37.
+
+2002-01-25  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac: 1.3.36.
+
+	* configure.ac (AC_PREREQ): 2.52.
+	* Makefile.am (AUTOMAKE_OPTIONS): Require 1.5.
+	* Makefile.am (EXTRA_DIST): Add config.rpath.
+
+2002-01-25  gettextize	<bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Add m4.
+	(ACLOCAL_AMFLAGS): New variable.
+	(EXTRA_DIST): Add config.rpath.
+	* configure.ac (AC_OUTPUT): Add m4/Makefile.
+
+2001-10-08  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac (All_LINGUAS): Add 'hu'.
+
+2001-08-11  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac: 1.3.34, ke_PRE: 1.3.33.
+
+	* Release 1.3.33.
+
+2001-07-31  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac (ALL_LINGUAS): Drop 'no'; add 'nb' and 'nn'.
+
+2001-07-27  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Makefile.am (AUTOMAKE_OPTIONS): Add 'dist-bzip2'.
+
+	* configure.ac (ke_PRE): Set pre-version number here.
+	* Makefile.am (ke_PRE): Use it.
+
+	* Run 'gettextize -f -c' to update the intl directory (GNU
+	gettext 0.10.39).
+
+2001-07-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.ac: Use AM_CONFIG_HEADER instead of
+	AC_CONFIG_HEADERS.
+	From Tom Tromey.
+	* Makefile.am (EXTRA_DIST): Using AM_CONFIG_HEADER it isn't needed
+	to list config.h.in.
+
+2001-06-23  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Makefile.am (diff): Exclude aclocal.m4.
+
+	* configure.ac: 1.3.33.
+	* Makefile.am (ke_PRE): 1.3.32
+
+2001-06-23  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 1.3.32.
+
+	* configure.ac: Rename configure.in.
+
+	* configure.in (AC_CONFIG_FILES): Using gettext.m4 from cvs it
+	isn't needed to treat po/Makefile.in special.
+
+	* configure.in: Provide PACKAGE_BUGREPORT.
+
+	* configure.in: AM_INIT_AUTOMAKE third argument prevents PACKAGE
+	and VERSION to defined.
+
+	* Makefile.am (EXTRA_DIST): Add config.h.in to work around a
+	automake 1.4-p4 problem.
+
+	* configure.in: AC_CONFIG_HEADERS instead of AM_CONFIG_HEADER.
+
+2001-06-08  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: Run autoupdate from Autoconf 2.50.
+
+2001-06-04  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: Add 'gl'.
+
+2001-06-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: 1.3.32.
+	* Makefile.am (ke_PRE): 1.3.31
+
+	* Release 1.3.30.
+
+	* configure.in (ALL_LINGUAS): Add 'tr'.
+
+2001-05-29  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in (ALL_LINGUAS): Add 'uk'.
+
+2001-05-24  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: 1.3.31.
+	* Makefile.am (ke_PRE): 1.3.30
+
+	* Release 1.3.30.
+
+	* Run 'gettextize -f -c' to update the intl directory (GNU
+	gettext 0.10.38).
+
+	* configure.in: 1.3.30.
+	* Makefile.am (ke_PRE): 1.3.29
+
+2001-05-21  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 1.3.29.
+
+	* acconfig.h: General cleanup: HAVE_LC_MESSAGES, ENABLE_NLS,
+	HAVE_CATGETS, HAVE_GETTEXT, and HAVE_STPCPY are provided by
+	gettext.m4 since gettext-0.10.36 (Bruno Haible).
+
+	* Remove ltconfig and ltmain.sh (Bruno Haible).
+
+2001-05-16  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in (ALL_LINGUAS): Add 'eo'.
+
+2001-05-01  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: 1.3.29.
+	* Makefile.am (ke_PRE): 1.3.28
+
+2001-05-01  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 1.3.28.
+
+2001-04-28  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Run 'gettextize -f -c' to update the intl directory (GNU
+	gettext 0.10.37); 'rm aclocal.m4'.
+
+2001-04-02  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: 1.3.28.
+	* Makefile.am (ke_PRE): 1.3.27.
+
+2001-03-31  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Release 1.3.27.
+
+	* README-alpha: Update.
+
+	* Run 'gettextize -f -c' to update the intl directory (GNU
+	gettext 0.10.36); 'rm aclocal.m4'.
+
+2001-03-23  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in: Remove old test frame work.
+
+2001-03-19  Karl Eichwalder  <keichwa@gmx.net>
+
+	* Run 'rm Makefile.in */Makefile.in'.
+	* Run 'libtoolize --force' to acquire config.{guess,sub}.
+	* Run 'gettextize -f -c' to update the intl directory (GNU
+	gettext 0.10.36pre); 'rm aclocal.m4'.
+
+2000-11-18  Karl Eichwalder  <keichwa@gmx.net>
+
+	* configure.in (ALL_LINGUAS): Add de_DE.
+
+2000-06-06  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* configure.in: 1.3.27
+	* Makefile.am (ke_PRE): 1.3.26.
+	* configure.in (ALL_LINGUAS): Add fi.
+
+2000-03-13  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* configure.in: 1.3.26.
+	* Makefile.am (ke_PRE): 1.3.25.
+
+	* m4/: New directory.
+
+2000-02-16  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* configure.in (ALL_LINGUAS): Add et.
+
+1999-11-17  Karl EICHWALDER  <ke@gnu.franken.de>
+
+	* configure.in (ALL_LINGUAS): Add id.
+
+1999-10-23  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* configure.in: 1.3.25.
+	* Makefile.am (ke_PRE): 1.3.24.
+
+	* configure.in (ALL_LINGUAS): Add ja.
+
+1999-10-02  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* configure.in (ALL_LINGUAS): Add lv.
+
+1999-08-21  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* Release 1.3.24.
+
+	* Makefile.am (ke_PRE): 1.3.23.
+	* configure.in: 1.3.24.
+
+	* configure.in (AC_OUTPUT): Add man/Makefile.
+	(AC_CHECK_PROG): Check for perl (for help2man).
+
+	* Makefile.am (SUBDIRS): add `man' (after `src'!).
+
+	* man/: Create new directory for the manpage.
+
+1999-08-15  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* configure.in (ALL_LINGUAS): Add pt_BR.
+
+1999-07-28  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* Release 1.3.23 - no changes, but increase the version number as
+	necessary.
+	* Makefile.am (ke_PRE): 1.3.22.
+	* configure.in: 1.3.23.
+
+1999-07-13  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* Release 1.3.22.
+
+1999-07-12  Karl Eichwalder  <ke@gnu.franken.de>
+
+	* contrib/ChangeLog: New file.
+
+	* Makefile.am (SUBDIRS): Add `contrib'.
+
+	* contrib/: Create new directory -- is there any GNU program
+	without a contrib directory?  `GNU hello' mised it for so long...
+	(Idea by François Pinard <pinard@iro.umontreal.ca>, thanks!).
+
+	* configure.in (ALL_LINGUAS): Add `el' and `sk'.
+
+1999-01-31  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (AC_PREREQ): automake-1.4 needs 2.13.
+
+1999-01-31  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.22; now, I'm using automake-1.4 and
+	autoconf-2.13.
+
+	* Makefile.am (ke_PRE): 1.3.21.
+
+	* INSTALL: Renewed from automake-1.4.
+	* install-sh: Ditto
+	* missing: Ditto.
+	* mkinstalldirs: Ditto.
+
+1998-12-12  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.21.
+	* Makefile.am (ke_PRE): 1.3.20.
+
+	* Makefile.am (pot-to-trans): Add.
+
+1998-12-11  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.20).
+	* Makefile.am (ke_PRE): 1.3.19.
+	* configure.in (ALL_LINGUAS): Add `ru'.
+
+1998-06-15  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.19.
+	* Makefile.am (ke_PRE): 1.3.18.
+	* configure.in (ALL_LINGUAS): Add `it'.
+
+1998-05-02  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.18.
+	* Makefile.am (ke_PRE): 1.3.16.
+	(AUTOMAKE_OPTIONS): require automake 1.3.
+
+	* configure.in: Remove commands in AC_OUTPUT; now it's in the
+	AM_GNU_GETTEXT macro.
+	* configure.in (AC_LINK_FILES): remove it; now it's in the
+	AM_GNU_GETTEXT macro.
+
+	* Run `gettextize -f -c' to update all the files from the GNU
+	gettext library (0.10.35); rm aclocal.m4 and
+	* use automake 1.3 to build m4 files and Makefiles.
+
+1998-04-30  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in (ALL_LINGUAS): Add da.
+
+1998-04-05  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.16.
+	* Makefile.am (ke_PRE): 1.3.15
+	* use automake 1.2h.
+
+1998-04-04  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.15.
+	* Makefile.am (ke_PRE): 1.3.14
+
+1998-02-28  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in: (VERSION): 1.3.14.
+	* Makefile.am (ke_PRE): 1.3.13.
+	* use automake 1.2f.
+
+1998-02-14  Karl Eichwalder  <ke@suse.de>
+
+	* configure.in (VERSION): 1.3.13.
+	* configure.in: Remove AC_PROG_RANLIB.
+
+	* Makefile.am (ke_PRE): 1.3.12.
+
+	* Run `gettextize -f -c' to update all the files from the GNU
+	gettext library (0.10.32); run aclocal to update aclocal.m4.
+
+	* Makefile.am (AUTOMAKE_OPTIONS): require automake 1.2; actually
+	use automake 1.2e.
+
+Sun May 25 18:49:14 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* ABOUT-NLS: Update from ftp://ftp.gnu.ai.mit.edu/pub/gnu/.
+
+	* Makefile.am (diffcheck): Try to extract the archives.
+
+	* Switch to automake-1.1p.  Update COPYING, INSTALL, install-sh,
+	missing, and mkinstalldirs.
+
+Mon Apr 21 21:33:50 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Switch to automake-1.1n and use all files and scripts coming
+	with it (INSTALL, mkinstalldirs, etc.).
+
+Wed Mar 26 08:40:36 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (AC_ARG_PROGRAM): Delete; done by AM_INIT_AUTOMAKE.
+
+	* Makefile.am (AUTOMAKE_OPTIONS): Use `gnits' to make DIST_ALPHA
+	work.  Remove all other related DIST_ALPHA stuff.
+	(MAINT_CHARSET): `latin1'.
+
+Sun Mar 23 08:18:29 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (AC_PREREQ): Delete; automake knows it better.
+
+Sat Mar 22 09:06:57 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in: Add AC_PROG_RANLIB.
+
+Fri Mar 21 16:44:11 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* missing: New file from automake-1.1m.
+
+Sat Feb 22 18:29:57 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* acconfig.h: Add #undef HAVE_STPCPY.
+
+Sat Jan 25 16:51:31 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (VERSION): 1.3.10.
+
+Fri Jan 17 10:46:59 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.am (diff): Exclude rebuildable files.  Tell how to
+	rebuild them.
+
+Wed Jan	 8 16:29:06 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.am (ke_PRE): New Variable
+	(diffcheck, diff): New targets.
+
+	* configure.in: Provide a mechanism to include `README-alpha' in
+	alpha releases (stolen from gettext-0.10.26, but broken with
+	automake-1.1l).
+	(AC_SUBST): Add DIST_ALPHA.
+
+	* README: Reflect the number of the upcoming version (1.4).
+
+	* Makefile.am (my-dist): new target to archive the best
+	compression ratio.
+
+Sun Jan	 5 10:04:07 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (VERSION): 1.3.9.
+
+Sat Jan	 4 10:23:55 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (AC_OUTPUT): Add extra command
+	`chmod +x tests/hello'; reported by Kaveh R. Ghazi
+	<ghazi@caip.rutgers.edu>.
+
+Thu Jan	 2 18:40:02 1997  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (AC_OUTPUT): Add `tests/hello'.
+	(VERSION): 1.3.8.
+
+Mon Dec 30 17:21:04 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.am (EXTRA_DIST): Remove `INSTALL-1.3'.
+
+	* configure.in (AC_OUTPUT): Add `tests/Makefile'.
+	(AC_PROG_MAKE_SET, AC_PROG_INSTALL): Delete.
+
+	* Makefile.am (SUBDIRS): Add `tests'.
+
+	* tests/: New directory.
+
+Sun Dec 29 11:50:08 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (AC_FUNC_ALLOCA): instead of the old ALLOCA.
+
+Wed Dec 18 15:39:26 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (VERSION): 1.3.7.
+
+Mon Dec 16 21:03:13 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (AC_HAVE_HEADERS): Some systems need sys/param.h,
+	reported by Kaveh R. Ghazi <ghazi@caip.rutgers.edu>.
+
+	* acconfig.h: include <libintl.h>, reported by Kaveh R. Ghazi
+	<ghazi@caip.rutgers.edu>.
+
+Thu Dec 12 18:58:01 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (ALL_LINGUAS): remove `it'.
+
+Wed Dec 11 19:45:49 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (ALL_LINGUAS): add es ko nl no pl pt sl sv.
+
+	* `mv aclocal.m4 acinclude.m4', and run aclocal from
+	automake-1.1l.
+
+Sat Dec	 7 14:23:44 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in: AC_PREREQ(2.12), add AM_INIT_AUTOMAKE, delete
+	PACKAGE and VERSION and related opperations, now covered by
+	AM_INIT_AUTOMAKE.
+
+	* Run `gettextize -f -c' to update all the files from the GNU
+	gettext library (0.10.26).
+
+Thu Dec	 5 17:51:48 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.am (EXTRA_DIST): add ChangeLog.O.
+
+	* configure.in (VERSION): 1.3.6.
+
+Wed Dec	 4 19:06:42 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.am: new file.
+	(SUBDIRS, EXTRA_DIST): define.
+
+	* aclocal.m4: new internationalization macros.
+
+	* Makefile.in (SUBDIRS): add intl/ and po/ literary, remove
+	@INTLSUB@ and @POSUB@.
+
+	* configure.in AM_GNU_GETTEXT replaces ud_GNU_GETTEXT.
+
+	* Run `gettextize -f -c' to update all the files from the GNU
+	gettext library (0.10.25).
+
+Sat Nov 30 17:41:51 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (VERSION): 1.3.5.
+
+Fri Mar 15 12:38:17 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (ALL_LINGUAS): Add fr.
+
+Tue Aug	 6 11:58:19 1996  Kjetil Wiekhorst J|rgensen  <jorgens@voldsboks.pvv.ntnu.no>
+
+	* configure.in: Added check for st_blksize in 'struct stat'.
+
+	* config.h.in: Added HAVE_ST_BLKSIZE.
+
+	* system.h: new file, define macro ST_BLKSIZE and DEV_BSIZE.
+
+	* hello.c: Use ST_BLKSIZE instead of st_blksize. Use the system.h
+	headerfile.
+
+
+Tue Mar 12 09:57:19 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* make dist: 1.3.4, test release for alpha.gnu.ai.mit.edu.
+
+	* INSTALL: New file from autoconf-2.8.
+
+	* Makefile.in (fix-permissions perm): Add.
+
+Sun Mar 10 13:13:03 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (VERSION) 1.3.4.	 (AC_ISC_POSIX) add,
+	(AC_PREREQ) now 2.8; (AC_PROG_CPP) delete.
+
+	* make dist: 1.3.3; internal release.
+
+	* aclocal.m4: ud_LC_MESSAGES, ud_WITH_NLS and ud_GNU_GETTEXT from
+	gettext-0.10.6.
+
+	* Run `gettextize -f' to update all the files from the GNU gettext
+	library (now using version 0.10.6).
+
+Tue Mar	 5 14:39:39 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* Makefile.in (DISTFILES): Add ChangeLog.O.
+
+	* ChangeLog.O: News file.  Contains the ChangeLog entries from the
+	versions 1.0-1.3
+
+	* configure.in (VERSION): 1.3.3.
+
+Sun Mar	 3 12:00:07 1996  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (VERSION): 1.3.2.
+
+Wed Dec 20 16:50:34 1995  Karl Eichwalder  <keichwa@.gwdg.de>
+	* make dist 1.3-ki.
+	* configure.in (VERSION): 1.3-ki.
+
+	* Makefile.in (DISTFILES):  Add `config.h.in'.
+
+Wed Dec 20 09:42:02 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* make dist 1.3-kh.
+	* configure.in (VERSION): 1.3-kh.
+
+	* THANKS-ke: New file.
+
+Tue Dec 19 13:38:58 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* ChangeLog: Remove Local Variables List.
+
+Mon Dec 18 16:34:14 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* configure.in (ALL_OUPUT): Add doc/Makefile and src/Makefile.
+
+	* doc: Move gpl.texinfo, hello.info, hello.texi, and texinfo.tex
+	to new directory `doc'.
+
+	* src: Move Makefile.in, TAGS, alloca.c, getopt.c, getopt.h,
+	getopt1.c, hello.c, testdata, and version.c to new directory
+	`src'.
+
+Sat Dec 16 00:00:41 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* texinfo.tex: Include version 2.150.
+
+	* Makefile.in (install): Use install-info if available.
+	(clean): Add `*~ and `\#*'.
+	(configure, config.h, stamp-h, config.h.in, stamp-h.in): New
+	targets for autoconf.
+
+	* hello.c (main), version.c (version): Use `N_(...)' tag instead
+	of `gettext_noop'.
+
+	* acconfig.h (N_): Rename `gettext_noop'.
+
+Fri Dec 15 11:03:27 1995  Karl Eichwalder  <ke@ke.Central.DE>
+
+	* hello.texi: Add INFO-DIR-ENTRY.
+
+	* Pre-Release Version 1.3-ke.
+
+	* Makefile.in (check): Add `@unset LANG'.  Okay???
+
+	* INSTALL: file from version 1.3 saved as INSTALL-1.3.	New file
+	from autoconf-2.7.
+
+	* Makefile.in: Remove first line entry (Indented-Text).
+	(SUBDIRS): Added variable.
+	(dist dist-hello): Renewed according to gettext-0.10.
+	(CFLAGS, LDFLAGS): Replacable.
+
+	* install-sh: Added.
+
+	* acconfig.h: New file. HAVE_LC_MESSAGES, ENABLE_NLS,
+	HAVE_CATGETS, and HAVE_GETTEXT stolen from gettext-0.10. Define
+	_(...) and gettext_noop(...).  Insert @TOP@ and @BOTTOM@.  Add
+	HAVE_STPCPY.
+
+	* aclocal.m4: New file.	 `ud_LC_MESSAGES', `ud_WITH_NLS' and
+	`ud_GNU_GETTEXT' stolen from gettext-0.10.
+
+	* configure.in (PACKAGE, VERSION, ALL_LINGUAS, ud_GNU_GETTEXT,
+	LINK_FILES): Add i18n and gettext related macros.
+	(CONFIG_HEADER): config.h.
+	(PREREQ): 2.5.
+	(PROG_MAKE_SET): Added.
+	(OUTPUT): Add `intl/Makefile', `po/Makefile.in', and a `sed'
+	command to postprocess `po/Makefile.in'
+
+	* TODO: New file.
+
+	* version.c hello.c: Add i18n support: include "config.h",
+	<locale.h>, and <libintl.h>.  Tag translatable strings with
+	`_(...)' and `gettext_noop (...)', defined in `config.h'.
+
+	* config.h: New file, for the sake of i18n.
+
+	* hello.c (main): Add i18n support: new functions `setlocale ()',
+	`bindtextdomain ()', and `textdomain ()',
+
+	* run `gettextize -f' to get the i18n skeleton: Add `ABOUT-NLS'
+	from gettext-0.10, also the directories `intl/' and `po/'; fill
+	`intl/' with needed files from the gettext-0.10 package.
+
+Thu Jul 29 14:31:18 1993  Charles Hannum  (mycroft@trinity.gnu.ai.mit.edu)
+
+	* hello.c (main): Add /var/mail to default list of directories.
+	Don't loop forever if one of the files is not found.
+
+	* Makefile (check): Check some more cases.
+	testdata: Add sample output for new test cases.
+
+Sat May 22 20:36:28 1993  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Version 1.3 released.
+
+	* Makefile.in (DISTFILES): Add hello.?? and hello.??s.
+	(dist): Use tar's o flag to make compatible archives.
+
+	* hello.c (main): Exit with 0, not 1, under -h and -v.
+
+	* Makefile.in (DISTFILES): Add mkinstalldirs.
+
+	* Makefile.in (binprefix): New variable.
+	(install): Use it.
+
+	* Makefile.in (all): Don't depend on info.
+
+Fri May 21 20:04:14 1993  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Version 1.2 released.
+
+Wed May 19 21:54:02 1993  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* hello.c: Insert standard alloca #ifdef spooge.
+
+	* hello.c: Include <errno.h> and declare errno.
+	(main): Don't assume getenv ("USER") works.  If it
+	fails, use getpwuid (getuid ()).
+	Don't hard-code /usr/spool/mail.  New static variable DIRS
+	lists directories to try.  When MAILNAME is nil, run through
+	there until we find one that exists.
+
+	* hello.c (progname): New static variable.
+	(main): Set it to ARGV[0].  Use it in error message fprintfs.
+	(xmalloc): New function.
+
+	* hello.c [HAVE_FCNTL_H]: Include <fcntl.h>.
+	[HAVE_SYS_FILE_H]: Protect #include <sys/file.h> with this.
+	* configure.in (AC_HAVE_HEADERS): Check for fcntl.h and sys/file.h.
+
+	* hello.c (main): Under -v, exit after printing version info,
+	unless also under -h.
+
+	* hello.c [HAVE_STRING_H]: Include <string.h> for strcmp.
+	[! HAVE_STRING_H]: Include <strings.h> instead.
+	* configure.in: Use AC_HAVE_HEADERS to check for string.h.
+
+	* Makefile.in (Makefile): Use $(SHELL) to run config.status.
+
+	* testdata: Updated capitalization and punctuation.
+
+	* Makefile.in (all): Depend on info, not hello.info.
+	(info, dvi): New targets.
+	(.c.o): Put $(CFLAGS) last.
+	(install): Depend on hello and hello.info, not on all.
+	(all, install, check, clean, mostlyclean, distclean,
+	realclean, dist): Declare as phony targets.
+	(configure): Target removed.
+	(srcdir): Set to $(VPATH), not @srcdir@.
+	(MAKEINFO, TEXI2DVI): New variables.
+	(hello.info, hello.dvi): Use them.
+	(clean): Remove hello.dvi hello.?? hello.??s.
+	(realclean): Remove hello.info*.
+	(installdirs): New target.
+	(install): Depend on it first.
+	(dist): Create a .z file instead of a .Z file.
+
+Mon Nov  9 18:38:08 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* hello.c (main): added mail-printing feature.
+
+Wed Sep 16 19:30:08 1992  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Version 1.1 released.
+
+	* Makefile.in (DISTFILES): Add TAGS.
+
+	* Makefile.in (DISTFILES): Remove COPYING.LIB.
+	* COPYING.LIB: Removed.
+
+	* hello.c (main): Shortened verbose variable name.
+	Robustified and simplified argument test.
+
+Wed Sep  2 23:45:10 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+	* hello.c (main): added zork output compatibility.
+
+Wed Sep  2 22:58:15 1992  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Makefile.in (config.status): Find configure in $(srcdir).
+
+	* Makefile.in: Regularize spacing after colons.
+
+Tue Aug 11 16:48:21 1992  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* NEWS: New file.
+	* Makefile.in (DISTFILES): Add NEWS.
+
+	* hello.c (usage): Capitalize first word.
+
+	* Makefile.in (DISTFILES): Add COPYING.LIB.
+
+Wed Jul  1 02:43:47 1992  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Makefile.in (hello.dvi): New rule.
+	(doc): New rule.
+	(check): Depend on hello, not all.
+
+	* hello.texi (Instructions): Add important warning to all our readers.
+	(Sample): Show new greeting msg, and --traditional option.
+	(Invoking hello): Document --traditional.
+	(Problems): Invite users to ask questions of the maintainer.
+
+	* hello.c (longopts, main): Add new option --traditional/-t.
+	(main): When not under --traditional, use proper capitalization,
+	appropriate punctuation, and the most suited output function.
+	Under --traditional, retain compatibility with old implementations.
+
+	* hello.c (main): Notice switches in flag variables and act on
+	them after the getopt loop is finished.
+
+	* ChangeLog (3-1-78): Correct name.
+
+Sun Jun 28 12:54:28 1992  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Makefile.in: Add emacs mode cookie.
+	(DISTFILES): Indent contiuation lines reasonably.
+
+	* hello.texi (Instructions): Properly capitalize title.
+
+Fri Jun 26 23:44:03 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * hello.texi: new node "how to read this manual".
+
+Fri Jun 26 18:15:53 1992  David J. MacKenzie  (djm@apple-gunkies.gnu.ai.mit.edu)
+
+	* Makefile.in (check): Look for testdata in $(srcdir).
+	From david d `zoo' zuhn (zoo@cygnus.com).
+
+Fri Jun 26 18:03:09 1992  Charles Hannum  (mycroft@hill.gnu.ai.mit.edu)
+
+	* hello.texi: Fix grammo in first line.
+
+Fri Jun 26 02:55:44 1992  The King  (elvis@graceland.gnu.ai.mit.edu)
+
+	* Version 1.0 released.
+
+Fri Jun 26 01:02:04 1992  David J. MacKenzie  (djm@apple-gunkies.gnu.ai.mit.edu)
+
+	* Makefile.in, configure.in, hello.texi: New files.
+
+Fri Jun 26 00:57:54 1992  Jan Brittenson  (bson@kropotkin.gnu.ai.mit.edu)
+
+	* hello.c (version): Declare it.
+
+Fri Jun 26 00:47:03 1992  Roland McGrath  (roland@geech.gnu.ai.mit.edu)
+
+	* hello.c (longopts, main): Add -h/--help option.
+	[STDC_HEADERS]: #include <stdlib.h>
+	[! STDC_HEADERS] (exit): Declare it.
+
+Fri Jun 26 00:44:27 1992  Charles Hannum  (mycroft@hal.gnu.ai.mit.edu)
+
+	* hello.c (longopts): New variable.
+	(main): Use it.
+
+Fri Jun 26 00:43:46 1992  Mike Haertel  (mike@churchy.gnu.ai.mit.edu)
+
+	* version.c: New file.
+
+Thu Nov 24 00:00:01 1983  Richard M. Stallman  (rms at prep)
+
+	* Begin GNU project; add copyleft.
+
+Sat Apr  1 00:27:19 1978  Brian Kernighan  (bwk at research)
+
+	* Initial version.
+
+Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2004,
+2005, 2006, 2008, 2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification, are
+permitted in any medium without royalty provided the copyright notice
+and this notice are preserved.
+
+
+ChangeLog.O ends here

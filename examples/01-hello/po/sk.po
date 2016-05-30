@@ -1,0 +1,218 @@
+# hello sk.po
+# Copyright (C) 1999, 2000, 2001, 2002, 2008, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+# This file is distributed under the same license as the hello package.
+# Marcel Telka <marcel@telka.sk>, 2002, 2008, 2010, 2011, 2012, 2013.
+# Stanislav Meduna <stano@meduna.org>, 2000, 2001.
+# Miroslav Vasko <vasko@debian.cz>, 1999.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hello 2.9\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2013-10-10 14:16+0200\n"
+"Last-Translator: Marcel Telka <marcel@telka.sk>\n"
+"Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "Ahoj, svet!"
+
+#: src/hello.c:84
+msgid "hello, world"
+msgstr "ahoj, svet"
+
+#: src/hello.c:94
+#, fuzzy
+msgid "extra operand"
+msgstr "%s: operand navyše: %s\n"
+
+#: src/hello.c:100
+#, fuzzy, c-format
+msgid "conversion to a multibyte string failed"
+msgstr "%s: konverzia na viacbajtový reťazec zlyhala\n"
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Použitie: %s [VOĽBA]...\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr "Vytlačiť priateľský, nastaviteľný pozdrav.\n"
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          zobraziť túto pomoc a skončiť\n"
+"  -v, --version       zobraziť informácie o verzii a skončiť\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t, --traditional       použiť tradičný pozdrav\n"
+"  -n, --next-generation   použiť pozdrav budúcej generácie\n"
+"  -g, --greeting=TEXT     použiť TEXT ako správu pozdravu\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, c-format
+msgid "Report bugs to: %s\n"
+msgstr ""
+"Chyby hláste na: %s (po anglicky)\n"
+"Komentáre k slovenskému prekladu zasielajte na: sk-i18n@lists.linux.sk\n"
+
+#: src/hello.c:152
+#, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr "Chyby v %s hláste na: %s (po anglicky)\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Domovská stránka %s: <%s>\n"
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr "Domovská stránka %s: <http://www.gnu.org/software/%s/>\n"
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+"Všeobecný návod na používanie softvéru GNU: <http://www.gnu.org/gethelp/>\n"
+
+#: src/hello.c:179
+#, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+"Autorské práva © %d Free Software Foundation, Inc.\n"
+"Licencia GPLv3+: GNU GPL verzia 3 alebo novšia <http://gnu.org/licenses/gpl."
+"html>\n"
+"Toto je slobodný softvér: môžete ho slobodne meniť a ďalej šíriť.\n"
+"Neposkytuje sa ŽIADNA ZÁRUKA v rozsahu povolenom zákonmi.\n"
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr "Neznáma systémová chyba"
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: voľba '%s' je nejasná; možnosti:"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: voľba '--%s' nepovoľuje argument\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: voľba '%c%s' nepovoľuje argument\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: voľba '--%s' vyžaduje argument\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: neznáma voľba '--%s'\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: neznáma voľba '%c%s'\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: neplatná voľba -- '%c'\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: voľba vyžaduje argument -- '%c'\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: voľba '-W %s' je nejasná\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: voľba '-W %s' nepovoľuje argument\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: voľba '-W %s' vyžaduje argument\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr "chyba zápisu"
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr "„"
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr "“"
+
+#: lib/xalloc-die.c:34
+msgid "memory exhausted"
+msgstr "vyčerpaná pamäť"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "Skúste `%s --help' pre viac informácií.\n"

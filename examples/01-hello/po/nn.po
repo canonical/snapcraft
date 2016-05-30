@@ -1,0 +1,263 @@
+# Norwegian nynorsk messages for GNU hello.
+# Copyright (C) 1996 Free Software Foundation, Inc.
+# Kjetil Torgrim Homme <kjetilho@ifi.uio.no>, 2001.
+# Eivind Tagseth <eivindt@multinet.no>, 1997.
+# Karl Anders Øygard <Karl.Oygard@fou.telenor.no>, 1996.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GNU hello 1.3.37\n"
+"Report-Msgid-Bugs-To: bug-hello@gnu.org\n"
+"POT-Creation-Date: 2014-11-16 11:53+0000\n"
+"PO-Revision-Date: 2002-02-02 17:10+0100\n"
+"Last-Translator: Kjetil Torgrim Homme <kjetilho@linpro.no>\n"
+"Language-Team: Norwegian nynorsk <i18n-nn@lister.ping.uio.no>\n"
+"Language: nn\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: src/hello.c:60
+msgid "Hello, world!"
+msgstr "Hei, verda!"
+
+#: src/hello.c:84
+#, fuzzy
+msgid "hello, world"
+msgstr "hei, verda\n"
+
+#: src/hello.c:94
+msgid "extra operand"
+msgstr ""
+
+#: src/hello.c:100
+#, c-format
+msgid "conversion to a multibyte string failed"
+msgstr ""
+
+#. TRANSLATORS: --help output 1 (synopsis)
+#. no-wrap
+#: src/hello.c:121
+#, fuzzy, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Bruk: %s [FLAGG]\n"
+
+#. TRANSLATORS: --help output 2 (brief description)
+#. no-wrap
+#: src/hello.c:126
+msgid "Print a friendly, customizable greeting.\n"
+msgstr ""
+
+#. TRANSLATORS: --help output 3: options 1/2
+#. no-wrap
+#: src/hello.c:132
+msgid ""
+"  -h, --help          display this help and exit\n"
+"  -v, --version       display version information and exit\n"
+msgstr ""
+"  -h, --help          vis denne hjelpeteksten og avslutt\n"
+"  -v, --version       vis programversjon og avslutt\n"
+
+#. TRANSLATORS: --help output 4: options 2/2
+#. no-wrap
+#: src/hello.c:139
+#, fuzzy
+msgid ""
+"  -t, --traditional       use traditional greeting\n"
+"  -g, --greeting=TEXT     use TEXT as the greeting message\n"
+msgstr ""
+"  -t, --traditional       bruk tradisjonelt format på helsinga\n"
+"  -n, --next-generation   bruk nestegenerasjonsformat på helsinga\n"
+"  -m, --mail              vis fram eposten din\n"
+
+#. TRANSLATORS: --help output 5+ (reports)
+#. TRANSLATORS: the placeholder indicates the bug-reporting address
+#. for this application.  Please add _another line_ with the
+#. address for translation bugs.
+#. no-wrap
+#: src/hello.c:149
+#, fuzzy, c-format
+msgid "Report bugs to: %s\n"
+msgstr ""
+"Rapporter programfeil til <%s>.\n"
+"Feil i den norske teksten kan meldast til <i18n-nn@lister.ping.uio.no>.\n"
+
+#: src/hello.c:152
+#, fuzzy, c-format
+msgid "Report %s bugs to: %s\n"
+msgstr ""
+"Rapporter programfeil til <%s>.\n"
+"Feil i den norske teksten kan meldast til <i18n-nn@lister.ping.uio.no>.\n"
+
+#: src/hello.c:156
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr ""
+
+#: src/hello.c:158
+#, c-format
+msgid "%s home page: <http://www.gnu.org/software/%s/>\n"
+msgstr ""
+
+#: src/hello.c:161
+msgid "General help using GNU software: <http://www.gnu.org/gethelp/>\n"
+msgstr ""
+
+#: src/hello.c:179
+#, c-format
+msgid ""
+"Copyright (C) %d Free Software Foundation, Inc.\n"
+"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+"html>\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+
+#: lib/error.c:191
+msgid "Unknown system error"
+msgstr ""
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, fuzzy, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: flagget «%s» er fleirtydig\n"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, fuzzy, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s: flagget «--%s» tek ikkje argument\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, fuzzy, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s: flagget «%c%s» tek ikkje noko argument\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, fuzzy, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s: flagget «%s» treng eit argument\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, fuzzy, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s: ukjent flagg «--%s»\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, fuzzy, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s: ukjent flagg «%c%s»\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, fuzzy, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: ulovleg flagg -- %c\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, fuzzy, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: flagget treng eit argument -- %c\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, fuzzy, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s: flagget «-W %s» er fleirtydig\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, fuzzy, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s: flagget «-W %s» tek ikkje noko argument\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, fuzzy, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s: flagget «%s» treng eit argument\n"
+
+#: lib/closeout.c:112
+msgid "write error"
+msgstr ""
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr ""
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr ""
+
+#: lib/xalloc-die.c:34
+#, fuzzy
+msgid "memory exhausted"
+msgstr "%s: Virtuelt minne oppbrukt\n"
+
+#~ msgid "%s: illegal option -- %c\n"
+#~ msgstr "%s: ulovleg flagg -- %c\n"
+
+#~ msgid "Too many arguments\n"
+#~ msgstr "For mange argument\n"
+
+#~ msgid "Try `%s --help' for more information.\n"
+#~ msgstr "Prøv «%s --help» for meir informasjon.\n"
+
+#~ msgid "GNU hello, THE greeting printing program.\n"
+#~ msgstr "GNU hello, det BESTE programmet til å skriva helsingar.\n"
+
+#~ msgid ""
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+#~ "PARTICULAR PURPOSE.  You may redistribute copies of GNU %s under the "
+#~ "terms\n"
+#~ "of the GNU General Public License.\n"
+#~ "For more information about these matters, see the file named COPYING.\n"
+#~ msgstr ""
+#~ "(Fylgjande tekst er ei omsetjing som *kun* vert gitt på informativ "
+#~ "basis.\n"
+#~ "For alle juridiske tolkingar gjeld den engelske originalteksten.)\n"
+#~ "\n"
+#~ "Copyright (C) %s Free Software Foundation, Inc.\n"
+#~ "Der er INGA FORM FOR garanti; ikkje eingong for at produktet er eigna "
+#~ "for\n"
+#~ "SAL eller BRUK TIL NOKO FORMÅL.  Du kan redistribuere kopiar av GNU %s\n"
+#~ "under vilkåra i GNU General Public License.\n"
+#~ "For meir informasjon om dette, sjå fila med namnet COPYING.\n"
+
+#~ msgid "%s: Incompatible flags: -m and -t\n"
+#~ msgstr "%s: Flagga -m og -t kan ikkje kombinerast.\n"
+
+#~ msgid "%s: Who are you?\n"
+#~ msgstr "%s: Kven er du?\n"
+
+#~ msgid "%s: Cannot find your mail spool file.\n"
+#~ msgstr "%s: Kan ikkje finne epost-fila di.\n"
+
+#~ msgid "Nothing happens here."
+#~ msgstr "Her skjer ingen ting."
+
+#~ msgid ""
+#~ "+---------------+\n"
+#~ "| Hello, world! |\n"
+#~ "+---------------+\n"
+#~ msgstr ""
+#~ "+---------------+\n"
+#~ "|  Hei, verda!  |\n"
+#~ "+---------------+\n"

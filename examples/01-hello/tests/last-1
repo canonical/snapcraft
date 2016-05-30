@@ -1,0 +1,38 @@
+#! /bin/sh
+# Test that last greeting option specified is what counts.
+#
+# Copyright 2008, 2013, 2014 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
+# This script takes one argument.
+
+trap 'rm -fr $tmpfiles' 1 2 3 15
+
+# We force the C locale here, since we are checking normal output,
+# which will be translated.
+
+LANGUAGE=
+LC_ALL=C
+LC_MESSAGES=
+LANG=
+export LANGUAGE LC_ALL LC_MESSAGES LANG
+
+tmpfiles="last-test1.ok"
+cat <<EOF > last-test1.ok
+my hello
+EOF
+
+tmpfiles="$tmpfiles last-test1.out"
+: ${HELLO=hello}
+${HELLO} -t -g 'my hello' | tr -d '\r' \
+| tr -d '\r' >last-test1.out
+
+: ${DIFF=diff}
+${DIFF} last-test1.ok last-test1.out
+result=$?
+
+rm -fr $tmpfiles
+
+exit $result
