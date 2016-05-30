@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import inspect
 import os
 import sys
 
@@ -23,6 +24,12 @@ sys.path = [topdir] + sys.path
 import demos_tests
 
 
-class ExampleTestCase(demos_tests.ExampleTestCase):
+class TourTestCase(demos_tests.ExampleTestCase):
 
-    src_dir = "examples"
+    def __init__(self, *args, **kwargs):
+        relative_path = os.path.relpath(
+            os.path.dirname(inspect.getfile(self.__class__)),
+            os.path.dirname(__file__))
+        self.src_dir = os.path.join("tour", relative_path)
+        super().__init__(*args, **kwargs)
+
