@@ -14,38 +14,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Common keywords for plugins that use common source options.
+"""Common 'source' options.
 
-A part that uses common source options can have these keyword entries:
+Unless the part plugin overrides this behaviour, a part can use these
+'source' keys in its definition. They tell snapcraft where to pull source
+code for that part, and how to unpack it if necessary.
 
-    - source:
-      (string)
-      A path to some source tree to build. It can be either remote or local,
-      and either a directory tree or a tarball.
-    - source-type:
-      (string)
-      In some cases the source is not enough to identify the version control
-      system or compression algorithim. This hints the system into what to
-      do, the valid values are:
+  - source: (string)
 
-                   - bzr
-                   - mercurial
-                   - hg
-                   - git
-                   - tar
-                   - zip
+    A URL or path to some source tree to build. It can be local
+    ('./src/foo') or remote ('https://foo.org/...'), and can refer to a
+    directory tree or a tarball or a revision control repository
+    ('git:...').
 
-    - source-branch:
-      (string)
-      A specific branch from the source tree. This will result in an error
-      if used with a bazaar source type.
-    - source-tag:
-      (string)
-      A specific tag from the source tree.
-    - source-subdir:
-      (string)
-      A source directory within a repository or tarfile to enter and build
-      from.
+  - source-type: (string)
+
+    In some cases the source string is not enough to identify the version
+    control system or compression algorithim. The source-type key can tell
+    snapcraft exactly how to treat that content. Valid options are:
+
+      git, bzr, hg, tar or zip
+
+  - source-branch: (string)
+
+    Snapcraft will checkout a specific branch from the source tree. This
+    only works on multi-branch repositories from git and hg (mercurial).
+
+  - source-tag: (string)
+
+    Snapcraft will checkout the specific tag from the source tree revision
+    control system.
+
+  - source-subdir: (string)
+
+    Snapcraft will checkout the repository or unpack the archive referred to
+    by the 'source' path, but it will only copy the specified subdirectory
+    into parts/<part-name>/build.
+
 """
 
 
