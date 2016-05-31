@@ -32,6 +32,7 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
+  snapcraft [options] list-parts
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -67,6 +68,7 @@ The available commands are:
   help         Obtain help for a certain plugin or topic
   init         Initialize a snapcraft project.
   list-plugins List the available plugins that handle different types of part.
+  list-parts   List parts
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
   upload       Upload a snap to the Ubuntu Store.
@@ -103,7 +105,7 @@ import textwrap
 from docopt import docopt
 
 import snapcraft
-from snapcraft.internal import lifecycle, log
+from snapcraft.internal import lifecycle, log, yaml
 
 
 logger = logging.getLogger(__name__)
@@ -120,6 +122,11 @@ def _list_plugins():
     for importer, modname, is_package in pkgutil.iter_modules(
             snapcraft.plugins.__path__):
         print(modname.replace('_', '-'))
+
+
+def _list_parts():
+    for part in yaml.Config().all_parts:
+        print(part.name)
 
 
 def _get_project_options(args):
@@ -165,6 +172,7 @@ def _get_command_from_arg(args):
         'login': snapcraft.login,
         'logout': snapcraft.logout,
         'list-plugins': _list_plugins,
+        'list-parts': _list_parts,
     }
     function = [k for k in functions if args[k]]
     if len(function) == 0:
