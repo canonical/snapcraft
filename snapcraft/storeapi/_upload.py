@@ -13,8 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import, unicode_literals
-import json
+
 import logging
 import functools
 import time
@@ -26,17 +25,9 @@ from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from .common import (
-    get_oauth_session,
     retry,
 )
-from .compat import open, quote_plus, urljoin
-from .constants import (
-    UBUNTU_STORE_API_ROOT_URL,
-    UBUNTU_STORE_UPLOAD_ROOT_URL,
-    SCAN_STATUS_POLL_DELAY,
-    SCAN_STATUS_POLL_RETRIES,
-)
-from snapcraft import config
+from snapcraft.storeapi import constants
 
 
 logger = logging.getLogger(__name__)
@@ -47,68 +38,13 @@ def _update_progress_bar(progress_bar, maximum_value, monitor):
         progress_bar.update(monitor.bytes_read)
 
 
-def upload(binary_filename, snap_name, metadata_filename='', metadata=None):
-    """Create a new upload based on a snap package."""
-    # Print a newline so the progress bar has some breathing room.
-    print('')
-
-    conf = config.Config()
-    data = upload_files(binary_filename, config=conf)
-    success = data.get('success', False)
-    errors = data.get('errors', [])
-    if not success:
-        logger.info('Upload failed:\n\n%s\n', '\n'.join(errors))
-        return False
-
-    meta = read_metadata(metadata_filename)
-    meta.update(metadata or {})
-    result = upload_app(snap_name, data, metadata=meta, config=conf)
-    success = result.get('success', False)
-    errors = result.get('errors', [])
-    app_url = result.get('application_url', '')
-    revision = result.get('revision')
-
-    # Print another newline to make sure the user sees the final result of the
-    # upload (success/failure).
-    print('')
-
-    if success:
-        message = 'Application uploaded successfully'
-        if revision:
-            message += ' (as revision {})'.format(revision)
-
-        logger.info(message)
-    else:
-        logger.info('Upload did not complete.')
-
-    if errors:
-        logger.info('Some errors were detected:\n\n%s\n',
-                    '\n'.join(str(error) for error in errors))
-
-    if app_url:
-        logger.info('Please check out the application at: %s\n',
-                    app_url)
-
-    return success
-
-
-def upload_files(binary_filename, config=None):
+def upload_files(binary_filename, updown_client):
     """Upload a binary file to the Store.
 
     Submit a file to the Store upload service and return the
     corresponding upload_id.
     """
-    updown_url = os.environ.get('UBUNTU_STORE_UPLOAD_ROOT_URL',
-                                UBUNTU_STORE_UPLOAD_ROOT_URL)
-    unscanned_upload_url = urljoin(updown_url, 'unscanned-upload/')
-
     result = {'success': False, 'errors': []}
-
-    session = get_oauth_session(config)
-    if session is None:
-        result['errors'] = [
-            'No valid credentials found. Have you run "snapcraft login"?']
-        return result
 
     try:
         binary_file_size = os.path.getsize(binary_filename)
@@ -123,7 +59,10 @@ def upload_files(binary_filename, config=None):
         progress_bar = ProgressBar(
             widgets=['Uploading {} '.format(binary_filename),
                      Bar(marker='=', left='[', right=']'), ' ', Percentage()],
-            maxval=os.path.getsize(binary_filename)).start()
+            maxval=os.path.getsize(binary_filename))
+        progress_bar.start()
+        # Print a newline so the progress bar has some breathing room.
+        logger.info('')
 
         # Create a monitor for this upload, so that progress can be displayed
         monitor = MultipartEncoderMonitor(
@@ -131,9 +70,7 @@ def upload_files(binary_filename, config=None):
                                        binary_file_size))
 
         # Begin upload
-        response = session.post(
-            unscanned_upload_url,
-            data=monitor, headers={'Content-Type': monitor.content_type})
+        response = updown_client.upload(monitor)
 
         # Make sure progress bar shows 100% complete
         progress_bar.finish()
@@ -164,53 +101,29 @@ def upload_files(binary_filename, config=None):
     return result
 
 
-def read_metadata(metadata_filename):
-    """Return a dictionary of metadata as read from a json file."""
-    if metadata_filename:
-        with open(metadata_filename, 'r') as metadata_file:
-            # file is automatically closed by context manager
-            metadata = json.load(metadata_file)
-    else:
-        metadata = {}
-
-    return metadata
-
-
-def upload_app(name, upload_data, metadata=None, config=None):
+def upload_app(sca_client, name, upload_data):
     """Request a new upload to be created for a given upload_id."""
-    upload_url = get_upload_url(name)
+    result = dict(success=False)
 
-    result = {'success': False, 'errors': [],
-              'application_url': '', 'revision': None}
-
-    session = get_oauth_session(config)
-    if session is None:
-        result['errors'] = [
-            'No valid credentials found. Have you run "snapcraft login"?']
-        return result
-
-    if metadata is None:
-        metadata = {}
-
+    data = {
+        'series': constants.DEFAULT_SERIES,
+        'updown_id': upload_data['upload_id'],
+        'binary_filesize': upload_data['binary_filesize'],
+        'source_uploaded': upload_data['source_uploaded'],
+    }
     try:
-        data = get_post_data(upload_data, metadata=metadata)
-        files = get_post_files(metadata=metadata)
-
-        result = _upload_files(session, upload_url, data, files, result)
+        result = _upload_files(sca_client, name, data, result)
     except Exception as err:
         logger.exception(
             'There was an error uploading the application.')
         result['errors'] = [str(err)]
-    finally:
-        # make sure to close any open files used for request
-        for fname, fd in files:
-            fd.close()
 
     return result
 
 
-def _upload_files(session, upload_url, data, files, result):
-    response = session.post(upload_url, data=data, files=files)
+def _upload_files(sca_client, name, data, result):
+    data['name'] = name
+    response = sca_client.snap_upload(data)
     if response.ok:
         response_data = response.json()
         status_url = response_data['status_url']
@@ -219,12 +132,13 @@ def _upload_files(session, upload_url, data, files, result):
         # AnimatedMarker for it.
         progress_indicator = ProgressBar(
             widgets=['Checking package status... ', AnimatedMarker()],
-            maxval=7).start()
+            maxval=7)
+        progress_indicator.start()
 
         # Execute the package scan in another thread so we can update the
         # progress indicator.
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(get_scan_data, session, status_url)
+            future = executor.submit(get_scan_data, sca_client, status_url)
 
             count = 0
             while not future.done():
@@ -273,53 +187,6 @@ def _upload_files(session, upload_url, data, files, result):
     return result
 
 
-def get_upload_url(name):
-    """Return the url of the uploaded package."""
-    store_api_url = os.environ.get('UBUNTU_STORE_API_ROOT_URL',
-                                   UBUNTU_STORE_API_ROOT_URL)
-    upload_url = urljoin(store_api_url, 'click-package-upload/')
-    upload_url += "%s/" % quote_plus(name)
-    return upload_url
-
-
-def get_post_data(upload_data, metadata=None):
-    """Return the data to be posted in order to create the upload."""
-    data = {
-        'updown_id': upload_data['upload_id'],
-        'binary_filesize': upload_data['binary_filesize'],
-        'source_uploaded': upload_data['source_uploaded'],
-    }
-    data.update({
-        key: value
-        for (key, value) in metadata.items()
-        if key not in (
-            # make sure not to override upload_id, binary_filesize and
-            # source_uploaded
-            'upload_id', 'binary_filesize', 'source_uploaded',
-            # skip files as they will be added to the files argument
-            'icon_256', 'icon', 'screenshots',
-        )
-    })
-    return data
-
-
-def get_post_files(metadata=None):
-    """Return data about files to upload during the package upload request."""
-    files = []
-
-    icon = metadata.get('icon', metadata.get('icon_256', ''))
-    if icon:
-        icon_file = open(icon, 'rb')
-        files.append(('icon_256', icon_file))
-
-    screenshots = metadata.get('screenshots', [])
-    for screenshot in screenshots:
-        screenshot_file = open(screenshot, 'rb')
-        files.append(('screenshots', screenshot_file))
-
-    return files
-
-
 def is_scan_completed(response):
     """Return True if the response indicates the scan process completed."""
     if response is None:
@@ -332,9 +199,9 @@ def is_scan_completed(response):
     return False
 
 
-def get_scan_status(session, url):
+def get_scan_status(sca_client, url):
     try:
-        resp = session.get(url)
+        resp = sca_client.get(url)
         return resp
     except (requests.ConnectionError, requests.HTTPError):
         # Something went wrong and we couldn't acquire the status. Upper
@@ -344,17 +211,17 @@ def get_scan_status(session, url):
         return None
 
 
-def get_scan_data(session, status_url):
+def get_scan_data(sca_client, status_url):
     """Return metadata about the state of the upload scan process."""
     # initial retry after 5 seconds
     # linear backoff after that
     # abort after 5 retries
     @retry(terminator=is_scan_completed,
-           retries=SCAN_STATUS_POLL_RETRIES,
-           delay=SCAN_STATUS_POLL_DELAY,
+           retries=constants.SCAN_STATUS_POLL_RETRIES,
+           delay=constants.SCAN_STATUS_POLL_DELAY,
            backoff=1)
     def get_status():
-        return get_scan_status(session, status_url)
+        return get_scan_status(sca_client, status_url)
 
     response, aborted = get_status()
 

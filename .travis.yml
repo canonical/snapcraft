@@ -15,7 +15,7 @@ env:
   - TEST_SUITE=unit
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y python3-coverage python3-distutils-extra
+  - sudo apt-get install -y python3-coverage python3-distutils-extra squashfs-tools
 install:
   - pip install docopt fixtures flake8 jsonschema lxml mccabe petname pexpect python-apt pyxdg pyyaml py3-progressbar requests requests-oauthlib requests-toolbelt responses setuptools ssoclient testscenarios file-magic
 script:
