@@ -77,7 +77,7 @@ class UploadCommandTestCase(tests.TestCase):
         main(['upload', 'test.snap'])
 
         self.assertEqual(
-            'Uploading existing test.snap.\n\n'
+            'Uploading existing test.snap.\n'
             'Application uploaded successfully (as revision test-revision)\n'
             'Please check out the application at: test-url\n\n',
             self.fake_logger.output)
