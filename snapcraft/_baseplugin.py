@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import glob
 import os
 import shutil
 
@@ -143,10 +144,19 @@ class BasePlugin:
         if os.path.exists(self.build_basedir):
             shutil.rmtree(self.build_basedir)
 
+        def ignore(directory, files):
+            if directory is self.sourcedir:
+                snaps = glob.glob(os.path.join(directory, '*.snap'))
+                if snaps:
+                    snaps = [os.path.basename(s) for s in snaps]
+                    return common.SNAPCRAFT_FILES + snaps
+                else:
+                    return common.SNAPCRAFT_FILES
+            else:
+                return []
+
         shutil.copytree(
-            self.sourcedir, self.build_basedir, symlinks=True,
-            ignore=lambda d, s: common.SNAPCRAFT_FILES
-            if d is self.sourcedir else [])
+            self.sourcedir, self.build_basedir, symlinks=True, ignore=ignore)
 
     def clean_build(self):
         """Clean the artifacts that resulted from building this part.
