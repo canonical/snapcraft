@@ -267,7 +267,7 @@ class GoPluginTestCase(tests.TestCase):
 
         self.run_mock.assert_has_calls([
             mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', 
+                       'go', 'get', '-t', '-d',
                        './github.com/snapcore/launcher/...'],
                       cwd=plugin._gopath_src),
             mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
