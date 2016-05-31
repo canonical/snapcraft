@@ -74,6 +74,21 @@ class SHAMismatchError(StoreError):
         super().__init__(path=path, expected_sha=expected_sha)
 
 
+def _get_name_from_snap_file(snap_path):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output = subprocess.check_output(
+            ['unsquashfs', '-d',
+             os.path.join(temp_dir, 'squashfs-root'),
+             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
+        logger.debug(output)
+        with open(os.path.join(
+                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
+        ) as yaml_file:
+            snap_yaml = yaml.load(yaml_file)
+
+    return snap_yaml['name']
+
+
 class Client():
     """A base class to define clients for the ols servers.
 
@@ -140,7 +155,7 @@ class StoreClient():
     def upload(self, snap_filename):
         if not os.path.exists(snap_filename):
             raise FileNotFoundError(snap_filename)
-        snap_name = self._get_name_from_snap_file(snap_filename)
+        snap_name = _get_name_from_snap_file(snap_filename)
 
         session = common.get_oauth_session(config.Config())
         if session is None:
@@ -152,20 +167,6 @@ class StoreClient():
 
         result = _upload.upload_app(self.sca, snap_name, data)
         return result
-
-    def _get_name_from_snap_file(self, snap_path):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            output = subprocess.check_output(
-                ['unsquashfs', '-d',
-                 os.path.join(temp_dir, 'squashfs-root'),
-                 snap_path, '-e', os.path.join('meta', 'snap.yaml')])
-            logger.debug(output)
-            with open(os.path.join(
-                    temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
-            ) as yaml_file:
-                snap_yaml = yaml.load(yaml_file)
-
-        return snap_yaml['name']
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
