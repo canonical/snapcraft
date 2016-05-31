@@ -106,7 +106,8 @@ from docopt import docopt
 
 import snapcraft
 from snapcraft.internal import lifecycle, log
-from snapcraft.internal.common import MAX_CHARACTERS_WRAP
+from snapcraft.internal.common import (format_output_in_columns,
+                                       MAX_CHARACTERS_WRAP)
 
 
 logger = logging.getLogger(__name__)
@@ -134,8 +135,8 @@ def _list_plugins():
             command = ['tput', 'cols']
             width = min(int(subprocess.check_output(command)), width)
 
-    print(textwrap.fill("  ".join(plugins), width=width,
-                        break_on_hyphens=False))
+    for line in format_output_in_columns(plugins, max_width=width):
+        print(line)
 
 
 def _get_project_options(args):

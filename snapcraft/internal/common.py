@@ -16,8 +16,10 @@
 
 # Data/methods shared between plugins and snapcraft
 
+from contextlib import suppress
 import glob
 import logging
+import math
 import os
 import shutil
 import subprocess
@@ -197,3 +199,48 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
             f.seek(0)
             f.truncate()
             f.write(replaced)
+
+
+def format_output_in_columns(elements_list, max_width=MAX_CHARACTERS_WRAP,
+                             num_col_spaces=2):
+    """Return a formatted list of strings ready to be printed line by line
+
+    elements_list is the list of elements ready to be printed on the output
+    max_width is the number of caracters the output shouldn't exceed
+    num_col_spaces is the number of spaces set between 2 columns"""
+
+    # First, try to get the starting point in term of number of lines
+    total_num_chars = sum([len(elem) for elem in elements_list])
+    num_lines = math.ceil((total_num_chars +
+                           (len(elements_list) - 1) * num_col_spaces) /
+                          max_width)
+    sep = ' '*num_col_spaces
+
+    candidate_output = []
+    while not candidate_output:
+        # dispatch elements in resulting list until num_lines
+        for i, element in enumerate(elements_list):
+            # for new columns, get the maximum width of this column
+            if i % num_lines == 0:
+                col_width = 0
+                for j in range(i, i+num_lines):
+                    # ignore non existing elements at the end
+                    with suppress(IndexError):
+                        col_width = max(len(elements_list[j]), col_width)
+
+            if i < num_lines:
+                candidate_output.append([])
+            candidate_output[i % num_lines].append(element.ljust(col_width))
+
+        # check that any line (like the first one) is still smaller than
+        # max_width
+        if len(sep.join(candidate_output[0])) > max_width:
+            # reset and try with one more line
+            num_lines += 1
+            candidate_output = []
+
+    result_output = []
+    for i, line in enumerate(candidate_output):
+        result_output.append(sep.join(candidate_output[i]))
+
+    return result_output
