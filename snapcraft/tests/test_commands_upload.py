@@ -83,3 +83,13 @@ class UploadCommandTestCase(tests.TestCase):
             self.fake_logger.output)
 
         mock_upload.assert_called_once_with('test.snap')
+
+    def test_upload_without_login_must_raise_exception(self):
+        snap_path = os.path.join(
+            os.path.dirname(tests.__file__), 'data',
+            'test-snap.snap')
+        with self.assertRaises(SystemExit):
+            main(['upload', snap_path])
+        self.assertIn(
+            'No valid credentials found. Have you run "snapcraft login"?\n',
+            self.fake_logger.output)

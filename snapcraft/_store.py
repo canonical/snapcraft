@@ -60,9 +60,9 @@ def upload(snap_filename):
         store = storeapi.StoreClient()
         result = store.upload(snap_filename)
     except storeapi.InvalidCredentialsError:
-        logger.info('No valid credentials found.'
-                    ' Have you run "snapcraft login"?')
-        return
+        logger.error('No valid credentials found.'
+                     ' Have you run "snapcraft login"?')
+        raise
 
     success = result.get('success', False)
     errors = result.get('errors', [])
