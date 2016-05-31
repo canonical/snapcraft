@@ -71,23 +71,23 @@ def upload(snap_filename):
 
     # Print another newline to make sure the user sees the final result of the
     # upload (success/failure).
-    logger.info('')
+    print()
 
     if success:
         message = 'Application uploaded successfully'
         if revision:
-            message += ' (as revision {})'.format(revision)
+            message = '{} (as revision {})'.format(message, revision)
         logger.info(message)
     else:
         logger.info('Upload did not complete.')
 
     if errors:
-        logger.info('Some errors were detected:\n\n%s\n',
-                    '\n'.join(str(error) for error in errors))
+        logger.info('Some errors were detected:\n\n{}\n'.format(
+            '\n'.join(str(error) for error in errors)))
 
     if app_url:
-        logger.info('Please check out the application at: %s\n',
-                    app_url)
+        logger.info('Please check out the application at: {}\n'.format(
+                    app_url))
 
     return success
 
