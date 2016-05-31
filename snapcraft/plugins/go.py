@@ -31,6 +31,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
       are pulled in automatically by `go get`.
       Packages that are not "main" will not cause an error, but would
       not be useful either.
+
+    - gopath:
+      (string)
+      When using a source entry, we sometimes need the code to live in a
+      certain location within the `GOPATH`. This has the format of a go
+      import path which would be go gettable.
 """
 
 import os
@@ -53,6 +59,10 @@ class GoPlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['gopath'] = {
+            'type': 'string',
+            'default': ''
+        }
 
         if 'required' in schema:
             del schema['required']
@@ -74,6 +84,10 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath_src = os.path.join(self._gopath, 'src')
         self._gopath_bin = os.path.join(self._gopath, 'bin')
         self._gopath_pkg = os.path.join(self._gopath, 'pkg')
+
+        if self.options.source and self.options.gopath:
+            self.sourcedir = os.path.join(self._gopath_src,
+                                          self.options.gopath)
 
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
@@ -105,11 +119,15 @@ class GoPlugin(snapcraft.BasePlugin):
             shutil.rmtree(self._gopath)
 
     def _local_pull(self):
-        go_package = os.path.basename(os.path.abspath(self.options.source))
-        local_path = os.path.join(self._gopath_src, go_package)
-        if os.path.islink(local_path):
-            os.unlink(local_path)
-        os.symlink(self.sourcedir, local_path)
+        if self.options.gopath:
+            go_package = self.options.gopath
+        else:
+            go_package = os.path.basename(
+               os.path.abspath(self.options.source))
+            local_path = os.path.join(self._gopath_src, go_package)
+            if os.path.islink(local_path):
+                os.unlink(local_path)
+            os.symlink(self.sourcedir, local_path)
         self._run(['go', 'get', '-t', '-d', './{}/...'.format(go_package)])
 
     def _remote_pull(self):
@@ -139,7 +157,10 @@ class GoPlugin(snapcraft.BasePlugin):
             shutil.rmtree(self._gopath_pkg)
 
     def _local_build(self):
-        go_package = os.path.basename(os.path.abspath(self.options.source))
+        if self.options.gopath:
+            go_package = self.options.gopath
+        else:
+            go_package = os.path.basename(os.path.abspath(self.options.source))
         self._run(['go', 'install', './{}/...'.format(go_package)])
 
     def _remote_build(self):
