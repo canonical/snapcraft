@@ -93,7 +93,7 @@ class StoreClient():
     def __init__(self):
         super().__init__()
         self.conf = config.Config()
-        self.cpi = CPIClient(self.conf)
+        self.cpi = SnapIndexClient(self.conf)
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
@@ -208,7 +208,7 @@ class StoreClient():
         return expected_sha512 == file_sum.hexdigest()
 
 
-class CPIClient(Client):
+class SnapIndexClient(Client):
     """The Click Package Index knows everything about existing snaps.
 
     https://wiki.ubuntu.com/AppStore/Interfaces/ClickPackageIndex is the

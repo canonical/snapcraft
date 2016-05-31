@@ -188,7 +188,7 @@ class DownloadTestCase(tests.TestCase):
         # download first time.
         self.client.download(
             'test-snap', 'test-channel', download_path)
-        with mock.patch.object(storeapi.CPIClient, 'get') as mock_get:
+        with mock.patch.object(storeapi.SnapIndexClient, 'get') as mock_get:
             # download again.
             self.client.download(
                 'test-snap', 'test-channel', download_path)
