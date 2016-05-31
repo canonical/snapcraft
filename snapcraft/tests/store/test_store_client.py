@@ -20,6 +20,7 @@ import os
 from unittest import mock
 
 import fixtures
+import progressbar
 import requests
 
 from snapcraft import (
@@ -215,3 +216,47 @@ class DownloadTestCase(tests.TestCase):
         with self.assertRaises(storeapi.SHAMismatchError):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
+
+
+class SilentProgressBar(progressbar.ProgressBar):
+    """A progress bar causing no spurious output during tests."""
+
+    def start(self):
+        pass
+
+    def update(self, value=None):
+        pass
+
+    def finish(self):
+        pass
+
+
+class UploadTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+        self.snap_path = os.path.join(
+            os.path.dirname(tests.__file__), 'data',
+            'test-snap.snap')
+        patcher = mock.patch(
+            'snapcraft.storeapi._upload.ProgressBar',
+            new=SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_upload_unexisting_snap_raises_exception(self):
+        with self.assertRaises(FileNotFoundError):
+            self.client.upload('unexisting.snap')
+
+    def test_upload_without_login_raises_exception(self):
+        with self.assertRaises(storeapi.InvalidCredentialsError):
+            self.client.upload(self.snap_path)
+
+    def test_upload_snap(self):
+        self.client.login('dummy', 'test correct password', 'dummy')
+        result = self.client.upload(self.snap_path)
+        self.assertTrue(result['success'])
+        self.assertEqual('test-application-url', result['application_url'])
+        self.assertEqual('test-revision', result['revision'])
