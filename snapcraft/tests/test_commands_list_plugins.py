@@ -25,9 +25,9 @@ from snapcraft import tests
 class ListPluginsCommandTestCase(tests.TestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
-    default_plugin_output = ("ant  autotools  catkin  cmake  copy  go  jdk  " +
-                             "kbuild  kernel  make  maven  nil  nodejs  " +
-                             "python2  python3  scons\ntar-content\n")
+    default_plugin_output = (
+        "ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content\n"  # noqa
+        "autotools  cmake   go    kbuild  make    nil    python2  scons  \n")  # noqa
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     @mock.patch('subprocess.check_output')
@@ -40,11 +40,12 @@ class ListPluginsCommandTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     def test_list_plugins_small_terminal(self, mock_subprocess, mock_stdout):
         mock_subprocess.return_value = "60"
-        expected_list = ("ant  autotools  catkin  cmake  copy  go  jdk  " +
-                         "kbuild  kernel\nmake  maven  nil  nodejs  " +
-                         "python2  python3  scons\ntar-content\n")
+        expected_output = (
+            "ant        cmake  jdk     make   nodejs   scons      \n"
+            "autotools  copy   kbuild  maven  python2  tar-content\n"
+            "catkin     go     kernel  nil    python3\n")
         main(['list-plugins'])
-        self.assertEqual(mock_stdout.getvalue(), expected_list)
+        self.assertEqual(mock_stdout.getvalue(), expected_output)
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     @mock.patch('subprocess.check_output')
