@@ -1,0 +1,9 @@
+name: kernel-download
+version: 0.1
+summary: Simple kernel snap to test download
+description: test
+
+parts:
+  kernel:
+    plugin: kernel
+    source: .
