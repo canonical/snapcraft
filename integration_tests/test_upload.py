@@ -16,6 +16,7 @@
 
 import fileinput
 import os
+import subprocess
 import uuid
 
 from testtools.matchers import (
@@ -54,10 +55,11 @@ class UploadTestCase(integration_tests.TestCase):
         os.chdir(project_dir)
         self.assertThat(snap_file_path, FileExists())
 
-        output = self.run_snapcraft(['upload', snap_file_path])
-
+        error = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.run_snapcraft, ['upload', snap_file_path])
         self.assertIn('No valid credentials found. Have you run "snapcraft '
-                      'login"?', output)
+                      'login"?', str(error.output))
 
     def test_upload_with_login(self):
         if os.getenv('TEST_USER_PASSWORD', None) is None:
