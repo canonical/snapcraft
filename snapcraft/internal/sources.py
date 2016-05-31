@@ -20,36 +20,41 @@ Unless the part plugin overrides this behaviour, a part can use these
 'source' keys in its definition. They tell snapcraft where to pull source
 code for that part, and how to unpack it if necessary.
 
-  - source: (string)
+  - source: url-or-path
 
     A URL or path to some source tree to build. It can be local
     ('./src/foo') or remote ('https://foo.org/...'), and can refer to a
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: (string)
+  - source-type: git, bzr, hg, tar or zip
 
     In some cases the source string is not enough to identify the version
     control system or compression algorithim. The source-type key can tell
-    snapcraft exactly how to treat that content. Valid options are:
+    snapcraft exactly how to treat that content.
 
-      git, bzr, hg, tar or zip
-
-  - source-branch: (string)
+  - source-branch: <branch-name>
 
     Snapcraft will checkout a specific branch from the source tree. This
     only works on multi-branch repositories from git and hg (mercurial).
 
-  - source-tag: (string)
+  - source-tag: <tag>
 
     Snapcraft will checkout the specific tag from the source tree revision
     control system.
 
-  - source-subdir: (string)
+  - source-subdir: path
 
     Snapcraft will checkout the repository or unpack the archive referred to
-    by the 'source' path, but it will only copy the specified subdirectory
-    into parts/<part-name>/build.
+    by the 'source' keyword into parts/<part-name>/src/ but it will only
+    copy the specified subdirectory into parts/<part-name>/build/
+
+Note that plugins might well define their own semantics for the 'source'
+keywords, because they handle specific build systems, and many languages
+have their own built-in packaging systems (think CPAN, PyPI, NPM). In those
+cases you want to refer to the help text for the specific plugin.
+
+  snapcraft help <plugin>
 
 """
 
