@@ -15,4 +15,5 @@ parts:
     plugin: go
     source: https://github.com/mvo5/godd
     source-type: git
+    go-importpath: github.com/mvo5/godd
     build-packages: [gcc, libgudev-1.0-dev]

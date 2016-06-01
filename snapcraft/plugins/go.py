@@ -39,10 +39,14 @@ Additionally, this plugin uses the following plugin-specific keywords:
       This is not needed for `go-packages`.
 """
 
+import logging
 import os
 import shutil
 
 import snapcraft
+
+
+logger = logging.getLogger(__name__)
 
 
 class GoPlugin(snapcraft.BasePlugin):
@@ -122,6 +126,9 @@ class GoPlugin(snapcraft.BasePlugin):
         if self.options.go_importpath:
             go_package = self.options.go_importpath
         else:
+            logger.warning(
+                'Please consider setting `go-importpath for the {!r} '
+                'part'.format(self.name))
             go_package = os.path.basename(
                os.path.abspath(self.options.source))
             local_path = os.path.join(self._gopath_src, go_package)
