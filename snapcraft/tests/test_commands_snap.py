@@ -21,13 +21,14 @@ import subprocess
 from unittest import mock
 
 import fixtures
+import testtools
 from testtools.matchers import FileExists
 
 from snapcraft.main import main
 from snapcraft import tests
 
 
-class SnapCommandTestCase(tests.TestCase):
+class SnapCommandTestCase(testtools.TestCase, tests.TestCase):
 
     yaml_template = """name: snap-test
 version: 1.0
@@ -287,3 +288,5 @@ type: os
             'mksquashfs', self.snap_dir, 'mysnap.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('mysnap.snap', FileExists())
