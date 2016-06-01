@@ -68,7 +68,7 @@ def main():
     # them again.
     argv = [sys.argv[0]]
     argv.append('discover')
-    argv.append(os.path.dirname(__file__).split(os.path.sep)[-1])
+    argv.append(os.path.basename(os.path.dirname(__file__)))
     runner(module=None, verbosity=2, stdout=stdout,
            testRunner=test_runner, exit=exit, argv=argv)
 
