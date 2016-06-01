@@ -46,7 +46,8 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        tokens_discharge_path = self._API_PATH + 'tokens/discharge'
+        tokens_discharge_path = urllib.parse.urljoin(
+            self._API_PATH, 'tokens/discharge')
         if parsed_path.path.startswith(tokens_discharge_path):
             self._handle_tokens_discharge_request()
         else:
@@ -134,8 +135,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        acl_path = self._DEV_API_PATH + 'acl/'
-        upload_path = self._DEV_API_PATH + 'snap-upload/'
+        acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-upload/')
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
@@ -178,8 +179,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        scan_complete_path = (
-            self._DEV_API_PATH + 'click-scan-complete/updown/')
+        scan_complete_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'click-scan-complete/updown/')
         if parsed_path.path.startswith(scan_complete_path):
             self._handle_scan_complete_request()
         else:
@@ -218,7 +219,7 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        search_path = self._API_PATH + 'search'
+        search_path = urllib.parse.urljoin(self._API_PATH,  'search')
         download_path = '/download-snap/'
         if parsed_path.path.startswith(search_path):
             self._handle_search_request(
