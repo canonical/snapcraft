@@ -23,11 +23,11 @@ Usage:
 
 Options:
   -h --help                             show this help message and exit
-  -p --print                            print the master parts list
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
                                         (including backtraces)
-  -i --index=<index>                    a file containing a part index.
+  -i --index=<filename>                 a file containing a part index.
+  -o --output=<filename>                where to write the parsed parts list.
 """
 
 import gzip
@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 PART_NAMESPACE_SEP = '/'
 # TODO: make this a temporary directory that get's removed when finished
 BASE_DIR = "/tmp"
-PARTS_FILE = os.path.join(BASE_DIR, "snap-parts.yaml.gz")
+PARTS_FILE = "snap-parts.yaml.gz"
 
 
 def _get_version():
@@ -93,12 +93,18 @@ def _get_origin_data(origin_dir):
 
 
 def run(args):
+
+    path = args.get("--output")
+    if path is None:
+        path = PARTS_FILE
+
     index = args.get('--index')
     if index is not None:
         if "://" not in index:
             index = "%s%s" % ("file://", os.path.join(os.getcwd(), index))
         output = urllib.request.urlopen(index).read()
     else:
+        # XXX: fetch the index from the wiki
         output = "{}"
 
     # XXX: This can't remain in memory if the list gets very large, but it
@@ -168,18 +174,18 @@ def run(args):
                         after = _update_after_parts(project_part, after)
                         after_parts.update(set(after))
 
-        if _valid_parts_list(parts_list, after_parts):
+        if is_valid_parts_list(parts_list, after_parts):
             master_parts_list.update(parts_list)
 
-    _write_gzipped_parts_list(BASE_DIR, master_parts_list)
+    _write_gzipped_parts_list(path, master_parts_list)
 
 
-    if args['--print']:
+    if args['--debug']:
         print(yaml.dump(master_parts_list, default_flow_style=False))
 
     return args
 
-def _valid_parts_list(parts_list, parts):
+def is_valid_parts_list(parts_list, parts):
     for partname in parts:
         if partname not in parts_list.keys():
             logging.error(
@@ -188,8 +194,9 @@ def _valid_parts_list(parts_list, parts):
 
     return True
 
-def _write_gzipped_parts_list(base_dir, master_parts_list):
-    with gzip.open(PARTS_FILE, "w") as fgp:
+def _write_gzipped_parts_list(path, master_parts_list):
+    logging.debug("Writing gzipped parts list to %s", path)
+    with gzip.open(path, "w") as fgp:
         fgp.write(yaml.dump(master_parts_list,
                             default_flow_style=False).encode("utf-8"))
 
