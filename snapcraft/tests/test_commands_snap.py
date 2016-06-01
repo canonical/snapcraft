@@ -17,6 +17,7 @@
 import logging
 import os
 import os.path
+import subprocess
 from unittest import mock
 
 import fixtures
@@ -40,13 +41,30 @@ parts:
       plugin: nil
 """
 
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.lifecycle.Popen',
+                             new=mock.Mock(wraps=subprocess.Popen))
+        self.popen_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('sys.stdout.fileno')
+        self.fileno_mock = patcher.start()
+        self.fileno_mock.return_value = 1
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('os.isatty')
+        self.isatty_mock = patcher.start()
+        self.isatty_mock.return_value = False
+        self.addCleanup(patcher.stop)
+
     def make_snapcraft_yaml(self, n=1, snap_type='app'):
         snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_defaults(self, mock_call):
+    def test_snap_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
@@ -60,7 +78,7 @@ parts:
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
-            'Snapping snap-test_1.0_amd64.snap\n'
+            'Snapping \'snap-test\' ...\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
@@ -69,12 +87,41 @@ parts:
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_type_os_does_not_use_all_root(self, mock_call):
+    @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+    def test_snap_defaults_on_a_tty(self, progress_mock):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.make_snapcraft_yaml()
+        self.isatty_mock.return_value = True
+
+        main(['snap'])
+
+        self.assertEqual(
+            'Preparing to pull part1 \n'
+            'Pulling part1 \n'
+            'Preparing to build part1 \n'
+            'Building part1 \n'
+            'Staging part1 \n'
+            'Stripping part1 \n'
+            'Snapped snap-test_1.0_amd64.snap\n',
+            fake_logger.output)
+
+        self.assertTrue(os.path.exists(self.stage_dir),
+                        'Expected a stage directory')
+
+        self.verify_state('part1', self.state_dir, 'strip')
+
+        self.popen_mock.assert_called_once_with([
+            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+    def test_snap_type_os_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml(snap_type='os')
@@ -88,7 +135,7 @@ parts:
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
-            'Snapping snap-test_1.0_amd64.snap\n'
+            'Snapping \'snap-test\' ...\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
@@ -97,12 +144,12 @@ parts:
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs'])
+            '-noappend', '-comp', 'xz', '-no-xattrs'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_defaults_with_parts_in_strip(self, mock_call):
+    def test_snap_defaults_with_parts_in_strip(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
@@ -118,16 +165,16 @@ parts:
             'Skipping build part1 (already ran)\n'
             'Skipping stage part1 (already ran)\n'
             'Skipping strip part1 (already ran)\n'
-            'Snapping snap-test_1.0_amd64.snap\n'
+            'Snapping \'snap-test\' ...\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_from_dir(self, mock_call):
+    def test_snap_from_dir(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -142,16 +189,16 @@ architectures: [amd64, armhf]
         main(['snap', 'mysnap'])
 
         self.assertEqual(
-            'Snapping my_snap_99_multi.snap\n'
+            'Snapping \'my_snap\' ...\n'
             'Snapped my_snap_99_multi.snap\n',
             fake_logger.output)
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_from_dir_with_no_arch(self, mock_call):
+    def test_snap_from_dir_with_no_arch(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -165,16 +212,16 @@ version: 99
         main(['snap', 'mysnap'])
 
         self.assertEqual(
-            'Snapping my_snap_99_all.snap\n'
+            'Snapping \'my_snap\' ...\n'
             'Snapped my_snap_99_all.snap\n',
             fake_logger.output)
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_all.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_from_dir_type_os_does_not_use_all_root(self, mock_call):
+    def test_snap_from_dir_type_os_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -190,16 +237,16 @@ type: os
         main(['snap', 'mysnap'])
 
         self.assertEqual(
-            'Snapping my_snap_99_multi.snap\n'
+            'Snapping \'my_snap\' ...\n'
             'Snapped my_snap_99_multi.snap\n',
             fake_logger.output)
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs'])
+            '-noappend', '-comp', 'xz', '-no-xattrs'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('subprocess.check_call')
-    def test_snap_with_output(self, mock_call):
+    def test_snap_with_output(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
@@ -213,7 +260,7 @@ type: os
             'Building part1 \n'
             'Staging part1 \n'
             'Stripping part1 \n'
-            'Snapping mysnap.snap\n'
+            'Snapping \'snap-test\' ...\n'
             'Snapped mysnap.snap\n',
             fake_logger.output)
 
@@ -222,6 +269,7 @@ type: os
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        mock_call.assert_called_once_with([
+        self.popen_mock.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'mysnap.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'])
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)

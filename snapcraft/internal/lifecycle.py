@@ -18,10 +18,10 @@ import contextlib
 import logging
 import os
 import shutil
-import subprocess
 import sys
 import tarfile
 import time
+from subprocess import Popen, PIPE, STDOUT
 
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
@@ -263,10 +263,8 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    with subprocess.Popen(
-            ['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT) as proc:
+    with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+               stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if os.isatty(sys.stdout.fileno()):
             message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
