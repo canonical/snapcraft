@@ -133,7 +133,9 @@ def _list_plugins():
             # this is the only way to get current terminal size reliably
             # without duplicating a bunch of logic
             command = ['tput', 'cols']
-            width = min(int(subprocess.check_output(command)), width)
+            candidate_width = \
+                subprocess.check_output(command, stderr=subprocess.DEVNULL)
+            width = min(int(candidate_width), width)
 
     for line in format_output_in_columns(plugins, max_width=width):
         print(line)
