@@ -51,7 +51,7 @@ class ListPluginsCommandTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     def test_list_plugins_error_invalid_terminal_size(self, mock_subprocess,
                                                       mock_stdout):
-        def raise_error(x):
+        def raise_error(cmd, stderr):
             raise OSError()
         mock_subprocess.side_effect = raise_error
         main(['list-plugins'])
@@ -61,8 +61,8 @@ class ListPluginsCommandTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     def test_list_plugins_error_invalid_subprocess_call(self, mock_subprocess,
                                                         mock_stdout):
-        def raise_error(x):
-            raise subprocess.CalledProcessError(returncode=1, cmd="foo")
+        def raise_error(cmd, stderr):
+            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
         mock_subprocess.side_effect = raise_error
         main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), self.default_plugin_output)
