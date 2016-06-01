@@ -19,7 +19,9 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import tarfile
+import time
 
 import yaml
 
@@ -254,15 +256,35 @@ def snap(project_options, directory=None, output=None):
 
     snap_name = output or common.format_snap_name(snap)
 
-    logger.info('Snapping {}'.format(snap_name))
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    subprocess.check_call(
-        ['mksquashfs', snap_dir, snap_name] + mksquashfs_args)
+    ticker = '/-\\|'
+    i = 0
+    with subprocess.Popen(
+            ['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT) as proc:
+        ret = None
+        if os.isatty(sys.stdout.fileno()):
+            ret = proc.poll()
+            while ret is None:
+                print('\033[0;32m\rSnapping {!r}\033[0;32m {}'.format(
+                    snap['name'], ticker[i]), end='')
+                i = (i+1) % len(ticker)
+                time.sleep(.2)
+                ret = proc.poll()
+        else:
+            logger.info('Snapping {!r} ...'.format(snap['name']))
+            ret = proc.wait()
+        print('')
+        if ret != 0:
+            logger.error(proc.stdout.read().decode('utf-8'))
+            raise RuntimeError('Failed to create snap {!r}'.format(snap_name))
+
     logger.info('Snapped {}'.format(snap_name))
 
 
