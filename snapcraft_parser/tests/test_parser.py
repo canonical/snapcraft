@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gzip
 import logging
 import os
 from unittest import mock
@@ -39,8 +38,8 @@ def _create_example_output(output):
 
 def _get_part_list_count(path=PARTS_FILE):
     input = ""
-    with gzip.open(path, "r") as fpg:
-        input = fpg.read()
+    with open(path, "r") as fp:
+        input = fp.read()
 
     return len(yaml.load(input))
 
@@ -272,7 +271,7 @@ example:
             }
         }
 
-        filename = "parts.gz"
+        filename = "parts.yaml"
         try:
             os.remove(filename)
         except FileNotFoundError:

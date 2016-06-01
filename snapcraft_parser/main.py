@@ -30,7 +30,6 @@ Options:
   -o --output=<filename>                where to write the parsed parts list.
 """
 
-import gzip
 import logging
 import os
 import pkg_resources
@@ -51,7 +50,7 @@ logger = logging.getLogger(__name__)
 PART_NAMESPACE_SEP = '/'
 # TODO: make this a temporary directory that get's removed when finished
 BASE_DIR = "/tmp"
-PARTS_FILE = "snap-parts.yaml.gz"
+PARTS_FILE = "snap-parts.yaml"
 
 
 def _get_version():
@@ -194,7 +193,7 @@ def run(args):
     master_parts_list = _process_index(output)
 
 
-    _write_gzipped_parts_list(path, master_parts_list)
+    _write_parts_list(path, master_parts_list)
 
 
     if args['--debug']:
@@ -206,16 +205,16 @@ def is_valid_parts_list(parts_list, parts):
     for partname in parts:
         if partname not in parts_list.keys():
             logging.error(
-                "Part '%s' is referenced by another part but not included in the master parts list" % partname)
+                "Part '%s' is missing from the parts entry" % partname)
             return False
 
     return True
 
-def _write_gzipped_parts_list(path, master_parts_list):
-    logging.debug("Writing gzipped parts list to %s", path)
-    with gzip.open(path, "w") as fgp:
-        fgp.write(yaml.dump(master_parts_list,
-                            default_flow_style=False).encode("utf-8"))
+def _write_parts_list(path, master_parts_list):
+    logging.debug("Writing parts list to %s", path)
+    with open(path, "w") as fp:
+        fp.write(yaml.dump(master_parts_list,
+                            default_flow_style=False))
 
 
 def _namespaced_partname(key, partname):
