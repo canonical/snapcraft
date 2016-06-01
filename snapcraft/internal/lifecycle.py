@@ -24,6 +24,7 @@ import tarfile
 import time
 
 import yaml
+from progressbar import AnimatedMarker, ProgressBar
 
 import snapcraft
 import snapcraft.internal
@@ -262,19 +263,27 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    ticker = '/-\\|'
-    i = 0
     with subprocess.Popen(
             ['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT) as proc:
         ret = None
         if os.isatty(sys.stdout.fileno()):
+            message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
+                    snap['name'])
+            progress_indicator = ProgressBar(widgets=[message, AnimatedMarker()],
+                                             maxval=7)
+            progress_indicator.start()
+
             ret = proc.poll()
+            count = 0
+
             while ret is None:
-                print('\033[0;32m\rSnapping {!r}\033[0;32m {}'.format(
-                    snap['name'], ticker[i]), end='')
-                i = (i+1) % len(ticker)
+                if count >= 7:
+                    progress_indicator.start()
+                    count = 0
+                progress_indicator.update(count)
+                count += 1
                 time.sleep(.2)
                 ret = proc.poll()
         else:
@@ -284,6 +293,8 @@ def snap(project_options, directory=None, output=None):
         if ret != 0:
             logger.error(proc.stdout.read().decode('utf-8'))
             raise RuntimeError('Failed to create snap {!r}'.format(snap_name))
+
+        logger.debug(proc.stdout.read().decode('utf-8'))
 
     logger.info('Snapped {}'.format(snap_name))
 
