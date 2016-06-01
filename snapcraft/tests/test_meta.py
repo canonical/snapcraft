@@ -498,8 +498,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         with self.assertRaises(EnvironmentError) as raised:
             self.packager._wrap_apps(apps)
         self.assertEqual(
-            "The specified command 'command-does-not-exist' defined in 'app1' "
-            "does not exist or is not executable",
+            "The specified command 'command-does-not-exist' defined in the "
+            "app 'app1' does not exist or is not executable",
             str(raised.exception))
 
     def test_command_is_not_executable(self):
@@ -514,8 +514,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         with self.assertRaises(EnvironmentError) as raised:
             self.packager._wrap_apps(apps)
         self.assertEqual(
-            "The specified command 'command-not-executable' defined in 'app1' "
-            "does not exist or is not executable",
+            "The specified command 'command-not-executable' defined in the "
+            "app 'app1' does not exist or is not executable",
             str(raised.exception))
 
     def test_command_found(self):
