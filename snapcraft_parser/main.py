@@ -28,10 +28,6 @@ Options:
   -d --debug                            print debug information while executing
                                         (including backtraces)
   -i --index=<index>                    a file containing a part index.
-
-
-For more help, visit the documentation:
-http://developer.ubuntu.com/snappy/snapcraft
 """
 
 import gzip
