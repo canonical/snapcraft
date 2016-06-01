@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,8 +26,8 @@ class ListPluginsCommandTestCase(tests.TestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-        "ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content\n"  # noqa
-        "autotools  cmake   go    kbuild  make    nil    python2  scons  \n")  # noqa
+        'ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content\n'  # noqa
+        'autotools  cmake   go    kbuild  make    nil    python2  scons  \n')  # noqa
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     @mock.patch('subprocess.check_output')
@@ -41,9 +41,9 @@ class ListPluginsCommandTestCase(tests.TestCase):
     def test_list_plugins_small_terminal(self, mock_subprocess, mock_stdout):
         mock_subprocess.return_value = "60"
         expected_output = (
-            "ant        cmake  jdk     make   nodejs   scons      \n"
-            "autotools  copy   kbuild  maven  python2  tar-content\n"
-            "catkin     go     kernel  nil    python3\n")
+            'ant        cmake  jdk     make   nodejs   scons      \n'
+            'autotools  copy   kbuild  maven  python2  tar-content\n'
+            'catkin     go     kernel  nil    python3\n')
         main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), expected_output)
 

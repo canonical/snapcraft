@@ -105,19 +105,19 @@ class CommonMigratedTestCase(tests.TestCase):
 
 class FormatInColumnsTestCase(tests.TestCase):
 
-    elements_list = ["ant", "autotools", "catkin", "cmake", "copy", "go",
-                     "jdk", "kbuild", "kernel", "make", "maven", "nil",
-                     "nodejs", "python2", "python3", "scons", "tar-content"]
+    elements_list = ['ant', 'autotools', 'catkin', 'cmake', 'copy', 'go',
+                     'jdk', 'kbuild', 'kernel', 'make', 'maven', 'nil',
+                     'nodejs', 'python2', 'python3', 'scons', 'tar-content']
 
     def test_format_output_in_columns_default(self):
-        '''Format output on 2 lines, with default max-width and space sep'''
+        """Format output on 2 lines, with default max-width and space sep"""
         expected = ['ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content',  # noqa
                     'autotools  cmake   go    kbuild  make    nil    python2  scons  ']  # noqa
         self.assertEquals(expected,
                           common.format_output_in_columns(self.elements_list))
 
     def test_format_output_in_columns_narrow(self):
-        '''Format output on 3 lines, with narrow max-width and space sep'''
+        """Format output on 3 lines, with narrow max-width and space sep"""
         expected = ['ant        cmake  jdk     make   nodejs   scons      ',
                     'autotools  copy   kbuild  maven  python2  tar-content',
                     'catkin     go     kernel  nil    python3']
@@ -126,7 +126,7 @@ class FormatInColumnsTestCase(tests.TestCase):
                                                           max_width=60))
 
     def test_format_output_in_columns_large(self):
-        '''Format output on one big line, with default space sep'''
+        """Format output on one big line, with default space sep"""
         expected = ['ant  autotools  catkin  cmake  copy  go  jdk  kbuild  '
                     'kernel  make  maven  nil  nodejs  python2  python3  '
                     'scons  tar-content']
@@ -135,7 +135,7 @@ class FormatInColumnsTestCase(tests.TestCase):
                                                           max_width=990))
 
     def test_format_output_in_columns_one_space(self):
-        '''Format output with one space sep'''
+        """Format output with one space sep"""
         expected = ['ant       cmake jdk    make  nodejs  scons      ',
                     'autotools copy  kbuild maven python2 tar-content',
                     'catkin    go    kernel nil   python3']
