@@ -111,8 +111,10 @@ class FormatInColumnsTestCase(tests.TestCase):
 
     def test_format_output_in_columns_default(self):
         """Format output on 2 lines, with default max-width and space sep"""
-        expected = ['ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content',  # noqa
-                    'autotools  cmake   go    kbuild  make    nil    python2  scons  ']  # noqa
+        expected = ['ant        catkin  copy  jdk     kernel  maven  '
+                    'nodejs   python3  tar-content',
+                    'autotools  cmake   go    kbuild  make    nil    '
+                    'python2  scons  ']
         self.assertEquals(expected,
                           common.format_output_in_columns(self.elements_list))
 

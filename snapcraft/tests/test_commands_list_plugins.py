@@ -26,8 +26,9 @@ class ListPluginsCommandTestCase(tests.TestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-        'ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content\n'  # noqa
-        'autotools  cmake   go    kbuild  make    nil    python2  scons  \n')  # noqa
+        'ant        catkin  copy  jdk     kernel  maven  nodejs   python3  '
+        'tar-content\n'
+        'autotools  cmake   go    kbuild  make    nil    python2  scons  \n')
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     @mock.patch('subprocess.check_output')

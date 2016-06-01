@@ -21,6 +21,8 @@ class ListPluginsTestCase(integration_tests.TestCase):
 
     def test_list_plugins(self):
         output = self.run_snapcraft('list-plugins')
-        expected = ('ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content\n'  # noqa
-                    'autotools  cmake   go    kbuild  make    nil    python2  scons  \n')  # noqa
+        expected = ('ant        catkin  copy  jdk     kernel  maven  '
+                    'nodejs   python3  tar-content\n'
+                    'autotools  cmake   go    kbuild  make    nil    '
+                    'python2  scons  \n')
         self.assertEqual(expected, output)
