@@ -37,9 +37,9 @@ def _create_example_output(output):
         fp.write(output)
 
 
-def _get_part_list_count():
+def _get_part_list_count(path=PARTS_FILE):
     input = ""
-    with gzip.open(PARTS_FILE, "r") as fpg:
+    with gzip.open(path, "r") as fpg:
         input = fpg.read()
 
     return len(yaml.load(input))
@@ -100,7 +100,7 @@ example:
     project-part: main
     parts: [part1, part2]
 """)
-        main(["--index", TEST_OUTPUT_PATH])
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(3, _get_part_list_count())
 
     @mock.patch('snapcraft_parser.main._get_origin_data')
@@ -138,7 +138,7 @@ example:
     project-part: main
     parts: [part1]
 """)
-        main(["--index", TEST_OUTPUT_PATH])
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft_parser.main._get_origin_data')
@@ -160,7 +160,7 @@ example:
                 },
             }
         }
-        main(["--index", TEST_OUTPUT_PATH])
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft_parser.main._get_origin_data')
@@ -186,7 +186,7 @@ example:
                 },
             }
         }
-        main(["--index", TEST_OUTPUT_PATH])
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft_parser.main._get_origin_data')
@@ -211,7 +211,7 @@ example:
                 },
             }
         }
-        main(["--index", TEST_OUTPUT_PATH])
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
 
         self.assertEqual(1, _get_part_list_count())
 
@@ -244,6 +244,41 @@ example:
                 },
             }
         }
-        main(["--index", TEST_OUTPUT_PATH])
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
 
         self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_output_parameter(self,
+                              mock_get,
+                              mock_get_origin_data):
+        """Test a wiki entry with multiple origin parts."""
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+    parts: []
+""")
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": "lp:something",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+            }
+        }
+
+        filename = "parts.gz"
+        try:
+            os.remove(filename)
+        except FileNotFoundError:
+            pass
+
+        main(["--debug", "--index", TEST_OUTPUT_PATH, "--output", filename])
+
+        self.assertEqual(1, _get_part_list_count(filename))
+        self.assertTrue(os.path.exists(filename))
