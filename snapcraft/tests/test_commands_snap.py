@@ -21,6 +21,7 @@ import subprocess
 from unittest import mock
 
 import fixtures
+from testtools.matchers import FileExists
 
 from snapcraft.main import main
 from snapcraft import tests
@@ -46,9 +47,10 @@ parts:
 
         patcher = mock.patch('snapcraft.internal.lifecycle.Popen',
                              new=mock.Mock(wraps=subprocess.Popen))
-        self.popen_mock = patcher.start()
+        self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)
 
+        # Avoiding a io.UnsupportedOperation: fileno
         patcher = mock.patch('sys.stdout.fileno')
         self.fileno_mock = patcher.start()
         self.fileno_mock.return_value = 1
@@ -87,7 +89,7 @@ parts:
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
@@ -116,10 +118,12 @@ parts:
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
     def test_snap_type_os_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -144,10 +148,12 @@ parts:
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
     def test_snap_defaults_with_parts_in_strip(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -169,10 +175,12 @@ parts:
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
     def test_snap_from_dir(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -193,10 +201,12 @@ architectures: [amd64, armhf]
             'Snapped my_snap_99_multi.snap\n',
             fake_logger.output)
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('my_snap_99_multi.snap', FileExists())
 
     def test_snap_from_dir_with_no_arch(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -216,10 +226,12 @@ version: 99
             'Snapped my_snap_99_all.snap\n',
             fake_logger.output)
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_all.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('my_snap_99_all.snap', FileExists())
 
     def test_snap_from_dir_type_os_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -241,10 +253,12 @@ type: os
             'Snapped my_snap_99_multi.snap\n',
             fake_logger.output)
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('my_snap_99_multi.snap', FileExists())
 
     def test_snap_with_output(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -269,7 +283,7 @@ type: os
 
         self.verify_state('part1', self.state_dir, 'strip')
 
-        self.popen_mock.assert_called_once_with([
+        self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'mysnap.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)

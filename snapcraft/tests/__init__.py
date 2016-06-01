@@ -20,6 +20,7 @@ from unittest import mock
 
 import fixtures
 import testscenarios
+import testtools
 
 from snapcraft.internal import common
 from snapcraft.tests import fixture_setup
@@ -36,7 +37,8 @@ class MockOptions:
         self.source_subdir = source_subdir
 
 
-class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
+class TestCase(testtools.TestCase, testscenarios.WithScenarios,
+               fixtures.TestWithFixtures):
 
     def setUp(self):
         super().setUp()
