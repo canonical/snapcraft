@@ -46,8 +46,8 @@ _ARCH_TRANSLATIONS = {
     'ppc64le': {
         'kernel': 'powerpc',
         'deb': 'ppc64el',
-        'cross-compiler-prefix': 'gcc-powerpc64-linux-gnu-',
-        'cross-build-packages': ['gcc-powerpc64-linux-gnu'],
+        'cross-compiler-prefix': 'powerpc64le-linux-gnu-',
+        'cross-build-packages': ['gcc-powerpc64le-linux-gnu'],
         'triplet': 'powerpc64le-linux-gnu',
     },
     'x86_64': {
