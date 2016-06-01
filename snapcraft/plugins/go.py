@@ -36,7 +36,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       This entry tells the checked out `source` to live within a certain path
       within `GOPATH`.
-      This is not needed for `go-packages`.
+      This is not needed and does not affect `go-packages`.
 """
 
 import logging
