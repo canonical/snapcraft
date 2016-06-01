@@ -20,7 +20,7 @@ from unittest import mock
 import yaml
 
 from snapcraft_parser.main import (
-    _namespaced_partname,
+    _get_namespaced_partname,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
     main,
@@ -56,7 +56,7 @@ class TestParser(TestCase):
         partname = "part"
         subpart = "subpart"
 
-        result = _namespaced_partname(partname, subpart)
+        result = _get_namespaced_partname(partname, subpart)
         logging.warn("JOE: result: %s", result)
 
         self.assertEqual("{p}{s}{sp}".format(p=partname,
@@ -272,10 +272,6 @@ example:
         }
 
         filename = "parts.yaml"
-        try:
-            os.remove(filename)
-        except FileNotFoundError:
-            pass
 
         main(["--debug", "--index", TEST_OUTPUT_PATH, "--output", filename])
 

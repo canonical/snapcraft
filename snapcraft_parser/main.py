@@ -79,8 +79,16 @@ def main(argv=None):
         sys.exit(textwrap.fill(str(e)))
 
 
+def _get_namespaced_partname(key, partname):
+    return "{key}{sep}{partname}".format(
+        key=key,
+        sep=PART_NAMESPACE_SEP,
+        partname=partname,
+    )
+
+
 def _update_after_parts(partname, after_parts):
-    return [_namespaced_partname(partname, x) for x in after_parts]
+    return [_get_namespaced_partname(partname, x) for x in after_parts]
 
 
 def _get_origin_data(origin_dir):
@@ -98,9 +106,9 @@ def _process_subparts(project_part, subparts, parts):
         source_part = parts.get(part)
         # TODO: get any dependent parts here as well using
         # 'project_part' to namespace them.
-        if source_part is not None:
-            parts_list[_namespaced_partname(project_part,
-                                            part)] = source_part
+        if source_part:
+            namespaced_part = _get_namespaced_partname(project_part, part)
+            parts_list[namespaced_part] = source_part
             after = source_part.get("after", [])
 
             if after:
@@ -130,7 +138,7 @@ def _process_index(output):
         project_part = data[key].get("project-part")
         subparts = data[key].get("parts", [])
 
-        if origin is not None:
+        if origin:
             # TODO: this should really be based on the origin uri not
             # the part name to avoid the situation where there are multiple
             # parts being pulled from the same repo branch.
@@ -146,7 +154,7 @@ def _process_index(output):
             options = Options()
             setattr(options, "source", origin)
 
-            if origin_type is not None:
+            if origin_type:
                 setattr(options, "source_type", origin_type)
 
             sources.get(origin_dir, None, options)
@@ -156,7 +164,7 @@ def _process_index(output):
             parts = origin_data.get('parts', {})
 
             source_part = parts.get(project_part)
-            if source_part is not None:
+            if source_part:
                 after = source_part.get('after', [])
 
                 if after:
@@ -182,7 +190,7 @@ def run(args):
         path = PARTS_FILE
 
     index = args.get('--index')
-    if index is not None:
+    if index:
         if "://" not in index:
             index = "%s%s" % ("file://", os.path.join(os.getcwd(), index))
         output = urllib.request.urlopen(index).read()
@@ -215,14 +223,6 @@ def _write_parts_list(path, master_parts_list):
     with open(path, "w") as fp:
         fp.write(yaml.dump(master_parts_list,
                             default_flow_style=False))
-
-
-def _namespaced_partname(key, partname):
-    return "{key}{sep}{partname}".format(
-        key=key,
-        sep=PART_NAMESPACE_SEP,
-        partname=partname,
-    )
 
 
 if __name__ == '__main__':  # pragma: no cover
