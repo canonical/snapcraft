@@ -92,21 +92,26 @@ def _get_origin_data(origin_dir):
     return origin_data
 
 
-def run(args):
+def _process_subparts(project_part, subparts, parts):
+    after_parts = set()
+    parts_list = {}
+    for part in subparts:
+        source_part = parts.get(part)
+        # TODO: get any dependent parts here as well using
+        # 'project_part' to namespace them.
+        if source_part is not None:
+            parts_list[_namespaced_partname(project_part,
+                                            part)] = source_part
+            after = source_part.get("after", [])
 
-    path = args.get("--output")
-    if path is None:
-        path = PARTS_FILE
+            if after:
+                after = _update_after_parts(project_part, after)
+                after_parts.update(set(after))
 
-    index = args.get('--index')
-    if index is not None:
-        if "://" not in index:
-            index = "%s%s" % ("file://", os.path.join(os.getcwd(), index))
-        output = urllib.request.urlopen(index).read()
-    else:
-        # XXX: fetch the index from the wiki
-        output = "{}"
+    return parts_list, after_parts
 
+
+def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = {}
@@ -160,22 +165,34 @@ def run(args):
                     after_parts.update(set(after))
 
                 parts_list[project_part] = source_part
-
-            for part in subparts:
-                source_part = parts.get(part)
-                # TODO: get any dependent parts here as well using
-                # 'project_part' to namespace them.
-                if source_part is not None:
-                    parts_list[_namespaced_partname(project_part,
-                                                    part)] = source_part
-                    after = source_part.get("after", [])
-
-                    if after:
-                        after = _update_after_parts(project_part, after)
-                        after_parts.update(set(after))
+                subparts_list, subparts_after_list = _process_subparts(
+                    project_part, subparts, parts)
+                parts_list.update(subparts_list)
+                after_parts.update(subparts_after_list)
 
         if is_valid_parts_list(parts_list, after_parts):
             master_parts_list.update(parts_list)
+
+        return master_parts_list
+
+
+def run(args):
+
+    path = args.get("--output")
+    if path is None:
+        path = PARTS_FILE
+
+    index = args.get('--index')
+    if index is not None:
+        if "://" not in index:
+            index = "%s%s" % ("file://", os.path.join(os.getcwd(), index))
+        output = urllib.request.urlopen(index).read()
+    else:
+        # XXX: fetch the index from the wiki
+        output = "{}"
+
+    master_parts_list = _process_index(output)
+
 
     _write_gzipped_parts_list(path, master_parts_list)
 
