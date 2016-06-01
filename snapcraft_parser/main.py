@@ -27,6 +27,7 @@ Options:
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
                                         (including backtraces)
+  -i --index=<index>                    a file containing a part index.
 
 
 For more help, visit the documentation:
@@ -39,6 +40,7 @@ import os
 import pkg_resources
 import sys
 import textwrap
+import urllib
 import yaml
 
 from docopt import docopt
@@ -86,19 +88,6 @@ def _update_after_parts(partname, after_parts):
     return [_namespaced_partname(partname, x) for x in after_parts]
 
 
-def _get_output():
-    # TODO: pull the part origin list from the wiki
-    output = """
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:~joetalbott/+junk/snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: [part1]
-"""
-    return output
-
-
 def _get_origin_data(origin_dir):
     origin_data = {}
     with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
@@ -108,7 +97,13 @@ def _get_origin_data(origin_dir):
 
 
 def run(args):
-    output = _get_output()
+    index = args.get('--index')
+    if index is not None:
+        if "://" not in index:
+            index = "%s%s" % ("file://", os.path.join(os.getcwd(), index))
+        output = urllib.request.urlopen(index).read()
+    else:
+        output = "{}"
 
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
@@ -121,8 +116,8 @@ def run(args):
         # we can check later that we aren't missing any parts.
         # XXX: What do we do about 'after' parts that should be looked for in
         # the wiki?  They should be in the master parts list.
-
         after_parts = set()
+
         logger.debug("Processing part %s", key)
         origin = data[key].get("origin")
         origin_type = data[key].get("origin-type")
@@ -171,8 +166,6 @@ def run(args):
                 if source_part is not None:
                     parts_list[_namespaced_partname(project_part,
                                                     part)] = source_part
-
-        # after_parts should already be namespaced at this point.
 
         if _valid_parts_list(parts_list, after_parts):
             master_parts_list.update(parts_list)

@@ -30,6 +30,13 @@ from snapcraft_parser.main import (
 from snapcraft.tests import TestCase
 
 
+TEST_OUTPUT_PATH=os.path.join(os.getcwd(), "test_output.wiki")
+
+def _create_example_output(output):
+    with open(TEST_OUTPUT_PATH, "w") as fp:
+        fp.write(output)
+
+
 def _get_part_list_count():
     input = ""
     with gzip.open(PARTS_FILE, "r") as fpg:
@@ -42,6 +49,7 @@ class TestParser(TestCase):
     def tearDown(self):
         try:
             os.remove(PARTS_FILE)
+            os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
 
@@ -57,33 +65,25 @@ class TestParser(TestCase):
                                              sp=subpart),
                          result)
 
-    @mock.patch('snapcraft_parser.main._get_output')
     @mock.patch('snapcraft_parser.main._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
-    def test_main_valid(self,
-                        mock_get,
-                        mock_get_origin_data,
-                        mock_get_output):
-        mock_get_output.return_value = """
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: [part1, part2]
-"""
+    def test_main_nested_parts_valid(self, mock_get, mock_get_origin_data):
+        """ Ensure that we fail if there are dependent parts that
+        are not included in the wiki's "parts" section."""
+
         mock_get_origin_data.return_value = {
             "parts": {
                 "main": {
                     "source": "lp:something",
                     "plugin": "copy",
                     "files": ["file1", "file2"],
-                    "after": ["part1", "part2"],
+                    "after": ["part1"],
                 },
                 "part1": {
                     "source": "lp:somethingelse1",
                     "plugin": "copy",
                     "files": ["subfile1"],
+                    "after": ["part2"],
                 },
                 "part2": {
                     "source": "lp:somethingelse2",
@@ -92,24 +92,90 @@ example:
                 },
             }
         }
-        main([])
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+    parts: [part1, part2]
+""")
+        main(["--index", TEST_OUTPUT_PATH])
         self.assertEqual(3, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_output')
     @mock.patch('snapcraft_parser.main._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
-    def test_main_invalid(self,
-                          mock_get,
-                          mock_get_origin_data,
-                          mock_get_output):
-        mock_get_output.return_value = """
+    def test_main_nested_parts_invalid(self, mock_get, mock_get_origin_data):
+        """ Ensure that we fail if there are dependent parts that
+        are not included in the wiki's "parts" section."""
+
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": "lp:something",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                    "after": ["part1"],
+                },
+                "part1": {
+                    "source": "lp:somethingelse1",
+                    "plugin": "copy",
+                    "files": ["subfile1"],
+                    "after": ["part2"],
+                },
+                "part2": {
+                    "source": "lp:somethingelse2",
+                    "plugin": "copy",
+                    "files": ["subfile2"],
+                },
+            }
+        }
+        _create_example_output("""
 example:
     maintainer: John Doe <john.doe@example.com
     origin: lp:snapcraft-parser-example
     description: example
     project-part: main
     parts: [part1]
-"""
+""")
+        main(["--index", TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_main_valid(self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": "lp:something",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+            }
+        }
+        main(["--index", TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_main_invalid(self,
+                          mock_get,
+                          mock_get_origin_data):
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+    parts: [part1]
+""")
         mock_get_origin_data.return_value = {
             "parts": {
                 "main": {
@@ -120,24 +186,22 @@ example:
                 },
             }
         }
-        main(['--debug'])
+        main(["--index", TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_output')
     @mock.patch('snapcraft_parser.main._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_single_part_origin(self,
                                 mock_get,
-                                mock_get_origin_data,
-                                mock_get_output):
+                                mock_get_origin_data):
         """Test a wiki entry with a single origin part."""
-        mock_get_output.return_value = """
+        _create_example_output("""
 example:
     maintainer: John Doe <john.doe@example.com
     origin: lp:snapcraft-parser-example
     description: example
     project-part: main
-"""
+""")
         mock_get_origin_data.return_value = {
             "parts": {
                 "main": {
@@ -147,26 +211,24 @@ example:
                 },
             }
         }
-        main(['--debug'])
+        main(["--index", TEST_OUTPUT_PATH])
 
         self.assertEqual(1, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_output')
     @mock.patch('snapcraft_parser.main._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_multiple_part_origin(self,
                                   mock_get,
-                                  mock_get_origin_data,
-                                  mock_get_output):
+                                  mock_get_origin_data):
         """Test a wiki entry with multiple origin parts."""
-        mock_get_output.return_value = """
+        _create_example_output("""
 example:
     maintainer: John Doe <john.doe@example.com
     origin: lp:snapcraft-parser-example
     description: example
     project-part: main
     parts: ['subpart']
-"""
+""")
         mock_get_origin_data.return_value = {
             "parts": {
                 "main": {
@@ -182,6 +244,6 @@ example:
                 },
             }
         }
-        main(['--debug'])
+        main(["--index", TEST_OUTPUT_PATH])
 
         self.assertEqual(2, _get_part_list_count())
