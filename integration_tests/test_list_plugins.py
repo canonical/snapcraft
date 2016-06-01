@@ -21,21 +21,8 @@ class ListPluginsTestCase(integration_tests.TestCase):
 
     def test_list_plugins(self):
         output = self.run_snapcraft('list-plugins')
-        expected = ('ant\n'
-                    'autotools\n'
-                    'catkin\n'
-                    'cmake\n'
-                    'copy\n'
-                    'go\n'
-                    'jdk\n'
-                    'kbuild\n'
-                    'kernel\n'
-                    'make\n'
-                    'maven\n'
-                    'nil\n'
-                    'nodejs\n'
-                    'python2\n'
-                    'python3\n'
-                    'scons\n'
-                    'tar-content\n')
+        expected = ('ant        catkin  copy  jdk     kernel  maven  '
+                    'nodejs   python3  tar-content\n'
+                    'autotools  cmake   go    kbuild  make    nil    '
+                    'python2  scons  \n')
         self.assertEqual(expected, output)
