@@ -263,7 +263,6 @@ name: webcam-webui
 version: 1
 summary: Webcam web UI
 description: Exposes your webcam over a web UI
-icon: icon.png
 confinement: strict
 
 apps:
@@ -283,7 +282,25 @@ parts:
       webcam-webui: bin/webcam-webui
 ```
 
-and tell Snapcraft to actually make the snap package:
+### Snap icon
+
+Providing an icon for your snap is important, even for command-line
+applications, if for nothing else than discoverability from management
+interfaces such as store fronts like webdm.
+
+To use an icon to represent the snap, just drop a PNG or SVG in setup/gui
+named icon.png for the former or icon.svg for the latter such that the
+(reduced) project tree would look like:
+
+    setup/gui/icon.png
+    snapcraft.yaml
+
+or
+
+    setup/gui/icon.svg
+    snapcraft.yaml
+
+Finally tell Snapcraft to actually make the snap package:
 
     $ snapcraft snap
 
