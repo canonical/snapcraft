@@ -166,6 +166,11 @@ def run(args):
                 if source_part is not None:
                     parts_list[_namespaced_partname(project_part,
                                                     part)] = source_part
+                    after = source_part.get("after", [])
+
+                    if after:
+                        after = _update_after_parts(project_part, after)
+                        after_parts.update(set(after))
 
         if _valid_parts_list(parts_list, after_parts):
             master_parts_list.update(parts_list)
