@@ -22,24 +22,7 @@ class MainTestCase(integration_tests.TestCase):
     def test_main(self):
         project_dir = 'assemble'
         output = self.run_snapcraft('list-plugins', project_dir)
-        expected_plugins = [
-            'ant',
-            'autotools',
-            'catkin',
-            'cmake',
-            'copy',
-            'go',
-            'jdk',
-            'kbuild',
-            'kernel',
-            'make',
-            'maven',
-            'nil',
-            'nodejs',
-            'python2',
-            'python3',
-            'scons',
-            'tar-content',
-        ]
+        expected = ('ant        catkin  copy  jdk     kernel  maven  nodejs   python3  tar-content\n'  # noqa
+                    'autotools  cmake   go    kbuild  make    nil    python2  scons  \n')  # noqa
 
-        self.assertIn('\n'.join(expected_plugins), output)
+        self.assertEqual(expected, output)
