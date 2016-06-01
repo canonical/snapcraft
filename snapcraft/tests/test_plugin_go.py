@@ -42,7 +42,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'http://github.com/testplug'
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test', Options(), self.project_options)
         self.assertEqual(plugin.env('myroot'), [
@@ -56,7 +56,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -78,7 +78,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = ['github.com/gotools/vet']
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -99,7 +99,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
         plugin.pull()
@@ -114,7 +114,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -145,7 +145,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = ['github.com/gotools/vet']
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -179,7 +179,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = None
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -202,7 +202,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -232,7 +232,7 @@ class GoPluginTestCase(tests.TestCase):
         class Options:
             source = 'dir'
             go_packages = []
-            gopath = ''
+            go_importpath = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -247,11 +247,11 @@ class GoPluginTestCase(tests.TestCase):
 
         self.assertFalse(os.path.exists(plugin._gopath))
 
-    def test_build_with_local_sources_and_gopath(self):
+    def test_build_with_local_sources_and_go_importpath(self):
         class Options:
             source = 'dir'
             go_packages = []
-            gopath = 'github.com/snapcore/launcher'
+            go_importpath = 'github.com/snapcore/launcher'
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -276,4 +276,4 @@ class GoPluginTestCase(tests.TestCase):
         ])
 
         self.assertTrue(os.path.exists(
-            os.path.join(plugin._gopath_src, plugin.options.gopath)))
+            os.path.join(plugin._gopath_src, plugin.options.go_importpath)))

@@ -32,11 +32,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Packages that are not "main" will not cause an error, but would
       not be useful either.
 
-    - gopath:
+    - go-importpath:
       (string)
-      When using a source entry, we sometimes need the code to live in a
-      certain location within the `GOPATH`. This has the format of a go
-      import path which would be go gettable.
+      This entry tells the checked out `source` to live within a certain path
+      within `GOPATH`.
+      This is not needed for `go-packages`.
 """
 
 import os
@@ -59,7 +59,7 @@ class GoPlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
-        schema['properties']['gopath'] = {
+        schema['properties']['go-importpath'] = {
             'type': 'string',
             'default': ''
         }
@@ -85,9 +85,9 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath_bin = os.path.join(self._gopath, 'bin')
         self._gopath_pkg = os.path.join(self._gopath, 'pkg')
 
-        if self.options.source and self.options.gopath:
+        if self.options.source and self.options.go_importpath:
             self.sourcedir = os.path.join(self._gopath_src,
-                                          self.options.gopath)
+                                          self.options.go_importpath)
 
     def env(self, root):
         # usr/lib/go/bin on newer Ubuntus, usr/bin on trusty
@@ -119,8 +119,8 @@ class GoPlugin(snapcraft.BasePlugin):
             shutil.rmtree(self._gopath)
 
     def _local_pull(self):
-        if self.options.gopath:
-            go_package = self.options.gopath
+        if self.options.go_importpath:
+            go_package = self.options.go_importpath
         else:
             go_package = os.path.basename(
                os.path.abspath(self.options.source))
@@ -157,8 +157,8 @@ class GoPlugin(snapcraft.BasePlugin):
             shutil.rmtree(self._gopath_pkg)
 
     def _local_build(self):
-        if self.options.gopath:
-            go_package = self.options.gopath
+        if self.options.go_importpath:
+            go_package = self.options.go_importpath
         else:
             go_package = os.path.basename(os.path.abspath(self.options.source))
         self._run(['go', 'install', './{}/...'.format(go_package)])
