@@ -17,48 +17,12 @@ import json
 from unittest.mock import Mock, call, patch
 
 import responses
-from requests_oauthlib import OAuth1Session
 
-from snapcraft import (
-    config,
-    tests
-)
+from snapcraft import tests
 from snapcraft.storeapi.common import (
-    get_oauth_session,
     retry,
     store_api_call,
 )
-
-
-class GetOAuthSessionTestCase(tests.TestCase):
-
-    def test_get_oauth_session_when_no_config(self):
-        conf = config.Config()
-        session = get_oauth_session(conf)
-        self.assertIsNone(session)
-
-    def test_get_oauth_session_when_partial_config(self):
-        conf = config.Config()
-        conf.set('consumer_key', 'consumer-key')
-        conf.set('consumer_secret', 'consumer-secret')
-        conf.save()
-        session = get_oauth_session(conf)
-        self.assertIsNone(session)
-
-    def test_get_oauth_session(self):
-        conf = config.Config()
-        conf.set('consumer_key', 'consumer-key')
-        conf.set('consumer_secret', 'consumer-secret')
-        conf.set('token_key', 'token-key')
-        conf.set('token_secret', 'token-secret')
-        conf.save()
-        session = get_oauth_session(conf)
-        self.assertIsInstance(session, OAuth1Session)
-        self.assertEqual(session.auth.client.client_key, 'consumer-key')
-        self.assertEqual(session.auth.client.client_secret, 'consumer-secret')
-        self.assertEqual(session.auth.client.resource_owner_key, 'token-key')
-        self.assertEqual(session.auth.client.resource_owner_secret,
-                         'token-secret')
 
 
 class ApiCallTestCase(tests.TestCase):

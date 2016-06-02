@@ -35,8 +35,7 @@ def login():
     logger.info('Authenticating against Ubuntu One SSO.')
     store = storeapi.StoreClient()
     response = store.login(
-        email, password, token_name='snapcraft',
-        one_time_password=one_time_password)
+        email, password, one_time_password=one_time_password)
     success = response.get('success', False)
 
     if success:
@@ -59,7 +58,7 @@ def upload(snap_filename):
     try:
         store = storeapi.StoreClient()
         result = store.upload(snap_filename)
-    except storeapi.InvalidCredentialsError:
+    except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
@@ -97,15 +96,16 @@ def download(snap_name, channel, download_path, arch):
     try:
         store = storeapi.StoreClient()
         store.download(snap_name, channel, download_path, arch)
-    except storeapi.InvalidCredentialsError:
-        logger.info('No valid credentials found.'
-                    ' Have you run "snapcraft login"?')
-    except storeapi.SnapNotFoundError:
+    except storeapi.errors.InvalidCredentialsError:
+        logger.error('No valid credentials found.'
+                     ' Have you run "snapcraft login"?')
+        raise
+    except storeapi.errors.SnapNotFoundError:
         raise RuntimeError(
             'Snap {name} for {arch} cannot be found'
             ' in the {channel} channel'.format(name=snap_name, arch=arch,
                                                channel=channel))
-    except storeapi.SHAMismatchError:
+    except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
                 snap_name, download_path))

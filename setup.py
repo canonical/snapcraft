@@ -54,7 +54,6 @@ setup(
         'pyxdg',
         'requests',
         'requests-oauthlib',
-        'ssoclient',
     ],
     test_suite='snapcraft.tests',
     license='GPL v3',
