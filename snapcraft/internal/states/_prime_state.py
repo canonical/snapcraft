@@ -19,15 +19,15 @@ import yaml
 from snapcraft.internal.states._state import State
 
 
-def _strip_state_constructor(loader, node):
+def _prime_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
-    return StripState(**parameters)
+    return PrimeState(**parameters)
 
-yaml.add_constructor(u'!StripState', _strip_state_constructor)
+yaml.add_constructor(u'!PrimeState', _prime_state_constructor)
 
 
-class StripState(State):
-    yaml_tag = u'!StripState'
+class PrimeState(State):
+    yaml_tag = u'!PrimeState'
 
     def __init__(self, files, directories, dependency_paths=None,
                  options=None, project=None):
@@ -43,7 +43,7 @@ class StripState(State):
     def properties_of_interest(self, options):
         """Extract the properties concerning this step from the options.
 
-        The only property of interest to the strip step is the `snap` keyword
+        The only property of interest to the prime step is the `snap` keyword
         used to filter out files with a white or blacklist.
         """
 
@@ -52,7 +52,7 @@ class StripState(State):
     def project_options_of_interest(self, project):
         """Extract the options concerning this step from the project.
 
-        The strip step doesn't care about any project options.
+        The prime step doesn't care about any project options.
         """
 
         return {}
