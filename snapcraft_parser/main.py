@@ -142,8 +142,9 @@ def _process_index(output):
     # should be okay for now.
     master_parts_list = {}
 
-    data = yaml.load(output)
-    for key, value in data.items():
+    all_data = yaml.load_all(output)
+    for data in all_data:
+        key = data.get('project-part')
         parts_list = {}
         # Store all the parts listed in 'after' for each included part so that
         # we can check later that we aren't missing any parts.
@@ -152,10 +153,10 @@ def _process_index(output):
         after_parts = set()
 
         logger.debug("Processing part %s", key)
-        origin = data[key].get("origin")
-        origin_type = data[key].get("origin-type")
-        project_part = data[key].get("project-part")
-        subparts = data[key].get("parts", [])
+        origin = data.get("origin")
+        origin_type = data.get("origin-type")
+        project_part = data.get("project-part")
+        subparts = data.get("parts", [])
 
         if origin:
             # TODO: this should really be based on the origin uri not
@@ -200,7 +201,7 @@ def _process_index(output):
         if is_valid_parts_list(parts_list, after_parts):
             master_parts_list.update(parts_list)
 
-        return master_parts_list
+    return master_parts_list
 
 
 def run(args):
