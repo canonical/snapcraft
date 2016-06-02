@@ -35,13 +35,20 @@ def _create_example_output(output):
     with open(TEST_OUTPUT_PATH, "w") as fp:
         fp.write(output)
 
-
-def _get_part_list_count(path=PARTS_FILE):
+def _get_part_list(path=PARTS_FILE):
     input = ""
     with open(path, "r") as fp:
         input = fp.read()
 
-    return len(yaml.load(input))
+    return yaml.load(input)
+
+def _get_part(name, path=PARTS_FILE):
+    part_list = _get_part_list(path)
+    return part_list.get(name)
+
+
+def _get_part_list_count(path=PARTS_FILE):
+    return len(_get_part_list(path))
 
 
 class TestParser(TestCase):
@@ -277,3 +284,93 @@ example:
 
         self.assertEqual(1, _get_part_list_count(filename))
         self.assertTrue(os.path.exists(filename))
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_source_with_local_part_origin(self,
+                                           mock_get,
+                                           mock_get_origin_data):
+        """Test a wiki entry with a source with a local part."""
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": ".",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+            }
+        }
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
+
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part("main")
+        self.assertNotEqual(".", part["source"])
+        self.assertEqual(3, len(part.keys()))
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_source_with_local_subdir_part_origin(self,
+                                                  mock_get,
+                                                  mock_get_origin_data):
+        """Test a wiki entry with a source with a local part."""
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": "local",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+            }
+        }
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
+
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part("main")
+        self.assertNotEqual("local", part["source"])
+        self.assertEqual("local", part["source-subdir"])
+        self.assertEqual(4, len(part.keys()))
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_source_with_local_source_subdir_part_origin(self,
+                                                  mock_get,
+                                                  mock_get_origin_data):
+        """Test a wiki entry with a source with a local source-subdir part."""
+        _create_example_output("""
+example:
+    maintainer: John Doe <john.doe@example.com
+    origin: lp:snapcraft-parser-example
+    description: example
+    project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": ".",
+                    "source-subdir": "local",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+            }
+        }
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
+
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part("main")
+        self.assertNotEqual(".", part["source"])
+        self.assertEqual("local", part["source-subdir"])
+        self.assertEqual(4, len(part.keys()))
