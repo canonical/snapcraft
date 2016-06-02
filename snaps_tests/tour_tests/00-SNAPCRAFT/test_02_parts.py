@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,19 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import demos_tests
+
+import snaps_tests
 
 
-class LibPipelineTestCase(demos_tests.ExampleTestCase):
+class EasyStartTestCase(snaps_tests.SnapsTestCase):
 
-    demo_dir = 'libpipeline'
+    snap_content_dir = '02-parts'
 
-    def test_libpipeline(self):
-        self.build_snap(self.demo_dir)
-        self.install_snap(self.demo_dir, 'pipelinetest', '1.0')
-        expected = (
-            'running echo test | grep s | grep t\n'
-            'custom libpipeline called\n'
-            'test\n')
+    def test_hello(self):
+        self.skipTest(
+            'Temporary skip while we solve the bad system call error')
+        self.build_snap(self.snap_content_dir)
+        self.install_snap(self.snap_content_dir, 'hello-debug', '2.1')
         self.assert_command_in_snappy_testbed(
-            '/snap/bin/pipelinetest', expected)
+            '/snap/bin/hello-debug.bash -c "echo hello from bash"',
+            'hello from bash\n')
