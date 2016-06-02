@@ -23,15 +23,15 @@ import subprocess
 
 class ROSTestCase(snaps_tests.SnapsTestCase):
 
-    demo_dir = 'ros'
+    snap_content_dir = 'ros'
 
     def test_ros(self):
-        self.build_snap(self.demo_dir)
-        self.install_snap(self.demo_dir, 'ros-example', '1.0')
+        self.build_snap(self.snap_content_dir)
+        self.install_snap(self.snap_content_dir, 'ros-example', '1.0')
         # check that the hardcoded /usr/bin/python in rosversion
         # is changed to using /usr/bin/env python
         expected = b'#!/usr/bin/env python\n'
         output = subprocess.check_output(
             "sed -n '/env/p;1q' snap/usr/bin/rosversion",
-            cwd=os.path.join('demos', self.demo_dir), shell=True)
+            cwd=os.path.join('demos', self.snap_content_dir), shell=True)
         self.assertEqual(output, expected)
