@@ -26,4 +26,4 @@ class EasyStartTestCase(snaps_tests.SnapsTestCase):
         self.build_snap(self.snap_content_dir)
         self.install_snap(self.snap_content_dir, 'hello', '2.1')
         self.assert_command_in_snappy_testbed(
-            '/snap/bin/hello', 'Hello world!\n')
+            '/snap/bin/hello', 'Hello, world!\n')
