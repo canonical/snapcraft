@@ -94,16 +94,20 @@ For more help, visit the documentation:
 http://developer.ubuntu.com/snappy/snapcraft
 """
 
+from contextlib import suppress
 import logging
 import pkg_resources
 import pkgutil
 import sys
+import subprocess
 import textwrap
 
 from docopt import docopt
 
 import snapcraft
 from snapcraft.internal import lifecycle, log
+from snapcraft.internal.common import (format_output_in_columns,
+                                       MAX_CHARACTERS_WRAP)
 
 
 logger = logging.getLogger(__name__)
@@ -117,9 +121,24 @@ def _get_version():
 
 
 def _list_plugins():
+    plugins = []
     for importer, modname, is_package in pkgutil.iter_modules(
             snapcraft.plugins.__path__):
-        print(modname.replace('_', '-'))
+        plugins.append(modname.replace('_', '-'))
+
+    # we wrap the output depending on terminal size
+    width = MAX_CHARACTERS_WRAP
+    with suppress(OSError):
+        with suppress(subprocess.CalledProcessError):
+            # this is the only way to get current terminal size reliably
+            # without duplicating a bunch of logic
+            command = ['tput', 'cols']
+            candidate_width = \
+                subprocess.check_output(command, stderr=subprocess.DEVNULL)
+            width = min(int(candidate_width), width)
+
+    for line in format_output_in_columns(plugins, max_width=width):
+        print(line)
 
 
 def _get_project_options(args):

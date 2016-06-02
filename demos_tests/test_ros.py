@@ -1,3 +1,4 @@
+
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015, 2016 Canonical Ltd
@@ -25,8 +26,8 @@ class ROSTestCase(demos_tests.ExampleTestCase):
     demo_dir = 'ros'
 
     def test_ros(self):
-        self.build_snap(self.example_dir)
-        self.install_snap(self.example_dir, 'ros-example', '1.0')
+        self.build_snap(self.demo_dir)
+        self.install_snap(self.demo_dir, 'ros-example', '1.0')
         # check that the hardcoded /usr/bin/python in rosversion
         # is changed to using /usr/bin/env python
         expected = b'#!/usr/bin/env python\n'

@@ -241,8 +241,9 @@ class _SnapPackaging:
                         apps[app][k], '{}-{}'.format(k, app))
                 except CommandError as e:
                     raise EnvironmentError(
-                        'The specified command {!r} defined in {!r} does '
-                        'not exist or is not executable'.format(str(e), app))
+                        'The specified command {!r} defined in the app {!r} '
+                        'does not exist or is not executable'.format(
+                            str(e), app))
         return apps
 
 
