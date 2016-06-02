@@ -86,13 +86,13 @@ class CleanBuildStepBuiltTestCase(integration_tests.TestCase):
         self.assert_files_exist()
 
 
-class CleanBuildStepStrippedTestCase(integration_tests.TestCase):
+class CleanBuildStepPrimedTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
 
         self.project_dir = 'independent-parts'
-        self.run_snapcraft('strip', self.project_dir)
+        self.run_snapcraft('prime', self.project_dir)
 
         self.snapdir = os.path.join(self.project_dir, 'snap')
         self.snap_bindir = os.path.join(self.snapdir, 'bin')
@@ -134,8 +134,8 @@ class CleanBuildStepStrippedTestCase(integration_tests.TestCase):
             self.assertThat(part['installdir'], Not(DirExists()))
             self.assertThat(part['sourcedir'], DirExists())
 
-        # Now try to strip again
-        self.run_snapcraft('strip', self.project_dir)
+        # Now try to prime again
+        self.run_snapcraft('prime', self.project_dir)
         self.assert_files_exist()
 
     def test_clean_build_step_single_part(self):
@@ -161,6 +161,6 @@ class CleanBuildStepStrippedTestCase(integration_tests.TestCase):
             os.path.join(self.parts['part2']['bindir'], 'file2'),
             FileExists())
 
-        # Now try to strip again
-        self.run_snapcraft('strip', self.project_dir)
+        # Now try to prime again
+        self.run_snapcraft('prime', self.project_dir)
         self.assert_files_exist()

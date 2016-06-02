@@ -52,7 +52,7 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.useFixture(
            fixtures.EnvironmentVariable(
-                'SNAP', os.path.join(os.getcwd(), 'snap')))
+                'SNAP', os.path.join(os.getcwd(), 'prime')))
         binary_scenarios = (
             ('command-assemble-service.wrapper', 'service-start\n'),
             ('stop-command-assemble-service.wrapper', 'service-stop\n'),
@@ -61,16 +61,16 @@ class SnapTestCase(integration_tests.TestCase):
         )
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
-                os.path.join('snap', binary), universal_newlines=True)
+                os.path.join('prime', binary), universal_newlines=True)
             self.assertEqual(expected_output, output)
 
         with testtools.ExpectedException(subprocess.CalledProcessError):
             subprocess.check_output(
-                os.path.join('snap', 'bin', 'not-wrapped'),
+                os.path.join('prime', 'bin', 'not-wrapped'),
                 stderr=subprocess.STDOUT)
 
         self.assertThat(
-            os.path.join('snap', 'bin', 'not-wrapped.wrapper'),
+            os.path.join('prime', 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
     def test_snap_default(self):
@@ -142,10 +142,10 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('snap', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'snap', 'usr', 'bin', 'nmcli'),
+            os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmcli'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'snap', 'usr', 'bin', 'nmtui'),
+            os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmtui'),
             Not(FileExists()))
 
     def test_snap_from_snapcraft_init(self):

@@ -29,9 +29,9 @@ class LicenseTestCase(integration_tests.TestCase):
 
     def test_license(self):
         project_dir = 'license'
-        self.run_snapcraft('strip', project_dir)
+        self.run_snapcraft('prime', project_dir)
 
-        meta_dir = os.path.join(project_dir, 'snap', 'meta')
+        meta_dir = os.path.join(project_dir, 'prime', 'meta')
         self.assertThat(meta_dir, DirExists())
         license_asset = os.path.join(meta_dir, 'license.txt')
         self.assertThat(license_asset, FileExists())

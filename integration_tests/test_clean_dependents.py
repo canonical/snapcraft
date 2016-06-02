@@ -31,7 +31,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         super().setUp()
 
         self.project_dir = 'dependencies'
-        self.run_snapcraft('strip', self.project_dir)
+        self.run_snapcraft('prime', self.project_dir)
 
         # Need to use the state directory here instead of partdir due to
         # bug #1567054.
@@ -44,7 +44,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
 
         self.partsdir = os.path.join(self.project_dir, 'parts')
         self.stagedir = os.path.join(self.project_dir, 'stage')
-        self.snapdir = os.path.join(self.project_dir, 'snap')
+        self.snapdir = os.path.join(self.project_dir, 'prime')
 
     def assert_clean(self, parts, common=False):
         for part in parts:
@@ -82,8 +82,8 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.assert_clean(['p3'])
         self.assert_not_clean(['p1', 'p2', 'p4'], True)
 
-        # Now run strip again
-        self.run_snapcraft('strip', self.project_dir)
+        # Now run prime again
+        self.run_snapcraft('prime', self.project_dir)
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent(self):
@@ -93,8 +93,8 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.assert_clean(['p2', 'p3', 'p4'])
         self.assert_not_clean(['p1'], True)
 
-        # Now run strip again
-        self.run_snapcraft('strip', self.project_dir)
+        # Now run prime again
+        self.run_snapcraft('prime', self.project_dir)
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_main(self):
@@ -103,8 +103,8 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.run_snapcraft(['clean', 'p1', 'p2', 'p3', 'p4'], self.project_dir)
         self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
 
-        # Now run strip again
-        self.run_snapcraft('strip', self.project_dir)
+        # Now run prime again
+        self.run_snapcraft('prime', self.project_dir)
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent_without_nested_dependents_raises(self):
