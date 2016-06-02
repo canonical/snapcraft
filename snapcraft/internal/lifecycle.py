@@ -18,10 +18,13 @@ import contextlib
 import logging
 import os
 import shutil
-import subprocess
+import sys
 import tarfile
+import time
+from subprocess import Popen, PIPE, STDOUT
 
 import yaml
+from progressbar import AnimatedMarker, ProgressBar
 
 import snapcraft
 import snapcraft.internal
@@ -254,15 +257,43 @@ def snap(project_options, directory=None, output=None):
 
     snap_name = output or common.format_snap_name(snap)
 
-    logger.info('Snapping {}'.format(snap_name))
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    subprocess.check_call(
-        ['mksquashfs', snap_dir, snap_name] + mksquashfs_args)
+    with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+               stdout=PIPE, stderr=STDOUT) as proc:
+        ret = None
+        if os.isatty(sys.stdout.fileno()):
+            message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
+                    snap['name'])
+            progress_indicator = ProgressBar(
+                widgets=[message, AnimatedMarker()], maxval=7)
+            progress_indicator.start()
+
+            ret = proc.poll()
+            count = 0
+
+            while ret is None:
+                if count >= 7:
+                    progress_indicator.start()
+                    count = 0
+                progress_indicator.update(count)
+                count += 1
+                time.sleep(.2)
+                ret = proc.poll()
+        else:
+            logger.info('Snapping {!r} ...'.format(snap['name']))
+            ret = proc.wait()
+        print('')
+        if ret != 0:
+            logger.error(proc.stdout.read().decode('utf-8'))
+            raise RuntimeError('Failed to create snap {!r}'.format(snap_name))
+
+        logger.debug(proc.stdout.read().decode('utf-8'))
+
     logger.info('Snapped {}'.format(snap_name))
 
 
