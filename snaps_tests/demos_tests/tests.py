@@ -16,11 +16,11 @@
 
 import testscenarios
 
-import demos_tests
+import snaps_tests
 
 
 class TestSnapcraftExamples(
-        testscenarios.WithScenarios, demos_tests.ExampleTestCase):
+        testscenarios.WithScenarios, snaps_tests.SnapsTestCase):
 
     scenarios = [
         ('downloader-with-wiki-parts', {

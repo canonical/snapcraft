@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import demos_tests
+import snaps_tests
 
 
-class LibPipelineTestCase(demos_tests.ExampleTestCase):
+class LibPipelineTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'libpipeline'
 

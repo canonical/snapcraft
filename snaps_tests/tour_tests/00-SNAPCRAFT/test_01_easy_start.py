@@ -15,12 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os
-
-import tour_tests
+import snaps_tests
 
 
-class EasyStartTestCase(tour_tests.TourTestCase):
+class EasyStartTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = '01-easy-start'
 

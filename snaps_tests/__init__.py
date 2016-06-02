@@ -31,7 +31,7 @@ from testtools.matchers import (
     MatchesRegex
 )
 
-from demos_tests import testbed
+from snaps_tests import testbed
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def _get_latest_ssh_private_key():
     return candidates[0]
 
 
-class ExampleTestCase(testtools.TestCase):
+class SnapsTestCase(testtools.TestCase):
 
     snap_content_dir = None
 

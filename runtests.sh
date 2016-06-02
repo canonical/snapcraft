@@ -25,7 +25,7 @@ parseargs(){
         export RUN_STATIC="true"
         export RUN_UNIT="true"
         export RUN_INTEGRATION="true"
-        export RUN_DEMOS="true"
+        export RUN_SNAPS="true"
     else
         if [ "$1" == "static" ] ; then
             export RUN_STATIC="true"
@@ -33,19 +33,20 @@ parseargs(){
             export RUN_UNIT="true"
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
-        elif [ "$1" == "tour" ] ; then
-            export RUN_TOUR="true"
-        elif [ "$1" == "demos" ] ; then
-            export RUN_DEMOS="true"
+        elif [ "$1" == "snaps" ] ; then
+            export RUN_SNAPS="true"
+        # Temporary: backward compatibility until CI run the "snaps" target
+        elif [ "$1" == "examples" ] ; then
+            export RUN_SNAPS="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration, tour examples or demos"
+            echo "Not recognized option, should be one of all, static, unit, integration or snaps"
             exit 1
         fi
     fi
 }
 
 run_static_tests(){
-    SRC_PATHS="bin snapcraft snapcraft/tests demos_tests"
+    SRC_PATHS="bin snapcraft snapcraft/tests snaps_tests"
     python3 -m flake8 $SRC_PATHS
 
     mccabe_list=
@@ -76,12 +77,8 @@ run_integration(){
     python3 -m unittest discover -b -v -s integration_tests
 }
 
-run_tour(){
-    python3 -m tour_tests "$@"
-}
-
-run_demos(){
-    python3 -m demos_tests "$@"
+run_snaps(){
+    python3 -m snaps_tests "$@"
 }
 
 parseargs "$@"
@@ -97,24 +94,21 @@ fi
 if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration
 fi
-if [ ! -z "$RUN_TOUR" ]; then
-    if [ "$1" == "tour" ] ; then
-        # shift to remove the test suite name and be able to pass the rest
-        # to the tour suite.
-        shift
-    fi
-    run_tour "$@"
-    # Temporary: until CI add "runtests demo" target
-    run_demos "$@"
-fi
 
-if [ ! -z "$RUN_DEMOS" ]; then
-    if [ "$1" == "demos" ] ; then
+if [ ! -z "$RUN_SNAPS" ]; then
+    if [ "$1" == "snaps" ] ; then
         # shift to remove the test suite name and be able to pass the rest
-        # to the demos suite.
+        # to the snaps suite.
         shift
     fi
-    run_demos "$@"
+    ## Temporary: backward compatibility until CI run the "snaps" target
+    if [ "$1" == "examples" ] ; then
+        # shift to remove the test suite name and be able to pass the rest
+        # to the snaps suite.
+        shift
+    fi
+    ##
+    run_snaps "$@"
 fi
 
 if [ ! -z "$RUN_UNIT" ]; then
