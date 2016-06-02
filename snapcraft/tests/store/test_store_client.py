@@ -26,6 +26,10 @@ from snapcraft import (
     storeapi,
     tests
 )
+from snapcraft.storeapi import (
+    errors,
+    macaroons
+)
 from snapcraft.tests import fixture_setup
 
 
@@ -82,12 +86,12 @@ class DownloadTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_download_without_login_raises_exception(self):
-        with self.assertRaises(storeapi.InvalidCredentialsError):
+        with self.assertRaises(errors.InvalidCredentialsError):
             self.client.download('dummy', 'dummy', 'dummy')
 
     def test_download_unexisting_snap_raises_exception(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.SnapNotFoundError) as e:
+        with self.assertRaises(errors.SnapNotFoundError) as e:
             self.client.download(
                 'unexisting-snap', 'test-channel', 'dummy', 'test-arch')
         self.assertEqual(
@@ -137,9 +141,18 @@ class DownloadTestCase(tests.TestCase):
     def test_download_with_hash_mismatch_raises_exception(self):
         self.client.login('dummy', 'test correct password')
         download_path = os.path.join(self.path, 'test-snap.snap')
-        with self.assertRaises(storeapi.SHAMismatchError):
+        with self.assertRaises(errors.SHAMismatchError):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
+
+    def test_upload_with_invalid_credentials_raises_exception(self):
+        conf = config.Config()
+        conf.set('macaroon', 'inval"id')
+        conf.save()
+        download_path = os.path.join(self.path, 'test-snap.snap')
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.download(
+                'test-snap', 'test-channel', download_path)
 
 
 class SilentProgressBar(progressbar.ProgressBar):
@@ -175,7 +188,7 @@ class UploadTestCase(tests.TestCase):
             self.client.upload('unexisting.snap')
 
     def test_upload_without_login_raises_exception(self):
-        with self.assertRaises(storeapi.InvalidCredentialsError):
+        with self.assertRaises(errors.InvalidCredentialsError):
             self.client.upload(self.snap_path)
 
     def test_upload_snap(self):
@@ -184,3 +197,28 @@ class UploadTestCase(tests.TestCase):
         self.assertTrue(result['success'])
         self.assertEqual('test-application-url', result['application_url'])
         self.assertEqual('test-revision', result['revision'])
+
+    def test_upload_with_invalid_credentials_raises_exception(self):
+        conf = config.Config()
+        conf.set('macaroon', 'inval"id')
+        conf.save()
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.upload(self.snap_path)
+
+
+class MacaroonsTestCase(tests.TestCase):
+
+    def test_invalid_macaroon_root_raises_exception(self):
+        conf = config.Config()
+        conf.set('macaroon', 'inval"id')
+        conf.save()
+        with self.assertRaises(errors.InvalidCredentialsError):
+            storeapi._macaroon_auth(conf)
+
+    def test_invalid_discharge_raises_exception(self):
+        conf = config.Config()
+        conf.set('macaroon', macaroons.Macaroon().serialize())
+        conf.set('unbound_discharge', 'inval*id')
+        conf.save()
+        with self.assertRaises(errors.InvalidCredentialsError):
+            storeapi._macaroon_auth(conf)

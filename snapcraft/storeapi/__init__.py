@@ -30,48 +30,12 @@ from snapcraft import config
 from snapcraft.storeapi import (
     _upload,
     constants,
+    errors,
     macaroons
 )
 
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidCredentialsError(Exception):
-    pass
-
-
-class StoreError(Exception):
-    """Base class for all storeapi exceptions.
-
-    :cvar fmt: A format string that daughter classes override
-
-    """
-
-    fmt = 'Daughter classes should redefine this'
-
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __str__(self):
-        return self.fmt.format([], **self.__dict__)
-
-
-class SnapNotFoundError(StoreError):
-
-    fmt = 'The "{name}" for {arch} was not found in {channel}.'
-
-    def __init__(self, name, channel, arch):
-        super().__init__(name=name, channel=channel, arch=arch)
-
-
-class SHAMismatchError(StoreError):
-
-    fmt = 'SHA512 checksum for {path} is not {expected_sha}.'
-
-    def __init__(self, path, expected_sha):
-        super().__init__(path=path, expected_sha=expected_sha)
 
 
 def _get_name_from_snap_file(snap_path):
@@ -97,12 +61,20 @@ def _macaroon_auth(conf):
     """
     root_macaroon_raw = conf.get('macaroon')
     unbound_raw = conf.get('unbound_discharge')
-    root_macaroon = macaroons.Macaroon.deserialize(root_macaroon_raw)
-    unbound = macaroons.Macaroon.deserialize(unbound_raw)
+    root_macaroon = _deserialize_macaroon(root_macaroon_raw)
+    unbound = _deserialize_macaroon(unbound_raw)
     bound = root_macaroon.prepare_for_request(unbound)
-    auth = 'Macaroon root={}, discharge={}'.format(root_macaroon_raw,
-                                                   bound.serialize())
+    discharge_macaroon_raw = bound.serialize()
+    auth = 'Macaroon root={}, discharge={}'.format(
+        root_macaroon_raw, discharge_macaroon_raw)
     return auth
+
+
+def _deserialize_macaroon(value):
+    try:
+        return macaroons.Macaroon.deserialize(value)
+    except:
+        raise errors.InvalidCredentialsError()
 
 
 class Client():
@@ -192,7 +164,7 @@ class StoreClient():
         snap_name = _get_name_from_snap_file(snap_filename)
 
         if self.conf.get('unbound_discharge') is None:
-            raise InvalidCredentialsError()
+            raise errors.InvalidCredentialsError()
         data = _upload.upload_files(snap_filename, self.updown)
         success = data.get('success', False)
         if not success:
@@ -207,7 +179,7 @@ class StoreClient():
 
         package = self.cpi.search_package(snap_name, channel, arch)
         if package is None:
-            raise SnapNotFoundError(snap_name, channel, arch)
+            raise errors.SnapNotFoundError(snap_name, channel, arch)
         self._download_snap(
             snap_name, channel, arch, download_path,
             package['download_url'], package['download_sha512'])
@@ -229,7 +201,7 @@ class StoreClient():
             logger.info('Successfully downloaded {} at {}'.format(
                 name, download_path))
         else:
-            raise SHAMismatchError(download_path, expected_sha512)
+            raise errors.SHAMismatchError(download_path, expected_sha512)
 
     def _is_downloaded(self, path, expected_sha512):
         if not os.path.exists(path):
@@ -284,7 +256,7 @@ class SnapIndexClient(Client):
 
     def search_package(self, snap_name, channel, arch):
         if self.conf.get('unbound_discharge') is None:
-            raise InvalidCredentialsError()
+            raise errors.InvalidCredentialsError()
 
         headers = {
             'Accept': 'application/hal+json',
