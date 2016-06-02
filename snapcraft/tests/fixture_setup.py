@@ -66,7 +66,7 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_SSO_API_ROOT_URL',
             urllib.parse.urljoin(
-                self.fake_sso_server_fixture.url, 'api/v2')))
+                self.fake_sso_server_fixture.url, 'api/v2/')))
 
         self.fake_store_upload_server_fixture = FakeStoreUploadServerRunning()
         self.useFixture(self.fake_store_upload_server_fixture)
@@ -79,7 +79,7 @@ class FakeStore(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
             urllib.parse.urljoin(
-                self.fake_store_api_server_fixture.url, 'dev/api')))
+                self.fake_store_api_server_fixture.url, 'dev/api/')))
 
         self.fake_store_search_server_fixture = FakeStoreSearchServerRunning()
         self.useFixture(self.fake_store_search_server_fixture)

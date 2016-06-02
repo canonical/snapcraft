@@ -21,6 +21,7 @@ import os
 import urllib.parse
 
 import snapcraft.tests
+from snapcraft.storeapi import macaroons
 
 
 logger = logging.getLogger(__name__)
@@ -45,14 +46,16 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        oauth_path = self._API_PATH + 'tokens/oauth'
-        if parsed_path.path.startswith(oauth_path):
-            self._handle_oauth()
+        tokens_discharge_path = urllib.parse.urljoin(
+            self._API_PATH, 'tokens/discharge')
+        if parsed_path.path.startswith(tokens_discharge_path):
+            self._handle_tokens_discharge_request()
         else:
             logger.error('Not implemented path in fake SSO server: {}'.format(
                 self.path))
+            raise NotImplementedError(self.path)
 
-    def _handle_oauth(self):
+    def _handle_tokens_discharge_request(self):
         string_data = self.rfile.read(
             int(self.headers['Content-Length'])).decode('utf8')
         data = json.loads(string_data)
@@ -62,21 +65,17 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         if (data['password'] == 'test correct password' and
             ('otp' not in data or
              data['otp'] == 'test correct one-time password')):
-            self._send_success()
+            self._send_tokens_discharge(data)
         else:
             self._send_invalid_credentials_error()
 
-    def _send_success(self):
+    def _send_tokens_discharge(self, data):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'success': True,
-            'consumer_key': 'test consumer key',
-            'consumer_secret': 'test consumer secret',
-            'token_key': 'test token key',
-            'token_secret': 'test token secret'
-        }
+            'discharge_macaroon': macaroons.Macaroon().serialize()
+            }
         self.wfile.write(
             json.dumps(response).encode())
 
@@ -84,9 +83,12 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         self.send_response(401)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        response = {'success': False}
-        self.wfile.write(
-            json.dumps(response).encode())
+        response = {
+            'code': 'INVALID_CREDENTIALS',
+            'message': 'Provided email/password is not correct.',
+            'message': 'Provided email/password is not correct.',
+        }
+        self.wfile.write(json.dumps(response).encode())
 
 
 class FakeStoreUploadServer(http.server.HTTPServer):
@@ -129,18 +131,38 @@ class FakeStoreAPIServer(http.server.HTTPServer):
 
 class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
-    _DEV_API_PATH = '/dev/'
+    _DEV_API_PATH = '/dev/api/'
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        upload_path = self._DEV_API_PATH + 'click-package-upload/'
-        if parsed_path.path.startswith(upload_path):
+        acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
+        if parsed_path.path.startswith(acl_path):
+            permission = parsed_path.path[len(acl_path):].strip('/')
+            self._handle_acl_request(permission)
+        elif parsed_path.path.startswith(upload_path):
             self._handle_upload_request()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
             raise NotImplementedError(self.path)
+
+    def _handle_acl_request(self, permission):
+        logger.debug(
+            'Handling ACL request for {}'.format(permission))
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        macaroon = macaroons.Macaroon(
+            caveats=[
+                macaroons.Caveat(
+                    caveat_id='test caveat',
+                    location='localhost',
+                    verification_key_id='test verifiacion')
+            ])
+        response = {'macaroon': macaroon.serialize()}
+        self.wfile.write(json.dumps(response).encode())
 
     def _handle_upload_request(self):
         logger.debug('Handling upload request')
@@ -157,8 +179,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        scan_complete_path = (
-            self._DEV_API_PATH + 'api/click-scan-complete/updown/')
+        scan_complete_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'click-scan-complete/updown/')
         if parsed_path.path.startswith(scan_complete_path):
             self._handle_scan_complete_request()
         else:
@@ -197,7 +219,7 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        search_path = self._API_PATH + 'search'
+        search_path = urllib.parse.urljoin(self._API_PATH,  'search')
         download_path = '/download-snap/'
         if parsed_path.path.startswith(search_path):
             self._handle_search_request(

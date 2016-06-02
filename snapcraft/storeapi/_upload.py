@@ -27,7 +27,10 @@ from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 from .common import (
     retry,
 )
-from snapcraft.storeapi import constants
+from snapcraft.storeapi import (
+    constants,
+    errors
+)
 
 
 logger = logging.getLogger(__name__)
@@ -113,6 +116,8 @@ def upload_app(sca_client, name, upload_data):
     }
     try:
         result = _upload_files(sca_client, name, data, result)
+    except errors.InvalidCredentialsError:
+        raise
     except Exception as err:
         logger.exception(
             'There was an error uploading the application.')
