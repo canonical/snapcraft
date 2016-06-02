@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import atexit
+import inspect
 import logging
 import os
 import re
@@ -77,7 +78,15 @@ def _get_latest_ssh_private_key():
 class ExampleTestCase(testtools.TestCase):
 
     snap_content_dir = None
-    src_dir = "demos"
+
+    def __init__(self, *args, **kwargs):
+        # match base snap src path on current
+        relative_path = os.path.relpath(
+            os.path.dirname(inspect.getfile(self.__class__)),
+            os.path.dirname(__file__))
+        self.src_dir = os.path.join(*re.findall('(.*?)_tests/?(.*)',
+                                                relative_path)[0])
+        super().__init__(*args, **kwargs)
 
     def setUp(self):
         filter_ = config.get('filter', None)
