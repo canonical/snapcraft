@@ -324,7 +324,8 @@ class UpDownClient(Client):
     def upload(self, monitor):
         return self.post(
             urllib.parse.urljoin(self.root_url, 'unscanned-upload/'),
-            data=monitor, headers={'Content-Type': monitor.content_type})
+            data=monitor, headers={'Content-Type': monitor.content_type,
+                                   'Accept': 'application/json'})
 
 
 class SCAClient(Client):
@@ -339,7 +340,8 @@ class SCAClient(Client):
         response = self.post(
             'acl/',
             data=json.dumps({'permissions': acls}),
-            headers={'Content-Type': 'application/json'})
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
         if response.ok:
             return response.json()['macaroon'], None
         else:
@@ -350,5 +352,6 @@ class SCAClient(Client):
         response = self.post(
             'snap-push/', data=json.dumps(data),
             headers={'Authorization': auth,
-                     'Content-Type': 'application/json'})
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
         return response
