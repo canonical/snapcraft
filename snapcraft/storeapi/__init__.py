@@ -348,7 +348,7 @@ class SCAClient(Client):
     def snap_upload(self, data):
         auth = _macaroon_auth(self.conf)
         response = self.post(
-            'snap-upload/', data=json.dumps(data),
+            'snap-push/', data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json'})
         return response
