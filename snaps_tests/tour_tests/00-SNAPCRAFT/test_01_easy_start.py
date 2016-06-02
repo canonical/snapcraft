@@ -23,6 +23,7 @@ class EasyStartTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = '01-easy-start'
 
     def test_hello(self):
+        self.skipTest('Skip while the proxy rule is added by IS.')
         self.build_snap(self.snap_content_dir)
         self.install_snap(self.snap_content_dir, 'hello', '2.1')
         self.assert_command_in_snappy_testbed(
