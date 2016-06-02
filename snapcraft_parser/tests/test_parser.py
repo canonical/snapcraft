@@ -99,12 +99,12 @@ class TestParser(TestCase):
             }
         }
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: [part1, part2]
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+parts: [part1, part2]
 """)
         main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(3, _get_part_list_count())
@@ -137,12 +137,12 @@ example:
             }
         }
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: [part1]
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+parts: [part1]
 """)
         main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
@@ -151,11 +151,11 @@ example:
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_valid(self, mock_get, mock_get_origin_data):
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -175,12 +175,12 @@ example:
                           mock_get,
                           mock_get_origin_data):
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: [part1]
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+parts: [part1]
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -202,11 +202,11 @@ example:
                                 mock_get_origin_data):
         """Test a wiki entry with a single origin part."""
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -228,12 +228,12 @@ example:
                                   mock_get_origin_data):
         """Test a wiki entry with multiple origin parts."""
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: ['subpart']
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+parts: ['subpart']
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -261,12 +261,12 @@ example:
                               mock_get_origin_data):
         """Test a wiki entry with multiple origin parts."""
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
-    parts: []
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+parts: []
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -292,11 +292,11 @@ example:
                                            mock_get_origin_data):
         """Test a wiki entry with a source with a local part."""
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -321,11 +321,11 @@ example:
                                                   mock_get_origin_data):
         """Test a wiki entry with a source with a local part."""
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -351,11 +351,11 @@ example:
                                                   mock_get_origin_data):
         """Test a wiki entry with a source with a local source-subdir part."""
         _create_example_output("""
-example:
-    maintainer: John Doe <john.doe@example.com
-    origin: lp:snapcraft-parser-example
-    description: example
-    project-part: main
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
 """)
         mock_get_origin_data.return_value = {
             "parts": {
@@ -374,3 +374,39 @@ example:
         self.assertNotEqual(".", part["source"])
         self.assertEqual("local", part["source-subdir"])
         self.assertEqual(4, len(part.keys()))
+
+    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_source_with_local_source_subdir_part_origin(self,
+                                                  mock_get,
+                                                  mock_get_origin_data):
+        """Test a wiki entry with a source with a local source-subdir part."""
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main2
+""")
+        mock_get_origin_data.return_value = {
+            "parts": {
+                "main": {
+                    "source": "lp:project",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+                "main2": {
+                    "source": "lp:project",
+                    "plugin": "copy",
+                    "files": ["file1", "file2"],
+                },
+            }
+        }
+        main(["--debug", "--index", TEST_OUTPUT_PATH])
+
+        self.assertEqual(2, _get_part_list_count())
