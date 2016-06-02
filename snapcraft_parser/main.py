@@ -99,7 +99,24 @@ def _get_origin_data(origin_dir):
     return origin_data
 
 
-def _process_subparts(project_part, subparts, parts):
+def _is_local(source):
+    # XXX: Is this sufficient?  Can ":" be part of a local
+    # directory?
+    return ":" not in source
+
+def _update_source(part, origin):
+    # handle subparts with local sources
+    orig_source = part.get("source")
+    if orig_source == ".":
+        part["source"] = origin
+    elif _is_local(orig_source):
+        part["source"] = origin
+        part["source-subdir"] = orig_source
+
+    return part
+
+
+def _process_subparts(project_part, subparts, parts, origin):
     after_parts = set()
     parts_list = {}
     for part in subparts:
@@ -107,6 +124,8 @@ def _process_subparts(project_part, subparts, parts):
         # TODO: get any dependent parts here as well using
         # 'project_part' to namespace them.
         if source_part:
+            source_part = _update_source(source_part, origin)
+
             namespaced_part = _get_namespaced_partname(project_part, part)
             parts_list[namespaced_part] = source_part
             after = source_part.get("after", [])
@@ -165,6 +184,7 @@ def _process_index(output):
 
             source_part = parts.get(project_part)
             if source_part:
+                source_part = _update_source(source_part, origin)
                 after = source_part.get('after', [])
 
                 if after:
@@ -173,7 +193,7 @@ def _process_index(output):
 
                 parts_list[project_part] = source_part
                 subparts_list, subparts_after_list = _process_subparts(
-                    project_part, subparts, parts)
+                    project_part, subparts, parts, origin)
                 parts_list.update(subparts_list)
                 after_parts.update(subparts_after_list)
 
