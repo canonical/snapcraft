@@ -14,7 +14,7 @@ snapcraft (2.10) xenial; urgency=medium
   * Updated the documentation about the icon. (#542) (LP: #1578231)
   * Improve the error message when a part binary is not found. (#541)
     (LP: #1582367)
-  * Reenable the ROS demo for autopackage testing. (#520) (LP: #1588098)
+  * Re-enable the ROS demo for autopackage testing. (#520) (LP: #1588098)
   * Add macaroon support to login, upload and download. (#532) (LP: #1586910)
   * Set the no_proxy environment variable to access the local fake servers.
     (#546) (LP: #1588631)
