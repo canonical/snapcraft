@@ -94,7 +94,7 @@ class CleanBuildStepPrimedTestCase(integration_tests.TestCase):
         self.project_dir = 'independent-parts'
         self.run_snapcraft('prime', self.project_dir)
 
-        self.snapdir = os.path.join(self.project_dir, 'snap')
+        self.snapdir = os.path.join(self.project_dir, 'prime')
         self.snap_bindir = os.path.join(self.snapdir, 'bin')
         self.stagedir = os.path.join(self.project_dir, 'stage')
         self.stage_bindir = os.path.join(self.stagedir, 'bin')

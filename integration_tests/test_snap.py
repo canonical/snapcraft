@@ -44,7 +44,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
         binary1_wrapper_path = os.path.join(
-            'snap', 'command-assemble-bin.wrapper')
+            'prime', 'command-assemble-bin.wrapper')
         with open('binary1.after', 'r') as file_:
             expected_binary1_wrapper = file_.read()
         self.assertThat(
@@ -104,7 +104,7 @@ class SnapTestCase(integration_tests.TestCase):
         # Verify that Snapcraft can snap its own snap directory (this will make
         # sure `snapcraft snap` and `snapcraft snap <directory>` are always in
         # sync).
-        self.run_snapcraft(['snap', 'snap'])
+        self.run_snapcraft(['snap', 'prime'])
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_long_output_option(self):
