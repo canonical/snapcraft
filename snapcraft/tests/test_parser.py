@@ -17,6 +17,7 @@
 import logging
 import os
 from unittest import mock
+
 import yaml
 
 from snapcraft.internal.parser import (
@@ -25,22 +26,21 @@ from snapcraft.internal.parser import (
     PARTS_FILE,
     main,
 )
-
 from snapcraft.tests import TestCase
 
 
-TEST_OUTPUT_PATH=os.path.join(os.getcwd(), "test_output.wiki")
+TEST_OUTPUT_PATH = os.path.join(os.getcwd(), 'test_output.wiki')
+
 
 def _create_example_output(output):
-    with open(TEST_OUTPUT_PATH, "w") as fp:
+    with open(TEST_OUTPUT_PATH, 'w') as fp:
         fp.write(output)
 
-def _get_part_list(path=PARTS_FILE):
-    input = ""
-    with open(path, "r") as fp:
-        input = fp.read()
 
-    return yaml.load(input)
+def _get_part_list(path=PARTS_FILE):
+    with open(path) as fp:
+        return yaml.load(fp)
+
 
 def _get_part(name, path=PARTS_FILE):
     part_list = _get_part_list(path)
@@ -60,13 +60,13 @@ class TestParser(TestCase):
             pass
 
     def test_namespace(self):
-        partname = "part"
-        subpart = "subpart"
+        partname = 'part'
+        subpart = 'subpart'
 
         result = _get_namespaced_partname(partname, subpart)
-        logging.warn("JOE: result: %s", result)
+        logging.warn('JOE: result: {}'.format(result))
 
-        self.assertEqual("{p}{s}{sp}".format(p=partname,
+        self.assertEqual('{p}{s}{sp}'.format(p=partname,
                                              s=PART_NAMESPACE_SEP,
                                              sp=subpart),
                          result)
@@ -74,27 +74,27 @@ class TestParser(TestCase):
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_nested_parts_valid(self, mock_get, mock_get_origin_data):
-        """ Ensure that we fail if there are dependent parts that
-        are not included in the wiki's "parts" section."""
+        """Ensure that we fail if there are dependent parts that
+        are not included in the wiki's 'parts' section."""
 
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
-                    "after": ["part1"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                    'after': ['part1'],
                 },
-                "part1": {
-                    "source": "lp:somethingelse1",
-                    "plugin": "copy",
-                    "files": ["subfile1"],
-                    "after": ["part2"],
+                'part1': {
+                    'source': 'lp:somethingelse1',
+                    'plugin': 'copy',
+                    'files': ['subfile1'],
+                    'after': ['part2'],
                 },
-                "part2": {
-                    "source": "lp:somethingelse2",
-                    "plugin": "copy",
-                    "files": ["subfile2"],
+                'part2': {
+                    'source': 'lp:somethingelse2',
+                    'plugin': 'copy',
+                    'files': ['subfile2'],
                 },
             }
         }
@@ -106,33 +106,33 @@ description: example
 project-part: main
 parts: [part1, part2]
 """)
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(3, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_nested_parts_invalid(self, mock_get, mock_get_origin_data):
-        """ Ensure that we fail if there are dependent parts that
-        are not included in the wiki's "parts" section."""
+        """Ensure that we fail if there are dependent parts that
+        are not included in the wiki's 'parts' section."""
 
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
-                    "after": ["part1"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                    'after': ['part1'],
                 },
-                "part1": {
-                    "source": "lp:somethingelse1",
-                    "plugin": "copy",
-                    "files": ["subfile1"],
-                    "after": ["part2"],
+                'part1': {
+                    'source': 'lp:somethingelse1',
+                    'plugin': 'copy',
+                    'files': ['subfile1'],
+                    'after': ['part2'],
                 },
-                "part2": {
-                    "source": "lp:somethingelse2",
-                    "plugin": "copy",
-                    "files": ["subfile2"],
+                'part2': {
+                    'source': 'lp:somethingelse2',
+                    'plugin': 'copy',
+                    'files': ['subfile2'],
                 },
             }
         }
@@ -144,7 +144,7 @@ description: example
 project-part: main
 parts: [part1]
 """)
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -158,15 +158,15 @@ description: example
 project-part: main
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -183,16 +183,16 @@ project-part: main
 parts: [part1]
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
-                    "after": ["part1"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                    'after': ['part1'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -209,15 +209,15 @@ description: example
 project-part: main
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         self.assertEqual(1, _get_part_list_count())
 
@@ -236,21 +236,21 @@ project-part: main
 parts: ['subpart']
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
-                    "after": ["subpart"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                    'after': ['subpart'],
                 },
-                "subpart": {
-                    "source": "lp:somethingelse",
-                    "plugin": "copy",
-                    "files": ["subfile2"],
+                'subpart': {
+                    'source': 'lp:somethingelse',
+                    'plugin': 'copy',
+                    'files': ['subfile2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         self.assertEqual(2, _get_part_list_count())
 
@@ -269,18 +269,18 @@ project-part: main
 parts: []
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:something",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
 
-        filename = "parts.yaml"
+        filename = 'parts.yaml'
 
-        main(["--debug", "--index", TEST_OUTPUT_PATH, "--output", filename])
+        main(['--debug', '--index', TEST_OUTPUT_PATH, '--output', filename])
 
         self.assertEqual(1, _get_part_list_count(filename))
         self.assertTrue(os.path.exists(filename))
@@ -299,19 +299,19 @@ description: example
 project-part: main
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": ".",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': '.',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         self.assertEqual(1, _get_part_list_count())
-        part = _get_part("main")
-        self.assertNotEqual(".", part["source"])
+        part = _get_part('main')
+        self.assertNotEqual('.', part['source'])
         self.assertEqual(3, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -328,27 +328,26 @@ description: example
 project-part: main
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "local",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': 'local',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         self.assertEqual(1, _get_part_list_count())
-        part = _get_part("main")
-        self.assertNotEqual("local", part["source"])
-        self.assertEqual("local", part["source-subdir"])
+        part = _get_part('main')
+        self.assertNotEqual('local', part['source'])
+        self.assertEqual('local', part['source-subdir'])
         self.assertEqual(4, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
-    def test_source_with_local_source_subdir_part_origin(self,
-                                                  mock_get,
-                                                  mock_get_origin_data):
+    def test_source_with_local_source_subdir_part_origin(
+            self, mock_get, mock_get_origin_data):
         """Test a wiki entry with a source with a local source-subdir part."""
         _create_example_output("""
 ---
@@ -358,29 +357,28 @@ description: example
 project-part: main
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": ".",
-                    "source-subdir": "local",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': '.',
+                    'source-subdir': 'local',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         self.assertEqual(1, _get_part_list_count())
-        part = _get_part("main")
-        self.assertNotEqual(".", part["source"])
-        self.assertEqual("local", part["source-subdir"])
+        part = _get_part('main')
+        self.assertNotEqual('.', part['source'])
+        self.assertEqual('local', part['source-subdir'])
         self.assertEqual(4, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
-    def test_source_with_local_source_subdir_part_origin(self,
-                                                  mock_get,
-                                                  mock_get_origin_data):
-        """Test a wiki entry with a source with a local source-subdir part."""
+    def test_n_documents(
+            self, mock_get, mock_get_origin_data):
+        """Test 2 wiki entries."""
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com
@@ -394,19 +392,19 @@ description: example
 project-part: main2
 """)
         mock_get_origin_data.return_value = {
-            "parts": {
-                "main": {
-                    "source": "lp:project",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
-                "main2": {
-                    "source": "lp:project",
-                    "plugin": "copy",
-                    "files": ["file1", "file2"],
+                'main2': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
                 },
             }
         }
-        main(["--debug", "--index", TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         self.assertEqual(2, _get_part_list_count())

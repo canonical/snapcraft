@@ -101,7 +101,8 @@ def _get_origin_data(origin_dir):
 def _is_local(source):
     # XXX: Is this sufficient?  Can ":" be part of a local
     # directory?
-    return ":" not in source
+    return ':' not in source
+
 
 def _update_source(part, origin):
     # handle subparts with local sources
@@ -151,11 +152,11 @@ def _process_index(output):
         # the wiki?  They should be in the master parts list.
         after_parts = set()
 
-        logger.debug("Processing part %s", key)
-        origin = data.get("origin")
-        origin_type = data.get("origin-type")
-        project_part = data.get("project-part")
-        subparts = data.get("parts", [])
+        logger.debug('Processing part {!r}'.format(key))
+        origin = data.get('origin')
+        origin_type = data.get('origin-type')
+        project_part = data.get('project-part')
+        subparts = data.get('parts', [])
 
         if origin:
             # TODO: this should really be based on the origin uri not
@@ -171,10 +172,10 @@ def _process_index(output):
                 pass
 
             options = Options()
-            setattr(options, "source", origin)
+            setattr(options, 'source', origin)
 
             if origin_type:
-                setattr(options, "source_type", origin_type)
+                setattr(options, 'source_type', origin_type)
 
             sources.get(origin_dir, None, options)
 
@@ -204,45 +205,44 @@ def _process_index(output):
 
 
 def run(args):
-
-    path = args.get("--output")
+    path = args.get('--output')
     if path is None:
         path = PARTS_FILE
 
     index = args.get('--index')
     if index:
-        if "://" not in index:
-            index = "%s%s" % ("file://", os.path.join(os.getcwd(), index))
+        if '://' not in index:
+            index = '{}{}'.format(
+                'file://', os.path.join(os.getcwd(), index))
         output = urllib.request.urlopen(index).read()
     else:
         # XXX: fetch the index from the wiki
-        output = "{}"
+        output = '{}'
 
     master_parts_list = _process_index(output)
-
-
     _write_parts_list(path, master_parts_list)
-
 
     if args['--debug']:
         print(yaml.dump(master_parts_list, default_flow_style=False))
 
     return args
 
+
 def is_valid_parts_list(parts_list, parts):
     for partname in parts:
         if partname not in parts_list.keys():
-            logging.error(
-                "Part '%s' is missing from the parts entry" % partname)
+            logging.error('Part {!r} is missing from the parts entry'.format(
+                partname))
             return False
 
     return True
 
+
 def _write_parts_list(path, master_parts_list):
-    logging.debug("Writing parts list to %s", path)
-    with open(path, "w") as fp:
+    logging.debug('Writing parts list to {!r}'.format(path))
+    with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
-                            default_flow_style=False))
+                 default_flow_style=False))
 
 
 if __name__ == '__main__':  # pragma: no cover
