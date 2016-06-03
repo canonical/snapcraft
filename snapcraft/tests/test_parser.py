@@ -19,7 +19,7 @@ import os
 from unittest import mock
 import yaml
 
-from snapcraft_parser.main import (
+from snapcraft.internal.parser import (
     _get_namespaced_partname,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
@@ -71,7 +71,7 @@ class TestParser(TestCase):
                                              sp=subpart),
                          result)
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_nested_parts_valid(self, mock_get, mock_get_origin_data):
         """ Ensure that we fail if there are dependent parts that
@@ -109,7 +109,7 @@ parts: [part1, part2]
         main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(3, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_nested_parts_invalid(self, mock_get, mock_get_origin_data):
         """ Ensure that we fail if there are dependent parts that
@@ -147,7 +147,7 @@ parts: [part1]
         main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_valid(self, mock_get, mock_get_origin_data):
         _create_example_output("""
@@ -169,7 +169,7 @@ project-part: main
         main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_invalid(self,
                           mock_get,
@@ -195,7 +195,7 @@ parts: [part1]
         main(["--debug", "--index", TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_single_part_origin(self,
                                 mock_get,
@@ -221,7 +221,7 @@ project-part: main
 
         self.assertEqual(1, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_multiple_part_origin(self,
                                   mock_get,
@@ -254,7 +254,7 @@ parts: ['subpart']
 
         self.assertEqual(2, _get_part_list_count())
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_output_parameter(self,
                               mock_get,
@@ -285,7 +285,7 @@ parts: []
         self.assertEqual(1, _get_part_list_count(filename))
         self.assertTrue(os.path.exists(filename))
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_source_with_local_part_origin(self,
                                            mock_get,
@@ -314,7 +314,7 @@ project-part: main
         self.assertNotEqual(".", part["source"])
         self.assertEqual(3, len(part.keys()))
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_source_with_local_subdir_part_origin(self,
                                                   mock_get,
@@ -344,7 +344,7 @@ project-part: main
         self.assertEqual("local", part["source-subdir"])
         self.assertEqual(4, len(part.keys()))
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_source_with_local_source_subdir_part_origin(self,
                                                   mock_get,
@@ -375,7 +375,7 @@ project-part: main
         self.assertEqual("local", part["source-subdir"])
         self.assertEqual(4, len(part.keys()))
 
-    @mock.patch('snapcraft_parser.main._get_origin_data')
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_source_with_local_source_subdir_part_origin(self,
                                                   mock_get,

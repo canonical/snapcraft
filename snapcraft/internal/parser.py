@@ -40,7 +40,6 @@ import yaml
 
 from docopt import docopt
 
-import snapcraft_parser
 from snapcraft.internal import log, sources
 
 
