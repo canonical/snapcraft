@@ -87,6 +87,9 @@ class FakeStore(fixtures.Fixture):
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             self.fake_store_search_server_fixture.url))
 
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
 
 class _FakeServerRunning(fixtures.Fixture):
 
