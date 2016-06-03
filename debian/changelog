@@ -1,3 +1,50 @@
+snapcraft (2.10) xenial; urgency=medium
+
+  [ Martin Wimpress ]
+  * Correct autotools tests to use configflags (#521)
+
+  [ Leo Arias ]
+  * Run the integration tests against a local fake server when the user
+    password is not in the environment. (#511) (LP: #1585023)
+  * Move the login and logout methods to a client. (#518) (LP: #1586504)
+  * Improve the config handling. (#519) (LP: #1586511)
+  * Fix the one-time password login. (#529) (LP: #1586832)
+  * Moved the download to the store client. (#530) (LP: #1586836)
+  * Moved the upload to the store client. (#531) (LP: #1586836)
+  * Updated the documentation about the icon. (#542) (LP: #1578231)
+  * Improve the error message when a part binary is not found. (#541)
+    (LP: #1582367)
+  * Reenable the ROS demo for autopackage testing. (#520) (LP: #1588098)
+  * Add macaroon support to login, upload and download. (#532) (LP: #1586910)
+  * Set the no_proxy environment variable to access the local fake servers.
+    (#546) (LP: #1588631)
+
+  [ Stephen Stewart ]
+  * nodejs plugin: Support configurable node version (#509) (LP: #1586104)
+
+  [ Kyle Fazzari ]
+  * Use correct cross-build packages for ppc64le. (#539) (LP: #1570944)
+
+  [ Sergio Schvezov ]
+  * Support zip files as source (#523) (LP: #1577062)
+  * A nicer error message for incorrect stage-packages (#524) (LP: #1568131)
+  * Support the assumes keyword (#525) (LP: #1586429)
+  * Improve the template for snapcraft init (#528) (LP: #1575581)
+  * Filter out *.snap from sourcedir (#535) (LP: #1575628)
+  * Support setting a gopath for a go project from vcs (#538) (LP: #1583426)
+  * Add a ticker for snapping (#540) (LP: #1582955)
+  * Rename strip to prime (#543) (LP: #1582515)
+
+  [ Didier Roche ]
+  * Wrap plugin list output content (#534) (LP: #1587057)
+  * Add snapcraft examples to scaffold getting started tour (#513)
+    (LP: #1586137)
+
+  [ Joe Talbott ]
+  * Add support for parsing the parts wiki (#545) (LP: #1587583)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 03 Jun 2016 13:37:58 -0300
+
 snapcraft (2.9) xenial; urgency=medium
 
   [ Leo Arias ]
