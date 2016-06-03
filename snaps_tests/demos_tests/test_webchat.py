@@ -1,4 +1,3 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015, 2016 Canonical Ltd
@@ -15,23 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import demos_tests
-
-import os
-import subprocess
+import snaps_tests
 
 
-class ROSTestCase(demos_tests.ExampleTestCase):
+class WebchatTestCase(snaps_tests.SnapsTestCase):
 
-    demo_dir = 'ros'
+    snap_content_dir = 'webchat'
 
-    def test_ros(self):
-        self.build_snap(self.demo_dir)
-        self.install_snap(self.demo_dir, 'ros-example', '1.0')
-        # check that the hardcoded /usr/bin/python in rosversion
-        # is changed to using /usr/bin/env python
-        expected = b'#!/usr/bin/env python\n'
-        output = subprocess.check_output(
-            "sed -n '/env/p;1q' snap/usr/bin/rosversion",
-            cwd=os.path.join('demos', self.demo_dir), shell=True)
-        self.assertEqual(output, expected)
+    def test_webchat(self):
+        self.build_snap(self.snap_content_dir)
+        snap_name = 'webchat'
+        self.install_snap(self.snap_content_dir, snap_name, '0.0.1')
+        self.assert_service_running(snap_name, 'webchat')

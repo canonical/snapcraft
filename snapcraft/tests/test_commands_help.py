@@ -84,7 +84,7 @@ class HelpCommandTestCase(tests.TestCase):
     def test_print_topic_help_for_valid_topic(self, mock_stdout):
         main(['help', 'sources'])
 
-        expected = 'Common keywords for plugins that use common source'
+        expected = "Common 'source' options."
         output = mock_stdout.getvalue()[:len(expected)]
         self.assertEqual(output, expected,
                          'The help message does not start with {!r} but with '

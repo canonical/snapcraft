@@ -1,8 +1,8 @@
 docs/reference.md
-examples/*/parts/
-examples/*/snap/
-examples/*/stage/
-examples/**/*.snap
+demos/*/parts/
+demos/*/snap/
+demos/*/stage/
+demos/**/*.snap
 tests/unit/parts/
 tests/unit/snap/
 tests/unit/stage/

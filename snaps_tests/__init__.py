@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import atexit
+import inspect
 import logging
 import os
 import re
@@ -30,7 +31,7 @@ from testtools.matchers import (
     MatchesRegex
 )
 
-from demos_tests import testbed
+from snaps_tests import testbed
 
 logger = logging.getLogger(__name__)
 
@@ -74,18 +75,26 @@ def _get_latest_ssh_private_key():
     return candidates[0]
 
 
-class ExampleTestCase(testtools.TestCase):
+class SnapsTestCase(testtools.TestCase):
 
-    demo_dir = None
+    snap_content_dir = None
+
+    def __init__(self, *args, **kwargs):
+        # match base snap src path on current
+        relative_path = os.path.relpath(
+            os.path.dirname(inspect.getfile(self.__class__)),
+            os.path.dirname(__file__))
+        self.src_dir = os.path.join(*re.findall('(.*?)_tests/?(.*)',
+                                                relative_path)[0])
+        super().__init__(*args, **kwargs)
 
     def setUp(self):
         filter_ = config.get('filter', None)
         if filter_:
-            if not re.match(filter_, self.demo_dir):
+            if not re.match(filter_, self.snap_content_dir):
                 self.skipTest(
                     '{} does not match the filter {}'.format(
-                        self.demo_dir, filter_))
-
+                        self.snap_content_dir, filter_))
         super().setUp()
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_command = 'snapcraft'
@@ -126,8 +135,8 @@ class ExampleTestCase(testtools.TestCase):
         self.addCleanup(snappy_testbed.delete)
         return snappy_testbed
 
-    def build_snap(self, demo_dir):
-        working_dir = os.path.join('demos', demo_dir)
+    def build_snap(self, snap_content_dir):
+        working_dir = os.path.join(self.src_dir, snap_content_dir)
         subprocess.check_call(
             [self.snapcraft_command, 'clean'], cwd=working_dir)
         try:
@@ -138,12 +147,12 @@ class ExampleTestCase(testtools.TestCase):
             self.addDetail('output', content.text_content(str(e.output)))
             raise
 
-    def install_snap(self, demo_dir, snap_name, version):
+    def install_snap(self, snap_content_dir, snap_name, version):
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(
                 snap_name, version)
             snap_local_path = os.path.join(
-                'demos', demo_dir, snap_file_name)
+                self.src_dir, snap_content_dir, snap_file_name)
             self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
             snap_path_in_testbed = os.path.join(
                 '/home/ubuntu/', snap_file_name)
