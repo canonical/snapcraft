@@ -14,15 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import demos_tests
+import snaps_tests
 
 
-class WebcamWebUITestCase(demos_tests.ExampleTestCase):
+class GopasteTestCase(snaps_tests.SnapsTestCase):
 
-    demo_dir = 'webcam-webui'
+    snap_content_dir = 'gopaste'
 
-    def test_webcam_webui(self):
-        self.build_snap(self.demo_dir)
-        snap_name = 'webcam-webui'
-        self.install_snap(self.demo_dir, snap_name, '1')
-        self.assert_service_running(snap_name, 'webcam-webui')
+    def test_gopaste(self):
+        self.build_snap(self.snap_content_dir)
+        snap_name = 'gopaste'
+        self.install_snap(self.snap_content_dir, snap_name, '1.0')
+        self.assert_service_running(snap_name, 'gopaste')
