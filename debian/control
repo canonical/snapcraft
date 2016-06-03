@@ -56,6 +56,13 @@ Description: easily craft snaps
  natural workflow of an upstream to be extended with a simple release step
  into Snappy.
 
+Package: snapcraft-parser
+Architecture: all
+Depends: snapcraft (= ${binary:Version}), ${misc:Depends}, ${python3:Depends}
+Description: the cloud parser for shared snapcraft parts.
+ The parser is in charge of getting all the shared parts out there
+ indexed into a common cacheable file.
+
 Package: snapcraft-examples
 Architecture: all
 Depends: snapcraft (= ${binary:Version}), ${misc:Depends}, ${python3:Depends}
