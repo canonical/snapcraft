@@ -30,7 +30,7 @@ class CleanTestCase(integration_tests.TestCase):
         project_dir = 'simple-make'
         self.run_snapcraft('snap', project_dir)
 
-        snap_dirs = ('stage', 'parts', 'snap')
+        snap_dirs = ('stage', 'parts', 'prime')
         for dir_ in snap_dirs:
             self.assertThat(
                 os.path.join(project_dir, dir_), DirExists())

@@ -44,7 +44,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
         binary1_wrapper_path = os.path.join(
-            'snap', 'command-assemble-bin.wrapper')
+            'prime', 'command-assemble-bin.wrapper')
         with open('binary1.after', 'r') as file_:
             expected_binary1_wrapper = file_.read()
         self.assertThat(
@@ -52,7 +52,7 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.useFixture(
            fixtures.EnvironmentVariable(
-                'SNAP', os.path.join(os.getcwd(), 'snap')))
+                'SNAP', os.path.join(os.getcwd(), 'prime')))
         binary_scenarios = (
             ('command-assemble-service.wrapper', 'service-start\n'),
             ('stop-command-assemble-service.wrapper', 'service-stop\n'),
@@ -61,16 +61,16 @@ class SnapTestCase(integration_tests.TestCase):
         )
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
-                os.path.join('snap', binary), universal_newlines=True)
+                os.path.join('prime', binary), universal_newlines=True)
             self.assertEqual(expected_output, output)
 
         with testtools.ExpectedException(subprocess.CalledProcessError):
             subprocess.check_output(
-                os.path.join('snap', 'bin', 'not-wrapped'),
+                os.path.join('prime', 'bin', 'not-wrapped'),
                 stderr=subprocess.STDOUT)
 
         self.assertThat(
-            os.path.join('snap', 'bin', 'not-wrapped.wrapper'),
+            os.path.join('prime', 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
     def test_snap_default(self):
@@ -104,7 +104,7 @@ class SnapTestCase(integration_tests.TestCase):
         # Verify that Snapcraft can snap its own snap directory (this will make
         # sure `snapcraft snap` and `snapcraft snap <directory>` are always in
         # sync).
-        self.run_snapcraft(['snap', 'snap'])
+        self.run_snapcraft(['snap', 'prime'])
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_long_output_option(self):
@@ -142,10 +142,10 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('snap', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'snap', 'usr', 'bin', 'nmcli'),
+            os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmcli'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'snap', 'usr', 'bin', 'nmtui'),
+            os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmtui'),
             Not(FileExists()))
 
     def test_snap_from_snapcraft_init(self):

@@ -57,7 +57,7 @@ parts:
         plugin: nil
 """
 
-_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'strip'}
+_STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
 
 def init():
@@ -84,7 +84,7 @@ def execute(step, project_options, part_names=None):
     forced until the stage step for such part. If part_names was provided
     and after is not in this set, an exception will be raised.
 
-    :param str step: A valid step in the lifecycle: pull, build, strip or snap.
+    :param str step: A valid step in the lifecycle: pull, build, prime or snap.
     :param project_options: Runtime options for the project.
     :param list part_names: A list of parts to execute the lifecycle on.
     :raises RuntimeError: If a prerequesite of the part needs to be staged
@@ -165,7 +165,7 @@ class _Executor:
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
-        if step == 'strip' and part_names == self.config.part_names:
+        if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(self.config.data,
                                        self.project_options.snap_dir,
@@ -179,7 +179,7 @@ class _Executor:
                     step, part.name))
 
         staged_state = self.config.get_project_state('stage')
-        stripped_state = self.config.get_project_state('strip')
+        primed_state = self.config.get_project_state('prime')
 
         # We need to clean this step, but if it involves cleaning the stage
         # step and it has dependents that have been built, we need to ask for
@@ -200,7 +200,7 @@ class _Executor:
                             step, part.name, humanized_parts,
                             's' if len(dependents) == 1 else ''))
 
-        part.clean(staged_state, stripped_state, step, '(out of date)')
+        part.clean(staged_state, primed_state, step, '(out of date)')
 
 
 def _create_tar_filter(tar_filename):
@@ -208,7 +208,7 @@ def _create_tar_filter(tar_filename):
         fn = tarinfo.name
         if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
             return None
-        elif fn in ('./stage', './snap', tar_filename):
+        elif fn in ('./stage', './prime', './snap', tar_filename):
             return None
         elif fn.endswith('.snap'):
             return None
@@ -253,7 +253,7 @@ def snap(project_options, directory=None, output=None):
     else:
         # make sure the full lifecycle is executed
         snap_dir = project_options.snap_dir
-        snap = execute('strip', project_options)
+        snap = execute('prime', project_options)
 
     snap_name = output or common.format_snap_name(snap)
 
@@ -308,17 +308,17 @@ def _reverse_dependency_tree(config, part_name):
 
 
 def _clean_part_and_all_dependents(part_name, step, config, staged_state,
-                                   stripped_state):
+                                   primed_state):
     # Obtain the reverse dependency tree for this part. Make sure all
     # dependents are cleaned.
     dependents = _reverse_dependency_tree(config, part_name)
     dependent_parts = {p for p in config.all_parts
                        if p.name in dependents}
     for dependent_part in dependent_parts:
-        dependent_part.clean(staged_state, stripped_state, step)
+        dependent_part.clean(staged_state, primed_state, step)
 
     # Finally, clean the part in question
-    config.get_part(part_name).clean(staged_state, stripped_state, step)
+    config.get_part(part_name).clean(staged_state, primed_state, step)
 
 
 def _humanize_list(items):
@@ -355,7 +355,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        's' if len(dependents) == 1 else ''))
 
 
-def _clean_parts(part_names, step, config, staged_state, stripped_state):
+def _clean_parts(part_names, step, config, staged_state, primed_state):
     if not step:
         step = 'pull'
 
@@ -367,7 +367,7 @@ def _clean_parts(part_names, step, config, staged_state, stripped_state):
     # Now we can actually clean.
     for part_name in part_names:
         _clean_part_and_all_dependents(
-            part_name, step, config, staged_state, stripped_state)
+            part_name, step, config, staged_state, primed_state)
 
 
 def _remove_directory_if_empty(directory):
@@ -404,8 +404,8 @@ def _cleanup_common_directories(config, project_options):
         logger.info('Cleaning up staging area')
         shutil.rmtree(project_options.stage_dir)
 
-    # If no parts have been stripped, remove snapping area.
-    should_remove_snapdir = max_index < common.COMMAND_ORDER.index('strip')
+    # If no parts have been primed, remove snapping area.
+    should_remove_snapdir = max_index < common.COMMAND_ORDER.index('prime')
     if should_remove_snapdir and os.path.exists(project_options.snap_dir):
         logger.info('Cleaning up snapping area')
         shutil.rmtree(project_options.snap_dir)
@@ -420,8 +420,8 @@ def clean(project_options, parts, step=None):
         parts = [part.name for part in config.all_parts]
 
     staged_state = config.get_project_state('stage')
-    stripped_state = config.get_project_state('strip')
+    primed_state = config.get_project_state('prime')
 
-    _clean_parts(parts, step, config, staged_state, stripped_state)
+    _clean_parts(parts, step, config, staged_state, primed_state)
 
     _cleanup_common_directories(config, project_options)

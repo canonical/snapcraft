@@ -34,7 +34,7 @@ class FilesetsTestCase(integration_tests.TestCase):
         expected_dirs = (
             os.path.join('stage', 'new', 'dir1'),
             os.path.join('stage', 'new', 'dir2'),
-            os.path.join('snap', 'new', 'dir2'),
+            os.path.join('prime', 'new', 'dir2'),
         )
         for expected_dir in expected_dirs:
             self.assertThat(
@@ -42,16 +42,16 @@ class FilesetsTestCase(integration_tests.TestCase):
                 DirExists())
 
         self.assertThat(
-            os.path.join(project_dir, 'snap', 'new', 'dir1'),
+            os.path.join(project_dir, 'prime', 'new', 'dir1'),
             Not(DirExists()))
 
         expected_files = (
             (os.path.join('stage', 'share', 'file1'), 'file1\n'),
             (os.path.join('stage', 'share', 'file2'), 'file2\n'),
             (os.path.join('stage', 'new', 'dir2', 'file1'), 'file1\n'),
-            (os.path.join('snap', 'share', 'file1'), 'file1\n'),
-            (os.path.join('snap', 'share', 'file2'), 'file2\n'),
-            (os.path.join('snap', 'new', 'dir2', 'file1'), 'file1\n'),
+            (os.path.join('prime', 'share', 'file1'), 'file1\n'),
+            (os.path.join('prime', 'share', 'file2'), 'file2\n'),
+            (os.path.join('prime', 'new', 'dir2', 'file1'), 'file1\n'),
         )
         for path, content in expected_files:
             self.assertThat(

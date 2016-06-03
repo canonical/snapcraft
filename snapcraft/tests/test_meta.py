@@ -342,7 +342,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         # Check that the wrapper is created even if there is already a file
         # with the same name.
-        open(os.path.join('snap', 'test_relexepath.wrapper'), 'w').close()
+        open(os.path.join('prime', 'test_relexepath.wrapper'), 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)

@@ -26,7 +26,7 @@ class NilPluginTestCase(integration_tests.TestCase):
         project_dir = 'simple-nil'
         self.run_snapcraft('snap', project_dir)
 
-        dirs = os.listdir(os.path.join(project_dir, 'snap'))
+        dirs = os.listdir(os.path.join(project_dir, 'prime'))
         self.assertEqual(['meta'], dirs)
 
     def test_nil_no_additional_properties(self):

@@ -24,6 +24,7 @@ Usage:
   snapcraft [options] pull [<part> ...]  [--enable-geoip]
   snapcraft [options] build [<part> ...] [--no-parallel-build]
   snapcraft [options] stage [<part> ...]
+  snapcraft [options] prime [<part> ...]
   snapcraft [options] strip [<part> ...]
   snapcraft [options] clean [<part> ...] [--step <step>]
   snapcraft [options] snap [<directory> --output <snap-file>]
@@ -79,7 +80,7 @@ The available lifecycle commands are:
                running parallel build jobs will do so unless
                "--no-parallel-build" is specified.
   stage        Stage the part's built artifacts into the common staging area.
-  strip        Final copy and preparation for the snap.
+  prime        Final copy and preparation for the snap.
   snap         Create a snap.
 
 Calling snapcraft without a COMMAND will default to 'snap'
@@ -185,6 +186,9 @@ def main(argv=None):
     log.configure(log_level=log_level)
     project_options = _get_project_options(args)
 
+    if args['strip']:
+        logger.warning("DEPRECATED: use 'prime' instead of 'strip'")
+        args['prime'] = True
     try:
         return run(args, project_options)
     except Exception as e:
@@ -195,7 +199,7 @@ def main(argv=None):
 
 
 def _get_lifecycle_command(args):
-    lifecycle_commands = ['pull', 'build', 'stage', 'strip']
+    lifecycle_commands = ['pull', 'build', 'stage', 'prime']
     lifecycle_command = [k for k in lifecycle_commands if args[k]]
     if len(lifecycle_command) == 0:
         return None

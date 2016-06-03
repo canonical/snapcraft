@@ -134,7 +134,7 @@ class ProjectOptions:
 
     @property
     def snap_dir(self):
-        return os.path.join(self.__project_dir, 'snap')
+        return os.path.join(self.__project_dir, 'prime')
 
     def __init__(self, use_geoip=False, parallel_builds=True,
                  target_deb_arch=None):
