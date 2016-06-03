@@ -29,7 +29,7 @@ class CleanBuildCommandTestCase(tests.TestCase):
 
     yaml_template = """name: snap-test
 version: 1.0
-summary: test strip
+summary: test cleanbuild
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']
 confinement: strict

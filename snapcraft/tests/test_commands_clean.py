@@ -64,7 +64,7 @@ parts:
                 handler.mark_done('build')
 
                 handler.stage()
-                handler.strip()
+                handler.prime()
 
         return parts
 
@@ -157,14 +157,14 @@ parts:
             'clean2': states.StageState({'clean2'}, set()),
         }
 
-        expected_stripped_state = {
-            'clean0': states.StripState({'clean0'}, set()),
-            'clean1': states.StripState({'clean1'}, set()),
-            'clean2': states.StripState({'clean2'}, set()),
+        expected_primed_state = {
+            'clean0': states.PrimeState({'clean0'}, set()),
+            'clean1': states.PrimeState({'clean1'}, set()),
+            'clean2': states.PrimeState({'clean2'}, set()),
         }
 
         mock_clean.assert_called_with(
-            expected_staged_state, expected_stripped_state, 'foo')
+            expected_staged_state, expected_primed_state, 'foo')
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):

@@ -83,7 +83,7 @@ class PluginTestCase(tests.TestCase):
                          handler.code.options.__dict__,
                          'Expected options to be unmodified')
 
-        handler.migratable_fileset_for('strip')
+        handler.migratable_fileset_for('prime')
         self.assertEqual(expected_options.__dict__,
                          handler.code.options.__dict__,
                          'Expected options to be unmodified')
@@ -532,7 +532,7 @@ class PluginMakedirsTestCase(tests.TestCase):
             os.path.join(parts_dir, part_name, 'build'),
             os.path.join(parts_dir, part_name, 'install'),
             os.path.join(self.path, 'stage'),
-            os.path.join(self.path, 'snap')
+            os.path.join(self.path, 'prime')
         ]
 
     def test_makedirs_with_existing_dirs(self):
@@ -826,7 +826,7 @@ class StateTestCase(tests.TestCase):
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_strip_state(self, mock_copy, mock_find_dependencies):
+    def test_prime_state(self, mock_copy, mock_find_dependencies):
         mock_find_dependencies.return_value = set()
 
         self.assertEqual(None, self.handler.last_step())
@@ -838,15 +838,15 @@ class StateTestCase(tests.TestCase):
 
         self.handler.mark_done('build')
         self.handler.stage()
-        self.handler.strip()
+        self.handler.prime()
 
-        self.assertEqual('strip', self.handler.last_step())
+        self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
         self.assertFalse(mock_copy.called)
 
-        state = self.handler.get_state('strip')
+        state = self.handler.get_state('prime')
 
-        self.assertTrue(type(state) is states.StripState)
+        self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -864,7 +864,7 @@ class StateTestCase(tests.TestCase):
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
-    def test_strip_state_with_dependencies(self, mock_migrate_files,
+    def test_prime_state_with_dependencies(self, mock_migrate_files,
                                            mock_find_dependencies):
         mock_find_dependencies.return_value = {
             '/foo/bar/baz',
@@ -881,9 +881,9 @@ class StateTestCase(tests.TestCase):
 
         self.handler.mark_done('build')
         self.handler.stage()
-        self.handler.strip()
+        self.handler.prime()
 
-        self.assertEqual('strip', self.handler.last_step())
+        self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
@@ -892,9 +892,9 @@ class StateTestCase(tests.TestCase):
                  follow_symlinks=True),
         ])
 
-        state = self.handler.get_state('strip')
+        state = self.handler.get_state('prime')
 
-        self.assertTrue(type(state) is states.StripState)
+        self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -915,7 +915,7 @@ class StateTestCase(tests.TestCase):
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_strip_state_with_snap_keyword(self, mock_copy,
+    def test_prime_state_with_snap_keyword(self, mock_copy,
                                            mock_find_dependencies):
         mock_find_dependencies.return_value = set()
         self.handler.code.options.snap = ['bin/1']
@@ -929,15 +929,15 @@ class StateTestCase(tests.TestCase):
 
         self.handler.mark_done('build')
         self.handler.stage()
-        self.handler.strip()
+        self.handler.prime()
 
-        self.assertEqual('strip', self.handler.last_step())
+        self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
         self.assertFalse(mock_copy.called)
 
-        state = self.handler.get_state('strip')
+        state = self.handler.get_state('prime')
 
-        self.assertTrue(type(state) is states.StripState)
+        self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
@@ -952,7 +952,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.project_options) is dict)
         self.assertEqual(0, len(state.project_options))
 
-    def test_clean_strip_state(self):
+    def test_clean_prime_state(self):
         self.assertEqual(None, self.handler.last_step())
         bindir = os.path.join(self.snap_dir, 'bin')
         os.makedirs(bindir)
@@ -962,14 +962,14 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', states.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'prime', states.PrimeState({'bin/1', 'bin/2'}, {'bin'}))
 
-        self.handler.clean_strip({})
+        self.handler.clean_prime({})
 
         self.assertEqual('stage', self.handler.last_step())
         self.assertFalse(os.path.exists(bindir))
 
-    def test_clean_strip_state_multiple_parts(self):
+    def test_clean_prime_state_multiple_parts(self):
         self.assertEqual(None, self.handler.last_step())
         bindir = os.path.join(self.snap_dir, 'bin')
         os.makedirs(bindir)
@@ -980,18 +980,18 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', states.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'prime', states.PrimeState({'bin/1', 'bin/2'}, {'bin'}))
 
-        self.handler.clean_strip({})
+        self.handler.clean_prime({})
 
         self.assertEqual('stage', self.handler.last_step())
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
         self.assertTrue(
             os.path.exists(os.path.join(bindir, '3')),
-            "Expected 'bin/3' to remain as it wasn't stripped by this part")
+            "Expected 'bin/3' to remain as it wasn't primed by this part")
 
-    def test_clean_strip_state_common_files(self):
+    def test_clean_prime_state_common_files(self):
         self.assertEqual(None, self.handler.last_step())
         bindir = os.path.join(self.snap_dir, 'bin')
         os.makedirs(bindir)
@@ -1001,10 +1001,10 @@ class StateTestCase(tests.TestCase):
         self.handler.mark_done('stage')
 
         self.handler.mark_done(
-            'strip', states.StripState({'bin/1', 'bin/2'}, {'bin'}))
+            'prime', states.PrimeState({'bin/1', 'bin/2'}, {'bin'}))
 
-        self.handler.clean_strip({
-            'other_part': states.StripState({'bin/2'}, {'bin'})
+        self.handler.clean_prime({
+            'other_part': states.PrimeState({'bin/2'}, {'bin'})
         })
 
         self.assertEqual('stage', self.handler.last_step())
@@ -1013,14 +1013,14 @@ class StateTestCase(tests.TestCase):
             os.path.exists(os.path.join(bindir, '2')),
             "Expected 'bin/2' to remain as it's required by other parts")
 
-    def test_clean_strip_old_state(self):
-        self.handler.mark_done('strip', None)
+    def test_clean_prime_old_state(self):
+        self.handler.mark_done('prime', None)
         with self.assertRaises(pluginhandler.MissingState) as raised:
-            self.handler.clean_strip({})
+            self.handler.clean_prime({})
 
         self.assertEqual(
             str(raised.exception),
-            "Failed to clean step 'strip': Missing necessary state. "
+            "Failed to clean step 'prime': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
 
@@ -1034,29 +1034,29 @@ class IsDirtyTestCase(tests.TestCase):
                 target_deb_arch='amd64'))
         self.handler.makedirs()
 
-    def test_strip_is_dirty(self):
+    def test_prime_is_dirty(self):
         self.handler.code.options.snap = ['foo']
         self.handler.mark_done(
-            'strip', states.StripState(
+            'prime', states.PrimeState(
                 set(), set(), set(), self.handler.code.options))
-        self.assertFalse(self.handler.is_clean('strip'),
-                         'Strip step was unexpectedly clean')
-        self.assertFalse(self.handler.is_dirty('strip'),
+        self.assertFalse(self.handler.is_clean('prime'),
+                         'Prime step was unexpectedly clean')
+        self.assertFalse(self.handler.is_dirty('prime'),
                          'Strip step was unexpectedly dirty')
 
-        # Change the `snap` keyword-- thereby making the strip step dirty.
+        # Change the `snap` keyword-- thereby making the prime step dirty.
         self.handler.code.options.snap = ['bar']
-        self.assertFalse(self.handler.is_clean('strip'),
+        self.assertFalse(self.handler.is_clean('prime'),
                          'Strip step was unexpectedly clean')
-        self.assertTrue(self.handler.is_dirty('strip'),
-                        'Expected strip step to be dirty')
+        self.assertTrue(self.handler.is_dirty('prime'),
+                        'Expected prime step to be dirty')
 
-    def test_strip_not_dirty_if_clean(self):
-        self.assertTrue(self.handler.is_clean('strip'),
-                        'Expected vanilla handler to have clean strip step')
+    def test_prime_not_dirty_if_clean(self):
+        self.assertTrue(self.handler.is_clean('prime'),
+                        'Expected vanilla handler to have clean prime step')
         self.assertFalse(
-            self.handler.is_dirty('strip'),
-            'Expected vanilla handler to not have a dirty strip step')
+            self.handler.is_dirty('prime'),
+            'Expected vanilla handler to not have a dirty prime step')
 
     def test_stage_is_dirty(self):
         self.handler.code.options.stage = ['foo']
@@ -1246,7 +1246,7 @@ class CleanTestCase(tests.TestCase):
         if os.path.exists(self.snap_dir):
             shutil.rmtree(self.snap_dir)
 
-    def test_clean_strip(self):
+    def test_clean_prime(self):
         filesets = {
             'all': {
                 'fileset': ['*'],
@@ -1294,17 +1294,17 @@ class CleanTestCase(tests.TestCase):
                 # Stage the installed files
                 handler.stage()
 
-                # Now strip them
-                handler.strip()
+                # Now prime them
+                handler.prime()
 
                 self.assertTrue(os.listdir(self.snap_dir))
 
-                handler.clean_strip({})
+                handler.clean_prime({})
 
                 self.assertFalse(os.listdir(self.snap_dir),
                                  'Expected snapdir to be completely cleaned')
 
-    def test_clean_strip_multiple_independent_parts(self):
+    def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
         handler1 = pluginhandler.load_plugin('part1', 'nil')
         handler1.makedirs()
@@ -1329,32 +1329,32 @@ class CleanTestCase(tests.TestCase):
         handler1.stage()
         handler2.stage()
 
-        # And strip both parts
-        handler1.strip()
-        handler2.strip()
+        # And prime both parts
+        handler1.prime()
+        handler2.prime()
 
-        # Verify that part1's file has been stripped
+        # Verify that part1's file has been primeped
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
 
-        # Verify that part2's file has been stripped
+        # Verify that part2's file has been primeped
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
 
-        # Now clean the strip step for part1
-        handler1.clean_strip({})
+        # Now clean the prime step for part1
+        handler1.clean_prime({})
 
-        # Verify that part1's file is no longer stripped
+        # Verify that part1's file is no longer primeped
         self.assertFalse(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
-            "Expected part1's stripped files to be cleaned")
+            "Expected part1's primeped files to be cleaned")
 
         # Verify that part2's file is still there
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
-            "Expected part2's stripped files to be untouched")
+            "Expected part2's primeped files to be untouched")
 
-    def test_clean_strip_after_fileset_change(self):
+    def test_clean_prime_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
@@ -1366,9 +1366,9 @@ class CleanTestCase(tests.TestCase):
 
         handler.mark_done('build')
         handler.stage()
-        handler.strip()
+        handler.prime()
 
-        # Verify that both files have been stripped
+        # Verify that both files have been primeped
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
         self.assertTrue(
@@ -1377,25 +1377,25 @@ class CleanTestCase(tests.TestCase):
         # Now update the `snap` fileset to only snap one of these files
         handler.code.options.snap = ['bin/1']
 
-        # Now clean the strip step for part1
-        handler.clean_strip({})
+        # Now clean the prime step for part1
+        handler.clean_prime({})
 
-        # Verify that part1's file is no longer stripped
+        # Verify that part1's file is no longer primeped
         self.assertFalse(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
-            'changed since it was stripped.')
+            'changed since it was primeped.')
 
-    def test_clean_old_strip_state(self):
+    def test_clean_old_prime_state(self):
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
 
         open(os.path.join(self.snap_dir, '1'), 'w').close()
 
-        handler.mark_done('strip', None)
+        handler.mark_done('prime', None)
 
         self.assertTrue(os.path.exists(handler.code.partdir))
 
@@ -1403,24 +1403,24 @@ class CleanTestCase(tests.TestCase):
 
         self.assertFalse(os.path.exists(handler.code.partdir))
 
-    def test_clean_strip_old_strip_state(self):
+    def test_clean_prime_old_prime_state(self):
         handler = pluginhandler.load_plugin('part1', 'nil')
         handler.makedirs()
 
-        stripped_file = os.path.join(self.snap_dir, '1')
-        open(stripped_file, 'w').close()
+        primed_file = os.path.join(self.snap_dir, '1')
+        open(primed_file, 'w').close()
 
-        handler.mark_done('strip', None)
+        handler.mark_done('prime', None)
 
         with self.assertRaises(pluginhandler.MissingState) as raised:
-            handler.clean(step='strip')
+            handler.clean(step='prime')
 
         self.assertEqual(
             str(raised.exception),
-            "Failed to clean step 'strip': Missing necessary state. "
+            "Failed to clean step 'prime': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
-        self.assertTrue(os.path.isfile(stripped_file))
+        self.assertTrue(os.path.isfile(primed_file))
 
     def test_clean_stage(self):
         filesets = {
@@ -1545,7 +1545,7 @@ class CleanTestCase(tests.TestCase):
         # Now update the `stage` fileset to only snap one of these files
         handler.code.options.stage = ['bin/1']
 
-        # Now clean the strip step for part1
+        # Now clean the prime step for part1
         handler.clean_stage({})
 
         # Verify that part1's file is no longer staged
@@ -1610,8 +1610,8 @@ class PerStepCleanTestCase(tests.TestCase):
         self.manager_mock.attach_mock(patcher.start(), 'clean_stage')
         self.addCleanup(patcher.stop)
 
-        patcher = patch.object(pluginhandler.PluginHandler, 'clean_strip')
-        self.manager_mock.attach_mock(patcher.start(), 'clean_strip')
+        patcher = patch.object(pluginhandler.PluginHandler, 'clean_prime')
+        self.manager_mock.attach_mock(patcher.start(), 'clean_prime')
         self.addCleanup(patcher.stop)
 
     def test_clean_with_hint(self):
@@ -1621,7 +1621,7 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(4, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}, 'foo'),
+            call.clean_prime({}, 'foo'),
             call.clean_stage({}, 'foo'),
             call.clean_build('foo'),
             call.clean_pull('foo'),
@@ -1634,7 +1634,7 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(4, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}, ''),
+            call.clean_prime({}, ''),
             call.clean_stage({}, ''),
             call.clean_build(''),
             call.clean_pull(''),
@@ -1647,7 +1647,7 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(3, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}, ''),
+            call.clean_prime({}, ''),
             call.clean_stage({}, ''),
             call.clean_build(''),
         ])
@@ -1659,18 +1659,18 @@ class PerStepCleanTestCase(tests.TestCase):
         # Verify the step cleaning order
         self.assertEqual(2, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}, ''),
+            call.clean_prime({}, ''),
             call.clean_stage({}, ''),
         ])
 
-    def test_clean_strip_order(self):
+    def test_clean_prime_order(self):
         handler = pluginhandler.load_plugin('test_part', 'nil')
-        handler.clean(step='strip')
+        handler.clean(step='prime')
 
         # Verify the step cleaning order
         self.assertEqual(1, len(self.manager_mock.mock_calls))
         self.manager_mock.assert_has_calls([
-            call.clean_strip({}, ''),
+            call.clean_prime({}, ''),
         ])
 
 

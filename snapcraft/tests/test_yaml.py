@@ -809,7 +809,7 @@ parts:
                              'Current environment is {!r}'.format(e))
 
     @unittest.mock.patch.object(snapcraft.internal.pluginhandler.PluginHandler,
-                                'get_stripped_dependency_paths')
+                                'get_primed_dependency_paths')
     def test_config_snap_environment_with_dependencies(self,
                                                        mock_get_dependencies):
         library_paths = {
@@ -841,7 +841,7 @@ parts:
                     paths, item))
 
     @unittest.mock.patch.object(snapcraft.internal.pluginhandler.PluginHandler,
-                                'get_stripped_dependency_paths')
+                                'get_primed_dependency_paths')
     def test_config_snap_environment_with_dependencies_but_no_paths(
             self, mock_get_dependencies):
         library_paths = {

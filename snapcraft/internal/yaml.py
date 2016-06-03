@@ -317,7 +317,7 @@ class Config:
         dependency_paths = set()
         for part in self.all_parts:
             env += part.env(snap_dir)
-            dependency_paths |= part.get_stripped_dependency_paths()
+            dependency_paths |= part.get_primed_dependency_paths()
 
         # Dependency paths are only valid if they actually exist. Sorting them
         # here as well so the LD_LIBRARY_PATH is consistent between runs.

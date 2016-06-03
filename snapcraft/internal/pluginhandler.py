@@ -377,9 +377,9 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def strip(self, force=False):
+    def prime(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Stripping')
+        self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
         dependencies = _find_dependencies(self.snapdir)
@@ -387,7 +387,7 @@ class PluginHandler:
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
         # track the part and staged dependencies, since they should have
-        # already been stripped by other means, and migrating them again could
+        # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         part_dependencies = set()
         staged_dependencies = set()
@@ -414,34 +414,34 @@ class PluginHandler:
 
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
-        self.mark_done('strip', states.StripState(
+        self.mark_done('prime', states.PrimeState(
             snap_files, snap_dirs, dependency_paths, self.code.options,
             self._project_options))
 
-    def clean_strip(self, project_stripped_state, hint=''):
-        if self.is_clean('strip'):
+    def clean_prime(self, project_primed_state, hint=''):
+        if self.is_clean('prime'):
             hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning snapping area for',
+            self.notify_part_progress('Skipping cleaning priming area for',
                                       hint)
             return
 
-        self.notify_part_progress('Cleaning snapping area for', hint)
+        self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = self.get_state('strip')
+        state = self.get_state('prime')
 
         try:
             self._clean_shared_area(self.snapdir, state,
-                                    project_stripped_state)
+                                    project_primed_state)
         except AttributeError:
             raise MissingState(
-                "Failed to clean step 'strip': Missing necessary state. "
+                "Failed to clean step 'prime': Missing necessary state. "
                 "This won't work until a complete clean has occurred.")
 
-        self.mark_cleaned('strip')
+        self.mark_cleaned('prime')
 
     def _clean_shared_area(self, shared_directory, part_state, project_state):
-        stripped_files = part_state.files
-        stripped_directories = part_state.directories
+        primed_files = part_state.files
+        primed_directories = part_state.directories
 
         # We want to make sure we don't remove a file or directory that's
         # being used by another part. So we'll examine the state for all parts
@@ -449,17 +449,17 @@ class PluginHandler:
         # common.
         for other_name, other_state in project_state.items():
             if other_state and (other_name != self.name):
-                stripped_files -= other_state.files
-                stripped_directories -= other_state.directories
+                primed_files -= other_state.files
+                primed_directories -= other_state.directories
 
         # Finally, clean the files and directories that are specific to this
         # part.
-        _clean_migrated_files(stripped_files, stripped_directories,
+        _clean_migrated_files(primed_files, primed_directories,
                               shared_directory)
 
-    def get_stripped_dependency_paths(self):
+    def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = self.get_state('strip')
+        state = self.get_state('prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
@@ -470,16 +470,16 @@ class PluginHandler:
     def env(self, root):
         return self.code.env(root)
 
-    def clean(self, project_staged_state=None, project_stripped_state=None,
+    def clean(self, project_staged_state=None, project_primed_state=None,
               step=None, hint=''):
         if not project_staged_state:
             project_staged_state = {}
 
-        if not project_stripped_state:
-            project_stripped_state = {}
+        if not project_primed_state:
+            project_primed_state = {}
 
         try:
-            self._clean_steps(project_staged_state, project_stripped_state,
+            self._clean_steps(project_staged_state, project_primed_state,
                               step, hint)
         except MissingState:
             # If one of the step cleaning rules is missing state, it must be
@@ -500,7 +500,7 @@ class PluginHandler:
                 not os.listdir(self.code.partdir)):
             os.rmdir(self.code.partdir)
 
-    def _clean_steps(self, project_staged_state, project_stripped_state,
+    def _clean_steps(self, project_staged_state, project_primed_state,
                      step=None, hint=None):
         index = None
         if step:
@@ -511,8 +511,8 @@ class PluginHandler:
 
             index = common.COMMAND_ORDER.index(step)
 
-        if not index or index <= common.COMMAND_ORDER.index('strip'):
-            self.clean_strip(project_stripped_state, hint)
+        if not index or index <= common.COMMAND_ORDER.index('prime'):
+            self.clean_prime(project_primed_state, hint)
 
         if not index or index <= common.COMMAND_ORDER.index('stage'):
             self.clean_stage(project_staged_state, hint)

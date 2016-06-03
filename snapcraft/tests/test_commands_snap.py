@@ -32,7 +32,7 @@ class SnapCommandTestCase(testtools.TestCase, tests.TestCase):
 
     yaml_template = """name: snap-test
 version: 1.0
-summary: test strip
+summary: test snapping
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']
 type: {}
@@ -80,7 +80,7 @@ parts:
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
-            'Stripping part1 \n'
+            'Priming part1 \n'
             'Snapping \'snap-test\' ...\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
@@ -88,7 +88,7 @@ parts:
         self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
-        self.verify_state('part1', self.state_dir, 'strip')
+        self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
@@ -110,14 +110,14 @@ parts:
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
-            'Stripping part1 \n'
+            'Priming part1 \n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
         self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
-        self.verify_state('part1', self.state_dir, 'strip')
+        self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
@@ -139,7 +139,7 @@ parts:
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
-            'Stripping part1 \n'
+            'Priming part1 \n'
             'Snapping \'snap-test\' ...\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
@@ -147,7 +147,7 @@ parts:
         self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
-        self.verify_state('part1', self.state_dir, 'strip')
+        self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
@@ -156,14 +156,14 @@ parts:
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
-    def test_snap_defaults_with_parts_in_strip(self):
+    def test_snap_defaults_with_parts_in_prime(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        # Pretend this part has already been stripped
+        # Pretend this part has already been primed
         os.makedirs(self.state_dir)
-        open(os.path.join(self.state_dir, 'strip'), 'w').close()
+        open(os.path.join(self.state_dir, 'prime'), 'w').close()
 
         main(['snap'])
 
@@ -171,7 +171,7 @@ parts:
             'Skipping pull part1 (already ran)\n'
             'Skipping build part1 (already ran)\n'
             'Skipping stage part1 (already ran)\n'
-            'Skipping strip part1 (already ran)\n'
+            'Skipping prime part1 (already ran)\n'
             'Snapping \'snap-test\' ...\n'
             'Snapped snap-test_1.0_amd64.snap\n',
             fake_logger.output)
@@ -274,7 +274,7 @@ type: os
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
-            'Stripping part1 \n'
+            'Priming part1 \n'
             'Snapping \'snap-test\' ...\n'
             'Snapped mysnap.snap\n',
             fake_logger.output)
@@ -282,7 +282,7 @@ type: os
         self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
 
-        self.verify_state('part1', self.state_dir, 'strip')
+        self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.snap_dir, 'mysnap.snap',
