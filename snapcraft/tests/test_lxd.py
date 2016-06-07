@@ -40,6 +40,7 @@ class LXDTestCase(tests.TestCase):
 
         project_options = ProjectOptions()
         lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+        expected_arch = project_options.deb_arch
 
         self.assertEqual(
             'Setting up container with project assets\n'
@@ -51,7 +52,8 @@ class LXDTestCase(tests.TestCase):
         mock_call.assert_has_calls([
             call(['lxc', 'remote', 'add', 'my-pet',
                   'https://images.linuxcontainers.org:8443']),
-            call(['lxc', 'launch', 'my-pet:ubuntu/xenial/amd64',
+            call(['lxc', 'launch',
+                  'my-pet:ubuntu/xenial/{}'.format(expected_arch),
                   'snapcraft-my-pet']),
             call(['lxc', 'file', 'push', 'project.tar',
                   'snapcraft-my-pet//root/project.tar']),
