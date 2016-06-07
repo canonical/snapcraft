@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import atexit
+import glob
 import inspect
 import logging
 import os
@@ -149,10 +150,11 @@ class SnapsTestCase(testtools.TestCase):
 
     def install_snap(self, snap_content_dir, snap_name, version):
         if not config.get('skip-install', False):
-            snap_file_name = '{}_{}_amd64.snap'.format(
+            snap_file_name = '{}_{}_*.snap'.format(
                 snap_name, version)
-            snap_local_path = os.path.join(
+            snap_local_glob_path = os.path.join(
                 self.src_dir, snap_content_dir, snap_file_name)
+            snap_local_path = glob.glob(snap_local_glob_path)[0]
             self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
             snap_path_in_testbed = os.path.join(
                 '/home/ubuntu/', snap_file_name)
