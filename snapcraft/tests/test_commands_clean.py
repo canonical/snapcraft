@@ -195,6 +195,7 @@ parts:
         mock_clean.assert_called_with(
             expected_staged_state, expected_primed_state, 'prime')
 
+
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):
 
     def setUp(self):
