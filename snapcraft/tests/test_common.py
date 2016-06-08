@@ -25,7 +25,10 @@ class CommonTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        # reset all default paths
+        self.addCleanup(self._reset_default_paths)
+
+    def _reset_default_paths(self):
+        """Reset all default paths"""
         common._plugindir = common._DEFAULT_PLUGINDIR
         common._schemadir = common._DEFAULT_SCHEMADIR
         common._librariesdir = common._DEFAULT_LIBRARIESDIR
