@@ -229,7 +229,7 @@ def run(args, project_options):
         argless_command()
     elif args['clean']:
         step = args['--step']
-        if args['--step'] == 'strip':
+        if step == 'strip':
             logger.warning('DEPRECATED: Use `prime` instead of `strip` '
                            'as the step to clean')
             step = 'prime'
