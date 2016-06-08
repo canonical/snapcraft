@@ -1,3 +1,9 @@
+snapcraft (2.10.1) xenial; urgency=medium
+
+  * Backwards compatible clean with strip (#556) (LP: #1590256)
+
+ -- Sergio Schvezov <sergiusens@gmail.com>  Wed, 08 Jun 2016 16:32:27 -0300
+
 snapcraft (2.10) xenial; urgency=medium
 
   [ Martin Wimpress ]
