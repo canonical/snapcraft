@@ -228,7 +228,12 @@ def run(args, project_options):
     elif argless_command:
         argless_command()
     elif args['clean']:
-        lifecycle.clean(project_options, args['<part>'], args['--step'])
+        step = args['--step']
+        if args['--step'] == 'strip':
+            logger.warning('DEPRECATED: Use `prime` instead of `strip` '
+                           'as the step to clean')
+            step = 'prime'
+        lifecycle.clean(project_options, args['<part>'], step)
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:
