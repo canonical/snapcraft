@@ -117,7 +117,7 @@ from snapcraft.internal.common import (
 
 
 logger = logging.getLogger(__name__)
-_SNAPCRAFT_TOUR_DIR = "snapcraft-tour"
+_SNAPCRAFT_TOUR_DIR = "./snapcraft-tour/"
 
 
 def _get_version():
@@ -143,7 +143,7 @@ def _scaffold_examples(directory):
         dest_dir = os.path.join(dest_dir, _SNAPCRAFT_TOUR_DIR)
         shutil.copytree(get_tourdir(), dest_dir)
 
-    print("Snapcraft tour initialized in {}.\n"
+    print("Snapcraft tour initialized in {}\n"
           "Instructions are in the README, or "
           "https://snapcraft.io/create/#begin".format(directory))
 
