@@ -49,11 +49,13 @@ class TestScaffoldExample(TestCase):
     def setUp(self):
         super().setUp()
         self.temp_dir = None
+        self.cwd = os.getcwd()
 
     def tearDown(self):
         with suppress(OSError):
             if self.temp_dir:
                 shutil.rmtree(self.temp_dir)
+        os.chdir(self.cwd)
         super().tearDown()
 
     @mock.patch('snapcraft.main.get_tourdir')
@@ -76,6 +78,20 @@ class TestScaffoldExample(TestCase):
             dest_path = os.path.join(temp_dir, "snapcraft-tour")
 
             self.assertTrue(os.path.isdir(dest_path), "dest path exists: {}")
+
+    @mock.patch('snapcraft.main.get_tourdir')
+    def test_copy_example_existing_default_path(self, mock_get_tourdir):
+        mock_get_tourdir.return_value = \
+            os.path.join(os.path.dirname(__file__), '..', '..', 'tour')
+        with TemporaryDirectory() as temp_dir:
+            # we create assets with default name in cwd
+            os.chdir(temp_dir)
+            default_dir = snapcraft.main._SNAPCRAFT_TOUR_DIR
+            os.makedirs(default_dir)
+
+            self.assertRaises(FileExistsError,
+                              snapcraft.main._scaffold_examples,
+                              default_dir)
 
     @mock.patch('snapcraft.main.get_tourdir')
     def test_copy_example_on_existing_file(self, mock_get_tourdir):

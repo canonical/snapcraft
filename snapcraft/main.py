@@ -132,10 +132,15 @@ def _scaffold_examples(directory):
     dest_dir = os.path.abspath(directory)
 
     # If dest_dir doesn't exist, we dump all examples in it.
-    # If it does exist, we dump them into a subdirectory
+    # If it does exist, we dump them into a subdirectory if it's not
+    # the default dir.
     try:
         shutil.copytree(get_tourdir(), dest_dir)
     except FileExistsError:
+        # default crafted directory shouldn't add itself inside
+        if directory == _SNAPCRAFT_TOUR_DIR:
+            raise FileExistsError("{} already exists, please specify a "
+                                  "destination directory.".format(directory))
         # don't event try to copy if the dest exists already
         if not os.path.isdir(dest_dir):
             raise NotADirectoryError("{} is a file, can't be used as a "
