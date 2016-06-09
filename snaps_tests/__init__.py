@@ -163,7 +163,7 @@ class SnapsTestCase(testtools.TestCase):
                 ['rm', snap_path_in_testbed])
             cmd = ['sudo', 'snap', 'install', snap_path_in_testbed]
             if devmode:
-                cmd.append("--devmode")
+                cmd.append('--devmode')
             try:
                 self.snappy_testbed.run_command(cmd)
             except subprocess.CalledProcessError as e:
