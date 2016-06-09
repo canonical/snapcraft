@@ -33,6 +33,7 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
+  snapcraft [options] tour [<directory>]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -70,6 +71,8 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  tour         Setup the snapcraft examples tour in the specified directory,
+               or ./snapcraft-tour/.
   upload       Upload a snap to the Ubuntu Store.
 
 The available lifecycle commands are:
@@ -238,9 +241,8 @@ def run(args, project_options):
         snapcraft.upload(args['<snap-file>'])
     elif args['cleanbuild']:
         lifecycle.cleanbuild(project_options),
-    # disable until the tour command is activated
-    # elif args['tour']:
-    #    _scaffold_examples(args['<directory>'] or _SNAPCRAFT_TOUR_DIR)
+    elif args['tour']:
+        _scaffold_examples(args['<directory>'] or _SNAPCRAFT_TOUR_DIR)
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
