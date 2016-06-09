@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import suppress
 import os
-import shutil
 import sys
-from tempfile import mktemp, TemporaryDirectory, NamedTemporaryFile
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from unittest import mock
 
 import snapcraft.main
@@ -29,7 +27,6 @@ from snapcraft.tests import TestCase
 class TestExamplesCmd(TestCase):
 
     def test_call_scaffold_with_parameter(self):
-        return  # disabled until the tour command is activated
         sys.argv = ['/usr/bin/snapcraft', 'tour', '/tmp/foo']
 
         with mock.patch('snapcraft.main._scaffold_examples') as mock_cmd:
@@ -37,7 +34,6 @@ class TestExamplesCmd(TestCase):
             mock_cmd.assert_called_once_with("/tmp/foo")
 
     def test_call_scaffold_without_parameter(self):
-        return  # disabled until the tour command is activated
         sys.argv = ['/usr/bin/snapcraft', 'tour']
 
         with mock.patch('snapcraft.main._scaffold_examples') as mock_cmd:
@@ -48,29 +44,20 @@ class TestExamplesCmd(TestCase):
 
 class TestScaffoldExample(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.temp_dir = None
-
-    def tearDown(self):
-        with suppress(OSError):
-            if self.temp_dir:
-                shutil.rmtree(self.temp_dir)
-        super().tearDown()
-
     @mock.patch('snapcraft.main.get_tourdir')
     def test_copy_example_unexisting_path(self, mock_get_tourdir):
         mock_get_tourdir.return_value = \
             os.path.join(os.path.dirname(__file__), '..', '..', 'tour')
-        self.temp_dir = mktemp()
-        snapcraft.main._scaffold_examples(self.temp_dir)
+        dest_path = os.path.join(self.path, 'foo')
+        snapcraft.main._scaffold_examples(dest_path)
 
-        self.assertTrue(os.path.isdir(self.temp_dir), "dest path exists")
+        self.assertTrue(os.path.isdir(dest_path), "dest path exists")
 
     @mock.patch('snapcraft.main.get_tourdir')
     def test_copy_example_existing_path(self, mock_get_tourdir):
         mock_get_tourdir.return_value = \
             os.path.join(os.path.dirname(__file__), '..', '..', 'tour')
+        # we create a path which isn't cwd
         with TemporaryDirectory() as temp_dir:
             snapcraft.main._scaffold_examples(temp_dir)
 
@@ -78,6 +65,18 @@ class TestScaffoldExample(TestCase):
             dest_path = os.path.join(temp_dir, "snapcraft-tour")
 
             self.assertTrue(os.path.isdir(dest_path), "dest path exists: {}")
+
+    @mock.patch('snapcraft.main.get_tourdir')
+    def test_copy_example_existing_default_path(self, mock_get_tourdir):
+        mock_get_tourdir.return_value = \
+            os.path.join(os.path.dirname(__file__), '..', '..', 'tour')
+        # we create the default dir name in cwd
+        default_dir = snapcraft.main._SNAPCRAFT_TOUR_DIR
+        os.makedirs(default_dir)
+
+        self.assertRaises(FileExistsError,
+                          snapcraft.main._scaffold_examples,
+                          default_dir)
 
     @mock.patch('snapcraft.main.get_tourdir')
     def test_copy_example_on_existing_file(self, mock_get_tourdir):
