@@ -59,9 +59,11 @@ Description: easily craft snaps
 Package: snapcraft-parser
 Architecture: all
 Depends: snapcraft (= ${binary:Version}), ${misc:Depends}, ${python3:Depends}
-Description: the cloud parser for shared snapcraft parts.
+Description: cloud parser for shared snapcraft parts.
  The parser is in charge of getting all the shared parts out there
- indexed into a common cacheable file.
+ indexed into a common cacheable file. It processes multiple origin's
+ specified in yaml documents and outputs `parts` which snapcraft can
+ utilize.
 
 Package: snapcraft-examples
 Architecture: all
