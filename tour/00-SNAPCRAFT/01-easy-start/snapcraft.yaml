@@ -1,8 +1,9 @@
 name: hello
-version: 2.10
+version: "2.10"
 summary: GNU Hello, the "hello world" snap
 description: GNU hello prints a friendly greeting.
   This is part of the snapcraft tour at https://snapcraft.io/create/
+confinement: strict
 
 apps:
   hello:

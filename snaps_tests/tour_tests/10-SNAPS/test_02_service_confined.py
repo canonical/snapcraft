@@ -18,13 +18,11 @@
 import snaps_tests
 
 
-class EasyStartTestCase(snaps_tests.SnapsTestCase):
+class ServiceConfinedTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = '02-parts'
+    snap_content_dir = '02-service-confined'
 
     def test_hello(self):
-        self.skipTest('Skip while the proxy rule is added by IS.')
         self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'hello-debug', '2.10')
-        self.run_command_in_snappy_testbed(
-            '/snap/bin/hello-debug.bash --version')
+        self.install_snap(self.snap_content_dir, 'hello-world-service', '0.1')
+        self.assert_service_running('hello-world-service', 'hello-service')

@@ -148,7 +148,8 @@ class SnapsTestCase(testtools.TestCase):
             self.addDetail('output', content.text_content(str(e.output)))
             raise
 
-    def install_snap(self, snap_content_dir, snap_name, version):
+    def install_snap(self, snap_content_dir, snap_name, version,
+                     devmode=False):
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_*.snap'.format(
                 snap_name, version)
@@ -162,9 +163,11 @@ class SnapsTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', snap_path_in_testbed])
+            cmd = ['sudo', 'snap', 'install', snap_path_in_testbed]
+            if devmode:
+                cmd.append('--devmode')
             try:
-                self.snappy_testbed.run_command([
-                    'sudo', 'snap', 'install', snap_path_in_testbed])
+                self.snappy_testbed.run_command(cmd)
             except subprocess.CalledProcessError as e:
                 self.addDetail(
                     'ssh output', content.text_content(str(e.output)))
