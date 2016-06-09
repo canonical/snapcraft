@@ -1,0 +1,2 @@
+# This is just a demo meant to be used with snapcraft
+snapcraft-examples: privacy-breach-uses-embedded-file *
