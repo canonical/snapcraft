@@ -147,7 +147,8 @@ class SnapsTestCase(testtools.TestCase):
             self.addDetail('output', content.text_content(str(e.output)))
             raise
 
-    def install_snap(self, snap_content_dir, snap_name, version, devmode=False):
+    def install_snap(self, snap_content_dir, snap_name, version,
+                     devmode=False):
         if not config.get('skip-install', False):
             snap_file_name = '{}_{}_amd64.snap'.format(
                 snap_name, version)
