@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import shutil
 
 from unittest import mock
+
+import fixtures
 
 from snapcraft.main import main
 from snapcraft.internal import (
@@ -165,6 +168,32 @@ parts:
 
         mock_clean.assert_called_with(
             expected_staged_state, expected_primed_state, 'foo')
+
+    @mock.patch.object(pluginhandler.PluginHandler, 'clean')
+    def test_cleaning_with_strip_does_prime_and_warns(self, mock_clean):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml(n=3)
+
+        main(['clean', '--step=strip'])
+
+        expected_staged_state = {
+            'clean0': states.StageState({'clean0'}, set()),
+            'clean1': states.StageState({'clean1'}, set()),
+            'clean2': states.StageState({'clean2'}, set()),
+        }
+
+        expected_primed_state = {
+            'clean0': states.PrimeState({'clean0'}, set()),
+            'clean1': states.PrimeState({'clean1'}, set()),
+            'clean2': states.PrimeState({'clean2'}, set()),
+        }
+
+        self.assertEqual('DEPRECATED: Use `prime` instead of `strip` as '
+                         'the step to clean\n', fake_logger.output)
+        mock_clean.assert_called_with(
+            expected_staged_state, expected_primed_state, 'prime')
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):

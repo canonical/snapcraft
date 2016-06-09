@@ -65,3 +65,19 @@ class CleanPrimeStepTestCase(integration_tests.TestCase):
         self.run_snapcraft('prime', self.project_dir)
         self.assertThat(os.path.join(bindir, 'file1'), FileExists())
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
+
+    def test_clean_with_deprecated_strip_step(self):
+        snapdir = os.path.join(self.project_dir, 'prime')
+        bindir = os.path.join(snapdir, 'bin')
+        self.assertThat(os.path.join(bindir, 'file1'), FileExists())
+        self.assertThat(os.path.join(bindir, 'file2'), FileExists())
+
+        self.run_snapcraft(['clean', '--step=strip'], self.project_dir)
+        self.assertThat(snapdir, Not(DirExists()))
+        self.assertThat(os.path.join(self.project_dir, 'stage'), DirExists())
+        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+
+        # Now try to prime again
+        self.run_snapcraft('prime', self.project_dir)
+        self.assertThat(os.path.join(bindir, 'file1'), FileExists())
+        self.assertThat(os.path.join(bindir, 'file2'), FileExists())
