@@ -1,3 +1,23 @@
+snapcraft (2.11) xenial; urgency=medium
+
+  [ Leo Arias ]
+  * Make the lxd unit test pass in architectures other than amd64. (#552)
+    (LP: #1589747)
+  * Support running the snaps tests in multiple architectures (#554)
+    (LP: #1589779)
+  * Make the IsDirty unit test case pass in architectures other than
+    amd64. (#553) (LP: #1589752)
+
+  [ Didier Roche ]
+  * Reenable get and set tourdir unit tests (#551) (LP: #1589782)
+  * Add finale tour examples and tests (#558) (LP: #1590903)
+  * Reenable tour command (#559) (LP: #1590906)
+
+  [ Sergio Schvezov ]
+  * Fix or address lintian errors and warnings (#561) (LP: #1588980)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 09 Jun 2016 18:46:22 -0300
+
 snapcraft (2.10.1) xenial; urgency=medium
 
   * Backwards compatible clean with strip (#556) (LP: #1590256)
