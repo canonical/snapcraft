@@ -1030,8 +1030,7 @@ class IsDirtyTestCase(tests.TestCase):
         super().setUp()
 
         self.handler = pluginhandler.load_plugin(
-            'test-part', 'nil', project_options=snapcraft.ProjectOptions(
-                target_deb_arch='amd64'))
+            'test-part', 'nil', project_options=snapcraft.ProjectOptions())
         self.handler.makedirs()
 
     def test_prime_is_dirty(self):
