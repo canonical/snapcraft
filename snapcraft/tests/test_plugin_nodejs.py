@@ -59,7 +59,7 @@ class NodePluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -81,7 +81,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
@@ -105,7 +105,7 @@ class NodePluginTestCase(tests.TestCase):
                       cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs._get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(plugin.options.node_engine),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download(),
             mock.call().provision(
@@ -145,8 +145,8 @@ class NodePluginTestCase(tests.TestCase):
                 'source-tag': {'default': '', 'type:': 'string'},
                 'source-type': {'default': '', 'type': 'string'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir'],
-            'build-properties': ['node-packages', 'node-engine'],
+                                'source-tag', 'source-subdir', 'node-engine'],
+            'build-properties': ['node-packages'],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)

@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The nodejs plugin is useful for node/npm based parts.
+"""The gulp plugin is useful for parts that use gulp tasks.
 
-The plugin uses node to install dependencies from `package.json`. It
-also sets up binaries defined in `package.json` into the `PATH`.
+The plugin uses gulp to drive the build.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -25,7 +24,7 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - node-packages:
+    - gulp-tasks:
       (list)
       A list of dependencies to fetch using npm.
     - node-engine:
@@ -35,50 +34,37 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
-import platform
 import shutil
 
 import snapcraft
 from snapcraft import sources
+from snapcraft.plugins import nodejs
 
 logger = logging.getLogger(__name__)
 
-_NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '4.4.4'
-_NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
-_NODEJS_ARCHES = {
-    'i686': 'x86',
-    'x86_64': 'x64',
-    'armv7l': 'armv7l',
-}
 
-
-class NodePlugin(snapcraft.BasePlugin):
+class GulpPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def schema(cls):
         schema = super().schema()
+        node_properties = nodejs.NodePlugin.schema()['properties']
 
-        schema['properties']['node-packages'] = {
+        schema['properties']['gulp-tasks'] = {
             'type': 'array',
             'minitems': 1,
             'uniqueItems': True,
             'items': {
                 'type': 'string'
             },
-            'default': []
+            'default': [],
         }
-        schema['properties']['node-engine'] = {
-            'type': 'string',
-            'default': _NODEJS_VERSION
-        }
-
-        if 'required' in schema:
-            del schema['required']
+        schema['properties']['node-engine'] = node_properties['node-engine']
+        schema['required'] = ['gulp-tasks']
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append('node-packages')
+        schema['build-properties'] = ['gulp-tasks']
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['pull-properties'].append('node-engine')
@@ -88,7 +74,7 @@ class NodePlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self._npm_dir = os.path.join(self.partdir, 'npm')
-        self._nodejs_tar = sources.Tar(get_nodejs_release(
+        self._nodejs_tar = sources.Tar(nodejs.get_nodejs_release(
             self.options.node_engine), self._npm_dir)
 
     def pull(self):
@@ -105,23 +91,16 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
+
         self._nodejs_tar.provision(
-            self.installdir, clean_target=False, keep_tarball=True)
-        for pkg in self.options.node_packages:
-            self.run(['npm', 'install', '-g', pkg])
+            self._npm_dir, clean_target=False, keep_tarball=True)
+
+        env = os.environ.copy()
+        env['PATH'] = '{}:{}'.format(
+            os.path.join(self._npm_dir, 'bin'), env['PATH'])
+        self.run(['npm', 'install', '-g', 'gulp-cli'], env=env)
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
-            self.run(['npm', 'install', '-g'])
-
-
-def _get_nodejs_base(node_engine):
-    machine = platform.machine()
-    if machine not in _NODEJS_ARCHES:
-        raise EnvironmentError('architecture not supported ({})'.format(
-            machine))
-    return _NODEJS_BASE.format(version=node_engine,
-                               arch=_NODEJS_ARCHES[machine])
-
-
-def get_nodejs_release(node_engine):
-    return _NODEJS_TMPL.format(version=node_engine,
-                               base=_get_nodejs_base(node_engine))
+            self.run(['npm', 'install', '--only-development'], env=env)
+        self.run([
+            os.path.join(self._npm_dir, 'bin', 'gulp')] +
+            self.options.gulp_tasks, env=env)
