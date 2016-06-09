@@ -145,7 +145,8 @@ def _scaffold_examples(directory):
         if not os.path.isdir(dest_dir):
             raise NotADirectoryError("{} is a file, can't be used as a "
                                      "destination".format(dest_dir))
-        dest_dir = os.path.join(dest_dir, _SNAPCRAFT_TOUR_DIR)
+        dest_dir = os.path.normpath(os.path.join(dest_dir,
+                                                 _SNAPCRAFT_TOUR_DIR))
         shutil.copytree(get_tourdir(), dest_dir)
 
     print("Snapcraft tour initialized in {}\n"
