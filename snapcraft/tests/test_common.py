@@ -23,17 +23,6 @@ from snapcraft import tests
 
 class CommonTestCase(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.addCleanup(self._reset_default_paths)
-
-    def _reset_default_paths(self):
-        """Reset all default paths"""
-        common._plugindir = common._DEFAULT_PLUGINDIR
-        common._schemadir = common._DEFAULT_SCHEMADIR
-        common._librariesdir = common._DEFAULT_LIBRARIESDIR
-        common._tourdir = common._DEFAULT_TOURDIR
-
     def test_get_default_plugindir(self):
         self.assertEqual(
             '/usr/share/snapcraft/plugins', common.get_plugindir())
