@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import suppress
 import os
-import shutil
 import sys
-from tempfile import mktemp, TemporaryDirectory, NamedTemporaryFile
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from unittest import mock
 
 import snapcraft.main
