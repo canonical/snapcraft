@@ -17,21 +17,19 @@
 import os
 import subprocess
 
-from snapcraft.tests import TestCase
+import integration_tests
 
 
-class TestParser(TestCase):
-    '''Test bin/snapcraft-parser'''
+class TestParser(integration_tests.TestCase):
+    """Test bin/snapcraft-parser"""
 
     def test_parser_basic(self):
-        '''Test snapcraft-parser basic usage'''
-        src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                '..', 'bin', 'snapcraft-parser')
+        """Test snapcraft-parser basic usage"""
 
-        args = ['python3', src_path, '--index',
+        args = [self.snapcraft_parser_command, '--index',
                 'https://wiki.ubuntu.com/snapcraft/parts?action=raw',
                 '--output', 'parts.yaml']
-        with open(os.path.devnull, 'w') as devnull:
-            subprocess.check_call(args, stderr=devnull, stdout=devnull)
+        subprocess.check_call(args, stderr=subprocess.DEVNULL,
+                              stdout=subprocess.DEVNULL)
 
         self.assertTrue(os.path.exists('parts.yaml'))
