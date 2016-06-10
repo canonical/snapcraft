@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#-*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015, 2016 Canonical Ltd
 #
@@ -27,7 +27,7 @@ code for that part, and how to unpack it if necessary.
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: git, bzr, hg, tar or zip
+  - source-type: git, bzr, hg, tar, zip, or subversion
 
     In some cases the source string is not enough to identify the version
     control system or compression algorithim. The source-type key can tell
@@ -291,6 +291,23 @@ class Zip(FileBase):
         if not keep_zip:
             os.remove(zip)
 
+class Subversion(Base):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+        if source_tag:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-tag for a subversion source')
+        elif source_branch:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a subversion source')
+
+    def pull(self):
+        if os.path.exists(os.path.join(self.source_dir, '.svn')):
+            subprocess.check_call(['svn', 'update', self.source, self.source_dir])
+        else:
+            subprocess.check_call(['svn', 'checkout', self.source, self.source_dir])
 
 class Local(Base):
 
@@ -348,6 +365,8 @@ def get_required_packages(options):
         packages.append('tar')
     elif source_type == 'hg' or source_type == 'mercurial':
         packages.append('mercurial')
+    elif source_type == 'subversion':
+        packages.append('subversion')
 
     return packages
 
@@ -359,6 +378,7 @@ _source_handler = {
     'mercurial': Mercurial,
     'tar': Tar,
     'zip': Zip,
+    'subversion': Subversion,
 }
 
 
@@ -383,6 +403,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
         source_type = 'tar'
     elif source.endswith('.zip'):
         source_type = 'zip'
+    elif source.startswith('svn:'):
+        source_type = 'subversion'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
     elif not os.path.isdir(source) and not ignore_errors:
