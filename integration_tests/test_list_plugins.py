@@ -21,7 +21,7 @@ class ListPluginsTestCase(integration_tests.TestCase):
 
     def test_list_plugins(self):
         output = self.run_snapcraft('list-plugins')
-        expected = ('ant        catkin  copy  jdk     kernel  maven  '
+        expected = ('ant        catkin  copy  grunt  jdk     kernel  maven  '
                     'nodejs   python3  tar-content\n'
                     'autotools  cmake   go    kbuild  make    nil    '
                     'python2  scons  \n')
