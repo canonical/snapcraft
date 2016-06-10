@@ -27,8 +27,9 @@ class ListPluginsCommandTestCase(tests.TestCase):
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
         'ant        catkin  copy  jdk     kernel  maven  nodejs   python3  '
-        'tar-content\n'
-        'autotools  cmake   go    kbuild  make    nil    python2  scons  \n')
+        'scons      \n'
+        'autotools  cmake   go    kbuild  make    nil    python2  qmake    '
+        'tar-content\n')
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     @mock.patch('subprocess.check_output')
@@ -42,9 +43,9 @@ class ListPluginsCommandTestCase(tests.TestCase):
     def test_list_plugins_small_terminal(self, mock_subprocess, mock_stdout):
         mock_subprocess.return_value = "60"
         expected_output = (
-            'ant        cmake  jdk     make   nodejs   scons      \n'
-            'autotools  copy   kbuild  maven  python2  tar-content\n'
-            'catkin     go     kernel  nil    python3\n')
+            'ant        cmake  jdk     make   nodejs   qmake      \n'
+            'autotools  copy   kbuild  maven  python2  scons      \n'
+            'catkin     go     kernel  nil    python3  tar-content\n')
         main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), expected_output)
 
