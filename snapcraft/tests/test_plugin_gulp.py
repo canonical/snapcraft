@@ -1,0 +1,147 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright (C) 2015 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+
+from os import path
+from unittest import mock
+
+import snapcraft
+from snapcraft.plugins import gulp, nodejs
+from snapcraft import tests
+
+
+class GulpPluginTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.project_options = snapcraft.ProjectOptions()
+
+        patcher = mock.patch('snapcraft.internal.common.run')
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.sources.Tar')
+        self.tar_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('sys.stdout')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_pull_local_sources(self):
+        class Options:
+            source = '.'
+            gulp_tasks = []
+            node_engine = '4'
+
+        plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.assertFalse(self.run_mock.called, 'run() was called')
+        self.tar_mock.assert_has_calls([
+            mock.call(
+                nodejs.get_nodejs_release(plugin.options.node_engine),
+                path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
+            mock.call().download()])
+
+    def test_build(self):
+        self.skipTest('I cannot mock.patch.dict')
+
+        class Options:
+            source = '.'
+            gulp_tasks = []
+            node_engine = '4'
+
+        plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        with mock.patch.dict(os.environ, {'PATH': 'bin'}):
+            plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['npm', 'install', '-g', 'gulp-cli'],
+                      cwd=plugin.builddir, env={})])
+        self.tar_mock.assert_has_calls([
+            mock.call(
+                nodejs.get_nodejs_release(plugin.options.node_engine),
+                path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
+            mock.call().provision(
+                plugin._npm_dir, clean_target=False, keep_tarball=True)])
+
+    @mock.patch('platform.machine')
+    def test_unsupported_arch_raises_exception(self, machine_mock):
+        machine_mock.return_value = 'fantasy-arch'
+
+        class Options:
+            source = None
+            gulp_tasks = []
+            node_engine = '4'
+
+        with self.assertRaises(EnvironmentError) as raised:
+            gulp.GulpPlugin('test-part', Options(), self.project_options)
+
+        self.assertEqual(raised.exception.__str__(),
+                         'architecture not supported (fantasy-arch)')
+
+    def test_schema(self):
+        self.maxDiff = None
+        plugin_schema = {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'additionalProperties': False,
+            'properties': {
+                'gulp-tasks': {'default': [],
+                               'items': {'type': 'string'},
+                               'minitems': 1,
+                               'type': 'array',
+                               'uniqueItems': True},
+                'node-engine': {'default': '4.4.4', 'type': 'string'},
+                'source': {'type': 'string'},
+                'source-branch': {'default': '', 'type': 'string'},
+                'source-subdir': {'default': None, 'type': 'string'},
+                'source-tag': {'default': '', 'type:': 'string'},
+                'source-type': {'default': '', 'type': 'string'}},
+            'pull-properties': ['source', 'source-type', 'source-branch',
+                                'source-tag', 'source-subdir', 'node-engine'],
+            'build-properties': ['gulp-tasks'],
+            'required': ['gulp-tasks'],
+            'type': 'object'}
+
+        self.assertEqual(gulp.GulpPlugin.schema(), plugin_schema)
+
+    def test_clean_pull_step(self):
+        class Options:
+            source = '.'
+            gulp_tasks = []
+            node_engine = '4'
+
+        plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.assertTrue(os.path.exists(plugin._npm_dir))
+
+        plugin.clean_pull()
+
+        self.assertFalse(os.path.exists(plugin._npm_dir))
