@@ -26,7 +26,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - gulp-tasks:
       (list)
-      A list of dependencies to fetch using npm.
+      A list of gulp tasks to run.
     - node-engine:
       (string)
       The version of nodejs you want the snap to run on.
