@@ -1,7 +1,6 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -90,7 +89,7 @@ class QMakeTestCase(tests.TestCase):
                          '"string", but it was "{}"'
                          .format(options_items_type))
 
-        # Check install-via property
+        # Check qt-version property
         qt_version = properties['qt-version']
         self.assertTrue('enum' in qt_version,
                         'Expected "enum" to be included in "qt_version"')
@@ -116,10 +115,18 @@ class QMakeTestCase(tests.TestCase):
         self.assertTrue('qt-version' in required,
                         'Expected "qt-version" to be required')
 
+    def test_unsupported_qt_version(self):
+        self.options.qt_version = 'qt3'
+        with self.assertRaises(RuntimeError) as raised:
+            qmake.QmakePlugin('test-part', self.options, self.project_options)
+
+        self.assertEqual(str(raised.exception),
+                         "Unsupported Qt version: 'qt3'")
+
     def test_build_referencing_sourcedir_if_no_subdir(self):
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(plugin.builddir)
+        os.makedirs(os.path.dirname(plugin.builddir))
         plugin.build()
 
         self.run_mock.assert_has_calls([
@@ -135,7 +142,7 @@ class QMakeTestCase(tests.TestCase):
 
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(plugin.builddir)
+        os.makedirs(os.path.dirname(plugin.builddir))
         plugin.build()
 
         sourcedir = os.path.join(
@@ -147,14 +154,25 @@ class QMakeTestCase(tests.TestCase):
                        'INSTALL_ROOT={}'.format(plugin.installdir)],
                       cwd=plugin.builddir, env=mock.ANY)])
 
-    def test_build_environment(self):
+    def test_build_environment_qt4(self):
+        self.options.qt_version = 'qt4'
+        plugin = qmake.QmakePlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(os.path.dirname(plugin.builddir))
+        plugin.build()
+
+        self.assert_expected_environment({'QT_SELECT': 'qt4'})
+
+    def test_build_environment_qt5(self):
+        self.options.qt_version = 'qt5'
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
 
-        expected = {'QT_SELECT': 'qt5'}
+        self.assert_expected_environment({'QT_SELECT': 'qt5'})
 
+    def assert_expected_environment(self, expected):
         self.assertEqual(3, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:
             environment = call_args[1]['env']

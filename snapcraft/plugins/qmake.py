@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,6 +27,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - options:
       (list of strings)
       additional options to pass to the qmake invocation.
+    - qt-version:
+      (enum, 'qt4' or 'qt5')
+      Version of Qt to use with qmake.
 """
 
 import os
@@ -56,12 +59,9 @@ class QmakePlugin(snapcraft.BasePlugin):
         # Qt version must be specified
         schema['required'].append('qt-version')
 
-        # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
+        # Inform Snapcraft of the properties associated with building and
+        # pulling so it can mark those steps dirty if they change in the YAML.
         schema['build-properties'].append('options')
-
-        # Inform Snapcraft of the properties associated with pulling. If these
-        # change in the YAML Snapcraft will consider the pull step dirty.
         schema['pull-properties'].append('qt-version')
 
         return schema

@@ -9,6 +9,7 @@ tests/unit/stage/
 build
 dist
 *.egg-info
+*.pyc
 .coverage**
 htmlcov
 __pycache__

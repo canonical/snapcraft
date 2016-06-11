@@ -1,5 +1,5 @@
 name: text-editor
-version: 1
+version: 1.0
 summary: Qt Application Example
 description: A simple text editor
 confinement: strict
