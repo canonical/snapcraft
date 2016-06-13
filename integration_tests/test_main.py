@@ -22,9 +22,8 @@ class MainTestCase(integration_tests.TestCase):
     def test_main(self):
         project_dir = 'assemble'
         output = self.run_snapcraft('list-plugins', project_dir)
-        expected = ('ant        catkin  copy  jdk     kernel  maven  '
-                    'nodejs   python3  tar-content\n'
-                    'autotools  cmake   go    kbuild  make    nil    '
-                    'python2  scons  \n')
-
+        expected = ('ant        catkin  copy  gulp  kbuild  make   nil     '
+                    'python2  scons      \n'
+                    'autotools  cmake   go    jdk   kernel  maven  nodejs  '
+                    'python3  tar-content\n')
         self.assertEqual(expected, output)
