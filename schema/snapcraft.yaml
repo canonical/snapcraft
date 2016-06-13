@@ -81,7 +81,7 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
-      "^[A-Za-z0-9:-]*$":
+      "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
         type: object
         required:
           - command

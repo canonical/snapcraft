@@ -466,6 +466,70 @@ parts:
             in fake_logger.output, 'Missing confinement hint in output')
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_yaml_valid_app_names(self, mock_loadPlugin):
+        valid_app_names = [
+            '1', 'a', 'aa', 'aaa', 'aaaa', 'Aa', 'aA', '1a', 'a1', '1-a',
+            'a-1', 'a-a', 'aa-a', 'a-aa', 'a-b-c', '0a-a', 'a-0a',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for app_name in valid_app_names:
+            with self.subTest(key=app_name):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+apps:
+  {!r}:
+    command: foo
+
+parts:
+  part1:
+    plugin: nil
+""".format(app_name))
+                c = internal_yaml.Config()
+                self.assertTrue(app_name in c.data['apps'])
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_invalid_yaml_invalid_app_names(self, mock_loadPlugin):
+        invalid_app_names = [
+            '', '-', '--', 'a--a', 'a-', 'a ', ' a', 'a a', '日本語', '한글',
+            'ру́сский язы́к', 'ໄຂ່​ອີ​ສ​ເຕີ້', ':a', 'a:', 'a:a', '_a', 'a_',
+            'a_a',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for app_name in invalid_app_names:
+            with self.subTest(key=app_name):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+apps:
+  {!r}:
+    command: foo
+
+parts:
+  part1:
+    plugin: nil
+""".format(app_name))
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    internal_yaml.Config()
+
+                self.assertRegex(
+                    raised.exception.message,
+                    "The 'apps' property does not match the required "
+                    "schema.*")
+
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_yaml_valid_confinement_types(self, mock_loadPlugin):
         valid_confinement_types = [
             'strict',
