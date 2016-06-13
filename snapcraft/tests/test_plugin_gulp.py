@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,8 @@ import os
 
 from os import path
 from unittest import mock
+
+import fixtures
 
 import snapcraft
 from snapcraft.plugins import gulp, nodejs
@@ -63,7 +65,9 @@ class GulpPluginTestCase(tests.TestCase):
             mock.call().download()])
 
     def test_build(self):
-        self.skipTest('I cannot mock.patch.dict')
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+        self.useFixture(fixtures.EnvironmentVariable(
+            'PATH', '/bin'))
 
         class Options:
             source = '.'
@@ -75,16 +79,20 @@ class GulpPluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
 
-        with mock.patch.dict(os.environ, {'PATH': 'bin'}):
-            plugin.build()
+        plugin.build()
 
+        path = '{}:/bin'.format(os.path.join(plugin._npm_dir, 'bin'))
         self.run_mock.assert_has_calls([
             mock.call(['npm', 'install', '-g', 'gulp-cli'],
-                      cwd=plugin.builddir, env={})])
+                      cwd=plugin.builddir, env={'PATH': path}),
+            mock.call(['npm', 'install', '--only-development'],
+                      cwd=plugin.builddir, env={'PATH': path}),
+        ])
+
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
-                path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
+                os.path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])
 
