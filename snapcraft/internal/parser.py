@@ -144,8 +144,7 @@ def _process_index(output):
 
     output = output.strip()
 
-    output = output.lreplace('```', '')
-    output = output.rreplace('```', '')
+    output = output.replace(b"{{{", b"").replace(b"}}}", b"")
 
     all_data = yaml.load_all(output)
     for data in all_data:

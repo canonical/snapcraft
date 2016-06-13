@@ -151,13 +151,13 @@ parts: [part1]
     @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_code_tags(self, mock_get, mock_get_origin_data):
         _create_example_output("""
-```
+{{{
 ---
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
-```
+}}}
 """)
         mock_get_origin_data.return_value = {
             'parts': {
