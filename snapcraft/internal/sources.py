@@ -1,4 +1,4 @@
-#-*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015, 2016 Canonical Ltd
 #
