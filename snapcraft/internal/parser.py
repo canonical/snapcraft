@@ -142,6 +142,13 @@ def _process_index(output):
     # should be okay for now.
     master_parts_list = {}
 
+    output = output.strip()
+
+    if output.startswith(b"```"):
+        output = output[3:]
+    if output.endswith(b"```"):
+        output = output[:-3]
+
     all_data = yaml.load_all(output)
     for data in all_data:
         key = data.get('project-part')
