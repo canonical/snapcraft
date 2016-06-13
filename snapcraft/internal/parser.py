@@ -144,10 +144,8 @@ def _process_index(output):
 
     output = output.strip()
 
-    if output.startswith(b"```"):
-        output = output[3:]
-    if output.endswith(b"```"):
-        output = output[:-3]
+    output = output.lreplace('```', '')
+    output = output.rreplace('```', '')
 
     all_data = yaml.load_all(output)
     for data in all_data:
