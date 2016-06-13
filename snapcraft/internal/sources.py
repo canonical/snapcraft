@@ -291,6 +291,7 @@ class Zip(FileBase):
         if not keep_zip:
             os.remove(zip)
 
+
 class Subversion(Base):
 
     def __init__(self, source, source_dir, source_tag=None,
@@ -305,9 +306,12 @@ class Subversion(Base):
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
-            subprocess.check_call(['svn', 'update', self.source, self.source_dir])
+            subprocess.check_call(
+                ['svn', 'update', self.source, self.source_dir])
         else:
-            subprocess.check_call(['svn', 'checkout', self.source, self.source_dir])
+            subprocess.check_call(
+                ['svn', 'checkout', self.source, self.source_dir])
+
 
 class Local(Base):
 

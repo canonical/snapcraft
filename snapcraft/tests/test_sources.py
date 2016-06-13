@@ -321,6 +321,22 @@ class TestMercurial(SourceTestCase):
         self.assertEqual(raised.exception.message, expected_message)
 
 
+class TestSubversion(SourceTestCase):
+
+    def test_pull(self):
+        svn = sources.Subversion('svn://my-source', 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'checkout', 'svn://my-source', 'source-dir'])
+
+    def test_pull_existing(self):
+        self.mock_path_exists.return_value = True
+        svn = sources.Subversion('svn://my-source', 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'update', 'source-dir'])
+
+
 class TestLocal(tests.TestCase):
 
     def test_pull_with_existing_source_dir_creates_symlink(self):
