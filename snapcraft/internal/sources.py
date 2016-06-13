@@ -369,7 +369,7 @@ def get_required_packages(options):
         packages.append('tar')
     elif source_type == 'hg' or source_type == 'mercurial':
         packages.append('mercurial')
-    elif source_type == 'subversion':
+    elif source_type == 'subversion' or source_type == 'svn':
         packages.append('subversion')
 
     return packages
