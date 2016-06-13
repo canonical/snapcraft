@@ -92,7 +92,7 @@ class GulpPluginTestCase(tests.TestCase):
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
-                os.path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
+                os.path.join(plugin._npm_dir)),
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])
 
