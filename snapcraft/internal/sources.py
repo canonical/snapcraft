@@ -380,9 +380,10 @@ _source_handler = {
     'git': Git,
     'hg': Mercurial,
     'mercurial': Mercurial,
+    'svn': Subversion,
+    'subversion': Subversion,
     'tar': Tar,
     'zip': Zip,
-    'subversion': Subversion,
 }
 
 
