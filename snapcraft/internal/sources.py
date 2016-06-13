@@ -399,12 +399,12 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     elif source.startswith('git:') or source.startswith('git@') or \
             source.endswith('.git'):
         source_type = 'git'
+    elif source.startswith('svn:'):
+        source_type = 'subversion'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
     elif source.endswith('.zip'):
         source_type = 'zip'
-    elif source.startswith('svn:'):
-        source_type = 'subversion'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
     elif not os.path.isdir(source) and not ignore_errors:
