@@ -27,7 +27,7 @@ code for that part, and how to unpack it if necessary.
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: git, bzr, hg, tar, zip, or subversion
+  - source-type: git, bzr, hg, svn, tar, or zip
 
     In some cases the source string is not enough to identify the version
     control system or compression algorithim. The source-type key can tell
