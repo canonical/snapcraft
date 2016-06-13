@@ -334,7 +334,7 @@ class TestSubversion(SourceTestCase):
         svn = sources.Subversion('svn://my-source', 'source_dir')
         svn.pull()
         self.mock_run.assert_called_once_with(
-            ['svn', 'update', 'source_dir'])
+            ['svn', 'update'], cwd=self.source_dir)
 
 
 class TestLocal(tests.TestCase):

@@ -307,7 +307,7 @@ class Subversion(Base):
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
-                ['svn', 'update', self.source, self.source_dir])
+                ['svn', 'update'], cwd=self.source_dir)
         else:
             subprocess.check_call(
                 ['svn', 'checkout', self.source, self.source_dir])
