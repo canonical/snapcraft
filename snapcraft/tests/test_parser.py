@@ -411,9 +411,9 @@ project-part: main2
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
-    def test_maintaner_and_description_are_included(
+    def test_maintaner_is_included(
             self, mock_get, mock_get_origin_data):
-        """Test 2 wiki entries."""
+        """Test maintainer is included in parsed parts."""
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com>
@@ -442,12 +442,51 @@ project-part: main2
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        part = _get_part("main")
+        part = _get_part('main')
         self.assertEqual('John Doe <john.doe@example.com>', part['maintainer'])
+
+        part = _get_part('main2')
+        self.assertEqual('Jim Doe <jim.doe@example.com>', part['maintainer'])
+
+        self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_description_is_included(
+            self, mock_get, mock_get_origin_data):
+        """Test description is included in parsed parts."""
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: main2
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'main2': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
         self.assertEqual('example main', part['description'])
 
-        part = _get_part("main2")
-        self.assertEqual('Jim Doe <jim.doe@example.com>', part['maintainer'])
+        part = _get_part('main2')
         self.assertEqual('example main2', part['description'])
 
         self.assertEqual(2, _get_part_list_count())
