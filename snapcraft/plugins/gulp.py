@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The gulp plugin is useful for parts that use gulp tasks.
+"""The gulp plugin drives gulp.js, the streaming build system.
 
 The plugin uses gulp to drive the build.
 
