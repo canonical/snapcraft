@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
 from testtools.matchers import (
     DirExists,
@@ -30,7 +31,7 @@ class GulpPluginTestCase(integration_tests.TestCase):
         project_dir = 'simple-gulp'
         self.run_snapcraft('stage', project_dir)
 
-        binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'hello-world'),
+        binary_output = subprocess.check_output(
+            [os.path.join('stage', 'hello-world')],
             cwd=project_dir)
-        self.assertEqual('I was installed with gulp\n', binary_output)
+        self.assertEqual(b'I was installed with gulp\n', binary_output)
