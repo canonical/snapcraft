@@ -42,8 +42,8 @@ class SubversionSourceTestCase(integration_tests.TestCase):
     def test_commit_svn(self):
         self.test_pull_svn()
 
-        subprocess.check_call(
-            ['cd', 'local'],stdout=subprocess.DEVNULL)
+        os.chdir("local")
+
         subprocess.check_call(
             ['touch', 'test_file'],stdout=subprocess.DEVNULL)
 
@@ -52,8 +52,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['svn', 'commit', '-m', 'test'],stdout=subprocess.DEVNULL)
 
-        subprocess.check_call(
-            ['cd', '..'],stdout=subprocess.DEVNULL)
+        os.chdir("..")
 
     def test_update_svn(self):
         self.test_commit_svn()
@@ -69,7 +68,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['svn', 'commit', '-m', 'test2'],stdout=subprocess.DEVNULL)
 
-        subprocess.check_call(
-            ['cd', '../testupdate'],stdout=subprocess.DEVNULL)
+        os.chdir("../testupdate")
+
         subprocess.check_call(
             ['svn', 'update', '.'],stdout=subprocess.DEVNULL)
