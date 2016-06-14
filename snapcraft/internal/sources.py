@@ -208,10 +208,10 @@ class Subversion(Base):
         super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag:
             raise IncompatibleOptionsError(
-                "can\'t specify a source-tag for a subversion source")
+                "can't specify a source-tag for a Subversion source")
         elif source_branch:
             raise IncompatibleOptionsError(
-                "can\'t specify a source-branch for a subversion source")
+                "can't specify a source-branch for a Subversion source")
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
