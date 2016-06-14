@@ -116,7 +116,8 @@ def _update_source(part, origin):
     return part
 
 
-def _process_subparts(project_part, subparts, parts, origin):
+def _process_subparts(project_part, subparts, parts, origin, maintainer,
+                      description):
     after_parts = set()
     parts_list = {}
     for part in subparts:
@@ -125,6 +126,8 @@ def _process_subparts(project_part, subparts, parts, origin):
         # 'project_part' to namespace them.
         if source_part:
             source_part = _update_source(source_part, origin)
+            source_part['maintainer'] = maintainer
+            source_part['description'] = description
 
             namespaced_part = _get_namespaced_partname(project_part, part)
             parts_list[namespaced_part] = source_part
@@ -142,6 +145,10 @@ def _process_index(output):
     # should be okay for now.
     master_parts_list = {}
 
+    output = output.strip()
+
+    output = output.replace(b"{{{", b"").replace(b"}}}", b"")
+
     all_data = yaml.load_all(output)
     for data in all_data:
         key = data.get('project-part')
@@ -157,6 +164,8 @@ def _process_index(output):
         origin_type = data.get('origin-type')
         project_part = data.get('project-part')
         subparts = data.get('parts', [])
+        maintainer = data.get('maintainer', '')
+        description = data.get('description', '')
 
         if origin:
             # TODO: this should really be based on the origin uri not
@@ -186,6 +195,8 @@ def _process_index(output):
             source_part = parts.get(project_part)
             if source_part:
                 source_part = _update_source(source_part, origin)
+                source_part['maintainer'] = maintainer
+                source_part['description'] = description
                 after = source_part.get('after', [])
 
                 if after:
@@ -194,7 +205,9 @@ def _process_index(output):
 
                 parts_list[project_part] = source_part
                 subparts_list, subparts_after_list = _process_subparts(
-                    project_part, subparts, parts, origin)
+                    project_part, subparts, parts, origin, maintainer,
+                    description,
+                )
                 parts_list.update(subparts_list)
                 after_parts.update(subparts_after_list)
 
