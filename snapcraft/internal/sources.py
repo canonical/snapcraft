@@ -206,12 +206,14 @@ class Subversion(Base):
     def __init__(self, source, source_dir, source_tag=None,
                  source_branch=None):
         super().__init__(source, source_dir, source_tag, source_branch)
-        if source_tag && source_branch:
-            raise IncompatibleOptionsError(
-                "Can't specify source-tag OR source-branch for a Subversion source")
         if source_tag:
-            raise IncompatibleOptionsError(
-                "Can't specify source-tag for a Subversion source")
+            if source_branch:
+                raise IncompatibleOptionsError(
+                    "Can't specify source-tag OR source-branch for a "
+                    "Subversion source")
+            else:
+                raise IncompatibleOptionsError(
+                    "Can't specify source-tag for a Subversion source")
         elif source_branch:
             raise IncompatibleOptionsError(
                 "Can't specify source-branch for a Subversion source")
