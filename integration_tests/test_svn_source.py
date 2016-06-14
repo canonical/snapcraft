@@ -41,7 +41,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         self._init_svn()
 
         subprocess.check_call(
-            ['svn', 'checkout', 'file:///$(pwd)/repo', 'local'],
+            ['svn', 'checkout', 'file:///{}'.format(os.path.join(project_dir, 'repo')), 'local'],
             stdout=subprocess.DEVNULL)
 
         os.chdir("local/")
