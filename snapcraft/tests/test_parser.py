@@ -149,6 +149,30 @@ parts: [part1]
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_code_tags(self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+{{{
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+}}}
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_main_valid(self, mock_get, mock_get_origin_data):
         _create_example_output("""
 ---
