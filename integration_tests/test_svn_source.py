@@ -33,42 +33,27 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
 
     def test_pull_svn(self):
+
+        project_dir = self.copy_project_to_tmp('svn-checkout')
+        os.chdir(project_dir)
+
         self._init_svn()
 
         subprocess.check_call(
             ['svn', 'checkout', 'file:///$(pwd)/repo', 'local'],
             stdout=subprocess.DEVNULL)
 
-    def test_commit_svn(self):
-        self.test_pull_svn()
-
-        os.chdir("local")
-
+        os.chdir("local/")
+        subprocess.check_call(['touch', 'file'],stdout=subprocess.DEVNULL)
         subprocess.check_call(
-            ['touch', 'test_file'],stdout=subprocess.DEVNULL)
-
+            ['svn', 'add', 'file'],stdout=subprocess.DEVNULL)
         subprocess.check_call(
-            ['svn', 'add', 'test_file'],stdout=subprocess.DEVNULL)
+~           ['svn', 'commit', '-m', 'test'],stdout=subprocess.DEVNULL)
+        subprocess.check_call(['svn', 'update'],stdout=subprocess.DEVNULL)
         subprocess.check_call(
-            ['svn', 'commit', '-m', 'test'],stdout=subprocess.DEVNULL)
-
+            ['rm', '-rf', 'local/'],stdout=subprocess.DEVNULL)
         os.chdir("..")
 
-    def test_update_svn(self):
-        self.test_commit_svn()
-
-        subprocess.check_call(
-            ['svn', 'checkout', 'file:///$(pwd)/repo', 'testupdate'],
-            stdout=subprocess.DEVNULL)
-
-        subprocess.check_call(
-            ['cd', 'local'],stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['echo', 'test', '>', 'test_file'],stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['svn', 'commit', '-m', 'test2'],stdout=subprocess.DEVNULL)
-
-        os.chdir("../testupdate")
-
-        subprocess.check_call(
-            ['svn', 'update', '.'],stdout=subprocess.DEVNULL)
+        self.run_snapcraft('pull', project_dir)
+        revno = subprocess.check_output('svnversion parts/svn/src').strip()
+        self.assertEqual('"1"', revno)

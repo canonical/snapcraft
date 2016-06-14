@@ -7,5 +7,5 @@ confinement: strict
 parts:
     svn:
         plugin: make
-        source: .
+        source: repo/trunk/
         source-type: svn
