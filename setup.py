@@ -53,6 +53,13 @@ setup(
         'requests-oauthlib',
         'ssoclient',
     ],
+    tests_require=[
+        'fixtures',
+        'flake8',
+        'mock',
+        'petname',
+        'testscenarios',
+    ],
     test_suite='snapcraft.tests',
     license='GPL v3',
     classifiers=(
