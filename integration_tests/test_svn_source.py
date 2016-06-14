@@ -57,3 +57,5 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output('svnversion parts/svn/src').strip()
         self.assertEqual('"1"', revno)
+        filepresent = os.path.isfile("parts/svn/src/file")
+        self.assertEqual('"True"', filepresent)
