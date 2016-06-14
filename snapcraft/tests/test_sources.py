@@ -336,6 +336,33 @@ class TestSubversion(SourceTestCase):
         self.mock_run.assert_called_once_with(
             ['svn', 'update'], cwd=svn.source_dir)
 
+    def test_init_with_source_tag_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_tag='tag')
+        expected_message = (
+            "Can't specify source-tag for a Subversion source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_branch_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_branch='branch')
+        expected_message = (
+            "Can't specify source-branch for a Subversion source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_branch_and_tag_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_tag='tag',
+                source_branch='branch')
+
+        expected_message = (
+            "Can't specify source-tag OR source-branch for a Subversion"
+            "source")
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestLocal(tests.TestCase):
 
