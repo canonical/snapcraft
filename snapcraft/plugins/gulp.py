@@ -61,11 +61,11 @@ class GulpPlugin(snapcraft.BasePlugin):
             'default': [],
         }
         schema['properties']['node-engine'] = node_properties['node-engine']
-        schema['required'] = ['gulp-tasks']
+        schema['required'].append('gulp-tasks')
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'] = ['gulp-tasks']
+        schema['build-properties'].append('gulp-tasks')
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['pull-properties'].append('node-engine')

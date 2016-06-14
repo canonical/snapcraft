@@ -131,7 +131,7 @@ class GulpPluginTestCase(tests.TestCase):
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir', 'node-engine'],
             'build-properties': ['gulp-tasks'],
-            'required': ['gulp-tasks'],
+            'required': ['source', 'gulp-tasks'],
             'type': 'object'}
 
         self.assertEqual(gulp.GulpPlugin.schema(), plugin_schema)
