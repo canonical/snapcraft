@@ -51,12 +51,20 @@ _MVN_SETTINGS_FORMAT = (
     '  <interactiveMode>false</interactiveMode>\n'
     '  <proxies>\n'
     '    <proxy>\n'
-    '      <id>proxy</id>\n'
+    '      <id>http_proxy</id>\n'
     '      <active>true</active>\n'
     '      <protocol>http</protocol>\n'
-    '      <host>{}</host>\n'
-    '      <port>{}</port>\n'
-    '      <nonProxyHosts>{}</nonProxyHosts>\n'
+    '      <host>{http_host}</host>\n'
+    '      <port>{http_port}</port>\n'
+    '      <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>\n'
+    '    </proxy>\n'
+    '    <proxy>\n'
+    '      <id>https_proxy</id>\n'
+    '      <active>true</active>\n'
+    '      <protocol>https</protocol>\n'
+    '      <host>{https_host}</host>\n'
+    '      <port>{https_port}</port>\n'
+    '      <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>\n'
     '    </proxy>\n'
     '  </proxies>\n'
     '</settings>\n'
@@ -114,13 +122,16 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
 
 def _create_settings(settings_path):
-    proxy = urlparse(os.environ['http_proxy'])
+    http_proxy = urlparse(os.environ['http_proxy'])
+    https_proxy = urlparse(os.environ['https_proxy'])
     os.makedirs(os.path.dirname(settings_path), exist_ok=True)
     with open(settings_path, 'w') as f:
         f.write(_MVN_SETTINGS_FORMAT.format(
-            proxy.hostname,
-            proxy.port,
-            _get_no_proxy_string()))
+            http_host=http_proxy.hostname,
+            http_port=http_proxy.port,
+            https_host=https_proxy.hostname,
+            https_port=https_proxy.port,
+            non_proxy_hosts=_get_no_proxy_string()))
 
 
 def _get_no_proxy_string():
