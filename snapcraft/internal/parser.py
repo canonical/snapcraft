@@ -145,6 +145,10 @@ def _process_index(output):
     # should be okay for now.
     master_parts_list = {}
 
+    output = output.strip()
+
+    output = output.replace(b"{{{", b"").replace(b"}}}", b"")
+
     all_data = yaml.load_all(output)
     for data in all_data:
         key = data.get('project-part')
