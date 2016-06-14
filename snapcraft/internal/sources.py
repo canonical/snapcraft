@@ -201,6 +201,27 @@ class Mercurial(Base):
         subprocess.check_call(cmd)
 
 
+class Subversion(Base):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+        if source_tag:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-tag for a subversion source')
+        elif source_branch:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a subversion source')
+
+    def pull(self):
+        if os.path.exists(os.path.join(self.source_dir, '.svn')):
+            subprocess.check_call(
+                ['svn', 'update'], cwd=self.source_dir)
+        else:
+            subprocess.check_call(
+                ['svn', 'checkout', self.source, self.source_dir])
+
+
 class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,
@@ -290,27 +311,6 @@ class Zip(FileBase):
 
         if not keep_zip:
             os.remove(zip)
-
-
-class Subversion(Base):
-
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
-        if source_tag:
-            raise IncompatibleOptionsError(
-                'can\'t specify a source-tag for a subversion source')
-        elif source_branch:
-            raise IncompatibleOptionsError(
-                'can\'t specify a source-branch for a subversion source')
-
-    def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, '.svn')):
-            subprocess.check_call(
-                ['svn', 'update'], cwd=self.source_dir)
-        else:
-            subprocess.check_call(
-                ['svn', 'checkout', self.source, self.source_dir])
 
 
 class Local(Base):
