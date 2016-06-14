@@ -44,7 +44,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             stdout=subprocess.DEVNULL)
 
         os.chdir("local/")
-        subprocess.check_call(['touch', 'file'],stdout=subprocess.DEVNULL)
+        open(os.path.join('local', 'file'), 'w').close()
         subprocess.check_call(
             ['svn', 'add', 'file'],stdout=subprocess.DEVNULL)
         subprocess.check_call(
