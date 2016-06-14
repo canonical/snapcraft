@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The gulp plugin drives gulp.js, the streaming build system.
+"""This plugin is used for gulp.js, the streaming build system.
 
 The plugin uses gulp to drive the build. It requires a gulpfile.js in
 the root of the source.
@@ -30,7 +30,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A list of gulp tasks to run.
     - node-engine:
       (string)
-      The version of nodejs you want the snap to run on.
+      The version of nodejs to use for the build.
 """
 
 import logging
