@@ -359,7 +359,7 @@ class TestSubversion(SourceTestCase):
                 source_branch='branch')
 
         expected_message = (
-            "Can't specify source-tag OR source-branch for a Subversion"
+            "Can't specify source-tag OR source-branch for a Subversion "
             "source")
         self.assertEqual(raised.exception.message, expected_message)
 
