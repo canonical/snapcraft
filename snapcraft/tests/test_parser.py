@@ -336,7 +336,7 @@ project-part: main
         self.assertEqual(1, _get_part_list_count())
         part = _get_part('main')
         self.assertNotEqual('.', part['source'])
-        self.assertEqual(3, len(part.keys()))
+        self.assertEqual(5, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -366,7 +366,7 @@ project-part: main
         part = _get_part('main')
         self.assertNotEqual('local', part['source'])
         self.assertEqual('local', part['source-subdir'])
-        self.assertEqual(4, len(part.keys()))
+        self.assertEqual(6, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -396,7 +396,7 @@ project-part: main
         part = _get_part('main')
         self.assertNotEqual('.', part['source'])
         self.assertEqual('local', part['source-subdir'])
-        self.assertEqual(4, len(part.keys()))
+        self.assertEqual(6, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -430,5 +430,87 @@ project-part: main2
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_maintaner_is_included(
+            self, mock_get, mock_get_origin_data):
+        """Test maintainer is included in parsed parts."""
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: main2
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'main2': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
+        self.assertEqual('John Doe <john.doe@example.com>', part['maintainer'])
+
+        part = _get_part('main2')
+        self.assertEqual('Jim Doe <jim.doe@example.com>', part['maintainer'])
+
+        self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_description_is_included(
+            self, mock_get, mock_get_origin_data):
+        """Test description is included in parsed parts."""
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: main2
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'main2': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
+        self.assertEqual('example main', part['description'])
+
+        part = _get_part('main2')
+        self.assertEqual('example main2', part['description'])
 
         self.assertEqual(2, _get_part_list_count())
