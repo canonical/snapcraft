@@ -64,7 +64,7 @@ setup(
         'py3-progressbar',
         'pyxdg',
         'PyYAML',
-        'requests',
+        'Requests',
         'python-apt',
         'python-distutils-extra',
         'requests-oauthlib',
