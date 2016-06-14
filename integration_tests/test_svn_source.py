@@ -18,6 +18,8 @@ import os
 import subprocess
 import shutil
 
+from testtools.matchers import FileExists
+
 import integration_tests
 
 
@@ -33,7 +35,6 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
 
     def test_pull_svn(self):
-
         project_dir = self.copy_project_to_tmp('svn-checkout')
         os.chdir(project_dir)
 
@@ -54,8 +55,8 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['rm', '-rf', 'local/'],stdout=subprocess.DEVNULL)
         os.chdir("..")
 
+        part_src_path = os.path.join('parts', 'svn', 'src')
         self.run_snapcraft('pull', project_dir)
-        revno = subprocess.check_output('svnversion parts/svn/src').strip()
+        revno = subprocess.check_output(['svnversion', parts_src_path]).strip()
         self.assertEqual('"1"', revno)
-        filepresent = os.path.isfile("parts/svn/src/file")
-        self.assertEqual('"True"', filepresent)
+        self.assertThat(os.path.join(parts_src_path, 'file'), FileExists())
