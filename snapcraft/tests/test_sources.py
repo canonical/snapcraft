@@ -469,7 +469,6 @@ class TestUri(tests.TestCase):
     @unittest.mock.patch('snapcraft.sources.Subversion.pull')
     def test_get_svn_source_from_uri(self, mock_pull):
         test_sources = [
-            'https://subversion.assembla.com/svn/snapcraft/trunk/',
             'svn://sylpheed.sraoss.jp/sylpheed/trunk'
         ]
 
