@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,8 +21,9 @@ class ListPluginsTestCase(integration_tests.TestCase):
 
     def test_list_plugins(self):
         output = self.run_snapcraft('list-plugins')
-        expected = ('ant        catkin  copy  jdk     kernel  maven  '
-                    'nodejs   python3  tar-content\n'
-                    'autotools  cmake   go    kbuild  make    nil    '
-                    'python2  scons  \n')
+        expected = (
+            'ant        catkin  copy  gulp  kbuild  make   nil     python2  '
+            'scons      \n'
+            'autotools  cmake   go    jdk   kernel  maven  nodejs  python3  '
+            'tar-content\n')
         self.assertEqual(expected, output)

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,17 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import subprocess
+
+from testtools.matchers import (
+    DirExists,
+    Not
+)
+
 import integration_tests
 
 
-class MainTestCase(integration_tests.TestCase):
+class GulpPluginTestCase(integration_tests.TestCase):
 
-    def test_main(self):
-        project_dir = 'assemble'
-        output = self.run_snapcraft('list-plugins', project_dir)
-        expected = ('ant        catkin  copy  jdk     kernel  maven  '
-                    'nodejs   python3  tar-content\n'
-                    'autotools  cmake   go    kbuild  make    nil    '
-                    'python2  scons  \n')
+    def test_stage_make_plugin(self):
+        project_dir = 'simple-gulp'
+        self.run_snapcraft('stage', project_dir)
 
-        self.assertEqual(expected, output)
+        binary_output = subprocess.check_output(
+            [os.path.join('stage', 'hello-world')],
+            cwd=project_dir)
+        self.assertEqual(b'I was installed with gulp\n', binary_output)
