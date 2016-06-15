@@ -52,7 +52,7 @@ class CommandError(Exception):
         self.message = message
 
     def __str__(self):
-        return 'Error running command {} in {}. {}'.format(
+        return 'Error running command {!r} in {!r}. {}'.format(
             self.command, self.working_dir, self.message)
 
 
@@ -111,7 +111,7 @@ class SnapsTestCase(testtools.TestCase):
                 self.skipTest(
                     '{} does not match the filter {}'.format(
                         self.snap_content_dir, filter_))
-        logger.info('Testing ' + self.snap_content_dir)
+        logger.info('Testing {}'.format(self.snap_content_dir))
         super().setUp()
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_command = 'snapcraft'
@@ -158,11 +158,11 @@ class SnapsTestCase(testtools.TestCase):
         self._snap(working_dir)
 
     def _clean(self, project_dir):
-        command = self.snapcraft_command + ' clean'
+        command = '{} {}'.format(self.snapcraft_command, 'clean')
         self._run_command(command, project_dir)
 
     def _snap(self, project_dir):
-        command = self.snapcraft_command + ' snap'
+        command = '{} {}'.format(self.snapcraft_command, 'snap')
         self._run_command(
             command, project_dir, expect='Snapped .*\.snap', timeout=1200)
 
@@ -178,14 +178,14 @@ class SnapsTestCase(testtools.TestCase):
             self._add_output_detail(process.before)
             raise CommandError(
                 command, working_dir,
-                'Expected output "{}" not found.'.format(expect)) from None
+                'Expected output {!r} not found.'.format(expect)) from None
         finally:
             process.close()
             if process.exitstatus:
                 self._add_output_detail(process.before)
                 raise CommandError(
                     command, working_dir,
-                    'Exit status: {}.'.format(process.exitstatus))
+                    'Exit status: {!r}.'.format(process.exitstatus))
 
     def _add_output_detail(self, output):
         self.addDetail('output', content.text_content(str(output)))
