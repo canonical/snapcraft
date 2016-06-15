@@ -2,7 +2,6 @@ name: shout
 version: 0.52.0
 summary: A self hosted web IRC client
 description: This example is not really production quality
-icon: icon.png
 confinement: strict
 
 apps:
