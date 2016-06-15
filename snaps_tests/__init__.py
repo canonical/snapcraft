@@ -164,7 +164,7 @@ class SnapsTestCase(testtools.TestCase):
     def _snap(self, project_dir):
         command = self.snapcraft_command + ' snap'
         self._run_command(
-            command, project_dir, expect='Snapped .*\.snap', timeout=600)
+            command, project_dir, expect='Snapped .*\.snap', timeout=900)
 
     def _run_command(
             self, command, working_dir, expect=pexpect.EOF, timeout=30):
@@ -172,7 +172,7 @@ class SnapsTestCase(testtools.TestCase):
         process = pexpect.spawn(
             command, cwd=working_dir, timeout=timeout,
             encoding='utf-8', codec_errors='ignore')
-        process.logfile = sys.stdout
+        process.logfile_read = sys.stdout.buffer
         try:
             process.expect(expect)
         except pexpect.ExceptionPexpect:
