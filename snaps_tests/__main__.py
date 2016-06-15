@@ -56,13 +56,11 @@ def main():
         runner = run.SubunitTestProgram
         stdout = open('results.subunit', 'wb')
         test_runner = run.SubunitTestRunner
-        exit = False
     else:
         from testtools import run
         runner = run.TestProgram
         stdout = None
         test_runner = None
-        exit = True
 
     # Strip all the command line arguments, so the test runner does not handle
     # them again.
@@ -70,7 +68,7 @@ def main():
     argv.append('discover')
     argv.append(os.path.basename(os.path.dirname(__file__)))
     runner(module=None, verbosity=2, stdout=stdout,
-           testRunner=test_runner, exit=exit, argv=argv)
+           testRunner=test_runner, argv=argv)
 
 
 if __name__ == '__main__':
