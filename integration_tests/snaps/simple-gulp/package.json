@@ -1,0 +1,12 @@
+{
+  "name": "SimpleGulp",
+  "version": "1.0.0",
+  "author": {
+    "name": "Sergio Schvezov"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^3.8.9",
+    "gulp-util": "^3.0.6"
+  }
+}
