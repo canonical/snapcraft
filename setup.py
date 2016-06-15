@@ -51,7 +51,6 @@ setup(
             ['libraries/' + x for x in os.listdir('libraries')]),
     ],
     dependency_links=[
-        #'git+git://anonscm.debian.org/apt/python-apt.git#egg=python_apt-0.0.0',
         'https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz#egg=python_apt-0.0.0',
         'https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz',
     ],
