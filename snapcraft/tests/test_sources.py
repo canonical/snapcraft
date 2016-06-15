@@ -466,7 +466,6 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
-
     @unittest.mock.patch('snapcraft.sources.Subversion.pull')
     def test_get_svn_source_from_uri(self, mock_pull):
         test_sources = [
