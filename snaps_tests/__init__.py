@@ -169,7 +169,9 @@ class SnapsTestCase(testtools.TestCase):
     def _run_command(
             self, command, working_dir, expect=pexpect.EOF, timeout=30):
         print(command)
-        process = pexpect.spawnu(command, cwd=working_dir, timeout=timeout)
+        process = pexpect.spawn(
+            command, cwd=working_dir, timeout=timeout,
+            encoding='utf-8', codec_errors='ignore')
         process.logfile = sys.stdout
         try:
             process.expect(expect)
