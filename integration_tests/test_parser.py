@@ -14,17 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import subprocess
+
 import integration_tests
 
 
-class MainTestCase(integration_tests.TestCase):
+class TestParser(integration_tests.TestCase):
+    """Test bin/snapcraft-parser"""
 
-    def test_main(self):
-        project_dir = 'assemble'
-        output = self.run_snapcraft('list-plugins', project_dir)
-        expected = ('ant        catkin  copy  jdk     kernel  maven  '
-                    'nodejs   python3  tar-content\n'
-                    'autotools  cmake   go    kbuild  make    nil    '
-                    'python2  scons  \n')
+    def test_parser_basic(self):
+        """Test snapcraft-parser basic usage"""
 
-        self.assertEqual(expected, output)
+        args = [self.snapcraft_parser_command, '--index',
+                'https://wiki.ubuntu.com/snapcraft/parts?action=raw',
+                '--output', 'parts.yaml']
+        subprocess.check_call(args, stderr=subprocess.DEVNULL,
+                              stdout=subprocess.DEVNULL)
+
+        self.assertTrue(os.path.exists('parts.yaml'))

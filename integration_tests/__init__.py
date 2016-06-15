@@ -32,9 +32,12 @@ class TestCase(testtools.TestCase):
         super().setUp()
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_command = 'snapcraft'
+            self.snapcraft_parser_command = 'snapcraft-parser'
         else:
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')
+            self.snapcraft_parser_command = os.path.join(
+                os.getcwd(), 'bin', 'snapcraft-parser')
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
         temp_cwd_fixture = fixture_setup.TempCWD()

@@ -56,6 +56,17 @@ class TempConfig(fixtures.Fixture):
         self.addCleanup(patcher_dirs.stop)
 
 
+class CleanEnvironment(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        current_environment = os.environ.copy()
+        os.environ = {}
+
+        self.addCleanup(os.environ.update, current_environment)
+
+
 class FakeStore(fixtures.Fixture):
 
     def setUp(self):
