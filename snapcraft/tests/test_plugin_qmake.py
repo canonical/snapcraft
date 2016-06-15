@@ -41,6 +41,7 @@ class QMakeTestCase(tests.TestCase):
         class Options:
             options = []
             qt_version = 'qt5'
+            project_files = []
 
         self.options = Options()
 
@@ -110,6 +111,41 @@ class QMakeTestCase(tests.TestCase):
         pull_properties = schema['pull-properties']
         self.assertTrue('qt-version' in pull_properties)
 
+        # Check project-files property
+        project_files = properties['project-files']
+        for item in ['type', 'minitems', 'uniqueItems', 'items', 'default']:
+            self.assertTrue(item in options,
+                            'Expected {!r} to be included in "project_files"'
+                            .format(item))
+
+        project_files_type = project_files['type']
+        self.assertEqual(project_files_type, 'array',
+                         'Expected "project_files" "type" to be "array", but it '
+                         'was "{}"'.format(project_files_type))
+
+        project_files_minitems = project_files['minitems']
+        self.assertEqual(project_files_minitems, 1,
+                         'Expected "project_files" "minitems" to be 1, but '
+                         'it was {}'.format(project_files_minitems))
+
+        self.assertTrue(project_files['uniqueItems'])
+
+        project_files_default = project_files['default']
+        self.assertEqual(project_files_default, [],
+                         'Expected "project_files" "default" to be [], but '
+                         'it was {}'.format(project_files_default))
+
+        project_files_items = project_files['items']
+        self.assertTrue('type' in project_files_items,
+                        'Expected "type" to be included in "project_files" '
+                        '"items"')
+
+        project_files_items_type = project_files_items['type']
+        self.assertEqual(project_files_items_type, 'string',
+                         'Expected "project_files" "items" "type" to be '
+                         '"string", but it was "{}"'
+                         .format(project_files_items_type))
+
         # Finally, verify that qt-version is required
         required = schema['required']
         self.assertTrue('qt-version' in required,
@@ -149,6 +185,59 @@ class QMakeTestCase(tests.TestCase):
             plugin.sourcedir, plugin.options.source_subdir)
         self.run_mock.assert_has_calls([
             mock.call(['qmake', sourcedir], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', 'install',
+                       'INSTALL_ROOT={}'.format(plugin.installdir)],
+                      cwd=plugin.builddir, env=mock.ANY)])
+
+    def test_build_with_project_file(self):
+        self.options.project_files = ['project_file.pro']
+
+        plugin = qmake.QmakePlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(os.path.dirname(plugin.builddir))
+        plugin.build()
+
+        path_to_pro_file = os.path.join(plugin.sourcedir, 'project_file.pro')
+        self.run_mock.assert_has_calls([
+            mock.call(['qmake', path_to_pro_file], cwd=plugin.builddir,
+                      env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', 'install',
+                       'INSTALL_ROOT={}'.format(plugin.installdir)],
+                      cwd=plugin.builddir, env=mock.ANY)])
+
+    def test_build_with_project_file_with_subdir(self):
+        self.options.source_subdir = 'subdir'
+        self.options.project_files = ['project_file.pro']
+
+        plugin = qmake.QmakePlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(os.path.dirname(plugin.builddir))
+        plugin.build()
+
+        path_to_pro_file = os.path.join(
+            plugin.sourcedir, plugin.options.source_subdir,
+            'project_file.pro')
+        self.run_mock.assert_has_calls([
+            mock.call(['qmake', path_to_pro_file], cwd=plugin.builddir,
+                      env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', 'install',
+                       'INSTALL_ROOT={}'.format(plugin.installdir)],
+                      cwd=plugin.builddir, env=mock.ANY)])
+
+    def test_build_with_options(self):
+        self.options.options = ['-foo']
+
+        plugin = qmake.QmakePlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(os.path.dirname(plugin.builddir))
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['qmake', '-foo', plugin.sourcedir], cwd=plugin.builddir,
+                      env=mock.ANY),
             mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'INSTALL_ROOT={}'.format(plugin.installdir)],

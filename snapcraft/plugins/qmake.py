@@ -30,6 +30,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - qt-version:
       (enum, 'qt4' or 'qt5')
       Version of Qt to use with qmake.
+    - project-files:
+      (list of strings)
+      list of .pro files to pass to the qmake invocation.
 """
 
 import os
@@ -54,6 +57,15 @@ class QmakePlugin(snapcraft.BasePlugin):
         }
         schema['properties']['qt-version'] = {
             'enum': ['qt4', 'qt5'],
+        }
+        schema['properties']['project-files'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
         }
 
         # Qt version must be specified
@@ -91,7 +103,12 @@ class QmakePlugin(snapcraft.BasePlugin):
 
         env = self._build_environment()
 
-        self.run(['qmake', sourcedir] + self.options.options, env=env)
+        sources = [sourcedir]
+        if self.options.project_files:
+            sources = [os.path.join(sourcedir, project_file)
+                       for project_file in self.options.project_files]
+
+        self.run(['qmake'] + self.options.options + sources, env=env)
 
         self.run(['make', '-j{}'.format(
             self.project.parallel_build_count)], env=env)
