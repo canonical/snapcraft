@@ -46,12 +46,12 @@ class SubversionSourceTestCase(integration_tests.TestCase):
 
         open(os.path.join('local', 'file'), 'w').close()
         subprocess.check_call(
-            ['svn', 'add', 'file'],stdout=subprocess.DEVNULL,cwd='local/')
+            ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
         subprocess.check_call(
-~           ['svn', 'commit', '-m', 'test'],stdout=subprocess.DEVNULL,cwd='local/')
-        subprocess.check_call(['svn', 'update'],stdout=subprocess.DEVNULL,cwd='local/')
+            ['svn', 'commit', '-m', 'test'], stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(['svn', 'update'], stdout=subprocess.DEVNULL, cwd='local/')
         subprocess.check_call(
-            ['rm', '-rf', 'local/'],stdout=subprocess.DEVNULL)
+            ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
         part_src_path = os.path.join('parts', 'svn', 'src')
         self.run_snapcraft('pull', project_dir)
