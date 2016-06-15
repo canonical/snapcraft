@@ -66,7 +66,7 @@ setup(
         'pyxdg==0.25',
         'requests==2.9.1',
         'python-apt==0.0.0',
-        'python-distutils-extra==2.39',
+        'python-distutils-extra',
         'requests-oauthlib==0.4.0',
         'requests-toolbelt==0.6.0',
     ],
