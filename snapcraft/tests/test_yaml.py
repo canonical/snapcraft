@@ -198,6 +198,8 @@ parts:
             ('mercurial', 'mercurial'),
             ('bzr', 'bzr'),
             ('tar', 'tar'),
+            ('svn', 'subversion')
+            ('subversion', 'subversion')
         ]
         yaml_t = """name: test
 version: "1"
