@@ -120,8 +120,8 @@ class QMakeTestCase(tests.TestCase):
 
         project_files_type = project_files['type']
         self.assertEqual(project_files_type, 'array',
-                         'Expected "project_files" "type" to be "array", but it '
-                         'was "{}"'.format(project_files_type))
+                         'Expected "project_files" "type" to be "array", but '
+                         'it was "{}"'.format(project_files_type))
 
         project_files_minitems = project_files['minitems']
         self.assertEqual(project_files_minitems, 1,

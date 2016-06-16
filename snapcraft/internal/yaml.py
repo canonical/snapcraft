@@ -369,14 +369,22 @@ def _build_env(root, arch_triplet):
         include_path_for_env = _get_include_paths(envvar, root, arch_triplet)
         if include_path_for_env:
             env.append(include_path_for_env)
+    include_path_for_env = _get_include_paths(
+        'CPATH', root, arch_triplet, prepend='', sep=':')
+    if include_path_for_env:
+        env.append(include_path_for_env)
     library_path = _get_library_paths('LDFLAGS', root, arch_triplet)
+    if library_path:
+        env.append(library_path)
+    library_path = _get_library_paths(
+        'LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
     if library_path:
         env.append(library_path)
 
     return env
 
 
-def _get_include_paths(envvar, root, arch_triplet):
+def _get_include_paths(envvar, root, arch_triplet, prepend='-I', sep=' '):
     paths = [
         os.path.join(root, 'include'),
         os.path.join(root, 'usr', 'include'),
@@ -384,13 +392,9 @@ def _get_include_paths(envvar, root, arch_triplet):
         os.path.join(root, 'usr', 'include', arch_triplet),
     ]
 
-    include_paths = ['-I{}'.format(p) for p in paths if os.path.exists(p)]
-
-    if not include_paths:
-        return ''
-    else:
-        return '{envvar}="${envvar} {include_paths}"'.format(
-            envvar=envvar, include_paths=' '.join(include_paths))
+    include_paths = ['{}{}'.format(prepend, p)
+                     for p in paths if os.path.exists(p)]
+    return _combine_paths(envvar, include_paths, prepend, sep)
 
 
 def _get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
@@ -403,12 +407,15 @@ def _get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
 
     library_paths = ['{}{}'.format(prepend, l)
                      for l in paths if os.path.exists(l)]
+    return _combine_paths(envvar, library_paths, prepend, sep)
 
-    if not library_paths:
+
+def _combine_paths(envvar, paths, prepend, sep):
+    if not paths:
         return ''
     else:
-        return '{envvar}="${envvar}{sep}{library_paths}"'.format(
-            envvar=envvar, sep=sep, library_paths=sep.join(library_paths))
+        return '{envvar}="${envvar}{sep}{paths}"'.format(
+            envvar=envvar, sep=sep, paths=sep.join(paths))
 
 
 def _build_env_for_stage(stagedir, arch_triplet):
