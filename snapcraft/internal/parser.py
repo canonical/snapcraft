@@ -43,6 +43,10 @@ from docopt import docopt
 from snapcraft.internal import log, sources
 
 
+class InvalidEntry(Exception):
+    pass
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -160,12 +164,17 @@ def _process_index(output):
         after_parts = set()
 
         logger.debug('Processing part {!r}'.format(key))
-        origin = data.get('origin')
-        origin_type = data.get('origin-type')
-        project_part = data.get('project-part')
-        subparts = data.get('parts', [])
-        maintainer = data.get('maintainer', '')
-        description = data.get('description', '')
+
+        try:
+            origin = data['origin']
+            origin_type = data.get('origin-type')
+            project_part = data['project-part']
+            subparts = data.get('parts', [])
+            maintainer = data['maintainer']
+            description = data['description']
+        except KeyError as e:
+            logger.warning("Missing key in wiki entry: {}".format(e))
+            continue  # next entry
 
         if origin:
             # TODO: this should really be based on the origin uri not

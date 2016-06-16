@@ -514,3 +514,24 @@ project-part: main2
         self.assertEqual('example main2', part['description'])
 
         self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_missing_fields(self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
