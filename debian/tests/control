@@ -23,5 +23,6 @@ Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          git,
          python3-fixtures,
+         python3-pexpect,
          python3-testscenarios,
          snapd
