@@ -40,8 +40,20 @@ class GruntPlugin(snapcraft.BasePlugin):
         schema = super().schema()
         node_properties = nodejs.NodePlugin.schema()['properties']
 
+        schema['properties']['grunt-tasks'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
+        }
         schema['properties']['node-engine'] = node_properties['node-engine']
 
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'] = ['grunt-tasks']
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['pull-properties'].append('node-engine')
@@ -78,4 +90,5 @@ class GruntPlugin(snapcraft.BasePlugin):
         self.run(['npm', 'install', '-g', 'grunt-cli'], env=env)
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
             self.run(['npm', 'install', '--only-development'], env=env)
-        self.run([os.path.join(self._npm_dir, 'bin', 'grunt')], env=env)
+        self.run([os.path.join(self._npm_dir, 'bin', 'grunt')]
+            + self.options.grunt_tasks, env=env)
