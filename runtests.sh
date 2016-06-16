@@ -74,7 +74,12 @@ run_unit_tests(){
 }
 
 run_integration(){
-    python3 -m unittest discover -b -v -s integration_tests
+    if [[ "$#" -lt 2 ]]; then
+        pattern="*"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests -p $pattern
 }
 
 run_snaps(){
@@ -92,7 +97,7 @@ if [ ! -z "$RUN_UNIT" ]; then
 fi
 
 if [ ! -z "$RUN_INTEGRATION" ]; then
-    run_integration
+    run_integration "$@"
 fi
 
 if [ ! -z "$RUN_SNAPS" ]; then
