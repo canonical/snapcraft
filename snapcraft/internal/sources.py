@@ -232,6 +232,7 @@ class Subversion(Base):
                 subprocess.check_call(
                     ['svn', 'checkout', self.source, self.source_dir])
 
+
 class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,

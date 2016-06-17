@@ -323,11 +323,18 @@ class TestMercurial(SourceTestCase):
 
 class TestSubversion(SourceTestCase):
 
-    def test_pull(self):
+    def test_pull_remote(self):
         svn = sources.Subversion('svn://my-source', 'source_dir')
         svn.pull()
         self.mock_run.assert_called_once_with(
             ['svn', 'checkout', 'svn://my-source', 'source_dir'])
+
+    def test_pull_local(self):
+        svn = sources.Subversion('file://{}'.format(os.path.abspath('my-source/')), 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'checkout',
+             'file://{}'.format(os.path.abspath('my-source/')), 'source_dir'])
 
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
