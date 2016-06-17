@@ -334,12 +334,15 @@ class TestSubversion(SourceTestCase):
         svn.pull()
         self.mock_run.assert_called_once_with(
             ['svn', 'checkout', 'file://{}'+self.path, 'source_dir'])
+
     def test_pull_local_relative_path(self):
         os.mkdir("my-source")
         svn = sources.Subversion('my-source/', 'source_dir')
         svn.pull()
         self.mock_run.assert_called_once_with(
-            ['svn', 'checkout', 'file://{}'.format(os.path.join(self.path, 'my-source/')), 'source_dir'])
+            ['svn', 'checkout',
+             'file://{}'.format(os.path.join(self.path, 'my-source/')),
+             'source_dir'])
 
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
