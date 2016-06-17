@@ -35,7 +35,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
 
     def test_pull_svn(self):
-        project_dir = self.copy_project_to_tmp('svn-checkout')
+        project_dir = self.copy_project_to_tmp('svn-pull-update')
         os.chdir(project_dir)
 
         self._init_svn()
@@ -54,7 +54,24 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
         part_src_path = os.path.join('parts', 'svn', 'src')
+        subprocess.check_call(
+            ['svn', 'checkout', 'file:///{}'.format(os.path.join(project_dir, 'repo')), part_src_path],
+            stdout=subprocess.DEVNULL)
+
+        subprocess.check_call(
+            ['svn', 'checkout', 'file:///{}'.format(os.path.join(project_dir, 'repo')), 'local'],
+            stdout=subprocess.DEVNULL)
+        open(os.path.join('local', 'filetwo'), 'w').close()
+        subprocess.check_call(
+            ['svn', 'add', 'filetwo'], stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(
+            ['svn', 'commit', '-m', 'testtwo'], stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(['svn', 'update'], stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(
+            ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
+
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
-        self.assertEqual(b'1', revno)
+        self.assertEqual(b'2', revno)
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
+        self.assertThat(os.path.join(part_src_path, 'filetwo'), FileExists())
