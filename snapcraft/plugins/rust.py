@@ -30,7 +30,9 @@ Additionally, this plugin uses the following plugin-specific keyword:
       select rust version
 """
 
-import os, snapcraft
+import os
+import snapcraft
+
 
 class RustPlugin(snapcraft.BasePlugin):
 
@@ -55,10 +57,9 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-
         self.run([self._cargo, "install",
-                          "-j{}".format(self.project.parallel_build_count),
-                          "--root", self.installdir])
+                  "-j{}".format(self.project.parallel_build_count),
+                  "--root", self.installdir])
 
     def env(self, root):
         env = ["RUSTC=%s" % self._rustc,
@@ -80,10 +81,12 @@ class RustPlugin(snapcraft.BasePlugin):
             if self.options.rust_channel in ["stable", "beta", "nightly"]:
                 options.append("--channel=%s" % self.options.rust_channel)
             else:
-                raise EnvironmentError("%s is not a valid rust channel" % self.options.rust_channel)
+                raise EnvironmentError("%s is not a valid rust channel"
+                                       % self.options.rust_channel)
 
         rustup = "rustup.sh"
-        self.run(["wget", "-N", "https://static.rust-lang.org/rustup.sh", "-O", rustup])
+        self.run(["wget", "-N", "https://static.rust-lang.org/rustup.sh",
+                  "-O", rustup])
         self.run(["chmod", "+x", rustup])
         self.run(["./%s" % rustup,
                   "--prefix=%s" % self._rustpath,

@@ -50,8 +50,8 @@ class MakePluginTestCase(tests.TestCase):
 
         rust_channel_type = rust_channel['type']
         self.assertEqual(rust_channel_type, 'string',
-                         'Expected "rust-channel" "type" to be "string", but it '
-                         'was "{}"'.format(rust_channel_type))
+                         'Expected "rust-channel" "type" to be "string", '
+                         'but it was "{}"'.format(rust_channel_type))
 
         rust_revision = properties['rust-revision']
         self.assertTrue('type' in rust_revision,
@@ -59,8 +59,8 @@ class MakePluginTestCase(tests.TestCase):
 
         rust_revision_type = rust_revision['type']
         self.assertEqual(rust_revision_type, 'string',
-                         'Expected "rust-revision" "type" to be "string", but it '
-                         'was "{}"'.format(rust_revision_type))
+                         'Expected "rust-revision" "type" to be "string", '
+                         'but it was "{}"'.format(rust_revision_type))
 
     @mock.patch.object(rust.RustPlugin, 'run')
     def test_build(self, run_mock):
