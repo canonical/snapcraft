@@ -56,6 +56,8 @@ _MVN_SETTINGS_FORMAT = (
     '      <protocol>http</protocol>\n'
     '      <host>{http_host}</host>\n'
     '      <port>{http_port}</port>\n'
+    '      <username>{http_username}</username>\n'
+    '      <password>{http_password}</password>\n'
     '      <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>\n'
     '    </proxy>\n'
     '    <proxy>\n'
@@ -64,6 +66,8 @@ _MVN_SETTINGS_FORMAT = (
     '      <protocol>https</protocol>\n'
     '      <host>{https_host}</host>\n'
     '      <port>{https_port}</port>\n'
+    '      <username>{https_username}</username>\n'
+    '      <password>{https_password}</password>\n'
     '      <nonProxyHosts>{non_proxy_hosts}</nonProxyHosts>\n'
     '    </proxy>\n'
     '  </proxies>\n'
@@ -129,8 +133,12 @@ def _create_settings(settings_path):
         f.write(_MVN_SETTINGS_FORMAT.format(
             http_host=http_proxy.hostname,
             http_port=http_proxy.port,
+            http_username=http_proxy.username or '',
+            http_password=http_proxy.password or '',
             https_host=https_proxy.hostname,
             https_port=https_proxy.port,
+            https_username=https_proxy.username or '',
+            https_password=https_proxy.password or '',
             non_proxy_hosts=_get_no_proxy_string()))
 
 
