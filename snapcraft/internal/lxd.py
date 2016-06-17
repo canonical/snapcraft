@@ -61,7 +61,7 @@ class Cleanbuilder:
             remote_tmp = petname.Generate(2, '-')
             check_call(['lxc', 'remote', 'add', remote_tmp, self._server])
             check_call([
-                'lxc', 'launch',
+                'lxc', 'launch', '-e',
                 '{}:ubuntu/xenial/{}'.format(
                     remote_tmp, self._project_options.deb_arch),
                 self._container_name])

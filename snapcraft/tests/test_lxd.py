@@ -52,7 +52,7 @@ class LXDTestCase(tests.TestCase):
         mock_call.assert_has_calls([
             call(['lxc', 'remote', 'add', 'my-pet',
                   'https://images.linuxcontainers.org:8443']),
-            call(['lxc', 'launch',
+            call(['lxc', 'launch', '-e',
                   'my-pet:ubuntu/xenial/{}'.format(expected_arch),
                   'snapcraft-my-pet']),
             call(['lxc', 'file', 'push', 'project.tar',
