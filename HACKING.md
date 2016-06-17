@@ -39,7 +39,7 @@ We'd love the help!
 
 - Submit pull requests against [snapcraft](https://github.com/ubuntu-core/snapcraft/pulls)
 - Make sure to read the [contribution guide](CONTRIBUTING.md)
-- Our mailing list is snappy-devel@lists.ubuntu.com
+- Our mailing list is snapcraft@lists.ubuntu.com
 - We can also be found on the #snappy IRC channel on Freenode
 
 
