@@ -231,7 +231,9 @@ class Subversion(Base):
                     ['svn', 'checkout', self.source, self.source_dir])
             else:
                 subprocess.check_call(
-                    ['svn', 'checkout', 'file://{}'.format(os.path.abspath(self.source)), self.source_dir])
+                    ['svn', 'checkout',\
+                    'file://{}'.format(os.path.abspath(self.source)),
+                    self.source_dir])
 
 
 class Tar(FileBase):
