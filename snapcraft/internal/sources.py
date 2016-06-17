@@ -223,8 +223,15 @@ class Subversion(Base):
             subprocess.check_call(
                 ['svn', 'update'], cwd=self.source_dir)
         else:
-            subprocess.check_call(
-                ['svn', 'checkout', self.source, self.source_dir])
+            if self.source.startswith('svn:') or \
+                    self.source.startswith('https:') or \
+                    self.source.startswith('http:') or \
+                    self.source.startswith('svn+ssh:'):
+                subprocess.check_call(
+                    ['svn', 'checkout', self.source, self.source_dir])
+            else:
+                subprocess.check_call(
+                    ['svn', 'checkout', 'file://{}'.format(os.path.abspath(self.source)), self.source_dir])
 
 
 class Tar(FileBase):
