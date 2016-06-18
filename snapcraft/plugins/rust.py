@@ -59,12 +59,13 @@ class RustPlugin(snapcraft.BasePlugin):
         super().build()
         self.run([self._cargo, "install",
                   "-j{}".format(self.project.parallel_build_count),
-                  "--root", self.installdir])
+                  "--root", self.installdir], env=_build_env())
 
-    def env(self, root):
-        env = ["RUSTC=%s" % self._rustc,
-               "RUSTDOC=%s" % self._rustdoc,
-               "RUST_PATH=%s" % self._rustlib]
+    def _build_env(self, root):
+        env = os.environ.copy()
+        env += {"RUSTC": self._rustc,
+               "RUSTDOC": self._rustdoc,
+               "RUST_PATH": self._rustlib}
         return env
 
     def pull(self):
