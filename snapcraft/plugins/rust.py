@@ -20,7 +20,7 @@ This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
-Additionally, this plugin uses the following plugin-specific keyword:
+Additionally, this plugin uses the following plugin-specific keywords:
 
     - rust-channel
       (string)
