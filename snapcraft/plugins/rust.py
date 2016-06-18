@@ -71,6 +71,13 @@ class RustPlugin(snapcraft.BasePlugin):
         super().pull()
         self._fetch_rust()
 
+    def clean_pull(self):
+        super().clean_pull()
+
+        # Remove the rust path (if any)
+        if os.path.exists(self._rustpath):
+            shutil.rmtree(self._rustpath)
+
     def _fetch_rust(self):
         options = []
 
