@@ -40,13 +40,13 @@ class MakePluginTestCase(tests.TestCase):
 
         properties = schema['properties']
         self.assertTrue('rust-channel' in properties,
-                        'Expected "rust-verion" to be included in properties')
+                        'Expected "rust-channel" to be included in properties')
         self.assertTrue('rust-revision' in properties,
                         'Expected "rust-revision to be included in properties')
 
         rust_channel = properties['rust-channel']
         self.assertTrue('type' in rust_channel,
-                        'Expected "type" to be included in "rust-verion"')
+                        'Expected "type" to be included in "rust-channel"')
 
         rust_channel_type = rust_channel['type']
         self.assertEqual(rust_channel_type, 'string',
