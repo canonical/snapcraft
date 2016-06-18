@@ -32,6 +32,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 import snapcraft
+import shutil
 
 
 class RustPlugin(snapcraft.BasePlugin):
@@ -59,13 +60,13 @@ class RustPlugin(snapcraft.BasePlugin):
         super().build()
         self.run([self._cargo, "install",
                   "-j{}".format(self.project.parallel_build_count),
-                  "--root", self.installdir], env=_build_env())
+                  "--root", self.installdir], env=self._build_env())
 
-    def _build_env(self, root):
+    def _build_env(self):
         env = os.environ.copy()
-        env += {"RUSTC": self._rustc,
+        env.update({"RUSTC": self._rustc,
                "RUSTDOC": self._rustdoc,
-               "RUST_PATH": self._rustlib}
+               "RUST_PATH": self._rustlib})
         return env
 
     def pull(self):
