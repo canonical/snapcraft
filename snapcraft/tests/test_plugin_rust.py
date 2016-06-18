@@ -74,5 +74,5 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call([plugin._cargo, 'install',
                        '-j{}'.format(plugin.project.parallel_build_count),
-                       '--root', plugin.installdir])
+                       '--root', plugin.installdir], env=plugin._build_env())
         ])
