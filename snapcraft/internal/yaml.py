@@ -123,7 +123,8 @@ class Config:
         self._project_options = project_options
         self.after_requests = {}
 
-        self.data = _snapcraft_yaml_load()
+        self._snapcraft_yaml = _get_snapcraft_yaml()
+        self.data = _snapcraft_yaml_load(self._snapcraft_yaml)
 
         self._validator = Validator(self.data)
         self._validator.validate()
@@ -254,7 +255,7 @@ class Config:
             if part_name not in self._part_names:
                 raise EnvironmentError(
                     'The part named {!r} is not defined in '
-                    '\'snapcraft.yaml\''.format(part_name))
+                    '{!r}'.format(part_name, self._snapcraft_yaml))
 
     def load_plugin(self, part_name, plugin_name, properties):
         part = pluginhandler.load_plugin(
@@ -514,12 +515,25 @@ def _expand_filesets_for(step, properties):
     return new_step_set
 
 
-def _snapcraft_yaml_load(yaml_file='snapcraft.yaml'):
-    try:
-        with open(yaml_file, 'rb') as fp:
-            bs = fp.read(2)
-    except FileNotFoundError:
-        raise SnapcraftYamlFileError(yaml_file)
+def _get_snapcraft_yaml():
+    unhidden_yaml_exists = os.path.exists('snapcraft.yaml')
+    hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
+
+    if unhidden_yaml_exists and hidden_yaml_exists:
+        raise EnvironmentError(
+            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
+            "please remove one")
+    elif unhidden_yaml_exists:
+        return 'snapcraft.yaml'
+    elif hidden_yaml_exists:
+        return '.snapcraft.yaml'
+    else:
+        raise SnapcraftYamlFileError('snapcraft.yaml')
+
+
+def _snapcraft_yaml_load(yaml_file):
+    with open(yaml_file, 'rb') as fp:
+        bs = fp.read(2)
 
     if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
         encoding = 'utf-16'
