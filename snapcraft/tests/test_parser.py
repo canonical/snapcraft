@@ -157,6 +157,7 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 }}}
 """)
         mock_get_origin_data.return_value = {
@@ -180,6 +181,7 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -231,6 +233,7 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -321,6 +324,7 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -350,6 +354,7 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -379,6 +384,7 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -409,11 +415,13 @@ maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main
+parts: []
 ---
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
 project-part: main2
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -444,11 +452,13 @@ maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
 project-part: main
+parts: []
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main2
 project-part: main2
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -485,11 +495,13 @@ maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
 project-part: main
+parts: []
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main2
 project-part: main2
+parts: []
 """)
         mock_get_origin_data.return_value = {
             'parts': {

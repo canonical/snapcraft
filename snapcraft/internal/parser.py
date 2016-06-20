@@ -43,10 +43,6 @@ from docopt import docopt
 from snapcraft.internal import log, sources
 
 
-class InvalidEntry(Exception):
-    pass
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -169,7 +165,7 @@ def _process_index(output):
             origin = data['origin']
             origin_type = data.get('origin-type')
             project_part = data['project-part']
-            subparts = data.get('parts', [])
+            subparts = data['parts']
             maintainer = data['maintainer']
             description = data['description']
         except KeyError as e:
