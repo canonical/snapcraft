@@ -172,49 +172,48 @@ def _process_index(output):
             logger.warning("Missing key in wiki entry: {}".format(e))
             continue  # next entry
 
-        if origin:
-            # TODO: this should really be based on the origin uri not
-            # the part name to avoid the situation where there are multiple
-            # parts being pulled from the same repo branch.
-            origin_dir = os.path.join(BASE_DIR, key)
-            try:
-                os.makedirs(origin_dir)
-            except FileExistsError:
-                pass
+        # TODO: this should really be based on the origin uri not
+        # the part name to avoid the situation where there are multiple
+        # parts being pulled from the same repo branch.
+        origin_dir = os.path.join(BASE_DIR, key)
+        try:
+            os.makedirs(origin_dir)
+        except FileExistsError:
+            pass
 
-            class Options():
-                pass
+        class Options():
+            pass
 
-            options = Options()
-            setattr(options, 'source', origin)
+        options = Options()
+        setattr(options, 'source', origin)
 
-            if origin_type:
-                setattr(options, 'source_type', origin_type)
+        if origin_type:
+            setattr(options, 'source_type', origin_type)
 
-            sources.get(origin_dir, None, options)
+        sources.get(origin_dir, None, options)
 
-            origin_data = _get_origin_data(origin_dir)
+        origin_data = _get_origin_data(origin_dir)
 
-            parts = origin_data.get('parts', {})
+        parts = origin_data.get('parts', {})
 
-            source_part = parts.get(project_part)
-            if source_part:
-                source_part = _update_source(source_part, origin)
-                source_part['maintainer'] = maintainer
-                source_part['description'] = description
-                after = source_part.get('after', [])
+        source_part = parts.get(project_part)
+        if source_part:
+            source_part = _update_source(source_part, origin)
+            source_part['maintainer'] = maintainer
+            source_part['description'] = description
+            after = source_part.get('after', [])
 
-                if after:
-                    after = _update_after_parts(project_part, after)
-                    after_parts.update(set(after))
+            if after:
+                after = _update_after_parts(project_part, after)
+                after_parts.update(set(after))
 
-                parts_list[project_part] = source_part
-                subparts_list, subparts_after_list = _process_subparts(
-                    project_part, subparts, parts, origin, maintainer,
-                    description,
-                )
-                parts_list.update(subparts_list)
-                after_parts.update(subparts_after_list)
+            parts_list[project_part] = source_part
+            subparts_list, subparts_after_list = _process_subparts(
+                project_part, subparts, parts, origin, maintainer,
+                description,
+            )
+            parts_list.update(subparts_list)
+            after_parts.update(subparts_after_list)
 
         if is_valid_parts_list(parts_list, after_parts):
             master_parts_list.update(parts_list)
