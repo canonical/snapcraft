@@ -835,7 +835,7 @@ parts:
         os.rename('snapcraft.yaml', '.snapcraft.yaml')
         internal_yaml.Config()
 
-    def test_unhidden_snapcraft_yaml_loads(self):
+    def test_visible_snapcraft_yaml_loads(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test

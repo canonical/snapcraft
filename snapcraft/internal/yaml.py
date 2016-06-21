@@ -516,14 +516,14 @@ def _expand_filesets_for(step, properties):
 
 
 def _get_snapcraft_yaml():
-    unhidden_yaml_exists = os.path.exists('snapcraft.yaml')
+    visible_yaml_exists = os.path.exists('snapcraft.yaml')
     hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
 
-    if unhidden_yaml_exists and hidden_yaml_exists:
+    if visible_yaml_exists and hidden_yaml_exists:
         raise EnvironmentError(
             "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
             "please remove one")
-    elif unhidden_yaml_exists:
+    elif visible_yaml_exists:
         return 'snapcraft.yaml'
     elif hidden_yaml_exists:
         return '.snapcraft.yaml'
