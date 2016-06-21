@@ -154,6 +154,9 @@ class StoreClient():
         self.conf.clear()
         self.conf.save()
 
+    def register(self, snap_name):
+        return self.sca.register(snap_name, constants.DEFAULT_SERIES)
+
     def upload(self, snap_filename):
         if not os.path.exists(snap_filename):
             raise FileNotFoundError(snap_filename)
@@ -316,6 +319,17 @@ class SCAClient(Client):
             return response.json()['macaroon']
         else:
             raise errors.StoreAuthenticationError('Failed to get macaroon')
+
+    def register(self, snap_name, series):
+        auth = _macaroon_auth(self.conf)
+        data = dict(snap_name=snap_name, series=series)
+        response = self.post(
+            'register-name/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json'})
+        # TODO handle macaroon refresh
+        # TODO raise different exceptions based on the response error codes.
+        return response
 
     def snap_upload(self, data):
         auth = _macaroon_auth(self.conf)

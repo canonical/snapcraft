@@ -156,6 +156,28 @@ class DownloadTestCase(tests.TestCase):
                 'test-snap', 'test-channel', download_path)
 
 
+class RegisterTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_register_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.register('dummy')
+
+    def test_register_name_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        response = self.client.register('test-good-snap-name')
+        self.assertTrue(response.ok)
+
+    def test_registration_failed(self):
+        self.client.login('dummy', 'test correct password')
+        response = self.client.register('test-bad-snap-name')
+        self.assertFalse(response.ok)
+
+
 class SilentProgressBar(progressbar.ProgressBar):
     """A progress bar causing no spurious output during tests."""
 
