@@ -159,7 +159,7 @@ def _process_entry(data):
         origin = data['origin']
         origin_type = data.get('origin-type')
         project_part = data['project-part']
-        subparts = data['parts']
+        subparts = data.get('parts', [])
         maintainer = data['maintainer']
         description = data['description']
     except KeyError as e:
