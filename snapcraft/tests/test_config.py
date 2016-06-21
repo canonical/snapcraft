@@ -20,7 +20,6 @@ from snapcraft import (
     config,
     tests
 )
-from snapcraft.tests import fixture_setup
 
 
 def create_config_from_string(content):

@@ -19,7 +19,7 @@ import os
 
 import requests
 import yaml
-from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
+from progressbar import (ProgressBar, Percentage, Bar)
 from xdg import BaseDirectory
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
@@ -89,4 +89,3 @@ class _Update(_Base):
 
 def update():
     _Update().execute()
-

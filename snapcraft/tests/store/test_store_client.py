@@ -19,7 +19,6 @@ import os
 from unittest import mock
 
 import fixtures
-import progressbar
 
 from snapcraft import (
     config,
