@@ -35,7 +35,7 @@ class TempCWD(fixtures.TempDir):
         os.chdir(self.path)
 
 
-class TempConfig(fixtures.Fixture):
+class TempXDG(fixtures.Fixture):
     """Isolate a test from xdg so a private temp config is used."""
 
     def __init__(self, path):
@@ -44,14 +44,26 @@ class TempConfig(fixtures.Fixture):
 
     def setUp(self):
         super().setUp()
-        patcher_home = mock.patch(
+        patcher = mock.patch(
             'xdg.BaseDirectory.xdg_config_home',
             new=os.path.join(self.path, '.config'))
-        patcher_home.start()
-        self.addCleanup(patcher_home.stop)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_data_home',
+            new=os.path.join(self.path, '.local'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher_dirs = mock.patch(
             'xdg.BaseDirectory.xdg_config_dirs',
             new=[xdg.BaseDirectory.xdg_config_home])
+        patcher_dirs.start()
+        self.addCleanup(patcher_dirs.stop)
+
+        patcher_dirs = mock.patch(
+            'xdg.BaseDirectory.xdg_data_dirs',
+            new=[xdg.BaseDirectory.xdg_data_home])
         patcher_dirs.start()
         self.addCleanup(patcher_dirs.stop)
 
@@ -65,6 +77,19 @@ class CleanEnvironment(fixtures.Fixture):
         os.environ = {}
 
         self.addCleanup(os.environ.update, current_environment)
+
+
+class FakeParts(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_parts_server_fixture = FakePartsServerRunning()
+        self.useFixture(self.fake_parts_server_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_PARTS_URI',
+            urllib.parse.urljoin(
+                self.fake_parts_server_fixture.url, 'parts.yaml')))
 
 
 class FakeStore(fixtures.Fixture):
@@ -123,6 +148,11 @@ class _FakeServerRunning(fixtures.Fixture):
         self.server.shutdown()
         self.server.socket.close()
         thread.join()
+
+
+class FakePartsServerRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakePartsServer
 
 
 class FakeSSOServerRunning(_FakeServerRunning):

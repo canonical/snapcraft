@@ -80,10 +80,6 @@ class TestConfig(tests.TestCase):
 
 class TestOptions(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixture_setup.TempConfig(self.path))
-
     def create_config(self, **kwargs):
         conf = config.Config()
         for k, v in kwargs.items():
