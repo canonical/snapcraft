@@ -41,34 +41,35 @@ class LoginTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_login_successful(self):
-        result = self.client.login(
+        self.client.login(
             'dummy email',
             'test correct password')
-        self.assertTrue(result['success'])
+        conf = config.Config()
+        self.assertIsNotNone(conf.get('macaroon'))
+        self.assertIsNotNone(conf.get('unbound_discharge'))
 
     def test_login_successful_with_one_time_password(self):
-        result = self.client.login(
+        self.client.login(
             'dummy email',
             'test correct password',
             'test correct one-time password')
-        self.assertTrue(result['success'])
         conf = config.Config()
         self.assertIsNotNone(conf.get('macaroon'))
         self.assertIsNotNone(conf.get('unbound_discharge'))
 
     def test_failed_login_with_wrong_password(self):
-        result = self.client.login(
-            'dummy email',
-            'wrong password')
-        self.assertFalse(result['success'])
+        with self.assertRaises(errors.StoreAuthenticationError):
+            self.client.login('dummy email', 'wrong password')
+
         self.assertTrue(config.Config().is_empty())
 
     def test_failed_login_with_wrong_one_time_password(self):
-        result = self.client.login(
-            'dummy email',
-            'test correct password',
-            'wrong one-time password')
-        self.assertFalse(result['success'])
+        with self.assertRaises(errors.StoreAuthenticationError):
+            self.client.login(
+                'dummy email',
+                'test correct password',
+                'wrong one-time password')
+
         self.assertTrue(config.Config().is_empty())
 
 
