@@ -22,6 +22,7 @@ import subprocess
 import tempfile
 import urllib.parse
 
+import pymacaroons
 import requests
 import yaml
 
@@ -31,7 +32,6 @@ from snapcraft.storeapi import (
     _upload,
     constants,
     errors,
-    macaroons
 )
 
 
@@ -79,7 +79,7 @@ def _macaroon_auth(conf):
 
 def _deserialize_macaroon(value):
     try:
-        return macaroons.Macaroon.deserialize(value)
+        return pymacaroons.Macaroon.deserialize(value)
     except:
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
@@ -140,13 +140,13 @@ class StoreClient():
         self.conf.save()
 
     def _extract_caveat_id(self, root_macaroon):
-        macaroon = macaroons.Macaroon.deserialize(root_macaroon)
+        macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)
         # macaroons are all bytes, never strings
-        sso_host = macaroons.convert_to_bytes(
+        sso_host = pymacaroons.utils.convert_to_bytes(
             urllib.parse.urlparse(self.sso.root_url).hostname)
         for caveat in macaroon.caveats:
             if caveat.location == sso_host:
-                return macaroons.convert_to_string(caveat.caveat_id)
+                return pymacaroons.utils.convert_to_string(caveat.caveat_id)
         else:
             raise errors.InvalidCredentialsError('Invalid root macaroon')
 

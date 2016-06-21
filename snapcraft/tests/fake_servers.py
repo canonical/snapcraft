@@ -20,8 +20,9 @@ import http.server
 import os
 import urllib.parse
 
+import pymacaroons
+
 import snapcraft.tests
-from snapcraft.storeapi import macaroons
 
 
 logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'discharge_macaroon': macaroons.Macaroon().serialize()
+            'discharge_macaroon': pymacaroons.Macaroon().serialize()
             }
         self.wfile.write(
             json.dumps(response).encode())
@@ -158,9 +159,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        macaroon = macaroons.Macaroon(
+        macaroon = pymacaroons.Macaroon(
             caveats=[
-                macaroons.Caveat(
+                pymacaroons.Caveat(
                     caveat_id='test caveat',
                     location='localhost',
                     verification_key_id='test verifiacion')
