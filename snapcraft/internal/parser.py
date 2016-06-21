@@ -174,11 +174,11 @@ def _process_entry(data):
     except FileExistsError:
         pass
 
-    class Options():
-        pass
+    class Options:
+        source = origin
+        source_type = None
 
     options = Options()
-    setattr(options, 'source', origin)
 
     if origin_type:
         setattr(options, 'source_type', origin_type)
