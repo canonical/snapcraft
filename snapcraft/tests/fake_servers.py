@@ -136,10 +136,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        register_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
+        elif parsed_path.path.startswith(register_path):
+            self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
             self._handle_upload_request()
         else:
@@ -162,6 +166,34 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                     verification_key_id='test verifiacion')
             ])
         response = {'macaroon': macaroon.serialize()}
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_registration_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling registration request with content {}'.format(data))
+        if data['snap_name'] == 'test-bad-snap-name':
+            self._handle_failed_registration()
+        else:
+            self._handle_successful_registration()
+
+    def _handle_successful_registration(self):
+        self.send_response(201)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {'snap_id': 'test-snap-id'}
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_failed_registration(self):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 409,
+            'code': 'already_registered'
+        }
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_upload_request(self):

@@ -31,6 +31,7 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] register <snap-name>
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
@@ -71,6 +72,7 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
   upload       Upload a snap to the Ubuntu Store.
@@ -237,16 +239,11 @@ def run(args, project_options):
     elif argless_command:
         argless_command()
     elif args['clean']:
-        step = args['--step']
-        if step == 'strip':
-            logger.warning('DEPRECATED: Use `prime` instead of `strip` '
-                           'as the step to clean')
-            step = 'prime'
-        lifecycle.clean(project_options, args['<part>'], step)
-    elif args['upload']:
-        snapcraft.upload(args['<snap-file>'])
+        _run_clean(args, project_options)
     elif args['cleanbuild']:
         lifecycle.cleanbuild(project_options),
+    elif _is_store_command(args):
+        _run_store_command(args)
     elif args['tour']:
         _scaffold_examples(args['<directory>'] or _SNAPCRAFT_TOUR_DIR)
     elif args['help']:
@@ -256,6 +253,26 @@ def run(args, project_options):
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
     return project_options
+
+
+def _run_clean(args, project_options):
+    step = args['--step']
+    if step == 'strip':
+        logger.warning('DEPRECATED: Use `prime` instead of `strip` '
+                       'as the step to clean')
+        step = 'prime'
+    lifecycle.clean(project_options, args['<part>'], step)
+
+
+def _is_store_command(args):
+    return args['register'] or args['upload']
+
+
+def _run_store_command(args):
+    if args['register']:
+        snapcraft.register(args['<snap-name>'])
+    elif args['upload']:
+        snapcraft.upload(args['<snap-file>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

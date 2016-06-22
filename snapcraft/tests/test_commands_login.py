@@ -46,9 +46,8 @@ class LoginCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_successful_login(self):
-        with mock.patch.object(
-                storeapi.StoreClient, 'login') as mock_login:
-            mock_login.return_value = {'success': True}
+        with mock.patch.object(storeapi.StoreClient, 'login'):
+            # no exception raised.
             main(['login'])
 
         self.assertEqual(
@@ -56,10 +55,23 @@ class LoginCommandTestCase(tests.TestCase):
             'Login successful.\n',
             self.fake_logger.output)
 
-    def test_failed_login(self):
+    def test_failed_login_with_invalid_credentials(self):
         with mock.patch.object(
                 storeapi.StoreClient, 'login') as mock_login:
-            mock_login.return_value = {'success': False}
+            mock_login.side_effect = storeapi.errors.InvalidCredentialsError(
+                'error')
+            main(['login'])
+
+        self.assertEqual(
+            'Authenticating against Ubuntu One SSO.\n'
+            'Login failed.\n',
+            self.fake_logger.output)
+
+    def test_failed_login_with_store_authentication_error(self):
+        with mock.patch.object(
+                storeapi.StoreClient, 'login') as mock_login:
+            mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
+                'error')
             main(['login'])
 
         self.assertEqual(
