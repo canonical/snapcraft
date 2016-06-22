@@ -60,7 +60,14 @@ def _macaroon_auth(conf):
 
     """
     root_macaroon_raw = conf.get('macaroon')
+    if root_macaroon_raw is None:
+        raise errors.InvalidCredentialsError(
+            'Root macaroon not in the config file')
     unbound_raw = conf.get('unbound_discharge')
+    if unbound_raw is None:
+        raise errors.InvalidCredentialsError(
+            'Unbound discharge not in the config file')
+
     root_macaroon = _deserialize_macaroon(root_macaroon_raw)
     unbound = _deserialize_macaroon(unbound_raw)
     bound = root_macaroon.prepare_for_request(unbound)
@@ -74,7 +81,7 @@ def _deserialize_macaroon(value):
     try:
         return macaroons.Macaroon.deserialize(value)
     except:
-        raise errors.InvalidCredentialsError()
+        raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
 
 class Client():
@@ -120,29 +127,17 @@ class StoreClient():
 
     def login(self, email, password, one_time_password=None):
         """Log in via the Ubuntu One SSO API."""
-        result = dict(success=False, body=None)
         # Ask the store for the needed capabalities to be associated with the
         # macaroon.
-        macaroon, error = self.sca.get_macaroon(
+        macaroon = self.sca.get_macaroon(
             ['package_upload', 'package_access'])
-        if error:
-            result['errors'] = error
-        else:
-            caveat_id = self._extract_caveat_id(macaroon)
-            if caveat_id is None:
-                error = 'Invalid macaroon'
-            else:
-                unbound_discharge, error = self.sso.get_unbound_discharge(
-                    email, password, one_time_password, caveat_id)
-            if error:
-                result['errors'] = error
-            else:
-                # The macaroon has been discharged, save it in the config
-                self.conf.set('macaroon', macaroon)
-                self.conf.set('unbound_discharge', unbound_discharge)
-                self.conf.save()
-                result['success'] = True
-        return result
+        caveat_id = self._extract_caveat_id(macaroon)
+        unbound_discharge = self.sso.get_unbound_discharge(
+            email, password, one_time_password, caveat_id)
+        # The macaroon has been discharged, save it in the config
+        self.conf.set('macaroon', macaroon)
+        self.conf.set('unbound_discharge', unbound_discharge)
+        self.conf.save()
 
     def _extract_caveat_id(self, root_macaroon):
         macaroon = macaroons.Macaroon.deserialize(root_macaroon)
@@ -152,19 +147,27 @@ class StoreClient():
         for caveat in macaroon.caveats:
             if caveat.location == sso_host:
                 return macaroons.convert_to_string(caveat.caveat_id)
-        return None
+        else:
+            raise errors.InvalidCredentialsError('Invalid root macaroon')
 
     def logout(self):
         self.conf.clear()
         self.conf.save()
+
+    def register(self, snap_name):
+        return self.sca.register(snap_name, constants.DEFAULT_SERIES)
 
     def upload(self, snap_filename):
         if not os.path.exists(snap_filename):
             raise FileNotFoundError(snap_filename)
         snap_name = _get_name_from_snap_file(snap_filename)
 
+        # FIXME This should be raised by the function that uses the
+        # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:
-            raise errors.InvalidCredentialsError()
+            raise errors.InvalidCredentialsError(
+                'Unbound discharge not in the config file')
+
         data = _upload.upload_files(snap_filename, self.updown)
         success = data.get('success', False)
         if not success:
@@ -237,9 +240,10 @@ class SSOClient(Client):
             headers={'Content-Type': 'application/json',
                      'Accept': 'application/json'})
         if response.ok:
-            return response.json()['discharge_macaroon'], None
+            return response.json()['discharge_macaroon']
         else:
-            return None, response.text
+            raise errors.StoreAuthenticationError(
+                'Failed to get unbound discharge: '.format(response.text))
 
 
 class SnapIndexClient(Client):
@@ -255,9 +259,6 @@ class SnapIndexClient(Client):
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
     def search_package(self, snap_name, channel, arch):
-        if self.conf.get('unbound_discharge') is None:
-            raise errors.InvalidCredentialsError()
-
         headers = {
             'Accept': 'application/hal+json',
             'X-Ubuntu-Architecture': arch,
@@ -315,9 +316,20 @@ class SCAClient(Client):
             headers={'Content-Type': 'application/json',
                      'Accept': 'application/json'})
         if response.ok:
-            return response.json()['macaroon'], None
+            return response.json()['macaroon']
         else:
-            return None, response.text
+            raise errors.StoreAuthenticationError('Failed to get macaroon')
+
+    def register(self, snap_name, series):
+        auth = _macaroon_auth(self.conf)
+        data = dict(snap_name=snap_name, series=series)
+        response = self.post(
+            'register-name/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json'})
+        # TODO handle macaroon refresh
+        # TODO raise different exceptions based on the response error codes.
+        return response
 
     def snap_upload(self, data):
         auth = _macaroon_auth(self.conf)
