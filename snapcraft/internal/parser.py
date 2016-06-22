@@ -43,7 +43,7 @@ from docopt import docopt
 from snapcraft.internal import log, sources
 
 
-class InvalidEntry(Exception):
+class InvalidEntryError(Exception):
     pass
 
 
@@ -155,34 +155,30 @@ def _process_entry(data):
 
     logger.debug('Processing part {!r}'.format(key))
 
+    # Get optional wiki entry fields.
+    subparts = data.get('parts', [])
+    origin_type = data.get('origin-type')
+
+    # Get required wiki entry fields.
     try:
         origin = data['origin']
-        origin_type = data.get('origin-type')
         project_part = data['project-part']
-        subparts = data.get('parts', [])
         maintainer = data['maintainer']
         description = data['description']
     except KeyError as e:
-        raise InvalidEntry("Missing key in wiki entry: {}".format(e))
+        raise InvalidEntryError('Missing key in wiki entry: {}'.format(e))
 
     # TODO: this should really be based on the origin uri not
     # the part name to avoid the situation where there are multiple
     # parts being pulled from the same repo branch.
     origin_dir = os.path.join(BASE_DIR, key)
-    try:
-        os.makedirs(origin_dir)
-    except FileExistsError:
-        pass
+    os.makedirs(origin_dir, exist_ok=True)
 
     class Options:
         source = origin
-        source_type = None
+        source_type = origin_type
 
     options = Options()
-
-    if origin_type:
-        setattr(options, 'source_type', origin_type)
-
     sources.get(origin_dir, None, options)
 
     origin_data = _get_origin_data(origin_dir)
@@ -224,8 +220,8 @@ def _process_index(output):
     for data in all_data:
         try:
             parts_list, after_parts = _process_entry(data)
-        except InvalidEntry as e:
-            logger.warning("Invalid wiki entry: {}".format(e))
+        except InvalidEntryError as e:
+            logger.warning('Invalid wiki entry: {}'.format(e))
             continue
 
         if is_valid_parts_list(parts_list, after_parts):
