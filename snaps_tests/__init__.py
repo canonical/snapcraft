@@ -231,6 +231,12 @@ class SnapsTestCase(testtools.TestCase):
             output = self.run_command_in_snappy_testbed(command)
             self.assertEqual(expected_output, output)
 
+    def assert_command_in_snappy_testbed_with_regex(
+            self, command, expected_regex, flags=0):
+        if not config.get('skip-install', False):
+            output = self.run_command_in_snappy_testbed(command)
+            self.assertThat(output, MatchesRegex(expected_regex, flags=flags))
+
     def run_command_in_snappy_testbed(self, command):
         if not config.get('skip-install', False):
             try:
