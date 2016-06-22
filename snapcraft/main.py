@@ -206,7 +206,7 @@ def main(argv=None):
         if args['--debug']:
             raise
 
-        sys.exit(textwrap.fill(str(e)))
+        sys.exit(e)
 
 
 def _get_lifecycle_command(args):
