@@ -57,7 +57,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
         universal_newlines=True
-        self.assertEqual('1', revno)
+        self.assertEqual(b'1', revno)
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
 
     def test_pull_svn_update(self):
@@ -99,7 +99,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
         universal_newlines=True
-        self.assertEqual('2', revno)
+        self.assertEqual(b'2', revno)
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
         self.assertThat(os.path.join(part_src_path, 'filetwo'), FileExists())
 
