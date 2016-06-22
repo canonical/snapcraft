@@ -28,9 +28,9 @@ import yaml
 import snapcraft
 from snapcraft.internal import (
     libraries,
+    parts,
     pluginhandler,
     sources,
-    wiki,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError
 
@@ -133,7 +133,7 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        self._wiki = wiki.Wiki()
+        self._remote_parts = parts.get_remote_parts()
         self._process_parts()
 
     def _process_parts(self):
@@ -144,14 +144,12 @@ class Config:
             plugin_name = properties.pop('plugin', None)
             if not plugin_name:
                 logger.info(
-                    'Searching the wiki to compose part "{}"'.format(
-                        part_name))
+                    'Searching in the remotes parts cache for part '
+                    '{!r}'.format(part_name))
                 with contextlib.suppress(KeyError):
-                    properties = self._wiki.compose(part_name, properties)
+                    properties = self._remote_parts.compose(
+                        part_name, properties)
                     plugin_name = properties.pop('plugin', None)
-                    # The wiki still supports using 'type' for snapcraft 1.x
-                    if 'type' in properties:
-                        del properties['type']
 
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
@@ -186,13 +184,16 @@ class Config:
                         found = True
                         break
                 if not found:
-                    wiki_part = self._wiki.get_part(dep)
-                    found = True if wiki_part else False
+                    remote_part = self._remote_parts.get_part(dep)
+                    found = True if remote_part else False
                     if found:
-                        plugin_name = wiki_part.pop('plugin')
+                        plugin_name = remote_part.pop('plugin')
                         part.deps.append(self.load_plugin(
-                            dep, plugin_name, wiki_part))
+                            dep, plugin_name, remote_part))
                         self._part_names.append(dep)
+                    else:
+                        logger.info('Maybe {!r} is defined as a remote part, '
+                                    'run `snapcraft update` to refresh')
                 if not found:
                     raise SnapcraftLogicError(
                         'part name missing {}'.format(dep))
