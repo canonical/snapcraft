@@ -5,8 +5,13 @@ description: This example is not really production quality
 confinement: strict
 
 apps:
-  server:
+  git:
     command: bin/git
+    # git will now have access to files outside of its containment
+    # until you run the following command after installing the snap:
+    #     snap connect git:home ubuntu-core:home
+    plugs:
+      - home
 
 parts:
   git:
