@@ -2,7 +2,6 @@ name: spongeshaker
 version: 0
 summary: A python sha3 implementation
 description: A python3 project using snapcraft
-icon: icon.png
 confinement: strict
 
 apps:
