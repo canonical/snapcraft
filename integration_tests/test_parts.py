@@ -37,11 +37,29 @@ class PartsTestCase(integration_tests.TestCase):
         self.assertTrue(os.path.exists(self.parts_yaml))
         self.assertTrue(os.path.exists(self.headers_yaml))
 
-    def test_curl_exists(self):
+    def test_curl_exists_and_properly_defined(self):
         """Curl is used in most of the demos so we test for its existence."""
         self.run_snapcraft('update')
+        output = self.run_snapcraft(['define', 'curl'])
 
-        with open(self.parts_yaml) as parts_file:
-            parts = yaml.load(parts_file)
+        expected = """Maintainer: 'Sergio Schvezov <sergio.schvezov@ubuntu.com>'
+Description: 'A tool and a library (usable from many languages) for client side URL transfers, supporting FTP, FTPS, HTTP, HTTPS, TELNET, DICT, FILE and LDAP.'
 
-        self.assertTrue('curl' in parts, parts)
+curl:
+  configflags:
+  - --enable-static
+  - --enable-shared
+  - --disable-manual
+  plugin: autotools
+  snap:
+  - -bin
+  - -lib/*.a
+  - -lib/pkgconfig
+  - -lib/*.la
+  - -include
+  - -share
+  source: http://curl.haxx.se/download/curl-7.44.0.tar.bz2
+  source-type: tar
+"""
+
+        self.assertEqual(expected, output)

@@ -36,6 +36,7 @@ Usage:
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
+  snapcraft [options] define <part-name>
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -91,6 +92,7 @@ The available lifecycle commands are:
 
 Parts ecosystem commands
   update       Updates the parts listing from the cloud.
+  define       Shows the definition for the cloud part.
 
 Calling snapcraft without a COMMAND will default to 'snap'
 
@@ -255,6 +257,8 @@ def run(args, project_options):
                              args['--devel'], args['topics'])
     elif args['update']:
         parts.update()
+    elif args['define']:
+        parts.define(args['<part-name>'])
     else:  # snap by default:
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
