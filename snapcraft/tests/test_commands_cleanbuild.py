@@ -98,15 +98,19 @@ parts:
 
     @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_no_lxd(self, mock_installed):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         mock_installed.return_value = False
         with self.assertRaises(SystemExit) as raised:
             main(['cleanbuild'])
 
         self.maxDiff = None
+        self.assertEqual(1, raised.exception.code)
         self.assertEqual(
-            str(raised.exception),
+            fake_logger.output,
             'The lxd package is not installed, in order to use `cleanbuild` '
             'you\nmust install lxd onto your system. Refer to the '
             '"Ubuntu Desktop and\nUbuntu Server" section on '
             'https://linuxcontainers.org/lxd/getting-\nstarted-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper\nsetup.')
+            '#ubuntu-desktop-and-ubuntu-server to enable a proper\nsetup.\n')

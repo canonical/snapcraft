@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,13 +25,18 @@ from snapcraft import tests
 class InitCommandTestCase(tests.TestCase):
 
     def test_init_with_existing_snapcraft_yaml_must_fail(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         open('snapcraft.yaml', 'w').close()
 
         with self.assertRaises(SystemExit) as raised:
             main(['init'])
 
+        self.assertEqual(1, raised.exception.code)
         self.assertEqual(
-            'snapcraft.yaml already exists!', str(raised.exception))
+            fake_logger.output,
+            'snapcraft.yaml already exists!\n')
 
     def test_init_must_write_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)

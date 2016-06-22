@@ -158,8 +158,6 @@ class StoreClient():
         return self.sca.register(snap_name, constants.DEFAULT_SERIES)
 
     def upload(self, snap_filename):
-        if not os.path.exists(snap_filename):
-            raise FileNotFoundError(snap_filename)
         snap_name = _get_name_from_snap_file(snap_filename)
 
         # FIXME This should be raised by the function that uses the
