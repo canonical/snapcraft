@@ -17,6 +17,7 @@
 
 import getpass
 import logging
+import os
 
 from snapcraft import storeapi
 
@@ -67,12 +68,15 @@ def register(snap_name):
             "Congratulations! You're now the publisher for {!r}.".format(
                 snap_name))
     else:
-        logger.error('Registration failed.')
-        raise RuntimeError()
+        raise RuntimeError('Registration failed.')
 
 
 def upload(snap_filename):
-    logger.info('Uploading existing {}.'.format(snap_filename))
+    if not os.path.exists(snap_filename):
+        raise FileNotFoundError(
+            'The file {!r} does not exist.'.format(snap_filename))
+
+    logger.info('Uploading {}.'.format(snap_filename))
 
     try:
         store = storeapi.StoreClient()
