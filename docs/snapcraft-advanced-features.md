@@ -275,4 +275,4 @@ Combining various plugins and parts and using [the wiki][wiki] plugin make
 [your own plugin] [plugin] as well.
 
 [plugin]: plugins.md
-[wiki]: https://wiki.ubuntu.com/Snappy/Parts
+[wiki]: https://wiki.ubuntu.com/snapcraft/parts

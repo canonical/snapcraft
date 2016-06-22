@@ -176,4 +176,31 @@ of published parts increases, writing a snapcraft.yaml file will get easier
 because one would simply include a set of published parts and the local part(s)
 specific to the snap being created.
 
-[wiki]: https://wiki.ubuntu.com/Snappy/Parts
+The format of the wiki entries is a stream of YAML documents with the following
+required fields:
+
+ * origin - The url where the snapcraft.yaml is located
+ * project-part - The actual part to be published
+ * description - A brief description of the part.
+ * maintainer - The person who maintains the part's name and email address.
+
+Optional fields are:
+
+ * origin-type - A hint about the type of project that contains the part. (e.g. bzr, git, tar)
+ * parts - A YAML list of other parts from the snapcraft.yaml that are needed to use the project-part.
+
+### Note:
+
+It can take up to an hour for updates to the wiki to become available to snapcraft.
+
+### Example:
+
+```yaml
+---
+project-part: curl
+origin: https://github.com/curl/curl
+maintainer: John Doe <john.doe@example.com>
+parts: [libcurl]
+```
+
+[wiki]: https://wiki.ubuntu.com/snapcraft/parts
