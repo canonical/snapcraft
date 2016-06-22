@@ -90,6 +90,8 @@ class FakeParts(fixtures.Fixture):
             'SNAPCRAFT_PARTS_URI',
             urllib.parse.urljoin(
                 self.fake_parts_server_fixture.url, 'parts.yaml')))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
 
 
 class FakeStore(fixtures.Fixture):
