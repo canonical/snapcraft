@@ -46,7 +46,7 @@ Run the `snapcraft upload` command passing the path to the `snap` file as an arg
     Checking package status... |
 
     Application uploaded successfully (as revision 1)
-    Please check out the application at: https://myapps.ubuntu.com/dev/click-apps/1337/
+    Please check out the application at: https://myapps.developer.ubuntu.com/dev/click-apps/1337/
 
 Your snap has now been uploaded to the store, and is now undergoing an
 automated review. You'll be emailed when the review has completed, at which time
