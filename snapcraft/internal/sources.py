@@ -27,7 +27,7 @@ code for that part, and how to unpack it if necessary.
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: git, bzr, hg, tar or zip
+  - source-type: git, bzr, hg, svn, tar, or zip
 
     In some cases the source string is not enough to identify the version
     control system or compression algorithim. The source-type key can tell
@@ -201,6 +201,38 @@ class Mercurial(Base):
         subprocess.check_call(cmd)
 
 
+class Subversion(Base):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+        if source_tag:
+            if source_branch:
+                raise IncompatibleOptionsError(
+                    "Can't specify source-tag OR source-branch for a "
+                    "Subversion source")
+            else:
+                raise IncompatibleOptionsError(
+                    "Can't specify source-tag for a Subversion source")
+        elif source_branch:
+            raise IncompatibleOptionsError(
+                "Can't specify source-branch for a Subversion source")
+
+    def pull(self):
+        if os.path.exists(os.path.join(self.source_dir, '.svn')):
+            subprocess.check_call(
+                ['svn', 'update'], cwd=self.source_dir)
+        else:
+            if os.path.isdir(self.source):
+                subprocess.check_call(
+                    ['svn', 'checkout',
+                     'file://{}'.format(os.path.abspath(self.source)),
+                     self.source_dir])
+            else:
+                subprocess.check_call(
+                    ['svn', 'checkout', self.source, self.source_dir])
+
+
 class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,
@@ -348,6 +380,8 @@ def get_required_packages(options):
         packages.append('tar')
     elif source_type == 'hg' or source_type == 'mercurial':
         packages.append('mercurial')
+    elif source_type == 'subversion' or source_type == 'svn':
+        packages.append('subversion')
 
     return packages
 
@@ -357,6 +391,8 @@ _source_handler = {
     'git': Git,
     'hg': Mercurial,
     'mercurial': Mercurial,
+    'svn': Subversion,
+    'subversion': Subversion,
     'tar': Tar,
     'zip': Zip,
 }
@@ -379,6 +415,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     elif source.startswith('git:') or source.startswith('git@') or \
             source.endswith('.git'):
         source_type = 'git'
+    elif source.startswith('svn:'):
+        source_type = 'subversion'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
     elif source.endswith('.zip'):

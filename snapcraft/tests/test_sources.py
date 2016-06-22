@@ -321,6 +321,64 @@ class TestMercurial(SourceTestCase):
         self.assertEqual(raised.exception.message, expected_message)
 
 
+class TestSubversion(SourceTestCase):
+
+    def test_pull_remote(self):
+        svn = sources.Subversion('svn://my-source', 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'checkout', 'svn://my-source', 'source_dir'])
+
+    def test_pull_local_absolute_path(self):
+        svn = sources.Subversion(self.path, 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'checkout', 'file://'+self.path, 'source_dir'])
+
+    def test_pull_local_relative_path(self):
+        os.mkdir("my-source")
+        svn = sources.Subversion('my-source', 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'checkout',
+             'file://{}'.format(os.path.join(self.path, 'my-source')),
+             'source_dir'])
+
+    def test_pull_existing(self):
+        self.mock_path_exists.return_value = True
+        svn = sources.Subversion('svn://my-source', 'source_dir')
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'update'], cwd=svn.source_dir)
+
+    def test_init_with_source_tag_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_tag='tag')
+        expected_message = (
+            "Can't specify source-tag for a Subversion source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_branch_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_branch='branch')
+        expected_message = (
+            "Can't specify source-branch for a Subversion source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_branch_and_tag_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_tag='tag',
+                source_branch='branch')
+
+        expected_message = (
+            "Can't specify source-tag OR source-branch for a Subversion "
+            "source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+
 class TestLocal(tests.TestCase):
 
     def test_pull_with_existing_source_dir_creates_symlink(self):
@@ -410,6 +468,23 @@ class TestUri(tests.TestCase):
         test_sources = [
             'lp:snapcraft_test_source',
             'bzr:dummy-source'
+        ]
+
+        for source in test_sources:
+            with self.subTest(key=source):
+                options = tests.MockOptions(source=source)
+                sources.get(
+                    sourcedir='dummy',
+                    builddir='dummy',
+                    options=options)
+
+                mock_pull.assert_called_once_with()
+                mock_pull.reset_mock()
+
+    @unittest.mock.patch('snapcraft.sources.Subversion.pull')
+    def test_get_svn_source_from_uri(self, mock_pull):
+        test_sources = [
+            'svn://sylpheed.sraoss.jp/sylpheed/trunk'
         ]
 
         for source in test_sources:
