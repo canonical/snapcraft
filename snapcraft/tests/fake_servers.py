@@ -21,7 +21,13 @@ import os
 import urllib.parse
 
 import pymacaroons
+import yaml
 
+import snapcraft.tests
+from snapcraft.storeapi import macaroons
+
+
+logger = logging.getLogger(__name__)
 import snapcraft.tests
 
 
@@ -32,6 +38,64 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def log_message(*args):
         logger.debug(args)
+
+
+class FakePartsServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsRequestHandler)
+
+
+class FakePartsRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = {
+                'curl': {
+                    'source': 'http://curl.org',
+                    'plugin': 'autotools',
+                },
+            }
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', '100')
+        self.send_header('ETag', '1111')
+        self.end_headers()
+        self.wfile.write(yaml.dump(response).encode())
+
+
+class FakePartsServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsRequestHandler)
+
+
+class FakePartsRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = {
+                'curl': {
+                    'source': 'http://curl.org',
+                    'plugin': 'autotools',
+                },
+            }
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', '100')
+        self.send_header('ETag', '1111')
+        self.end_headers()
+        self.wfile.write(yaml.dump(response).encode())
 
 
 class FakeSSOServer(http.server.HTTPServer):

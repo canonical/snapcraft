@@ -20,7 +20,6 @@ from snapcraft import (
     config,
     tests
 )
-from snapcraft.tests import fixture_setup
 
 
 def create_config_from_string(content):
@@ -79,10 +78,6 @@ class TestConfig(tests.TestCase):
 
 
 class TestOptions(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixture_setup.TempConfig(self.path))
 
     def create_config(self, **kwargs):
         conf = config.Config()

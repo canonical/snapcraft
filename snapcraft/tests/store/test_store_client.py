@@ -177,19 +177,6 @@ class RegisterTestCase(tests.TestCase):
         self.assertFalse(response.ok)
 
 
-class SilentProgressBar(progressbar.ProgressBar):
-    """A progress bar causing no spurious output during tests."""
-
-    def start(self):
-        pass
-
-    def update(self, value=None):
-        pass
-
-    def finish(self):
-        pass
-
-
 class UploadTestCase(tests.TestCase):
 
     def setUp(self):
@@ -201,7 +188,7 @@ class UploadTestCase(tests.TestCase):
             'test-snap.snap')
         patcher = mock.patch(
             'snapcraft.storeapi._upload.ProgressBar',
-            new=SilentProgressBar)
+            new=tests.SilentProgressBar)
         patcher.start()
         self.addCleanup(patcher.stop)
 

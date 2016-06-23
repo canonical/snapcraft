@@ -160,9 +160,9 @@ after:
 ```
 
 As we never define the `curl` part in the above example, `snapcraft` will
-check the Ubuntu Wiki, which is where we currently host examples of
-successful snapcraft parts. The build order in this case would be `curl`,
-then `main`.
+check the Ubuntu [Wiki][wiki],
+which is where we currently host examples of successful snapcraft parts.
+The build order in this case would be `curl`, then `main`.
 
 
 ## Finishing steps
@@ -270,8 +270,9 @@ add to the snap.
 
 ### Endless possibilities
 
-Combining various plugins and parts and using the wiki plugin make `snapcraft`
-incredibly versatile. On top of that, you can write [your own plugin] [plugin]
-as well.
+Combining various plugins and parts and using [the wiki][wiki] plugin make
+`snapcraft` incredibly versatile. On top of that, you can write
+[your own plugin] [plugin] as well.
 
 [plugin]: plugins.md
+[wiki]: https://wiki.ubuntu.com/snapcraft/parts
