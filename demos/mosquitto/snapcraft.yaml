@@ -28,4 +28,4 @@ parts:
     files:
       subscribe.py: bin/subscribe
       publish.py: bin/publish
-    after: [mqtt-paho-py3]
+    after: [mqtt-paho/python3]
