@@ -235,7 +235,7 @@ def _get_command_from_arg(args):
     return functions[function[0]]
 
 
-def run(args, project_options):
+def run(args, project_options):  # noqa
     lifecycle_command = _get_lifecycle_command(args)
     argless_command = _get_command_from_arg(args)
     if lifecycle_command:
