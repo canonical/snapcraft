@@ -20,7 +20,6 @@ import subprocess
 from unittest import mock
 
 import fixtures
-import progressbar
 import pymacaroons
 
 from snapcraft import (
