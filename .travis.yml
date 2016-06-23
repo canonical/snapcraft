@@ -1,25 +1,21 @@
 sudo: required
-dist: trusty
+services:
+  - docker
 language: python
-python:
-  - 3.4
-virtualenv:
-  system_site_packages: true
 env:
   global:
   # Encrypted test user password. Generated with the travis gem:
   #     travis encrypt -r ubuntu-core/snapcraft TEST_USER_PASSWORD=$password
   - secure: "H58yffyxq1y5RxbEBroXgdkmfc2ttvD8Y6ARh1HCNv0AvAfJ6FA5/Ly2rzBMh/ghXnwumkLHKUYa9dGnbJl0R26U4b7w4YkmSKsrWgNWL1M3iqXdiVsZRJ3K3RaVRya3m9k9DL6b3gR2ZVhz6FeDlaKuOZqCeFxRgXGTB71NrFUKSwXqqE5w10u3woItG3upqr2fPDjJ4bIaffpINpX2MabghfboBB9VbKdLvWiEkH7kEJKNh9zNHZJ4FK5LVt/GAR7CHQhuQsJVQOO+dPE7ZL7FlvqYg33b4ly75kpoo30muzSRXbs+qoSaBe6K41vbVhGdBmtJ9SXxYeuVGunFq8hKOGrSq00vIcPyOonTIZmkWVA/oxuo6viIzuzP1BlU5ulEmQjIbJj5trEzLo3Nd5o8WF19fLpp5MYuU0w28F/TzjarWYU9mw/sPkTJTrV5wHP5jGa/2mcExJBg+MgH60Q8I/uObz9EdovOjLKb1d8x2NSlWozXDyLYVTWIecetEPArhNVuOaGFLpGorDVVTvcrvkLR/rnvY+iqxthuQWuzfEsmkafWFwxgEO/G1mZUI66aq7UdtkToLKCcwi6FCYASQ7AA0mzizWI76teUXr3iJ/HFh7+BfKblfbkgS+eYIjLuAJBxp0NXY6J+eO0gG6n2Pp0emy+PFDJ4xD0XkR0="
   matrix:
-  - TEST_SUITE=static
-  - TEST_SUITE=unit
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y python3-coverage python3-distutils-extra squashfs-tools
+  - TEST_SUITE=static       DEPENDENCIES="apt install -y python3-flake8 python3-mccabe"
+  - TEST_SUITE=unit         DEPENDENCIES="apt build-dep -y ./ && apt install -y python3-coverage"
+  - TEST_SUITE=integration  DEPENDENCIES="apt build-dep -y ./ && apt install -y bzr git mercurial python3-pexpect subversion sudo"
+
 install:
-  - pip install docopt fixtures flake8 jsonschema lxml mccabe petname pexpect python-apt pyxdg pyyaml py3-progressbar requests requests-oauthlib requests-toolbelt responses setuptools testscenarios file-magic
+  - echo "Skip. Install is done by the test script."
 script:
-  - ./runtests.sh $TEST_SUITE
+  - docker run -v $(pwd):/snapcraft -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd /snapcraft && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
   - pip install coveralls
   - coveralls
