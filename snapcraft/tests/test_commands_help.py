@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import io
 import pydoc
 from unittest import mock
+
+import fixtures
 
 from snapcraft._help import _TOPICS
 from snapcraft.main import main
@@ -35,12 +38,17 @@ class HelpCommandTestCase(tests.TestCase):
         self.addCleanup(p.stop)
 
     def test_topic_and_plugin_not_found_exits_with_tip(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         with self.assertRaises(SystemExit) as raised:
             main(['help', 'does-not-exist'])
 
-        self.assertEqual('The plugin does not exist. Run `snapcraft '
-                         'list-plugins` to see the\navailable plugins.',
-                         str(raised.exception))
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(
+            fake_logger.output,
+            'The plugin does not exist. Run `snapcraft '
+            'list-plugins` to see the\navailable plugins.\n')
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_print_module_help_when_no_help_for_valid_plugin(

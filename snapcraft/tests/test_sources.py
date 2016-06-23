@@ -19,8 +19,9 @@ import http.server
 import threading
 import unittest.mock
 
-from snapcraft.internal import sources
+import fixtures
 
+from snapcraft.internal import sources
 from snapcraft import tests
 
 
@@ -43,7 +44,8 @@ class TestTar(tests.TestCase):
 
     @unittest.mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
-        os.environ['no_proxy'] = '127.0.0.1'
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
         server = http.server.HTTPServer(
             ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
         server_thread = threading.Thread(target=server.serve_forever)
@@ -71,7 +73,8 @@ class TestZip(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        os.environ['no_proxy'] = '127.0.0.1'
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
         self.server = http.server.HTTPServer(
             ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
         server_thread = threading.Thread(target=self.server.serve_forever)

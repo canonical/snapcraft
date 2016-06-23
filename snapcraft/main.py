@@ -35,6 +35,7 @@ Usage:
   snapcraft [options] upload <snap-file>
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
+  snapcraft [options] update
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -88,6 +89,9 @@ The available lifecycle commands are:
   prime        Final copy and preparation for the snap.
   snap         Create a snap.
 
+Parts ecosystem commands
+  update       Updates the parts listing from the cloud.
+
 Calling snapcraft without a COMMAND will default to 'snap'
 
 The cleanbuild command requires a properly setup lxd environment that
@@ -113,7 +117,7 @@ import textwrap
 from docopt import docopt
 
 import snapcraft
-from snapcraft.internal import lifecycle, log
+from snapcraft.internal import lifecycle, log, parts
 from snapcraft.internal.common import (
     format_output_in_columns, MAX_CHARACTERS_WRAP, get_tourdir)
 
@@ -206,7 +210,8 @@ def main(argv=None):
         if args['--debug']:
             raise
 
-        sys.exit(textwrap.fill(str(e)))
+        logger.error(textwrap.fill(str(e)))
+        sys.exit(1)
 
 
 def _get_lifecycle_command(args):
@@ -249,6 +254,8 @@ def run(args, project_options):
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
+    elif args['update']:
+        parts.update()
     else:  # snap by default:
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
