@@ -1,7 +1,10 @@
 sudo: required
+dist: trusty
 services:
   - docker
 language: python
+virtualenv:
+  system_site_packages: true
 env:
   global:
   # Encrypted test user password. Generated with the travis gem:
@@ -13,9 +16,11 @@ env:
   - TEST_SUITE=integration  DEPENDENCIES="apt build-dep -y ./ && apt install -y bzr git mercurial python3-pexpect subversion sudo"
 
 install:
-  - echo "Skip. Install is done by the test script."
+  - sudo apt-get -qq update
+  - sudo apt-get install -y python3-coverage
 script:
   - docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
+  - python3 -m coverage report
   - pip install coveralls
   - coveralls
