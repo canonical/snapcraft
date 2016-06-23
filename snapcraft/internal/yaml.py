@@ -222,23 +222,9 @@ class Config:
                     else:
                         logger.info('Maybe {!r} is defined as a remote part, '
                                     'run `snapcraft update` to refresh')
-                        found = self._search_deprecated_wiki(part, dep)
                 if not found:
                     raise SnapcraftLogicError(
                         'part name missing {}'.format(dep))
-
-    def _search_deprecated_wiki(self, part, dep):
-        logger.warning('Searching for part in the DEPRECATED '
-                       'parts wiki')
-        wiki_part = self._wiki.get_part(dep)
-        found = True if wiki_part else False
-
-        if found:
-            plugin_name = wiki_part.pop('plugin')
-            part.deps.append(self.load_plugin(dep, plugin_name, wiki_part))
-            self._part_names.append(dep)
-
-        return found
 
     def _sort_parts(self):
         '''Performs an inneficient but easy to follow sorting of parts.'''
