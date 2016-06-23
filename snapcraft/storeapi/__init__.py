@@ -142,11 +142,10 @@ class StoreClient():
     def _extract_caveat_id(self, root_macaroon):
         macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)
         # macaroons are all bytes, never strings
-        sso_host = pymacaroons.utils.convert_to_bytes(
-            urllib.parse.urlparse(self.sso.root_url).hostname)
+        sso_host = urllib.parse.urlparse(self.sso.root_url).hostname
         for caveat in macaroon.caveats:
             if caveat.location == sso_host:
-                return pymacaroons.utils.convert_to_string(caveat.caveat_id)
+                return caveat.caveat_id
         else:
             raise errors.InvalidCredentialsError('Invalid root macaroon')
 
