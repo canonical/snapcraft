@@ -204,8 +204,9 @@ def main(argv=None):
     except Exception as e:
         if args['--debug']:
             raise
-        sys.exit(e)
 
+        logger.error(str(e))
+        sys.exit(1)
 
 def _get_lifecycle_command(args):
     lifecycle_commands = ['pull', 'build', 'stage', 'prime']
