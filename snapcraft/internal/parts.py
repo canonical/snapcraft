@@ -120,14 +120,11 @@ class _RemoteParts(_Base):
         :param str part_name: The name of the part to query from the wiki
         :param dict properties: The current set of properties
         :return: Part properties from the wiki composed with the properties
-                 passed as a parameter. If there is no wiki part named name,
-                 properties will be returned.
+                 passed as a parameter.
         :rtype: dict
-        :raises KeyError: if the part named name is not found in the wiki.
+        :raises KeyError: if part_name is not found in the wiki.
         """
-        remote_part = self._parts[part_name].copy()
-        for key in ['description', 'maintainer']:
-            remote_part.pop(key)
+        remote_part = self.get_part(part_name)
         remote_part.update(properties)
 
         return remote_part
