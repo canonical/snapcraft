@@ -144,12 +144,19 @@ class Config:
             plugin_name = properties.pop('plugin', None)
             if not plugin_name:
                 logger.info(
-                    'Searching in the remotes parts cache for part '
+                    'Searching in the remote parts cache for part '
                     '{!r}'.format(part_name))
-                with contextlib.suppress(KeyError):
+                try:
                     properties = self._remote_parts.compose(
                         part_name, properties)
                     plugin_name = properties.pop('plugin', None)
+                except KeyError:
+                    logger.error(
+                        'A part without a plugin defined will be searched for '
+                        'in the defined remote parts, {!r} is missing the '
+                        '`plugin` entry and is not defined in the current '
+                        'remote parts cache, try to run `snapcraft update` '
+                        'to refresh'.format(part_name))
 
             if not plugin_name:
                 raise PluginNotDefinedError(part_name)
