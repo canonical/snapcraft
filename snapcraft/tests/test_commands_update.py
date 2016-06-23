@@ -76,3 +76,7 @@ class UpdateCommandTestCase(tests.TestCase):
         self.assertEqual(
             'The parts cache is already up to date.\n',
             fake_logger.output)
+
+    def test_update_with_no_content_length_is_supported(self):
+        self.useFixture(fixtures.EnvironmentVariable('NO_CONTENT_LENGTH', '1'))
+        main.main(['update'])
