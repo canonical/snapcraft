@@ -23,6 +23,5 @@ install:
 script:
   - docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
-  - python3 -m coverage report
   - pip install coveralls
   - coveralls
