@@ -108,7 +108,6 @@ import pkgutil
 import shutil
 import sys
 import subprocess
-import textwrap
 
 from docopt import docopt
 
