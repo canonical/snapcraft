@@ -16,6 +16,7 @@
 
 import logging
 import os
+import subprocess
 from unittest import mock
 
 import fixtures
@@ -145,7 +146,7 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
 
-    def test_upload_with_invalid_credentials_raises_exception(self):
+    def test_download_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
@@ -193,7 +194,7 @@ class UploadTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_upload_unexisting_snap_raises_exception(self):
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(subprocess.CalledProcessError):
             self.client.upload('unexisting.snap')
 
     def test_upload_without_login_raises_exception(self):
