@@ -19,7 +19,13 @@ import os
 
 import requests
 import yaml
-from progressbar import (ProgressBar, Percentage, Bar)
+from progressbar import (
+    AnimatedMarker,
+    Bar,
+    Percentage,
+    ProgressBar,
+    UnknownLength,
+)
 from xdg import BaseDirectory
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
@@ -57,17 +63,22 @@ class _Update(_Base):
         self._save_headers()
 
     def _download(self):
-        total_length = int(self._request.headers.get('Content-Length'))
-        progress_bar = ProgressBar(
-            widgets=['Updating parts list',
-                     Bar(marker='=', left='[', right=']'),
-                     ' ', Percentage()],
-            maxval=total_length)
+        total_length = int(self._request.headers.get('Content-Length', '0'))
+        if total_length:
+            progress_bar = ProgressBar(
+                widgets=['Updating parts list',
+                         Bar(marker='=', left='[', right=']'),
+                         ' ', Percentage()],
+                maxval=total_length)
+        else:
+            progress_bar = ProgressBar(
+                widgets=['Updating parts list... ', AnimatedMarker()],
+                maxval=UnknownLength)
 
         total_read = 0
         progress_bar.start()
         with open(self.parts_yaml, 'wb') as parts_file:
-            for buf in self._request.iter_content(1):
+            for buf in self._request.iter_content(1024):
                 parts_file.write(buf)
                 total_read += len(buf)
                 progress_bar.update(total_read)
