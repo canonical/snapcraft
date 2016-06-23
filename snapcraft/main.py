@@ -205,7 +205,6 @@ def main(argv=None):
     except Exception as e:
         if args['--debug']:
             raise
-
         sys.exit(e)
 
 

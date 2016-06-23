@@ -1,0 +1,11 @@
+name: test-package
+version: 0.1
+summary: svn integration test
+description: use svn
+confinement: strict
+
+parts:
+    svn:
+        plugin: make
+        source: repo/
+        source-type: svn

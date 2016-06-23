@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import os.path
-
 from unittest import mock
+
+import fixtures
 
 import snapcraft
 from snapcraft.main import main
@@ -64,14 +66,18 @@ parts:
         return parts
 
     def test_pull_invalid_part(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         self.make_snapcraft_yaml()
 
         with self.assertRaises(SystemExit) as raised:
             main(['pull', 'no-pull', ])
 
+        self.assertEqual(1, raised.exception.code)
         self.assertEqual(
-            "The part named 'no-pull' is not defined in 'snapcraft.yaml'",
-            str(raised.exception))
+            fake_logger.output,
+            "The part named 'no-pull' is not defined in 'snapcraft.yaml'\n")
 
     def test_pull_defaults(self):
         parts = self.make_snapcraft_yaml()

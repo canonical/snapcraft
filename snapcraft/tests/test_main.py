@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,6 +19,8 @@ import logging
 import pkg_resources
 import sys
 from unittest import mock
+
+import fixtures
 
 import snapcraft.main
 
@@ -43,16 +45,17 @@ class TestMain(TestCase):
             mock_project_options.assert_called_once_with(
                 parallel_builds=True, target_deb_arch=None, use_geoip=True)
 
-    @mock.patch('snapcraft.internal.log.configure')
-    def test_command_error(self, mock_log_configure):
+    def test_command_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
         with mock.patch('snapcraft.topic_help') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
 
-            with self.assertRaises(SystemExit) as cm:
+            with self.assertRaises(SystemExit) as raised:
                 snapcraft.main.main(['help', 'topics'])
 
-        self.assertEqual(str(cm.exception), 'some error')
-        mock_log_configure.assert_called_once_with(log_level=logging.INFO)
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(fake_logger.output, 'some error\n')
 
     @mock.patch('snapcraft.internal.log.configure')
     def test_command_error_debug(self, mock_log_configure):
