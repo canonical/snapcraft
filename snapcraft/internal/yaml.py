@@ -31,7 +31,6 @@ from snapcraft.internal import (
     parts,
     pluginhandler,
     sources,
-    wiki,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError
 
@@ -134,9 +133,6 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        # DEPRECATED
-        self._wiki = wiki.Wiki()
-
         self._remote_parts = parts.get_remote_parts()
         self._process_parts()
 
@@ -163,11 +159,6 @@ class Config:
                         'to refresh'.format(part_name))
 
             if not plugin_name:
-                properties = self._compose_from_deprecated_wiki(
-                    part_name, properties)
-                plugin_name = properties.pop('plugin', None)
-
-            if not plugin_name:
                 raise PluginNotDefinedError(part_name)
 
             if 'after' in properties:
@@ -186,18 +177,6 @@ class Config:
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
-
-    def _compose_from_deprecated_wiki(self, part_name, properties):
-        logger.warning(
-            'Searching the DEPRECATED wiki to compose part '
-            '{!r}'.format(part_name))
-        with contextlib.suppress(KeyError):
-            properties = self._wiki.compose(part_name, properties)
-            # The wiki still supports using 'type' for snapcraft 1.x
-            if 'type' in properties:
-                del properties['type']
-
-        return properties
 
     def _compute_part_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''
