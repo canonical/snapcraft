@@ -16,20 +16,18 @@
 
 import logging
 import os
+import subprocess
 from unittest import mock
 
 import fixtures
-import progressbar
+import pymacaroons
 
 from snapcraft import (
     config,
     storeapi,
     tests
 )
-from snapcraft.storeapi import (
-    errors,
-    macaroons
-)
+from snapcraft.storeapi import errors
 from snapcraft.tests import fixture_setup
 
 
@@ -146,7 +144,7 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
 
-    def test_upload_with_invalid_credentials_raises_exception(self):
+    def test_download_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
@@ -178,19 +176,6 @@ class RegisterTestCase(tests.TestCase):
         self.assertFalse(response.ok)
 
 
-class SilentProgressBar(progressbar.ProgressBar):
-    """A progress bar causing no spurious output during tests."""
-
-    def start(self):
-        pass
-
-    def update(self, value=None):
-        pass
-
-    def finish(self):
-        pass
-
-
 class UploadTestCase(tests.TestCase):
 
     def setUp(self):
@@ -202,12 +187,12 @@ class UploadTestCase(tests.TestCase):
             'test-snap.snap')
         patcher = mock.patch(
             'snapcraft.storeapi._upload.ProgressBar',
-            new=SilentProgressBar)
+            new=tests.SilentProgressBar)
         patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_upload_unexisting_snap_raises_exception(self):
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(subprocess.CalledProcessError):
             self.client.upload('unexisting.snap')
 
     def test_upload_without_login_raises_exception(self):
@@ -240,7 +225,7 @@ class MacaroonsTestCase(tests.TestCase):
 
     def test_invalid_discharge_raises_exception(self):
         conf = config.Config()
-        conf.set('macaroon', macaroons.Macaroon().serialize())
+        conf.set('macaroon', pymacaroons.Macaroon().serialize())
         conf.set('unbound_discharge', 'inval*id')
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):

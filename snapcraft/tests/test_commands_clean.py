@@ -139,14 +139,17 @@ parts:
         main(['clean'])
 
     def test_part_to_remove_not_defined_exits_with_error(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
         self.make_snapcraft_yaml(n=3)
 
         with self.assertRaises(SystemExit) as raised:
             main(['clean', 'no-clean'])
 
+        self.assertEqual(1, raised.exception.code)
         self.assertEqual(
-            raised.exception.__str__(),
-            "The part named 'no-clean' is not defined in 'snapcraft.yaml'")
+            fake_logger.output,
+            "The part named 'no-clean' is not defined in 'snapcraft.yaml'\n")
 
     @mock.patch.object(pluginhandler.PluginHandler, 'clean')
     def test_per_step_cleaning(self, mock_clean):

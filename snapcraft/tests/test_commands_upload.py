@@ -77,7 +77,7 @@ class UploadCommandTestCase(tests.TestCase):
         main(['upload', 'test.snap'])
 
         self.assertEqual(
-            'Uploading existing test.snap.\n'
+            'Uploading test.snap.\n'
             'Application uploaded successfully (as revision test-revision)\n'
             'Please check out the application at: test-url\n\n',
             self.fake_logger.output)
@@ -93,3 +93,7 @@ class UploadCommandTestCase(tests.TestCase):
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
+
+    def test_upload_nonexisting_snap_must_raise_exception(self):
+        with self.assertRaises(SystemExit):
+            main(['upload', 'test-unexisting-snap'])

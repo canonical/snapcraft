@@ -47,21 +47,7 @@ parseargs(){
 
 run_static_tests(){
     SRC_PATHS="bin snapcraft snapcraft/tests snaps_tests"
-    python3 -m flake8 $SRC_PATHS
-
-    mccabe_list=
-    for unit in $(find snapcraft -type f -name '*.py')
-    do
-        output=$(python3 -m mccabe --min 10 "$unit")
-        [ -n "$output" ] && mccabe_list="- $unit:\n  $output\n$mccabe_list"
-    done
-
-    if [ -n "$mccabe_list" ]; then
-        echo -e "\e[1;31mThe project has gotten complex\e[0m."
-        echo "Here's the list of units exceeding 10:"
-        echo -e "$mccabe_list"
-        exit 1
-    fi
+    python3 -m flake8 --max-complexity=10 $SRC_PATHS
 }
 
 run_unit_tests(){
@@ -75,7 +61,7 @@ run_unit_tests(){
 
 run_integration(){
     if [[ "$#" -lt 2 ]]; then
-        pattern="*"
+        pattern="test_*.py"
     else
         pattern=$2
     fi

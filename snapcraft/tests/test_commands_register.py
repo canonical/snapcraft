@@ -41,8 +41,10 @@ class RegisterTestCase(tests.TestCase):
         self.assertTrue('Usage:' in str(raised.exception))
 
     def test_register_without_login_must_raise_exception(self):
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as raised:
             main(['register', 'dummy'])
+
+        self.assertEqual(1, raised.exception.code)
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
@@ -64,9 +66,10 @@ class RegisterTestCase(tests.TestCase):
         with mock.patch.object(
                 storeapi.SCAClient, 'register') as mock_register:
             mock_register.return_value.ok = False
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(SystemExit) as raised:
                 main(['register', 'test-snap'])
 
+        self.assertEqual(1, raised.exception.code)
         self.assertEqual(
             'Registering test-snap.\n'
             'Registration failed.\n',
