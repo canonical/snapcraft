@@ -243,6 +243,41 @@ class QMakeTestCase(tests.TestCase):
                        'INSTALL_ROOT={}'.format(plugin.installdir)],
                       cwd=plugin.builddir, env=mock.ANY)])
 
+    def test_build_with_libs_and_includes_in_installdir(self):
+        plugin = qmake.QmakePlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(os.path.join(plugin.installdir, 'include'))
+        os.makedirs(os.path.join(plugin.installdir, 'lib'))
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['qmake', 'LIBS+="-L{}/lib"'.format(plugin.installdir),
+                       'INCLUDEPATH+="{}/include"'.format(plugin.installdir),
+                       plugin.sourcedir], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', 'install',
+                       'INSTALL_ROOT={}'.format(plugin.installdir)],
+                      cwd=plugin.builddir, env=mock.ANY)])
+
+    def test_build_with_libs_and_includes_in_stagedir(self):
+        plugin = qmake.QmakePlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(os.path.join(plugin.project.stage_dir, 'include'))
+        os.makedirs(os.path.join(plugin.project.stage_dir, 'lib'))
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(
+                ['qmake', 'LIBS+="-L{}/lib"'.format(plugin.project.stage_dir),
+                 'INCLUDEPATH+="{}/include"'.format(plugin.project.stage_dir),
+                 plugin.sourcedir], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['make', 'install',
+                       'INSTALL_ROOT={}'.format(plugin.installdir)],
+                      cwd=plugin.builddir, env=mock.ANY)])
+
     def test_build_environment_qt4(self):
         self.options.qt_version = 'qt4'
         plugin = qmake.QmakePlugin('test-part', self.options,

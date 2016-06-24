@@ -345,10 +345,10 @@ def _runtime_env(root, arch_triplet):
     ]).format(root) + '"')
 
     # Add the default LD_LIBRARY_PATH
-    library_path = common.get_library_paths(
-        'LD_LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
-    if library_path:
-        env.append(library_path)
+    paths = common.get_library_paths(root, arch_triplet)
+    if paths:
+        env.append(common.format_path_variable(
+            'LD_LIBRARY_PATH', paths, prepend='', separator=':'))
 
     # Add more specific LD_LIBRARY_PATH from staged packages if necessary
     ld_library_paths = libraries.determine_ld_library_path(root)
@@ -367,21 +367,15 @@ def _build_env(root, arch_triplet):
     """
     env = []
 
-    for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-        include_path_for_env = common.get_include_paths(envvar, root, arch_triplet)
-        if include_path_for_env:
-            env.append(include_path_for_env)
-    include_path_for_env = common.get_include_paths(
-        'CPATH', root, arch_triplet, prepend='', sep=':')
-    if include_path_for_env:
-        env.append(include_path_for_env)
-    library_path = common.get_library_paths('LDFLAGS', root, arch_triplet)
-    if library_path:
-        env.append(library_path)
-    library_path = common.get_library_paths(
-        'LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
-    if library_path:
-        env.append(library_path)
+    paths = common.get_include_paths(root, arch_triplet)
+    if paths:
+        for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
+            env.append(common.format_path_variable(
+                envvar, paths, prepend='-I', separator=' '))
+    paths = common.get_library_paths(root, arch_triplet)
+    if paths:
+        env.append(common.format_path_variable(
+            'LDFLAGS', paths, prepend='-L', separator=' '))
 
     return env
 

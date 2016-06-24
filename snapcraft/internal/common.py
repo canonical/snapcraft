@@ -257,7 +257,7 @@ def format_output_in_columns(elements_list, max_width=MAX_CHARACTERS_WRAP,
     return result_output
 
 
-def get_include_paths(envvar, root, arch_triplet, prepend='-I', sep=' '):
+def get_include_paths(root, arch_triplet):
     paths = [
         os.path.join(root, 'include'),
         os.path.join(root, 'usr', 'include'),
@@ -265,12 +265,10 @@ def get_include_paths(envvar, root, arch_triplet, prepend='-I', sep=' '):
         os.path.join(root, 'usr', 'include', arch_triplet),
     ]
 
-    include_paths = ['{}{}'.format(prepend, p)
-                     for p in paths if os.path.exists(p)]
-    return _combine_paths(envvar, include_paths, prepend, sep)
+    return [p for p in paths if os.path.exists(p)]
 
 
-def get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
+def get_library_paths(root, arch_triplet):
     paths = [
         os.path.join(root, 'lib'),
         os.path.join(root, 'usr', 'lib'),
@@ -278,14 +276,18 @@ def get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
         os.path.join(root, 'usr', 'lib', arch_triplet),
     ]
 
-    library_paths = ['{}{}'.format(prepend, l)
-                     for l in paths if os.path.exists(l)]
-    return _combine_paths(envvar, library_paths, prepend, sep)
+    return [p for p in paths if os.path.exists(p)]
 
 
-def _combine_paths(envvar, paths, prepend, sep):
+def combine_paths(paths, prepend, separator):
+    paths = ['{}{}'.format(prepend, p) for p in paths]
+    return separator.join(paths)
+
+
+def format_path_variable(envvar, paths, prepend, separator):
     if not paths:
         return ''
     else:
-        return '{envvar}="${envvar}{sep}{paths}"'.format(
-            envvar=envvar, sep=sep, paths=sep.join(paths))
+        return '{envvar}="${envvar}{separator}{paths}"'.format(
+            envvar=envvar, separator=separator,
+            paths=combine_paths(paths, prepend, separator))

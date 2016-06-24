@@ -1066,24 +1066,9 @@ parts:
             in environment,
             'Current environment is {!r}'.format(environment))
         self.assertTrue(
-            'CPATH="$CPATH:{stage_dir}/include'
-            ':{stage_dir}/usr/include'
-            ':{stage_dir}/include/{arch_triplet}'
-            ':{stage_dir}/usr/include/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
-            in environment,
-            'Current environment is {!r}'.format(environment))
-        self.assertTrue(
             'LDFLAGS="$LDFLAGS -L{stage_dir}/lib -L{stage_dir}/usr/lib '
             '-L{stage_dir}/lib/{arch_triplet} '
             '-L{stage_dir}/usr/lib/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
-            in environment,
-            'Current environment is {!r}'.format(environment))
-        self.assertTrue(
-            'LIBRARY_PATH="$LIBRARY_PATH:{stage_dir}/lib:{stage_dir}/usr/lib'
-            ':{stage_dir}/lib/{arch_triplet}'
-            ':{stage_dir}/usr/lib/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
             in environment,
             'Current environment is {!r}'.format(environment))
