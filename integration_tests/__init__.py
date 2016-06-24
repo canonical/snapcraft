@@ -88,7 +88,7 @@ class TestCase(testtools.TestCase):
         email = email or os.getenv(
             'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
         password = password or os.getenv(
-            'TEST_USER_PASSWORD', 'test correct password')
+            'TEST_USER_PASSWORD', None) or 'test correct password'
 
         process = pexpect.spawn(self.snapcraft_command, ['login'])
 
