@@ -16,6 +16,7 @@
 
 import logging
 import os
+import sys
 
 import requests
 import yaml
@@ -109,10 +110,11 @@ class _RemoteParts(_Base):
         else:
             self._parts = {}
 
-    def get_part(self, part_name):
+    def get_part(self, part_name, full=False):
         remote_part = self._parts[part_name].copy()
-        for key in ['description', 'maintainer']:
-            remote_part.pop(key)
+        if not full:
+            for key in ['description', 'maintainer']:
+                remote_part.pop(key)
         return remote_part
 
     def compose(self, part_name, properties):
@@ -132,6 +134,21 @@ class _RemoteParts(_Base):
 
 def update():
     _Update().execute()
+
+
+def define(part_name):
+    try:
+        remote_part = _RemoteParts().get_part(part_name, full=True)
+    except KeyError as e:
+        raise RuntimeError(
+            'Cannot find the part name {!r} in the cache. Please '
+            'consider going to https://wiki.ubuntu.com/snapcraft/parts '
+            'to add it.') from e
+    print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
+    print('Description: {!r}'.format(remote_part.pop('description')))
+    print('')
+    yaml.dump({part_name: remote_part},
+              default_flow_style=False, stream=sys.stdout)
 
 
 def get_remote_parts():
