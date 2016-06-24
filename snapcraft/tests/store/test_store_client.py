@@ -16,20 +16,18 @@
 
 import logging
 import os
+import subprocess
 from unittest import mock
 
 import fixtures
-import progressbar
+import pymacaroons
 
 from snapcraft import (
     config,
     storeapi,
     tests
 )
-from snapcraft.storeapi import (
-    errors,
-    macaroons
-)
+from snapcraft.storeapi import errors
 from snapcraft.tests import fixture_setup
 
 
@@ -41,34 +39,35 @@ class LoginTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_login_successful(self):
-        result = self.client.login(
+        self.client.login(
             'dummy email',
             'test correct password')
-        self.assertTrue(result['success'])
+        conf = config.Config()
+        self.assertIsNotNone(conf.get('macaroon'))
+        self.assertIsNotNone(conf.get('unbound_discharge'))
 
     def test_login_successful_with_one_time_password(self):
-        result = self.client.login(
+        self.client.login(
             'dummy email',
             'test correct password',
             'test correct one-time password')
-        self.assertTrue(result['success'])
         conf = config.Config()
         self.assertIsNotNone(conf.get('macaroon'))
         self.assertIsNotNone(conf.get('unbound_discharge'))
 
     def test_failed_login_with_wrong_password(self):
-        result = self.client.login(
-            'dummy email',
-            'wrong password')
-        self.assertFalse(result['success'])
+        with self.assertRaises(errors.StoreAuthenticationError):
+            self.client.login('dummy email', 'wrong password')
+
         self.assertTrue(config.Config().is_empty())
 
     def test_failed_login_with_wrong_one_time_password(self):
-        result = self.client.login(
-            'dummy email',
-            'test correct password',
-            'wrong one-time password')
-        self.assertFalse(result['success'])
+        with self.assertRaises(errors.StoreAuthenticationError):
+            self.client.login(
+                'dummy email',
+                'test correct password',
+                'wrong one-time password')
+
         self.assertTrue(config.Config().is_empty())
 
 
@@ -145,7 +144,7 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
 
-    def test_upload_with_invalid_credentials_raises_exception(self):
+    def test_download_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
@@ -155,17 +154,26 @@ class DownloadTestCase(tests.TestCase):
                 'test-snap', 'test-channel', download_path)
 
 
-class SilentProgressBar(progressbar.ProgressBar):
-    """A progress bar causing no spurious output during tests."""
+class RegisterTestCase(tests.TestCase):
 
-    def start(self):
-        pass
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
 
-    def update(self, value=None):
-        pass
+    def test_register_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.register('dummy')
 
-    def finish(self):
-        pass
+    def test_register_name_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        response = self.client.register('test-good-snap-name')
+        self.assertTrue(response.ok)
+
+    def test_registration_failed(self):
+        self.client.login('dummy', 'test correct password')
+        response = self.client.register('test-bad-snap-name')
+        self.assertFalse(response.ok)
 
 
 class UploadTestCase(tests.TestCase):
@@ -179,12 +187,12 @@ class UploadTestCase(tests.TestCase):
             'test-snap.snap')
         patcher = mock.patch(
             'snapcraft.storeapi._upload.ProgressBar',
-            new=SilentProgressBar)
+            new=tests.SilentProgressBar)
         patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_upload_unexisting_snap_raises_exception(self):
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(subprocess.CalledProcessError):
             self.client.upload('unexisting.snap')
 
     def test_upload_without_login_raises_exception(self):
@@ -217,7 +225,7 @@ class MacaroonsTestCase(tests.TestCase):
 
     def test_invalid_discharge_raises_exception(self):
         conf = config.Config()
-        conf.set('macaroon', macaroons.Macaroon().serialize())
+        conf.set('macaroon', pymacaroons.Macaroon().serialize())
         conf.set('unbound_discharge', 'inval*id')
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):

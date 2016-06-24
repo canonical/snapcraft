@@ -20,8 +20,10 @@ import http.server
 import os
 import urllib.parse
 
+import pymacaroons
+import yaml
+
 import snapcraft.tests
-from snapcraft.storeapi import macaroons
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +33,35 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def log_message(*args):
         logger.debug(args)
+
+
+class FakePartsServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsRequestHandler)
+
+
+class FakePartsRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = {
+                'curl': {
+                    'source': 'http://curl.org',
+                    'plugin': 'autotools',
+                },
+            }
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', '100')
+        self.send_header('ETag', '1111')
+        self.end_headers()
+        self.wfile.write(yaml.dump(response).encode())
 
 
 class FakeSSOServer(http.server.HTTPServer):
@@ -74,7 +105,7 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'discharge_macaroon': macaroons.Macaroon().serialize()
+            'discharge_macaroon': pymacaroons.Macaroon().serialize()
             }
         self.wfile.write(
             json.dumps(response).encode())
@@ -136,10 +167,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        register_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
+        elif parsed_path.path.startswith(register_path):
+            self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
             self._handle_upload_request()
         else:
@@ -154,14 +189,42 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        macaroon = macaroons.Macaroon(
+        macaroon = pymacaroons.Macaroon(
             caveats=[
-                macaroons.Caveat(
+                pymacaroons.Caveat(
                     caveat_id='test caveat',
                     location='localhost',
                     verification_key_id='test verifiacion')
             ])
         response = {'macaroon': macaroon.serialize()}
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_registration_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling registration request with content {}'.format(data))
+        if data['snap_name'] == 'test-bad-snap-name':
+            self._handle_failed_registration()
+        else:
+            self._handle_successful_registration()
+
+    def _handle_successful_registration(self):
+        self.send_response(201)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {'snap_id': 'test-snap-id'}
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_failed_registration(self):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 409,
+            'code': 'already_registered'
+        }
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_upload_request(self):

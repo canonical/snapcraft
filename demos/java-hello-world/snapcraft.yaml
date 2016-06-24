@@ -2,7 +2,6 @@ name: java-hello-world
 version: 0
 summary: A java example
 description: this is not much more than an example
-icon: icon.png
 confinement: strict
 
 apps:
