@@ -1,7 +1,3 @@
-Tests: unittests
-Restrictions: allow-stderr
-Depends: @builddeps@
-
 Tests: integrationtests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
