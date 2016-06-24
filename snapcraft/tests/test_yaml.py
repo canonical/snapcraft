@@ -117,7 +117,7 @@ parts:
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
-    def test_config_composes_with_inexisting_parts(self):
+    def test_config_composes_with_a_non_existent_remote_part(self):
         self.useFixture(fixture_setup.FakeParts())
         patcher = unittest.mock.patch(
             'snapcraft.internal.parts.ProgressBar',
@@ -146,7 +146,7 @@ parts:
             'current remote parts cache, try to run `snapcraft update` '
             'to refresh'.format('non-existing-part'))
 
-    def test_config_after_is_an_inexisting(self):
+    def test_config_after_is_an_undefined_part(self):
         self.useFixture(fixture_setup.FakeParts())
         patcher = unittest.mock.patch(
             'snapcraft.internal.parts.ProgressBar',
