@@ -20,16 +20,14 @@ import subprocess
 from unittest import mock
 
 import fixtures
+import pymacaroons
 
 from snapcraft import (
     config,
     storeapi,
     tests
 )
-from snapcraft.storeapi import (
-    errors,
-    macaroons
-)
+from snapcraft.storeapi import errors
 from snapcraft.tests import fixture_setup
 
 
@@ -227,7 +225,7 @@ class MacaroonsTestCase(tests.TestCase):
 
     def test_invalid_discharge_raises_exception(self):
         conf = config.Config()
-        conf.set('macaroon', macaroons.Macaroon().serialize())
+        conf.set('macaroon', pymacaroons.Macaroon().serialize())
         conf.set('unbound_discharge', 'inval*id')
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):
