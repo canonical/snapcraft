@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import integration_tests
+import snaps_tests
 
 
-class ListPluginsTestCase(integration_tests.TestCase):
+class Qt4TextEditorTestCase(snaps_tests.SnapsTestCase):
 
-    def test_list_plugins(self):
-        output = self.run_snapcraft('list-plugins')
-        expected = (
-            'ant        cmake  gulp    kernel  nil      python3  tar-content\n'
-            'autotools  copy   jdk     make    nodejs   qmake  \n'
-            'catkin     go     kbuild  maven   python2  scons  \n')
-        self.assertEqual(expected, output)
+    snap_content_dir = 'qt4-text-editor'
+
+    def test_text_editor(self):
+        self.build_snap(self.snap_content_dir)
+        self.install_snap(
+            self.snap_content_dir, 'text-editor', '1.0')
+
+        # TODO: Need xvfb in order to actually run
