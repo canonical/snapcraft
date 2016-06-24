@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.common import get_python2_path  # noqa
-from snapcraft.internal.common import isurl             # noqa
-from snapcraft.internal.common import link_or_copy      # noqa
-from snapcraft.internal.common import replace_in_file   # noqa
+from snapcraft.internal.common import get_python2_path   # noqa
+from snapcraft.internal.common import isurl              # noqa
+from snapcraft.internal.common import link_or_copy       # noqa
+from snapcraft.internal.common import replace_in_file    # noqa
+from snapcraft.internal.common import get_include_paths  # noqa
+from snapcraft.internal.common import get_library_paths  # noqa

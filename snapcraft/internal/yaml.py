@@ -27,6 +27,7 @@ import yaml
 
 import snapcraft
 from snapcraft.internal import (
+    common,
     libraries,
     pluginhandler,
     sources,
@@ -344,7 +345,7 @@ def _runtime_env(root, arch_triplet):
     ]).format(root) + '"')
 
     # Add the default LD_LIBRARY_PATH
-    library_path = _get_library_paths(
+    library_path = common.get_library_paths(
         'LD_LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
     if library_path:
         env.append(library_path)
@@ -367,56 +368,22 @@ def _build_env(root, arch_triplet):
     env = []
 
     for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-        include_path_for_env = _get_include_paths(envvar, root, arch_triplet)
+        include_path_for_env = common.get_include_paths(envvar, root, arch_triplet)
         if include_path_for_env:
             env.append(include_path_for_env)
-    include_path_for_env = _get_include_paths(
+    include_path_for_env = common.get_include_paths(
         'CPATH', root, arch_triplet, prepend='', sep=':')
     if include_path_for_env:
         env.append(include_path_for_env)
-    library_path = _get_library_paths('LDFLAGS', root, arch_triplet)
+    library_path = common.get_library_paths('LDFLAGS', root, arch_triplet)
     if library_path:
         env.append(library_path)
-    library_path = _get_library_paths(
+    library_path = common.get_library_paths(
         'LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
     if library_path:
         env.append(library_path)
 
     return env
-
-
-def _get_include_paths(envvar, root, arch_triplet, prepend='-I', sep=' '):
-    paths = [
-        os.path.join(root, 'include'),
-        os.path.join(root, 'usr', 'include'),
-        os.path.join(root, 'include', arch_triplet),
-        os.path.join(root, 'usr', 'include', arch_triplet),
-    ]
-
-    include_paths = ['{}{}'.format(prepend, p)
-                     for p in paths if os.path.exists(p)]
-    return _combine_paths(envvar, include_paths, prepend, sep)
-
-
-def _get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
-    paths = [
-        os.path.join(root, 'lib'),
-        os.path.join(root, 'usr', 'lib'),
-        os.path.join(root, 'lib', arch_triplet),
-        os.path.join(root, 'usr', 'lib', arch_triplet),
-    ]
-
-    library_paths = ['{}{}'.format(prepend, l)
-                     for l in paths if os.path.exists(l)]
-    return _combine_paths(envvar, library_paths, prepend, sep)
-
-
-def _combine_paths(envvar, paths, prepend, sep):
-    if not paths:
-        return ''
-    else:
-        return '{envvar}="${envvar}{sep}{paths}"'.format(
-            envvar=envvar, sep=sep, paths=sep.join(paths))
 
 
 def _build_env_for_stage(stagedir, arch_triplet):
