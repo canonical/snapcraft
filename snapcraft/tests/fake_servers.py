@@ -24,7 +24,6 @@ import pymacaroons
 import yaml
 
 import snapcraft.tests
-from snapcraft.storeapi import macaroons
 
 
 logger = logging.getLogger(__name__)
