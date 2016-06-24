@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
-import contextlib
 import logging
 import os
 import os.path

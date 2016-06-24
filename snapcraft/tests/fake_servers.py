@@ -67,7 +67,7 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
             }
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
-            self.send_header('Content-Length', '100')
+            self.send_header('Content-Length', '300')
         self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(yaml.dump(response).encode())
