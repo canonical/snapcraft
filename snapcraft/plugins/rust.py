@@ -94,8 +94,8 @@ class RustPlugin(snapcraft.BasePlugin):
                                        % self.options.rust_channel)
 
         rustup = "rustup.sh"
-        self.run(["wget", "-N", "https://static.rust-lang.org/rustup.sh",
-                  "-O", rustup])
+        self.run(["curl", "https://static.rust-lang.org/rustup.sh",
+                  "-o", rustup])
         self.run(["chmod", "+x", rustup])
         self.run(["./%s" % rustup,
                   "--prefix=%s" % self._rustpath,

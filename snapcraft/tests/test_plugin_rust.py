@@ -88,9 +88,8 @@ class RustPluginTestCase(tests.TestCase):
 
         self.assertEqual(3, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(["wget", "-N",
-                       "https://static.rust-lang.org/rustup.sh",
-                       "-O", rustup]),
+            mock.call(["curl", "https://static.rust-lang.org/rustup.sh",
+                       "-o", rustup]),
             mock.call(["chmod", "+x", rustup]),
             mock.call(["./%s" % rustup,
                        "--prefix=%s" % plugin._rustpath,
