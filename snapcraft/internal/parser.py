@@ -105,7 +105,7 @@ def _get_origin_data(origin_dir):
 def _is_local(source):
     # XXX: Is this sufficient?  Can ":" be part of a local
     # directory?
-    return ':' not in source
+    return source is not None and ':' not in source
 
 
 def _update_source(part, origin):
