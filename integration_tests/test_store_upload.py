@@ -66,7 +66,7 @@ class UploadTestCase(integration_tests.TestCase):
                       'login"?', str(error.output))
 
     def test_upload_with_login(self):
-        if os.getenv('TEST_USER_PASSWORD', None) is None:
+        if not os.getenv('TEST_USER_PASSWORD', None):
             self.useFixture(fixture_setup.FakeStore())
         else:
             self.useFixture(fixture_setup.StagingStore())
