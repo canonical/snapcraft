@@ -17,6 +17,7 @@
 
 import getpass
 import logging
+import os
 
 from snapcraft import storeapi
 
@@ -34,15 +35,16 @@ def login():
 
     logger.info('Authenticating against Ubuntu One SSO.')
     store = storeapi.StoreClient()
-    response = store.login(
-        email, password, one_time_password=one_time_password)
-    success = response.get('success', False)
-
-    if success:
-        logger.info('Login successful.')
-    else:
+    try:
+        store.login(
+            email, password, one_time_password=one_time_password)
+    except (storeapi.errors.InvalidCredentialsError,
+            storeapi.errors.StoreAuthenticationError):
         logger.info('Login failed.')
-    return success
+        return False
+    else:
+        logger.info('Login successful.')
+        return True
 
 
 def logout():
@@ -52,8 +54,29 @@ def logout():
     logger.info('Credentials cleared.')
 
 
+def register(snap_name):
+    logger.info('Registering {}.'.format(snap_name))
+    store = storeapi.StoreClient()
+    try:
+        response = store.register(snap_name)
+    except storeapi.errors.InvalidCredentialsError:
+        logger.error('No valid credentials found.'
+                     ' Have you run "snapcraft login"?')
+        raise
+    if response.ok:
+        logger.info(
+            "Congratulations! You're now the publisher for {!r}.".format(
+                snap_name))
+    else:
+        raise RuntimeError('Registration failed.')
+
+
 def upload(snap_filename):
-    logger.info('Uploading existing {}.'.format(snap_filename))
+    if not os.path.exists(snap_filename):
+        raise FileNotFoundError(
+            'The file {!r} does not exist.'.format(snap_filename))
+
+    logger.info('Uploading {}.'.format(snap_filename))
 
     try:
         store = storeapi.StoreClient()
