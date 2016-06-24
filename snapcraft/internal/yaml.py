@@ -149,16 +149,12 @@ class Config:
                     properties = self._remote_parts.compose(
                         part_name, properties)
                     plugin_name = properties.pop('plugin', None)
-                except KeyError:
-                    logger.error(
-                        'A part without a plugin defined will be searched for '
-                        'in the defined remote parts, {!r} is missing the '
-                        '`plugin` entry and is not defined in the current '
-                        'remote parts cache, try to run `snapcraft update` '
-                        'to refresh'.format(part_name))
-
-            if not plugin_name:
-                raise PluginNotDefinedError(part_name)
+                except KeyError as e:
+                    raise SnapcraftLogicError(
+                        '{!r} is missing the `plugin` entry and is not '
+                        'defined in the current remote parts cache, try to '
+                        'run `snapcraft update` to '
+                        'refresh'.format(part_name)) from e
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
@@ -190,19 +186,18 @@ class Config:
                         found = True
                         break
                 if not found:
-                    remote_part = self._remote_parts.get_part(dep)
-                    found = True if remote_part else False
-                    if found:
-                        plugin_name = remote_part.pop('plugin')
-                        part.deps.append(self.load_plugin(
-                            dep, plugin_name, remote_part))
-                        self._part_names.append(dep)
-                    else:
-                        logger.info('Maybe {!r} is defined as a remote part, '
-                                    'run `snapcraft update` to refresh')
-                if not found:
-                    raise SnapcraftLogicError(
-                        'part name missing {}'.format(dep))
+                    try:
+                        remote_part = self._remote_parts.get_part(dep)
+                    except KeyError as e:
+                        raise SnapcraftLogicError(
+                            'Cannot find definition for part {!r}. '
+                            'It may be a remote part, run `snapcraft update` '
+                            'to refresh the remote parts '
+                            'cache'.format(dep)) from e
+                    plugin_name = remote_part.pop('plugin')
+                    part.deps.append(self.load_plugin(
+                        dep, plugin_name, remote_part))
+                    self._part_names.append(dep)
 
     def _sort_parts(self):
         '''Performs an inneficient but easy to follow sorting of parts.'''
