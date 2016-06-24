@@ -10,6 +10,7 @@ build
 dist
 *.egg-info
 .eggs/
+*.pyc
 .coverage**
 htmlcov
 __pycache__
