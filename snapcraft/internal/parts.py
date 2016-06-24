@@ -141,7 +141,7 @@ def define(part_name):
     except KeyError as e:
         raise RuntimeError(
             'Cannot find the part name {!r} in the cache. Please '
-            'consider going to https://wiki.ubunut.com/snapcraft/parts '
+            'consider going to https://wiki.ubuntu.com/snapcraft/parts '
             'to add it.') from e
     print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
     print('Description: {!r}'.format(remote_part.pop('description')))

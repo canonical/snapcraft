@@ -56,4 +56,4 @@ curl:
         self.assertEqual(
             str(raised.exception),
             'Cannot find the part name {!r} in the cache. Please consider '
-            'going to https://wiki.ubunut.com/snapcraft/parts to add it.')
+            'going to https://wiki.ubuntu.com/snapcraft/parts to add it.')
