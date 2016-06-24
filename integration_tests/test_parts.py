@@ -17,7 +17,6 @@
 import os
 
 import yaml
-from xdg import BaseDirectory
 
 import integration_tests
 
@@ -27,7 +26,7 @@ class PartsTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
+        self.parts_dir = os.path.join('data', 'snapcraft')
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
         self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
 

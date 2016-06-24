@@ -212,7 +212,8 @@ def main(argv=None):
         if args['--debug']:
             raise
 
-        sys.exit(textwrap.fill(str(e)))
+        logger.error(textwrap.fill(str(e)))
+        sys.exit(1)
 
 
 def _get_lifecycle_command(args):
@@ -236,7 +237,7 @@ def _get_command_from_arg(args):
     return functions[function[0]]
 
 
-def run(args, project_options):
+def run(args, project_options):  # noqa
     lifecycle_command = _get_lifecycle_command(args)
     argless_command = _get_command_from_arg(args)
     if lifecycle_command:

@@ -117,6 +117,65 @@ parts:
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
+    def test_config_composes_with_a_non_existent_remote_part(self):
+        self.useFixture(fixture_setup.FakeParts())
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.parts.ProgressBar',
+            new=tests.SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  non-existing-part:
+    stage-packages: [fswebcam]
+""")
+
+        parts.update()
+
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+            internal_yaml.Config()
+        self.assertEqual(
+            str(raised.exception),
+            '{!r} is missing the `plugin` entry and is not defined in the '
+            'current remote parts cache, try to run `snapcraft update` '
+            'to refresh'.format('non-existing-part'))
+
+    def test_config_after_is_an_undefined_part(self):
+        self.useFixture(fixture_setup.FakeParts())
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.parts.ProgressBar',
+            new=tests.SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    after: [non-existing-part]
+""")
+
+        parts.update()
+
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+            internal_yaml.Config()
+        self.assertEqual(
+            str(raised.exception),
+            'Cannot find definition for part {!r}. It may be a '
+            'remote part, run `snapcraft update` to '
+            'refresh the remote parts cache'.format('non-existing-part'))
+
     @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
     def test_config_uses_remote_part_from_after(self, mock_load):
         self.useFixture(fixture_setup.FakeParts())
@@ -199,6 +258,8 @@ parts:
             ('mercurial', 'mercurial'),
             ('bzr', 'bzr'),
             ('tar', 'tar'),
+            ('svn', 'subversion'),
+            ('subversion', 'subversion'),
         ]
         yaml_t = """name: test
 version: "1"
@@ -283,8 +344,7 @@ parts:
     source: .
     after: [p1]
 """)
-        with self.assertRaises(
-                snapcraft.internal.yaml.SnapcraftLogicError) as raised:
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
             internal_yaml.Config()
 
         self.assertEqual(
