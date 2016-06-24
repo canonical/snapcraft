@@ -15,12 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
-import logging
-import os
 from unittest import mock
-
-import fixtures
-import yaml
 
 from snapcraft import main, tests
 from snapcraft.internal import parts
