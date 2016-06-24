@@ -25,9 +25,10 @@ import unittest.mock
 import fixtures
 
 import snapcraft
-from snapcraft.internal import dirs
+from snapcraft.internal import dirs, parts
 from snapcraft.internal import yaml as internal_yaml
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 
 from snapcraft._schema import SnapcraftSchemaError
 
@@ -43,18 +44,11 @@ class TestYaml(tests.TestCase):
         self.mock_get_yaml = patcher.start()
         self.mock_get_yaml.return_value = 'snapcraft.yaml'
         self.addCleanup(patcher.stop)
-
-        patcher = unittest.mock.patch('os.path.exists')
-        self.mock_path_exists = patcher.start()
-        self.mock_path_exists.return_value = True
-        self.addCleanup(patcher.stop)
         self.part_schema = internal_yaml.Validator().part_schema
-
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
-    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.get_part')
-    def test_config_loads_plugins(self, mock_get_part, mock_loadPlugin):
+    def test_config_loads_plugins(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -72,12 +66,9 @@ parts:
             'stage': [], 'snap': [],
         })
 
-        self.assertFalse(mock_get_part.called)
-
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
-    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.get_part')
     def test_config_loads_with_different_encodings(
-            self, mock_get_part, mock_loadPlugin):
+            self, mock_loadPlugin):
         content = """name: test
 version: "1"
 summary: test
@@ -99,11 +90,15 @@ parts:
                     'stage': [], 'snap': [],
                 })
 
-                self.assertFalse(mock_get_part.called)
-
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
-    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.compose')
-    def test_config_loads_part_from_wiki(self, mock_compose, mock_loadPlugin):
+    def test_config_composes_with_remote_parts(self, mock_loadPlugin):
+        self.useFixture(fixture_setup.FakeParts())
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.parts.ProgressBar',
+            new=tests.SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -114,19 +109,82 @@ parts:
   part1:
     stage-packages: [fswebcam]
 """)
-        mock_compose.return_value = {
-            'plugin': 'go',
-            'source': 'http://source.tar.gz',
-        }
 
+        parts.update()
         internal_yaml.Config()
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
-            'source': 'http://source.tar.gz', 'stage': [], 'snap': []})
+            'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
+            'stage': [], 'snap': []})
+
+    def test_config_composes_with_a_non_existent_remote_part(self):
+        self.useFixture(fixture_setup.FakeParts())
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.parts.ProgressBar',
+            new=tests.SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  non-existing-part:
+    stage-packages: [fswebcam]
+""")
+
+        parts.update()
+
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+            internal_yaml.Config()
+        self.assertEqual(
+            str(raised.exception),
+            '{!r} is missing the `plugin` entry and is not defined in the '
+            'current remote parts cache, try to run `snapcraft update` '
+            'to refresh'.format('non-existing-part'))
+
+    def test_config_after_is_an_undefined_part(self):
+        self.useFixture(fixture_setup.FakeParts())
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.parts.ProgressBar',
+            new=tests.SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    after: [non-existing-part]
+""")
+
+        parts.update()
+
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+            internal_yaml.Config()
+        self.assertEqual(
+            str(raised.exception),
+            'Cannot find definition for part {!r}. It may be a '
+            'remote part, run `snapcraft update` to '
+            'refresh the remote parts cache'.format('non-existing-part'))
 
     @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
-    @unittest.mock.patch('snapcraft.internal.wiki.Wiki.get_part')
-    def test_config_with_wiki_part_after(self, mock_get_part, mock_load):
+    def test_config_uses_remote_part_from_after(self, mock_load):
+        self.useFixture(fixture_setup.FakeParts())
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.parts.ProgressBar',
+            new=tests.SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -136,7 +194,7 @@ confinement: strict
 parts:
   part1:
     after:
-      - part2wiki
+      - curl
     plugin: go
     stage-packages: [fswebcam]
 """)
@@ -150,24 +208,20 @@ parts:
             return mock_part
 
         mock_load.side_effect = load_effect
-        mock_get_part.return_value = {
-            'plugin': 'go',
-            'source': 'http://somesource'
-        }
 
         project_options = snapcraft.ProjectOptions()
 
+        parts.update()
         internal_yaml.Config(project_options)
 
         call1 = unittest.mock.call('part1', 'go', {
             'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
             project_options, self.part_schema)
-        call2 = unittest.mock.call('part2wiki', 'go', {
-            'source': 'http://somesource'},
+        call2 = unittest.mock.call('curl', 'autotools', {
+            'source': 'http://curl.org'},
             project_options, self.part_schema)
 
         mock_load.assert_has_calls([call1, call2])
-        self.assertTrue(mock_get_part.called)
 
     def test_config_adds_vcs_packages_to_build_packages(self):
         scenarios = [
@@ -204,8 +258,6 @@ parts:
             ('mercurial', 'mercurial'),
             ('bzr', 'bzr'),
             ('tar', 'tar'),
-            ('svn', 'subversion'),
-            ('subversion', 'subversion'),
         ]
         yaml_t = """name: test
 version: "1"
@@ -290,8 +342,7 @@ parts:
     source: .
     after: [p1]
 """)
-        with self.assertRaises(
-                snapcraft.internal.yaml.SnapcraftLogicError) as raised:
+        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
             internal_yaml.Config()
 
         self.assertEqual(
@@ -370,8 +421,6 @@ parts:
     def test_invalid_yaml_missing_icon(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
-
-        self.mock_path_exists.return_value = False
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
