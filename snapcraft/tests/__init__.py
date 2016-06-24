@@ -19,6 +19,7 @@ import os
 from unittest import mock
 
 import fixtures
+import progressbar
 import testscenarios
 
 from snapcraft.internal import common
@@ -43,7 +44,7 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
-        self.useFixture(fixture_setup.TempConfig(self.path))
+        self.useFixture(fixture_setup.TempXDG(self.path))
         # Some tests will directly or indirectly change the plugindir, which
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
@@ -81,3 +82,16 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
             self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
                             'Expected {!r} to be run for {}'.format(
                                 step, part_name))
+
+
+class SilentProgressBar(progressbar.ProgressBar):
+    """A progress bar causing no spurious output during tests."""
+
+    def start(self):
+        pass
+
+    def update(self, value=None):
+        pass
+
+    def finish(self):
+        pass

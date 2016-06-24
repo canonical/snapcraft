@@ -15,17 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class InvalidCredentialsError(Exception):
-    pass
-
-
-class StoreError(Exception):
+# TODO move to snapcraft.errors --elopio - 2016-06-20
+class SnapcraftError(Exception):
     """Base class for all storeapi exceptions.
 
     :cvar fmt: A format string that daughter classes override
 
     """
-
     fmt = 'Daughter classes should redefine this'
 
     def __init__(self, **kwargs):
@@ -34,6 +30,22 @@ class StoreError(Exception):
 
     def __str__(self):
         return self.fmt.format([], **self.__dict__)
+
+
+class InvalidCredentialsError(SnapcraftError):
+
+    fmt = 'Invalid credentials: {}.'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class StoreError(SnapcraftError):
+    """Base class for all storeapi exceptions.
+
+    :cvar fmt: A format string that daughter classes override
+
+    """
 
 
 class SnapNotFoundError(StoreError):
@@ -50,3 +62,11 @@ class SHAMismatchError(StoreError):
 
     def __init__(self, path, expected_sha):
         super().__init__(path=path, expected_sha=expected_sha)
+
+
+class StoreAuthenticationError(StoreError):
+
+    fmt = 'Authentication error: {}.'
+
+    def __init__(self, message):
+        super().__init__(message=message)

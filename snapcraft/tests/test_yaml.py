@@ -38,6 +38,12 @@ class TestYaml(tests.TestCase):
         super().setUp()
         dirs.setup_dirs()
 
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.yaml._get_snapcraft_yaml')
+        self.mock_get_yaml = patcher.start()
+        self.mock_get_yaml.return_value = 'snapcraft.yaml'
+        self.addCleanup(patcher.stop)
+
         patcher = unittest.mock.patch('os.path.exists')
         self.mock_path_exists = patcher.start()
         self.mock_path_exists.return_value = True
@@ -198,6 +204,8 @@ parts:
             ('mercurial', 'mercurial'),
             ('bzr', 'bzr'),
             ('tar', 'tar'),
+            ('svn', 'subversion'),
+            ('subversion', 'subversion'),
         ]
         yaml_t = """name: test
 version: "1"
@@ -261,17 +269,6 @@ parts:
         config = internal_yaml.Config(ProjectOptionsFake())
 
         self.assertEqual(config.build_tools, [])
-
-    def test_config_raises_on_missing_snapcraft_yaml(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        # no snapcraft.yaml
-        with self.assertRaises(
-                snapcraft.internal.yaml.SnapcraftYamlFileError) as raised:
-            internal_yaml.Config()
-
-        self.assertEqual(raised.exception.file, 'snapcraft.yaml')
 
     def test_config_loop(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -795,6 +792,64 @@ parts:
 
         self.assertFalse(config.part_dependents('dependent'))
         self.assertEqual({'dependent'}, config.part_dependents('main'))
+
+
+class InitTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+    def test_config_raises_on_missing_snapcraft_yaml(self):
+        # no snapcraft.yaml
+        with self.assertRaises(
+                snapcraft.internal.yaml.SnapcraftYamlFileError) as raised:
+            internal_yaml.Config()
+
+        self.assertEqual(raised.exception.file, 'snapcraft.yaml')
+
+    def test_two_snapcraft_yamls_cuase_error(self):
+        open('snapcraft.yaml', 'w').close()
+        open('.snapcraft.yaml', 'w').close()
+
+        with self.assertRaises(EnvironmentError) as raised:
+            internal_yaml.Config()
+
+        self.assertEqual(
+            str(raised.exception),
+            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
+            "please remove one")
+
+    def test_hidden_snapcraft_yaml_loads(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  main:
+    plugin: nil
+""")
+
+        os.rename('snapcraft.yaml', '.snapcraft.yaml')
+        internal_yaml.Config()
+
+    def test_visible_snapcraft_yaml_loads(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  main:
+    plugin: nil
+""")
+
+        internal_yaml.Config()
 
 
 class TestYamlEnvironment(tests.TestCase):

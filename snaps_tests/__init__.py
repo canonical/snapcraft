@@ -23,8 +23,10 @@ import re
 import tempfile
 import shutil
 import subprocess
+import sys
 
 import fixtures
+import pexpect
 import testtools
 from testtools import content
 from testtools.matchers import (
@@ -39,6 +41,19 @@ logger = logging.getLogger(__name__)
 config = {}
 
 _KVM_REDIRECT_PORTS = ['8080', '9000', '3000']
+
+
+class CommandError(Exception):
+
+    def __init__(self, command, working_dir, message):
+        super().__init__()
+        self.command = command
+        self.working_dir = working_dir
+        self.message = message
+
+    def __str__(self):
+        return 'Error running command {!r} in {!r}. {}'.format(
+            self.command, self.working_dir, self.message)
 
 
 def _get_latest_ssh_private_key():
@@ -96,6 +111,7 @@ class SnapsTestCase(testtools.TestCase):
                 self.skipTest(
                     '{} does not match the filter {}'.format(
                         self.snap_content_dir, filter_))
+        logger.info('Testing {}'.format(self.snap_content_dir))
         super().setUp()
         if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_command = 'snapcraft'
@@ -138,15 +154,41 @@ class SnapsTestCase(testtools.TestCase):
 
     def build_snap(self, snap_content_dir):
         working_dir = os.path.join(self.src_dir, snap_content_dir)
-        subprocess.check_call(
-            [self.snapcraft_command, 'clean'], cwd=working_dir)
+        self._clean(working_dir)
+        self._snap(working_dir)
+
+    def _clean(self, project_dir):
+        command = '{} {}'.format(self.snapcraft_command, 'clean')
+        self._run_command(command, project_dir)
+
+    def _snap(self, project_dir):
+        command = '{} {}'.format(self.snapcraft_command, 'snap')
+        self._run_command(
+            command, project_dir, expect='Snapped .*\.snap', timeout=1200)
+
+    def _run_command(
+            self, command, working_dir, expect=pexpect.EOF, timeout=30):
+        print(command)
+        process = pexpect.spawn(
+            command, cwd=working_dir, timeout=timeout)
+        process.logfile_read = sys.stdout.buffer
         try:
-            subprocess.check_output(
-                [self.snapcraft_command, 'snap'], cwd=working_dir,
-                stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            self.addDetail('output', content.text_content(str(e.output)))
-            raise
+            process.expect(expect)
+        except pexpect.ExceptionPexpect:
+            self._add_output_detail(process.before)
+            raise CommandError(
+                command, working_dir,
+                'Expected output {!r} not found.'.format(expect)) from None
+        finally:
+            process.close()
+            if process.exitstatus:
+                self._add_output_detail(process.before)
+                raise CommandError(
+                    command, working_dir,
+                    'Exit status: {!r}.'.format(process.exitstatus))
+
+    def _add_output_detail(self, output):
+        self.addDetail('output', content.text_content(str(output)))
 
     def install_snap(self, snap_content_dir, snap_name, version,
                      devmode=False):
@@ -194,8 +236,7 @@ class SnapsTestCase(testtools.TestCase):
             try:
                 return self.snappy_testbed.run_command(command)
             except subprocess.CalledProcessError as e:
-                self.addDetail(
-                    'ssh output', content.text_content(str(e.output)))
+                self._add_output_detail(e.output)
                 raise
 
     def assert_service_running(self, snap, service):
