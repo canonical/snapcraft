@@ -51,8 +51,16 @@ class UpdateCommandTestCase(tests.TestCase):
         expected_parts = {
             'curl': {
                 'source': 'http://curl.org',
-                'plugin': 'autotools'
-            }
+                'plugin': 'autotools',
+                'description': 'test entry for curl',
+                'maintainer': 'none',
+            },
+            'part1': {
+                'plugin': 'go',
+                'source': 'http://source.tar.gz',
+                'description': 'test entry for part1',
+                'maintainer': 'none',
+            },
         }
         expected_headers = {
             'If-None-Match': '1111',

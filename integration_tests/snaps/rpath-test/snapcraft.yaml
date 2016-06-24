@@ -1,0 +1,10 @@
+name: rpath-test
+version: 1
+summary: summary
+description: description
+confinement: strict
+
+parts:
+  rpath-test:
+    plugin: make
+    source: src/
