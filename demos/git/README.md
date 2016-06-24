@@ -8,7 +8,7 @@ command to grant it access to your home directory:
 snap connect git:home ubuntu-core:home
 ```
 
-Only access the home directory is granted. You can see this containment
+Only access to the home directory is granted. You can see this containment
 in action by attempting to initialize a repository in /tmp:
 
 ```sh
@@ -18,10 +18,11 @@ $ /snap/bin/git init
 fatal: Could not change back to '/tmp/foo': No such file or directory
 ```
 
-Files repositories in your home directory work fine:
+Initializing and using repositories in your home directory works fine:
+
 ```sh
-$ mkdir -p ~/tmp/foo
-$ cd ~/tmp/foo
+$ mkdir -p $HOME/tmp/foo
+$ cd $HOME/tmp/foo
 $ /snap/bin/git init
-Initialized empty Git repository in /home/stub/tmp/foo/.git/
+Initialized empty Git repository in /home/ubuntu/tmp/foo/.git/
 ```

@@ -7,9 +7,11 @@ confinement: strict
 apps:
   git:
     command: bin/git
-    # git will now have access to files outside of its containment
+    # git will not have access to files outside of its containment
     # until you run the following command after installing the snap:
     #     snap connect git:home ubuntu-core:home
+    # After connecting up the home interface it gains access to
+    # non-hidden files in home directories.
     plugs:
       - home
 
