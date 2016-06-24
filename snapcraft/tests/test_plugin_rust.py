@@ -1,6 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-#
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016 Marius Gripsgard (mariogrip@ubuntu.com)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,7 +21,7 @@ from snapcraft import tests
 from snapcraft.plugins import rust
 
 
-class MakePluginTestCase(tests.TestCase):
+class RustPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -75,4 +73,26 @@ class MakePluginTestCase(tests.TestCase):
             mock.call([plugin._cargo, 'install',
                        '-j{}'.format(plugin.project.parallel_build_count),
                        '--root', plugin.installdir], env=plugin._build_env())
+        ])
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_pull(self, run_mock):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        plugin.options.rust_revision = []
+        plugin.options.rust_channel = []
+
+        plugin.pull()
+        rustup = "rustup.sh"
+
+        self.assertEqual(3, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(["wget", "-N",
+                       "https://static.rust-lang.org/rustup.sh",
+                       "-O", rustup]),
+            mock.call(["chmod", "+x", rustup]),
+            mock.call(["./%s" % rustup,
+                       "--prefix=%s" % plugin._rustpath,
+                       "--disable-sudo", "--save"])
         ])
