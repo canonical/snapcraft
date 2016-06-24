@@ -286,8 +286,9 @@ def combine_paths(paths, prepend, separator):
 
 def format_path_variable(envvar, paths, prepend, separator):
     if not paths:
-        return ''
-    else:
-        return '{envvar}="${envvar}{separator}{paths}"'.format(
-            envvar=envvar, separator=separator,
-            paths=combine_paths(paths, prepend, separator))
+        raise ValueError(
+            "Failed to format '${}': no paths supplied".format(envvar))
+
+    return '{envvar}="${envvar}{separator}{paths}"'.format(
+        envvar=envvar, separator=separator, paths=combine_paths(
+            paths, prepend, separator))
