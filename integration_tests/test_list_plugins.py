@@ -14,15 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fixtures
+
 import integration_tests
 
 
 class ListPluginsTestCase(integration_tests.TestCase):
 
     def test_list_plugins(self):
+        # Alignment issues are complicated and it is hard for people
+        # to maintain so let's make it easy and enjoyable.
+        self.useFixture(fixtures.EnvironmentVariable('COLUMNS', '15'))
         output = self.run_snapcraft('list-plugins')
-        expected = (
-            'ant        cmake  gulp    kernel  nil      python3  tar-content\n'
-            'autotools  copy   jdk     make    nodejs   qmake  \n'
-            'catkin     go     kbuild  maven   python2  scons  \n')
+        expected = """ant        
+autotools  
+catkin     
+cmake      
+copy       
+go         
+gulp       
+jdk        
+kbuild     
+kernel     
+make       
+maven      
+nil        
+nodejs     
+python2    
+python3    
+qmake      
+scons      
+tar-content
+"""
         self.assertEqual(expected, output)
