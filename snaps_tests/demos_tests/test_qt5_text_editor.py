@@ -22,7 +22,7 @@ class Qt5TextEditorTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'qt5-text-editor'
 
     def test_text_editor(self):
-        self.build_snap(self.snap_content_dir)
+        self.build_snap(self.snap_content_dir, update_cache=True)
         self.install_snap(
             self.snap_content_dir, 'text-editor', '1.0')
 

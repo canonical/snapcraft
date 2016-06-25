@@ -24,7 +24,7 @@ class MosquittoTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'mosquitto'
 
     def test_mosquitto(self):
-        self.build_snap(self.snap_content_dir)
+        self.build_snap(self.snap_content_dir, update_cache=True)
         snap_name = 'mosquitto'
         self.install_snap(self.snap_content_dir, snap_name, '0.1')
         self.assert_service_running(snap_name, 'mosquitto')
