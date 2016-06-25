@@ -22,6 +22,12 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
+class FakeTerminalSize:
+
+    def __init__(self, columns=80):
+        self.columns = columns
+
+
 class ListPluginsCommandTestCase(tests.TestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
@@ -31,17 +37,21 @@ class ListPluginsCommandTestCase(tests.TestCase):
         'autotools  cmake   go    jdk   kernel  maven  nodejs  python3  '
         'scons\n')
 
+    def setUp(self):
+        patcher = mock.patch('shutil.get_terminal_size')
+        self.mock_terminal_size = patcher.start()
+        self.mock_terminal_size.return_value = FakeTerminalSize()
+        self.addCleanup(patcher.stop)
+
     @mock.patch('sys.stdout', new_callable=io.StringIO)
-    @mock.patch('subprocess.check_output')
-    def test_list_plugins_large_terminal(self, mock_subprocess, mock_stdout):
-        mock_subprocess.return_value = "999"
+    def test_list_plugins_large_terminal(self, mock_stdout):
+        self.mock_terminal_size.return_value = FakeTerminalSize(999)
         main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), self.default_plugin_output)
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
-    @mock.patch('subprocess.check_output')
-    def test_list_plugins_small_terminal(self, mock_subprocess, mock_stdout):
-        mock_subprocess.return_value = "60"
+    def test_list_plugins_small_terminal(self, mock_stdout):
+        self.mock_terminal_size.return_value = FakeTerminalSize(60)
         expected_output = (
             'ant        copy  kbuild  nil      qmake      \n'
             'autotools  go    kernel  nodejs   scons      \n'
@@ -49,23 +59,3 @@ class ListPluginsCommandTestCase(tests.TestCase):
             'cmake      jdk   maven   python3\n')
         main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), expected_output)
-
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    @mock.patch('subprocess.check_output')
-    def test_list_plugins_error_invalid_terminal_size(self, mock_subprocess,
-                                                      mock_stdout):
-        def raise_error(cmd, stderr):
-            raise OSError()
-        mock_subprocess.side_effect = raise_error
-        main(['list-plugins'])
-        self.assertEqual(mock_stdout.getvalue(), self.default_plugin_output)
-
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    @mock.patch('subprocess.check_output')
-    def test_list_plugins_error_invalid_subprocess_call(self, mock_subprocess,
-                                                        mock_stdout):
-        def raise_error(cmd, stderr):
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        mock_subprocess.side_effect = raise_error
-        main(['list-plugins'])
-        self.assertEqual(mock_stdout.getvalue(), self.default_plugin_output)

@@ -61,6 +61,12 @@ class UpdateCommandTestCase(tests.TestCase):
                 'description': 'test entry for part1',
                 'maintainer': 'none',
             },
+            'long-described-part': {
+                'plugin': 'go',
+                'source': 'http://source.tar.gz',
+                'description': 'this is a repetetive description ' * 3,
+                'maintainer': 'none',
+            },
         }
         expected_headers = {
             'If-None-Match': '1111',

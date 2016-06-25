@@ -37,6 +37,7 @@ Usage:
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] define <part-name>
+  snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -93,6 +94,7 @@ The available lifecycle commands are:
 Parts ecosystem commands
   update       Updates the parts listing from the cloud.
   define       Shows the definition for the cloud part.
+  search       Searches the remotes part cache for matching parts.
 
 Calling snapcraft without a COMMAND will default to 'snap'
 
@@ -121,7 +123,9 @@ from docopt import docopt
 import snapcraft
 from snapcraft.internal import lifecycle, log, parts
 from snapcraft.internal.common import (
-    format_output_in_columns, MAX_CHARACTERS_WRAP, get_tourdir)
+    format_output_in_columns,
+    get_terminal_width,
+    get_tourdir)
 
 
 logger = logging.getLogger(__name__)
@@ -169,16 +173,7 @@ def _list_plugins():
         plugins.append(modname.replace('_', '-'))
 
     # we wrap the output depending on terminal size
-    width = MAX_CHARACTERS_WRAP
-    with suppress(OSError):
-        with suppress(subprocess.CalledProcessError):
-            # this is the only way to get current terminal size reliably
-            # without duplicating a bunch of logic
-            command = ['tput', 'cols']
-            candidate_width = \
-                subprocess.check_output(command, stderr=subprocess.DEVNULL)
-            width = min(int(candidate_width), width)
-
+    width = get_terminal_width()
     for line in format_output_in_columns(plugins, max_width=width):
         print(line)
 
@@ -260,6 +255,8 @@ def run(args, project_options):  # noqa
         parts.update()
     elif args['define']:
         parts.define(args['<part-name>'])
+    elif args['search']:
+        parts.search(' '.join(args['<query>']))
     else:  # snap by default:
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
