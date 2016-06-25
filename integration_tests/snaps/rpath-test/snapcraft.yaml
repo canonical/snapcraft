@@ -7,5 +7,5 @@ confinement: strict
 parts:
   rpath-test:
     plugin: make
-    build-packages: [gcc, libc6-dev]
+    build-packages: [gcc, g++, libc6-dev]
     source: src/
