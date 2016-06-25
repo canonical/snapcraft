@@ -21,6 +21,13 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
+class FakeStdout(io.StringIO):
+    """A fake stdout using StringIO implementing the missing fileno attrib."""
+
+    def fileno(self):
+        return 1
+
+
 class FakeTerminalSize:
 
     def __init__(self, columns=80):
@@ -37,18 +44,31 @@ class ListPluginsCommandTestCase(tests.TestCase):
         'scons\n')
 
     def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('os.isatty')
+        self.mock_isatty = patcher.start()
+        self.mock_isatty.return_value = True
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('shutil.get_terminal_size')
         self.mock_terminal_size = patcher.start()
         self.mock_terminal_size.return_value = FakeTerminalSize()
         self.addCleanup(patcher.stop)
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    @mock.patch('sys.stdout', new_callable=FakeStdout)
+    def test_list_plugins_non_tty(self, mock_stdout):
+        self.mock_isatty.return_value = False
+        main(['list-plugins'])
+        self.assertEqual(mock_stdout.getvalue(), self.default_plugin_output)
+
+    @mock.patch('sys.stdout', new_callable=FakeStdout)
     def test_list_plugins_large_terminal(self, mock_stdout):
         self.mock_terminal_size.return_value = FakeTerminalSize(999)
         main(['list-plugins'])
         self.assertEqual(mock_stdout.getvalue(), self.default_plugin_output)
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    @mock.patch('sys.stdout', new_callable=FakeStdout)
     def test_list_plugins_small_terminal(self, mock_stdout):
         self.mock_terminal_size.return_value = FakeTerminalSize(60)
         expected_output = (
