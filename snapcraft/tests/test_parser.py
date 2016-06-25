@@ -516,6 +516,28 @@ project-part: main2
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_origin_part_without_source(self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+        self.assertEqual(4, len(_get_part('main').keys()))
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_missing_fields(self, mock_get, mock_get_origin_data):
         _create_example_output("""
 ---

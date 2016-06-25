@@ -391,6 +391,7 @@ class PluginHandler:
         # potentially override the `stage` or `snap` filtering.
         part_dependencies = set()
         staged_dependencies = set()
+        primed_dependencies = set()
         system_dependencies = set()
         for file_path in dependencies:
             if file_path.startswith(self.installdir):
@@ -399,6 +400,9 @@ class PluginHandler:
             elif file_path.startswith(self.stagedir):
                 staged_dependencies.add(
                     os.path.relpath(file_path, self.stagedir))
+            elif file_path.startswith(self.snapdir):
+                primed_dependencies.add(
+                    os.path.relpath(file_path, self.snapdir))
             else:
                 system_dependencies.add(file_path.lstrip('/'))
 

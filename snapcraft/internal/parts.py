@@ -16,6 +16,7 @@
 
 import logging
 import os
+import sys
 
 import requests
 import yaml
@@ -98,5 +99,57 @@ class _Update(_Base):
             headers_file.write(yaml.dump(headers))
 
 
+class _RemoteParts(_Base):
+
+    def __init__(self):
+        super().__init__()
+
+        if os.path.exists(self.parts_yaml):
+            with open(self.parts_yaml) as parts_file:
+                self._parts = yaml.load(parts_file)
+        else:
+            self._parts = {}
+
+    def get_part(self, part_name, full=False):
+        remote_part = self._parts[part_name].copy()
+        if not full:
+            for key in ['description', 'maintainer']:
+                remote_part.pop(key)
+        return remote_part
+
+    def compose(self, part_name, properties):
+        """Return properties composed with the ones from part name in the wiki.
+        :param str part_name: The name of the part to query from the wiki
+        :param dict properties: The current set of properties
+        :return: Part properties from the wiki composed with the properties
+                 passed as a parameter.
+        :rtype: dict
+        :raises KeyError: if part_name is not found in the wiki.
+        """
+        remote_part = self.get_part(part_name)
+        remote_part.update(properties)
+
+        return remote_part
+
+
 def update():
     _Update().execute()
+
+
+def define(part_name):
+    try:
+        remote_part = _RemoteParts().get_part(part_name, full=True)
+    except KeyError as e:
+        raise RuntimeError(
+            'Cannot find the part name {!r} in the cache. Please '
+            'consider going to https://wiki.ubuntu.com/snapcraft/parts '
+            'to add it.') from e
+    print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
+    print('Description: {!r}'.format(remote_part.pop('description')))
+    print('')
+    yaml.dump({part_name: remote_part},
+              default_flow_style=False, stream=sys.stdout)
+
+
+def get_remote_parts():
+    return _RemoteParts()
