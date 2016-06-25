@@ -108,14 +108,12 @@ For more help, visit the documentation:
 http://developer.ubuntu.com/snappy/snapcraft
 """
 
-from contextlib import suppress
 import logging
 import os
 import pkg_resources
 import pkgutil
 import shutil
 import sys
-import subprocess
 import textwrap
 
 from docopt import docopt

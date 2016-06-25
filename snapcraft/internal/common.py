@@ -218,6 +218,7 @@ def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
         width = min(max_width, width)
     return width
 
+
 def format_output_in_columns(elements_list, max_width=MAX_CHARACTERS_WRAP,
                              num_col_spaces=2):
     """Return a formatted list of strings ready to be printed line by line
