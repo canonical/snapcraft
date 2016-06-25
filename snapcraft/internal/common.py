@@ -213,7 +213,10 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
 
 
 def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
-    width = shutil.get_terminal_size().columns
+    if os.isatty(sys.stdout.fileno()):
+        width = shutil.get_terminal_size().columns
+    else:
+        width = max_width
     if max_width:
         width = min(max_width, width)
     return width
