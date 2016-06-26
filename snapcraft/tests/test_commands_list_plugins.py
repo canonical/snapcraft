@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import io
-from unittest import mock
-
 from snapcraft.main import main
 from snapcraft import tests
 from snapcraft.tests import fixture_setup

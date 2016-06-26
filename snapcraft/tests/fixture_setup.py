@@ -100,8 +100,6 @@ class FakeTerminal(fixtures.Fixture):
         self.isatty = isatty
 
     def _setUp(self):
-        stdout = _FakeStdout()
-
         patcher = mock.patch('shutil.get_terminal_size')
         mock_terminal_size = patcher.start()
         mock_terminal_size.return_value = _FakeTerminalSize(self.columns)

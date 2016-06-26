@@ -125,18 +125,15 @@ class _RemoteParts(_Base):
         return remote_part
 
     def matches_for(self, part_match, max_len=0):
-        sm = difflib.SequenceMatcher(isjunk=None, autojunk=False)
-        sm.set_seq2(part_match)
+        matcher = difflib.SequenceMatcher(isjunk=None, autojunk=False)
+        matcher.set_seq2(part_match)
 
         matching_parts = {}
         for part_name in self._parts.keys():
-            sm.set_seq1(part_name)
-            add_part_name = sm.ratio() >= _MATCH_RATIO
-            sm.set_seq1(self._parts[part_name]['description'])
-            add_description = sm.ratio() >= _MATCH_RATIO
+            matcher.set_seq1(part_name)
+            add_part_name = matcher.ratio() >= _MATCH_RATIO
 
-            if add_part_name or add_description or part_match in part_name:
-                matching_parts[part_name] = self._parts[part_name]
+            if add_part_name or part_match in part_name:
                 matching_parts[part_name] = self._parts[part_name]
                 if len(part_name) > max_len:
                     max_len = len(part_name)
