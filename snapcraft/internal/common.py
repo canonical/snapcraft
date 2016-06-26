@@ -216,7 +216,7 @@ def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
     if os.isatty(sys.stdout.fileno()):
         width = shutil.get_terminal_size().columns
     else:
-        width = max_width
+        width = MAX_CHARACTERS_WRAP
     if max_width:
         width = min(max_width, width)
     return width

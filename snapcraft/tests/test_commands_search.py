@@ -34,25 +34,24 @@ class SearchCommandTestCase(tests.TestCase):
                         new=tests.SilentProgressBar):
             parts.update()
 
-        patcher = mock.patch('snapcraft.internal.parts.get_terminal_width')
-        self.mock_terminal = patcher.start()
-        self.mock_terminal.return_value = 80
-        self.addCleanup(patcher.stop)
+    def test_searching_for_a_part_that_exists(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_searching_for_a_part_that_exists(self, mock_stdout):
         main.main(['search', 'curl'])
 
         expected_output = """PART NAME  DESCRIPTION
 curl       test entry for curl
 """
-        self.assertEqual(mock_stdout.getvalue(), expected_output)
+        self.assertEqual(fake_terminal.getvalue(), expected_output)
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_empty_search_searches_all(self, mock_stdout):
+    def test_empty_search_searches_all(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
         main.main(['search'])
 
-        output = mock_stdout.getvalue()
+        output = fake_terminal.getvalue()
         self.assertEqual(
             output.split('\n')[0], 'PART NAME            DESCRIPTION')
         self.assertTrue('part1                test entry for part1' in output)
@@ -62,6 +61,8 @@ curl       test entry for curl
             'this is a repetetive de...' in output)
 
     def test_searching_for_a_part_that_doesnt_exist_helps_out(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -71,3 +72,14 @@ curl       test entry for curl
             fake_logger.output,
             'No matches found, try to run `snapcraft update` to refresh the '
             'remote parts cache.\n')
+
+    def test_search_on_non_tty(self):
+        fake_terminal = fixture_setup.FakeTerminal(isatty=False)
+        self.useFixture(fake_terminal)
+
+        main.main(['search', 'curl'])
+
+        expected_output = """PART NAME  DESCRIPTION
+curl       test entry for curl
+"""
+        self.assertEqual(fake_terminal.getvalue(), expected_output)
