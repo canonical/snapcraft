@@ -9,9 +9,9 @@ snapcraft (2.12) xenial; urgency=medium
   [ Joe Talbott ]
   * Include 'maintainer' and 'description' in the parser output. (#565)
     (LP: #1591199)
-  * Support "```" wiki code tags in the parser. (#569)
+  * Support "```" wiki code tags in the parser. (#569) (LP: #1592133)
   * Add snapcraft-parser integration test. (#560) (LP: #1590268)
-  * Make most wiki fields required.  Bugs/1593390 (#581)
+  * Make most wiki fields required. (#581) (LP: #LP: #1592133)
   * Add more info about reusable parts. (#527) (LP: #1582499)
   * Allow parts without a 'source' entry. (#599)
 
