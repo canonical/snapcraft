@@ -56,8 +56,8 @@ curl       test entry for curl
         self.assertTrue('part1                test entry for part1' in output)
         self.assertTrue('curl                 test entry for curl' in output)
         self.assertTrue(
-            'long-described-part  this is a repetetive description '
-            'this is a repetetive de...' in output)
+            'long-described-part  this is a repetitive description '
+            'this is a repetitive de...' in output)
 
     def test_search_trims_long_descriptions(self):
         fake_terminal = fixture_setup.FakeTerminal()
@@ -67,8 +67,8 @@ curl       test entry for curl
 
         expected_output = (
             'PART NAME            DESCRIPTION\n'
-            'long-described-part  this is a repetetive description this is a '
-            'repetetive de...\n')
+            'long-described-part  this is a repetitive description this is a '
+            'repetitive de...\n')
         self.assertEqual(fake_terminal.getvalue(), expected_output)
 
     def test_searching_for_a_part_that_doesnt_exist_helps_out(self):

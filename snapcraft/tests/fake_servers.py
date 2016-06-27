@@ -67,7 +67,7 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                 'long-described-part': {
                     'plugin': 'go',
                     'source': 'http://source.tar.gz',
-                    'description': 'this is a repetetive description ' * 3,
+                    'description': 'this is a repetitive description ' * 3,
                     'maintainer': 'none',
                 },
             }
