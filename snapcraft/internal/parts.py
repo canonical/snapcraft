@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import difflib
 import logging
 import os
 import sys
@@ -29,7 +30,13 @@ from progressbar import (
 )
 from xdg import BaseDirectory
 
+from snapcraft.internal.common import get_terminal_width
+
+
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
+_MATCH_RATIO = 0.6
+_HEADER_PART_NAME = 'PART NAME'
+_HEADER_DESCRIPTION = 'DESCRIPTION'
 
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
@@ -117,6 +124,22 @@ class _RemoteParts(_Base):
                 remote_part.pop(key)
         return remote_part
 
+    def matches_for(self, part_match, max_len=0):
+        matcher = difflib.SequenceMatcher(isjunk=None, autojunk=False)
+        matcher.set_seq2(part_match)
+
+        matching_parts = {}
+        for part_name in self._parts.keys():
+            matcher.set_seq1(part_name)
+            add_part_name = matcher.ratio() >= _MATCH_RATIO
+
+            if add_part_name or (part_match in part_name):
+                matching_parts[part_name] = self._parts[part_name]
+                if len(part_name) > max_len:
+                    max_len = len(part_name)
+
+        return matching_parts, max_len
+
     def compose(self, part_name, properties):
         """Return properties composed with the ones from part name in the wiki.
         :param str part_name: The name of the part to query from the wiki
@@ -149,6 +172,31 @@ def define(part_name):
     print('')
     yaml.dump({part_name: remote_part},
               default_flow_style=False, stream=sys.stdout)
+
+
+def search(part_match):
+    header_len = len(_HEADER_PART_NAME)
+    matches, part_length = _RemoteParts().matches_for(part_match, header_len)
+
+    terminal_width = get_terminal_width(max_width=None)
+    part_length = max(part_length, header_len)
+    # <space> + <space> + <description> + ... = 5
+    description_space = terminal_width - part_length - 5
+
+    if not matches:
+        # apt search does not return error, we probably shouldn't either.
+        logger.info('No matches found, try to run `snapcraft update` to '
+                    'refresh the remote parts cache.')
+        return
+
+    print('{}  {}'.format(
+        _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
+    for part_key in matches.keys():
+        description = matches[part_key]['description']
+        if len(description) > description_space:
+            description = '{}...'.format(description[0:description_space])
+        print('{}  {}'.format(
+            part_key.ljust(part_length, ' '), description))
 
 
 def get_remote_parts():
