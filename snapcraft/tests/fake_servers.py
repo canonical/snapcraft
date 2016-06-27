@@ -64,10 +64,16 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     'description': 'test entry for part1',
                     'maintainer': 'none',
                 },
+                'long-described-part': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'this is a repetitive description ' * 3,
+                    'maintainer': 'none',
+                },
             }
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
-            self.send_header('Content-Length', '300')
+            self.send_header('Content-Length', '1000')
         self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(yaml.dump(response).encode())
