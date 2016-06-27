@@ -17,6 +17,7 @@
 import os
 import shutil
 import subprocess
+import time
 
 import fixtures
 import pexpect
@@ -111,3 +112,9 @@ class TestCase(testtools.TestCase):
         expected = ('Clearing credentials for Ubuntu One SSO.\n'
                     'Credentials cleared.\n')
         self.assertEqual(expected, output)
+
+    def register(self, snap_name):
+        self.run_snapcraft(['register', snap_name])
+        # sleep a few seconds to avoid hitting the store restriction on
+        # following registrations.
+        time.sleep(10)

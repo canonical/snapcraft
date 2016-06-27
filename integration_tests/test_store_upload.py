@@ -88,7 +88,7 @@ class UploadTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
 
         # Register the snap
-        self.run_snapcraft(['register', new_name])
+        self.register(new_name)
         # Upload the snap
         snap_file_path = '{}_{}_{}.snap'.format(
             new_name, new_version, self.deb_arch)

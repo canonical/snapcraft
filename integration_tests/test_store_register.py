@@ -34,7 +34,7 @@ class RegisterTestCase(integration_tests.TestCase):
     def test_successful_registration(self):
         self.login(expect_success=True)
         snap_name = 'u1test{}'.format(uuid.uuid4().int)
-        self.run_snapcraft(['register', snap_name])
+        self.register(snap_name)
 
     def test_failed_registration(self):
         self.login(expect_success=True)
