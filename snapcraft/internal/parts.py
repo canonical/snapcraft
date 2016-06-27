@@ -133,7 +133,7 @@ class _RemoteParts(_Base):
             matcher.set_seq1(part_name)
             add_part_name = matcher.ratio() >= _MATCH_RATIO
 
-            if add_part_name or part_match in part_name:
+            if add_part_name or (part_match in part_name):
                 matching_parts[part_name] = self._parts[part_name]
                 if len(part_name) > max_len:
                     max_len = len(part_name)
