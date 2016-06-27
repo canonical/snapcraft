@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
-import contextlib
 import logging
 import os
 import os.path
@@ -27,10 +26,11 @@ import yaml
 
 import snapcraft
 from snapcraft.internal import (
+    common,
     libraries,
+    parts,
     pluginhandler,
     sources,
-    wiki,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError
 
@@ -133,7 +133,7 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        self._wiki = wiki.Wiki()
+        self._remote_parts = parts.get_remote_parts()
         self._process_parts()
 
     def _process_parts(self):
@@ -144,17 +144,18 @@ class Config:
             plugin_name = properties.pop('plugin', None)
             if not plugin_name:
                 logger.info(
-                    'Searching the wiki to compose part "{}"'.format(
-                        part_name))
-                with contextlib.suppress(KeyError):
-                    properties = self._wiki.compose(part_name, properties)
+                    'Searching in the remote parts cache for part '
+                    '{!r}'.format(part_name))
+                try:
+                    properties = self._remote_parts.compose(
+                        part_name, properties)
                     plugin_name = properties.pop('plugin', None)
-                    # The wiki still supports using 'type' for snapcraft 1.x
-                    if 'type' in properties:
-                        del properties['type']
-
-            if not plugin_name:
-                raise PluginNotDefinedError(part_name)
+                except KeyError as e:
+                    raise SnapcraftLogicError(
+                        '{!r} is missing the `plugin` entry and is not '
+                        'defined in the current remote parts cache, try to '
+                        'run `snapcraft update` to '
+                        'refresh'.format(part_name)) from e
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
@@ -186,16 +187,18 @@ class Config:
                         found = True
                         break
                 if not found:
-                    wiki_part = self._wiki.get_part(dep)
-                    found = True if wiki_part else False
-                    if found:
-                        plugin_name = wiki_part.pop('plugin')
-                        part.deps.append(self.load_plugin(
-                            dep, plugin_name, wiki_part))
-                        self._part_names.append(dep)
-                if not found:
-                    raise SnapcraftLogicError(
-                        'part name missing {}'.format(dep))
+                    try:
+                        remote_part = self._remote_parts.get_part(dep)
+                    except KeyError as e:
+                        raise SnapcraftLogicError(
+                            'Cannot find definition for part {!r}. '
+                            'It may be a remote part, run `snapcraft update` '
+                            'to refresh the remote parts '
+                            'cache'.format(dep)) from e
+                    plugin_name = remote_part.pop('plugin')
+                    part.deps.append(self.load_plugin(
+                        dep, plugin_name, remote_part))
+                    self._part_names.append(dep)
 
     def _sort_parts(self):
         '''Performs an inneficient but easy to follow sorting of parts.'''
@@ -344,10 +347,10 @@ def _runtime_env(root, arch_triplet):
     ]).format(root) + '"')
 
     # Add the default LD_LIBRARY_PATH
-    library_path = _get_library_paths(
-        'LD_LIBRARY_PATH', root, arch_triplet, prepend='', sep=':')
-    if library_path:
-        env.append(library_path)
+    paths = common.get_library_paths(root, arch_triplet)
+    if paths:
+        env.append(common.format_path_variable(
+            'LD_LIBRARY_PATH', paths, prepend='', separator=':'))
 
     # Add more specific LD_LIBRARY_PATH from staged packages if necessary
     ld_library_paths = libraries.determine_ld_library_path(root)
@@ -366,50 +369,17 @@ def _build_env(root, arch_triplet):
     """
     env = []
 
-    for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-        include_path_for_env = _get_include_paths(envvar, root, arch_triplet)
-        if include_path_for_env:
-            env.append(include_path_for_env)
-    library_path = _get_library_paths('LDFLAGS', root, arch_triplet)
-    if library_path:
-        env.append(library_path)
+    paths = common.get_include_paths(root, arch_triplet)
+    if paths:
+        for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
+            env.append(common.format_path_variable(
+                envvar, paths, prepend='-I', separator=' '))
+    paths = common.get_library_paths(root, arch_triplet)
+    if paths:
+        env.append(common.format_path_variable(
+            'LDFLAGS', paths, prepend='-L', separator=' '))
 
     return env
-
-
-def _get_include_paths(envvar, root, arch_triplet):
-    paths = [
-        os.path.join(root, 'include'),
-        os.path.join(root, 'usr', 'include'),
-        os.path.join(root, 'include', arch_triplet),
-        os.path.join(root, 'usr', 'include', arch_triplet),
-    ]
-
-    include_paths = ['-I{}'.format(p) for p in paths if os.path.exists(p)]
-
-    if not include_paths:
-        return ''
-    else:
-        return '{envvar}="${envvar} {include_paths}"'.format(
-            envvar=envvar, include_paths=' '.join(include_paths))
-
-
-def _get_library_paths(envvar, root, arch_triplet, prepend='-L', sep=' '):
-    paths = [
-        os.path.join(root, 'lib'),
-        os.path.join(root, 'usr', 'lib'),
-        os.path.join(root, 'lib', arch_triplet),
-        os.path.join(root, 'usr', 'lib', arch_triplet),
-    ]
-
-    library_paths = ['{}{}'.format(prepend, l)
-                     for l in paths if os.path.exists(l)]
-
-    if not library_paths:
-        return ''
-    else:
-        return '{envvar}="${envvar}{sep}{library_paths}"'.format(
-            envvar=envvar, sep=sep, library_paths=sep.join(library_paths))
 
 
 def _build_env_for_stage(stagedir, arch_triplet):

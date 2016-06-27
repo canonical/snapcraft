@@ -1,0 +1,24 @@
+name: text-editor
+version: 1.0
+summary: Qt Application Example
+description: A simple text editor
+confinement: strict
+
+apps:
+  text-editor:
+    command: qt5-launch application
+    plugs:
+      - unity7
+      - home
+
+parts:
+  application:
+    plugin: qmake
+    qt-version: qt5
+    source: src/
+    stage-packages:
+      # Here for the plugins-- they're not linked in automatically.
+      - libqt5gui5
+      # Here to make the menus work.
+      - libgtk2.0-0
+    after: [qt5conf] # A wiki part

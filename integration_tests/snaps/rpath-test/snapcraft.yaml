@@ -1,0 +1,11 @@
+name: rpath-test
+version: 1
+summary: summary
+description: description
+confinement: strict
+
+parts:
+  rpath-test:
+    plugin: make
+    build-packages: [gcc, g++, libc6-dev]
+    source: src/
