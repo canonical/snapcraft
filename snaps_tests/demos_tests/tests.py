@@ -33,11 +33,6 @@ class TestSnapcraftExamples(
             'name': 'godd',
             'version': '1.0',
             }),
-        ('git', {
-            'snap_content_dir': 'git',
-            'name': 'git',
-            'version': '2.8.0',
-            }),
         ('py2-project', {
             'snap_content_dir': 'py2-project',
             'name': 'spongeshaker',
