@@ -59,6 +59,18 @@ curl       test entry for curl
             'long-described-part  this is a repetetive description '
             'this is a repetetive de...' in output)
 
+    def test_search_trims_long_descriptions(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        main.main(['search', 'long-described-part'])
+
+        expected_output = (
+            'PART NAME            DESCRIPTION\n'
+            'long-described-part  this is a repetetive description this is a '
+            'repetetive de...\n')
+        self.assertEqual(fake_terminal.getvalue(), expected_output)
+
     def test_searching_for_a_part_that_doesnt_exist_helps_out(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
