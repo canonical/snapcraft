@@ -144,6 +144,9 @@ class BasePlugin:
         if os.path.exists(self.build_basedir):
             shutil.rmtree(self.build_basedir)
 
+        # FIXME: It's not necessary to ignore here anymore since it's now done
+        # in the Local source. However, it's left here so that it continues to
+        # work on old snapcraft trees that still have src symlinks.
         def ignore(directory, files):
             if directory is self.sourcedir:
                 snaps = glob.glob(os.path.join(directory, '*.snap'))

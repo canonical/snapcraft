@@ -163,9 +163,16 @@ def reset_env():
 
 
 def link_or_copy(source, destination, follow_symlinks=False):
-    # Hard-link this file to the source. It's possible for this to
-    # fail (e.g. a cross-device link, or permission denied), so as a backup
-    # plan we'll just copy it.
+    """Hard-link source and destination files. Copy if it fails to link.
+
+    Hard-linking may fail (e.g. a cross-device link, or permission denied), so
+    as a backup plan we just copy it.
+
+    :param str source: The source to which destination will be linked.
+    :param str destination: The destination to be linked to source.
+    :param bool follow_symlinks: Whether or not symlinks should be followed.
+    """
+
     try:
         # Note that follow_symlinks doesn't seem to work for os.link, so we'll
         # implement this logic ourselves using realpath.
