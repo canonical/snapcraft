@@ -212,6 +212,16 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
             f.write(replaced)
 
 
+def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
+    if os.isatty(sys.stdout.fileno()):
+        width = shutil.get_terminal_size().columns
+    else:
+        width = MAX_CHARACTERS_WRAP
+    if max_width:
+        width = min(max_width, width)
+    return width
+
+
 def format_output_in_columns(elements_list, max_width=MAX_CHARACTERS_WRAP,
                              num_col_spaces=2):
     """Return a formatted list of strings ready to be printed line by line
@@ -255,3 +265,40 @@ def format_output_in_columns(elements_list, max_width=MAX_CHARACTERS_WRAP,
         result_output.append(sep.join(candidate_output[i]))
 
     return result_output
+
+
+def get_include_paths(root, arch_triplet):
+    paths = [
+        os.path.join(root, 'include'),
+        os.path.join(root, 'usr', 'include'),
+        os.path.join(root, 'include', arch_triplet),
+        os.path.join(root, 'usr', 'include', arch_triplet),
+    ]
+
+    return [p for p in paths if os.path.exists(p)]
+
+
+def get_library_paths(root, arch_triplet):
+    paths = [
+        os.path.join(root, 'lib'),
+        os.path.join(root, 'usr', 'lib'),
+        os.path.join(root, 'lib', arch_triplet),
+        os.path.join(root, 'usr', 'lib', arch_triplet),
+    ]
+
+    return [p for p in paths if os.path.exists(p)]
+
+
+def combine_paths(paths, prepend, separator):
+    paths = ['{}{}'.format(prepend, p) for p in paths]
+    return separator.join(paths)
+
+
+def format_path_variable(envvar, paths, prepend, separator):
+    if not paths:
+        raise ValueError(
+            "Failed to format '${}': no paths supplied".format(envvar))
+
+    return '{envvar}="${envvar}{separator}{paths}"'.format(
+        envvar=envvar, separator=separator, paths=combine_paths(
+            paths, prepend, separator))

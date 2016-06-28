@@ -20,10 +20,10 @@ import http.server
 import os
 import urllib.parse
 
+import pymacaroons
 import yaml
 
 import snapcraft.tests
-from snapcraft.storeapi import macaroons
 
 
 logger = logging.getLogger(__name__)
@@ -55,10 +55,25 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                 'curl': {
                     'source': 'http://curl.org',
                     'plugin': 'autotools',
+                    'description': 'test entry for curl',
+                    'maintainer': 'none',
+                },
+                'part1': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'test entry for part1',
+                    'maintainer': 'none',
+                },
+                'long-described-part': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'this is a repetitive description ' * 3,
+                    'maintainer': 'none',
                 },
             }
         self.send_header('Content-Type', 'text/plain')
-        self.send_header('Content-Length', '100')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', '1000')
         self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(yaml.dump(response).encode())
@@ -105,7 +120,7 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'discharge_macaroon': macaroons.Macaroon().serialize()
+            'discharge_macaroon': pymacaroons.Macaroon().serialize()
             }
         self.wfile.write(
             json.dumps(response).encode())
@@ -189,9 +204,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        macaroon = macaroons.Macaroon(
+        macaroon = pymacaroons.Macaroon(
             caveats=[
-                macaroons.Caveat(
+                pymacaroons.Caveat(
                     caveat_id='test caveat',
                     location='localhost',
                     verification_key_id='test verifiacion')

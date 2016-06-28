@@ -51,8 +51,22 @@ class UpdateCommandTestCase(tests.TestCase):
         expected_parts = {
             'curl': {
                 'source': 'http://curl.org',
-                'plugin': 'autotools'
-            }
+                'plugin': 'autotools',
+                'description': 'test entry for curl',
+                'maintainer': 'none',
+            },
+            'part1': {
+                'plugin': 'go',
+                'source': 'http://source.tar.gz',
+                'description': 'test entry for part1',
+                'maintainer': 'none',
+            },
+            'long-described-part': {
+                'plugin': 'go',
+                'source': 'http://source.tar.gz',
+                'description': 'this is a repetitive description ' * 3,
+                'maintainer': 'none',
+            },
         }
         expected_headers = {
             'If-None-Match': '1111',
@@ -76,3 +90,7 @@ class UpdateCommandTestCase(tests.TestCase):
         self.assertEqual(
             'The parts cache is already up to date.\n',
             fake_logger.output)
+
+    def test_update_with_no_content_length_is_supported(self):
+        self.useFixture(fixtures.EnvironmentVariable('NO_CONTENT_LENGTH', '1'))
+        main.main(['update'])

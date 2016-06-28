@@ -10,7 +10,9 @@ build
 dist
 *.egg-info
 .eggs/
+*.pyc
 .coverage**
 htmlcov
 __pycache__
 docs/**.html
+*.swp
