@@ -113,4 +113,4 @@ parts:
             'you must install lxd onto your system. Refer to the '
             '"Ubuntu Desktop and Ubuntu Server" section on '
             'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
+            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.\n')
