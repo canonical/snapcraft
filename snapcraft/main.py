@@ -114,7 +114,6 @@ import pkg_resources
 import pkgutil
 import shutil
 import sys
-import subprocess
 
 from docopt import docopt
 
@@ -207,6 +206,7 @@ def main(argv=None):
 
         logger.error(str(e))
         sys.exit(1)
+
 
 def _get_lifecycle_command(args):
     lifecycle_commands = ['pull', 'build', 'stage', 'prime']
