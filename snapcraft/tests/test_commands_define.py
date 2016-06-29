@@ -27,9 +27,7 @@ class DefineCommandTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.FakeParts())
-        with mock.patch('snapcraft.internal.parts.ProgressBar',
-                        new=tests.SilentProgressBar):
-            parts.update()
+        parts.update()
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_defining_a_part_that_exists(self, mock_stdout):
