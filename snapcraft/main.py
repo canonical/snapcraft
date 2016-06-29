@@ -114,7 +114,6 @@ import pkg_resources
 import pkgutil
 import shutil
 import sys
-import textwrap
 
 from docopt import docopt
 
@@ -205,7 +204,7 @@ def main(argv=None):
         if args['--debug']:
             raise
 
-        logger.error(textwrap.fill(str(e)))
+        logger.error(str(e))
         sys.exit(1)
 
 
