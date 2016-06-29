@@ -27,8 +27,8 @@ Build-Depends: bash-completion,
                python3-xdg,
                python3-yaml,
                squashfs-tools,
-Homepage: https://github.com/ubuntu-core/snapcraft
-Vcs-Git: https://github.com/ubuntu-core/snapcraft
+Homepage: https://github.com/snapcore/snapcraft
+Vcs-Git: https://github.com/snapcore/snapcraft
 Standards-Version: 3.9.7
 
 Package: snapcraft
