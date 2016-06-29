@@ -15,12 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from unittest import mock
 
 import fixtures
 
 from snapcraft import main, tests
-from snapcraft.internal import parts
 from snapcraft.tests import fixture_setup
 
 

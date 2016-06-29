@@ -21,15 +21,9 @@ import sys
 
 import requests
 import yaml
-from progressbar import (
-    AnimatedMarker,
-    Bar,
-    Percentage,
-    ProgressBar,
-    UnknownLength,
-)
 from xdg import BaseDirectory
 
+from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 
 
@@ -67,30 +61,9 @@ class _Update(_Base):
             return
         self._request.raise_for_status()
 
-        self._download()
+        download_requests_stream(self._request, self.parts_yaml,
+                                 'Downloading parts list')
         self._save_headers()
-
-    def _download(self):
-        total_length = int(self._request.headers.get('Content-Length', '0'))
-        if total_length:
-            progress_bar = ProgressBar(
-                widgets=['Updating parts list',
-                         Bar(marker='=', left='[', right=']'),
-                         ' ', Percentage()],
-                maxval=total_length)
-        else:
-            progress_bar = ProgressBar(
-                widgets=['Updating parts list... ', AnimatedMarker()],
-                maxval=UnknownLength)
-
-        total_read = 0
-        progress_bar.start()
-        with open(self.parts_yaml, 'wb') as parts_file:
-            for buf in self._request.iter_content(1024):
-                parts_file.write(buf)
-                total_read += len(buf)
-                progress_bar.update(total_read)
-        progress_bar.finish()
 
     def _load_headers(self):
         if not os.path.exists(self._headers_yaml):
