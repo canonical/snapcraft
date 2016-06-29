@@ -193,11 +193,7 @@ class StoreClient():
             return
         logger.info('Downloading {}'.format(name, download_path))
         request = self.cpi.get(download_url, stream=True)
-        if request.status_code is not 200:
-            raise EnvironmentError(
-                'unexpected http status code when '
-                'downloading {}'.format(request.status_code))
-
+        request.raise_for_status()
         download_requests_stream(request, download_path)
 
         if self._is_downloaded(download_path, expected_sha512):

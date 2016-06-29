@@ -105,10 +105,7 @@ class FileBase(Base):
 
     def download(self):
         request = requests.get(self.source, stream=True, allow_redirects=True)
-        if request.status_code is not 200:
-            raise EnvironmentError(
-                'unexpected http status code when '
-                'downloading {}'.format(request.status_code))
+        request.raise_for_status()
 
         file_path = os.path.join(
             self.source_dir, os.path.basename(self.source))
