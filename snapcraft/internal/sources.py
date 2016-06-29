@@ -71,7 +71,7 @@ import tempfile
 import zipfile
 
 from snapcraft.internal import common
-from snapcraft.internal.network import download_requests_stream
+from snapcraft.internal.indicators import download_requests_stream
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)

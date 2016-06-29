@@ -236,5 +236,4 @@ from snapcraft._store import (                      # noqa
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
-from snapcraft.internal import network              # noqa
 from snapcraft.internal import repo                 # noqa

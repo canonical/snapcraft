@@ -28,7 +28,7 @@ import yaml
 
 import snapcraft
 from snapcraft import config
-from snapcraft.internal.network import download_requests_stream
+from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.storeapi import (
     _upload,
     constants,

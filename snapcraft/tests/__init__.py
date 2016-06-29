@@ -63,7 +63,7 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            'snapcraft.internal.network.ProgressBar',
+            'snapcraft.internal.indicators.ProgressBar',
             new=SilentProgressBar)
         patcher.start()
         self.addCleanup(patcher.stop)

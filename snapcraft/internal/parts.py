@@ -23,7 +23,7 @@ import requests
 import yaml
 from xdg import BaseDirectory
 
-from snapcraft.internal.network import download_requests_stream
+from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 
 
