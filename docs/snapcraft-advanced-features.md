@@ -10,12 +10,12 @@ of what is possible and generally relevant.
 Our showcase can be found in the actual source of `snapcraft` itself. Check
 it out by simply running:
 
-	git clone https://github.com/ubuntu-core/snapcraft
+	git clone https://github.com/snapcore/snapcraft
 	cd snapcraft/demos
 
 Inspecting the source locally will make easier to build the demos and
 play around with them. (You can
-[view them online](https://github.com/ubuntu-core/snapcraft/tree/master/demos)
+[view them online](https://github.com/snapcore/snapcraft/tree/master/demos)
 as well.)
 
 ### Playing around with the demos
