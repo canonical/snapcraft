@@ -111,11 +111,11 @@ class _RemoteParts(_Base):
     def __init__(self):
         super().__init__()
 
-        if os.path.exists(self.parts_yaml):
-            with open(self.parts_yaml) as parts_file:
-                self._parts = yaml.load(parts_file)
-        else:
-            self._parts = {}
+        if not os.path.exists(self.parts_yaml):
+            update()
+
+        with open(self.parts_yaml) as parts_file:
+            self._parts = yaml.load(parts_file)
 
     def get_part(self, part_name, full=False):
         remote_part = self._parts[part_name].copy()
