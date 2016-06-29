@@ -17,7 +17,6 @@
 
 import logging
 import os
-from unittest import mock
 
 import fixtures
 import yaml

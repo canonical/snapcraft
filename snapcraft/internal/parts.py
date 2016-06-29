@@ -21,13 +21,6 @@ import sys
 
 import requests
 import yaml
-from progressbar import (
-    AnimatedMarker,
-    Bar,
-    Percentage,
-    ProgressBar,
-    UnknownLength,
-)
 from xdg import BaseDirectory
 
 from snapcraft.internal.network import download_requests_stream

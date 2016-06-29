@@ -110,7 +110,8 @@ class FileBase(Base):
                 'unexpected http status code when '
                 'downloading {}'.format(request.status_code))
 
-        file_path = os.path.join(self.source_dir, os.path.basename(self.source))
+        file_path = os.path.join(
+            self.source_dir, os.path.basename(self.source))
         download_requests_stream(request, file_path)
 
 
