@@ -28,6 +28,7 @@ import yaml
 
 import snapcraft
 from snapcraft import config
+from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.storeapi import (
     _upload,
     constants,
@@ -191,12 +192,10 @@ class StoreClient():
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
-        # FIXME: Check the status code ! -- vila 2016-05-04
-        download = self.cpi.get(download_url)
-        with open(download_path, 'wb') as f:
-            # FIXME: Cough, we may want to buffer here (and a progress bar
-            # would be nice) -- vila 2016-04-26
-            f.write(download.content)
+        request = self.cpi.get(download_url, stream=True)
+        request.raise_for_status()
+        download_requests_stream(request, download_path)
+
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(
                 name, download_path))
@@ -275,11 +274,12 @@ class SnapIndexClient(Client):
         else:
             return embedded['clickindex:package'][0]
 
-    def get(self, url, headers=None, params=None):
+    def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
             headers = {}
         headers.update({'Authorization': _macaroon_auth(self.conf)})
-        response = self.request('GET', url, headers=headers, params=params)
+        response = self.request('GET', url, stream=stream,
+                                headers=headers, params=params)
         return response
 
 
