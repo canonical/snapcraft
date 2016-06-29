@@ -22,4 +22,4 @@ Once your Ubuntu system is up and running, simply install Snapcraft:
 
 How about putting together [your first snap](your-first-snap.md) now?
 
-[1]: https://github.com/ubuntu-core/snapcraft/blob/1.x/docs/get-started.md
+[1]: https://github.com/snapcore/snapcraft/blob/1.x/docs/get-started.md
