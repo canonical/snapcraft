@@ -49,6 +49,10 @@ class InvalidEntryError(Exception):
     pass
 
 
+class BadSnapcraftYAMLError(Exception):
+    pass
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -122,7 +126,7 @@ def _get_origin_data(origin_dir):
     # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
     if os.path.exists(snapcraft_yaml_file):
         if os.path.exists(hidden_snapcraft_yaml_file):
-            raise Exception(
+            raise BadSnapcraftYAMLError(
                 'Origin has both "snapcraft.yaml" and ".snapcraft.yaml"')
         else:
             yaml_file = snapcraft_yaml_file

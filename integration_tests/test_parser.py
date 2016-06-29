@@ -36,3 +36,26 @@ class TestParser(integration_tests.TestCase):
                               stdout=subprocess.DEVNULL)
 
         self.assertTrue(os.path.exists('parts.yaml'))
+
+    def test_hidden_snapcraft_yaml(self):
+        """Test hidden .snapcraft.yaml file."""
+
+        args = [self.snapcraft_parser_command, '--index',
+                'http://people.canonical.com/~josepht/hidden_parts_wiki',
+                '--output', 'parts.yaml']
+        subprocess.check_call(args, stderr=subprocess.DEVNULL,
+                              stdout=subprocess.DEVNULL)
+
+        self.assertTrue(os.path.exists('parts.yaml'))
+
+    def test_both_snapcraft_yaml(self):
+        """Test hidden .snapcraft.yaml file."""
+
+        args = [self.snapcraft_parser_command, '--index',
+                'http://people.canonical.com/~josepht/both_parts_wiki',
+                '--output', 'parts.yaml']
+        self.assertRaises(
+            subprocess.CalledProcessError, subprocess.check_call,
+            args, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+
+        self.assertTrue(not os.path.exists('parts.yaml'))
