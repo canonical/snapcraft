@@ -77,7 +77,7 @@ parts:
 
         main(['cleanbuild', '--debug'])
 
-        self.assertEqual(
+        self.assertIn(
             'Setting up container with project assets\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
