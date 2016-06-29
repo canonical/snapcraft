@@ -28,10 +28,11 @@ from snapcraft.tests import fixture_setup
 
 class MockOptions:
 
-    def __init__(self, source=None, source_type=None, source_branch=None,
-                 source_tag=None, source_subdir=None):
+    def __init__(self, source=None, source_type=None, source_checksum=None,
+                 source_branch=None, source_tag=None, source_subdir=None):
         self.source = source
         self.source_type = source_type
+        self.source_checksum = source_checksum
         self.source_branch = source_branch
         self.source_tag = source_tag
         self.source_subdir = source_subdir

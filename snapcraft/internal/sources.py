@@ -33,6 +33,12 @@ code for that part, and how to unpack it if necessary.
     control system or compression algorithim. The source-type key can tell
     snapcraft exactly how to treat that content.
 
+  - source-checksum: checksum-of-file
+
+    Snapcraft will use either a file, URL, or raw checksum specified here to
+    verify the integrity of the source. The source-type needs to be either tar
+    or zip.
+
   - source-branch: <branch-name>
 
     Snapcraft will checkout a specific branch from the source tree. This
@@ -69,6 +75,7 @@ import re
 import subprocess
 import tempfile
 import zipfile
+import urllib3
 
 from snapcraft.internal import common
 
@@ -82,11 +89,18 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
+class NonMatchingChecksum(Exception):
+
+    def __init__(self, message):
+        self.message = message
+
+
 class Base:
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
+    def __init__(self, source, source_checksum, source_dir,
+                 source_tag=None, source_branch=None):
         self.source = source
+        self.source_checksum = source_checksum
         self.source_dir = source_dir
         self.source_tag = source_tag
         self.source_branch = source_branch
@@ -122,6 +136,9 @@ class Bazaar(Base):
         if source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
+        elif source_checksum:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-checksum for a git source')
 
     def pull(self):
         tag_opts = []
@@ -147,6 +164,9 @@ class Git(Base):
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
                 'a git source')
+        elif source_checksum:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-checksum for a git source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.git')):
@@ -183,6 +203,9 @@ class Mercurial(Base):
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
                 'mercurial source')
+        elif source_checksum:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-checksum for a mercurial source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):
@@ -217,6 +240,9 @@ class Subversion(Base):
         elif source_branch:
             raise IncompatibleOptionsError(
                 "Can't specify source-branch for a Subversion source")
+        elif source_checksum:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-checksum for a Subversion source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
@@ -245,9 +271,38 @@ class Tar(FileBase):
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
 
+    def check_checksum(self, source_checksum):
+        if source_checksum.startswith('http'):
+            checksum = urllib2.urlopen(source_checksum)
+            source_checksum = checksum.read()
+            self.check_checksum()
+        elif os.path.isfile(source_checksum):
+            with open (source_checksum, "r") as source_file:
+                source_checksum = str(source_file.read()).rstrip()
+            self.check_checksum()
+        elif len(source_checksum) == 32:
+            md5 = ((subprocess.check_output(['md5sum', tarball])).split())[0]
+            if md5 != source_checksum:
+                raise NonMatchingChecksum(
+                    'the checksum doesn\'t match the downloaded file')
+        elif len(source_checksum) == 64:
+            sha256 = (
+                (subprocess.check_output(['sha256sum', tarball])).split())[0]
+            if sha256 != source_checksum:
+                raise NonMatchingChecksum(
+                    'the checksum doesn\'t match the downloaded file')
+        elif len(source_checksum) == 128:
+            sha512 = (
+                (subprocess.check_output(['sha512sum', tarball])).split())[0]
+            if sha512 != source_checksum:
+                raise NonMatchingChecksum(
+                    'the checksum doesn\'t match the downloaded file')
+
     def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
+
+        self.check_checksum(self, source_checksum)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -307,6 +362,9 @@ class Zip(FileBase):
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
+        elif source_checksum:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-checksum for a zip source right now')
 
     def provision(self, dst, clean_target=True, keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
