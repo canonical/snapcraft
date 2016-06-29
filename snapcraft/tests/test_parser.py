@@ -16,6 +16,8 @@
 
 import logging
 import os
+import shutil
+import tempfile
 from unittest import mock
 
 import requests
@@ -25,6 +27,8 @@ from collections import OrderedDict
 
 from snapcraft.internal.parser import (
     _get_namespaced_partname,
+    _get_origin_data,
+    BadSnapcraftYAMLError,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
     main,
@@ -740,3 +744,29 @@ project-part: app1
 
         self.assertEqual(parts,
                          _get_part_list())
+
+    def test__get_origin_data_both(self):
+        tempdir = tempfile.mkdtemp()
+        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+
+        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data, tempdir)
+        shutil.rmtree(tempdir)
+
+    def test__get_origin_data_hidden_only(self):
+        tempdir = tempfile.mkdtemp()
+        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+
+        _get_origin_data(tempdir)
+        shutil.rmtree(tempdir)
+
+    def test__get_origin_data_normal_only(self):
+        tempdir = tempfile.mkdtemp()
+        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+
+        _get_origin_data(tempdir)
+        shutil.rmtree(tempdir)
