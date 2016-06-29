@@ -127,7 +127,7 @@ class PluginHandler:
             logger.warning(
                 'DEPRECATED: the plugin used by part {!r} needs to be updated '
                 'to accept project options in its initializer. See '
-                'https://github.com/ubuntu-core/snapcraft/blob/master/docs/'
+                'https://github.com/snapcore/snapcraft/blob/master/docs/'
                 'plugins.md#initializing-a-plugin for more information'.format(
                     self.name))
             self.code = plugin(self.name, options)
