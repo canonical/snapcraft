@@ -93,11 +93,6 @@ parts:
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_composes_with_remote_parts(self, mock_loadPlugin):
         self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -119,11 +114,6 @@ parts:
 
     def test_config_composes_with_a_non_existent_remote_part(self):
         self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -148,11 +138,6 @@ parts:
 
     def test_config_after_is_an_undefined_part(self):
         self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -179,11 +164,6 @@ parts:
     @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
     def test_config_uses_remote_part_from_after(self, mock_load):
         self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"

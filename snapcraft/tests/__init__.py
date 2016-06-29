@@ -62,6 +62,12 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         self.cpu_count.return_value = 2
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch(
+            'snapcraft.internal.network.ProgressBar',
+            new=SilentProgressBar)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         # These are what we expect by default
         self.snap_dir = os.path.join(os.getcwd(), 'prime')
         self.stage_dir = os.path.join(os.getcwd(), 'stage')

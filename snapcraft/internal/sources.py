@@ -71,6 +71,7 @@ import tempfile
 import zipfile
 
 from snapcraft.internal import common
+from snapcraft.internal.network import download_requests_stream
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -103,15 +104,14 @@ class FileBase(Base):
         self.provision(self.source_dir)
 
     def download(self):
-        req = requests.get(self.source, stream=True, allow_redirects=True)
-        if req.status_code is not 200:
-            raise EnvironmentError('unexpected http status code when '
-                                   'downloading {}'.format(req.status_code))
+        request = requests.get(self.source, stream=True, allow_redirects=True)
+        if request.status_code is not 200:
+            raise EnvironmentError(
+                'unexpected http status code when '
+                'downloading {}'.format(request.status_code))
 
-        file = os.path.join(self.source_dir, os.path.basename(self.source))
-        with open(file, 'wb') as f:
-            for chunk in req.iter_content(1024):
-                f.write(chunk)
+        file_path = os.path.join(self.source_dir, os.path.basename(self.source))
+        download_requests_stream(request, file_path)
 
 
 class Bazaar(Base):
