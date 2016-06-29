@@ -115,8 +115,22 @@ def _update_after_parts(partname, after_parts):
 
 def _get_origin_data(origin_dir):
     origin_data = {}
+    snapcraft_yaml_file = os.path.join(origin_dir, 'snapcraft.yaml')
+    hidden_snapcraft_yaml_file = os.path.join(origin_dir, '.snapcraft.yaml')
+    yaml_file = ''
+
+    # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
+    if os.path.exists(snapcraft_yaml_file):
+        if os.path.exists(hidden_snapcraft_yaml_file):
+            raise Exception(
+                'Origin has both "snapcraft.yaml" and ".snapcraft.yaml"')
+        else:
+            yaml_file = snapcraft_yaml_file
+    elif os.path.exists(hidden_snapcraft_yaml_file):
+        yaml_file = hidden_snapcraft_yaml_file
+
     try:
-        with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
+        with open(yaml_file, "r") as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
         raise InvalidEntryError(e)
