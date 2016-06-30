@@ -82,6 +82,7 @@ from snapcraft.internal import common
 
 logging.getLogger('urllib').setLevel(logging.CRITICAL)
 
+
 class IncompatibleOptionsError(Exception):
 
     def __init__(self, message):
@@ -275,20 +276,20 @@ class Tar(FileBase):
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
 
-    def pre_check_checksum(self, source_checksum):
+    def pre_check_checksum(self, source_checksum, tarball):
         if source_checksum.startswith('http'):
             checksum = urllib.urlopen(source_checksum)
             source_checksum = checksum.read()
-            self.check_checksum(self, source_checksum)
+            self.check_checksum(self, source_checksum, tarball)
         elif os.path.isfile(source_checksum):
-            with open (source_checksum, "r") as source_file:
+            with open(source_checksum, "r") as source_file:
                 source_checksum = str(source_file.read()).rstrip()
-            self.check_checksum(self, source_checksum)
-        elif len(source_checksum) == 32 or len(source_checksum) == 64 or
+            self.check_checksum(self, source_checksum, tarball)
+        elif len(source_checksum) == 32 or len(source_checksum) == 64 or \
                 len(source_checksum) == 128:
-            self.check_checksum(self, source_checksum)
+            self.check_checksum(self, source_checksum, tarball)
 
-    def check_checksum(self, source_checksum):
+    def check_checksum(self, source_checksum, tarball):
         if len(source_checksum) == 32:
             md5 = hashlib.md5(open(tarball, 'rb').read()).hexdigest()
             if md5 != source_checksum:
@@ -305,12 +306,12 @@ class Tar(FileBase):
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the downloaded file")
 
-
-    def provision(self, dst, clean_target=True, keep_tarball=False):
+    def provision(self, dst, source_checksum, clean_target=True,
+                  keep_tarball=False):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        self.pre_check_checksum(self, source_checksum)
+        self.pre_check_checksum(self, source_checksum, tarball)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -361,7 +362,7 @@ class Tar(FileBase):
 
 class Zip(FileBase):
 
-    def __init__(self, source, source_dir, source_tag=None,
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
                  source_branch=None):
         super().__init__(source, source_dir, source_tag, source_branch)
         if source_tag:
@@ -374,40 +375,41 @@ class Zip(FileBase):
             raise IncompatibleOptionsError(
                 'can\'t specify source-checksum for a zip source right now')
 
-    def pre_check_checksum(self, source_checksum):
+    def pre_check_checksum(self, source_checksum, zip):
         if source_checksum.startswith('http'):
-            checksum = urllib.urlopen(source_checksum)
+            checksum = urllib.urlopen(source_checksum, zip)
             source_checksum = checksum.read()
-            self.check_checksum(self, source_checksum)
+            self.check_checksum(self, source_checksum, zip)
         elif os.path.isfile(source_checksum):
-            with open (source_checksum, "r") as source_file:
+            with open(source_checksum, "r") as source_file:
                 source_checksum = str(source_file.read()).rstrip()
             self.check_checksum(self, source_checksum)
-        elif len(source_checksum) == 32 or len(source_checksum) == 64 or
+        elif len(source_checksum) == 32 or len(source_checksum) == 64 or \
                 len(source_checksum) == 128:
-            self.check_checksum(self, source_checksum)
+            self.check_checksum(self, source_checksum, zip)
 
-    def check_checksum(self, source_checksum):
+    def check_checksum(self, source_checksum, zip):
         if len(source_checksum) == 32:
-            md5 = hashlib.md5(open(tarball, 'rb').read()).hexdigest()
+            md5 = hashlib.md5(open(zip, 'rb').read()).hexdigest()
             if md5 != source_checksum:
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the downloaded file")
         elif len(source_checksum) == 64:
-            sha256 = hashlib.sha256(open(tarball, 'rb').read()).hexdigest()
+            sha256 = hashlib.sha256(open(zip, 'rb').read()).hexdigest()
             if sha256 != source_checksum:
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the downloaded file")
         elif len(source_checksum) == 128:
-            sha512 = hashlib.sha512(open(tarball, 'rb').read()).hexdigest()
+            sha512 = hashlib.sha512(open(zip, 'rb').read()).hexdigest()
             if sha512 != source_checksum:
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the downloaded file")
 
-    def provision(self, dst, clean_target=True, keep_zip=False):
+    def provision(self, dst, source_checksum, clean_target=True,
+                  keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        self.pre_check_checksum(self, source_checksum)
+        self.pre_check_checksum(self, source_checksum, zip)
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
