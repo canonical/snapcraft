@@ -130,9 +130,10 @@ class FileBase(Base):
 
 class Bazaar(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+                source_branch=None):
+        super().__init__(
+            source, source_checksum, source_dir, source_tag, source_branch)
         if source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
@@ -157,9 +158,10 @@ class Bazaar(Base):
 
 class Git(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+                source_branch=None):
+        super().__init__(
+            source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
@@ -196,9 +198,10 @@ class Git(Base):
 
 class Mercurial(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+                source_branch=None):
+        super().__init__(
+            source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
@@ -226,9 +229,10 @@ class Mercurial(Base):
 
 class Subversion(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+                source_branch=None):
+        super().__init__(
+            source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag:
             if source_branch:
                 raise IncompatibleOptionsError(
@@ -261,9 +265,10 @@ class Subversion(Base):
 
 class Tar(FileBase):
 
-    def __init__(self, source, source_dir, source_tag=None,
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
                  source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+        super().__init__(
+            source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a tar source')
@@ -366,8 +371,37 @@ class Zip(FileBase):
             raise IncompatibleOptionsError(
                 'can\'t specify source-checksum for a zip source right now')
 
+    def check_checksum(self, source_checksum):
+        if source_checksum.startswith('http'):
+            checksum = urllib2.urlopen(source_checksum)
+            source_checksum = checksum.read()
+            self.check_checksum()
+        elif os.path.isfile(source_checksum):
+            with open (source_checksum, "r") as source_file:
+                source_checksum = str(source_file.read()).rstrip()
+            self.check_checksum()
+        elif len(source_checksum) == 32:
+            md5 = ((subprocess.check_output(['md5sum', tarball])).split())[0]
+            if md5 != source_checksum:
+                raise NonMatchingChecksum(
+                    'the checksum doesn\'t match the downloaded file')
+        elif len(source_checksum) == 64:
+            sha256 = (
+                (subprocess.check_output(['sha256sum', tarball])).split())[0]
+            if sha256 != source_checksum:
+                raise NonMatchingChecksum(
+                    'the checksum doesn\'t match the downloaded file')
+        elif len(source_checksum) == 128:
+            sha512 = (
+                (subprocess.check_output(['sha512sum', tarball])).split())[0]
+            if sha512 != source_checksum:
+                raise NonMatchingChecksum(
+                    'the checksum doesn\'t match the downloaded file')
+
     def provision(self, dst, clean_target=True, keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
+
+        self.check_checksum(self, source_checksum)
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
