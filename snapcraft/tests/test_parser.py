@@ -28,6 +28,7 @@ from collections import OrderedDict
 from snapcraft.internal.parser import (
     _get_namespaced_partname,
     _get_origin_data,
+    _encode_origin,
     BadSnapcraftYAMLError,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
@@ -770,3 +771,15 @@ project-part: app1
 
         _get_origin_data(tempdir)
         shutil.rmtree(tempdir)
+
+    def test__encode_origin_git(self):
+        origin = 'git@github.com:testuser/testproject.git'
+        origin_dir = _encode_origin(origin)
+
+        self.assertEqual('gitgithub.comtestusertestproject.git', origin_dir)
+
+    def test__encode_origin_lp(self):
+        origin = 'lp:~testuser/testproject/testbranch'
+        origin_dir = _encode_origin(origin)
+
+        self.assertEqual('lptestusertestprojecttestbranch', origin_dir)

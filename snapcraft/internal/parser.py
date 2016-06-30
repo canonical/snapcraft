@@ -33,6 +33,7 @@ Options:
 import logging
 import os
 import pkg_resources
+import re
 import sys
 import textwrap
 import urllib
@@ -184,6 +185,10 @@ def _process_subparts(project_part, subparts, parts, origin, maintainer,
     return parts_list, after_parts
 
 
+def _encode_origin(origin):
+    return re.sub('[^A-Za-z0-9-_.]', '', origin)
+
+
 def _process_entry(data):
     key = data.get('project-part')
     parts_list = OrderedDict()
@@ -211,7 +216,7 @@ def _process_entry(data):
     # TODO: this should really be based on the origin uri not
     # the part name to avoid the situation where there are multiple
     # parts being pulled from the same repo branch.
-    origin_dir = os.path.join(BASE_DIR, key)
+    origin_dir = os.path.join(BASE_DIR, _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
     class Options:
