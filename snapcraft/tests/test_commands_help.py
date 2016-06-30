@@ -48,7 +48,7 @@ class HelpCommandTestCase(tests.TestCase):
         self.assertEqual(
             fake_logger.output,
             'The plugin does not exist. Run `snapcraft '
-            'list-plugins` to see the\navailable plugins.\n')
+            'list-plugins` to see the available plugins.\n')
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_print_module_help_when_no_help_for_valid_plugin(

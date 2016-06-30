@@ -15,12 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from unittest import mock
 
 import fixtures
 
 from snapcraft import main, tests
-from snapcraft.internal import parts
 from snapcraft.tests import fixture_setup
 
 
@@ -29,9 +27,6 @@ class SearchCommandTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.FakeParts())
-        with mock.patch('snapcraft.internal.parts.ProgressBar',
-                        new=tests.SilentProgressBar):
-            parts.update()
 
     def test_searching_for_a_part_that_exists(self):
         fake_terminal = fixture_setup.FakeTerminal()

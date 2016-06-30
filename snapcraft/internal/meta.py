@@ -110,7 +110,7 @@ class _SnapPackaging:
             # TODO: use developer.ubuntu.com once it has updated documentation.
             logger.warning(
                 "DEPRECATED: 'icon' defined in snapcraft.yaml. Look at "
-                "https://github.com/ubuntu-core/snapcraft/blob/master/docs/"
+                "https://github.com/snapcore/snapcraft/blob/master/docs/"
                 "metadata.md#snap-icon for more information")
             icon_ext = self._config_data['icon'].split(os.path.extsep)[1]
             icon_dir = os.path.join(self.meta_dir, 'gui')
