@@ -157,6 +157,7 @@ class FileBase(Base):
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the downloaded file")
 
+
 class Bazaar(Base):
 
     def __init__(self, source, source_dir, source_checksum=None,
