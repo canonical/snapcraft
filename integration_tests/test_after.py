@@ -45,6 +45,9 @@ class AfterTestCase(integration_tests.TestCase):
                     'p1:\n'
                     '    after: [p3]'))
 
+        # We update here to get a clean log/stdout later
+        self.run_snapcraft('update', project_dir)
+
         exception = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'build', project_dir)

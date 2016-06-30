@@ -152,19 +152,13 @@ class SnapsTestCase(testtools.TestCase):
         self.addCleanup(snappy_testbed.delete)
         return snappy_testbed
 
-    def build_snap(self, snap_content_dir, update_cache=False):
+    def build_snap(self, snap_content_dir):
         working_dir = os.path.join(self.src_dir, snap_content_dir)
-        if update_cache:
-            self._update(working_dir)
         self._clean(working_dir)
         self._snap(working_dir)
 
     def _clean(self, project_dir):
         command = '{} {}'.format(self.snapcraft_command, 'clean')
-        self._run_command(command, project_dir)
-
-    def _update(self, project_dir):
-        command = '{} {}'.format(self.snapcraft_command, 'update')
         self._run_command(command, project_dir)
 
     def _snap(self, project_dir):
