@@ -418,10 +418,11 @@ def get(sourcedir, builddir, options):
     source_type = getattr(options, 'source_type', None)
     source_tag = getattr(options, 'source_tag', None)
     source_branch = getattr(options, 'source_branch', None)
+    source_checksum = getattr(options, 'source_checksum', None)
 
     handler_class = _get_source_handler(source_type, options.source)
-    handler = handler_class(options.source, sourcedir, source_tag,
-                            source_branch)
+    handler = handler_class(options.source, sourcedir, source_checksum,
+                            source_tag, source_branch)
     handler.pull()
 
 
