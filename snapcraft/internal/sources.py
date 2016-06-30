@@ -97,8 +97,8 @@ class NonMatchingChecksum(Exception):
 
 class Base:
 
-    def __init__(self, source, source_checksum, source_dir,
-                 source_tag=None, source_branch=None):
+    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+                 source_branch=None):
         self.source = source
         self.source_checksum = source_checksum
         self.source_dir = source_dir
@@ -131,7 +131,7 @@ class FileBase(Base):
 class Bazaar(Base):
 
     def __init__(self, source, source_checksum, source_dir, source_tag=None,
-                source_branch=None):
+                 source_branch=None):
         super().__init__(
             source, source_checksum, source_dir, source_tag, source_branch)
         if source_branch:
@@ -159,7 +159,7 @@ class Bazaar(Base):
 class Git(Base):
 
     def __init__(self, source, source_checksum, source_dir, source_tag=None,
-                source_branch=None):
+                 source_branch=None):
         super().__init__(
             source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
@@ -199,7 +199,7 @@ class Git(Base):
 class Mercurial(Base):
 
     def __init__(self, source, source_checksum, source_dir, source_tag=None,
-                source_branch=None):
+                 source_branch=None):
         super().__init__(
             source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag and source_branch:
@@ -230,7 +230,7 @@ class Mercurial(Base):
 class Subversion(Base):
 
     def __init__(self, source, source_checksum, source_dir, source_tag=None,
-                source_branch=None):
+                 source_branch=None):
         super().__init__(
             source, source_checksum, source_dir, source_tag, source_branch)
         if source_tag:
