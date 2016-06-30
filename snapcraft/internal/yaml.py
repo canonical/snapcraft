@@ -415,7 +415,6 @@ def get_pkg_env_for(basedir):
         '{{basedir}}/usr/local/lib/{arch_triplet}/pkgconfig',
         '{{basedir}}/usr/local/share/pkgconfig']).format(basedir=basedir)
     env['PKG_CONFIG_SYSROOT_DIR'] = basedir
-    env['PKG_CONFIG_LIBDIR'] = ''
 
     current_env.update(env)
 
