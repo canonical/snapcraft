@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fileinput
 import glob
 import itertools
 import logging
 import os
 import platform
 import re
-import string
 import shutil
 import stat
+import string
 import subprocess
 import urllib
 import urllib.request
@@ -282,6 +283,17 @@ def _setup_apt_cache(rootdir, sources, project_options):
     apt_cache.open()
 
     return apt_cache, progress
+
+
+def fix_pkg_config(root, pkg_config_file):
+    """Opens a pkg_config_file and prefixes the prefix with root."""
+    pattern = re.compile('^prefix=(?P<prefix>.*)')
+    for line in fileinput.input(pkg_config_file, inplace=True):
+        match = pattern.search(line)
+        if match:
+            print('prefix={}{}'.format(root, match.group('prefix')))
+        else:
+            print(line, end='')
 
 
 def _fix_symlinks(debdir):

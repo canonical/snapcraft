@@ -82,7 +82,6 @@ class PluginHandler:
         self.snapdir = project_options.snap_dir
 
         parts_dir = project_options.parts_dir
-        self.bindir = os.path.join(parts_dir, part_name, 'bin')
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.statedir = os.path.join(parts_dir, part_name, 'state')
 
@@ -348,8 +347,16 @@ class PluginHandler:
         self.notify_part_progress('Staging')
         self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
+
+        def fixup_func(file_path):
+            if os.path.islink(file_path):
+                return
+            if not file_path.endswith('.pc'):
+                return
+            repo.fix_pkg_config(self.stagedir, file_path)
+
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
-                       self.stagedir)
+                       self.stagedir, fixup_func=fixup_func)
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
@@ -644,7 +651,7 @@ def _migratable_filesets(fileset, srcdir):
 
 
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
-                   follow_symlinks=False):
+                   follow_symlinks=False, fixup_func=None):
     for directory in snap_dirs:
         os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
 
@@ -664,6 +671,8 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
             os.remove(dst)
 
         common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+        if fixup_func:
+            fixup_func(dst)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):

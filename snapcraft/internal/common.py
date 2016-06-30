@@ -289,6 +289,21 @@ def get_library_paths(root, arch_triplet):
     return [p for p in paths if os.path.exists(p)]
 
 
+def get_pkg_config_paths(root, arch_triplet):
+    paths = [
+        os.path.join(root, 'lib', 'pkgconfig'),
+        os.path.join(root, 'lib', arch_triplet, 'pkgconfig'),
+        os.path.join(root, 'usr', 'lib', 'pkgconfig'),
+        os.path.join(root, 'usr', 'lib', arch_triplet, 'pkgconfig'),
+        os.path.join(root, 'usr', 'share', 'pkgconfig'),
+        os.path.join(root, 'usr', 'local', 'lib', 'pkgconfig'),
+        os.path.join(root, 'usr', 'local', 'lib', arch_triplet, 'pkgconfig'),
+        os.path.join(root, 'usr', 'local', 'share', 'pkgconfig'),
+    ]
+
+    return [p for p in paths if os.path.exists(p)]
+
+
 def combine_paths(paths, prepend, separator):
     paths = ['{}{}'.format(prepend, p) for p in paths]
     return separator.join(paths)
