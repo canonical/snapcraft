@@ -348,9 +348,8 @@ def _fix_symlink(path, debdir, root):
     if _skip_link(os.readlink(path)):
         logger.debug('Skipping {}'.format(target))
         return
-    if not os.path.exists(target):
-        if not _try_copy_local(path, target):
-            return
+    if not os.path.exists(target) and not _try_copy_local(path, target):
+        return
     os.remove(path)
     os.symlink(os.path.relpath(target, root), path)
 
