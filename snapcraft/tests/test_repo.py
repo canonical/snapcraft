@@ -128,7 +128,7 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         os.symlink('1', self.tempdir + '/rel-to-1')
         os.symlink('/1', self.tempdir + '/abs-to-1')
 
-        repo._fix_symlinks(debdir=self.tempdir)
+        repo._fix_artifacts(debdir=self.tempdir)
 
         self.assertEqual(os.readlink(self.tempdir + '/rel-to-a'), 'a')
         self.assertEqual(os.readlink(self.tempdir + '/abs-to-a'), 'a')
@@ -150,7 +150,7 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
                 open(file, mode='w').close()
                 os.chmod(file, files[key][0])
 
-                repo._fix_symlinks(debdir=self.tempdir)
+                repo._fix_artifacts(debdir=self.tempdir)
                 self.assertEqual(
                     stat.S_IMODE(os.stat(file).st_mode), files[key][1])
 

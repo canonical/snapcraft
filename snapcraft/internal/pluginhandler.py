@@ -353,7 +353,7 @@ class PluginHandler:
                 return
             if not file_path.endswith('.pc'):
                 return
-            repo.fix_pkg_config(self.stagedir, file_path)
+            repo.fix_pkg_config(self.stagedir, file_path, self.code.installdir)
 
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir, fixup_func=fixup_func)

@@ -181,7 +181,7 @@ class Ubuntu:
             except subprocess.CalledProcessError:
                 raise UnpackError(pkg)
 
-        _fix_symlinks(rootdir)
+        _fix_artifacts(rootdir)
         _fix_xml_tools(rootdir)
         _fix_shebangs(rootdir)
 
@@ -285,18 +285,26 @@ def _setup_apt_cache(rootdir, sources, project_options):
     return apt_cache, progress
 
 
-def fix_pkg_config(root, pkg_config_file):
+def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
     """Opens a pkg_config_file and prefixes the prefix with root."""
+    pattern_trim = None
+    if prefix_trim:
+        pattern_trim = re.compile(
+            '^prefix={}(?P<prefix>.*)'.format(prefix_trim))
     pattern = re.compile('^prefix=(?P<prefix>.*)')
     for line in fileinput.input(pkg_config_file, inplace=True):
         match = pattern.search(line)
+        if prefix_trim:
+            match_trim = pattern_trim.search(line)
         if match:
             print('prefix={}{}'.format(root, match.group('prefix')))
+        elif prefix_trim and match_trim:
+            print('prefix={}{}'.format(root, match_trim.group('prefix')))
         else:
             print(line, end='')
 
 
-def _fix_symlinks(debdir):
+def _fix_artifacts(debdir):
     '''
     Sometimes debs will contain absolute symlinks (e.g. if the relative
     path would go all the way to root, they just do absolute).  We can't
@@ -311,17 +319,12 @@ def _fix_symlinks(debdir):
         for entry in itertools.chain(files, dirs):
             path = os.path.join(root, entry)
             if os.path.islink(path) and os.path.isabs(os.readlink(path)):
-                target = os.path.join(debdir, os.readlink(path)[1:])
-                if _skip_link(os.readlink(path)):
-                    logger.debug('Skipping {}'.format(target))
-                    continue
-                if not os.path.exists(target):
-                    if not _try_copy_local(path, target):
-                        continue
-                os.remove(path)
-                os.symlink(os.path.relpath(target, root), path)
+                _fix_symlink(path, debdir, root)
             elif os.path.exists(path):
                 _fix_filemode(path)
+
+            if path.endswith('.pc') and not os.path.islink(path):
+                fix_pkg_config(debdir, path)
 
 
 def _fix_xml_tools(root):
@@ -336,6 +339,18 @@ def _fix_xml_tools(root):
         common.run(
             ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
                 format(root), xslt_config_path])
+
+
+def _fix_symlink(path, debdir, root):
+    target = os.path.join(debdir, os.readlink(path)[1:])
+    if _skip_link(os.readlink(path)):
+        logger.debug('Skipping {}'.format(target))
+        return
+    if not os.path.exists(target):
+        if not _try_copy_local(path, target):
+            return
+    os.remove(path)
+    os.symlink(os.path.relpath(target, root), path)
 
 
 def _fix_filemode(path):
