@@ -557,8 +557,7 @@ parts:
             f.write('Libs: -L${libdir} -lgranite\n')
             f.write('Cflags: -I${includedir}/granite\n')
             f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
-                    'gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 '
-                    'gtk+-3.0\n')
+                    'gobject-2.0\n')
 
         # Now we stage
         lifecycle.execute('stage', snapcraft.ProjectOptions())
@@ -575,7 +574,7 @@ Description: elementary's Application Framework
 Version: 0.4
 Libs: -L${{libdir}} -lgranite
 Cflags: -I${{includedir}}/granite
-Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 gtk+-3.0
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 """.format(os.getcwd())
 
         self.assertEqual(pc_file_content, expected_pc_file_content)
@@ -604,8 +603,7 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gd
             f.write('Libs: -L${libdir} -lgranite\n')
             f.write('Cflags: -I${includedir}/granite\n')
             f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
-                    'gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 '
-                    'gtk+-3.0\n')
+                    'gobject-2.0\n')
 
         # Now we stage
         lifecycle.execute('stage', snapcraft.ProjectOptions())
@@ -622,7 +620,7 @@ Description: elementary's Application Framework
 Version: 0.4
 Libs: -L${{libdir}} -lgranite
 Cflags: -I${{includedir}}/granite
-Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 gtk+-3.0
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 """.format(os.getcwd())
 
         self.assertEqual(pc_file_content, expected_pc_file_content)

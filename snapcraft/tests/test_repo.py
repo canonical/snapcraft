@@ -169,8 +169,7 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
             f.write('Libs: -L${libdir} -lgranite\n')
             f.write('Cflags: -I${includedir}/granite\n')
             f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
-                    'gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 '
-                    'gtk+-3.0\n')
+                    'gobject-2.0\n')
         repo._fix_artifacts(debdir=self.tempdir)
 
         with open(pc_file) as f:
@@ -185,7 +184,7 @@ Description: elementary's Application Framework
 Version: 0.4
 Libs: -L${{libdir}} -lgranite
 Cflags: -I${{includedir}}/granite
-Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 gtk+-3.0
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 """.format(self.tempdir)
 
         self.assertEqual(pc_file_content, expected_pc_file_content)

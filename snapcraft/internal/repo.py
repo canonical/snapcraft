@@ -294,7 +294,7 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
     pattern = re.compile('^prefix=(?P<prefix>.*)')
 
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
-        for line in input_file: 
+        for line in input_file:
             match = pattern.search(line)
             if prefix_trim:
                 match_trim = pattern_trim.search(line)
