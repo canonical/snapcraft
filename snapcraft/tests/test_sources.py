@@ -454,8 +454,9 @@ class TestLocal(tests.TestCase):
         os.makedirs(os.path.join('src', 'stage'))
         os.makedirs(os.path.join('src', 'prime'))
 
-        # Make the snapcraft.yaml and a built snap
+        # Make the snapcraft.yaml (and hidden one) and a built snap
         open(os.path.join('src', 'snapcraft.yaml'), 'w').close()
+        open(os.path.join('src', '.snapcraft.yaml'), 'w').close()
         open(os.path.join('src', 'foo.snap'), 'w').close()
 
         # Now make some real files
@@ -473,6 +474,8 @@ class TestLocal(tests.TestCase):
         self.assertFalse(os.path.exists(os.path.join('destination', 'prime')))
         self.assertFalse(
             os.path.exists(os.path.join('destination', 'snapcraft.yaml')))
+        self.assertFalse(
+            os.path.exists(os.path.join('destination', '.snapcraft.yaml')))
         self.assertFalse(
             os.path.exists(os.path.join('destination', 'foo.snap')))
 
