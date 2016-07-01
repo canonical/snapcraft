@@ -70,3 +70,22 @@ class StoreAuthenticationError(StoreError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class StoreRegistrationError(StoreError):
+
+    __FMT_ALREADY_REGISTERED = (
+        'The name {snap_name!r} is already taken.\n\n'
+        'We can if needed rename snaps to ensure they match the expectations '
+        'of most users. If you are the publisher most users expect for '
+        '{snap_name!r} then claim the name at {register_name_url!r}')
+
+    fmt = 'Registration failed.'
+
+    def __init__(self, snap_name, response):
+        response_json = response.json()
+        super().__init__(snap_name=snap_name, **response_json)
+
+        if response_json['status'] == 409:
+            if response_json['code'] == 'already_registered':
+                self.fmt = self.__FMT_ALREADY_REGISTERED
