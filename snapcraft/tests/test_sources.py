@@ -174,6 +174,14 @@ class TestBazaar(SourceTestCase):
         expected_message = 'can\'t specify a source-branch for a bzr source'
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(
+                sources.IncompatibleOptionsError) as raised:
+            sources.Bazaar('lp:mysource', 'source_dir',
+                           source_checksum='checksum')
+
+        expected_message = 'can\'t specify a source-checksum for a bzr source'
+        self.assertEqual(raised.exception.message, expected_message)
 
 class TestGit(SourceTestCase):
 
@@ -255,6 +263,15 @@ class TestGit(SourceTestCase):
             'can\'t specify both source-tag and source-branch for a git source'
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Git('git://mysource', 'source_dir',
+                        source_checksum='checksum')
+
+        expected_message = \
+            'can\'t specify source-checksum for a git source'
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestMercurial(SourceTestCase):
 
@@ -323,6 +340,15 @@ class TestMercurial(SourceTestCase):
             'source')
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial(
+                'hg://mysource', 'source_dir', source_checksum='checksum')
+
+        expected_message = (
+            'can\'t specify source-checksum for a mercurial source')
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestSubversion(SourceTestCase):
 
@@ -379,6 +405,15 @@ class TestSubversion(SourceTestCase):
         expected_message = (
             "Can't specify source-tag OR source-branch for a Subversion "
             "source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_checksum='checksum')
+
+        expected_message = (
+            "Can't specify source-checksum for a Subversion source")
         self.assertEqual(raised.exception.message, expected_message)
 
 
