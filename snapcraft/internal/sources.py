@@ -98,7 +98,7 @@ class NonMatchingChecksum(Exception):
 
 class Base:
 
-    def __init__(self, source, source_dir, source_checksum=None,
+    def __init__(self, source, source_dir, source_checksum,
                  source_tag=None, source_branch=None):
         self.source = source
         self.source_checksum = source_checksum
@@ -161,13 +161,13 @@ class Bazaar(Base):
     def __init__(self, source, source_dir, source_checksum=None,
                  source_tag=None, source_branch=None):
         super().__init__(
-            source, source_checksum, source_dir, source_tag, source_branch)
+            source, source_dir, source_checksum, source_tag, source_branch)
         if source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
         elif source_checksum:
             raise IncompatibleOptionsError(
-                'can\'t specify source-checksum for a bzr source')
+                'can\'t specify a source-checksum for a bzr source')
 
     def pull(self):
         tag_opts = []
@@ -189,7 +189,7 @@ class Git(Base):
     def __init__(self, source, source_dir, source_checksum=None,
                  source_tag=None, source_branch=None):
         super().__init__(
-            source, source_checksum, source_dir, source_tag, source_branch)
+            source, source_dir, source_checksum, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
@@ -229,7 +229,7 @@ class Mercurial(Base):
     def __init__(self, source, source_dir, source_checksum=None,
                  source_tag=None, source_branch=None):
         super().__init__(
-            source, source_checksum, source_dir, source_tag, source_branch)
+            source, source_dir, source_checksum, source_tag, source_branch)
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
@@ -260,7 +260,7 @@ class Subversion(Base):
     def __init__(self, source, source_dir, source_checksum=None,
                  source_tag=None, source_branch=None):
         super().__init__(
-            source, source_checksum, source_dir, source_tag, source_branch)
+            source, source_dir, source_checksum, source_tag, source_branch)
         if source_tag:
             if source_branch:
                 raise IncompatibleOptionsError(
@@ -296,7 +296,7 @@ class Tar(FileBase):
     def __init__(self, source, source_checksum, source_dir, source_tag=None,
                  source_branch=None):
         super().__init__(
-            source, source_checksum, source_dir, source_tag, source_branch)
+            source, source_dir, source_checksum, source_tag, source_branch)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a tar source')
@@ -362,7 +362,8 @@ class Zip(FileBase):
 
     def __init__(self, source, source_checksum, source_dir, source_tag=None,
                  source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+        super().__init__(source, source_dir, source_checksum,
+                         source_tag, source_branch)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a zip source')
