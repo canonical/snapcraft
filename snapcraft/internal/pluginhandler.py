@@ -651,7 +651,7 @@ def _migratable_filesets(fileset, srcdir):
 
 
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
-                   follow_symlinks=False, fixup_func=None):
+                   follow_symlinks=False, fixup_func=lambda *args: None):
     for directory in snap_dirs:
         os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
 
@@ -671,8 +671,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
             os.remove(dst)
 
         common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
-        if fixup_func:
-            fixup_func(dst)
+        fixup_func(dst)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
