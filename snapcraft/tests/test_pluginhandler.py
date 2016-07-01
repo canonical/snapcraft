@@ -31,6 +31,7 @@ import fixtures
 import snapcraft
 from snapcraft.internal import (
     common,
+    lifecycle,
     pluginhandler,
     states,
 )
@@ -516,6 +517,115 @@ class MigratableFilesetsTestCase(tests.TestCase):
                                                          'install')
         self.assertEqual({'foo/bar/baz/3'}, files)
         self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+
+
+class RealStageTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.make_snapcraft_yaml("""name: pc-file-test
+version: 1.0
+summary: test pkg-config .pc
+description: when the .pc files reach stage the should be reprefixed
+confinement: strict
+
+parts:
+    stage-pc:
+        plugin: nil
+""")
+
+    def test_pc_files_correctly_prefixed(self):
+        pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
+        stage_pc_install = os.path.join(
+            'parts', 'stage-pc', 'install', pc_file)
+        stage_pc_stage = os.path.join('stage', pc_file)
+
+        # Run build
+        lifecycle.execute('build', snapcraft.ProjectOptions())
+
+        # Simulate a .pc file was installed
+        os.makedirs(os.path.dirname(stage_pc_install))
+        with open(stage_pc_install, 'w') as f:
+            f.write('prefix=/usr\n')
+            f.write('exec_prefix=${prefix}\n')
+            f.write('libdir=${prefix}/lib\n')
+            f.write('includedir=${prefix}/include\n')
+            f.write('\n')
+            f.write('Name: granite\n')
+            f.write('Description: elementary\'s Application Framework\n')
+            f.write('Version: 0.4\n')
+            f.write('Libs: -L${libdir} -lgranite\n')
+            f.write('Cflags: -I${includedir}/granite\n')
+            f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
+                    'gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 '
+                    'gtk+-3.0\n')
+
+        # Now we stage
+        lifecycle.execute('stage', snapcraft.ProjectOptions())
+
+        with open(stage_pc_stage) as f:
+            pc_file_content = f.read()
+        expected_pc_file_content = """prefix={}/stage/usr
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib
+includedir=${{prefix}}/include
+
+Name: granite
+Description: elementary's Application Framework
+Version: 0.4
+Libs: -L${{libdir}} -lgranite
+Cflags: -I${{includedir}}/granite
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 gtk+-3.0
+""".format(os.getcwd())
+
+        self.assertEqual(pc_file_content, expected_pc_file_content)
+
+    def test_pc_files_correctly_prefixed_when_installed(self):
+        pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
+        install_path = os.path.join(
+            os.getcwd(), 'parts', 'stage-pc', 'install')
+        stage_pc_install = os.path.join(install_path, pc_file)
+        stage_pc_stage = os.path.join('stage', pc_file)
+
+        # Run build
+        lifecycle.execute('build', snapcraft.ProjectOptions())
+
+        # Simulate a .pc file was installed
+        os.makedirs(os.path.dirname(stage_pc_install))
+        with open(stage_pc_install, 'w') as f:
+            f.write('prefix={}/usr\n'.format(install_path))
+            f.write('exec_prefix=${prefix}\n')
+            f.write('libdir=${prefix}/lib\n')
+            f.write('includedir=${prefix}/include\n')
+            f.write('\n')
+            f.write('Name: granite\n')
+            f.write('Description: elementary\'s Application Framework\n')
+            f.write('Version: 0.4\n')
+            f.write('Libs: -L${libdir} -lgranite\n')
+            f.write('Cflags: -I${includedir}/granite\n')
+            f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
+                    'gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 '
+                    'gtk+-3.0\n')
+
+        # Now we stage
+        lifecycle.execute('stage', snapcraft.ProjectOptions())
+
+        with open(stage_pc_stage) as f:
+            pc_file_content = f.read()
+        expected_pc_file_content = """prefix={}/stage/usr
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib
+includedir=${{prefix}}/include
+
+Name: granite
+Description: elementary's Application Framework
+Version: 0.4
+Libs: -L${{libdir}} -lgranite
+Cflags: -I${{includedir}}/granite
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 gtk+-3.0
+""".format(os.getcwd())
+
+        self.assertEqual(pc_file_content, expected_pc_file_content)
 
 
 class PluginMakedirsTestCase(tests.TestCase):

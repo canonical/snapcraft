@@ -154,6 +154,42 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
                 self.assertEqual(
                     stat.S_IMODE(os.stat(file).st_mode), files[key][1])
 
+    def test_fix_pkg_config(self):
+        pc_file = os.path.join(self.tempdir, 'granite.pc')
+
+        with open(pc_file, 'w') as f:
+            f.write('prefix=/usr\n')
+            f.write('exec_prefix=${prefix}\n')
+            f.write('libdir=${prefix}/lib\n')
+            f.write('includedir=${prefix}/include\n')
+            f.write('\n')
+            f.write('Name: granite\n')
+            f.write('Description: elementary\'s Application Framework\n')
+            f.write('Version: 0.4\n')
+            f.write('Libs: -L${libdir} -lgranite\n')
+            f.write('Cflags: -I${includedir}/granite\n')
+            f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
+                    'gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 '
+                    'gtk+-3.0\n')
+        repo._fix_artifacts(debdir=self.tempdir)
+
+        with open(pc_file) as f:
+            pc_file_content = f.read()
+        expected_pc_file_content = """prefix={}/usr
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib
+includedir=${{prefix}}/include
+
+Name: granite
+Description: elementary's Application Framework
+Version: 0.4
+Libs: -L${{libdir}} -lgranite
+Cflags: -I${{includedir}}/granite
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0 gthread-2.0 gdk-3.0 gdk-pixbuf-2.0 gtk+-3.0
+""".format(self.tempdir)
+
+        self.assertEqual(pc_file_content, expected_pc_file_content)
+
     def test_fix_shebang(self):
         rootdir = 'root'
 

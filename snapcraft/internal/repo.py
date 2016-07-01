@@ -296,10 +296,10 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
         match = pattern.search(line)
         if prefix_trim:
             match_trim = pattern_trim.search(line)
-        if match:
-            print('prefix={}{}'.format(root, match.group('prefix')))
-        elif prefix_trim and match_trim:
+        if prefix_trim and match_trim:
             print('prefix={}{}'.format(root, match_trim.group('prefix')))
+        elif match:
+            print('prefix={}{}'.format(root, match.group('prefix')))
         else:
             print(line, end='')
 
