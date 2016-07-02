@@ -370,9 +370,6 @@ class Zip(FileBase):
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
-        elif source_checksum:
-            raise IncompatibleOptionsError(
-                'can\'t specify source-checksum for a zip source right now')
 
     def provision(self, dst, source_checksum, clean_target=True,
                   keep_zip=False):
