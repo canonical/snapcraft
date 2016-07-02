@@ -62,7 +62,7 @@ class TestCase(testtools.TestCase):
             cwd = None
         try:
             return subprocess.check_output(
-                [self.snapcraft_command] + command, cwd=cwd,
+                [self.snapcraft_command, '-d'] + command, cwd=cwd,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
