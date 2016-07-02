@@ -183,6 +183,7 @@ class TestBazaar(SourceTestCase):
         expected_message = 'can\'t specify a source-checksum for a bzr source'
         self.assertEqual(raised.exception.message, expected_message)
 
+
 class TestGit(SourceTestCase):
 
     def test_pull(self):
