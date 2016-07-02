@@ -78,9 +78,14 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             'default': [],
         }
 
+        schema['properties']['maven-targets'] = {
+            'type': 'object',
+            'default': {'target' : 'jar'},
+        }
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['build-properties'].append('maven-options')
+        schema['build-properties'].append('maven-targets')
 
         return schema
 
@@ -103,19 +108,16 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         self.run(mvn_cmd + self.options.maven_options)
 
-        jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
-        warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
-        if not (jarfiles or warfiles):
-            raise RuntimeError('could not find any built jar files for part')
-        if jarfiles:
-            jardir = os.path.join(self.installdir, 'jar')
-            os.makedirs(jardir, exist_ok=True)
-            self.run(['cp', '-a'] + jarfiles + [jardir])
-        if warfiles:
-            wardir = os.path.join(self.installdir, 'war')
-            os.makedirs(wardir, exist_ok=True)
-            self.run(['cp', '-a'] + warfiles + [wardir])
+        files = self.options.maven_targets
+        globs = {f: files[f] for f in files if glob.has_magic(f)}
+        filepaths = {os.path.join(self.builddir, f): files[f] for f in files
+                     if not glob.has_magic(f)}
 
+        for src in sorted(filepaths):
+            dst = os.path.join(self.installdir, filepaths[src].lstrip('/'))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            print(dst)
+            self.run(['cp', '-aR'] + [src] + [dst])
 
 def _create_settings(settings_path):
     proxy = urlparse(os.environ['http_proxy'])
