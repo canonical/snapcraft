@@ -78,9 +78,20 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             'default': [],
         }
 
+        schema['properties']['maven-targets'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [''],
+        }
+
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['build-properties'].append('maven-options')
+        schema['build-properties'].append('maven-targets')
 
         return schema
 
@@ -103,18 +114,35 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         self.run(mvn_cmd + self.options.maven_options)
 
-        jarfiles = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
-        warfiles = glob.glob(os.path.join(self.builddir, 'target', '*.war'))
-        if not (jarfiles or warfiles):
+        found = False
+
+        for f in self.options.maven_targets:
+            src = os.path.join(self.builddir, f, 'target')
+            jarfiles = glob.glob(os.path.join(src, '*.jar'))
+            warfiles = glob.glob(os.path.join(src, '*.war'))
+            found = _copy(jarfiles, warfiles, src, f, self) or found
+
+        if not found:
             raise RuntimeError('could not find any built jar files for part')
-        if jarfiles:
-            jardir = os.path.join(self.installdir, 'jar')
-            os.makedirs(jardir, exist_ok=True)
-            self.run(['cp', '-a'] + jarfiles + [jardir])
-        if warfiles:
-            wardir = os.path.join(self.installdir, 'war')
-            os.makedirs(wardir, exist_ok=True)
-            self.run(['cp', '-a'] + warfiles + [wardir])
+
+
+def _copy(jarfiles, warfiles, src, dst, self):
+    if len(dst) > 0:
+        basedir = dst
+    elif jarfiles:
+        basedir = 'jar'
+    elif warfiles:
+        basedir = 'war'
+
+    targetdir = os.path.join(self.installdir, basedir)
+    os.makedirs(targetdir, exist_ok=True)
+    if warfiles:
+        found = True
+        self.run(['cp', '-a'] + warfiles + [targetdir])
+    if jarfiles:
+        found = True
+        self.run(['cp', '-a'] + jarfiles + [targetdir])
+    return found
 
 
 def _create_settings(settings_path):
