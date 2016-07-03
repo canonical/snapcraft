@@ -31,6 +31,7 @@ class MavenPluginTestCase(tests.TestCase):
 
         class Options:
             maven_options = []
+            maven_targets = ['']
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -70,8 +71,31 @@ class MavenPluginTestCase(tests.TestCase):
             maven_options['uniqueItems'],
             'Expected "maven-options" "uniqueItems" to be "True"')
 
+        maven_targets = properties['maven-targets']
+
+        self.assertTrue(
+            'type' in maven_targets,
+            'Expected "type" to be included in "maven-targets"')
+        self.assertEqual(maven_targets['type'], 'array',
+                         'Expected "maven-targets" "type" to be "array", but '
+                         'it was "{}"'.format(maven_targets['type']))
+
+        self.assertTrue(
+            'minitems' in maven_targets,
+            'Expected "minitems" to be included in "maven-targets"')
+        self.assertEqual(maven_targets['minitems'], 1,
+                         'Expected "maven-targets" "minitems" to be 1, but '
+                         'it was "{}"'.format(maven_targets['minitems']))
+
+        self.assertTrue(
+            'uniqueItems' in maven_targets,
+            'Expected "uniqueItems" to be included in "maven-targets"')
+        self.assertTrue(
+            maven_targets['uniqueItems'],
+            'Expected "maven-targets" "uniqueItems" to be "True"')
+
         build_properties = schema['build-properties']
-        self.assertEqual(['maven-options'], build_properties)
+        self.assertEqual(['maven-options', 'maven-targets'], build_properties)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
