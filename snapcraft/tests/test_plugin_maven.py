@@ -114,19 +114,6 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
-    def test_build_with_exception(self, glob_mock, run_mock):
-        plugin = maven.MavenPlugin('test-part', self.options,
-                                   self.project_options)
-        os.makedirs(plugin.sourcedir)
-        glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
-
-        plugin.options.maven_targets = ['custom']
-        with self.assertRaises(RuntimeError) as raised:
-            plugin.build()
-
-    @mock.patch.object(maven.MavenPlugin, 'run')
-    @mock.patch('glob.glob')
     def test_build_with_snapcraft_proxy(self, glob_mock, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),

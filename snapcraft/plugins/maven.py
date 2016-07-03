@@ -119,22 +119,19 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
             jarfiles = glob.glob(os.path.join(src, '*.jar'))
             warfiles = glob.glob(os.path.join(src, '*.war'))
+            arfiles = glob.glob(os.path.join(src, '*.(j|w)ar'))
 
-            if len(f) > 0 and jarfiles:
+            if not (arfiles):
+                raise RuntimeError('could not find any built jar files for part')
+            elif len(f) > 0:
                 basedir = f
-                files = jarfiles
-            elif len(f) > 0 and warfiles:
-                basedir = f
-                files = warfiles
+                files = arfiles
             elif jarfiles:
                 basedir = 'jar'
                 files = jarfiles
-            elif warfiles:
+            else:
                 basedir = 'war'
                 files = jarfiles
-            else:
-                raise RuntimeError("could not find any"
-                                   "built jar files for part")
 
             targetdir = os.path.join(self.installdir, basedir)
             os.makedirs(targetdir, exist_ok=True)
