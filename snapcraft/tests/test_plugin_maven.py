@@ -112,6 +112,9 @@ class MavenPluginTestCase(tests.TestCase):
             mock.call(['mvn', 'package']),
         ])
 
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    @mock.patch('glob.glob')
+    def test_build_with_exception(self, glob_mock, run_mock):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -119,11 +122,8 @@ class MavenPluginTestCase(tests.TestCase):
             os.path.join(plugin.builddir, 'target', 'dummy')]
 
         plugin.options.maven_targets = ['custom']
-        plugin.build()
-
-        run_mock.assert_has_calls([
-            mock.call(['mvn', 'package']),
-        ])
+        with self.assertRaises(RuntimeError) as raised:
+            plugin.build()
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
