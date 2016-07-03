@@ -112,6 +112,19 @@ class MavenPluginTestCase(tests.TestCase):
             mock.call(['mvn', 'package']),
         ])
 
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        glob_mock.return_value = [
+            os.path.join(plugin.builddir, 'target', 'dummy')]
+
+        plugin.options.maven_targets = ['custom']
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
     def test_build_with_snapcraft_proxy(self, glob_mock, run_mock):
