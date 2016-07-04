@@ -26,7 +26,7 @@ class DownloadTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        if os.getenv('TEST_USER_PASSWORD', None) is None:
+        if not os.getenv('TEST_USER_PASSWORD', None):
             self.useFixture(fixture_setup.FakeStore())
         else:
             self.skipTest('There is no ubuntu-core snap in the staging server')

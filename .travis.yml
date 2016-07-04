@@ -11,17 +11,17 @@ env:
   global:
   # Encrypted test user password. Generated with the travis gem:
   #     travis encrypt -r ubuntu-core/snapcraft TEST_USER_PASSWORD=$password
-  - secure: "H58yffyxq1y5RxbEBroXgdkmfc2ttvD8Y6ARh1HCNv0AvAfJ6FA5/Ly2rzBMh/ghXnwumkLHKUYa9dGnbJl0R26U4b7w4YkmSKsrWgNWL1M3iqXdiVsZRJ3K3RaVRya3m9k9DL6b3gR2ZVhz6FeDlaKuOZqCeFxRgXGTB71NrFUKSwXqqE5w10u3woItG3upqr2fPDjJ4bIaffpINpX2MabghfboBB9VbKdLvWiEkH7kEJKNh9zNHZJ4FK5LVt/GAR7CHQhuQsJVQOO+dPE7ZL7FlvqYg33b4ly75kpoo30muzSRXbs+qoSaBe6K41vbVhGdBmtJ9SXxYeuVGunFq8hKOGrSq00vIcPyOonTIZmkWVA/oxuo6viIzuzP1BlU5ulEmQjIbJj5trEzLo3Nd5o8WF19fLpp5MYuU0w28F/TzjarWYU9mw/sPkTJTrV5wHP5jGa/2mcExJBg+MgH60Q8I/uObz9EdovOjLKb1d8x2NSlWozXDyLYVTWIecetEPArhNVuOaGFLpGorDVVTvcrvkLR/rnvY+iqxthuQWuzfEsmkafWFwxgEO/G1mZUI66aq7UdtkToLKCcwi6FCYASQ7AA0mzizWI76teUXr3iJ/HFh7+BfKblfbkgS+eYIjLuAJBxp0NXY6J+eO0gG6n2Pp0emy+PFDJ4xD0XkR0="
+  - secure: "gqtqTji8cie0Q2O+sRhE4MbTXGI0qTq8yPgRGFd9XlT/lB/EttFQKu72qycr/jyrvt809wjWM13QVqa5/71SoJd+Xzrmr1/leevx9Z/Wnv+IYkRAuGHW7iIDQb7MhQvpq3tw8hbGJzGxw03cUmjKJ89AAlGbwaURMat47lPsRXus8R7pl9S6r5owhBbmrQNaP9io0oPQDOAUf4pmJma1FTHAjXg0EdUwdXFUWToj15c7UJtB/MQNNTfjlwGA+/sPDqgthUEAzXmvUfXAZWnjQFZmq4ebvBIJEOQEPdLCXWGYdN2DAL7zp7WthrwFfgFFZb579rOBh0ETIMebUgBLoVSiPcn/bfzdYHcYKGf7lTJpoug5QENl+kZcuVyK7GUjf8O9tamhkYeMtUOy5Ubrcnv+Lfy9NsDPhKY05n+7tzzUVB1dePTrMHPuRZLl4OKku1AUN/S3A2xMrLO8vsWPVxcfxeb+4Y5ikYiHHpOozJHHDdPmj5raRIf3IH87W2PX0nJhg+gEgNHV1v3HBoyeqOPl4hl6/Fb9sCS/JAbbfcixkC54MHHI+opNSgZRvY0RORGHmuhHRGvfMxnwHmeOD51oV+SRGJS6A7qUq6GlBIy3/YlAY3LqqkWrHwm4EYttd4yM1FZ5s9pVnoSSJkgQ5vYK7A8a9AgZJlCcZnbzXtA="
   matrix:
-  - TEST_SUITE=static       DEPENDENCIES="apt install -y python3-flake8 python3-mccabe"
-  - TEST_SUITE=unit         DEPENDENCIES="apt build-dep -y ./ && apt install -y python3-coverage"
-  - TEST_SUITE=integration  DEPENDENCIES="apt build-dep -y ./ && apt install -y bzr git mercurial python3-pexpect subversion sudo"
+  - TEST_SUITE=static DEPENDENCIES="apt install -y python3-flake8 python3-mccabe"
+  - TEST_SUITE=unit DEPENDENCIES="apt build-dep -y ./ && apt install -y python3-coverage"
+  - TEST_SUITE=integration DEPENDENCIES="apt build-dep -y ./ && apt install -y bzr git mercurial python3-pexpect subversion sudo"
 
 install:
   - sudo apt-get -qq update
   - sudo apt-get install -y python3-coverage
 script:
-  - docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
+  - docker run -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
   - pip install coveralls
   - coveralls
