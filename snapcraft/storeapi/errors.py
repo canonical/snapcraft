@@ -82,10 +82,13 @@ class StoreRegistrationError(StoreError):
 
     fmt = 'Registration failed.'
 
-    def __init__(self, snap_name, response):
-        response_json = response.json()
+    def __init__(self, snap_name, response=None):
+        try:
+            response_json = response.json()
+        except AttributeError:
+            response_json = {}
         super().__init__(snap_name=snap_name, **response_json)
 
-        if response_json['status'] == 409:
+        if response_json.get('status') == 409:
             if response_json['code'] == 'already_registered':
                 self.fmt = self.__FMT_ALREADY_REGISTERED
