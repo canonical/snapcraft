@@ -242,7 +242,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         response = {
             'status': 409,
             'code': 'already_registered',
-            'register_name_url': 'https://claims.com/reclaim',
+            'register_name_url': 'https://myapps.com/register-name/',
         }
         self.wfile.write(json.dumps(response).encode())
 

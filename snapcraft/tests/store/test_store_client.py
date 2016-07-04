@@ -181,7 +181,7 @@ class RegisterTestCase(tests.TestCase):
             "We can if needed rename snaps to ensure they match the "
             "expectations of most users. If you are the publisher most users "
             "expect for 'test-already-registered-snap-name' then claim the "
-            "name at 'https://claims.com/reclaim'")
+            "name at 'https://myapps.com/register-name-dispute/'")
 
     def test_unhandled_registration_error_path(self):
         self.client.login('dummy', 'test correct password')

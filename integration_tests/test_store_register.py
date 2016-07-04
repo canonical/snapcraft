@@ -51,5 +51,6 @@ class RegisterTestCase(integration_tests.TestCase):
             'We can if needed rename snaps to ensure they match the '
             'expectations of most users. If you are the publisher most '
             'users expect for \'test-already-registered-snap-name\' then '
-            'claim the name at \'https://claims.com/reclaim\'\n')
+            'claim the name at \'https://myapps.com/register-name-dispute/'
+            '\'\n')
         self.assertIn(expected, str(error.output))
