@@ -118,6 +118,7 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             src = os.path.join(self.builddir, f, 'target')
 
             jarfiles = glob.glob(os.path.join(src, '*.jar'))
+            warfiles = glob.glob(os.path.join(src, '*.war'))
             arfiles = glob.glob(os.path.join(src, '*.[jw]ar'))
 
             if not (arfiles):
