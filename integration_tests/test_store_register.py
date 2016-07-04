@@ -36,10 +36,20 @@ class RegisterTestCase(integration_tests.TestCase):
         snap_name = 'u1test{}'.format(uuid.uuid4().int)
         self.run_snapcraft(['register', snap_name])
 
-    def test_failed_registration(self):
+    def test_failed_registration_already_registered(self):
         self.login(expect_success=True)
         # The snap name is already registered.
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['register', 'test-bad-snap-name'])
-        self.assertIn('Registration failed.', str(error.output))
+            self.run_snapcraft, 
+            ['register', 'test-already-registered-snap-name'])
+        expected = (
+            'Registering test-already-registered-snap-name.\n'
+            'The name \'test-already-registered-snap-name\' is already '
+            'taken.'
+            '\n\n'
+            'We can if needed rename snaps to ensure they match the '
+            'expectations of most users. If you are the publisher most '
+            'users expect for \'test-already-registered-snap-name\' then '
+            'claim the name at \'https://claims.com/reclaim\'\n')
+        self.assertIn(expected, str(error.output))
