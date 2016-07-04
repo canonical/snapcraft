@@ -83,6 +83,11 @@ class StoreRegistrationError(StoreError):
         'of most users. If you are the publisher most users expect for '
         '{snap_name!r} then claim the name at {register_claim_url!r}')
 
+    __FMT_RESERVED = (
+        'The name {snap_name!r} is reserved.\n\n'
+        'If you are the publisher most users expect for '
+        '{snap_name!r} then please claim the name at {register_claim_url!r}')
+
     fmt = 'Registration failed.'
 
     def __init__(self, snap_name, response=None):
@@ -96,6 +101,8 @@ class StoreRegistrationError(StoreError):
                 response_json.get('register_name_url', ''))
             if response_json['code'] == 'already_registered':
                 self.fmt = self.__FMT_ALREADY_REGISTERED
+            if response_json['code'] == 'reserved_name':
+                self.fmt = self.__FMT_RESERVED
 
         super().__init__(snap_name=snap_name, **response_json)
 

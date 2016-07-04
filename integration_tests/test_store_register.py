@@ -54,3 +54,16 @@ class RegisterTestCase(integration_tests.TestCase):
             'claim the name at \'https://myapps.com/register-name-dispute/'
             '\'\n')
         self.assertThat(str(error.output), EndsWith(expected))
+
+    def test_registration_of_reserved_name(self):
+        self.login(expect_success=True)
+        # The snap name is already registered.
+        error = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.register, 'test-reserved-snap-name')
+        expected = (
+            'The name \'test-reserved-snap-name\' is reserved.\n\n'
+            'If you are the publisher most users expect for '
+            '\'test-reserved-snap-name\' then please claim the name at '
+            '\'https://myapps.com/register-name-dispute/\'\n')
+        self.assertThat(str(error.output), EndsWith(expected))

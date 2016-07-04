@@ -183,6 +183,18 @@ class RegisterTestCase(tests.TestCase):
             "expect for 'test-already-registered-snap-name' then claim the "
             "name at 'https://myapps.com/register-name-dispute/'")
 
+    def test_register_a_reserved_name(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-reserved-snap-name')
+        self.assertEqual(
+            str(raised.exception),
+            "The name 'test-reserved-snap-name' is reserved."
+            "\n\n"
+            "If you are the publisher most users expect for "
+            "'test-reserved-snap-name' then please claim the "
+            "name at 'https://myapps.com/register-name-dispute/'")
+
     def test_unhandled_registration_error_path(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreRegistrationError) as raised:
