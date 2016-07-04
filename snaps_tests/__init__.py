@@ -131,8 +131,9 @@ class SnapsTestCase(testtools.TestCase):
                 self.snappy_testbed = testbed.LocalTestbed()
             else:
                 port = config.get('port', None) or '22'
+                proxy = config.get('proxy', None)
                 self.snappy_testbed = testbed.SshTestbed(
-                    ip, port, 'ubuntu')
+                    ip, port, 'ubuntu', proxy)
             self.snappy_testbed.wait()
 
     def _set_up_qemu_testbed(self):
