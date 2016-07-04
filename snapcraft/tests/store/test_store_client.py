@@ -167,13 +167,27 @@ class RegisterTestCase(tests.TestCase):
 
     def test_register_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        response = self.client.register('test-good-snap-name')
-        self.assertTrue(response.ok)
+        # No exception will be raised if this is succesful
+        self.client.register('test-good-snap-name')
 
-    def test_registration_failed(self):
+    def test_already_registered(self):
         self.client.login('dummy', 'test correct password')
-        response = self.client.register('test-bad-snap-name')
-        self.assertFalse(response.ok)
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-already-registered-snap-name')
+        self.assertEqual(
+            str(raised.exception),
+            "The name 'test-already-registered-snap-name' is already taken."
+            "\n\n"
+            "We can if needed rename snaps to ensure they match the "
+            "expectations of most users. If you are the publisher most users "
+            "expect for 'test-already-registered-snap-name' then claim the "
+            "name at 'https://myapps.com/register-name-dispute/'")
+
+    def test_unhandled_registration_error_path(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('snap-name-no-clear-error')
+        self.assertEqual(str(raised.exception), 'Registration failed.')
 
 
 class UploadTestCase(tests.TestCase):

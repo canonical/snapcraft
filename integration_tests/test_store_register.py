@@ -18,6 +18,8 @@ import os
 import subprocess
 import uuid
 
+from testtools.matchers import Contains
+
 import integration_tests
 from snapcraft.tests import fixture_setup
 
@@ -36,10 +38,20 @@ class RegisterTestCase(integration_tests.TestCase):
         snap_name = 'u1test{}'.format(uuid.uuid4().int)
         self.register(snap_name)
 
-    def test_failed_registration(self):
+    def test_failed_registration_already_registered(self):
         self.login(expect_success=True)
         # The snap name is already registered.
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['register', 'test-bad-snap-name'])
-        self.assertIn('Registration failed.', str(error.output))
+            self.register, 'test-already-registered-snap-name')
+        expected = (
+            'The name \'test-already-registered-snap-name\' is already '
+            'taken.'
+            '\n\n'
+            'We can if needed rename snaps to ensure they match the '
+            'expectations of most users. If you are the publisher most '
+            'users expect for \'test-already-registered-snap-name\' then '
+            'claim the name at')
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name-dispute'))
+

@@ -58,17 +58,13 @@ def register(snap_name):
     logger.info('Registering {}.'.format(snap_name))
     store = storeapi.StoreClient()
     try:
-        response = store.register(snap_name)
+        store.register(snap_name)
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
-    if response.ok:
-        logger.info(
-            "Congratulations! You're now the publisher for {!r}.".format(
-                snap_name))
-    else:
-        raise RuntimeError('Registration failed.')
+    logger.info("Congratulations! You're now the publisher for {!r}.".format(
+        snap_name))
 
 
 def upload(snap_filename):
