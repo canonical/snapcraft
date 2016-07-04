@@ -220,8 +220,11 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         data = json.loads(string_data)
         logger.debug(
             'Handling registration request with content {}'.format(data))
-        if data['snap_name'] == 'test-bad-snap-name':
-            self._handle_failed_registration()
+
+        if data['snap_name'] == 'test-already-registered-snap-name':
+            self._handle_already_registered()
+        elif data['snap_name'] == 'snap-name-no-clear-error':
+            self._handle_unclear_registration_error()
         else:
             self._handle_successful_registration()
 
@@ -232,13 +235,24 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         response = {'snap_id': 'test-snap-id'}
         self.wfile.write(json.dumps(response).encode())
 
-    def _handle_failed_registration(self):
+    def _handle_already_registered(self):
         self.send_response(409)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
             'status': 409,
-            'code': 'already_registered'
+            'code': 'already_registered',
+            'register_name_url': 'https://myapps.com/register-name/',
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_unclear_registration_error(self):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 409,
+            'code': 'unexistent_error_code',
         }
         self.wfile.write(json.dumps(response).encode())
 

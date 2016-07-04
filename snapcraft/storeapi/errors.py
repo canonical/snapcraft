@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import re
+
+
 # TODO move to snapcraft.errors --elopio - 2016-06-20
 class SnapcraftError(Exception):
     """Base class for all storeapi exceptions.
@@ -70,3 +73,33 @@ class StoreAuthenticationError(StoreError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class StoreRegistrationError(StoreError):
+
+    __FMT_ALREADY_REGISTERED = (
+        'The name {snap_name!r} is already taken.\n\n'
+        'We can if needed rename snaps to ensure they match the expectations '
+        'of most users. If you are the publisher most users expect for '
+        '{snap_name!r} then claim the name at {register_claim_url!r}')
+
+    fmt = 'Registration failed.'
+
+    def __init__(self, snap_name, response=None):
+        try:
+            response_json = response.json()
+        except AttributeError:
+            response_json = {}
+
+        if response_json.get('status') == 409:
+            response_json['register_claim_url'] = self.__get_claim_url(
+                response_json.get('register_name_url', ''))
+            if response_json['code'] == 'already_registered':
+                self.fmt = self.__FMT_ALREADY_REGISTERED
+
+        super().__init__(snap_name=snap_name, **response_json)
+
+    def __get_claim_url(self, url):
+        # TODO use the store provided claim url once it is there
+        # LP: #1598905
+        return re.sub('register-name', 'register-name-dispute', url, count=0)
