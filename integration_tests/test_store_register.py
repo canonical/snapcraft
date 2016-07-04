@@ -30,8 +30,10 @@ class RegisterTestCase(integration_tests.TestCase):
         super().setUp()
         if not os.getenv('TEST_USER_PASSWORD', None):
             self.useFixture(fixture_setup.FakeStore())
+            self.reserved_name = 'test-reserved-snap-name'
         else:
             self.useFixture(fixture_setup.StagingStore())
+            self.reserved_name = 'bash'
 
     def test_successful_registration(self):
         self.login(expect_success=True)
@@ -60,10 +62,10 @@ class RegisterTestCase(integration_tests.TestCase):
         # The snap name is already registered.
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.register, 'test-reserved-snap-name')
+            self.register, self.reserved_name)
         expected = (
-            'The name \'test-reserved-snap-name\' is reserved.\n\n'
-            'If you are the publisher most users expect for '
-            '\'test-reserved-snap-name\' then please claim the name at '
-            '\'https://myapps.com/register-name-dispute/\'\n')
-        self.assertThat(str(error.output), EndsWith(expected))
+            'The name {0!r} is reserved.\n\n'
+            'If you are the publisher most users expect for {0!r} '
+            'then please claim the name at').format(self.reserved_name)
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name-dispute'))
