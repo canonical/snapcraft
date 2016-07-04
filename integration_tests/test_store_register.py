@@ -18,7 +18,7 @@ import os
 import subprocess
 import uuid
 
-from testtools.matchers import EndsWith
+from testtools.matchers import Contains
 
 import integration_tests
 from snapcraft.tests import fixture_setup
@@ -51,6 +51,7 @@ class RegisterTestCase(integration_tests.TestCase):
             'We can if needed rename snaps to ensure they match the '
             'expectations of most users. If you are the publisher most '
             'users expect for \'test-already-registered-snap-name\' then '
-            'claim the name at \'https://myapps.com/register-name-dispute/'
-            '\'\n')
-        self.assertThat(str(error.output), EndsWith(expected))
+            'claim the name at')
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name-dispute'))
+
