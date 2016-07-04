@@ -20,6 +20,7 @@ import subprocess
 import fixtures
 import testtools
 from testtools.matchers import (
+    EndsWith,
     FileContains,
     FileExists,
     Not,
@@ -134,7 +135,7 @@ class SnapTestCase(integration_tests.TestCase):
         expected = (
             "Could not find a required package in 'build-packages': "
             '"The cache has no package named \'inexistent-package\'"\n')
-        self.assertEqual(expected, exception.output)
+        self.assertThat(exception.output, EndsWith(expected))
 
     def test_snap_with_exposed_files(self):
         project_dir = 'nil-plugin-pkgfilter'

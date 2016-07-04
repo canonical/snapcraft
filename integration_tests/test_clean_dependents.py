@@ -19,6 +19,7 @@ import subprocess
 
 from testtools.matchers import (
     DirExists,
+    EndsWith,
     Not
 )
 
@@ -113,10 +114,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p2'],
             self.project_dir)
-        self.assertEqual(
-            "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
-            "add each to the clean command if that's what you intended.",
-            exception.output.replace('\n', ' ').strip())
+        self.assertThat(
+            exception.output,
+            EndsWith(
+                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
+                "add each to the clean command if that's what you intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent_without_nested_dependent_raises(self):
@@ -125,10 +127,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
             ['clean', 'p2', 'p3'], self.project_dir)
-        self.assertEqual(
-            "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
-            "add each to the clean command if that's what you intended.",
-            exception.output.replace('\n', ' ').strip())
+        self.assertThat(
+            exception.output,
+            EndsWith(
+                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
+                "add each to the clean command if that's what you intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_main_without_any_dependent_raises(self):
@@ -137,10 +140,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p1'],
             self.project_dir)
-        self.assertEqual(
-            "Requested clean of 'p1' but 'p2' depends upon it. Please add "
-            "each to the clean command if that's what you intended.",
-            exception.output.replace('\n', ' ').strip())
+        self.assertThat(
+            exception.output,
+            EndsWith(
+                "Requested clean of 'p1' but 'p2' depends upon it. Please add "
+                "each to the clean command if that's what you intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_main_without_dependent_raises(self):
@@ -149,10 +153,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
             ['clean', 'p1', 'p3', 'p4'], self.project_dir)
-        self.assertEqual(
-            "Requested clean of 'p1' but 'p2' depends upon it. Please add "
-            "each to the clean command if that's what you intended.",
-            exception.output.replace('\n', ' ').strip())
+        self.assertThat(
+            exception.output,
+            EndsWith(
+                "Requested clean of 'p1' but 'p2' depends upon it. Please add "
+                "each to the clean command if that's what you intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_main_without_nested_dependent_raises(self):
@@ -162,8 +167,9 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
             ['clean', 'p1', 'p2'], self.project_dir)
-        self.assertEqual(
-            "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
-            "add each to the clean command if that's what you intended.",
-            exception.output.replace('\n', ' ').strip())
+        self.assertThat(
+            exception.output,
+            EndsWith(
+                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
+                "add each to the clean command if that's what you intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
