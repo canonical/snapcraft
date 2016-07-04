@@ -195,6 +195,15 @@ class RegisterTestCase(tests.TestCase):
             "'test-reserved-snap-name' then please claim the "
             "name at 'https://myapps.com/register-name-dispute/'")
 
+    def test_registering_too_fast_in_a_row(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-too-fast')
+        self.assertEqual(
+            str(raised.exception),
+            'You must wait 3 minutes before trying to register your '
+            'next snap.')
+
     def test_unhandled_registration_error_path(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreRegistrationError) as raised:
