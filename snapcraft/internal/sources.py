@@ -125,7 +125,7 @@ class FileBase(Base):
             self.source_dir, os.path.basename(self.source))
         download_requests_stream(request, file_path)
 
-    def pre_check_checksum(self, source_checksum, checkfile):
+    def check_checksum_determine_format(self, source_checksum, checkfile):
         if source_checksum.startswith('http'):
             checksum = urllib.urlopen(source_checksum)
             source_checksum = checksum.read()
@@ -134,41 +134,34 @@ class FileBase(Base):
             with open(source_checksum, "r") as source_file:
                 source_checksum = str(source_file.read()).rstrip()
             self.check_checksum(self, source_checksum, checkfile)
-        elif len(source_checksum) == 32 or len(source_checksum) == 64 or \
-                len(source_checksum) == 96 or len(source_checksum) == 128:
-            self.check_checksum(self, source_checksum, checkfile)
+        elif len(source_checksum) == 32 | 40 | 56 | 64 | 96 | 128:
+            self.check_checksum_determine_type(
+                self, source_checksum, checkfile)
 
-    def check_checksum(self, source_checksum, checkfile):
+    def check_checksum_determine_type(self, source_checksum, checkfile):
         if len(source_checksum) == 32:
-            md5 = hashlib.md5(open(checkfile, 'rb').read()).hexdigest()
-            if md5 != source_checksum:
-                raise NonMatchingChecksum(
-                    "the checksum doesn't match the file")
+            self.check_checksum(self, source_checksum, checkfile, "md5")
         elif len(source_checksum) == 40:
-            sha1 = hashlib.sha1(open(checkfile, 'rb').read()).hexdigest()
-            if sha1 != source_checksum:
-                raise NonMatchingChecksum(
-                    "the checksum doesn't match the file")
+            self.check_checksum(self, source_checksum, checkfile, "sha1")
         elif len(source_checksum) == 56:
-            sha224 = hashlib.sha1(open(checkfile, 'rb').read()).hexdigest()
-            if sha224 != source_checksum:
-                raise NonMatchingChecksum(
-                    "the checksum doesn't match the file")
+            self.check_checksum(
+                self, source_checksum, checkfile, "sha224")
         elif len(source_checksum) == 64:
-            sha256 = hashlib.sha256(open(checkfile, 'rb').read()).hexdigest()
-            if sha256 != source_checksum:
-                raise NonMatchingChecksum(
-                    "the checksum doesn't match the file")
+            self.check_checksum(
+                self, source_checksum, checkfile, "sha256")
         elif len(source_checksum) == 96:
-            sha384 = hashlib.sha384(open(checkfile, 'rb').read()).hexdigest()
-            if sha384 != source_checksum:
-                raise NonMatchingChecksum(
-                    "the checksum doesn't match the file")
+            self.check_checksum(
+                self, source_checksum, checkfile, "sha384")
         elif len(source_checksum) == 128:
-            sha512 = hashlib.sha512(open(checkfile, 'rb').read()).hexdigest()
-            if sha512 != source_checksum:
-                raise NonMatchingChecksum(
-                    "the checksum doesn't match the file")
+            self.check_checksum(
+                self, source_checksum, checkfile, "sha512")
+
+    def check_checksum(self, source_checksum, checkfile, chksum_format):
+        chksum = hashlib.chksum_format(
+            open(checkfile, 'rb').read()).hexdigest()
+        if chksum != source_checksum:
+            raise NonMatchingChecksum(
+                "the checksum doesn't match the file")
 
 
 class Bazaar(Base):
