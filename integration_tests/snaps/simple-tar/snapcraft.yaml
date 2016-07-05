@@ -40,3 +40,19 @@ parts:
     plugin: tar-content
     source: simple.tar.bz2
     destination: destdir1/destdir2
+  checksum-md5:
+    plugin: tar-content
+    source: checksum.tar.gz
+    source-checksum: b72c9bc23d7aea680e6a75d3c95c8d03
+  checksum-sha256:
+    plugin: tar-content
+    source: checksum.tar.gz
+    source-checksum: ad32a2cc4c7d481ab0c427137d65b7eb14e0c9b72f1eff7314e066cecbdbecc5
+  checksum-sha512:
+    plugin: tar-content
+    source: checksum.tar.gz
+    source-checksum: d2e115446a846fe6c311af3e491765270a5e644fca16f3b7804b3e103a95ca49dd3d650dd941812779128e54ed5ee8e67021e48a852261d5aeba38ad70c203b2
+  checksum-file:
+    plugin: tar-content
+    source: checksum.tar.gz
+    source-checksum: CHECKSUM
