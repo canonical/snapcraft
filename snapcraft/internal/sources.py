@@ -98,7 +98,7 @@ class NonMatchingChecksum(Exception):
 
 class Base:
 
-    def __init__(self, source, source_dir, source_checksum,
+    def __init__(self, source, source_dir, source_checksum=None,
                  source_tag=None, source_branch=None):
         self.source = source
         self.source_checksum = source_checksum
