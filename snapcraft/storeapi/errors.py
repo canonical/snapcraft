@@ -88,7 +88,17 @@ class StoreRegistrationError(StoreError):
         'If you are the publisher most users expect for '
         '{snap_name!r} then please claim the name at {register_claim_url!r}')
 
+    __FMT_RETRY_WAIT = (
+        'You must wait {retry_after} seconds before trying to register '
+        'your next snap.')
+
     fmt = 'Registration failed.'
+
+    __error_messages = {
+        'already_registered': __FMT_ALREADY_REGISTERED,
+        'reserved_name': __FMT_RESERVED,
+        'register_window': __FMT_RETRY_WAIT,
+    }
 
     def __init__(self, snap_name, response=None):
         try:
@@ -99,10 +109,11 @@ class StoreRegistrationError(StoreError):
         if response_json.get('status') == 409:
             response_json['register_claim_url'] = self.__get_claim_url(
                 response_json.get('register_name_url', ''))
-            if response_json['code'] == 'already_registered':
-                self.fmt = self.__FMT_ALREADY_REGISTERED
-            if response_json['code'] == 'reserved_name':
-                self.fmt = self.__FMT_RESERVED
+
+        error_code = response_json.get('code')
+        if error_code:
+            # we default to self.fmt in case error_code is not mapped yet.
+            self.fmt = self.__error_messages.get(error_code, self.fmt)
 
         super().__init__(snap_name=snap_name, **response_json)
 

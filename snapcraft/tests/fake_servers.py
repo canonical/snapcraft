@@ -225,6 +225,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_register_409('already_registered')
         elif data['snap_name'] == 'test-reserved-snap-name':
             self._handle_register_409('reserved_name')
+        elif data['snap_name'].startswith('test-too-fast'):
+            self._handle_register_429('register_window')
         elif data['snap_name'] == 'snap-name-no-clear-error':
             self._handle_unclear_registration_error()
         else:
@@ -246,6 +248,18 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'code': error_code,
             'register_name_url': 'https://myapps.com/register-name/',
         }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_register_429(self, error_code):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 429,
+            'code': error_code,
+        }
+        if error_code == 'register_window':
+            response['retry_after'] = 177
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_unclear_registration_error(self):

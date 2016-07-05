@@ -15,10 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import subprocess
 import uuid
 
-from testtools.matchers import Contains
+from testtools.matchers import Contains, MatchesRegex
 
 import integration_tests
 from snapcraft.tests import fixture_setup
@@ -69,3 +70,21 @@ class RegisterTestCase(integration_tests.TestCase):
             'then please claim the name at').format(self.reserved_name)
         self.assertThat(str(error.output), Contains(expected))
         self.assertThat(str(error.output), Contains('register-name-dispute'))
+
+    def test_registrations_in_a_row_fail_if_too_fast(self):
+        # This test has a potential to fail if working off a slow
+        # network.
+        self.login(expect_success=True)
+        snap_name_1 = 'good-snap{}'.format(uuid.uuid4().int)
+        snap_name_2 = 'test-too-fast{}'.format(uuid.uuid4().int)
+
+        self.register(snap_name_1, wait=False)
+
+        error = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.register, snap_name_2, wait=False)
+        expected = (
+            '.*You must wait \d+ seconds before trying to register your '
+            'next snap.*')
+        self.assertThat(
+            str(error.output), MatchesRegex(expected, flags=re.DOTALL))
