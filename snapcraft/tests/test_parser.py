@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from unittest import mock
 
 import requests
+import fixtures
 import yaml
 
 from snapcraft.internal.parser import (
@@ -652,6 +654,10 @@ project-part: 'somepart'
     @mock.patch('snapcraft.internal.sources.get')
     def test_duplicate_entries(self, mock_get, mock_get_origin_data):
         """Test duplicate parts are ignored."""
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com>
@@ -679,3 +685,7 @@ project-part: main
         self.assertEqual('example main', part['description'])
 
         self.assertEqual(1, _get_part_list_count())
+
+        self.assertTrue(
+            'Duplicate part found in wiki: main'
+            in fake_logger.output, 'Missing duplicate part info in output')
