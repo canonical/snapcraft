@@ -309,7 +309,8 @@ class Tar(FileBase):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        self.pre_check_checksum(self, source_checksum, tarball)
+        if source_checksum:
+            self.pre_check_checksum(self, source_checksum, tarball)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -375,7 +376,8 @@ class Zip(FileBase):
                   keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        self.pre_check_checksum(self, source_checksum, zip)
+        if source_checksum:
+            self.pre_check_checksum(self, source_checksum, zip)
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
