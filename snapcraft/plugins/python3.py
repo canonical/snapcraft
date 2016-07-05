@@ -121,8 +121,8 @@ class Python3Plugin(snapcraft.BasePlugin):
         self.run(['python3', easy_install, '--prefix', prefix, 'pip'])
 
         pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
-        pip_install = ['python3', pip3, 'install', '--target',
-                       site_packages_dir]
+        pip_install = ['python3', pip3, 'install', '--root',
+                       self.installdir, "--install-option=--prefix=usr"]
 
         if self.options.requirements:
             self.run(pip_install + ['--requirement', requirements])
