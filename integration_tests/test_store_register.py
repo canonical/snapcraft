@@ -80,9 +80,11 @@ class RegisterTestCase(integration_tests.TestCase):
 
         self.register(snap_name_1, wait=False)
 
+        # Wait after the registration attempt, so the following registrations
+        # don't get the error.
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.register, snap_name_2, wait=False)
+            self.register, snap_name_2, wait=True)
         expected = (
             '.*You must wait \d+ seconds before trying to register your '
             'next snap.*')
