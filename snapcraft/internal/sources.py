@@ -135,7 +135,7 @@ class FileBase(Base):
                 source_checksum = str(source_file.read()).rstrip()
             self.check_checksum(self, source_checksum, checkfile)
         elif len(source_checksum) == 32 or len(source_checksum) == 64 or \
-                len(source_checksum) == 128:
+                len(source_checksum) == 96 or len(source_checksum) == 128:
             self.check_checksum(self, source_checksum, checkfile)
 
     def check_checksum(self, source_checksum, checkfile):
@@ -147,6 +147,11 @@ class FileBase(Base):
         elif len(source_checksum) == 64:
             sha256 = hashlib.sha256(open(checkfile, 'rb').read()).hexdigest()
             if sha256 != source_checksum:
+                raise NonMatchingChecksum(
+                    "the checksum doesn't match the downloaded file")
+        elif len(source_checksum) == 96:
+            sha384 = hashlib.sha384(open(checkfile, 'rb').read()).hexdigest()
+            if sha384 != source_checksum:
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the downloaded file")
         elif len(source_checksum) == 128:
