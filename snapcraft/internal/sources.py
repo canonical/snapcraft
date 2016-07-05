@@ -149,6 +149,11 @@ class FileBase(Base):
             if sha1 != source_checksum:
                 raise NonMatchingChecksum(
                     "the checksum doesn't match the file")
+        elif len(source_checksum) == 56:
+            sha224 = hashlib.sha1(open(checkfile, 'rb').read()).hexdigest()
+            if sha224 != source_checksum:
+                raise NonMatchingChecksum(
+                    "the checksum doesn't match the file")
         elif len(source_checksum) == 64:
             sha256 = hashlib.sha256(open(checkfile, 'rb').read()).hexdigest()
             if sha256 != source_checksum:
