@@ -293,8 +293,8 @@ class Subversion(Base):
 
 class Tar(FileBase):
 
-    def __init__(self, source, source_dir, source_checksum, source_tag=None,
-                 source_branch=None):
+    def __init__(self, source, source_dir, source_checksum=None,
+                 source_tag=None, source_branch=None):
         super().__init__(
             source, source_dir, source_checksum, source_tag, source_branch)
         if source_tag:
@@ -308,8 +308,8 @@ class Tar(FileBase):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        if source_checksum:
-            self.pre_check_checksum(self, source_checksum, tarball)
+        if self.source_checksum:
+            self.pre_check_checksum(self, self.source_checksum, tarball)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -360,8 +360,8 @@ class Tar(FileBase):
 
 class Zip(FileBase):
 
-    def __init__(self, source, source_dir, source_checksum, source_tag=None,
-                 source_branch=None):
+    def __init__(self, source, source_dir, source_checksum=None,
+                 source_tag=None, source_branch=None):
         super().__init__(source, source_dir, source_checksum,
                          source_tag, source_branch)
         if source_tag:
@@ -374,8 +374,8 @@ class Zip(FileBase):
     def provision(self, dst, clean_target=True, keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        if source_checksum:
-            self.pre_check_checksum(self, source_checksum, zip)
+        if self.source_checksum:
+            self.pre_check_checksum(self, self.source_checksum, zip)
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
