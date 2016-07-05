@@ -17,6 +17,7 @@
 import os
 import shutil
 import subprocess
+import time
 
 import fixtures
 import pexpect
@@ -61,7 +62,7 @@ class TestCase(testtools.TestCase):
             cwd = None
         try:
             return subprocess.check_output(
-                [self.snapcraft_command] + command, cwd=cwd,
+                [self.snapcraft_command, '-d'] + command, cwd=cwd,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
@@ -88,7 +89,7 @@ class TestCase(testtools.TestCase):
         email = email or os.getenv(
             'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
         password = password or os.getenv(
-            'TEST_USER_PASSWORD', 'test correct password')
+            'TEST_USER_PASSWORD', None) or 'test correct password'
 
         process = pexpect.spawn(self.snapcraft_command, ['login'])
 
@@ -111,3 +112,10 @@ class TestCase(testtools.TestCase):
         expected = ('Clearing credentials for Ubuntu One SSO.\n'
                     'Credentials cleared.\n')
         self.assertEqual(expected, output)
+
+    def register(self, snap_name, wait=True):
+        self.run_snapcraft(['register', snap_name])
+        # sleep a few seconds to avoid hitting the store restriction on
+        # following registrations.
+        if wait:
+            time.sleep(10)

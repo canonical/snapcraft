@@ -278,9 +278,6 @@ class Config:
 
         if root_part:
             # this has to come before any {}/usr/bin
-            env += _create_pkg_config_override(
-                part.bindir, part.installdir, stagedir,
-                self._project_options.arch_triplet)
             env += part.env(part.installdir)
             env += _runtime_env(part.installdir,
                                 self._project_options.arch_triplet)
@@ -378,6 +375,10 @@ def _build_env(root, arch_triplet):
     if paths:
         env.append(common.format_path_variable(
             'LDFLAGS', paths, prepend='-L', separator=' '))
+    paths = common.get_pkg_config_paths(root, arch_triplet)
+    if paths:
+        env.append(common.format_path_variable(
+            'PKG_CONFIG_PATH', paths, prepend='', separator=':'))
 
     return env
 
@@ -387,83 +388,6 @@ def _build_env_for_stage(stagedir, arch_triplet):
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
 
     return env
-
-
-_PKG_CONFIG_TEMPLATE = """#!/usr/bin/env python3
-
-import os
-import sys
-from subprocess import check_call, CalledProcessError
-
-real_env = os.environ.copy()
-
-
-def run_pkg_config(args, env):
-    check_call(['/usr/bin/pkg-config'] + args, env=env)
-
-
-def get_pkg_env_for(basedir):
-    current_env = real_env.copy()
-    env = {{}}
-    env['PKG_CONFIG_PATH'] = ':'.join([
-        '{{basedir}}/lib/pkgconfig',
-        '{{basedir}}/lib/{arch_triplet}/pkgconfig',
-        '{{basedir}}/usr/lib/pkgconfig',
-        '{{basedir}}/usr/lib/{arch_triplet}/pkgconfig',
-        '{{basedir}}/usr/share/pkgconfig',
-        '{{basedir}}/usr/local/lib/pkgconfig',
-        '{{basedir}}/usr/local/lib/{arch_triplet}/pkgconfig',
-        '{{basedir}}/usr/local/share/pkgconfig']).format(basedir=basedir)
-    env['PKG_CONFIG_SYSROOT_DIR'] = basedir
-    env['PKG_CONFIG_LIBDIR'] = ''
-
-    current_env.update(env)
-
-    return current_env
-
-
-def modules_exist(modules, env):
-    try:
-        check_call(['/usr/bin/pkg-config', '--exists'] + modules, env=env)
-        return True
-    except CalledProcessError:
-        return False
-
-
-def main():
-    args = sys.argv[1:]
-    modules = list(filter(lambda x: not x.startswith('-'), args))
-
-    env = get_pkg_env_for('{installdir}')
-    if modules_exist(modules, env):
-        run_pkg_config(args, env)
-        return
-
-    env = get_pkg_env_for('{stagedir}')
-    if modules_exist(modules, env):
-        run_pkg_config(args, env)
-        return
-
-    run_pkg_config(args, env=real_env)
-
-
-if __name__ == '__main__':
-    main()
-"""
-
-
-def _create_pkg_config_override(bindir, installdir, stagedir, arch_triplet):
-    pkg_config_path = os.path.join(bindir, 'pkg-config')
-    os.makedirs(os.path.dirname(pkg_config_path), exist_ok=True)
-
-    pkg_config_content = _PKG_CONFIG_TEMPLATE.format(
-        installdir=installdir, stagedir=stagedir, arch_triplet=arch_triplet)
-
-    with open(pkg_config_path, 'w') as fn:
-        fn.write(pkg_config_content)
-    os.chmod(pkg_config_path, 0o755)
-
-    return ['PATH={}:$PATH'.format(bindir)]
 
 
 def _expand_filesets_for(step, properties):
