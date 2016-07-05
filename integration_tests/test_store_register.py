@@ -18,6 +18,8 @@ import os
 import subprocess
 import uuid
 
+from testtools.matchers import Contains
+
 import integration_tests
 from snapcraft.tests import fixture_setup
 
@@ -26,20 +28,44 @@ class RegisterTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        if os.getenv('TEST_USER_PASSWORD', None) is None:
+        if not os.getenv('TEST_USER_PASSWORD', None):
             self.useFixture(fixture_setup.FakeStore())
+            self.reserved_name = 'test-reserved-snap-name'
         else:
             self.useFixture(fixture_setup.StagingStore())
+            self.reserved_name = 'bash'
 
     def test_successful_registration(self):
         self.login(expect_success=True)
         snap_name = 'u1test{}'.format(uuid.uuid4().int)
-        self.run_snapcraft(['register', snap_name])
+        self.register(snap_name)
 
-    def test_failed_registration(self):
+    def test_failed_registration_already_registered(self):
         self.login(expect_success=True)
         # The snap name is already registered.
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['register', 'test-bad-snap-name'])
-        self.assertIn('Registration failed.', str(error.output))
+            self.register, 'test-already-registered-snap-name')
+        expected = (
+            'The name \'test-already-registered-snap-name\' is already '
+            'taken.'
+            '\n\n'
+            'We can if needed rename snaps to ensure they match the '
+            'expectations of most users. If you are the publisher most '
+            'users expect for \'test-already-registered-snap-name\' then '
+            'claim the name at')
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name-dispute'))
+
+    def test_registration_of_reserved_name(self):
+        self.login(expect_success=True)
+        # The snap name is already registered.
+        error = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.register, self.reserved_name)
+        expected = (
+            'The name {0!r} is reserved.\n\n'
+            'If you are the publisher most users expect for {0!r} '
+            'then please claim the name at').format(self.reserved_name)
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name-dispute'))

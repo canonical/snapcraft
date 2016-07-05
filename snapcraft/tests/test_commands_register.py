@@ -52,7 +52,6 @@ class RegisterTestCase(tests.TestCase):
     def test_register_name_successfully(self):
         with mock.patch.object(
                 storeapi.SCAClient, 'register') as mock_register:
-            mock_register.return_value.ok = True
             main(['register', 'test-snap'])
 
         self.assertEqual(
@@ -65,7 +64,8 @@ class RegisterTestCase(tests.TestCase):
     def test_registration_failed(self):
         with mock.patch.object(
                 storeapi.SCAClient, 'register') as mock_register:
-            mock_register.return_value.ok = False
+            mock_register.side_effect = storeapi.errors.StoreRegistrationError(
+                'test-snap')
             with self.assertRaises(SystemExit) as raised:
                 main(['register', 'test-snap'])
 

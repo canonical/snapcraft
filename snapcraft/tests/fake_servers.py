@@ -64,10 +64,16 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     'description': 'test entry for part1',
                     'maintainer': 'none',
                 },
+                'long-described-part': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'this is a repetitive description ' * 3,
+                    'maintainer': 'none',
+                },
             }
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
-            self.send_header('Content-Length', '300')
+            self.send_header('Content-Length', '1000')
         self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(yaml.dump(response).encode())
@@ -214,8 +220,13 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         data = json.loads(string_data)
         logger.debug(
             'Handling registration request with content {}'.format(data))
-        if data['snap_name'] == 'test-bad-snap-name':
-            self._handle_failed_registration()
+
+        if data['snap_name'] == 'test-already-registered-snap-name':
+            self._handle_register_409('already_registered')
+        elif data['snap_name'] == 'test-reserved-snap-name':
+            self._handle_register_409('reserved_name')
+        elif data['snap_name'] == 'snap-name-no-clear-error':
+            self._handle_unclear_registration_error()
         else:
             self._handle_successful_registration()
 
@@ -226,13 +237,24 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         response = {'snap_id': 'test-snap-id'}
         self.wfile.write(json.dumps(response).encode())
 
-    def _handle_failed_registration(self):
+    def _handle_register_409(self, error_code):
         self.send_response(409)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
             'status': 409,
-            'code': 'already_registered'
+            'code': error_code,
+            'register_name_url': 'https://myapps.com/register-name/',
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_unclear_registration_error(self):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 409,
+            'code': 'unexistent_error_code',
         }
         self.wfile.write(json.dumps(response).encode())
 

@@ -17,7 +17,6 @@
 
 import logging
 import os
-from unittest import mock
 
 import fixtures
 import yaml
@@ -32,11 +31,6 @@ class UpdateCommandTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.FakeParts())
-        patcher = mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
@@ -59,6 +53,12 @@ class UpdateCommandTestCase(tests.TestCase):
                 'plugin': 'go',
                 'source': 'http://source.tar.gz',
                 'description': 'test entry for part1',
+                'maintainer': 'none',
+            },
+            'long-described-part': {
+                'plugin': 'go',
+                'source': 'http://source.tar.gz',
+                'description': 'this is a repetitive description ' * 3,
                 'maintainer': 'none',
             },
         }

@@ -24,15 +24,15 @@ class MosquittoTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'mosquitto'
 
     def test_mosquitto(self):
-        self.build_snap(self.snap_content_dir, update_cache=True)
+        self.build_snap(self.snap_content_dir)
         snap_name = 'mosquitto'
         self.install_snap(self.snap_content_dir, snap_name, '0.1')
         self.assert_service_running(snap_name, 'mosquitto')
         if not snaps_tests.config.get('skip-install', False):
-            # No need to cleanup, the subscriber will exit after the first
-            # message.
-            self.snappy_testbed.run_command_in_background(
+            # The subscriber will exit after the first message.
+            process = self.snappy_testbed.run_command_in_background(
                 ['/snap/bin/mosquitto.subscribe', 'test-mosquitto-topic'])
+            self.addCleanup(process.wait, 30)
             time.sleep(5)
             self.assert_command_in_snappy_testbed(
                 ['/snap/bin/mosquitto.publish', 'test-mosquitto-topic',

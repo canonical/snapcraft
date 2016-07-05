@@ -21,5 +21,4 @@ class WikiTestCase(integration_tests.TestCase):
 
     def test_pull_wiki_part(self):
         project_dir = 'wiki'
-        self.run_snapcraft('update', project_dir)
         self.run_snapcraft('pull', project_dir)
