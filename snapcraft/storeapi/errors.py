@@ -100,7 +100,6 @@ class StoreRegistrationError(StoreError):
         'register_window': __FMT_RETRY_WAIT,
     }
 
-
     def __init__(self, snap_name, response=None):
         try:
             response_json = response.json()
@@ -117,7 +116,6 @@ class StoreRegistrationError(StoreError):
             self.fmt = self.__error_messages.get(error_code, self.fmt)
 
         super().__init__(snap_name=snap_name, **response_json)
-
 
     def __get_claim_url(self, url):
         # TODO use the store provided claim url once it is there
