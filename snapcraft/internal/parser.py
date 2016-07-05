@@ -54,6 +54,10 @@ class BadSnapcraftYAMLError(Exception):
     pass
 
 
+class MissingSnapcraftYAMLError(Exception):
+    pass
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -125,6 +129,10 @@ def _get_origin_data(origin_dir):
     yaml_file = ''
 
     # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
+    if not os.path.exists(snapcraft_yaml_file) and not os.path.exists(
+            hidden_snapcraft_yaml_file):
+        raise MissingSnapcraftYAMLError()
+
     if os.path.exists(snapcraft_yaml_file):
         if os.path.exists(hidden_snapcraft_yaml_file):
             raise BadSnapcraftYAMLError(
