@@ -40,8 +40,10 @@ class TestParser(integration_tests.TestCase):
     def test_hidden_snapcraft_yaml(self):
         """Test hidden .snapcraft.yaml file."""
 
+        print("JOE: pwd: %s" % os.getcwd())
         args = [self.snapcraft_parser_command, '--index',
-                'http://people.canonical.com/~josepht/hidden_parts_wiki',
+                os.path.join(os.path.dirname(__file__), 'hidden_parts_wiki'),
+                '--debug',
                 '--output', 'parts.yaml']
         subprocess.check_call(args, stderr=subprocess.DEVNULL,
                               stdout=subprocess.DEVNULL)
@@ -52,7 +54,8 @@ class TestParser(integration_tests.TestCase):
         """Test hidden .snapcraft.yaml file."""
 
         args = [self.snapcraft_parser_command, '--index',
-                'http://people.canonical.com/~josepht/both_parts_wiki',
+                os.path.join(os.path.dirname(__file__), 'both_parts_wiki'),
+                '--debug',
                 '--output', 'parts.yaml']
         self.assertRaises(
             subprocess.CalledProcessError, subprocess.check_call,
