@@ -114,8 +114,9 @@ class TestCase(testtools.TestCase):
                     'Credentials cleared.\n')
         self.assertEqual(expected, output)
 
-    def register(self, snap_name):
+    def register(self, snap_name, wait=True):
         self.run_snapcraft(['register', snap_name])
         # sleep a few seconds to avoid hitting the store restriction on
         # following registrations.
-        time.sleep(10)
+        if wait:
+            time.sleep(10)
