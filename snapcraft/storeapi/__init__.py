@@ -166,13 +166,12 @@ class StoreClient():
             raise errors.InvalidCredentialsError(
                 'Unbound discharge not in the config file')
 
-        data = _upload.upload_files(snap_filename, self.updown)
-        success = data.get('success', False)
+        updown_data = _upload.upload_files(snap_filename, self.updown)
+        success = updown_data.get('success', False)
         if not success:
-            return data
+            return updown_data
 
-        result = _upload.upload_app(self.sca, snap_name, data)
-        return result
+        return self.sca.snap_push_metadata(snap_name, updown_data)
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
@@ -328,11 +327,21 @@ class SCAClient(Client):
             raise errors.StoreRegistrationError(snap_name, response)
         # TODO handle macaroon refresh
 
-    def snap_upload(self, data):
+    def snap_push_metadata(self, snap_name, updown_data):
+        data = {
+            'name': snap_name,
+            'series': constants.DEFAULT_SERIES,
+            'updown_id': updown_data['upload_id'],
+            'binary_filesize': updown_data['binary_filesize'],
+            'source_uploaded': updown_data['source_uploaded'],
+        }
         auth = _macaroon_auth(self.conf)
         response = self.post(
             'snap-push/', data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
-        return response
+        if not response.ok:
+            raise errors.StorePushError(data['name'], response)
+
+        return response.json()

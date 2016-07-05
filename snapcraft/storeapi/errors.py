@@ -17,6 +17,8 @@
 
 import re
 
+from simplejson.scanner import JSONDecodeError
+
 
 # TODO move to snapcraft.errors --elopio - 2016-06-20
 class SnapcraftError(Exception):
@@ -121,3 +123,22 @@ class StoreRegistrationError(StoreError):
         # TODO use the store provided claim url once it is there
         # LP: #1598905
         return re.sub('register-name', 'register-name-dispute', url, count=0)
+
+
+class StorePushError(StoreError):
+
+    __FMT_NOT_REGISTERED = (
+        'The snap you are trying to upload {snap_name!r} does not seem to '
+        'be registered, try to run `snapcraft register {snap_name}` and '
+        'push again.')
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        if response.status_code == 404:
+            self.fmt = self.__FMT_NOT_REGISTERED
+
+        super().__init__(snap_name=snap_name, **response_json)

@@ -50,3 +50,13 @@ def download_requests_stream(request_stream, destination, message=None):
             total_read += len(buf)
             progress_bar.update(total_read)
     progress_bar.finish()
+
+
+def wait_ticker(message, is_done_callback):
+    """Creates a wait ticker that ticks until a is_done_callback is True.
+    :param str message: Message to display while ticking.
+    :param function is_done_callback: Function to call while waiting.
+    :param search_pattern: A re.compile'd pattern to search for within
+                           matching files.
+    """
+
