@@ -201,7 +201,7 @@ class RegisterTestCase(tests.TestCase):
             self.client.register('test-too-fast')
         self.assertEqual(
             str(raised.exception),
-            'You must wait 3 minutes before trying to register your '
+            'You must wait 177 seconds before trying to register your '
             'next snap.')
 
     def test_unhandled_registration_error_path(self):

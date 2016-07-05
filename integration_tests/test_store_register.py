@@ -75,7 +75,7 @@ class RegisterTestCase(integration_tests.TestCase):
         # This test has a potential to fail if working off a slow
         # network.
         self.login(expect_success=True)
-        snap_name_1 = 'good snap'
+        snap_name_1 = 'good-snap{}'.format(uuid.uuid4().int)
         snap_name_2 = 'test-too-fast{}'.format(uuid.uuid4().int)
 
         self.register(snap_name_1, wait=False)
@@ -84,7 +84,7 @@ class RegisterTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.register, snap_name_2, wait=False)
         expected = (
-            '.*You must wait \d+ minutes before trying to register your '
+            '.*You must wait \d+ seconds before trying to register your '
             'next snap.*')
         self.assertThat(
             str(error.output), MatchesRegex(expected, flags=re.DOTALL))
