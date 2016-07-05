@@ -293,7 +293,7 @@ class Subversion(Base):
 
 class Tar(FileBase):
 
-    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+    def __init__(self, source, source_dir, source_checksum, source_tag=None,
                  source_branch=None):
         super().__init__(
             source, source_dir, source_checksum, source_tag, source_branch)
@@ -304,8 +304,7 @@ class Tar(FileBase):
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
 
-    def provision(self, dst, source_checksum, clean_target=True,
-                  keep_tarball=False):
+    def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
@@ -361,7 +360,7 @@ class Tar(FileBase):
 
 class Zip(FileBase):
 
-    def __init__(self, source, source_checksum, source_dir, source_tag=None,
+    def __init__(self, source, source_dir, source_checksum, source_tag=None,
                  source_branch=None):
         super().__init__(source, source_dir, source_checksum,
                          source_tag, source_branch)
@@ -372,8 +371,7 @@ class Zip(FileBase):
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
 
-    def provision(self, dst, source_checksum, clean_target=True,
-                  keep_zip=False):
+    def provision(self, dst, clean_target=True, keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if source_checksum:
@@ -416,9 +414,9 @@ def get(sourcedir, builddir, options):
     :param options: source options.
     """
     source_type = getattr(options, 'source_type', None)
+    source_checksum = getattr(options, 'source_checksum', None)
     source_tag = getattr(options, 'source_tag', None)
     source_branch = getattr(options, 'source_branch', None)
-    source_checksum = getattr(options, 'source_checksum', None)
 
     handler_class = _get_source_handler(source_type, options.source)
     handler = handler_class(options.source, sourcedir, source_checksum,
