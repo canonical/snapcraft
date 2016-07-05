@@ -44,6 +44,10 @@ parts:
     plugin: tar-content
     source: checksum.tar.gz
     source-checksum: d9210476aac5f367b14e513bdefdee08
+  checksum-sha1:
+    plugin: tar-content
+    source: checksum.tar.gz
+    source-checksum: 8d5a102a7e7e99f8962a4de2c348a96b7d54200b
   checksum-sha256:
     plugin: tar-content
     source: checksum.tar.gz

@@ -143,22 +143,27 @@ class FileBase(Base):
             md5 = hashlib.md5(open(checkfile, 'rb').read()).hexdigest()
             if md5 != source_checksum:
                 raise NonMatchingChecksum(
-                    "the checksum doesn't match the downloaded file")
+                    "the checksum doesn't match the file")
+        elif len(source_checksum) == 40:
+            sha1 = hashlib.sha1(open(checkfile, 'rb').read()).hexdigest()
+            if sha1 != source_checksum:
+                raise NonMatchingChecksum(
+                    "the checksum doesn't match the file")
         elif len(source_checksum) == 64:
             sha256 = hashlib.sha256(open(checkfile, 'rb').read()).hexdigest()
             if sha256 != source_checksum:
                 raise NonMatchingChecksum(
-                    "the checksum doesn't match the downloaded file")
+                    "the checksum doesn't match the file")
         elif len(source_checksum) == 96:
             sha384 = hashlib.sha384(open(checkfile, 'rb').read()).hexdigest()
             if sha384 != source_checksum:
                 raise NonMatchingChecksum(
-                    "the checksum doesn't match the downloaded file")
+                    "the checksum doesn't match the file")
         elif len(source_checksum) == 128:
             sha512 = hashlib.sha512(open(checkfile, 'rb').read()).hexdigest()
             if sha512 != source_checksum:
                 raise NonMatchingChecksum(
-                    "the checksum doesn't match the downloaded file")
+                    "the checksum doesn't match the file")
 
 
 class Bazaar(Base):
