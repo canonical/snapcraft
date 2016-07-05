@@ -126,7 +126,6 @@ def _get_origin_data(origin_dir):
     origin_data = {}
     snapcraft_yaml_file = os.path.join(origin_dir, 'snapcraft.yaml')
     hidden_snapcraft_yaml_file = os.path.join(origin_dir, '.snapcraft.yaml')
-    yaml_file = ''
 
     # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
     if not os.path.exists(snapcraft_yaml_file) and not os.path.exists(
