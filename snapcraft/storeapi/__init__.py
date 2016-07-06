@@ -34,24 +34,10 @@ from snapcraft.storeapi import (
     constants,
     errors,
 )
+from snapcraft.storeapi._upload import StatusTracker  # noqa
 
 
 logger = logging.getLogger(__name__)
-
-
-def _get_name_from_snap_file(snap_path):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output = subprocess.check_output(
-            ['unsquashfs', '-d',
-             os.path.join(temp_dir, 'squashfs-root'),
-             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
-        logger.debug(output)
-        with open(os.path.join(
-                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
-        ) as yaml_file:
-            snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
 
 
 def _macaroon_auth(conf):
@@ -157,9 +143,7 @@ class StoreClient():
     def register(self, snap_name):
         self.sca.register(snap_name, constants.DEFAULT_SERIES)
 
-    def upload(self, snap_filename):
-        snap_name = _get_name_from_snap_file(snap_filename)
-
+    def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:

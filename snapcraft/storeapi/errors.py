@@ -132,6 +132,8 @@ class StorePushError(StoreError):
         'be registered, try to run `snapcraft register {snap_name}` and '
         'push again.')
 
+    fmt = 'Received {status_code!r}: {text!r}'
+
     def __init__(self, snap_name, response):
         try:
             response_json = response.json()
@@ -140,5 +142,9 @@ class StorePushError(StoreError):
 
         if response.status_code == 404:
             self.fmt = self.__FMT_NOT_REGISTERED
+        elif response.status_code == 401 or response.status_code == 403:
+            with contextlib.suppress(AttributeError):
+                response_json['text'] = response.text
 
-        super().__init__(snap_name=snap_name, **response_json)
+        super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)
