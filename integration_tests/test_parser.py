@@ -26,7 +26,7 @@ class TestParser(integration_tests.TestCase):
     def test_parser_basic(self):
         """Test snapcraft-parser basic usage"""
 
-        args = [self.snapcraft_parser_command, '--index',
+        args = [self.snapcraft_parser_command, '-d', '--index',
                 'https://wiki.ubuntu.com/snapcraft/parts?action=raw',
                 '--output', 'parts.yaml']
         subprocess.check_call(args, stderr=subprocess.DEVNULL,
