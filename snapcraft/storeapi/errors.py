@@ -143,8 +143,10 @@ class StorePushError(StoreError):
         if response.status_code == 404:
             self.fmt = self.__FMT_NOT_REGISTERED
         elif response.status_code == 401 or response.status_code == 403:
-            with contextlib.suppress(AttributeError):
+            try:
                 response_json['text'] = response.text
+            except AttributeError:
+                response_json['text'] = 'error while pushing'
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)

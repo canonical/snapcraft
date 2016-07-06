@@ -278,7 +278,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'status_url': urllib.parse.urljoin(
+            'status_details_url': urllib.parse.urljoin(
                 'http://localhost:{}/'.format(self.server.server_port),
                 'dev/api/click-scan-complete/updown/test-upload-id'),
             'success': True
@@ -303,10 +303,11 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'message': '',
-            'application_url': 'test-application-url',
-            'revision': 'test-revision',
-            'completed': True
+            'code': 'ready_to_release',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': 'True',
+            'revision': '1',
+            'processed': True
         }
         self.wfile.write(json.dumps(response).encode())
 

@@ -17,23 +17,13 @@
 import logging
 import functools
 import os
-from time import sleep
 
-import requests
-from concurrent.futures import ThreadPoolExecutor
 from progressbar import (
-    AnimatedMarker,
     Bar,
     Percentage,
     ProgressBar,
-    UnknownLength,
 )
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
-
-from snapcraft.storeapi import (
-    constants,
-    errors
-)
 
 
 logger = logging.getLogger(__name__)
@@ -105,46 +95,3 @@ def upload_files(binary_filename, updown_client):
         binary_file.close()
 
     return result
-
-
-class StatusTracker:
-
-    __messages = {
-        'being_processed': 'Processing...',
-        'ready_to_release': 'Ready to release!',
-        'need_manual_review': 'Will need manual review...',
-    }
-
-    def __init__(self, status_details_url):
-        self.__status_details_url = status_details_url
-        self._set_dummy_status()
-
-    def track(self):
-        widgets = [self._get_message(), AnimatedMarker()]
-
-        progress_indicator = ProgressBar(widgets=widgets, maxval=UnknownLength)
-        progress_indicator.start()
-        indicator_count = 0
-        while not self.__current_status['processed']:
-            self._update_status()
-            widgets[0] = self._get_message()
-            indicator_count += 1
-            sleep(constants.SCAN_STATUS_POLL_DELAY)
-            progress_indicator.update(indicator_count)
-        progress_indicator.finish()
-
-        return self.__current_status
-
-    def _get_message(self):
-        return self.__messages.get(self.__current_status['code'],
-                                   self.__current_status['code'])
-
-    def _update_status(self):
-        response = requests.get(self.__status_details_url)
-        if response.ok:
-            self.__current_status = response.json()
-        else:
-            self._set_dummy_status()
-
-    def _set_dummy_status(self):
-        self.__current_status = {'processed': False, 'code': 'being_processed'}

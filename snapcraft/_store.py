@@ -95,13 +95,13 @@ def upload(snap_filename):
     snap_name = _get_name_from_snap_file(snap_filename)
     try:
         store = storeapi.StoreClient()
-        result = store.upload(snap_name, snap_filename)
+        tracker = store.upload(snap_name, snap_filename)
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
 
-    result = storeapi.StatusTracker(result['status_details_url']).track()
+    result = tracker.track()
     try:
         logger.info('Revision {!r} of {!r} created.'.format(
             result['revision'], snap_name))

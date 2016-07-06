@@ -226,27 +226,21 @@ class UploadTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_upload_unexisting_snap_raises_exception(self):
-        with self.assertRaises(subprocess.CalledProcessError):
-            self.client.upload('unexisting.snap')
-
     def test_upload_without_login_raises_exception(self):
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload(self.snap_path)
+            self.client.upload('test-snap', self.snap_path)
 
     def test_upload_snap(self):
         self.client.login('dummy', 'test correct password')
-        result = self.client.upload(self.snap_path)
-        self.assertTrue(result['success'])
-        self.assertEqual('test-application-url', result['application_url'])
-        self.assertEqual('test-revision', result['revision'])
+        tracker = self.client.upload('test-snap', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
 
     def test_upload_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload(self.snap_path)
+            self.client.upload('test-snap', self.snap_path)
 
 
 class MacaroonsTestCase(tests.TestCase):

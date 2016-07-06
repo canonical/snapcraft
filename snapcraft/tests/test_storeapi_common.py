@@ -19,10 +19,7 @@ from unittest.mock import Mock, call, patch
 import responses
 
 from snapcraft import tests
-from snapcraft.storeapi.common import (
-    retry,
-    store_api_call,
-)
+from snapcraft.storeapi.common import store_api_call
 
 
 class ApiCallTestCase(tests.TestCase):
@@ -119,65 +116,3 @@ class ApiCallTestCase(tests.TestCase):
                          'application/json')
         self.assertEqual(responses.calls[0].request.body,
                          json.dumps({'request': 'value'}))
-
-
-class RetryDecoratorTestCase(tests.TestCase):
-
-    def target(self, *args, **kwargs):
-        return dict(args=args, kwargs=kwargs)
-
-    def test_retry(self):
-        result, aborted = retry()(self.target)()
-        self.assertEqual(result, dict(args=(), kwargs={}))
-        self.assertEqual(aborted, False)
-
-    @patch('snapcraft.storeapi.common.time.sleep')
-    def test_retry_small_backoff(self, mock_sleep):
-        mock_terminator = Mock()
-        mock_terminator.return_value = False
-
-        delay = 0.001
-        result, aborted = retry(mock_terminator, retries=2,
-                                delay=delay)(self.target)()
-
-        self.assertEqual(result, dict(args=(), kwargs={}))
-        self.assertEqual(aborted, True)
-        self.assertEqual(mock_terminator.call_count, 3)
-        self.assertEqual(mock_sleep.mock_calls, [
-            call(delay),
-            call(delay * 2),
-        ])
-
-    def test_retry_abort(self):
-        mock_terminator = Mock()
-        mock_terminator.return_value = False
-        mock_logger = Mock()
-
-        result, aborted = retry(mock_terminator, delay=0.001, backoff=1,
-                                logger=mock_logger)(self.target)()
-
-        self.assertEqual(result, dict(args=(), kwargs={}))
-        self.assertEqual(aborted, True)
-        self.assertEqual(mock_terminator.call_count, 4)
-        self.assertEqual(mock_logger.warning.call_count, 3)
-
-    def test_retry_with_invalid_retries(self):
-        for value in (0.1, -1):
-            with self.assertRaises(ValueError) as ctx:
-                retry(retries=value)(self.target)
-            self.assertEqual(
-                str(ctx.exception),
-                'retries value must be a positive integer or zero')
-
-    def test_retry_with_negative_delay(self):
-        with self.assertRaises(ValueError) as ctx:
-            retry(delay=-1)(self.target)
-        self.assertEqual(str(ctx.exception),
-                         'delay value must be positive')
-
-    def test_retry_with_invalid_backoff(self):
-        for value in (-1, 0, 0.1):
-            with self.assertRaises(ValueError) as ctx:
-                retry(backoff=value)(self.target)
-            self.assertEqual(str(ctx.exception),
-                             'backoff value must be a positive integer')
