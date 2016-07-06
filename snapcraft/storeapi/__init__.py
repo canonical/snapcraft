@@ -18,6 +18,8 @@ import hashlib
 import json
 import logging
 import os
+import threading
+import queue
 import urllib.parse
 from time import sleep
 
@@ -343,34 +345,55 @@ class StatusTracker:
 
     def __init__(self, status_details_url):
         self.__status_details_url = status_details_url
-        self._set_dummy_status()
 
     def track(self):
-        widgets = [self._get_message(), AnimatedMarker()]
+        queued = queue.Queue()
+        thread = threading.Thread(target=self._update_status, args=(queued,))
+        thread.start()
 
+        widgets = ['Processing...', AnimatedMarker()]
         progress_indicator = ProgressBar(widgets=widgets, maxval=UnknownLength)
         progress_indicator.start()
-        indicator_count = 0
-        while not self.__current_status['processed']:
-            self._update_status()
-            widgets[0] = self._get_message()
-            indicator_count += 1
-            sleep(constants.SCAN_STATUS_POLL_DELAY)
+
+        content = {}
+        for indicator_count in _infinite_counter():
+            if not queued.empty():
+                content = queued.get() 
+                if isinstance(content, Exception):
+                    raise content
+                widgets[0] = self._get_message(content)
             progress_indicator.update(indicator_count)
+            if content.get('processed'):
+                break
+            sleep(0.1)
         progress_indicator.finish()
 
-        return self.__current_status
+        return content
 
-    def _get_message(self):
-        return self.__messages.get(self.__current_status['code'],
-                                   self.__current_status['code'])
+    def _get_message(self, content):
+        return self.__messages.get(content['code'], content['code'])
 
-    def _update_status(self):
-        response = requests.get(self.__status_details_url)
-        if response.ok:
-            self.__current_status = response.json()
-        else:
-            self._set_dummy_status()
+    def _update_status(self, queued):
+        for content in self._get_status():
+            queued.put(content)
+            if content['processed']:
+                break
+            sleep(constants.SCAN_STATUS_POLL_DELAY)
 
-    def _set_dummy_status(self):
-        self.__current_status = {'processed': False, 'code': 'being_processed'}
+    def _get_status(self):
+        connection_errors_allowed = 10
+        while connection_errors_allowed:
+            try:
+                content = requests.get(self.__status_details_url).json()
+            except (requests.ConnectionError, requests.HTTPError) as e:
+                content = {'processed': False, 'code': 'being_processed'}
+                connection_errors_count -= 1
+            yield content
+        yield e
+
+
+def _infinite_counter():
+    i = 0
+    while True:
+       yield i
+       i += 1
