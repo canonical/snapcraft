@@ -17,6 +17,7 @@
 import os
 import re
 import subprocess
+import time
 import uuid
 
 from testtools.matchers import Contains, MatchesRegex
@@ -72,6 +73,9 @@ class RegisterTestCase(integration_tests.TestCase):
         self.assertThat(str(error.output), Contains('register-name-dispute'))
 
     def test_registrations_in_a_row_fail_if_too_fast(self):
+        # Wait after the registration attempts, so the following registrations
+        # don't get the error.
+        self.addCleanup(time.sleep, 10)
         # This test has a potential to fail if working off a slow
         # network.
         self.login(expect_success=True)
