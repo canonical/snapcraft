@@ -16,7 +16,6 @@
 
 import logging
 import os
-import subprocess
 from unittest import mock
 
 import fixtures

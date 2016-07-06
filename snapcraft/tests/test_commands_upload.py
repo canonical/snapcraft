@@ -23,7 +23,6 @@ from unittest import mock
 import docopt
 import fixtures
 
-import snapcraft._store
 from snapcraft import (
     storeapi,
     tests

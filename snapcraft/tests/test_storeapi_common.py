@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import responses
 
