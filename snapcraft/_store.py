@@ -102,9 +102,13 @@ def upload(snap_filename):
         raise
 
     result = tracker.track()
-
-    logger.info('Revision {!r} of {!r} created.'.format(
-        result['revision'], snap_name))
+    # This is workaround until LP: #1599875 is solved
+    if 'revision' in result: 
+        logger.info('Revision {!r} of {!r} created.'.format(
+            result['revision'], snap_name))
+    else:
+        logger.info('Uploaded {!r}'.format(snap_name))
+    tracker.raise_for_code()
 
 
 def download(snap_name, channel, download_path, arch):

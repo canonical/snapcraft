@@ -150,3 +150,25 @@ class StorePushError(StoreError):
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)
+
+class StoreReviewError(StoreError):
+
+    __FMT_NEED_MANUAL_REVIEW = (
+        'Publishing checks failed.\n'
+        'To release this to stable channel please request a review on '
+        'the snapcraft list.\n'
+        'Use devmode in the edge or beta channels to disable confinement.')
+
+    __FMT_PROCESSING_ERROR = (
+        'There has been a problem while analyzing the snap, check the snap '
+        'and try to push again.')
+
+    __messages = {
+        'need_manual_review': __FMT_NEED_MANUAL_REVIEW,
+        'processing_error': __FMT_PROCESSING_ERROR,
+    }
+
+    def __init__(self, result):
+        self.fmt = self.__messages[result['code']]
+        super().__init__()
+

@@ -342,7 +342,13 @@ class StatusTracker:
         'being_processed': 'Processing...',
         'ready_to_release': 'Ready to release!',
         'need_manual_review': 'Will need manual review...',
+        'processing_error': 'Error while processing...',
     }
+
+    __error_codes = (
+        'processing_error',
+        'need_manual_review',
+    )
 
     def __init__(self, status_details_url):
         self.__status_details_url = status_details_url
@@ -362,6 +368,7 @@ class StatusTracker:
                 content = queue.get()
                 if isinstance(content, Exception):
                     raise content
+                print(content)
                 widgets[0] = self._get_message(content)
             progress_indicator.update(indicator_count)
             if content.get('processed'):
@@ -369,7 +376,13 @@ class StatusTracker:
             sleep(0.1)
         progress_indicator.finish()
 
+        self.__content = content
+
         return content
+
+    def raise_for_code(self):
+        if any(self.__content['code'] == k for k in self.__error_codes):
+            raise errors.StoreReviewError(self.__content)
 
     def _get_message(self, content):
         return self.__messages.get(content['code'], content['code'])
