@@ -121,6 +121,35 @@ maintainer: none
         self.wfile.write(response.encode())
 
 
+class FakePartsWikiOriginServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiOriginRequestHandler)
+
+
+class FakePartsWikiOriginRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting part origin')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = """
+parts:
+  somepart:
+    source: https://github.com/someuser/somepart.git
+    plugin: nil
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
 class FakeSSOServer(http.server.HTTPServer):
 
     def __init__(self, server_address):

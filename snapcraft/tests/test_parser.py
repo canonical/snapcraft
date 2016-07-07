@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
 from unittest import mock
 
+import requests
 import yaml
 
 from snapcraft.internal.parser import (
@@ -617,3 +617,33 @@ project-part: 'main2'
         }
         main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
         self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_with_fake_origin(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        # TODO: update this once we start encoding the origin_dir
+        origin_dir = os.path.join('/tmp', 'somepart')
+        os.makedirs(origin_dir, exist_ok=True)
+
+        # Create a fake snapcraft.yaml for _get_origin_data() to parse
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'),
+                  'w') as fp:
+            text = requests.get(origin_url).text
+            fp.write(text)
+
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part('somepart')
+        self.assertTrue(part is not None)

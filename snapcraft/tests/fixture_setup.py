@@ -129,6 +129,17 @@ class FakePartsWiki(fixtures.Fixture):
             'no_proxy', 'localhost,127.0.0.1'))
 
 
+class FakePartsWikiOrigin(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_parts_wiki_origin_fixture = FakePartsWikiOriginRunning()
+        self.useFixture(self.fake_parts_wiki_origin_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+
 class FakeParts(fixtures.Fixture):
 
     def setUp(self):
@@ -200,6 +211,11 @@ class _FakeServerRunning(fixtures.Fixture):
         self.server.shutdown()
         self.server.socket.close()
         thread.join()
+
+
+class FakePartsWikiOriginRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakePartsWikiOriginServer
 
 
 class FakePartsWikiRunning(_FakeServerRunning):
