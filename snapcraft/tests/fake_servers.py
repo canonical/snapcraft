@@ -117,7 +117,6 @@ maintainer: none
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
             self.send_header('Content-Length', len(response.encode()))
-        self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(response.encode())
 
