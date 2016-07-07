@@ -5,91 +5,90 @@ description: |
     dependencies that can stress test the depedency resolution
     code in Snapcraft.
 version: 1.0
-icon: icon.svg
 confinement: strict
 
 parts:
     root:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
     a:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [root]
     b:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [root]
     c:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [root]
     aa:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [a]
     ab:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [a]
     ac:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [a]
     ba:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [b]
     bb:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [b]
     bc:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [b]
     ca:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [c]
     cb:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [c]
     cc:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [c]
     x:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [aa, ba, ca]
     y:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [ab, bb, cb]
     z:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [ac, bc, cc]
     last:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [x, y, z]
