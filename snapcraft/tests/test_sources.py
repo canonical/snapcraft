@@ -22,6 +22,7 @@ import unittest.mock
 import fixtures
 
 import tarfile
+import zipfile
 
 from snapcraft.internal import sources
 from snapcraft import tests
@@ -70,7 +71,7 @@ class TestTar(tests.TestCase):
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake compressed file', tar_file.read())
 
-    def test_checksum_of_tarball(self, sources):
+    def test_checksum_of_tarball(self):
         source_checksum = '82bb970c5a6c2e9a1f6e113c52f03026'
         tarball_check = tarfile.open("checksum.tar", "w")
         open(os.path.join('Filetogointar'), 'w').close()
@@ -78,8 +79,8 @@ class TestTar(tests.TestCase):
         tarball_check.close()
         os.remove('Filetogointar')
 
-        sources.check_checksum_determine_format(
-            source_checksum, "checksum.tar")
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.tar")
 
 
 class TestZip(tests.TestCase):
@@ -126,6 +127,17 @@ class TestZip(tests.TestCase):
 
         with open(zip_download, 'r') as zip_file:
             self.assertEqual('Test fake compressed file', zip_file.read())
+
+    def test_checksum_of_zip(self):
+        source_checksum = '82bb970c5a6c2e9a1f6e113c52f03026'
+        open(os.path.join('Filetogoinzip'), 'w').close()
+        zipfile_check = zipfile.ZipFile('checksum.zip', 'w')
+        zipfile_check.write('Filetogoinzip')
+        zipfile_check.close()
+        os.remove('Filetogoinzip')
+
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
 
 
 class SourceTestCase(tests.TestCase):

@@ -91,12 +91,6 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
-class NonMatchingChecksum(Exception):
-
-    def __init__(self, message):
-        self.message = message
-
-
 class Base:
 
     def __init__(self, source, source_dir, source_checksum=None,
@@ -181,7 +175,7 @@ class FileBase(Base):
                 open(checkfile, 'rb').read()).hexdigest()
 
         if chksum != source_checksum:
-            raise NonMatchingChecksum(
+            raise IncompatibleOptionsError(
                 "the checksum doesn't match the file")
 
 
