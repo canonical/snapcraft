@@ -16,21 +16,14 @@
 
 import logging
 import functools
-import time
 import os
 
-import requests
-from concurrent.futures import ThreadPoolExecutor
-from progressbar import (ProgressBar, Percentage, Bar, AnimatedMarker)
+from progressbar import (
+    Bar,
+    Percentage,
+    ProgressBar,
+)
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
-
-from .common import (
-    retry,
-)
-from snapcraft.storeapi import (
-    constants,
-    errors
-)
 
 
 logger = logging.getLogger(__name__)
@@ -102,137 +95,3 @@ def upload_files(binary_filename, updown_client):
         binary_file.close()
 
     return result
-
-
-def upload_app(sca_client, name, upload_data):
-    """Request a new upload to be created for a given upload_id."""
-    result = dict(success=False)
-
-    data = {
-        'series': constants.DEFAULT_SERIES,
-        'updown_id': upload_data['upload_id'],
-        'binary_filesize': upload_data['binary_filesize'],
-        'source_uploaded': upload_data['source_uploaded'],
-    }
-    try:
-        result = _upload_files(sca_client, name, data, result)
-    except errors.InvalidCredentialsError:
-        raise
-    except Exception as err:
-        logger.exception(
-            'There was an error uploading the application.')
-        result['errors'] = [str(err)]
-
-    return result
-
-
-def _upload_files(sca_client, name, data, result):
-    data['name'] = name
-    response = sca_client.snap_upload(data)
-    if response.ok:
-        response_data = response.json()
-        status_url = response_data['status_url']
-
-        # This is just a waiting game, so we'll show an indeterminate
-        # AnimatedMarker for it.
-        progress_indicator = ProgressBar(
-            widgets=['Checking package status... ', AnimatedMarker()],
-            maxval=7)
-        progress_indicator.start()
-
-        # Execute the package scan in another thread so we can update the
-        # progress indicator.
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(get_scan_data, sca_client, status_url)
-
-            count = 0
-            while not future.done():
-                # Annoyingly, there doesn't seem to be a way to actually
-                # make a progress indicator that will go on forever, so we
-                # need to restart this one each time we reach the end of
-                # its animation.
-                if count >= 7:
-                    progress_indicator.start()
-                    count = 0
-
-                # Actually update the progress indicator
-                progress_indicator.update(count)
-                count += 1
-                time.sleep(0.15)
-
-            # Grab the results from the package scan
-            completed, data = future.result()
-
-        progress_indicator.finish()
-
-        if completed:
-            message = data.get('message', '')
-            if not message:
-                result['success'] = True
-                result['revision'] = data.get('revision')
-            else:
-                result['errors'] = [message]
-        else:
-            result['errors'] = [
-                'Package scan took too long.',
-            ]
-            status_web_url = response_data.get('web_status_url')
-            if status_web_url:
-                result['errors'].append(
-                    'Please check the status later at: {}.'.format(
-                        status_web_url),
-                )
-        result['application_url'] = data.get('application_url', '')
-    else:
-        logger.error(
-            'There was an error uploading the application.\n'
-            'Reason: {}\n'
-            'Text: {}'.format(response.reason, response.text))
-        result['errors'] = [response.text]
-    return result
-
-
-def is_scan_completed(response):
-    """Return True if the response indicates the scan process completed."""
-    if response is None:
-        # To cope with spurious connection failures lacking a proper response:
-        # either we'll retry and succeed or we fail for all retries and report
-        # an error.
-        return False
-    if response.ok:
-        return response.json().get('completed', False)
-    return False
-
-
-def get_scan_status(sca_client, url):
-    try:
-        resp = sca_client.get(url)
-        return resp
-    except (requests.ConnectionError, requests.HTTPError):
-        # Something went wrong and we couldn't acquire the status. Upper
-        # level (is_scan_completed) will deal with the None response
-        # meaning we don't know the status. This avoid a spurious
-        # connection error breaking an upload for a wrong reason.
-        return None
-
-
-def get_scan_data(sca_client, status_url):
-    """Return metadata about the state of the upload scan process."""
-    # initial retry after 5 seconds
-    # linear backoff after that
-    # abort after 5 retries
-    @retry(terminator=is_scan_completed,
-           retries=constants.SCAN_STATUS_POLL_RETRIES,
-           delay=constants.SCAN_STATUS_POLL_DELAY,
-           backoff=1)
-    def get_status():
-        return get_scan_status(sca_client, status_url)
-
-    response, aborted = get_status()
-
-    completed = False
-    data = {}
-    if not aborted:
-        completed = is_scan_completed(response)
-        data = response.json()
-    return completed, data
