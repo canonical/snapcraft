@@ -102,11 +102,9 @@ def upload(snap_filename):
         raise
 
     result = tracker.track()
-    try:
-        logger.info('Revision {!r} of {!r} created.'.format(
-            result['revision'], snap_name))
-    except KeyError:
-        print(result)
+
+    logger.info('Revision {!r} of {!r} created.'.format(
+        result['revision'], snap_name))
 
 
 def download(snap_name, channel, download_path, arch):
