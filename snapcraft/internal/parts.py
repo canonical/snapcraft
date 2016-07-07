@@ -73,7 +73,8 @@ class _Update(_Base):
             return yaml.load(headers_file)
 
     def _save_headers(self):
-        headers = {'If-None-Match': self._request.headers.get('ETag')}
+        headers = {
+            'If-Modified-Since': self._request.headers.get('Last-Modified')}
 
         with open(self._headers_yaml, 'w') as headers_file:
             headers_file.write(yaml.dump(headers))
