@@ -128,9 +128,7 @@ class StoreRegistrationError(StoreError):
 class StorePushError(StoreError):
 
     __FMT_NOT_REGISTERED = (
-        'The snap you are trying to upload {snap_name!r} does not seem to '
-        'be registered, try to run `snapcraft register {snap_name}` and '
-        'push again.')
+        'Sorry, try `snapcraft register {snap_name}` before pushing again.')
 
     fmt = 'Received {status_code!r}: {text!r}'
 

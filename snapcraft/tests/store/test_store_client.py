@@ -267,6 +267,15 @@ class UploadTestCase(tests.TestCase):
         with self.assertRaises(errors.StoreReviewError):
             tracker.raise_for_code()
 
+    def test_upload_unregistered_snap(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StorePushError) as raised:
+            self.client.upload('test-snap-unregistered', self.snap_path)
+        self.assertEqual(
+            str(raised.exception),
+            'Sorry, try `snapcraft register '
+            'test-snap-unregistered` before pushing again.')
+
     def test_upload_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')

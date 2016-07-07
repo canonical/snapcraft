@@ -290,23 +290,31 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         logger.debug(
             'Handling registration request with content {}'.format(data))
 
+        response_code = 202
+        details_path = 'details/upload-id/good-snap'
         if data['name'] == 'test-review-snap':
             details_path = 'details/upload-id/review-snap'
-        else:
-            details_path = 'details/upload-id/good-snap'
+        elif data['name'] == 'test-snap-unregistered':
+            response_code = 404
 
         logger.debug('Handling upload request')
-        self.send_response(202)
-        self.send_header('Content-Type', 'application/json')
+        self.send_response(response_code)
+        if response_code == 404:
+            self.send_header('Content-Type', 'text/plain')
+            data = b''
+        else:
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'status_details_url': urllib.parse.urljoin(
+                    'http://localhost:{}/'.format(self.server.server_port),
+                    details_path
+                    ),
+                'success': True
+            }
+            data = json.dumps(response).encode()
         self.end_headers()
-        response = {
-            'status_details_url': urllib.parse.urljoin(
-                'http://localhost:{}/'.format(self.server.server_port),
-                details_path
-                ),
-            'success': True
-        }
-        self.wfile.write(json.dumps(response).encode())
+
+        self.wfile.write(data)
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
