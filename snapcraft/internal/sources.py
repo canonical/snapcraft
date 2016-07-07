@@ -134,32 +134,52 @@ class FileBase(Base):
         elif os.path.isfile(source_checksum):
             with open(source_checksum, "r") as source_file:
                 source_checksum = str(source_file.read()).rstrip()
-            self.check_checksum(self, source_checksum, checkfile)
+            self.check_checksum_determine_type(
+                source_checksum, checkfile)
         elif len(source_checksum) == 32 | 40 | 56 | 64 | 96 | 128:
             self.check_checksum_determine_type(
-                self, source_checksum, checkfile)
+                source_checksum, checkfile)
 
     def check_checksum_determine_type(self, source_checksum, checkfile):
         if len(source_checksum) == 32:
-            self.check_checksum(self, source_checksum, checkfile, "md5")
+            self.check_checksum_assign(
+                source_checksum, checkfile, "md5")
         elif len(source_checksum) == 40:
-            self.check_checksum(self, source_checksum, checkfile, "sha1")
+            self.check_checksum_assign(
+                source_checksum, checkfile, "sha1")
         elif len(source_checksum) == 56:
-            self.check_checksum(
-                self, source_checksum, checkfile, "sha224")
+            self.check_checksum_assign(
+                source_checksum, checkfile, "sha224")
         elif len(source_checksum) == 64:
-            self.check_checksum(
-                self, source_checksum, checkfile, "sha256")
+            self.check_checksum_assign(
+                source_checksum, checkfile, "sha256")
         elif len(source_checksum) == 96:
-            self.check_checksum(
-                self, source_checksum, checkfile, "sha384")
+            self.check_checksum_assign(
+                source_checksum, checkfile, "sha384")
         elif len(source_checksum) == 128:
-            self.check_checksum(
-                self, source_checksum, checkfile, "sha512")
+            self.check_checksum_assign(
+                source_checksum, checkfile, "sha512")
 
-    def check_checksum(self, source_checksum, checkfile, chksum_format):
-        chksum = hashlib.chksum_format(
-            open(checkfile, 'rb').read()).hexdigest()
+    def check_checksum_assign(self, source_checksum, checkfile, chksum_format):
+        if chksum_format == "md5":
+            chksum = hashlib.md5(
+                open(checkfile, 'rb').read()).hexdigest()
+        elif chksum_format == "sha1":
+            chksum = hashlib.sha1(
+                open(checkfile, 'rb').read()).hexdigest()
+        elif chksum_format == "sha224":
+            chksum = hashlib.sha224(
+                open(checkfile, 'rb').read()).hexdigest()
+        elif chksum_format == "sha256":
+            chksum = hashlib.sha256(
+                open(checkfile, 'rb').read()).hexdigest()
+        elif chksum_format == "sha384":
+            chksum = hashlib.sha384(
+                open(checkfile, 'rb').read()).hexdigest()
+        elif chksum_format == "sha512":
+            chksum = hashlib.sha512(
+                open(checkfile, 'rb').read()).hexdigest()
+
         if chksum != source_checksum:
             raise NonMatchingChecksum(
                 "the checksum doesn't match the file")
@@ -318,7 +338,8 @@ class Tar(FileBase):
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            self.pre_check_checksum(self, self.source_checksum, tarball)
+            self.check_checksum_determine_format(
+                self.source_checksum, tarball)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -384,7 +405,8 @@ class Zip(FileBase):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            self.pre_check_checksum(self, self.source_checksum, zip)
+            self.check_checksum_determine_format(
+                self.source_checksum, zip)
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
