@@ -103,7 +103,7 @@ def upload(snap_filename):
 
     result = tracker.track()
     # This is workaround until LP: #1599875 is solved
-    if 'revision' in result: 
+    if 'revision' in result:
         logger.info('Revision {!r} of {!r} created.'.format(
             result['revision'], snap_name))
     else:

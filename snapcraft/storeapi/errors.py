@@ -149,6 +149,7 @@ class StorePushError(StoreError):
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)
 
+
 class StoreReviewError(StoreError):
 
     __FMT_NEED_MANUAL_REVIEW = (
@@ -169,4 +170,3 @@ class StoreReviewError(StoreError):
     def __init__(self, result):
         self.fmt = self.__messages[result['code']]
         super().__init__()
-
