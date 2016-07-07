@@ -37,4 +37,5 @@ class DownloadTestCase(integration_tests.TestCase):
         project_dir = 'kernel-download'
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'os.snap'), FileExists())
+            os.path.join(project_dir, 'parts', 'kernel', 'src', 'os.snap'),
+            FileExists())
