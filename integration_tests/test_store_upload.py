@@ -16,11 +16,13 @@
 
 import fileinput
 import os
+import re
 import subprocess
 import uuid
 
 from testtools.matchers import (
     FileExists,
+    MatchesRegex,
 )
 
 import integration_tests
@@ -96,6 +98,5 @@ class UploadTestCase(integration_tests.TestCase):
             os.path.join(project_dir, snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path], project_dir)
-        self.assertIn(
-            'Application uploaded successfully (as revision ', output)
-        self.assertIn('Please check out the application at: ', output)
+        expected = r'.*Revision \'\d+\' of {!r} created..*'.format(new_name)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
