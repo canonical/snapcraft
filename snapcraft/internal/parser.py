@@ -37,6 +37,7 @@ import sys
 import textwrap
 import urllib
 import yaml
+from yaml.scanner import ScannerError
 
 from docopt import docopt
 
@@ -96,8 +97,11 @@ def _update_after_parts(partname, after_parts):
 
 def _get_origin_data(origin_dir):
     origin_data = {}
-    with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
-        origin_data = yaml.load(fp)
+    try:
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
+            origin_data = yaml.load(fp)
+    except ScannerError as e:
+        raise InvalidEntryError(e)
 
     return origin_data
 
@@ -216,16 +220,25 @@ def _process_index(output):
 
     output = output.replace(b"{{{", b"").replace(b"}}}", b"")
 
-    all_data = yaml.load_all(output)
-    for data in all_data:
-        try:
-            parts_list, after_parts = _process_entry(data)
-        except InvalidEntryError as e:
-            logger.warning('Invalid wiki entry: {}'.format(e))
-            continue
+    # split the wiki into an array of entries to allow the parser to
+    # proceed when invalid yaml is found.
+    entries = output.split(b'\n---\n')
+    for entry in entries:
+        print("JOE: entry: {}".format(entry))
+        if entry != b'':
+            try:
+                data = yaml.load(entry)
+            except ScannerError as e:
+                logger.warning(
+                    'Bad wiki entry, possibly malformed YAML: {}'.format(e))
+            try:
+                parts_list, after_parts = _process_entry(data)
+            except InvalidEntryError as e:
+                logger.warning('Invalid wiki entry: {}'.format(e))
+                continue
 
-        if is_valid_parts_list(parts_list, after_parts):
-            master_parts_list.update(parts_list)
+            if is_valid_parts_list(parts_list, after_parts):
+                master_parts_list.update(parts_list)
 
     return master_parts_list
 

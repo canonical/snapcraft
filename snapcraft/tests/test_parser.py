@@ -556,3 +556,45 @@ description: example
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_partial_processing_for_malformed_yaml(self,
+                                                   mock_get,
+                                                   mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description:
+  example
+
+  Usage
+    blahblahblah
+project-part: 'main'
+---
+maintainer: John Doeson <john.doeson@example.com>
+origin: lp:snapcraft-parser-example
+description:
+  example
+
+  Usage:
+    blahblahblah
+project-part: 'main2'
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'main2': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())

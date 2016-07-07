@@ -90,6 +90,38 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(yaml.dump(response).encode())
 
 
+class FakePartsWikiServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiRequestHandler)
+
+
+class FakePartsWikiRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = """
+---
+origin: https://github.com/sergiusens/curl.git
+project-part: curl
+description:
+  Description here
+maintainer: none
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.send_header('ETag', '1111')
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
 class FakeSSOServer(http.server.HTTPServer):
 
     def __init__(self, server_address):
