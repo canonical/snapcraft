@@ -26,8 +26,7 @@ from snapcraft.internal.parser import (
     PARTS_FILE,
     main,
 )
-from snapcraft.tests import TestCase
-
+from snapcraft.tests import TestCase, fixture_setup
 
 TEST_OUTPUT_PATH = os.path.join(os.getcwd(), 'test_output.wiki')
 
@@ -596,4 +595,25 @@ project-part: 'main2'
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_interactions_with_fake(self,
+                                         mock_get,
+                                         mock_get_origin_data):
+
+        fixture = fixture_setup.FakePartsWiki()
+        self.useFixture(fixture)
+
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'curl': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
         self.assertEqual(1, _get_part_list_count())
