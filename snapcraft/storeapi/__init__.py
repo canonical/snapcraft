@@ -368,7 +368,6 @@ class StatusTracker:
                 content = queue.get()
                 if isinstance(content, Exception):
                     raise content
-                print(content)
                 widgets[0] = self._get_message(content)
             progress_indicator.update(indicator_count)
             if content.get('processed'):
