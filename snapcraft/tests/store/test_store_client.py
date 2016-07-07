@@ -16,7 +16,6 @@
 
 import logging
 import os
-import subprocess
 from unittest import mock
 
 import fixtures
@@ -220,33 +219,69 @@ class UploadTestCase(tests.TestCase):
         self.snap_path = os.path.join(
             os.path.dirname(tests.__file__), 'data',
             'test-snap.snap')
-        patcher = mock.patch(
+        # These should eventually converge to the same module
+        pbars = (
             'snapcraft.storeapi._upload.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_upload_unexisting_snap_raises_exception(self):
-        with self.assertRaises(subprocess.CalledProcessError):
-            self.client.upload('unexisting.snap')
+            'snapcraft.storeapi.ProgressBar',
+        )
+        for pbar in pbars:
+            patcher = mock.patch(pbar, new=tests.SilentProgressBar)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     def test_upload_without_login_raises_exception(self):
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload(self.snap_path)
+            self.client.upload('test-snap', self.snap_path)
 
     def test_upload_snap(self):
         self.client.login('dummy', 'test correct password')
-        result = self.client.upload(self.snap_path)
-        self.assertTrue(result['success'])
-        self.assertEqual('test-application-url', result['application_url'])
-        self.assertEqual('test-revision', result['revision'])
+        tracker = self.client.upload('test-snap', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        result = tracker.track()
+        expected_result = {
+            'code': 'ready_to_release',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': True,
+            'processed': True
+        }
+        self.assertEqual(result, expected_result)
+
+        # This should not raise
+        tracker.raise_for_code()
+
+    def test_upload_snap_requires_review(self):
+        self.client.login('dummy', 'test correct password')
+        tracker = self.client.upload('test-review-snap', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        result = tracker.track()
+        expected_result = {
+            'code': 'need_manual_review',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': False,
+            'processed': True
+        }
+        self.assertEqual(result, expected_result)
+
+        with self.assertRaises(errors.StoreReviewError):
+            tracker.raise_for_code()
+
+    def test_upload_unregistered_snap(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StorePushError) as raised:
+            self.client.upload('test-snap-unregistered', self.snap_path)
+        self.assertEqual(
+            str(raised.exception),
+            'Sorry, try `snapcraft register '
+            'test-snap-unregistered` before pushing again.')
 
     def test_upload_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload(self.snap_path)
+            self.client.upload('test-snap', self.snap_path)
 
 
 class MacaroonsTestCase(tests.TestCase):
