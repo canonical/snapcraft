@@ -71,7 +71,8 @@ class TestCase(testtools.TestCase):
     def copy_project_to_tmp(self, project_dir):
         tmp_project_dir = os.path.join(self.path, project_dir)
         shutil.copytree(
-            os.path.join(self.snaps_dir, project_dir), tmp_project_dir)
+            os.path.join(self.snaps_dir, project_dir), tmp_project_dir,
+            symlinks=True)
         return tmp_project_dir
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd):

@@ -69,6 +69,7 @@ import re
 import subprocess
 import tempfile
 import zipfile
+import glob
 
 from snapcraft.internal import common
 from snapcraft.internal.indicators import download_requests_stream
@@ -325,17 +326,26 @@ class Zip(FileBase):
 class Local(Base):
 
     def pull(self):
-        if os.path.islink(self.source_dir):
+        if os.path.islink(self.source_dir) or os.path.isfile(self.source_dir):
             os.remove(self.source_dir)
-        elif (os.path.isdir(self.source_dir) and
-              not os.listdir(self.source_dir)):
-            os.rmdir(self.source_dir)
-        elif os.path.exists(self.source_dir):
-            raise EnvironmentError('Cannot pull to target {!r}'.format(
-                self.source_dir))
+        elif os.path.isdir(self.source_dir):
+            shutil.rmtree(self.source_dir)
 
         source_abspath = os.path.abspath(self.source)
-        os.symlink(source_abspath, self.source_dir)
+
+        def ignore(directory, files):
+            if directory is source_abspath:
+                snaps = glob.glob(os.path.join(directory, '*.snap'))
+                if snaps:
+                    snaps = [os.path.basename(s) for s in snaps]
+                    return common.SNAPCRAFT_FILES + snaps
+                else:
+                    return common.SNAPCRAFT_FILES
+            else:
+                return []
+
+        shutil.copytree(source_abspath, self.source_dir,
+                        copy_function=common.link_or_copy, ignore=ignore)
 
 
 def get(sourcedir, builddir, options):
