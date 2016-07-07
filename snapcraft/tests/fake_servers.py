@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 import json
 import logging
 import http.server
@@ -44,9 +45,17 @@ class FakePartsServer(http.server.HTTPServer):
 
 class FakePartsRequestHandler(BaseHTTPRequestHandler):
 
+    _date_format = '%a, %d %b %Y %H:%M:%S GMT'
+    _parts_date = datetime(2016, 7, 7, 10, 0, 20)
+
     def do_GET(self):
         logger.debug('Handling getting parts')
-        if self.headers.get('If-None-Match') == '1111':
+        if 'If-Modified-Since' in self.headers:
+            ims_date = datetime.strptime(
+                self.headers['If-Modified-Since'], self._date_format)
+        else:
+            ims_date = None
+        if ims_date is not None and ims_date >= self._parts_date:
             self.send_response(304)
             response = {}
         else:
@@ -74,6 +83,8 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
             self.send_header('Content-Length', '1000')
+        self.send_header(
+            'Last-Modified', self._parts_date.strftime(self._date_format))
         self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(yaml.dump(response).encode())
