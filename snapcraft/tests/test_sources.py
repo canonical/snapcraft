@@ -21,6 +21,8 @@ import unittest.mock
 
 import fixtures
 
+import tarfile
+
 from snapcraft.internal import sources
 from snapcraft import tests
 
@@ -67,6 +69,17 @@ class TestTar(tests.TestCase):
         mock_prov.assert_called_once_with(dest_dir)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake compressed file', tar_file.read())
+
+    def test_checksum_of_tarball(self, sources):
+        source_checksum = '82bb970c5a6c2e9a1f6e113c52f03026'
+        tarball_check = tarfile.open("checksum.tar", "w")
+        open(os.path.join('Filetogointar'), 'w').close()
+        tarball_check.add('Filetogointar')
+        tarball_check.close()
+        os.remove('Filetogointar')
+
+        sources.check_checksum_determine_format(
+            source_checksum, "checksum.tar")
 
 
 class TestZip(tests.TestCase):
