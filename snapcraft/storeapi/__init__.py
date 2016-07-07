@@ -15,13 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import hashlib
+import itertools
 import json
 import logging
 import os
-import threading
-import queue
 import urllib.parse
 from time import sleep
+from threading import Thread
+from queue import Queue
 
 import pymacaroons
 import requests
@@ -347,8 +348,8 @@ class StatusTracker:
         self.__status_details_url = status_details_url
 
     def track(self):
-        queued = queue.Queue()
-        thread = threading.Thread(target=self._update_status, args=(queued,))
+        queue = Queue()
+        thread = Thread(target=self._update_status, args=(queue,))
         thread.start()
 
         widgets = ['Processing...', AnimatedMarker()]
@@ -356,9 +357,9 @@ class StatusTracker:
         progress_indicator.start()
 
         content = {}
-        for indicator_count in _infinite_counter():
-            if not queued.empty():
-                content = queued.get() 
+        for indicator_count in itertools.count():
+            if not queue.empty():
+                content = queue.get()
                 if isinstance(content, Exception):
                     raise content
                 widgets[0] = self._get_message(content)
@@ -373,9 +374,9 @@ class StatusTracker:
     def _get_message(self, content):
         return self.__messages.get(content['code'], content['code'])
 
-    def _update_status(self, queued):
+    def _update_status(self, queue):
         for content in self._get_status():
-            queued.put(content)
+            queue.put(content)
             if content['processed']:
                 break
             sleep(constants.SCAN_STATUS_POLL_DELAY)
@@ -387,13 +388,6 @@ class StatusTracker:
                 content = requests.get(self.__status_details_url).json()
             except (requests.ConnectionError, requests.HTTPError) as e:
                 content = {'processed': False, 'code': 'being_processed'}
-                connection_errors_count -= 1
+                connection_errors_allowed -= 1
             yield content
         yield e
-
-
-def _infinite_counter():
-    i = 0
-    while True:
-       yield i
-       i += 1
