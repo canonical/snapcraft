@@ -224,7 +224,6 @@ def _process_index(output):
     # proceed when invalid yaml is found.
     entries = output.split(b'\n---\n')
     for entry in entries:
-        print("JOE: entry: {}".format(entry))
         if entry != b'':
             try:
                 data = yaml.load(entry)

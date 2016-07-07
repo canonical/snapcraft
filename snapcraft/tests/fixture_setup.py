@@ -119,6 +119,7 @@ class FakeTerminal(fixtures.Fixture):
 
 
 class FakePartsWiki(fixtures.Fixture):
+
     def setUp(self):
         super().setUp()
 

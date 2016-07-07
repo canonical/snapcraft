@@ -64,7 +64,6 @@ class TestParser(TestCase):
         subpart = 'subpart'
 
         result = _get_namespaced_partname(partname, subpart)
-        logging.warn('JOE: result: {}'.format(result))
 
         self.assertEqual('{p}{s}{sp}'.format(p=partname,
                                              s=PART_NAMESPACE_SEP,
