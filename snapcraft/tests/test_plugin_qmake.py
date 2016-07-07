@@ -162,11 +162,11 @@ class QMakeTestCase(tests.TestCase):
     def test_build_referencing_sourcedir_if_no_subdir(self):
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['qmake', plugin.sourcedir], cwd=plugin.builddir,
+            mock.call(['qmake'], cwd=plugin.builddir,
                       env=mock.ANY),
             mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
@@ -178,13 +178,11 @@ class QMakeTestCase(tests.TestCase):
 
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
-        sourcedir = os.path.join(
-            plugin.sourcedir, plugin.options.source_subdir)
         self.run_mock.assert_has_calls([
-            mock.call(['qmake', sourcedir], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['qmake'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'INSTALL_ROOT={}'.format(plugin.installdir)],
@@ -195,7 +193,7 @@ class QMakeTestCase(tests.TestCase):
 
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
         path_to_pro_file = os.path.join(plugin.sourcedir, 'project_file.pro')
@@ -213,7 +211,7 @@ class QMakeTestCase(tests.TestCase):
 
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
         path_to_pro_file = os.path.join(
@@ -232,11 +230,11 @@ class QMakeTestCase(tests.TestCase):
 
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['qmake', '-foo', plugin.sourcedir], cwd=plugin.builddir,
+            mock.call(['qmake', '-foo'], cwd=plugin.builddir,
                       env=mock.ANY),
             mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
@@ -246,15 +244,15 @@ class QMakeTestCase(tests.TestCase):
     def test_build_with_libs_and_includes_in_installdir(self):
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         os.makedirs(os.path.join(plugin.installdir, 'include'))
         os.makedirs(os.path.join(plugin.installdir, 'lib'))
         plugin.build()
 
         self.run_mock.assert_has_calls([
             mock.call(['qmake', 'LIBS+="-L{}/lib"'.format(plugin.installdir),
-                       'INCLUDEPATH+="{}/include"'.format(plugin.installdir),
-                       plugin.sourcedir], cwd=plugin.builddir, env=mock.ANY),
+                       'INCLUDEPATH+="{}/include"'.format(plugin.installdir)],
+                      cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'INSTALL_ROOT={}'.format(plugin.installdir)],
@@ -263,7 +261,7 @@ class QMakeTestCase(tests.TestCase):
     def test_build_with_libs_and_includes_in_stagedir(self):
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         os.makedirs(os.path.join(plugin.project.stage_dir, 'include'))
         os.makedirs(os.path.join(plugin.project.stage_dir, 'lib'))
         plugin.build()
@@ -271,8 +269,8 @@ class QMakeTestCase(tests.TestCase):
         self.run_mock.assert_has_calls([
             mock.call(
                 ['qmake', 'LIBS+="-L{}/lib"'.format(plugin.project.stage_dir),
-                 'INCLUDEPATH+="{}/include"'.format(plugin.project.stage_dir),
-                 plugin.sourcedir], cwd=plugin.builddir, env=mock.ANY),
+                 'INCLUDEPATH+="{}/include"'.format(plugin.project.stage_dir)],
+                cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'INSTALL_ROOT={}'.format(plugin.installdir)],
@@ -282,7 +280,7 @@ class QMakeTestCase(tests.TestCase):
         self.options.qt_version = 'qt4'
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(os.path.dirname(plugin.builddir))
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
         self.assert_expected_environment({'QT_SELECT': 'qt4'})
@@ -291,7 +289,7 @@ class QMakeTestCase(tests.TestCase):
         self.options.qt_version = 'qt5'
         plugin = qmake.QmakePlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(plugin.builddir)
+        os.makedirs(plugin.sourcedir)
         plugin.build()
 
         self.assert_expected_environment({'QT_SELECT': 'qt5'})
