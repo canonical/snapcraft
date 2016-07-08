@@ -135,7 +135,10 @@ class FileBase(Base):
             filename = source_checksum
             source_checksum = open(filename, 'r').read()
             if source_checksum.index(" "):
-                self.source_checksum = source_checksum.split(" ", 1)[0]
+                source_checksum = source_checksum.split(" ", 1)[0]
+            self.source_checksum = source_checksum
+            print(source_checksum)
+        self.check_checksum(self, source_checksum, checkfile)
 
     def check_checksum(self, source_checksum, checkfile):
         if len(source_checksum) == 32:
@@ -151,6 +154,7 @@ class FileBase(Base):
         elif len(source_checksum) == 128:
             chksum = hashlib.sha512()
         else:
+            print(source_checksum)
             raise IncompatibleOptionsError("Invalid checksum format")
 
         with open(checkfile, "rb") as f:
@@ -319,8 +323,6 @@ class Tar(FileBase):
 
         if self.source_checksum:
             self.check_checksum_determine_format(
-                str(self.source_checksum), tarball)
-            self.check_checksum(
                 self.source_checksum, tarball)
 
         if clean_target:
@@ -388,8 +390,6 @@ class Zip(FileBase):
 
         if self.source_checksum:
             self.check_checksum_determine_format(
-                str(self.source_checksum), zip)
-            self.check_checksum(
                 self.source_checksum, zip)
 
         if clean_target:
