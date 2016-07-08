@@ -494,10 +494,10 @@ def check_checksum_determine_format(source_checksum, checkfile):
                 source_checksum = source_checksum.split(" ", 1)[0]
         finally:
             filework.close()
-    check_checksum(source_checksum, checkfile)
+    check_checksum_determine_type_and_read_file(source_checksum, checkfile)
 
 
-def check_checksum(source_checksum, checkfile):
+def check_checksum_determine_type_and_read_file(source_checksum, checkfile):
     if len(source_checksum) == 32:
         chksum = hashlib.md5()
     elif len(source_checksum) == 40:
@@ -519,6 +519,10 @@ def check_checksum(source_checksum, checkfile):
 
     chksum = chksum.hexdigest()
 
+    check_checksum(source_checksum, chksum)
+
+
+def check_checksum(source_checksum, chksum):
     if chksum != source_checksum:
         raise ChecksumDoesNotMatch(
             "the checksum ( "+source_checksum+" ) doesn't match the file"
