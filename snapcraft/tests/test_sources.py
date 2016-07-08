@@ -72,14 +72,13 @@ class TestTar(tests.TestCase):
             self.assertEqual('Test fake compressed file', tar_file.read())
 
     def test_checksum_of_tarball(self):
-        source_checksum = '82bb970c5a6c2e9a1f6e113c52f03026'
-        tarball_check = tarfile.open("checksum.tar", "w")
-        open(os.path.join('Filetogointar'), 'w').close()
-        tarball_check.add('Filetogointar')
-        tarball_check.close()
-        os.remove('Filetogointar')
+        source_checksum = '34e163be8e43c5631d8b92e9c43ab0bf0fa62b9c'
+        tar = tarfile.open("checksum.tar", "w")
+        tar.close()
 
         sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.tar")
+        sources.FileBase.check_checksum(
             self, source_checksum, "checksum.tar")
 
 
@@ -129,14 +128,13 @@ class TestZip(tests.TestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
     def test_checksum_of_zip(self):
-        source_checksum = '82bb970c5a6c2e9a1f6e113c52f03026'
-        open(os.path.join('Filetogoinzip'), 'w').close()
+        source_checksum = 'b04f3ee8f5e43fa3b162981b50bb72fe1acabb33'
         zipfile_check = zipfile.ZipFile('checksum.zip', 'w')
-        zipfile_check.write('Filetogoinzip')
         zipfile_check.close()
-        os.remove('Filetogoinzip')
 
         sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        sources.FileBase.check_checksum(
             self, source_checksum, "checksum.zip")
 
 
