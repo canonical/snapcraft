@@ -99,22 +99,79 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
-    def test_build(self, glob_mock, run_mock):
+    @mock.patch('shutil.copy')
+    def test_build(self, shutil_mock, glob_mock, run_mock):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.sourcedir)
         glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
+            os.path.join(plugin.builddir, 'target', 'dummy.jar')]
 
         plugin.build()
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package']),
         ])
+        self.assertTrue(shutil_mock.called)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
-    def test_build_with_snapcraft_proxy(self, glob_mock, run_mock):
+    @mock.patch('shutil.copy')
+    def test_build_fail(self, shutil_mock, glob_mock, run_mock):
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        glob_mock.return_value = []
+        with self.assertRaises(RuntimeError):
+            plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+        self.assertFalse(shutil_mock.called)
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    @mock.patch('glob.glob')
+    @mock.patch('shutil.copy')
+    def test_build_war(self, shutil_mock, glob_mock, run_mock):
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        glob_mock.return_value = [
+            os.path.join(plugin.builddir, 'target', 'dummy.war')]
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+        self.assertTrue(shutil_mock.called)
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    @mock.patch('glob.glob')
+    @mock.patch('shutil.copy')
+    def test_build_with_targets(self, shutil_mock, glob_mock, run_mock):
+        opts = self.options
+        opts.maven_targets = ['child1', 'child2']
+        plugin = maven.MavenPlugin('test-part', opts,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        glob_mock.return_value = [
+            os.path.join(plugin.builddir, 'child1', 'target', 'child1.jar'),
+            os.path.join(plugin.builddir, 'child2', 'target', 'child2.jar')]
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+        self.assertTrue(shutil_mock.called)
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    @mock.patch('glob.glob')
+    @mock.patch('shutil.copy')
+    def test_build_with_snapcraft_proxy(self, shutil_mock,
+                                        glob_mock, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
@@ -129,13 +186,14 @@ class MavenPluginTestCase(tests.TestCase):
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
         os.makedirs(plugin.sourcedir)
         glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
+            os.path.join(plugin.builddir, 'target', 'dummy.jar')]
 
         plugin.build()
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package', '-s', settings_path]),
         ])
+        self.assertTrue(shutil_mock.called)
 
         self.assertTrue(
             os.path.exists(settings_path),
@@ -165,7 +223,9 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
-    def test_build_with_proxy_and_no_proxy(self, glob_mock, run_mock):
+    @mock.patch('shutil.copy')
+    def test_build_with_proxy_and_no_proxy(self, shutil_mock,
+                                           glob_mock, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
@@ -180,13 +240,14 @@ class MavenPluginTestCase(tests.TestCase):
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
         os.makedirs(plugin.sourcedir)
         glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
+            os.path.join(plugin.builddir, 'target', 'dummy.jar')]
 
         plugin.build()
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package', '-s', settings_path]),
         ])
+        self.assertTrue(shutil_mock.called)
 
         self.assertTrue(
             os.path.exists(settings_path),
@@ -216,7 +277,9 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     @mock.patch('glob.glob')
-    def test_build_with_proxy_and_no_proxies(self, glob_mock, run_mock):
+    @mock.patch('shutil.copy')
+    def test_build_with_proxy_and_no_proxies(self, shutil_mock,
+                                             glob_mock, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
@@ -231,13 +294,14 @@ class MavenPluginTestCase(tests.TestCase):
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
         os.makedirs(plugin.sourcedir)
         glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
+            os.path.join(plugin.builddir, 'target', 'dummy.jar')]
 
         plugin.build()
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package', '-s', settings_path]),
         ])
+        self.assertTrue(shutil_mock.called)
 
         self.assertTrue(
             os.path.exists(settings_path),
