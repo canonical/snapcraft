@@ -16,15 +16,17 @@
 
 import fileinput
 import os
+import re
 import subprocess
 import uuid
 
 from testtools.matchers import (
     FileExists,
+    MatchesRegex,
 )
 
 import integration_tests
-import snapcraft
+
 from snapcraft.tests import fixture_setup
 
 
@@ -32,7 +34,6 @@ class UploadTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def _update_name_and_version(self, project_dir, name=None, version=None):
         unique_id = uuid.uuid4().int
@@ -53,9 +54,9 @@ class UploadTestCase(integration_tests.TestCase):
         return updated_project_dir
 
     def test_upload_without_login(self):
-        project_dir = 'assemble'
+        project_dir = 'basic'
         self.run_snapcraft('snap', project_dir)
-        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
+        snap_file_path = 'basic_0.1_{}.snap'.format('all')
         os.chdir(project_dir)
         self.assertThat(snap_file_path, FileExists())
 
@@ -90,12 +91,10 @@ class UploadTestCase(integration_tests.TestCase):
         # Register the snap
         self.register(new_name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(
-            new_name, new_version, self.deb_arch)
+        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'all')
         self.assertThat(
             os.path.join(project_dir, snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path], project_dir)
-        self.assertIn(
-            'Application uploaded successfully (as revision ', output)
-        self.assertIn('Please check out the application at: ', output)
+        expected = r'.*Ready to release!.*'.format(new_name)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

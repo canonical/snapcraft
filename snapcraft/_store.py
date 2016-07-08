@@ -14,15 +14,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import getpass
 import logging
+import subprocess
+import tempfile
 import os
+
+import yaml
 
 from snapcraft import storeapi
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_name_from_snap_file(snap_path):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output = subprocess.check_output(
+            ['unsquashfs', '-d',
+             os.path.join(temp_dir, 'squashfs-root'),
+             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
+        logger.debug(output)
+        with open(os.path.join(
+                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
+        ) as yaml_file:
+            snap_yaml = yaml.load(yaml_file)
+
+    return snap_yaml['name']
 
 
 def login():
@@ -74,40 +92,23 @@ def upload(snap_filename):
 
     logger.info('Uploading {}.'.format(snap_filename))
 
+    snap_name = _get_name_from_snap_file(snap_filename)
     try:
         store = storeapi.StoreClient()
-        result = store.upload(snap_filename)
+        tracker = store.upload(snap_name, snap_filename)
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
 
-    success = result.get('success', False)
-    errors = result.get('errors', [])
-    app_url = result.get('application_url', '')
-    revision = result.get('revision')
-
-    # Print another newline to make sure the user sees the final result of the
-    # upload (success/failure).
-    print()
-
-    if success:
-        message = 'Application uploaded successfully'
-        if revision:
-            message = '{} (as revision {})'.format(message, revision)
-        logger.info(message)
+    result = tracker.track()
+    # This is workaround until LP: #1599875 is solved
+    if 'revision' in result:
+        logger.info('Revision {!r} of {!r} created.'.format(
+            result['revision'], snap_name))
     else:
-        logger.info('Upload did not complete.')
-
-    if errors:
-        logger.info('Some errors were detected:\n\n{}\n'.format(
-            '\n'.join(str(error) for error in errors)))
-
-    if app_url:
-        logger.info('Please check out the application at: {}\n'.format(
-                    app_url))
-
-    return success
+        logger.info('Uploaded {!r}'.format(snap_name))
+    tracker.raise_for_code()
 
 
 def download(snap_name, channel, download_path, arch):

@@ -36,7 +36,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import shutil
 
 import snapcraft
 from snapcraft import common
@@ -92,20 +91,16 @@ class QmakePlugin(snapcraft.BasePlugin):
                 self.options.qt_version))
 
     def build(self):
-        if os.path.exists(self.builddir):
-            shutil.rmtree(self.builddir)
-        os.mkdir(self.builddir)
-
-        source_subdir = getattr(self.options, 'source_subdir', None)
-        if source_subdir:
-            sourcedir = os.path.join(self.sourcedir, source_subdir)
-        else:
-            sourcedir = self.sourcedir
+        super().build()
 
         env = self._build_environment()
 
-        sources = [sourcedir]
+        sources = []
         if self.options.project_files:
+            sourcedir = self.sourcedir
+            source_subdir = getattr(self.options, 'source_subdir', None)
+            if source_subdir:
+                sourcedir = os.path.join(sourcedir, source_subdir)
             sources = [os.path.join(sourcedir, project_file)
                        for project_file in self.options.project_files]
 
