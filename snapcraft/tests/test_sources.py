@@ -142,6 +142,19 @@ class TestTar(tests.TestCase):
                             "24180bafd9f )")
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_invalid_checksum(self):
+        tar = tarfile.open("checksum.tar", "w")
+        tar.close()
+
+        source_checksum = 'this should NOT be a valid checksum'
+
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.check_checksum_determine_format(
+                source_checksum, "checksum.tar")
+        expected_message = ("Invalid checksum format")
+        self.assertEqual(raised.exception.message, expected_message)
+
+
 class TestZip(tests.TestCase):
 
     def setUp(self):
@@ -257,6 +270,19 @@ class TestZip(tests.TestCase):
                             ") doesn't match the file ( 1276481102f218c981e03"
                             "24180bafd9f )")
         self.assertEqual(raised.exception.message, expected_message)
+
+    def test_invalid_checksum(self):
+        tar = tarfile.open("checksum.zip", "w")
+        tar.close()
+
+        source_checksum = 'this should NOT be a valid checksum'
+
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.check_checksum_determine_format(
+                source_checksum, "checksum.zip")
+        expected_message = ("Invalid checksum format")
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class SourceTestCase(tests.TestCase):
 
