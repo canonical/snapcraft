@@ -384,51 +384,106 @@ class TestSubversion(SourceTestCase):
 
 class TestLocal(tests.TestCase):
 
-    def test_pull_with_existing_source_dir_creates_symlink(self):
-        os.mkdir('source_dir')
-        local = sources.Local('.', 'source_dir')
+    def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
+
+        os.mkdir('destination')
+
+        local = sources.Local('src', 'destination')
         local.pull()
 
-        self.assertTrue(os.path.islink('source_dir'))
-        self.assertEqual(os.path.realpath('source_dir'), self.path)
+        # Verify that the directories are not symlinks, but the file is a
+        # hardlink.
+        self.assertFalse(os.path.islink('destination'))
+        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
+        self.assertGreater(
+            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
 
     def test_pull_with_existing_source_link_creates_symlink(self):
-        os.symlink('dummy', 'source_dir')
-        local = sources.Local('.', 'source_dir')
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
+
+        # Note that this is a symlink now instead of a directory
+        os.symlink('dummy', 'destination')
+
+        local = sources.Local('src', 'destination')
         local.pull()
 
-        self.assertTrue(os.path.islink('source_dir'))
-        self.assertEqual(os.path.realpath('source_dir'), self.path)
+        self.assertFalse(os.path.islink('destination'))
+        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
+        self.assertGreater(
+            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
 
-    def test_pull_with_existing_source_file_fails(self):
-        open('source_dir', 'w').close()
-        local = sources.Local('.', 'source_dir')
+    def test_pull_with_existing_source_file_wipes_and_creates_hardlinks(self):
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            local.pull()
+        # Note that this is a file now instead of a directory
+        open('destination', 'w').close()
 
-        self.assertEqual("Cannot pull to target 'source_dir'",
-                         str(raised.exception))
+        local = sources.Local('src', 'destination')
+        local.pull()
 
-    def test_pull_with_source_dir_with_content_fails(self):
-        os.mkdir('source_dir')
-        open(os.path.join('source_dir', 'file'), 'w').close()
-        local = sources.Local('.', 'source_dir')
+        self.assertFalse(os.path.isfile('destination'))
+        self.assertFalse(os.path.islink('destination'))
+        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
+        self.assertGreater(
+            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
 
-        with self.assertRaises(EnvironmentError) as raised:
-            local.pull()
+    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self):
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
 
-        self.assertEqual("Cannot pull to target 'source_dir'",
-                         str(raised.exception))
+        os.mkdir('destination')
 
-    def test_pulling_twice_with_existing_source_dir_creates_symlink(self):
-        os.mkdir('source_dir')
-        local = sources.Local('.', 'source_dir')
+        local = sources.Local('src', 'destination')
         local.pull()
         local.pull()
 
-        self.assertTrue(os.path.islink('source_dir'))
-        self.assertEqual(os.path.realpath('source_dir'), self.path)
+        # Verify that the directories are not symlinks, but the file is a
+        # hardlink.
+        self.assertFalse(os.path.islink('destination'))
+        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
+        self.assertGreater(
+            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+
+    def test_pull_ignores_snapcraft_specific_data(self):
+        # Make the snapcraft-specific directories
+        os.makedirs(os.path.join('src', 'parts'))
+        os.makedirs(os.path.join('src', 'stage'))
+        os.makedirs(os.path.join('src', 'prime'))
+
+        # Make the snapcraft.yaml (and hidden one) and a built snap
+        open(os.path.join('src', 'snapcraft.yaml'), 'w').close()
+        open(os.path.join('src', '.snapcraft.yaml'), 'w').close()
+        open(os.path.join('src', 'foo.snap'), 'w').close()
+
+        # Now make some real files
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
+
+        os.mkdir('destination')
+
+        local = sources.Local('src', 'destination')
+        local.pull()
+
+        # Verify that the snapcraft-specific stuff got filtered out
+        self.assertFalse(os.path.exists(os.path.join('destination', 'parts')))
+        self.assertFalse(os.path.exists(os.path.join('destination', 'stage')))
+        self.assertFalse(os.path.exists(os.path.join('destination', 'prime')))
+        self.assertFalse(
+            os.path.exists(os.path.join('destination', 'snapcraft.yaml')))
+        self.assertFalse(
+            os.path.exists(os.path.join('destination', '.snapcraft.yaml')))
+        self.assertFalse(
+            os.path.exists(os.path.join('destination', 'foo.snap')))
+
+        # Verify that the real stuff made it in.
+        self.assertFalse(os.path.islink('destination'))
+        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
+        self.assertGreater(
+            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
 
 
 class TestUri(tests.TestCase):

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import logging
 import os
 import os.path
@@ -22,7 +23,6 @@ from unittest import mock
 import docopt
 import fixtures
 
-import snapcraft._store
 from snapcraft import (
     storeapi,
     tests
@@ -37,24 +37,6 @@ class UploadCommandTestCase(tests.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-    def _patch_snap_yaml(self, snap_name):
-        meta_path = os.path.join(os.getcwd(), 'squashfs-root', 'meta')
-        os.makedirs(meta_path)
-        with open(os.path.join(meta_path, 'snap.yaml'), 'w') as yaml_file:
-            yaml_file.write('name: {}\n'.format(snap_name))
-
-        temp_dir = snapcraft.storeapi.tempfile.TemporaryDirectory
-
-        def create_patch(method, return_value):
-            patcher = mock.patch.object(temp_dir, method)
-            mock_method = patcher.start()
-            mock_method.return_value = return_value
-            self.addCleanup(patcher.stop)
-
-        create_patch('_cleanup', None)
-        create_patch('__enter__', os.getcwd())
-        create_patch('__exit__', False)
-
     def test_upload_without_snap_must_raise_exception(self):
         with self.assertRaises(docopt.DocoptExit) as raised:
             main(['upload'])
@@ -62,27 +44,45 @@ class UploadCommandTestCase(tests.TestCase):
         self.assertTrue('Usage:' in str(raised.exception))
 
     def test_upload_snap(self):
+        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker.track.return_value = {
+            'code': 'ready_to_release',
+            'processed': True,
+            'can_release': True,
+            'url': '/fake/url',
+            'revision': 1,
+        }
         patcher = mock.patch.object(storeapi.StoreClient, 'upload')
         mock_upload = patcher.start()
         self.addCleanup(patcher.stop)
-        mock_upload.return_value = {
-            'success': True,
-            'revision': 'test-revision',
-            'application_url': 'test-url'
-        }
+        mock_upload.return_value = mock_tracker
 
-        open('test.snap', 'w').close()
+        # Avoiding a io.UnsupportedOperation: fileno
+        patcher = mock.patch('sys.stdout.fileno')
+        self.fileno_mock = patcher.start()
+        self.fileno_mock.return_value = 1
+        self.addCleanup(patcher.stop)
 
-        self._patch_snap_yaml('snaptestname')
-        main(['upload', 'test.snap'])
+        patcher = mock.patch('os.isatty')
+        self.isatty_mock = patcher.start()
+        self.isatty_mock.return_value = False
+        self.addCleanup(patcher.stop)
 
-        self.assertEqual(
-            'Uploading test.snap.\n'
-            'Application uploaded successfully (as revision test-revision)\n'
-            'Please check out the application at: test-url\n\n',
+        # Create a snap
+        main(['init'])
+        main(['snap'])
+        snap_file = glob.glob('*.snap')[0]
+
+        # Upload
+        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+            main(['upload', snap_file])
+
+        self.assertIn(
+            'Uploading my-snap_0_amd64.snap.\n'
+            'Revision 1 of \'my-snap\' created.',
             self.fake_logger.output)
 
-        mock_upload.assert_called_once_with('test.snap')
+        mock_upload.assert_called_once_with('my-snap', snap_file)
 
     def test_upload_without_login_must_raise_exception(self):
         snap_path = os.path.join(

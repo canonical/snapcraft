@@ -17,6 +17,8 @@
 
 import re
 
+from simplejson.scanner import JSONDecodeError
+
 
 # TODO move to snapcraft.errors --elopio - 2016-06-20
 class SnapcraftError(Exception):
@@ -121,3 +123,50 @@ class StoreRegistrationError(StoreError):
         # TODO use the store provided claim url once it is there
         # LP: #1598905
         return re.sub('register-name', 'register-name-dispute', url, count=0)
+
+
+class StorePushError(StoreError):
+
+    __FMT_NOT_REGISTERED = (
+        'Sorry, try `snapcraft register {snap_name}` before pushing again.')
+
+    fmt = 'Received {status_code!r}: {text!r}'
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        if response.status_code == 404:
+            self.fmt = self.__FMT_NOT_REGISTERED
+        elif response.status_code == 401 or response.status_code == 403:
+            try:
+                response_json['text'] = response.text
+            except AttributeError:
+                response_json['text'] = 'error while pushing'
+
+        super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)
+
+
+class StoreReviewError(StoreError):
+
+    __FMT_NEED_MANUAL_REVIEW = (
+        'Publishing checks failed.\n'
+        'To release this to stable channel please request a review on '
+        'the snapcraft list.\n'
+        'Use devmode in the edge or beta channels to disable confinement.')
+
+    __FMT_PROCESSING_ERROR = (
+        'There has been a problem while analyzing the snap, check the snap '
+        'and try to push again.')
+
+    __messages = {
+        'need_manual_review': __FMT_NEED_MANUAL_REVIEW,
+        'processing_error': __FMT_PROCESSING_ERROR,
+    }
+
+    def __init__(self, result):
+        self.fmt = self.__messages[result['code']]
+        super().__init__()

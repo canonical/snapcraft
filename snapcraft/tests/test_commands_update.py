@@ -63,7 +63,7 @@ class UpdateCommandTestCase(tests.TestCase):
             },
         }
         expected_headers = {
-            'If-None-Match': '1111',
+            'If-Modified-Since': 'Thu, 07 Jul 2016 10:00:20 GMT',
         }
 
         with open(self.parts_yaml) as parts_file:
@@ -74,7 +74,7 @@ class UpdateCommandTestCase(tests.TestCase):
         self.assertEqual(parts, expected_parts)
         self.assertEqual(headers, expected_headers)
 
-    def test_update_with_unchanged_etag_does_not_download_again(self):
+    def test_update_with_unchanged_date_does_not_download_again(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -84,6 +84,19 @@ class UpdateCommandTestCase(tests.TestCase):
         self.assertEqual(
             'The parts cache is already up to date.\n',
             fake_logger.output)
+
+    def test_update_with_changed_date_downloads_again(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        os.makedirs(self.parts_dir)
+        with open(self.headers_yaml, 'w') as headers_file:
+            yaml.dump(
+                {'If-Modified-Since': 'Fri, 01 Jan 2016 12:00:00 GMT'},
+                headers_file)
+        main.main(['update'])
+
+        self.assertEqual('', fake_logger.output)
 
     def test_update_with_no_content_length_is_supported(self):
         self.useFixture(fixtures.EnvironmentVariable('NO_CONTENT_LENGTH', '1'))
