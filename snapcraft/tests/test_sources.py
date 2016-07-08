@@ -71,7 +71,7 @@ class TestTar(tests.TestCase):
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake compressed file', tar_file.read())
 
-    def test_checksum_of_tarball(self):
+    def test_checksum(self):
         tar = tarfile.open("checksum.tar", "w")
         tar.close()
 
@@ -122,6 +122,22 @@ class TestTar(tests.TestCase):
         sources.FileBase.check_checksum(
             self, source_checksum, "checksum.tar")
 
+    def test_non_matching_checksum(self):
+        tar = tarfile.open("checksum.tar", "w")
+        tar.close()
+
+        source_checksum = '1234481102f218c981e0324180ba1234'
+
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.tar")
+
+        with self.assertRaises(sources.ChecksumDoesNotMatch) as raised:
+            sources.FileBase.check_checksum(
+                self, source_checksum, "checksum.tar")
+        expected_message = ("the checksum ( 1234481102f218c981e0324180ba1234 "
+                            ") doesn't match the file ( 1276481102f218c981e03"
+                            "24180bafd9f )")
+        self.assertEqual(raised.exception.message, expected_message)
 
 class TestZip(tests.TestCase):
 
@@ -219,6 +235,21 @@ class TestZip(tests.TestCase):
         sources.FileBase.check_checksum(
             self, source_checksum, "checksum.zip")
 
+    def test_non_matching_checksum(self):
+        zipfile = tarfile.open("checksum.zip", "w")
+        zipfile.close()
+
+        source_checksum = '1234481102f218c981e0324180ba1234'
+
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        with self.assertRaises(sources.ChecksumDoesNotMatch) as raised:
+            sources.FileBase.check_checksum(
+                self, source_checksum, "checksum.zip")
+        expected_message = ("the checksum ( 1234481102f218c981e0324180ba1234 "
+                            ") doesn't match the file ( 1276481102f218c981e03"
+                            "24180bafd9f )")
+        self.assertEqual(raised.exception.message, expected_message)
 
 class SourceTestCase(tests.TestCase):
 
