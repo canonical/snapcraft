@@ -33,5 +33,5 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
         expected = b'#!/usr/bin/env python\n'
         output = subprocess.check_output(
             "sed -n '/env/p;1q' prime/usr/bin/rosversion",
-            cwd=os.path.join('demos', self.snap_content_dir), shell=True)
+            cwd=os.path.join(self.path, self.snap_content_dir), shell=True)
         self.assertEqual(output, expected)
