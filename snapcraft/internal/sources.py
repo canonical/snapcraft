@@ -280,7 +280,7 @@ class Tar(FileBase):
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            self.check_checksum_determine_format(
+            check_checksum_determine_format(
                 self.source_checksum, tarball)
 
         if clean_target:
@@ -347,7 +347,7 @@ class Zip(FileBase):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            self.check_checksum_determine_format(
+            check_checksum_determine_format(
                 self.source_checksum, zip)
 
         if clean_target:
