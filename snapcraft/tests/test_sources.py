@@ -72,11 +72,11 @@ class TestTar(tests.TestCase):
             self.assertEqual('Test fake compressed file', tar_file.read())
 
     def test_checksum_of_tarball(self):
-        # md5
-        source_checksum = '1276481102f218c981e0324180bafd9f'
         tar = tarfile.open("checksum.tar", "w")
         tar.close()
 
+        # md5
+        source_checksum = '1276481102f218c981e0324180bafd9f'
         sources.FileBase.check_checksum_determine_format(
             self, source_checksum, "checksum.tar")
         sources.FileBase.check_checksum(
@@ -169,10 +169,51 @@ class TestZip(tests.TestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
     def test_checksum_of_zip(self):
-        source_checksum = 'b04f3ee8f5e43fa3b162981b50bb72fe1acabb33'
         zipfile_check = zipfile.ZipFile('checksum.zip', 'w')
         zipfile_check.close()
 
+        # md5
+        source_checksum = '76cdb2bad9582d23c1f6f4d868218d6c'
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        sources.FileBase.check_checksum(
+            self, source_checksum, "checksum.zip")
+
+        # sha1
+        source_checksum = 'b04f3ee8f5e43fa3b162981b50bb72fe1acabb33'
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        sources.FileBase.check_checksum(
+            self, source_checksum, "checksum.zip")
+
+        # sha224
+        source_checksum = ('a3cb5d98d33ad55b145b1d058d8ea50b3c212ad949ed85b6f'
+                           '7392196')
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        sources.FileBase.check_checksum(
+            self, source_checksum, "checksum.zip")
+
+        # sha256
+        source_checksum = ('8739c76e681f900923b900c9df0ef75cf421d39cabb54650c'
+                           '4b9ad19b6a76d85')
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        sources.FileBase.check_checksum(
+            self, source_checksum, "checksum.zip")
+
+        # sha384
+        source_checksum = ('35b38c9c2bfa0a9716fc424785c169b2f4b8cf9cd039ef63b'
+                           '502194ee482c332866f218fad8c9d00928394663ee75794')
+        sources.FileBase.check_checksum_determine_format(
+            self, source_checksum, "checksum.zip")
+        sources.FileBase.check_checksum(
+            self, source_checksum, "checksum.zip")
+
+        # sha512
+        source_checksum = ('5e2f959f36b66df0580a94f384c5fc1ceeec4b2a3925f062d'
+                           '7b68f21758b86581ac2adcfdde73a171a28496e758ef1b23c'
+                           'a4951c05455cdae9357cc3b5a5825f')
         sources.FileBase.check_checksum_determine_format(
             self, source_checksum, "checksum.zip")
         sources.FileBase.check_checksum(
