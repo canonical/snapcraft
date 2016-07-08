@@ -24,10 +24,6 @@ from snapcraft.tests import fixture_setup
 
 class SearchCommandTestCase(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixture_setup.FakeParts())
-
     def test_searching_for_a_part_that_exists(self):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
