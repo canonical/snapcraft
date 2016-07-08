@@ -488,13 +488,11 @@ def check_checksum_determine_format(source_checksum, checkfile):
         try:
             filework = open(filename, 'r')
             source_checksum = filework.read()
-            print(source_checksum)
             if source_checksum.index(" "):
                 source_checksum = source_checksum.split(" ", 1)[0]
         finally:
             filework.close()
-        print(source_checksum)
-        check_checksum(source_checksum, checkfile)
+    check_checksum(source_checksum, checkfile)
 
 
 def check_checksum(source_checksum, checkfile):
@@ -519,8 +517,6 @@ def check_checksum(source_checksum, checkfile):
             chksum.update(chunk)
 
     chksum = chksum.hexdigest()
-
-    print(source_checksum)
 
     if chksum != source_checksum:
         raise ChecksumDoesNotMatch(
