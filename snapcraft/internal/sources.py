@@ -159,7 +159,8 @@ class FileBase(Base):
 
         if chksum != source_checksum:
             raise ChecksumDoesNotMatch(
-                "the checksum doesn't match the file")
+                "the checksum ( "+source_checksum+" ) doesn't match the file"
+                " ( "+chksum+" )")
 
 
 class Bazaar(Base):
