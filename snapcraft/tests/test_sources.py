@@ -122,6 +122,12 @@ class TestTar(tests.TestCase):
         sources.check_checksum_determine_format(
             source_checksum, "checksum.tar")
 
+        # From remote file
+        source_checksum = 'http://tsimonq2.net/misc/snapcraft-checksum-tar'
+
+        sources.check_checksum_determine_format(
+            source_checksum, "checksum.tar")
+
     def test_non_matching_checksum(self):
         tar = tarfile.open("checksum.tar", "w")
         tar.close()
@@ -217,6 +223,24 @@ class TestZip(tests.TestCase):
         source_checksum = ('5e2f959f36b66df0580a94f384c5fc1ceeec4b2a3925f062d'
                            '7b68f21758b86581ac2adcfdde73a171a28496e758ef1b23c'
                            'a4951c05455cdae9357cc3b5a5825f')
+        sources.check_checksum_determine_format(
+            source_checksum, "checksum.zip")
+
+        # From file
+        source_checksum_write = open('CHECKSUM', 'w')
+        source_checksum_write.write('5e2f959f36b66df0580a94f384c5fc1ceeec4b2a'
+                                    '3925f062d7b68f21758b86581ac2adcfdde73a17'
+                                    '1a28496e758ef1b23ca4951c05455cdae9357cc3'
+                                    'b5a5825f checksum.zip')
+        source_checksum_write.close()
+        source_checksum = 'CHECKSUM'
+
+        sources.check_checksum_determine_format(
+            source_checksum, "checksum.zip")
+
+        # From remote file
+        source_checksum = 'http://tsimonq2.net/misc/snapcraft-checksum-zip'
+
         sources.check_checksum_determine_format(
             source_checksum, "checksum.zip")
 

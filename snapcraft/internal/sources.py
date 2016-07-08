@@ -480,10 +480,12 @@ def _get_source_type_from_uri(source, ignore_errors=False):
 
 def check_checksum_determine_format(source_checksum, checkfile):
     if source_checksum.startswith('http'):
-        checksum = urllib.urlopen(source_checksum)
-        source_checksum = checksum.read()
-        self.check_checksum(self, source_checksum, checkfile)
-    elif os.path.isfile(source_checksum):
+        response = urllib.request.urlopen(source_checksum)
+        data = response.read()
+        source_checksum = data.decode('utf-8')
+        if source_checksum.index(" "):
+            source_checksum = source_checksum.split(" ", 1)[0]
+    if os.path.isfile(source_checksum):
         filename = source_checksum
         try:
             filework = open(filename, 'r')
@@ -509,7 +511,6 @@ def check_checksum(source_checksum, checkfile):
     elif len(source_checksum) == 128:
         chksum = hashlib.sha512()
     else:
-        print(source_checksum)
         raise IncompatibleOptionsError("Invalid checksum format")
 
     with open(checkfile, "rb") as f:
