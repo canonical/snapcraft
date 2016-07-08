@@ -478,22 +478,26 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     return source_type
 
 
-def check_checksum_determine_format(self, source_checksum, checkfile):
+def check_checksum_determine_format(source_checksum, checkfile):
     if source_checksum.startswith('http'):
         checksum = urllib.urlopen(source_checksum)
         source_checksum = checksum.read()
         self.check_checksum(self, source_checksum, checkfile)
     elif os.path.isfile(source_checksum):
         filename = source_checksum
-        source_checksum = open(filename, 'r').read()
-        if source_checksum.index(" "):
-            source_checksum = source_checksum.split(" ", 1)[0]
-        self.source_checksum = source_checksum
+        try:
+            filework = open(filename, 'r')
+            source_checksum = filework.read()
+            print(source_checksum)
+            if source_checksum.index(" "):
+                source_checksum = source_checksum.split(" ", 1)[0]
+        finally:
+            filework.close()
         print(source_checksum)
-    self.check_checksum(self, source_checksum, checkfile)
+        check_checksum(source_checksum, checkfile)
 
 
-def check_checksum(self, source_checksum, checkfile):
+def check_checksum(source_checksum, checkfile):
     if len(source_checksum) == 32:
         chksum = hashlib.md5()
     elif len(source_checksum) == 40:
@@ -515,6 +519,8 @@ def check_checksum(self, source_checksum, checkfile):
             chksum.update(chunk)
 
     chksum = chksum.hexdigest()
+
+    print(source_checksum)
 
     if chksum != source_checksum:
         raise ChecksumDoesNotMatch(

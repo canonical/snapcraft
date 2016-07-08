@@ -78,30 +78,30 @@ class TestTar(tests.TestCase):
         # md5
         source_checksum = '1276481102f218c981e0324180bafd9f'
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.tar")
+            source_checksum, "checksum.tar")
 
         # sha1
         source_checksum = '34e163be8e43c5631d8b92e9c43ab0bf0fa62b9c'
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.tar")
+            source_checksum, "checksum.tar")
 
         # sha224
         source_checksum = ('82be34614e8ca3d20d1733e52ae9b5b12902c196eeb4ee36c'
                            '2625b5f')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.tar")
+            source_checksum, "checksum.tar")
 
         # sha256
         source_checksum = ('84ff92691f909a05b224e1c56abb4864f01b4f8e3c854e4bb'
                            '4c7baf1d3f6d652')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.tar")
+            source_checksum, "checksum.tar")
 
         # sha384
         source_checksum = ('a31859d12a1176d02c2552f1bea2cba40a3ec809a7b224425'
                            '04e7dd1c19201e6eeffce9a54d13760924ad73aad45049f')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.tar")
+            source_checksum, "checksum.tar")
 
         # sha512
         source_checksum = ('1e543b135acb1da2d9ce119c11d6fa9de2c9ca2e97e55fdf2'
@@ -120,7 +120,7 @@ class TestTar(tests.TestCase):
         source_checksum = 'CHECKSUM'
 
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.tar")
+            source_checksum, "checksum.tar")
 
     def test_non_matching_checksum(self):
         tar = tarfile.open("checksum.tar", "w")
@@ -130,7 +130,7 @@ class TestTar(tests.TestCase):
 
         with self.assertRaises(sources.ChecksumDoesNotMatch) as raised:
             sources.check_checksum_determine_format(
-                self, source_checksum, "checksum.tar")
+                source_checksum, "checksum.tar")
         expected_message = ("the checksum ( 1234481102f218c981e0324180ba1234 "
                             ") doesn't match the file ( 1276481102f218c981e03"
                             "24180bafd9f )")
@@ -188,37 +188,37 @@ class TestZip(tests.TestCase):
         # md5
         source_checksum = '76cdb2bad9582d23c1f6f4d868218d6c'
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.zip")
+            source_checksum, "checksum.zip")
 
         # sha1
         source_checksum = 'b04f3ee8f5e43fa3b162981b50bb72fe1acabb33'
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.zip")
+            source_checksum, "checksum.zip")
 
         # sha224
         source_checksum = ('a3cb5d98d33ad55b145b1d058d8ea50b3c212ad949ed85b6f'
                            '7392196')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.zip")
+            source_checksum, "checksum.zip")
 
         # sha256
         source_checksum = ('8739c76e681f900923b900c9df0ef75cf421d39cabb54650c'
                            '4b9ad19b6a76d85')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.zip")
+            source_checksum, "checksum.zip")
 
         # sha384
         source_checksum = ('35b38c9c2bfa0a9716fc424785c169b2f4b8cf9cd039ef63b'
                            '502194ee482c332866f218fad8c9d00928394663ee75794')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.zip")
+            source_checksum, "checksum.zip")
 
         # sha512
         source_checksum = ('5e2f959f36b66df0580a94f384c5fc1ceeec4b2a3925f062d'
                            '7b68f21758b86581ac2adcfdde73a171a28496e758ef1b23c'
                            'a4951c05455cdae9357cc3b5a5825f')
         sources.check_checksum_determine_format(
-            self, source_checksum, "checksum.zip")
+            source_checksum, "checksum.zip")
 
     def test_non_matching_checksum(self):
         zipfile = tarfile.open("checksum.zip", "w")
@@ -228,7 +228,7 @@ class TestZip(tests.TestCase):
 
         with self.assertRaises(sources.ChecksumDoesNotMatch) as raised:
             sources.check_checksum_determine_format(
-                self, source_checksum, "checksum.zip")
+                source_checksum, "checksum.zip")
         expected_message = ("the checksum ( 1234481102f218c981e0324180ba1234 "
                             ") doesn't match the file ( 1276481102f218c981e03"
                             "24180bafd9f )")
