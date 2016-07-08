@@ -25,7 +25,6 @@ import shutil
 import subprocess
 import sys
 
-import fixtures
 import pexpect
 import testtools
 from testtools import content
@@ -118,9 +117,6 @@ class SnapsTestCase(testtools.TestCase):
         else:
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')
-
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_SETUP_PROXIES', '1'))
 
         self.snappy_testbed = None
         if not config.get('skip-install', False):
