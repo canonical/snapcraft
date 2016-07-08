@@ -395,11 +395,12 @@ class StatusTracker:
 
     def _get_status(self):
         connection_errors_allowed = 10
-        while connection_errors_allowed:
+        while True:
             try:
                 content = requests.get(self.__status_details_url).json()
             except (requests.ConnectionError, requests.HTTPError) as e:
+                if not connection_errors_allowed:
+                    yield e
                 content = {'processed': False, 'code': 'being_processed'}
                 connection_errors_allowed -= 1
             yield content
-        yield e
