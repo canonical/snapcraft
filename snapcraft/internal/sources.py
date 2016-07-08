@@ -126,48 +126,6 @@ class FileBase(Base):
             self.source_dir, os.path.basename(self.source))
         download_requests_stream(request, file_path)
 
-    def check_checksum_determine_format(self, source_checksum, checkfile):
-        if source_checksum.startswith('http'):
-            checksum = urllib.urlopen(source_checksum)
-            source_checksum = checksum.read()
-            self.check_checksum(self, source_checksum, checkfile)
-        elif os.path.isfile(source_checksum):
-            filename = source_checksum
-            source_checksum = open(filename, 'r').read()
-            if source_checksum.index(" "):
-                source_checksum = source_checksum.split(" ", 1)[0]
-            self.source_checksum = source_checksum
-            print(source_checksum)
-        self.check_checksum(self, source_checksum, checkfile)
-
-    def check_checksum(self, source_checksum, checkfile):
-        if len(source_checksum) == 32:
-            chksum = hashlib.md5()
-        elif len(source_checksum) == 40:
-            chksum = hashlib.sha1()
-        elif len(source_checksum) == 56:
-            chksum = hashlib.sha224()
-        elif len(source_checksum) == 64:
-            chksum = hashlib.sha256()
-        elif len(source_checksum) == 96:
-            chksum = hashlib.sha384()
-        elif len(source_checksum) == 128:
-            chksum = hashlib.sha512()
-        else:
-            print(source_checksum)
-            raise IncompatibleOptionsError("Invalid checksum format")
-
-        with open(checkfile, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                chksum.update(chunk)
-
-        chksum = chksum.hexdigest()
-
-        if chksum != source_checksum:
-            raise ChecksumDoesNotMatch(
-                "the checksum ( "+source_checksum+" ) doesn't match the file"
-                " ( "+chksum+" )")
-
 
 class Bazaar(Base):
 
@@ -518,3 +476,47 @@ def _get_source_type_from_uri(source, ignore_errors=False):
         raise ValueError('local source is not a directory')
 
     return source_type
+
+
+def check_checksum_determine_format(self, source_checksum, checkfile):
+    if source_checksum.startswith('http'):
+        checksum = urllib.urlopen(source_checksum)
+        source_checksum = checksum.read()
+        self.check_checksum(self, source_checksum, checkfile)
+    elif os.path.isfile(source_checksum):
+        filename = source_checksum
+        source_checksum = open(filename, 'r').read()
+        if source_checksum.index(" "):
+            source_checksum = source_checksum.split(" ", 1)[0]
+        self.source_checksum = source_checksum
+        print(source_checksum)
+    self.check_checksum(self, source_checksum, checkfile)
+
+
+def check_checksum(self, source_checksum, checkfile):
+    if len(source_checksum) == 32:
+        chksum = hashlib.md5()
+    elif len(source_checksum) == 40:
+        chksum = hashlib.sha1()
+    elif len(source_checksum) == 56:
+        chksum = hashlib.sha224()
+    elif len(source_checksum) == 64:
+        chksum = hashlib.sha256()
+    elif len(source_checksum) == 96:
+        chksum = hashlib.sha384()
+    elif len(source_checksum) == 128:
+        chksum = hashlib.sha512()
+    else:
+        print(source_checksum)
+        raise IncompatibleOptionsError("Invalid checksum format")
+
+    with open(checkfile, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            chksum.update(chunk)
+
+    chksum = chksum.hexdigest()
+
+    if chksum != source_checksum:
+        raise ChecksumDoesNotMatch(
+            "the checksum ( "+source_checksum+" ) doesn't match the file"
+            " ( "+chksum+" )")
