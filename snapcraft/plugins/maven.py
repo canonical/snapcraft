@@ -130,7 +130,7 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             elif warfiles and len(f) == 0:
                 basedir = 'war'
             else:
-                basedif = f
+                basedir = f
 
             targetdir = os.path.join(self.installdir, basedir)
             os.makedirs(targetdir, exist_ok=True)
