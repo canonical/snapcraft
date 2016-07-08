@@ -127,15 +127,15 @@ class FileBase(Base):
         download_requests_stream(request, file_path)
 
     def check_checksum_determine_format(self, source_checksum, checkfile):
-        global checksum
-
         if source_checksum.startswith('http'):
             checksum = urllib.urlopen(source_checksum)
             source_checksum = checksum.read()
             self.check_checksum(self, source_checksum, checkfile)
         elif os.path.isfile(source_checksum):
-            with open(source_checksum, "r") as source_file:
-                source_checksum = str(source_file.read()).rstrip()
+            filename = source_checksum
+            source_checksum = open(filename, 'r').read()
+            if source_checksum.index(" "):
+                self.source_checksum = source_checksum.split(" ", 1)[0]
 
     def check_checksum(self, source_checksum, checkfile):
         if len(source_checksum) == 32:
@@ -150,6 +150,8 @@ class FileBase(Base):
             chksum = hashlib.sha384()
         elif len(source_checksum) == 128:
             chksum = hashlib.sha512()
+        else:
+            raise IncompatibleOptionsError("Invalid checksum format")
 
         with open(checkfile, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
