@@ -57,6 +57,8 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
                              '..', '..', '..', 'schema'))
         self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
 
+        self.useFixture(fixture_setup.FakeParts())
+
         patcher = mock.patch('multiprocessing.cpu_count')
         self.cpu_count = patcher.start()
         self.cpu_count.return_value = 2
