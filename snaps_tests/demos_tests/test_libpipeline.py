@@ -22,8 +22,8 @@ class LibPipelineTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'libpipeline'
 
     def test_libpipeline(self):
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'pipelinetest', '1.0')
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'pipelinetest', '1.0')
         expected = (
             'running echo test | grep s | grep t\n'
             'custom libpipeline called\n'
