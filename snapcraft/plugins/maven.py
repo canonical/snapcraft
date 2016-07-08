@@ -121,11 +121,6 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             warfiles = glob.glob(os.path.join(src, '*.war'))
             arfiles = glob.glob(os.path.join(src, '*.[jw]ar'))
 
-            # Looks redundant; but test suite will return war for jar
-            # because of the use of patching glob.glob
-            jarfiles = [x for x in jarfiles if x.endswith('jar')]
-            warfiles = [x for x in warfiles if x.endswith('war')]
-
             if len(arfiles) == 0:
                 raise RuntimeError("could not find any"
                                    "built jar files for part")
