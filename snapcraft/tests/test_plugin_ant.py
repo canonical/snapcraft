@@ -69,8 +69,7 @@ class AntPluginTestCase(tests.TestCase):
             mock.call(['ant']),
         ])
 
-    @mock.patch.object(ant.AntPlugin, 'run')
-    def test_env(self, run_mock):
+    def test_env(self):
         plugin = ant.AntPlugin('test-part', self.options,
                                self.project_options)
 
