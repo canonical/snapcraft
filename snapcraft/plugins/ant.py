@@ -27,6 +27,7 @@ For more information check the 'plugins' topic for the former and the
 import glob
 import logging
 import os
+import shutil
 
 import snapcraft
 import snapcraft.common
@@ -49,8 +50,9 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         if not files:
             raise RuntimeError('could not find any built jar files for part')
         jardir = os.path.join(self.installdir, 'jar')
-        self.run(['mkdir', '-p', jardir])
-        self.run(['cp', '-a'] + files + [jardir])
+        os.makedirs(jardir)
+        for f in files:
+            shutil.copy(f, jardir)
 
     def env(self, root):
         env = super().env(root)
