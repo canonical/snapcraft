@@ -68,3 +68,15 @@ class AntPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['ant']),
         ])
+
+    @mock.patch.object(ant.AntPlugin, 'run')
+    def test_env(self, run_mock):
+        plugin = ant.AntPlugin('test-part', self.options,
+                               self.project_options)
+
+        os.makedirs(plugin.installdir)
+        open(os.path.join(plugin.installdir,
+             'jar', 'lib1.jar'), 'w').close()
+        open(os.path.join(plugin.installdir,
+             'jar', 'lib2.jar'), 'w').close()
+        plugin.env(plugin.partdir)
