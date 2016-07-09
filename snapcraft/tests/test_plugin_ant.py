@@ -74,7 +74,7 @@ class AntPluginTestCase(tests.TestCase):
         plugin = ant.AntPlugin('test-part', self.options,
                                self.project_options)
 
-        os.makedirs(plugin.installdir)
+        os.makedirs(os.path.join(plugin.installdir, 'jar'))
         open(os.path.join(plugin.installdir,
              'jar', 'lib1.jar'), 'w').close()
         open(os.path.join(plugin.installdir,
