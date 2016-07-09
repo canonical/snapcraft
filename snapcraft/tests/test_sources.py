@@ -390,7 +390,7 @@ class TestLocal(tests.TestCase):
         local = sources.Local('..', 'src/snapcraft')
         local.pull()
 
-        self.assertEqual(os.listdir('src/snapcraft'), [])
+        self.assertTrue('snapcraft' not in os.listdir('src/snapcraft'))
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
