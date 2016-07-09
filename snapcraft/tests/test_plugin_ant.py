@@ -17,26 +17,30 @@
 import os
 from unittest import mock
 
-import fixtures
-
 import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import ant
 
 
-class MavenPluginTestCase(tests.TestCase):
+class AntPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
+
+        class Options:
+            ant_options = []
+        self.options = Options()
+
+        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch.object(maven.MavenPlugin, 'run')
-    def test_build(self, glob_mock, run_mock):
+    @mock.patch.object(ant.AntPlugin, 'run')
+    def test_build(self, run_mock):
         plugin = ant.AntPlugin('test-part', self.options,
-                                   self.project_options)
+                               self.project_options)
 
         def side(l):
             os.makedirs(os.path.join(plugin.builddir, 'target'))
@@ -52,10 +56,10 @@ class MavenPluginTestCase(tests.TestCase):
             mock.call(['ant']),
         ])
 
-    @mock.patch.object(maven.MavenPlugin, 'run')
-    def test_build_fail(self, glob_mock, run_mock):
+    @mock.patch.object(ant.AntPlugin, 'run')
+    def test_build_fail(self, run_mock):
         plugin = ant.AntPlugin('test-part', self.options,
-                                   self.project_options)
+                               self.project_options)
 
         os.makedirs(plugin.sourcedir)
         with self.assertRaises(RuntimeError):
