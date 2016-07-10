@@ -93,7 +93,8 @@ class MavenPluginTestCase(tests.TestCase):
     def test_build_with_snapcraft_proxy(self, glob_mock, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
-            ('http_proxy', 'http://localhost:3132'),
+            ('http_proxy', 'http://foo:bar@localhost:3132'),
+            ('https_proxy', 'https://baz:qux@localhost:3132'),
             ('no_proxy', None),
         )
         for v in env_vars:
@@ -128,11 +129,23 @@ class MavenPluginTestCase(tests.TestCase):
             '  <interactiveMode>false</interactiveMode>\n'
             '  <proxies>\n'
             '    <proxy>\n'
-            '      <id>proxy</id>\n'
+            '      <id>http_proxy</id>\n'
             '      <active>true</active>\n'
             '      <protocol>http</protocol>\n'
             '      <host>localhost</host>\n'
             '      <port>3132</port>\n'
+            '      <username>foo</username>\n'
+            '      <password>bar</password>\n'
+            '      <nonProxyHosts>localhost</nonProxyHosts>\n'
+            '    </proxy>\n'
+            '    <proxy>\n'
+            '      <id>https_proxy</id>\n'
+            '      <active>true</active>\n'
+            '      <protocol>https</protocol>\n'
+            '      <host>localhost</host>\n'
+            '      <port>3132</port>\n'
+            '      <username>baz</username>\n'
+            '      <password>qux</password>\n'
             '      <nonProxyHosts>localhost</nonProxyHosts>\n'
             '    </proxy>\n'
             '  </proxies>\n'
@@ -145,6 +158,7 @@ class MavenPluginTestCase(tests.TestCase):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
+            ('https_proxy', 'https://localhost:3132'),
             ('no_proxy', 'internal'),
         )
         for v in env_vars:
@@ -179,11 +193,23 @@ class MavenPluginTestCase(tests.TestCase):
             '  <interactiveMode>false</interactiveMode>\n'
             '  <proxies>\n'
             '    <proxy>\n'
-            '      <id>proxy</id>\n'
+            '      <id>http_proxy</id>\n'
             '      <active>true</active>\n'
             '      <protocol>http</protocol>\n'
             '      <host>localhost</host>\n'
             '      <port>3132</port>\n'
+            '      <username></username>\n'
+            '      <password></password>\n'
+            '      <nonProxyHosts>internal</nonProxyHosts>\n'
+            '    </proxy>\n'
+            '    <proxy>\n'
+            '      <id>https_proxy</id>\n'
+            '      <active>true</active>\n'
+            '      <protocol>https</protocol>\n'
+            '      <host>localhost</host>\n'
+            '      <port>3132</port>\n'
+            '      <username></username>\n'
+            '      <password></password>\n'
             '      <nonProxyHosts>internal</nonProxyHosts>\n'
             '    </proxy>\n'
             '  </proxies>\n'
@@ -196,6 +222,7 @@ class MavenPluginTestCase(tests.TestCase):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
+            ('https_proxy', 'https://localhost:3132'),
             ('no_proxy', 'internal, pseudo-dmz'),
         )
         for v in env_vars:
@@ -230,11 +257,23 @@ class MavenPluginTestCase(tests.TestCase):
             '  <interactiveMode>false</interactiveMode>\n'
             '  <proxies>\n'
             '    <proxy>\n'
-            '      <id>proxy</id>\n'
+            '      <id>http_proxy</id>\n'
             '      <active>true</active>\n'
             '      <protocol>http</protocol>\n'
             '      <host>localhost</host>\n'
             '      <port>3132</port>\n'
+            '      <username></username>\n'
+            '      <password></password>\n'
+            '      <nonProxyHosts>internal|pseudo-dmz</nonProxyHosts>\n'
+            '    </proxy>\n'
+            '    <proxy>\n'
+            '      <id>https_proxy</id>\n'
+            '      <active>true</active>\n'
+            '      <protocol>https</protocol>\n'
+            '      <host>localhost</host>\n'
+            '      <port>3132</port>\n'
+            '      <username></username>\n'
+            '      <password></password>\n'
             '      <nonProxyHosts>internal|pseudo-dmz</nonProxyHosts>\n'
             '    </proxy>\n'
             '  </proxies>\n'
