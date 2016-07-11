@@ -170,3 +170,30 @@ class StoreReviewError(StoreError):
     def __init__(self, result):
         self.fmt = self.__messages[result['code']]
         super().__init__()
+
+
+class StoreReleaseError(StoreError):
+
+    __FMT_NOT_REGISTERED = (
+        'Sorry, try `snapcraft register {snap_name}` before pushing again.')
+
+    fmt = 'Received {status_code!r}: {text!r}'
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        if response.status_code == 404:
+            self.fmt = self.__FMT_NOT_REGISTERED
+        elif response.status_code == 401 or response.status_code == 403:
+            try:
+                response_json['text'] = response.text
+            except AttributeError:
+                response_json['text'] = 'error while releasing'
+        elif 'errors' in response_json:
+            self.fmt = '{errors}'
+
+        super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)

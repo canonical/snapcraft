@@ -20,6 +20,7 @@ import subprocess
 import tempfile
 import os
 
+from tabulate import tabulate
 import yaml
 
 from snapcraft import storeapi
@@ -109,6 +110,58 @@ def upload(snap_filename):
     else:
         logger.info('Uploaded {!r}'.format(snap_name))
     tracker.raise_for_code()
+
+
+def _get_text_for_opened_channels(opened_channels):
+    if len(opened_channels) == 0:
+        return 'The {!r} channel is now open'.format(opened_channels[0])
+    else:
+        text = ''
+        for channel in opened_channels[:-1]:
+            if text:
+                text = '{}, {!r}'.format(text, channel)
+            else:
+                text = '{!r}'.format(channel)
+            text = '{} and {!r}'.format(text, opened_channels[-1])
+        return 'The {} channels are now open'.format(text)
+
+
+def _get_text_for_channel(channel):
+    if channel['info'] == 'none':
+        channel_text = [channel['channel'], '-', '-']
+    elif channel['info'] == 'tracking':
+        channel_text = [channel['channel'], '^', '^']
+    elif channel['info'] == 'specific':
+        channel_text = [
+            channel['channel'],
+            channel['version'],
+            channel['revision'],
+        ]
+    else:
+        raise RuntimeError('Unexpected channel info {!r}'.format(
+            channel['info']))
+
+    return channel_text
+
+
+def release(snap_name, revision, channel):
+    try:
+        store = storeapi.StoreClient()
+        channels = store.release(snap_name, revision, [channel])
+    except storeapi.errors.InvalidCredentialsError:
+        logger.error('No valid credentials found.'
+                     ' Have you run "snapcraft login"?')
+        raise
+
+    if 'opened_channels' in channels:
+        logger.info(
+            _get_text_for_opened_channels(channels['opened_channels']))
+    channel_map = channels['channel_map']
+    parsed_channels = [_get_text_for_channel(c) for c in channel_map]
+    tabulated_channels = tabulate(parsed_channels,
+                                  headers=['Channel', 'Version', 'Revision'])
+    # This does not look good in green so we print instead
+    print('{}'.format(tabulated_channels))
 
 
 def download(snap_name, channel, download_path, arch):
