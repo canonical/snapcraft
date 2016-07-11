@@ -3,6 +3,7 @@ docopt==0.6.2
 file-magic==0.3.0
 jsonschema==2.5.1
 oauthlib==1.0.3
+pkg-resources
 progressbar33==2.4
 PyYAML==3.11
 pyxdg==0.25
