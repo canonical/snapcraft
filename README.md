@@ -23,6 +23,7 @@ transactional update system.
 
 * [Introduction](docs/intro.md) to all the details about the concepts behind snapcraft.
 * [Hacking guide](HACKING.md) to contribute if you're interested in developing Snapcraft.
+* [Launchpad](https://bugs.launchpad.net/snapcraft) to submit bugs or issues.
 
 [travis-image]: https://travis-ci.org/snapcore/snapcraft.svg?branch=master
 [travis-url]: https://travis-ci.org/snapcore/snapcraft
