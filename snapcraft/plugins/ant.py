@@ -52,7 +52,7 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         os.makedirs(jardir)
         for f in files:
             base = os.path.basename(f)
-            os.link(f, os.path.join(targetdir, base))
+            os.link(f, os.path.join(jardir, base))
 
     def env(self, root):
         env = super().env(root)
