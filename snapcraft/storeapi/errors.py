@@ -175,7 +175,8 @@ class StoreReviewError(StoreError):
 class StoreReleaseError(StoreError):
 
     __FMT_NOT_REGISTERED = (
-        'Sorry, try `snapcraft register {snap_name}` before pushing again.')
+        'Sorry, try `snapcraft register {snap_name}` before trying to '
+        'release or choose an existing revision.')
 
     fmt = 'Received {status_code!r}: {text!r}'
 
