@@ -338,15 +338,15 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'errors': 'Not a valid channel: alpha',
             }
             data = json.dumps(response).encode()
-        elif data['name'] == 'test-snap':
+        elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
             response = {
-                'opened_channels': ['beta'],
+                'opened_channels': data['channels'],
                 'success': True,
                 'channel_map': [
                     {'channel': 'stable', 'info': 'none'},
                     {'channel': 'candidate', 'info': 'none'},
-                    {'revision': 19, 'channel': 'beta', 'version': '0',
-                     'info': 'specific'},
+                    {'revision': data['revision'], 'channel': 'beta',
+                     'version': '0', 'info': 'specific'},
                     {'channel': 'edge', 'info': 'tracking'}
                 ]
             }
