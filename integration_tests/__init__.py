@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fileinput
 import os
 import shutil
 import subprocess
 import time
+import uuid
 
 import fixtures
 import pexpect
@@ -120,3 +122,22 @@ class TestCase(testtools.TestCase):
         # following registrations.
         if wait:
             time.sleep(10)
+
+    def update_name_and_version(self, project_dir, name=None, version=None):
+        unique_id = uuid.uuid4().int
+        if name is None:
+            name = 'u1test-{}'.format(unique_id)
+        if version is None:
+            # The maximum size is 32 chars.
+            version = str(unique_id)[:32]
+        updated_project_dir = self.copy_project_to_tmp(project_dir)
+        yaml_file = os.path.join(project_dir, 'snapcraft.yaml')
+        for line in fileinput.input(yaml_file, inplace=True):
+            if 'name: ' in line:
+                print('name: {}'.format(name))
+            elif 'version: ' in line:
+                print('version: {}'.format(version))
+            else:
+                print(line)
+        return updated_project_dir
+
