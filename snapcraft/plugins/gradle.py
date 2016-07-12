@@ -33,7 +33,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import glob
 import logging
 import os
-import shutil
 
 import snapcraft
 import snapcraft.common
@@ -90,4 +89,5 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
         targetdir = os.path.join(self.installdir, basedir)
         os.makedirs(targetdir, exist_ok=True)
         for f in jarfiles:
-            shutil.copy(f, targetdir)
+            base = os.path.basename(f)
+            os.link(f, os.path.join(targetdir, base))
