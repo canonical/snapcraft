@@ -31,6 +31,7 @@ class MavenPluginTestCase(tests.TestCase):
 
         class Options:
             maven_options = []
+            maven_targets = ['']
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -70,17 +71,44 @@ class MavenPluginTestCase(tests.TestCase):
             maven_options['uniqueItems'],
             'Expected "maven-options" "uniqueItems" to be "True"')
 
+        maven_targets = properties['maven-targets']
+
+        self.assertTrue(
+            'type' in maven_targets,
+            'Expected "type" to be included in "maven-targets"')
+        self.assertEqual(maven_targets['type'], 'array',
+                         'Expected "maven-targets" "type" to be "array", but '
+                         'it was "{}"'.format(maven_targets['type']))
+
+        self.assertTrue(
+            'minitems' in maven_targets,
+            'Expected "minitems" to be included in "maven-targets"')
+        self.assertEqual(maven_targets['minitems'], 1,
+                         'Expected "maven-targets" "minitems" to be 1, but '
+                         'it was "{}"'.format(maven_targets['minitems']))
+
+        self.assertTrue(
+            'uniqueItems' in maven_targets,
+            'Expected "uniqueItems" to be included in "maven-targets"')
+        self.assertTrue(
+            maven_targets['uniqueItems'],
+            'Expected "maven-targets" "uniqueItems" to be "True"')
+
         build_properties = schema['build-properties']
-        self.assertEqual(['maven-options'], build_properties)
+        self.assertEqual(['maven-options', 'maven-targets'], build_properties)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
-    @mock.patch('glob.glob')
-    def test_build(self, glob_mock, run_mock):
+    def test_build(self, run_mock):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir, 'target'))
+            open(os.path.join(plugin.builddir,
+                 'target', 'dummy.jar'), 'w').close()
+
+        run_mock.side_effect = side
         os.makedirs(plugin.sourcedir)
-        glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
 
         plugin.build()
 
@@ -89,8 +117,64 @@ class MavenPluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(maven.MavenPlugin, 'run')
-    @mock.patch('glob.glob')
-    def test_build_with_snapcraft_proxy(self, glob_mock, run_mock):
+    def test_build_fail(self, run_mock):
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        with self.assertRaises(RuntimeError):
+            plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    def test_build_war(self, run_mock):
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir, 'target'))
+            open(os.path.join(plugin.builddir,
+                 'target', 'dummy.war'), 'w').close()
+
+        run_mock.side_effect = side
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    def test_build_with_targets(self, run_mock):
+        opts = self.options
+        opts.maven_targets = ['child1', 'child2']
+        plugin = maven.MavenPlugin('test-part', opts,
+                                   self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir,
+                        'child1', 'target'))
+            os.makedirs(os.path.join(plugin.builddir,
+                        'child2', 'target'))
+            open(os.path.join(plugin.builddir,
+                 'child1', 'target', 'child1.jar'), 'w').close()
+            open(os.path.join(plugin.builddir,
+                 'child2', 'target', 'child2.jar'), 'w').close()
+
+        run_mock.side_effect = side
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package']),
+        ])
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    def test_build_with_snapcraft_proxy(self, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
@@ -102,10 +186,14 @@ class MavenPluginTestCase(tests.TestCase):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
 
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir, 'target'))
+            open(os.path.join(plugin.builddir,
+                 'target', 'dummy.jar'), 'w').close()
+
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
+        run_mock.side_effect = side
         os.makedirs(plugin.sourcedir)
-        glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
 
         plugin.build()
 
@@ -140,8 +228,7 @@ class MavenPluginTestCase(tests.TestCase):
         self.assertEqual(settings_contents, expected_contents)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
-    @mock.patch('glob.glob')
-    def test_build_with_proxy_and_no_proxy(self, glob_mock, run_mock):
+    def test_build_with_proxy_and_no_proxy(self, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
@@ -153,10 +240,14 @@ class MavenPluginTestCase(tests.TestCase):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
 
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir, 'target'))
+            open(os.path.join(plugin.builddir,
+                 'target', 'dummy.jar'), 'w').close()
+
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
+        run_mock.side_effect = side
         os.makedirs(plugin.sourcedir)
-        glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
 
         plugin.build()
 
@@ -191,8 +282,7 @@ class MavenPluginTestCase(tests.TestCase):
         self.assertEqual(settings_contents, expected_contents)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
-    @mock.patch('glob.glob')
-    def test_build_with_proxy_and_no_proxies(self, glob_mock, run_mock):
+    def test_build_with_proxy_and_no_proxies(self, run_mock):
         env_vars = (
             ('SNAPCRAFT_SETUP_PROXIES', '1',),
             ('http_proxy', 'http://localhost:3132'),
@@ -204,10 +294,14 @@ class MavenPluginTestCase(tests.TestCase):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
 
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir, 'target'))
+            open(os.path.join(plugin.builddir,
+                 'target', 'dummy.jar'), 'w').close()
+
         settings_path = os.path.join(plugin.partdir, 'm2', 'settings.xml')
+        run_mock.side_effect = side
         os.makedirs(plugin.sourcedir)
-        glob_mock.return_value = [
-            os.path.join(plugin.builddir, 'target', 'dummy')]
 
         plugin.build()
 
