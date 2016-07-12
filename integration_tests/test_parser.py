@@ -18,6 +18,7 @@ import os
 import subprocess
 
 import integration_tests
+from snapcraft.tests import fixture_setup
 
 
 class TestParser(integration_tests.TestCase):
@@ -25,10 +26,12 @@ class TestParser(integration_tests.TestCase):
 
     def test_parser_basic(self):
         """Test snapcraft-parser basic usage"""
+        fixture = fixture_setup.FakePartsWiki()
+        self.useFixture(fixture)
 
         args = [self.snapcraft_parser_command, '--index',
-                'https://wiki.ubuntu.com/snapcraft/parts?action=raw',
-                '--output', 'parts.yaml']
+                fixture.fake_parts_wiki_fixture.url,
+                '--debug', '--output', 'parts.yaml']
         subprocess.check_call(args, stderr=subprocess.DEVNULL,
                               stdout=subprocess.DEVNULL)
 

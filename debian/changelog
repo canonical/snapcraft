@@ -1,3 +1,9 @@
+snapcraft (2.12.1) xenial; urgency=medium
+
+  * New upstream release 2.12.1 (LP: #1600090)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 08 Jul 2016 13:31:34 -0300
+
 snapcraft (2.12) xenial; urgency=medium
 
   [ Simon Quigley ]

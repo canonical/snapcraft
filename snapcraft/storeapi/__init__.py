@@ -15,16 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import hashlib
+import itertools
 import json
 import logging
 import os
-import subprocess
-import tempfile
 import urllib.parse
+from time import sleep
+from threading import Thread
+from queue import Queue
 
 import pymacaroons
 import requests
-import yaml
+from progressbar import (
+    AnimatedMarker,
+    ProgressBar,
+    UnknownLength,
+)
 
 import snapcraft
 from snapcraft import config
@@ -37,21 +43,6 @@ from snapcraft.storeapi import (
 
 
 logger = logging.getLogger(__name__)
-
-
-def _get_name_from_snap_file(snap_path):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output = subprocess.check_output(
-            ['unsquashfs', '-d',
-             os.path.join(temp_dir, 'squashfs-root'),
-             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
-        logger.debug(output)
-        with open(os.path.join(
-                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
-        ) as yaml_file:
-            snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
 
 
 def _macaroon_auth(conf):
@@ -157,22 +148,19 @@ class StoreClient():
     def register(self, snap_name):
         self.sca.register(snap_name, constants.DEFAULT_SERIES)
 
-    def upload(self, snap_filename):
-        snap_name = _get_name_from_snap_file(snap_filename)
-
+    def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:
             raise errors.InvalidCredentialsError(
                 'Unbound discharge not in the config file')
 
-        data = _upload.upload_files(snap_filename, self.updown)
-        success = data.get('success', False)
+        updown_data = _upload.upload_files(snap_filename, self.updown)
+        success = updown_data.get('success', False)
         if not success:
-            return data
+            return updown_data
 
-        result = _upload.upload_app(self.sca, snap_name, data)
-        return result
+        return self.sca.snap_push_metadata(snap_name, updown_data)
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
@@ -328,11 +316,91 @@ class SCAClient(Client):
             raise errors.StoreRegistrationError(snap_name, response)
         # TODO handle macaroon refresh
 
-    def snap_upload(self, data):
+    def snap_push_metadata(self, snap_name, updown_data):
+        data = {
+            'name': snap_name,
+            'series': constants.DEFAULT_SERIES,
+            'updown_id': updown_data['upload_id'],
+            'binary_filesize': updown_data['binary_filesize'],
+            'source_uploaded': updown_data['source_uploaded'],
+        }
         auth = _macaroon_auth(self.conf)
         response = self.post(
             'snap-push/', data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
-        return response
+        if not response.ok:
+            raise errors.StorePushError(data['name'], response)
+
+        return StatusTracker(response.json()['status_details_url'])
+
+
+class StatusTracker:
+
+    __messages = {
+        'being_processed': 'Processing...',
+        'ready_to_release': 'Ready to release!',
+        'need_manual_review': 'Will need manual review...',
+        'processing_error': 'Error while processing...',
+    }
+
+    __error_codes = (
+        'processing_error',
+        'need_manual_review',
+    )
+
+    def __init__(self, status_details_url):
+        self.__status_details_url = status_details_url
+
+    def track(self):
+        queue = Queue()
+        thread = Thread(target=self._update_status, args=(queue,))
+        thread.start()
+
+        widgets = ['Processing...', AnimatedMarker()]
+        progress_indicator = ProgressBar(widgets=widgets, maxval=UnknownLength)
+        progress_indicator.start()
+
+        content = {}
+        for indicator_count in itertools.count():
+            if not queue.empty():
+                content = queue.get()
+                if isinstance(content, Exception):
+                    raise content
+                widgets[0] = self._get_message(content)
+            progress_indicator.update(indicator_count)
+            if content.get('processed'):
+                break
+            sleep(0.1)
+        progress_indicator.finish()
+
+        self.__content = content
+
+        return content
+
+    def raise_for_code(self):
+        if any(self.__content['code'] == k for k in self.__error_codes):
+            raise errors.StoreReviewError(self.__content)
+
+    def _get_message(self, content):
+        return self.__messages.get(content['code'], content['code'])
+
+    def _update_status(self, queue):
+        for content in self._get_status():
+            queue.put(content)
+            if content['processed']:
+                break
+            sleep(constants.SCAN_STATUS_POLL_DELAY)
+
+    def _get_status(self):
+        connection_errors_allowed = 10
+        while True:
+            try:
+                content = requests.get(self.__status_details_url).json()
+            except (requests.ConnectionError, requests.HTTPError) as e:
+                if not connection_errors_allowed:
+                    yield e
+                content = {'processed': False, 'code': 'being_processed'}
+                connection_errors_allowed -= 1
+            yield content

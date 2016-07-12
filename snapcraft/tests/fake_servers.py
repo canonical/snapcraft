@@ -90,6 +90,66 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(yaml.dump(response).encode())
 
 
+class FakePartsWikiServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiRequestHandler)
+
+
+class FakePartsWikiRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = """
+---
+origin: https://github.com/sergiusens/curl.git
+project-part: curl
+description:
+  Description here
+maintainer: none
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
+class FakePartsWikiOriginServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiOriginRequestHandler)
+
+
+class FakePartsWikiOriginRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting part origin')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = """
+parts:
+  somepart:
+    source: https://github.com/someuser/somepart.git
+    plugin: nil
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
 class FakeSSOServer(http.server.HTTPServer):
 
     def __init__(self, server_address):
@@ -284,40 +344,65 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_upload_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling registration request with content {}'.format(data))
+
+        response_code = 202
+        details_path = 'details/upload-id/good-snap'
+        if data['name'] == 'test-review-snap':
+            details_path = 'details/upload-id/review-snap'
+        elif data['name'] == 'test-snap-unregistered':
+            response_code = 404
+
         logger.debug('Handling upload request')
-        self.send_response(202)
-        self.send_header('Content-Type', 'application/json')
+        self.send_response(response_code)
+        if response_code == 404:
+            self.send_header('Content-Type', 'text/plain')
+            data = b''
+        else:
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'status_details_url': urllib.parse.urljoin(
+                    'http://localhost:{}/'.format(self.server.server_port),
+                    details_path
+                    ),
+                'success': True
+            }
+            data = json.dumps(response).encode()
         self.end_headers()
-        response = {
-            'status_url': urllib.parse.urljoin(
-                'http://localhost:{}/'.format(self.server.server_port),
-                'dev/api/click-scan-complete/updown/test-upload-id'),
-            'success': True
-        }
-        self.wfile.write(json.dumps(response).encode())
+
+        self.wfile.write(data)
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        scan_complete_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'click-scan-complete/updown/')
-        if parsed_path.path.startswith(scan_complete_path):
-            self._handle_scan_complete_request()
+        details_good = urllib.parse.urljoin(
+            self._DEV_API_PATH, '/details/upload-id/good-snap')
+        details_review = urllib.parse.urljoin(
+            self._DEV_API_PATH, '/details/upload-id/review-snap')
+        if parsed_path.path.startswith(details_good):
+            self._handle_scan_complete_request('ready_to_release', True)
+        elif parsed_path.path.startswith(details_review):
+            self._handle_scan_complete_request('need_manual_review', False)
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
-            raise NotImplementedError(self.path)
+            raise NotImplementedError(parsed_path)
 
-    def _handle_scan_complete_request(self):
+    def _handle_scan_complete_request(self, code, can_release):
         logger.debug('Handling scan complete request')
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'message': '',
-            'application_url': 'test-application-url',
-            'revision': 'test-revision',
-            'completed': True
+            'code': code,
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': can_release,
+            'revision': '1',
+            'processed': True
         }
         self.wfile.write(json.dumps(response).encode())
 

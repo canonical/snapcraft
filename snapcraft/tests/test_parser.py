@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
 from unittest import mock
 
+import requests
 import yaml
 
 from snapcraft.internal.parser import (
@@ -26,8 +26,7 @@ from snapcraft.internal.parser import (
     PARTS_FILE,
     main,
 )
-from snapcraft.tests import TestCase
-
+from snapcraft.tests import TestCase, fixture_setup
 
 TEST_OUTPUT_PATH = os.path.join(os.getcwd(), 'test_output.wiki')
 
@@ -64,7 +63,6 @@ class TestParser(TestCase):
         subpart = 'subpart'
 
         result = _get_namespaced_partname(partname, subpart)
-        logging.warn('JOE: result: {}'.format(result))
 
         self.assertEqual('{p}{s}{sp}'.format(p=partname,
                                              s=PART_NAMESPACE_SEP,
@@ -556,3 +554,96 @@ description: example
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_partial_processing_for_malformed_yaml(self,
+                                                   mock_get,
+                                                   mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description:
+  example
+
+  Usage
+    blahblahblah
+project-part: 'main'
+---
+maintainer: John Doeson <john.doeson@example.com>
+origin: lp:snapcraft-parser-example
+description:
+  example
+
+  Usage:
+    blahblahblah
+project-part: 'main2'
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'main2': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_interactions_with_fake(self,
+                                         mock_get,
+                                         mock_get_origin_data):
+
+        fixture = fixture_setup.FakePartsWiki()
+        self.useFixture(fixture)
+
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'curl': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_with_fake_origin(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        # TODO: update this once we start encoding the origin_dir
+        origin_dir = os.path.join('/tmp', 'somepart')
+        os.makedirs(origin_dir, exist_ok=True)
+
+        # Create a fake snapcraft.yaml for _get_origin_data() to parse
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'),
+                  'w') as fp:
+            text = requests.get(origin_url).text
+            fp.write(text)
+
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part('somepart')
+        self.assertTrue(part is not None)
