@@ -17,6 +17,8 @@
 import os
 import subprocess
 
+from testtools import content
+
 import integration_tests
 
 
@@ -26,10 +28,14 @@ class TestParser(integration_tests.TestCase):
     def test_parser_basic(self):
         """Test snapcraft-parser basic usage"""
 
-        args = [self.snapcraft_parser_command, '--index',
-                'https://wiki.ubuntu.com/snapcraft/parts?action=raw',
-                '--output', 'parts.yaml']
-        subprocess.check_call(args, stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
+        command = [self.snapcraft_parser_command, '-d', '--index',
+                   'https://wiki.ubuntu.com/snapcraft/parts?action=raw',
+                   '--output', 'parts.yaml']
+        try:
+            subprocess.check_output(
+                command, stderr=subprocess.STDOUT, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('output', content.text_content(e.output))
+            raise
 
         self.assertTrue(os.path.exists('parts.yaml'))
