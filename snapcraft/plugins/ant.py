@@ -27,7 +27,6 @@ For more information check the 'plugins' topic for the former and the
 import glob
 import logging
 import os
-import shutil
 
 import snapcraft
 import snapcraft.common
@@ -52,7 +51,8 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         jardir = os.path.join(self.installdir, 'jar')
         os.makedirs(jardir)
         for f in files:
-            shutil.copy(f, jardir)
+            base = os.path.basename(f)
+            os.link(f, os.path.join(targetdir, base))
 
     def env(self, root):
         env = super().env(root)
