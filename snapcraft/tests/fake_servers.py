@@ -345,7 +345,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'channel_map': [
                     {'channel': 'stable', 'info': 'none'},
                     {'channel': 'candidate', 'info': 'none'},
-                    {'revision': data['revision'], 'channel': 'beta',
+                    {'revision': int(data['revision']), 'channel': 'beta',
                      'version': '0', 'info': 'specific'},
                     {'channel': 'edge', 'info': 'tracking'}
                 ]
