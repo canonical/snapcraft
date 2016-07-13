@@ -23,6 +23,6 @@ class ReusablePartTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = '01-reusable-part'
 
     def test_hello(self):
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'hello-world-desktop', '0.1')
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'hello-world-desktop', '0.1')
         self.run_command_in_snappy_testbed('ls /snap/bin/hello-world-desktop')
