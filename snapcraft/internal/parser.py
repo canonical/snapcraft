@@ -230,6 +230,13 @@ def _process_index(output):
             except ScannerError as e:
                 logger.warning(
                     'Bad wiki entry, possibly malformed YAML: {}'.format(e))
+
+            part_name = data.get('project-part')
+            if part_name is not None and part_name in master_parts_list:
+                logger.warning("Duplicate part found in wiki: {}".format(
+                    part_name))
+                continue
+
             try:
                 parts_list, after_parts = _process_entry(data)
             except InvalidEntryError as e:
