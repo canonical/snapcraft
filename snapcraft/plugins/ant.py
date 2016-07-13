@@ -49,8 +49,10 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         if not files:
             raise RuntimeError('could not find any built jar files for part')
         jardir = os.path.join(self.installdir, 'jar')
-        self.run(['mkdir', '-p', jardir])
-        self.run(['cp', '-a'] + files + [jardir])
+        os.makedirs(jardir)
+        for f in files:
+            base = os.path.basename(f)
+            os.link(f, os.path.join(jardir, base))
 
     def env(self, root):
         env = super().env(root)

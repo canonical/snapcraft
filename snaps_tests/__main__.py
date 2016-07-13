@@ -19,7 +19,7 @@
 Usage:
   snaps_tests [--skip-install] [--ip IP_OR_HOSTNAME]
               [--port PORT_NUMBER] [--filter REGEXP]
-              [--subunit]
+              [--subunit] [--proxy PROXY_URL]
 
 Options:
   --skip-install       skip the tests that install the snaps into a
@@ -29,6 +29,7 @@ Options:
   --port PORT_NUMBER   SSH port of the testbed. Defaults to use port 22.
   --filter REGEXP      a regular expression to filter the snaps to test.
   --subunit            generate subunit results.
+  --proxy PROXY_URL    URL of the proxy to use in the testbed.
 
 """
 
@@ -50,6 +51,7 @@ def main():
     snaps_tests.config['ip'] = arguments['--ip']
     snaps_tests.config['port'] = arguments['--port']
     snaps_tests.config['filter'] = arguments['--filter']
+    snaps_tests.config['proxy'] = arguments['--proxy']
 
     if arguments['--subunit']:
         from subunit import run
