@@ -1,17 +1,18 @@
 name: java-hello-gradle
-version: 0
-summary: A java example
-description: this is not much more than an example
+version: 1.0.0
+summary: A java example using gradle
+description: this is not much more than an example using gradle
 confinement: strict
 
 apps:
- hello:
-   command: bin/wrapper
+    hello:
+        command: bin/wrapper
 
 parts:
     local:
         plugin: gradle
         source: .
+        gradle-options: [--debug]
     wrapper:
         plugin: make
         source: .
