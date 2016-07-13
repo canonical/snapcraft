@@ -33,6 +33,7 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] register <snap-name>
   snapcraft [options] upload <snap-file>
+  snapcraft [options] release <snap-name> <revision> <channel>
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
@@ -79,6 +80,7 @@ The available commands are:
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
   upload       Upload a snap to the Ubuntu Store.
+  release      Release a revision of a snap to a specific channel.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -270,7 +272,8 @@ def _run_clean(args, project_options):
 
 
 def _is_store_command(args):
-    return args['register'] or args['upload']
+    commands = ('register', 'upload', 'release')
+    return any(args.get(command) for command in commands)
 
 
 def _run_store_command(args):
@@ -278,6 +281,9 @@ def _run_store_command(args):
         snapcraft.register(args['<snap-name>'])
     elif args['upload']:
         snapcraft.upload(args['<snap-file>'])
+    elif args['release']:
+        snapcraft.release(
+            args['<snap-name>'], args['<revision>'], args['<channel>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

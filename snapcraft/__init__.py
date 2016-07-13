@@ -231,7 +231,8 @@ from snapcraft._store import (                      # noqa
     login,
     logout,
     register,
-    upload
+    upload,
+    release,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
