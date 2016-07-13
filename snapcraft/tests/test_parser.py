@@ -30,6 +30,7 @@ from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
+    MissingSnapcraftYAMLError,
     BASE_DIR,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
@@ -626,6 +627,24 @@ project-part: 'main2'
         }
         main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
         self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_missing_snapcraft_yaml(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        self.assertRaises(MissingSnapcraftYAMLError, main,
+                          ['--debug', '--index', TEST_OUTPUT_PATH])
 
     @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_with_fake_origin(self, mock_get):
