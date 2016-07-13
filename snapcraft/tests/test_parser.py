@@ -30,6 +30,7 @@ from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
+    BASE_DIR,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
     main,
@@ -641,8 +642,7 @@ description: example
 project-part: 'somepart'
 """.format(origin_url=origin_url))
 
-        # TODO: update this once we start encoding the origin_dir
-        origin_dir = os.path.join('/tmp', 'somepart')
+        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
