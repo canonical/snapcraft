@@ -149,9 +149,18 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     def test_build_fail(self, run_mock):
+        env_vars = (
+            ('http_proxy', None),
+            ('https_proxy', None),
+        )
+        for v in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
+
         os.makedirs(plugin.sourcedir)
+
         with self.assertRaises(RuntimeError):
             plugin.build()
 
@@ -161,6 +170,13 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     def test_build_war(self, run_mock):
+        env_vars = (
+            ('http_proxy', None),
+            ('https_proxy', None),
+        )
+        for v in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
 
@@ -180,6 +196,13 @@ class MavenPluginTestCase(tests.TestCase):
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     def test_build_with_targets(self, run_mock):
+        env_vars = (
+            ('http_proxy', None),
+            ('https_proxy', None),
+        )
+        for v in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+
         opts = self.options
         opts.maven_targets = ['child1', 'child2']
         plugin = maven.MavenPlugin('test-part', opts,
