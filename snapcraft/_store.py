@@ -123,15 +123,15 @@ def _get_text_for_opened_channels(opened_channels):
 
 def _get_text_for_channel(channel):
     if channel['info'] == 'none':
-        channel_text = [channel['channel'], '-', '-']
+        channel_text = (channel['channel'], '-', '-')
     elif channel['info'] == 'tracking':
-        channel_text = [channel['channel'], '^', '^']
+        channel_text = (channel['channel'], '^', '^')
     elif channel['info'] == 'specific':
-        channel_text = [
+        channel_text = (
             channel['channel'],
             channel['version'],
             channel['revision'],
-        ]
+        )
     else:
         raise RuntimeError('Unexpected channel info {!r}.'.format(
             channel['info']))
