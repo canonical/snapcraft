@@ -156,7 +156,7 @@ def release(snap_name, revision, channel):
     tabulated_channels = tabulate(parsed_channels,
                                   headers=['Channel', 'Version', 'Revision'])
     # This does not look good in green so we print instead
-    print('{}'.format(tabulated_channels))
+    print(tabulated_channels)
 
 
 def download(snap_name, channel, download_path, arch):
