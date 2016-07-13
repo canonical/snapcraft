@@ -23,6 +23,6 @@ class ServiceConfinedTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = '02-service-confined'
 
     def test_hello(self):
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'hello-world-service', '0.1')
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'hello-world-service', '0.1')
         self.assert_service_running('hello-world-service', 'hello-service')

@@ -47,6 +47,6 @@ class TestSnapcraftExamples(
 
     def test_demo(self):
         # Build snap will raise an exception in case of error.
-        self.build_snap(self.snap_content_dir)
+        snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
-        self.install_snap(self.snap_content_dir, self.name, self.version)
+        self.install_snap(snap_path, self.name, self.version)

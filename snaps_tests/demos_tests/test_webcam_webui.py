@@ -22,7 +22,7 @@ class WebcamWebUITestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'webcam-webui'
 
     def test_webcam_webui(self):
-        self.build_snap(self.snap_content_dir)
+        snap_path = self.build_snap(self.snap_content_dir)
         snap_name = 'webcam-webui'
-        self.install_snap(self.snap_content_dir, snap_name, '1')
+        self.install_snap(snap_path, snap_name, '1')
         self.assert_service_running(snap_name, 'webcam-webui')

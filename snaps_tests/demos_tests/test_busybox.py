@@ -22,8 +22,8 @@ class BusyBoxTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'busybox'
 
     def test_busybox(self):
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'busybox', '1.0')
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'busybox', '1.0')
         # Run the binary once to create the data dir.
         self.run_command_in_snappy_testbed([
             '/snap/bin/busybox.touch', '/tmp/'])
