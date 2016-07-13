@@ -647,6 +647,39 @@ project-part: 'somepart'
                           ['--debug', '--index', TEST_OUTPUT_PATH])
 
     @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        os.makedirs(origin_dir, exist_ok=True)
+
+        # Create a fake snapcraft.yaml for _get_origin_data() to parse
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'),
+                  'w') as fp:
+            fp.write("bad yaml is : bad :yaml:::")
+
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+        self.assertTrue(
+            'Invalid wiki entry'
+            in fake_logger.output, 'Missing invalid wiki entry info in output')
+
+    @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_with_fake_origin(self, mock_get):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
