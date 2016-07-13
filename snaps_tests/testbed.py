@@ -57,11 +57,12 @@ class LocalTestbed:
 
 class SshTestbed:
 
-    def __init__(self, ip, port, user, private_key=None):
+    def __init__(self, ip, port, user, proxy=None, private_key=None):
         super().__init__()
         self.ip = ip
         self.port = port
         self.user = user
+        self.proxy = proxy
         self.private_key = private_key
 
     def wait(self, timeout=300, sleep=10):
@@ -86,6 +87,10 @@ class SshTestbed:
     def _prepare_ssh_command(self, command):
         if isinstance(command, str):
             command = [command]
+        if self.proxy:
+            command = [
+                'http_proxy={}'.format(self.proxy),
+                'https_proxy={}'.format(self.proxy)] + command
         ssh_command = ['ssh', '-l', self.user, '-p', self.port, self.ip]
         ssh_command.extend(self._get_options())
         ssh_command.extend(command)

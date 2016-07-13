@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,11 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
+from testtools.matchers import FileExists
+
 import integration_tests
 
 
-class MavenPluginTestCase(integration_tests.TestCase):
+class PlainboxProviderPluginTestCase(integration_tests.TestCase):
 
-    def test_build_maven_plugin(self):
-        project_dir = 'simple-maven'
-        self.run_snapcraft('build', project_dir)
+    def test_snap_simple_provider(self):
+        project_dir = 'simple-plainbox-provider'
+        self.run_snapcraft('stage', project_dir)
+
+        self.assertThat(
+            os.path.join(
+                project_dir, 'stage', 'providers', 'simple-plainbox-provider',
+                'plainbox-provider-simple.provider'),
+            FileExists())

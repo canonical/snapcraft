@@ -23,11 +23,6 @@ class TestSnapcraftExamples(
         testscenarios.WithScenarios, snaps_tests.SnapsTestCase):
 
     scenarios = [
-        ('downloader-with-wiki-parts', {
-            'snap_content_dir': 'downloader-with-wiki-parts',
-            'name': 'downloader',
-            'version': '1.0',
-            }),
         ('godd', {
             'snap_content_dir': 'godd',
             'name': 'godd',
