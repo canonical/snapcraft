@@ -69,9 +69,9 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
     def build(self):
         super().build()
 
-        gradle_cmd = ['./gradlew', 'jar']
+        gradle_cmd = ['./gradlew']
 
-        self.run(gradle_cmd + self.options.gradle_options)
+        self.run(gradle_cmd + self.options.gradle_options + '[jar]')
 
         src = os.path.join(self.builddir, 'build', 'libs')
         jarfiles = glob.glob(os.path.join(src, '*.jar'))
