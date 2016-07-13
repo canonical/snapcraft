@@ -116,14 +116,9 @@ def _get_text_for_opened_channels(opened_channels):
     if len(opened_channels) == 1:
         return 'The {!r} channel is now open.'.format(opened_channels[0])
     else:
-        text = ''
-        for channel in opened_channels[:-1]:
-            if text:
-                text = '{}, {!r}'.format(text, channel)
-            else:
-                text = '{!r}'.format(channel)
-        text = '{} and {!r}'.format(text, opened_channels[-1])
-        return 'The {} channels are now open.'.format(text)
+        channels = ('{!r}'.format(channel) for channel in opened_channels[:-1])
+        return 'The {} and {!r} channels are now open.'.format(
+            ', '.join(channels), opened_channels[-1])
 
 
 def _get_text_for_channel(channel):
