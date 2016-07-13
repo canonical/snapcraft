@@ -22,8 +22,8 @@ class Qt5TextEditorTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'qt5-text-editor'
 
     def test_text_editor(self):
-        self.build_snap(self.snap_content_dir)
+        snap_path = self.build_snap(self.snap_content_dir)
         self.install_snap(
-            self.snap_content_dir, 'text-editor', '1.0')
+            snap_path, 'text-editor', '1.0')
 
         # TODO: Need xvfb in order to actually run

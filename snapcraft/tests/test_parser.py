@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from unittest import mock
 
 import requests
+import fixtures
 import yaml
 
 from snapcraft.internal.parser import (
@@ -647,3 +649,43 @@ project-part: 'somepart'
         self.assertEqual(1, _get_part_list_count())
         part = _get_part('somepart')
         self.assertTrue(part is not None)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_duplicate_entries(self, mock_get, mock_get_origin_data):
+        """Test duplicate parts are ignored."""
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main duplicate
+project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
+        self.assertEqual('example main', part['description'])
+
+        self.assertEqual(1, _get_part_list_count())
+
+        self.assertTrue(
+            'Duplicate part found in wiki: main'
+            in fake_logger.output, 'Missing duplicate part info in output')

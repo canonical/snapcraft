@@ -22,7 +22,7 @@ class JavaHelloWorldTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'java-hello-world'
 
     def test_java_hello_world(self):
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'java-hello-world', '0')
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'java-hello-world', '0')
         self.assert_command_in_snappy_testbed(
             '/snap/bin/java-hello-world.hello', 'Hello World\n')
