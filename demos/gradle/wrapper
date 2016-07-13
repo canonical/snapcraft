@@ -1,2 +1,2 @@
 #!/bin/sh
-java -jar snapcraft-gradle-demo-1.0.0.jar
+java -jar $SNAP/jar/snapcraft-gradle-demo-1.0.0.jar

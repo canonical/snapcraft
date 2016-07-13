@@ -10,7 +10,7 @@ apps:
 
 parts:
     local:
-        plugin: gradlew
+        plugin: gradle
         source: .
     wrapper:
         plugin: make
