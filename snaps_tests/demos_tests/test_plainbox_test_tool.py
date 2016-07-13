@@ -23,8 +23,8 @@ class PlainboxTestCase(snaps_tests.SnapsTestCase):
 
     def test_plainbox(self):
         # build and install the example
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'plainbox-test-tool', '0.1')
+        snap_path= self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'plainbox-test-tool', '0.1')
         # check that can run plainbox and list the tests available
         expected = """2013.com.canonical.plainbox::collect-manifest
 2013.com.canonical.plainbox::manifest

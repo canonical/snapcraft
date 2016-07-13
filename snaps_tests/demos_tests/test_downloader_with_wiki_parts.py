@@ -24,8 +24,8 @@ class DownloaderWithWikiPartsTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'downloader-with-wiki-parts'
 
     def test_downloader_with_wiki_parts(self):
-        self.build_snap(self.snap_content_dir)
-        self.install_snap(self.snap_content_dir, 'downloader', '1.0')
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'downloader', '1.0')
         expected = (
             '.*<title>The leading OS for PC, tablet, phone and cloud '
             '| Ubuntu</title>.*')
