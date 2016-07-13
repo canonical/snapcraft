@@ -20,6 +20,7 @@ import subprocess
 import uuid
 
 from testtools.matchers import (
+    Equals,
     FileExists,
     MatchesRegex,
 )
@@ -29,36 +30,27 @@ import integration_tests
 from snapcraft.tests import fixture_setup
 
 
-class UploadTestCase(integration_tests.TestCase):
+class ReleaseTestCase(integration_tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-
-    def test_upload_without_login(self):
-        project_dir = 'basic'
-        self.run_snapcraft('snap', project_dir)
-        snap_file_path = 'basic_0.1_{}.snap'.format('all')
-        os.chdir(project_dir)
-        self.assertThat(snap_file_path, FileExists())
-
+    def test_release_without_login(self):
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['upload', snap_file_path])
+            self.run_snapcraft, 
+            ['release', 'test-snap', '19', 'beta'])
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', str(error.output))
 
-    def test_upload_with_login(self):
+    def test_release_with_login(self):
         if not os.getenv('TEST_USER_PASSWORD', None):
             self.useFixture(fixture_setup.FakeStore())
         else:
             self.useFixture(fixture_setup.StagingStore())
 
-        # Make a snap
-        project_dir = 'basic'
         self.addCleanup(self.logout)
         self.login()
 
         # Change to a random name and version.
+        project_dir = 'basic'
         unique_id = uuid.uuid4().int
         new_name = 'u1test-{}'.format(unique_id)
         # The maximum size is 32 chars.
@@ -78,4 +70,9 @@ class UploadTestCase(integration_tests.TestCase):
 
         output = self.run_snapcraft(['upload', snap_file_path], project_dir)
         expected = r'.*Ready to release!.*'.format(new_name)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        # Release it
+        output = self.run_snapcraft(['release', new_name, '1', 'edge'])
+        expected = r'.*The \'edge\' channel is now open.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

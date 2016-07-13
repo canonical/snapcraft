@@ -256,6 +256,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
+        release_path = urllib.parse.urljoin(self._DEV_API_PATH,
+                                            'snap-release/')
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
@@ -263,6 +265,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
             self._handle_upload_request()
+        elif parsed_path.path.startswith(release_path):
+            self._handle_release_request()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -348,7 +352,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             int(self.headers['Content-Length'])).decode('utf8')
         data = json.loads(string_data)
         logger.debug(
-            'Handling registration request with content {}'.format(data))
+            'Handling upload request with content {}'.format(data))
 
         response_code = 202
         details_path = 'details/upload-id/good-snap'
@@ -372,6 +376,48 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'success': True
             }
             data = json.dumps(response).encode()
+        self.end_headers()
+
+        self.wfile.write(data)
+
+    def _handle_release_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling release request with content {}'.format(data))
+        response_code = 200
+        content_type = 'application/json'
+        if data['name'] == 'test-snap-unregistered':
+            response_code = 404
+            content_type = 'text/plain'
+            data = b''
+        elif 'alpha' in data['channels']:
+            response = {
+                'success': False,
+                'errors': 'Not a valid channel: alpha',
+            }
+            data = json.dumps(response).encode()
+        elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
+            response = {
+                'opened_channels': data['channels'],
+                'success': True,
+                'channel_map': [
+                    {'channel': 'stable', 'info': 'none'},
+                    {'channel': 'candidate', 'info': 'none'},
+                    {'revision': int(data['revision']), 'channel': 'beta',
+                     'version': '0', 'info': 'specific'},
+                    {'channel': 'edge', 'info': 'tracking'}
+                ]
+            }
+            data = json.dumps(response).encode()
+        else:
+            raise NotImplementedError(
+                'Cannot handle release request for {!r}'.format(data['name']))
+
+        logger.debug('Handling release request')
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
         self.end_headers()
 
         self.wfile.write(data)

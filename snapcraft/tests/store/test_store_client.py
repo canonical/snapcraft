@@ -284,6 +284,60 @@ class UploadTestCase(tests.TestCase):
             self.client.upload('test-snap', self.snap_path)
 
 
+class ReleaseTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_release_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.release('test-snap', '19', ['beta'])
+
+    def test_release_snap(self):
+        self.client.login('dummy', 'test correct password')
+        channel_map = self.client.release('test-snap', '19', ['beta'])
+        expected_channel_map = {
+            'opened_channels': ['beta'],
+            'channel_map': [
+                {'channel': 'stable', 'info': 'none'},
+                {'channel': 'candidate', 'info': 'none'},
+                {'revision': 19, 'channel': 'beta', 'version': '0',
+                 'info': 'specific'},
+                {'channel': 'edge', 'info': 'tracking'}
+            ]
+        }
+        self.assertEqual(channel_map, expected_channel_map)
+
+    def test_release_snap_to_invalid_channel(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreReleaseError) as raised:
+            self.client.release('test-snap', '19', ['alpha'])
+
+        self.assertEqual(
+            str(raised.exception),
+            'Not a valid channel: alpha')
+
+    def test_release_unregistered_snap(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreReleaseError) as raised:
+            self.client.release('test-snap-unregistered', '19', ['alpha'])
+
+        self.assertEqual(
+            str(raised.exception),
+            'Sorry, try `snapcraft register test-snap-unregistered` '
+            'before trying to release or choose an existing '
+            'revision.')
+
+    def test_release_with_invalid_credentials_raises_exception(self):
+        conf = config.Config()
+        conf.set('macaroon', 'inval"id')
+        conf.save()
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.release('test-snap', '10', ['beta'])
+
+
 class MacaroonsTestCase(tests.TestCase):
 
     def test_invalid_macaroon_root_raises_exception(self):
