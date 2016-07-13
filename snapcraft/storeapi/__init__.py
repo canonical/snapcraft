@@ -162,6 +162,9 @@ class StoreClient():
 
         return self.sca.snap_push_metadata(snap_name, updown_data)
 
+    def release(self, snap_name, revision, channels):
+        return self.sca.snap_release(snap_name, revision, channels)
+
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
@@ -334,6 +337,28 @@ class SCAClient(Client):
             raise errors.StorePushError(data['name'], response)
 
         return StatusTracker(response.json()['status_details_url'])
+
+    def snap_release(self, snap_name, revision, channels):
+        data = {
+            'name': snap_name,
+            'revision': str(revision),
+            'channels': channels,
+        }
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'snap-release/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreReleaseError(data['name'], response)
+
+        response_json = response.json()
+        success = response_json.pop('success')
+        if not success:
+            raise errors.StoreReleaseError(data['name'], response)
+
+        return response_json
 
 
 class StatusTracker:

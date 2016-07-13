@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016 Canonical Ltd
@@ -16,14 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 
-# make running from source easy
-topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
-if os.path.exists(os.path.join(topdir, 'setup.py')):
-    sys.path = [topdir] + sys.path
+from testtools.matchers import FileExists
+
+import integration_tests
 
 
-if __name__ == '__main__':
-    import snapcraft.internal.parser
-    snapcraft.internal.parser.main()
+class PlainboxProviderPluginTestCase(integration_tests.TestCase):
+
+    def test_snap_simple_provider(self):
+        project_dir = 'simple-plainbox-provider'
+        self.run_snapcraft('stage', project_dir)
+
+        self.assertThat(
+            os.path.join(
+                project_dir, 'stage', 'providers', 'simple-plainbox-provider',
+                'plainbox-provider-simple.provider'),
+            FileExists())
