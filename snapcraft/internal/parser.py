@@ -58,6 +58,10 @@ class MissingSnapcraftYAMLError(Exception):
     pass
 
 
+class WikiError(Exception):
+    pass
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -287,6 +291,7 @@ def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
+    errors = dict(wiki=0)
 
     output = output.replace(b'{{{', b'').replace(b'}}}', b'')
     output = output.strip()
@@ -305,7 +310,7 @@ def _process_index(output):
     if entry:
         _process_wiki_entry(entry, master_parts_list)
 
-    return master_parts_list
+    return (master_parts_list, errors)
 
 
 def run(args):
@@ -323,11 +328,15 @@ def run(args):
         # XXX: fetch the index from the wiki
         output = '{}'
 
-    master_parts_list = _process_index(output)
+    master_parts_list, errors = _process_index(output)
+
     _write_parts_list(path, master_parts_list)
 
     if args['--debug']:
         print(yaml.dump(master_parts_list, default_flow_style=False))
+
+    if errors['wiki'] > 0:
+        raise WikiError("Wiki errors found")
 
     return args
 
