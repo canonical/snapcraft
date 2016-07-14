@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import copy
 import logging
 import os
@@ -707,9 +708,9 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(0, len(state.properties))
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch('importlib.import_module')
@@ -729,10 +730,10 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_pull')
@@ -758,9 +759,9 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(0, len(state.properties))
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch('importlib.import_module')
@@ -780,10 +781,10 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_build')
@@ -818,7 +819,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
@@ -826,7 +827,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['*'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     def test_stage_state_with_stage_keyword(self):
@@ -849,14 +850,14 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['bin/1'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
         self.assertEqual('stage', self.handler.last_step())
@@ -958,7 +959,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
@@ -967,7 +968,7 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
@@ -1006,7 +1007,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
@@ -1018,7 +1019,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('lib2' in state.dependency_paths)
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
@@ -1049,7 +1050,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertEqual(1, len(state.directories))
@@ -1057,7 +1058,7 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['bin/1'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     def test_clean_prime_state(self):
