@@ -111,6 +111,7 @@ properties:
                 - on-abnormal
                 - on-abort
                 - always
+                - never
           slots:
             type: array
             minitems: 1
