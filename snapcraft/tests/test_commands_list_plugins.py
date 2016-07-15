@@ -23,10 +23,10 @@ class ListPluginsCommandTestCase(tests.TestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-        'ant        catkin  copy  gulp  kbuild  make   nil     '
-        'plainbox-provider  python3  scons      \n'
-        'autotools  cmake   go    jdk   kernel  maven  nodejs  '
-        'python2            qmake    tar-content\n')
+        'ant        catkin  copy  gradle  jdk     kernel  maven  '
+        'nodejs             python2  qmake  tar-content\n'
+        'autotools  cmake   go    gulp    kbuild  make    nil    '
+        'plainbox-provider  python3  scons\n')
 
     def test_list_plugins_non_tty(self):
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
@@ -47,9 +47,11 @@ class ListPluginsCommandTestCase(tests.TestCase):
         self.useFixture(fake_terminal)
 
         expected_output = (
-            'ant        copy  kbuild  nil                python3    \n'
-            'autotools  go    kernel  nodejs             qmake      \n'
-            'catkin     gulp  make    plainbox-provider  scons      \n'
-            'cmake      jdk   maven   python2            tar-content\n')
+            'ant        go      kernel  plainbox-provider  tar-content\n'
+            'autotools  gradle  make    python2          \n'
+            'catkin     gulp    maven   python3          \n'
+            'cmake      jdk     nil     qmake            \n'
+            'copy       kbuild  nodejs  scons            \n')
+
         main(['list-plugins'])
         self.assertEqual(fake_terminal.getvalue(), expected_output)

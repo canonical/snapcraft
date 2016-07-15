@@ -14,11 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from unittest import mock
 
 import requests
+import fixtures
 import yaml
+from collections import OrderedDict
 
 from snapcraft.internal.parser import (
     _get_namespaced_partname,
@@ -647,3 +650,93 @@ project-part: 'somepart'
         self.assertEqual(1, _get_part_list_count())
         part = _get_part('somepart')
         self.assertTrue(part is not None)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_duplicate_entries(self, mock_get, mock_get_origin_data):
+        """Test duplicate parts are ignored."""
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main duplicate
+project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
+        self.assertEqual('example main', part['description'])
+
+        self.assertEqual(1, _get_part_list_count())
+
+        self.assertTrue(
+            'Duplicate part found in wiki: main'
+            in fake_logger.output, 'Missing duplicate part info in output')
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_parsed_output_matches_wiki_order(
+            self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: main2
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: app1
+""")
+        parts = OrderedDict()
+
+        parts_main = OrderedDict()
+        parts_main['source'] = 'lp:project'
+        parts_main['plugin'] = 'copy'
+        parts_main['files'] = ['file1', 'file2']
+        parts['main'] = parts_main
+
+        parts_main2 = OrderedDict()
+        parts_main2['source'] = 'lp:project'
+        parts_main2['plugin'] = 'copy'
+        parts_main2['files'] = ['file1', 'file2']
+        parts['main2'] = parts_main2
+
+        parts_app1 = OrderedDict()
+        parts_app1['source'] = 'lp:project'
+        parts_app1['plugin'] = 'copy'
+        parts_app1['files'] = ['file1', 'file2']
+        parts['app1'] = parts_app1
+
+        mock_get_origin_data.return_value = {
+            'parts': parts,
+        }
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(3, _get_part_list_count())
+
+        self.assertEqual(parts,
+                         _get_part_list())
