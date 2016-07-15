@@ -84,7 +84,8 @@ The available commands are:
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
   push         Pushes and optionally releases a snap to the Ubuntu Store.
-  upload       DEPRECATED Upload a snap to the Ubuntu Store.
+  upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
+               supersedes this command.
   release      Release a revision of a snap to a specific channel.
 
 The available lifecycle commands are:
