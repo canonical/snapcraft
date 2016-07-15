@@ -24,9 +24,9 @@ class MosquittoTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'mosquitto'
 
     def test_mosquitto(self):
-        self.build_snap(self.snap_content_dir)
+        snap_path = self.build_snap(self.snap_content_dir)
         snap_name = 'mosquitto'
-        self.install_snap(self.snap_content_dir, snap_name, '0.1')
+        self.install_snap(snap_path, snap_name, '0.1')
         self.assert_service_running(snap_name, 'mosquitto')
         if not snaps_tests.config.get('skip-install', False):
             # The subscriber will exit after the first message.
