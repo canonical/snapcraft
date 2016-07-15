@@ -30,8 +30,9 @@ Build-Depends: bash-completion,
                python3-yaml,
                squashfs-tools,
 Homepage: https://github.com/snapcore/snapcraft
-Vcs-Git: https://github.com/snapcore/snapcraft
-Standards-Version: 3.9.7
+Vcs-Git: https://github.com/snapcore/snapcraft.git
+Vcs-Browser: https://github.com/snapcore/snapcraft
+Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
