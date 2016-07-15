@@ -498,32 +498,32 @@ def check_checksum_determine_format(source_checksum, checkfile):
 
 
 def check_checksum_determine_type_and_read_file(source_checksum, checkfile):
-    if len(source_checksum) == 32:
-        chksum = hashlib.md5()
-    elif len(source_checksum) == 40:
-        chksum = hashlib.sha1()
-    elif len(source_checksum) == 56:
-        chksum = hashlib.sha224()
-    elif len(source_checksum) == 64:
-        chksum = hashlib.sha256()
-    elif len(source_checksum) == 96:
-        chksum = hashlib.sha384()
-    elif len(source_checksum) == 128:
-        chksum = hashlib.sha512()
-    else:
+
+    _HASH_FUNCTIONS = {
+        32: hashlib.md5(),
+        40: hashlib.sha1(),
+        56: hashlib.sha224(),
+        64: hashlib.sha256(),
+        96: hashlib.sha384(),
+        128: hashlib.sha512()
+    }
+
+    try:
+        checksum = _HASH_FUNCTIONS[len(source_checksum)]
+    except KeyError:
         raise IncompatibleOptionsError("Invalid checksum format")
 
     with open(checkfile, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
-            chksum.update(chunk)
+            checksum.update(chunk)
 
-    chksum = chksum.hexdigest()
+    checksum = chksum.hexdigest()
 
-    check_checksum(source_checksum, chksum)
+    check_checksum(source_checksum, checksum)
 
 
-def check_checksum(source_checksum, chksum):
-    if chksum != source_checksum:
+def check_checksum(source_checksum, checksum):
+    if checksum != source_checksum:
         raise ChecksumDoesNotMatch(
             "the checksum ( "+source_checksum+" ) doesn't match the file"
-            " ( "+chksum+" )")
+            " ( "+checksum+" )")
