@@ -113,7 +113,7 @@ class _Executor:
 
     def run(self, step, part_names=None, recursed=False):
         if part_names:
-            self.config.validate_parts(part_names)
+            self.config.parts_config.validate_parts(part_names)
             parts = {p for p in self.config.all_parts if p.name in part_names}
         else:
             parts = self.config.all_parts
@@ -132,7 +132,7 @@ class _Executor:
 
     def _run_step(self, step, part, part_names, dirty, recursed):
         common.reset_env()
-        prereqs = self.config.part_prereqs(part.name)
+        prereqs = self.config.parts_config.part_prereqs(part.name)
         if recursed:
             prereqs = prereqs & dirty
         if prereqs and not prereqs.issubset(part_names):
@@ -163,7 +163,7 @@ class _Executor:
         with contextlib.suppress(AttributeError):
             getattr(part, 'prepare_{}'.format(step))()
 
-        common.env = self.config.build_env_for_part(part)
+        common.env = self.config.parts_config.build_env_for_part(part)
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
@@ -187,7 +187,7 @@ class _Executor:
         # step and it has dependents that have been built, we need to ask for
         # them to first be cleaned (at least back to the build step).
         index = common.COMMAND_ORDER.index(step)
-        dependents = self.config.part_dependents(part.name)
+        dependents = self.config.parts_config.part_dependents(part.name)
         if (index <= common.COMMAND_ORDER.index('stage') and
                 not part.is_clean('stage') and dependents):
             for dependent in self.config.all_parts:
@@ -300,7 +300,7 @@ def snap(project_options, directory=None, output=None):
 
 
 def _reverse_dependency_tree(config, part_name):
-    dependents = config.part_dependents(part_name)
+    dependents = config.parts_config.part_dependents(part_name)
     for dependent in dependents.copy():
         # No need to worry about infinite recursion due to circular
         # dependencies since the YAML validation won't allow it.
@@ -320,7 +320,8 @@ def _clean_part_and_all_dependents(part_name, step, config, staged_state,
         dependent_part.clean(staged_state, primed_state, step)
 
     # Finally, clean the part in question
-    config.get_part(part_name).clean(staged_state, primed_state, step)
+    config.parts_config.get_part(part_name).clean(staged_state, primed_state,
+                                                  step)
 
 
 def _humanize_list(items):
@@ -342,7 +343,7 @@ def _humanize_list(items):
 def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        config):
     # Get the name of the parts that depend upon this one
-    dependents = config.part_dependents(part_name)
+    dependents = config.parts_config.part_dependents(part_name)
 
     # Verify that they're either already clean, or that they will be cleaned.
     if not dependents.issubset(clean_part_names):
@@ -417,7 +418,7 @@ def clean(project_options, parts, step=None):
     config = snapcraft.internal.load_config()
 
     if parts:
-        config.validate_parts(parts)
+        config.parts_config.validate_parts(parts)
     else:
         parts = [part.name for part in config.all_parts]
 

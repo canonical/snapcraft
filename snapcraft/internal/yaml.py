@@ -30,7 +30,6 @@ from snapcraft.internal import (
     libraries,
     parts,
     pluginhandler,
-    sources,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError
 
@@ -87,16 +86,6 @@ class SnapcraftYamlFileError(Exception):
         self._file = yaml_file
 
 
-class SnapcraftLogicError(Exception):
-
-    @property
-    def message(self):
-        return self._message
-
-    def __init__(self, message):
-        self._message = message
-
-
 class PluginNotDefinedError(Exception):
 
     @property
@@ -109,15 +98,20 @@ class PluginNotDefinedError(Exception):
 
 class Config:
 
+    @property
+    def part_names(self):
+        return self.parts_config._part_names
+
+    @property
+    def all_parts(self):
+        return self.parts_config.all_parts
+
     def __init__(self, project_options=None):
         if project_options is None:
             project_options = snapcraft.ProjectOptions()
 
         self.build_tools = []
-        self.all_parts = []
-        self._part_names = []
         self._project_options = project_options
-        self.after_requests = {}
 
         self._snapcraft_yaml = _get_snapcraft_yaml()
         self.data = _snapcraft_yaml_load(self._snapcraft_yaml)
@@ -128,179 +122,24 @@ class Config:
 
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
-        self._process_parts()
 
-    @property
-    def part_names(self):
-        return self._part_names
-
-    @property
-    def _remote_parts(self):
-        if getattr(self, '_remote_parts_attr', None) is None:
-            self._remote_parts_attr = parts.get_remote_parts()
-        return self._remote_parts_attr
-
-    def _process_parts(self):
-        for part_name in self.data.get('parts', []):
-            self._part_names.append(part_name)
-            properties = self.data['parts'][part_name] or {}
-
-            plugin_name = properties.pop('plugin', None)
-            if not plugin_name:
-                logger.info(
-                    'Searching in the remote parts cache for part '
-                    '{!r}'.format(part_name))
-                try:
-                    properties = self._remote_parts.compose(
-                        part_name, properties)
-                    plugin_name = properties.pop('plugin', None)
-                except KeyError as e:
-                    raise SnapcraftLogicError(
-                        '{!r} is missing the `plugin` entry and is not '
-                        'defined in the current remote parts cache, try to '
-                        'run `snapcraft update` to '
-                        'refresh'.format(part_name)) from e
-
-            if 'after' in properties:
-                self.after_requests[part_name] = properties.pop('after')
-
-            properties['stage'] = _expand_filesets_for('stage', properties)
-            properties['snap'] = _expand_filesets_for('snap', properties)
-
-            if 'filesets' in properties:
-                del properties['filesets']
-
-            self.load_plugin(part_name, plugin_name, properties)
-
-        self._compute_part_dependencies()
-        self.all_parts = self._sort_parts()
+        self.parts_config = parts.PartsConfig(self.data.get('parts', {}),
+                                              self._project_options,
+                                              self._validator,
+                                              self.build_tools,
+                                              self._snapcraft_yaml)
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
-
-    def _compute_part_dependencies(self):
-        '''Gather the lists of dependencies and adds to all_parts.'''
-
-        for part in self.all_parts:
-            dep_names = self.after_requests.get(part.name, [])
-            for dep in dep_names:
-                found = False
-                for i in range(len(self.all_parts)):
-                    if dep == self.all_parts[i].name:
-                        part.deps.append(self.all_parts[i])
-                        found = True
-                        break
-                if not found:
-                    try:
-                        remote_part = self._remote_parts.get_part(dep)
-                    except KeyError as e:
-                        raise SnapcraftLogicError(
-                            'Cannot find definition for part {!r}. '
-                            'It may be a remote part, run `snapcraft update` '
-                            'to refresh the remote parts '
-                            'cache'.format(dep)) from e
-                    plugin_name = remote_part.pop('plugin')
-                    part.deps.append(self.load_plugin(
-                        dep, plugin_name, remote_part))
-                    self._part_names.append(dep)
-
-    def _sort_parts(self):
-        '''Performs an inneficient but easy to follow sorting of parts.'''
-        sorted_parts = []
-
-        while self.all_parts:
-            top_part = None
-            for part in self.all_parts:
-                mentioned = False
-                for other in self.all_parts:
-                    if part in other.deps:
-                        mentioned = True
-                        break
-                if not mentioned:
-                    top_part = part
-                    break
-            if not top_part:
-                raise SnapcraftLogicError(
-                    'circular dependency chain found in parts definition')
-            sorted_parts = [top_part] + sorted_parts
-            self.all_parts.remove(top_part)
-
-        return sorted_parts
-
-    def part_prereqs(self, part_name):
-        """Returns a set with all of part_names' prerequisites."""
-        return set(self.after_requests.get(part_name, []))
-
-    def part_dependents(self, part_name):
-        """Returns a set of all the parts that depend upon part_name."""
-
-        dependents = set()
-        for part, prerequisites in self.after_requests.items():
-            if part_name in prerequisites:
-                dependents.add(part)
-
-        return dependents
-
-    def get_part(self, part_name):
-        for part in self.all_parts:
-            if part.name == part_name:
-                return part
-
-        return None
 
     def get_project_state(self, step):
         """Returns a dict of states for the given step of each part."""
 
         state = {}
-        for part in self.all_parts:
+        for part in self.parts_config.all_parts:
             state[part.name] = part.get_state(step)
 
         return state
-
-    def validate_parts(self, part_names):
-        for part_name in part_names:
-            if part_name not in self._part_names:
-                raise EnvironmentError(
-                    'The part named {!r} is not defined in '
-                    '{!r}'.format(part_name, self._snapcraft_yaml))
-
-    def load_plugin(self, part_name, plugin_name, properties):
-        part = pluginhandler.load_plugin(
-            part_name, plugin_name, properties,
-            self._project_options, self._validator.part_schema)
-
-        self.build_tools += part.code.build_packages
-        self.build_tools += sources.get_required_packages(part.code.options)
-        self.all_parts.append(part)
-        return part
-
-    def build_env_for_part(self, part, root_part=True):
-        """Return a build env of all the part's dependencies."""
-
-        env = []
-        stagedir = self._project_options.stage_dir
-
-        if root_part:
-            # this has to come before any {}/usr/bin
-            env += part.env(part.installdir)
-            env += _runtime_env(part.installdir,
-                                self._project_options.arch_triplet)
-            env += _runtime_env(stagedir,
-                                self._project_options.arch_triplet)
-            env += _build_env(part.installdir,
-                              self._project_options.arch_triplet)
-            env += _build_env_for_stage(stagedir,
-                                        self._project_options.arch_triplet)
-        else:
-            env += part.env(stagedir)
-            env += _runtime_env(stagedir,
-                                self._project_options.arch_triplet)
-
-        for dep_part in part.deps:
-            env += dep_part.env(stagedir)
-            env += self.build_env_for_part(dep_part, root_part=False)
-
-        return env
 
     def stage_env(self):
         stage_dir = self._project_options.stage_dir
@@ -309,7 +148,7 @@ class Config:
         env += _runtime_env(stage_dir, self._project_options.arch_triplet)
         env += _build_env_for_stage(stage_dir,
                                     self._project_options.arch_triplet)
-        for part in self.all_parts:
+        for part in self.parts_config.all_parts:
             env += part.env(stage_dir)
 
         return env
@@ -320,7 +159,7 @@ class Config:
 
         env += _runtime_env(snap_dir, self._project_options.arch_triplet)
         dependency_paths = set()
-        for part in self.all_parts:
+        for part in self.parts_config.all_parts:
             env += part.env(snap_dir)
             dependency_paths |= part.get_primed_dependency_paths()
 
@@ -394,25 +233,6 @@ def _build_env_for_stage(stagedir, arch_triplet):
     return env
 
 
-def _expand_filesets_for(step, properties):
-    filesets = properties.get('filesets', {})
-    fileset_for_step = properties.get(step, {})
-    new_step_set = []
-
-    for item in fileset_for_step:
-        if item.startswith('$'):
-            try:
-                new_step_set.extend(filesets[item[1:]])
-            except KeyError:
-                raise SnapcraftLogicError(
-                    '\'{}\' referred to in the \'{}\' fileset but it is not '
-                    'in filesets'.format(item, step))
-        else:
-            new_step_set.append(item)
-
-    return new_step_set
-
-
 def _get_snapcraft_yaml():
     visible_yaml_exists = os.path.exists('snapcraft.yaml')
     hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
@@ -465,7 +285,7 @@ def load_config(project_options=None):
             'Issues while validating snapcraft.yaml: the "plugin" keyword is '
             'missing for the "{}" part.'.format(e.part))
         sys.exit(1)
-    except SnapcraftLogicError as e:
+    except parts.SnapcraftLogicError as e:
         logger.error('Issue detected while analyzing '
                      'snapcraft.yaml: {}'.format(e.message))
         sys.exit(1)

@@ -46,7 +46,7 @@ class TestYaml(tests.TestCase):
         self.part_schema = internal_yaml.Validator().part_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -65,7 +65,7 @@ parts:
             'stage': [], 'snap': [],
         })
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_config_loads_with_different_encodings(
             self, mock_loadPlugin):
         content = """name: test
@@ -89,7 +89,7 @@ parts:
                     'stage': [], 'snap': [],
                 })
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_config_composes_with_remote_parts(self, mock_loadPlugin):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
@@ -244,8 +244,9 @@ parts:
                 c = internal_yaml.Config()
 
                 self.assertTrue(
-                    s[1] in c.build_tools,
-                    '{} not found in {}'.format(s[1], c.build_tools))
+                    s[1] in c.parts_config.build_tools,
+                    '{} not found in {}'.format(s[1],
+                                                c.parts_config.build_tools))
 
     def test_config_adds_vcs_packages_to_build_packages_from_types(self):
         scenarios = [
@@ -276,8 +277,9 @@ parts:
                 c = internal_yaml.Config()
 
                 self.assertTrue(
-                    s[1] in c.build_tools,
-                    '{} not found in {}'.format(s[1], c.build_tools))
+                    s[1] in c.parts_config.build_tools,
+                    '{} not found in {}'.format(s[1],
+                                                c.parts_config.build_tools))
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
         with unittest.mock.patch('platform.machine') as machine_mock:
@@ -297,7 +299,8 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = internal_yaml.Config(project_options)
 
-        self.assertEqual(config.build_tools, ['gcc-arm-linux-gnueabihf'])
+        self.assertEqual(config.parts_config.build_tools,
+                         ['gcc-arm-linux-gnueabihf'])
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         class ProjectOptionsFake(snapcraft.ProjectOptions):
@@ -318,7 +321,7 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = internal_yaml.Config(ProjectOptionsFake())
 
-        self.assertEqual(config.build_tools, [])
+        self.assertEqual(config.parts_config.build_tools, [])
 
     def test_config_loop(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -347,7 +350,7 @@ parts:
             raised.exception.message,
             'circular dependency chain found in parts definition')
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -369,7 +372,7 @@ parts:
         self.assertEqual(raised.exception.message,
                          "'name' is a required property")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -392,7 +395,7 @@ parts:
                          "The 'name' property does not match the required "
                          "schema: 1 is not of type 'string'")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_icon_extension(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -415,7 +418,7 @@ parts:
         self.assertEqual(raised.exception.message,
                          "'icon' must be either a .png or a .svg")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_icon(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -438,7 +441,7 @@ parts:
         self.assertEqual(raised.exception.message,
                          "Specified icon 'icon.png' does not exist")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -462,7 +465,7 @@ parts:
             "The 'name' property does not match the required schema: "
             "'myapp@me_1.0' does not match '^[a-z0-9][a-z0-9+-]*$'")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -484,7 +487,7 @@ parts:
             raised.exception.message,
             "'description' is a required property")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_yaml_missing_confinement_must_log(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -509,7 +512,7 @@ parts:
             '"confinement" property not specified: defaulting to "strict"'
             in fake_logger.output, 'Missing confinement hint in output')
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_yaml_valid_app_names(self, mock_loadPlugin):
         valid_app_names = [
             '1', 'a', 'aa', 'aaa', 'aaaa', 'Aa', 'aA', '1a', 'a1', '1-a',
@@ -538,7 +541,7 @@ parts:
                 c = internal_yaml.Config()
                 self.assertTrue(app_name in c.data['apps'])
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_app_names(self, mock_loadPlugin):
         invalid_app_names = [
             '', '-', '--', 'a--a', 'a-', 'a ', ' a', 'a a', '日本語', '한글',
@@ -573,7 +576,7 @@ parts:
                     "The 'apps' property does not match the required "
                     "schema.*")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_yaml_valid_confinement_types(self, mock_loadPlugin):
         valid_confinement_types = [
             'strict',
@@ -599,7 +602,7 @@ parts:
                 c = internal_yaml.Config()
                 self.assertEqual(c.data['confinement'], confinement_type)
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_confinement_types(self, mock_loadPlugin):
         invalid_confinement_types = [
             'foo',
@@ -632,7 +635,7 @@ parts:
                     "schema: '{}' is not one of ['devmode', 'strict']".format(
                         confinement_type))
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -657,7 +660,7 @@ parts:
             'found character \'\\t\' that cannot start any token '
             'on line 4 of snapcraft.yaml')
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_yaml_valid_epochs(self, mock_loadPlugin):
         valid_epochs = [
             {
@@ -724,7 +727,7 @@ parts:
                 c = internal_yaml.Config()
                 self.assertEqual(c.data['epoch'], epoch['expected'])
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_epochs(self, mock_loadPlugin):
         invalid_epochs = [
             '0*',
@@ -766,7 +769,7 @@ parts:
                     "schema:.*is not a 'epoch' \(epochs are positive integers "
                     "followed by an optional asterisk\)")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -817,8 +820,9 @@ parts:
 """)
         config = internal_yaml.Config()
 
-        self.assertFalse(config.part_prereqs('main'))
-        self.assertEqual({'main'}, config.part_prereqs('dependent'))
+        self.assertFalse(config.parts_config.part_prereqs('main'))
+        self.assertEqual({'main'},
+                         config.parts_config.part_prereqs('dependent'))
 
     def test_part_dependents(self):
         self.make_snapcraft_yaml("""name: test
@@ -837,8 +841,9 @@ parts:
 """)
         config = internal_yaml.Config()
 
-        self.assertFalse(config.part_dependents('dependent'))
-        self.assertEqual({'dependent'}, config.part_dependents('main'))
+        self.assertFalse(config.parts_config.part_dependents('dependent'))
+        self.assertEqual({'dependent'},
+                         config.parts_config.part_dependents('main'))
 
 
 class InitTestCase(tests.TestCase):
@@ -1164,8 +1169,9 @@ parts:
             os.makedirs(path)
 
         config = internal_yaml.Config()
-        part2 = [part for part in config.all_parts if part.name == 'part2'][0]
-        env = config.build_env_for_part(part2)
+        part2 = [part for part in
+                 config.parts_config.all_parts if part.name == 'part2'][0]
+        env = config.parts_config.build_env_for_part(part2)
         env_lines = '\n'.join(['export {}\n'.format(e) for e in env])
 
         shell_env = {
