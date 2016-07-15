@@ -280,7 +280,7 @@ class Tar(FileBase):
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            check_checksum_determine_format(
+            check_checksum(
                 self.source_checksum, tarball)
 
         if clean_target:
@@ -347,7 +347,7 @@ class Zip(FileBase):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            check_checksum_determine_format(
+            check_checksum(
                 self.source_checksum, zip)
 
         if clean_target:
@@ -478,7 +478,7 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     return source_type
 
 
-def check_checksum_determine_format(source_checksum, checkfile):
+def check_checksum(source_checksum, checkfile):
     if source_checksum.startswith('http'):
         response = urllib.request.urlopen(source_checksum)
         data = response.read()
@@ -494,10 +494,6 @@ def check_checksum_determine_format(source_checksum, checkfile):
                 source_checksum = source_checksum.split(" ", 1)[0]
         finally:
             filework.close()
-    check_checksum_determine_type_and_read_file(source_checksum, checkfile)
-
-
-def check_checksum_determine_type_and_read_file(source_checksum, checkfile):
 
     _HASH_FUNCTIONS = {
         32: hashlib.md5(),
@@ -519,10 +515,6 @@ def check_checksum_determine_type_and_read_file(source_checksum, checkfile):
 
     checksum = checksum.hexdigest()
 
-    check_checksum(source_checksum, checksum)
-
-
-def check_checksum(source_checksum, checksum):
     if checksum != source_checksum:
         raise ChecksumDoesNotMatch(
             "the checksum ( "+source_checksum+" ) doesn't match the file"
