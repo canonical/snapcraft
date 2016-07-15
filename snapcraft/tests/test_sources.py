@@ -200,7 +200,7 @@ class TestZip(tests.TestCase):
         with open(zip_download, 'r') as zip_file:
             self.assertEqual('Test fake compressed file', zip_file.read())
 
-    def test_checksum_of_zip(self):
+    def test_checksum(self):
         zipfile_check = zipfile.ZipFile('checksum.zip', 'w')
         zipfile_check.close()
 
