@@ -280,7 +280,7 @@ class Tar(FileBase):
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            check_checksum(
+            verify_checksum(
                 self.source_checksum, tarball)
 
         if clean_target:
@@ -347,7 +347,7 @@ class Zip(FileBase):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            check_checksum(
+            verify_checksum(
                 self.source_checksum, zip)
 
         if clean_target:
@@ -478,7 +478,7 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     return source_type
 
 
-def check_checksum(source_checksum, checkfile):
+def verify_checksum(source_checksum, checkfile):
     if source_checksum.startswith('http'):
         response = urllib.request.urlopen(source_checksum)
         data = response.read()
