@@ -517,7 +517,7 @@ def check_checksum_determine_type_and_read_file(source_checksum, checkfile):
         for chunk in iter(lambda: f.read(4096), b""):
             checksum.update(chunk)
 
-    checksum = chksum.hexdigest()
+    checksum = checksum.hexdigest()
 
     check_checksum(source_checksum, checksum)
 
