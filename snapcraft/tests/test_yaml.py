@@ -1331,7 +1331,7 @@ class TestValidation(tests.TestCase):
             }
         }
         valid_conditions = ['always', 'on-success', 'on-failure',
-                            'on-abnormal', 'on-abort', 'never']
+                            'on-abnormal', 'on-abort']
 
         for condition in valid_conditions:
             with self.subTest(key=condition):
@@ -1353,7 +1353,7 @@ class TestValidation(tests.TestCase):
         self.assertEqual(
             "The 'restart-condition' property does not match the required "
             "schema: 'on-watchdog' is not one of ['on-success', "
-            "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']",
+            "'on-failure', 'on-abnormal', 'on-abort', 'always']",
             str(raised.exception))
 
     def test_invalid_app_names(self):
