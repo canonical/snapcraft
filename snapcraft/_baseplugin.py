@@ -85,10 +85,11 @@ class BasePlugin:
         self.project = project
         self.options = options
 
+        part_dir = name.replace('/', '\N{BIG SOLIDUS}')
         if project:
-            self.partdir = os.path.join(project.parts_dir, self.name)
+            self.partdir = os.path.join(project.parts_dir, part_dir)
         else:
-            self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+            self.partdir = os.path.join(os.getcwd(), 'parts', part_dir)
 
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
