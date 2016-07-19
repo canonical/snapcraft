@@ -6,7 +6,7 @@ confinement: strict
 
 apps:
  hello:
-   command: java -jar jar/snapcraft-gradle-demo-1.0.0.jar
+   command: java -jar $SNAP/jar/snapcraft-gradle-demo-1.0.0.jar
 
 parts:
     local:
