@@ -19,6 +19,7 @@ from unittest import mock
 
 import docopt
 import fixtures
+from simplejson.scanner import JSONDecodeError
 
 from snapcraft import (
     storeapi,
@@ -62,10 +63,12 @@ class RegisterTestCase(tests.TestCase):
         mock_register.assert_called_once_with('test-snap', '16')
 
     def test_registration_failed(self):
+        response = mock.Mock()
+        response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         with mock.patch.object(
                 storeapi.SCAClient, 'register') as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
-                'test-snap')
+                'test-snap', response)
             with self.assertRaises(SystemExit) as raised:
                 main(['register', 'test-snap'])
 
