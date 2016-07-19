@@ -2,3 +2,4 @@
 /usr/lib/python*
 /usr/share/snapcraft
 tour /usr/share/snapcraft/
+manpages/* /usr/share/man/man1/
