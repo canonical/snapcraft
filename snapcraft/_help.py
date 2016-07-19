@@ -44,6 +44,8 @@ def _topic_help(module_name, devel):
 
 
 def _module_help(module_name, devel):
+    if module_name == "tar-content":
+        module_name = "tar_content"
     try:
         module = importlib.import_module(
             'snapcraft.plugins.{}'.format(module_name))
