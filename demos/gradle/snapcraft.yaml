@@ -12,3 +12,5 @@ parts:
     local:
         plugin: gradle
         source: .
+        gradle-options: [--debug]
+
