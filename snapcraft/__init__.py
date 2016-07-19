@@ -68,7 +68,7 @@ Note the install step - we might actually want to use built artifacts from
 one part in the build process of another, so the `parts/<part-name>/install`
 directory is useful as a 'working fresh install' of the part.
 
-Between the plugin, the part defintion YAML, and the build system of the
+Between the plugin, the part definition YAML, and the build system of the
 part, it is expected that the part can be built and installed in the right
 place.
 

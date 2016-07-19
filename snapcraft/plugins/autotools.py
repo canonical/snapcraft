@@ -26,7 +26,7 @@ This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
-In additon, this plugin uses the following plugin-specific keywords:
+In addition, this plugin uses the following plugin-specific keywords:
 
     - configflags:
       (list of strings)
