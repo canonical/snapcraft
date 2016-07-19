@@ -105,7 +105,7 @@ class StoreRegistrationError(StoreError):
     def __init__(self, snap_name, response=None):
         try:
             response_json = response.json()
-        except AttributeError:
+        except JSONDecodeError:
             response_json = {}
 
         if response_json.get('status') == 409:
