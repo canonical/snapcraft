@@ -85,6 +85,13 @@ class TestBasePlugin(tests.TestCase):
         self.assertTrue(
             os.path.exists(os.path.join(plugin.build_basedir, 'file')))
 
+    def test_part_name_with_forward_slash_is_one_directory(self):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+
+        os.makedirs(plugin.sourcedir)
+
+        self.assertIn('test\N{BIG SOLIDUS}part', os.listdir('parts'))
+
 
 class GetSourceWithBranches(tests.TestCase):
 
