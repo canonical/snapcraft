@@ -6,12 +6,9 @@ confinement: strict
 
 apps:
  hello:
-   command: bin/wrapper
+   command: java -jar jar/snapcraft-gradle-demo-1.0.0.jar
 
 parts:
     local:
         plugin: gradle
-        source: .
-    wrapper:
-        plugin: make
         source: .
