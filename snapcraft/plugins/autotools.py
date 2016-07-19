@@ -40,6 +40,7 @@ In additon, this plugin uses the following plugin-specific keywords:
 
 import os
 import stat
+import subprocess
 
 import snapcraft
 
@@ -117,3 +118,6 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
         self.run(configure_command + self.options.configflags)
         self.run(['make', '-j{}'.format(self.project.parallel_build_count)])
         self.run(make_install_command)
+
+        # Remove .la files which don't work when they are moved around
+        subprocess.check_call("find . -name '*.la' | xargs rm", shell=True, cwd=self.installdir)
