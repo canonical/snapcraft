@@ -1452,3 +1452,68 @@ Try to release to a channel that doesn't exist:
 
     $ snapcraft release idontexist 1 idontexist
     Not a valid channel: idontexist
+
+## Parts cloud
+
+### update
+
+    $ snapcraft update
+    Downloading parts list|
+
+Update again:
+
+    $ snapcraft update
+    The parts cache is already up to date.
+
+### search
+
+    $ snapcraft search desktop
+    PART NAME          DESCRIPTION
+    desktop            Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.
+    It bring...
+    desktop/glib-only  Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.
+    It bring...
+    desktop/qt4        Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.
+    It bring...
+    desktop/gtk2       Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.        It bring...
+    desktop/qt5        Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.        It bring...
+    desktop/gtk3       Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.
+    It bring...
+
+### define
+
+    $ snapcraft define desktop/gtk3
+    Maintainer: 'Snapcraft community <snapcraft@lists.snapcraft.io>'
+    Description: 'Helpers for gtk2, gtk3, qt4 and qt5 or glib minimal launchers.\nIt brings the necessary code and exports for binding and using those\ndesktop technologies in a relocatable fashion, enabling binding with\nglobal desktop theme, icon theme, image caching, fonts, mimetype handlers\napplication global menu and gsettings integration.\nIt also brings basics ubuntu dependency packages.\n\nUsage : \n  1. add "after: [desktop/<technology>]" to your launcher:\n     - gtk2, gtk3, qt4 and qt5 corresponds to their respective toolkit\n       main dependencies and default choices.\n     - glib-only enables to compile mime types and gsettings infos. If you\n       added your own graphical drivers, it will link them as well.\n  2. prepend your command with "desktop-launch", like:\n     commands: "desktop-launch foo" if foo is in $PATH. You can as well\n     specify: "desktop-launch $SNAP/foo".\n  3. add needed plugs to your application:\n     - for graphical application:\n       plugs: [x11 (or unity7 for appmenu integration)]. Think about adding\n       opengl if you need hw acceleration.\n     - if your application needs access to sound:\n       plugs: [pulseaudio]\n     - accessing to user\'s home directory:\n       plugs: [home]\n     - read/write to gsettings:\n       plugs: [gsettings, home]\n       (note that the home plug is needed to read new value)\n'
+
+    desktop/gtk3:
+      build-packages:
+      - libgtk-3-dev
+      make-parameters:
+      - FLAVOR=gtk3
+      plugin: make
+      source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+      source-subdir: gtk
+      stage-packages:
+      - libxkbcommon0
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - shared-mime-info
+      - libgtk-3-0
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk-3-bin
+      - unity-gtk3-module
+
+### Errors
+
+Search for a part that doesn't exist:
+
+    $ snapcraft search idontexist
+    No matches found, try to run `snapcraft update` to refresh the remote parts cache.
+
+Try to define a part that doesn't exist:
+
+    $ snapcraft define idontexist
+    Cannot find the part name {!r} in the cache. Please consider going to https://wiki.ubuntu.com/snapcraft/parts to add it.
