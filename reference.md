@@ -4,6 +4,9 @@
 
 ### version
 
+    $ snapcraft --version
+    2.12.1
+
 ### help
 
     $ snapcraft help
@@ -1293,3 +1296,98 @@ Try to snap a directory that doesn't exist:
 
     $ snapcraft snap idontexist
     [Errno 2] No such file or directory: '/tmp/test/idontexist/meta/snap.yaml'
+
+## Store integration
+
+### login
+
+    $ snapcraft login
+    Enter your Ubuntu One SSO credentials.
+    Email: u1test@canonical.com
+    Password:
+    One-time password (just press enter if you don't use two-factor authentication):
+    Authenticating against Ubuntu One SSO.
+    Login successful.
+
+Login again will just overwrite the existing credentials, if any:
+
+    $ snapcraft login
+    Enter your Ubuntu One SSO credentials.
+    Email:
+
+### logout
+
+    $ snapcraft logout
+    Clearing credentials for Ubuntu One SSO.
+    Credentials cleared.
+
+Logout again does the same, no message about credentials not existing:
+
+    $ snapcraft logout
+    Clearing credentials for Ubuntu One SSO.
+    Credentials cleared.
+
+### register
+
+    $ snapcraft register snap-name
+    Registering snap-name.
+    Congratulations! You're now the publisher for 'snap-name'.
+
+### Errors
+
+Try a store command without login:
+
+    $ snapcraft register test
+    Registering test.
+    No valid credentials found. Have you run "snapcraft login"?
+    Invalid credentials: [].
+
+Try to register a snap without signing the agreement:
+
+    $ snapcraft register test
+    Registering test.
+    Expecting value: line 1 column 1 (char 0)
+
+Try to register a snap without developer name or country: todo
+
+Try to register two snaps in a short period:
+
+    $ snapcraft register second-snap
+    Registering second-snap.
+    You must wait 152 seconds before trying to register your next snap.
+
+Try to register a reserved name:
+
+    $ snapcraft register bash
+    Registering bash.
+    The name 'bash' is reserved.
+
+    If you are the publisher most users expect for 'bash' then please claim the name at 'https://myapps.developer.ubuntu.com/dev/click-apps/register-name-dispute/?series=16&name=bash'
+
+Try to register a name already registered:
+
+    $ snapcraft register already-registered
+    Registering already-registered.
+    The name 'already-registered' is already taken.
+
+    We can if needed rename snaps to ensure they match the expectations of most users. If you are the publisher most users expect for 'already-registered' then claim the name at 'https://myapps.developer.ubuntu.com/dev/click-apps/register-name-dispute/?series=16&name=u1test201607183'
+
+Try to register a name with an invalid name:
+
+    $ snapcraft register _invalid   
+    Registering _invalid.
+    Registration failed.
+
+Try to upload a file that doesn’t exist:
+
+    $ snapcraft upload idontexist
+    The file 'idontexist' does not exist.
+
+Try to upload a file that’s not a snap:
+
+    $ snapcraft upload imnotasnap
+    Uploading imnotasnap.
+    Read on filesystem failed because EOF
+    Read on filesystem failed because EOF
+    Can't find a SQUASHFS superblock on imnotasnap
+    Command '['unsquashfs', '-d', '/tmp/tmphedels1u/squashfs-root', 'imnotasnap', '-e', 'meta/snap.yaml']' returned non-zero exit status 1
