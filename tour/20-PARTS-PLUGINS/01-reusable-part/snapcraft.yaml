@@ -3,7 +3,7 @@ version: 0.1
 summary: Qt Hello World example
 description:
   A simple cmake-based project showing Qt graphics.
-  This is part of the snapcraft tour at https://snapcraft.io/create/
+  This is part of the snapcraft tour at http://snapcraft.io/create/
 confinement: strict
 
 apps:

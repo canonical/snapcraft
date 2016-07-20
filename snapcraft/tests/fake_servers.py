@@ -73,6 +73,12 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     'description': 'test entry for part1',
                     'maintainer': 'none',
                 },
+                'project-part/part1': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'test entry for part1',
+                    'maintainer': 'none',
+                },
                 'long-described-part': {
                     'plugin': 'go',
                     'source': 'http://source.tar.gz',
