@@ -776,6 +776,24 @@
     The plugin has no documentation
 
 
+### tour
+
+    $ snapcraft tour
+    Snapcraft tour initialized in ./snapcraft-tour/
+    Instructions are in the README, or https://snapcraft.io/create/#begin
+
+Initialize the tour to an unexisting directory:
+
+    $ snapcraft tour idontexist
+    Snapcraft tour initialized in idontexist
+    Instructions are in the README, or https://snapcraft.io/create/#begin
+
+Initialize the tour to an existing directory:
+
+    $ snapcraft tour iexist
+    Snapcraft tour initialized in iexist
+    Instructions are in the README, or https://snapcraft.io/create/#begin
+
 ### list-plugins
 
     $ snapcraft list-plugins
@@ -1259,6 +1277,11 @@ Try to show help for an unexisting topic:
 
     $ snapcraft help idontexist
     The plugin does not exist. Run `snapcraft list-plugins` to see the available plugins.
+
+Try to initialize the tour in a directory already initialized:
+
+    $ snapcraft tour ialreadyhaveatour
+    [Errno 17] File exists: '/tmp/test/ialreadyhaveatour/snapcraft-tour'
 
 Try a lifecycle command without a yaml:
 
