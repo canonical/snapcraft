@@ -15,4 +15,5 @@ dist
 htmlcov
 __pycache__
 docs/**.html
+*~
 *.swp
