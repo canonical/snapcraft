@@ -1333,6 +1333,27 @@ Logout again does the same, no message about credentials not existing:
     Registering snap-name.
     Congratulations! You're now the publisher for 'snap-name'.
 
+### push
+
+    $ snapcraft push goodsnap_version_arch.snap
+    Uploading goodsnap_version_arch.snap.
+    Uploading integration_tests/snaps/basic/u1test20160920_0.1_all.snap [                  ]   0%
+    Uploading integration_tests/snaps/basic/u1test20160920_0.1_all.snap [==================] 100%
+    Ready to release!|
+    Revision 1 of 'goodsnap' created.
+
+### release
+
+    $ snapcraft release pushedsnap 1 edge
+    The 'edge' channel is now open.
+
+    Channel    Version    Revision
+    ---------  ---------  ----------
+    stable     -          -
+    candidate  -          -
+    beta       -          -
+    edge       0.1        1
+
 ### Errors
 
 Try a store command without login:
@@ -1378,16 +1399,56 @@ Try to register a name with an invalid name:
     Registering _invalid.
     Registration failed.
 
-Try to upload a file that doesn’t exist:
+Try to push a file that doesn’t exist:
 
-    $ snapcraft upload idontexist
+    $ snapcraft push idontexist
     The file 'idontexist' does not exist.
 
-Try to upload a file that’s not a snap:
+Try to push a file that’s not a snap:
 
-    $ snapcraft upload imnotasnap
+    $ snapcraft push imnotasnap
     Uploading imnotasnap.
     Read on filesystem failed because EOF
     Read on filesystem failed because EOF
     Can't find a SQUASHFS superblock on imnotasnap
     Command '['unsquashfs', '-d', '/tmp/tmphedels1u/squashfs-root', 'imnotasnap', '-e', 'meta/snap.yaml']' returned non-zero exit status 1
+
+Try to upload a snap not registered:
+
+    $ snapcraft push notregistered_version_arch.snap
+    Uploading notregistered_version_arch.snap.
+    Uploading notregistered_version_arch.snap [                                                 ]   0%
+    Uploading notregistered_version_arch.snap [=================================================] 100%
+    Sorry, try `snapcraft register notregistered` before pushing again.
+
+Upload a snap that requires a manual review:
+
+    $ snapcraft push manualreview_revision_architecture.snap
+    Uploading manualreview_revision_architecture.snap.
+    Uploading manualreview_revision_architecture.snap [                                      ]   0%
+    Uploading manualreview_revision_architecture.snap [======================================] 100%
+    Will need manual review...|
+    Revision 1 of 'manualreview_revision_architecture' created.
+    Publishing checks failed.
+    To release this to stable channel please request a review on the snapcraft list.
+    Use devmode in the edge or beta channels to disable confinement.
+
+Try to release a snap that doesn't exist:
+
+    $ snapcraft release idontexist 1 edge
+    Sorry, try `snapcraft register idontexist` before trying to release or choose an existing revision.
+
+Try to release a revision that doesn't exist:
+
+    $ snapcraft release u1test20160920 10 edge
+    Sorry, try `snapcraft register u1test20160920` before trying to release or choose an existing revision.
+
+Try to release using a non-integer revision:
+
+    $ snapcraft release u1test20160920 notanumber edge
+    {'revision': ['This field must be an integer.']}
+
+Try to release to a channel that doesn't exist:
+
+    $ snapcraft release idontexist 1 idontexist
+    Not a valid channel: idontexist
