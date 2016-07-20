@@ -90,10 +90,15 @@ class BasePlugin:
         self.project = project
         self.options = options
 
+        # The remote parts can have a '/' in them to separate the main project
+        # part with the subparts. This is rather unfortunate as it affects the
+        # the layout of parts inside the parts directory causing collisions
+        # between the main project part and its subparts.
+        part_dir = name.replace('/', '\N{BIG SOLIDUS}')
         if project:
-            self.partdir = os.path.join(project.parts_dir, self.name)
+            self.partdir = os.path.join(project.parts_dir, part_dir)
         else:
-            self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+            self.partdir = os.path.join(os.getcwd(), 'parts', part_dir)
 
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
