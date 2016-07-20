@@ -40,7 +40,6 @@ In additon, this plugin uses the following plugin-specific keywords:
 
 import os
 import stat
-import subprocess
 
 import snapcraft
 
