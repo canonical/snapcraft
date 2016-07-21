@@ -483,15 +483,21 @@ def verify_checksum(source_checksum, checkfile):
         response = urllib.request.urlopen(source_checksum)
         data = response.read()
         source_checksum = data.decode('utf-8')
-        if source_checksum.index(" "):
+        if (" " in source_checksum):
             source_checksum = source_checksum.split(" ", 1)[0]
+        else:
+            print('No file name detected in the checksum file, perhaps an '
+                  'invalid checksum file?')
     if os.path.isfile(source_checksum):
         filename = source_checksum
         try:
             filework = open(filename, 'r')
             source_checksum = filework.read()
-            if source_checksum.index(" "):
+            if (" " in source_checksum):
                 source_checksum = source_checksum.split(" ", 1)[0]
+            else:
+                print('No file name detected in the checksum file, perhaps an '
+                      'invalid checksum file?')
         finally:
             filework.close()
 

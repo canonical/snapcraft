@@ -43,6 +43,36 @@ class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class FakeTarChecksumHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        data = '1276481102f218c981e0324180bafd9f checksum.tar'
+        self.send_response(200)
+        self.send_header('Content-Length', len(data))
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(data.encode())
+
+    def log_message(self, *args):
+        # Overwritten so the test does not write to stderr.
+        pass
+
+
+class FakeZipChecksumHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        data = '76cdb2bad9582d23c1f6f4d868218d6c checksum.zip'
+        self.send_response(200)
+        self.send_header('Content-Length', len(data))
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(data.encode())
+
+    def log_message(self, *args):
+        # Overwritten so the test does not write to stderr.
+        pass
+
+
 class TestTar(tests.TestCase):
 
     @unittest.mock.patch('snapcraft.sources.Tar.provision')
@@ -122,8 +152,21 @@ class TestTar(tests.TestCase):
         sources.verify_checksum(
             source_checksum, "checksum.tar")
 
-        # From remote file
-        source_checksum = 'http://tsimonq2.net/misc/snapcraft-checksum-tar'
+        # From "remote" file
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+        server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeTarChecksumHTTPRequestHandler)
+        server_thread = threading.Thread(target=server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        server_thread.start()
+
+        checksum_file_name = 'CHECKSUM'
+        source_checksum = 'http://{}:{}/{file_name}'.format(
+            *server.server_address, file_name=checksum_file_name)
 
         sources.verify_checksum(
             source_checksum, "checksum.tar")
@@ -251,8 +294,21 @@ class TestZip(tests.TestCase):
         sources.verify_checksum(
             source_checksum, "checksum.zip")
 
-        # From remote file
-        source_checksum = 'http://tsimonq2.net/misc/snapcraft-checksum-zip'
+        # From "remote" file
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+        server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeZipChecksumHTTPRequestHandler)
+        server_thread = threading.Thread(target=server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        server_thread.start()
+
+        checksum_file_name = 'CHECKSUM'
+        source_checksum = 'http://{}:{}/{file_name}'.format(
+            *server.server_address, file_name=checksum_file_name)
 
         sources.verify_checksum(
             source_checksum, "checksum.zip")
