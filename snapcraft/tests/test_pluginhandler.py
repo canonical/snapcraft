@@ -1795,6 +1795,9 @@ class CollisionTestCase(tests.TestCase):
         part1.code.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
+        with open(part1.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part1.installdir))
+            f.write('Name: File\n')
 
         part2 = pluginhandler.load_plugin('part2', 'nil')
         part2.code.installdir = tmpdir + '/install2'
@@ -1804,6 +1807,9 @@ class CollisionTestCase(tests.TestCase):
         open(part2.installdir + '/2', mode='w').close()
         with open(part2.installdir + '/a/2', mode='w') as f:
             f.write('a/2')
+        with open(part2.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part2.installdir))
+            f.write('Name: File\n')
 
         part3 = pluginhandler.load_plugin('part3', 'nil')
         part3.code.installdir = tmpdir + '/install3'
@@ -1815,9 +1821,17 @@ class CollisionTestCase(tests.TestCase):
             f.write('1')
         open(part3.installdir + '/a/2', mode='w').close()
 
+        part4 = pluginhandler.load_plugin('part4', 'nil')
+        part4.code.installdir = tmpdir + '/install4'
+        os.makedirs(part4.installdir)
+        with open(part4.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part4.installdir))
+            f.write('Name: ConflictFile\n')
+
         self.part1 = part1
         self.part2 = part2
         self.part3 = part3
+        self.part4 = part4
 
     def test_no_collisions(self):
         """No exception is expected as there are no collisions."""
@@ -1832,6 +1846,16 @@ class CollisionTestCase(tests.TestCase):
             raised.exception.__str__(),
             "Parts 'part2' and 'part3' have the following file paths in "
             "common which have different contents:\n1\na/2")
+
+    def test_collisions_between_two_parts_pc_files(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            pluginhandler.check_for_collisions(
+                [self.part1, self.part4])
+
+        self.assertEqual(
+            raised.exception.__str__(),
+            "Parts 'part1' and 'part4' have the following file paths in "
+            "common which have different contents:\nfile.pc")
 
 
 class StageEnvTestCase(tests.TestCase):
