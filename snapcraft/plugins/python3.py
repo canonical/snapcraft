@@ -38,8 +38,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
+import re
 
 import snapcraft
+from snapcraft import common
 
 
 class Python3Plugin(snapcraft.BasePlugin):
@@ -150,6 +152,11 @@ class Python3Plugin(snapcraft.BasePlugin):
         self.run(
             ['python3', setup_file, 'install', '--install-layout=deb',
              '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
+
+        # Fix all shebangs to use the in-snap python.
+        common.replace_in_file(self.installdir, re.compile(r''),
+                               re.compile(r'#!.*python'),
+                               r'#!/usr/bin/env python')
 
     @property
     def dist_packages_dir(self):
