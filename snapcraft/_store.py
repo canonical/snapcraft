@@ -86,12 +86,7 @@ def register(snap_name):
         snap_name))
 
 
-def push(snap_filename, release_channels=None):
-    """Push a snap_filename to the store.
-
-    If release_channels is defined it also releases it to those channels if the
-    store deems the uploaded snap as ready to release.
-    """
+def upload(snap_filename):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError(
             'The file {!r} does not exist.'.format(snap_filename))
@@ -115,9 +110,6 @@ def push(snap_filename, release_channels=None):
     else:
         logger.info('Uploaded {!r}'.format(snap_name))
     tracker.raise_for_code()
-
-    if release_channels:
-        release(snap_name, result['revision'], release_channels)
 
 
 def _get_text_for_opened_channels(opened_channels):
@@ -147,10 +139,10 @@ def _get_text_for_channel(channel):
     return channel_text
 
 
-def release(snap_name, revision, release_channels):
+def release(snap_name, revision, channel):
     try:
         store = storeapi.StoreClient()
-        channels = store.release(snap_name, revision, release_channels)
+        channels = store.release(snap_name, revision, [channel])
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
@@ -159,9 +151,6 @@ def release(snap_name, revision, release_channels):
     if 'opened_channels' in channels:
         logger.info(
             _get_text_for_opened_channels(channels['opened_channels']))
-        # There should be an empty line between the open channels
-        # message and what follows
-        print()
     channel_map = channels['channel_map']
     parsed_channels = [_get_text_for_channel(c) for c in channel_map]
     tabulated_channels = tabulate(parsed_channels,

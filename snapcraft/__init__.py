@@ -230,8 +230,8 @@ from snapcraft._store import (                      # noqa
     download,
     login,
     logout,
-    push,
     register,
+    upload,
     release,
 )
 from snapcraft import common                        # noqa
