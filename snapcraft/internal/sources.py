@@ -181,7 +181,7 @@ class Git(Base):
         else:
             branch_opts = []
             if self.source_tag or self.source_branch:
-                branch_opts = ['--branch',
+                branch_opts = ['--single-branch', '--branch',
                                self.source_tag or self.source_branch]
             subprocess.check_call(['git', 'clone', '--depth', '1',
                                   '--recursive'] + branch_opts +
