@@ -1,0 +1,35 @@
+name: plainbox-test-tool
+summary: A Plainbox Test Tool
+description: >
+  The Plainbox tool itself coupled with a Provider which contains the test
+  definitions
+version: 0.1
+confinement: strict
+
+apps:
+    plainbox:
+        command: bin/plainbox-wrapper
+
+parts:
+    # The testing framework
+    plainbox-local:
+        plugin: python3
+        python-packages:
+            - plainbox
+            - requests-oauthlib
+            - xlsxwriter
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+    # The test definitions
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2016.com.example:simple
+        after: [plainbox-local]
+    # A wrapper script
+    launchers:
+        plugin: copy
+        files:
+            launchers/plainbox-wrapper: bin/plainbox-wrapper

@@ -23,11 +23,12 @@ transactional update system.
 
 * [Introduction](docs/intro.md) to all the details about the concepts behind snapcraft.
 * [Hacking guide](HACKING.md) to contribute if you're interested in developing Snapcraft.
+* [Launchpad](https://bugs.launchpad.net/snapcraft) to submit bugs or issues.
 
-[travis-image]: https://travis-ci.org/ubuntu-core/snapcraft.svg?branch=master
-[travis-url]: https://travis-ci.org/ubuntu-core/snapcraft
+[travis-image]: https://travis-ci.org/snapcore/snapcraft.svg?branch=master
+[travis-url]: https://travis-ci.org/snapcore/snapcraft
 
-[coveralls-image]: https://coveralls.io/repos/ubuntu-core/snapcraft/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/ubuntu-core/snapcraft?branch=master
+[coveralls-image]: https://coveralls.io/repos/snapcore/snapcraft/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/snapcore/snapcraft?branch=master
 
-[overview-image]: https://rawgit.com/ubuntu-core/snapcraft/master/docs/images/snapcraft_overview.svg
+[overview-image]: https://rawgit.com/snapcore/snapcraft/master/docs/images/snapcraft_overview.svg

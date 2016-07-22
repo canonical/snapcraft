@@ -37,8 +37,10 @@ import sys
 import textwrap
 import urllib
 import yaml
+from yaml.scanner import ScannerError
 
 from docopt import docopt
+from collections import OrderedDict
 
 from snapcraft.internal import log, sources
 
@@ -54,6 +56,23 @@ PART_NAMESPACE_SEP = '/'
 # TODO: make this a temporary directory that get's removed when finished
 BASE_DIR = "/tmp"
 PARTS_FILE = "snap-parts.yaml"
+
+
+# yaml OrderedDict loading and dumping
+# from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
+_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+
+
+def dict_representer(dumper, data):
+    return dumper.represent_dict(data.items())
+
+
+def dict_constructor(loader, node):
+    return OrderedDict(loader.construct_pairs(node))
+
+
+yaml.add_representer(OrderedDict, dict_representer)
+yaml.add_constructor(_mapping_tag, dict_constructor)
 
 
 def _get_version():
@@ -96,8 +115,11 @@ def _update_after_parts(partname, after_parts):
 
 def _get_origin_data(origin_dir):
     origin_data = {}
-    with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
-        origin_data = yaml.load(fp)
+    try:
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
+            origin_data = yaml.load(fp)
+    except ScannerError as e:
+        raise InvalidEntryError(e)
 
     return origin_data
 
@@ -146,7 +168,7 @@ def _process_subparts(project_part, subparts, parts, origin, maintainer,
 
 def _process_entry(data):
     key = data.get('project-part')
-    parts_list = {}
+    parts_list = OrderedDict()
     # Store all the parts listed in 'after' for each included part so that
     # we can check later that we aren't missing any parts.
     # XXX: What do we do about 'after' parts that should be looked for in
@@ -210,22 +232,37 @@ def _process_entry(data):
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
-    master_parts_list = {}
+    master_parts_list = OrderedDict()
 
     output = output.strip()
 
     output = output.replace(b"{{{", b"").replace(b"}}}", b"")
 
-    all_data = yaml.load_all(output)
-    for data in all_data:
-        try:
-            parts_list, after_parts = _process_entry(data)
-        except InvalidEntryError as e:
-            logger.warning('Invalid wiki entry: {}'.format(e))
-            continue
+    # split the wiki into an array of entries to allow the parser to
+    # proceed when invalid yaml is found.
+    entries = output.split(b'\n---\n')
+    for entry in entries:
+        if entry != b'':
+            try:
+                data = yaml.load(entry)
+            except ScannerError as e:
+                logger.warning(
+                    'Bad wiki entry, possibly malformed YAML: {}'.format(e))
 
-        if is_valid_parts_list(parts_list, after_parts):
-            master_parts_list.update(parts_list)
+            part_name = data.get('project-part')
+            if part_name is not None and part_name in master_parts_list:
+                logger.warning("Duplicate part found in wiki: {}".format(
+                    part_name))
+                continue
+
+            try:
+                parts_list, after_parts = _process_entry(data)
+            except InvalidEntryError as e:
+                logger.warning('Invalid wiki entry: {}'.format(e))
+                continue
+
+            if is_valid_parts_list(parts_list, after_parts):
+                master_parts_list.update(parts_list)
 
     return master_parts_list
 

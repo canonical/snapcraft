@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import io
 import threading
 import urllib.parse
 from unittest import mock
@@ -77,6 +78,66 @@ class CleanEnvironment(fixtures.Fixture):
         os.environ = {}
 
         self.addCleanup(os.environ.update, current_environment)
+
+
+class _FakeStdout(io.StringIO):
+    """A fake stdout using StringIO implementing the missing fileno attrib."""
+
+    def fileno(self):
+        return 1
+
+
+class _FakeTerminalSize:
+
+    def __init__(self, columns=80):
+        self.columns = columns
+
+
+class FakeTerminal(fixtures.Fixture):
+
+    def __init__(self, columns=80, isatty=True):
+        self.columns = columns
+        self.isatty = isatty
+
+    def _setUp(self):
+        patcher = mock.patch('shutil.get_terminal_size')
+        mock_terminal_size = patcher.start()
+        mock_terminal_size.return_value = _FakeTerminalSize(self.columns)
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('sys.stdout', new_callable=_FakeStdout)
+        self.mock_stdout = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('os.isatty')
+        mock_isatty = patcher.start()
+        mock_isatty.return_value = self.isatty
+        self.addCleanup(patcher.stop)
+
+    def getvalue(self):
+        return self.mock_stdout.getvalue()
+
+
+class FakePartsWiki(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_parts_wiki_fixture = FakePartsWikiRunning()
+        self.useFixture(self.fake_parts_wiki_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+
+class FakePartsWikiOrigin(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_parts_wiki_origin_fixture = FakePartsWikiOriginRunning()
+        self.useFixture(self.fake_parts_wiki_origin_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
 
 
 class FakeParts(fixtures.Fixture):
@@ -150,6 +211,16 @@ class _FakeServerRunning(fixtures.Fixture):
         self.server.shutdown()
         self.server.socket.close()
         thread.join()
+
+
+class FakePartsWikiOriginRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakePartsWikiOriginServer
+
+
+class FakePartsWikiRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakePartsWikiServer
 
 
 class FakePartsServerRunning(_FakeServerRunning):

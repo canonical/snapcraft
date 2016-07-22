@@ -19,17 +19,9 @@ from unittest import mock
 
 from snapcraft import main, tests
 from snapcraft.internal import parts
-from snapcraft.tests import fixture_setup
 
 
 class DefineCommandTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixture_setup.FakeParts())
-        with mock.patch('snapcraft.internal.parts.ProgressBar',
-                        new=tests.SilentProgressBar):
-            parts.update()
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_defining_a_part_that_exists(self, mock_stdout):

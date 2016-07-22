@@ -26,7 +26,7 @@ class DownloadTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        if os.getenv('TEST_USER_PASSWORD', None) is None:
+        if not os.getenv('TEST_USER_PASSWORD', None):
             self.useFixture(fixture_setup.FakeStore())
         else:
             self.skipTest('There is no ubuntu-core snap in the staging server')
@@ -37,4 +37,5 @@ class DownloadTestCase(integration_tests.TestCase):
         project_dir = 'kernel-download'
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'os.snap'), FileExists())
+            os.path.join(project_dir, 'parts', 'kernel', 'src', 'os.snap'),
+            FileExists())

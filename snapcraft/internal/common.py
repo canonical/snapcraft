@@ -28,7 +28,8 @@ import tempfile
 import urllib
 
 
-SNAPCRAFT_FILES = ['snapcraft.yaml', 'parts', 'stage', 'prime', 'snap']
+SNAPCRAFT_FILES = ['snapcraft.yaml', '.snapcraft.yaml', 'parts', 'stage',
+                   'prime', 'snap']
 COMMAND_ORDER = ['pull', 'build', 'stage', 'prime']
 _DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
@@ -163,9 +164,16 @@ def reset_env():
 
 
 def link_or_copy(source, destination, follow_symlinks=False):
-    # Hard-link this file to the source. It's possible for this to
-    # fail (e.g. a cross-device link, or permission denied), so as a backup
-    # plan we'll just copy it.
+    """Hard-link source and destination files. Copy if it fails to link.
+
+    Hard-linking may fail (e.g. a cross-device link, or permission denied), so
+    as a backup plan we just copy it.
+
+    :param str source: The source to which destination will be linked.
+    :param str destination: The destination to be linked to source.
+    :param bool follow_symlinks: Whether or not symlinks should be followed.
+    """
+
     try:
         # Note that follow_symlinks doesn't seem to work for os.link, so we'll
         # implement this logic ourselves using realpath.
@@ -210,6 +218,16 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
             f.seek(0)
             f.truncate()
             f.write(replaced)
+
+
+def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
+    if os.isatty(sys.stdout.fileno()):
+        width = shutil.get_terminal_size().columns
+    else:
+        width = MAX_CHARACTERS_WRAP
+    if max_width:
+        width = min(max_width, width)
+    return width
 
 
 def format_output_in_columns(elements_list, max_width=MAX_CHARACTERS_WRAP,
@@ -274,6 +292,21 @@ def get_library_paths(root, arch_triplet):
         os.path.join(root, 'usr', 'lib'),
         os.path.join(root, 'lib', arch_triplet),
         os.path.join(root, 'usr', 'lib', arch_triplet),
+    ]
+
+    return [p for p in paths if os.path.exists(p)]
+
+
+def get_pkg_config_paths(root, arch_triplet):
+    paths = [
+        os.path.join(root, 'lib', 'pkgconfig'),
+        os.path.join(root, 'lib', arch_triplet, 'pkgconfig'),
+        os.path.join(root, 'usr', 'lib', 'pkgconfig'),
+        os.path.join(root, 'usr', 'lib', arch_triplet, 'pkgconfig'),
+        os.path.join(root, 'usr', 'share', 'pkgconfig'),
+        os.path.join(root, 'usr', 'local', 'lib', 'pkgconfig'),
+        os.path.join(root, 'usr', 'local', 'lib', arch_triplet, 'pkgconfig'),
+        os.path.join(root, 'usr', 'local', 'share', 'pkgconfig'),
     ]
 
     return [p for p in paths if os.path.exists(p)]

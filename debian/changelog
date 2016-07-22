@@ -1,3 +1,74 @@
+snapcraft (2.13) xenial; urgency=medium
+
+  * New upstream release 2.13 (LP: #1605107)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 21 Jul 2016 08:12:25 +0000
+
+snapcraft (2.12.1) xenial; urgency=medium
+
+  * New upstream release 2.12.1 (LP: #1600090)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 08 Jul 2016 13:31:34 -0300
+
+snapcraft (2.12) xenial; urgency=medium
+
+  [ Simon Quigley ]
+  * Change apt-get to apt in HACKING.md (#564) (LP: #1591421)
+  * Changed the mailing list in HACKING.md from snappy-devel to snapcraft
+    (#577)
+  * Add Subversion support (#567) (LP: #1543243)
+
+  [ Joe Talbott ]
+  * Include 'maintainer' and 'description' in the parser output. (#565)
+    (LP: #1591199)
+  * Support "```" wiki code tags in the parser. (#569) (LP: #1592133)
+  * Add snapcraft-parser integration test. (#560) (LP: #1590268)
+  * Make most wiki fields required. (#581) (LP: #LP: #1592133)
+  * Add more info about reusable parts. (#527) (LP: #1582499)
+  * Allow parts without a 'source' entry. (#599)
+
+  [ Sergio Schvezov ]
+  * New plugin: gulp (#563) (LP: #1575880)
+  * Support for a hidden snapcraft.yaml (#582) (LP: #1587933)
+  * Implement `snapcraft update` for parts (#588) (LP: #1594643)
+  * Support updating cache without content-length (#598) (LP: #1595610)
+  * Switch from local copy to the proper python package. (LP: #1590813)
+  * Integrate with new remote parts (#590) (LP: #1594976)
+  * Implement `snapcraft define` for parts (#594) (LP: #1594643)
+  * Update the remote parts cache before demo tests (#604) (LP: #1596114)
+  * Add missing build-packages for rpath test (#605) (LP: #1596114)
+  * Implement snapcraft search (#608) (LP: #1596222)
+
+  [ Bayard Randel ]
+  * Ignore .eggs dir. (#572)
+
+  [ Leo Arias ]
+  * Use pexpect when testing the building of snaps (#573) (LP: #1592943)
+  * Allow to run a subset of integration tests. (#576) (LP: #1593009)
+  * Improve the store errors returning exceptions (#585) (LP: #1594636)
+  * Add the register command (#586) (LP: #1595012)
+  * Improve error reporting (#591) (LP: #1588023)
+  * Fix the store update test to register a unique name (#595) (LP: #1595319)
+  * Use a xenial docker container for travis executions (#597) (LP: #1532213)
+  * Simplify the list plugins integration test (#607) (LP: #1596112)
+  * Remove the unittests from the autopkgtest execution (#600) (LP: #1596068)
+
+  [ Evan Dandrea ]
+  * Make lxd containers ephemeral. (#578) (LP: #1577548)
+
+  [ Daniel Holbach ]
+  * it's myapps.developer.ubuntu.com (#587) (LP: #1594844)
+
+  [ Rob Loach ]
+  * Fix Snap icons for Demos (#574)
+
+  [ Kyle Fazzari ]
+  * Add qmake plugin. (#566) (LP: #1574774)
+  * Don't copy libraries that are already in prime. (#580) (LP: #1570895)
+  * Make app names more restrictive. (#555) (LP: #1589613)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 27 Jun 2016 13:58:10 -0300
+
 snapcraft (2.11) xenial; urgency=medium
 
   [ Leo Arias ]

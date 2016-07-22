@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import copy
 import logging
 import os
@@ -31,6 +32,7 @@ import fixtures
 import snapcraft
 from snapcraft.internal import (
     common,
+    lifecycle,
     pluginhandler,
     states,
 )
@@ -518,6 +520,113 @@ class MigratableFilesetsTestCase(tests.TestCase):
         self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
 
 
+class RealStageTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.make_snapcraft_yaml("""name: pc-file-test
+version: 1.0
+summary: test pkg-config .pc
+description: when the .pc files reach stage the should be reprefixed
+confinement: strict
+
+parts:
+    stage-pc:
+        plugin: nil
+""")
+
+    def test_pc_files_correctly_prefixed(self):
+        pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
+        stage_pc_install = os.path.join(
+            'parts', 'stage-pc', 'install', pc_file)
+        stage_pc_stage = os.path.join('stage', pc_file)
+
+        # Run build
+        lifecycle.execute('build', snapcraft.ProjectOptions())
+
+        # Simulate a .pc file was installed
+        os.makedirs(os.path.dirname(stage_pc_install))
+        with open(stage_pc_install, 'w') as f:
+            f.write('prefix=/usr\n')
+            f.write('exec_prefix=${prefix}\n')
+            f.write('libdir=${prefix}/lib\n')
+            f.write('includedir=${prefix}/include\n')
+            f.write('\n')
+            f.write('Name: granite\n')
+            f.write('Description: elementary\'s Application Framework\n')
+            f.write('Version: 0.4\n')
+            f.write('Libs: -L${libdir} -lgranite\n')
+            f.write('Cflags: -I${includedir}/granite\n')
+            f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
+                    'gobject-2.0\n')
+
+        # Now we stage
+        lifecycle.execute('stage', snapcraft.ProjectOptions())
+
+        with open(stage_pc_stage) as f:
+            pc_file_content = f.read()
+        expected_pc_file_content = """prefix={}/stage/usr
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib
+includedir=${{prefix}}/include
+
+Name: granite
+Description: elementary's Application Framework
+Version: 0.4
+Libs: -L${{libdir}} -lgranite
+Cflags: -I${{includedir}}/granite
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
+""".format(os.getcwd())
+
+        self.assertEqual(pc_file_content, expected_pc_file_content)
+
+    def test_pc_files_correctly_prefixed_when_installed(self):
+        pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
+        install_path = os.path.join(
+            os.getcwd(), 'parts', 'stage-pc', 'install')
+        stage_pc_install = os.path.join(install_path, pc_file)
+        stage_pc_stage = os.path.join('stage', pc_file)
+
+        # Run build
+        lifecycle.execute('build', snapcraft.ProjectOptions())
+
+        # Simulate a .pc file was installed
+        os.makedirs(os.path.dirname(stage_pc_install))
+        with open(stage_pc_install, 'w') as f:
+            f.write('prefix={}/usr\n'.format(install_path))
+            f.write('exec_prefix=${prefix}\n')
+            f.write('libdir=${prefix}/lib\n')
+            f.write('includedir=${prefix}/include\n')
+            f.write('\n')
+            f.write('Name: granite\n')
+            f.write('Description: elementary\'s Application Framework\n')
+            f.write('Version: 0.4\n')
+            f.write('Libs: -L${libdir} -lgranite\n')
+            f.write('Cflags: -I${includedir}/granite\n')
+            f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
+                    'gobject-2.0\n')
+
+        # Now we stage
+        lifecycle.execute('stage', snapcraft.ProjectOptions())
+
+        with open(stage_pc_stage) as f:
+            pc_file_content = f.read()
+        expected_pc_file_content = """prefix={}/stage/usr
+exec_prefix=${{prefix}}
+libdir=${{prefix}}/lib
+includedir=${{prefix}}/include
+
+Name: granite
+Description: elementary's Application Framework
+Version: 0.4
+Libs: -L${{libdir}} -lgranite
+Cflags: -I${{includedir}}/granite
+Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
+""".format(os.getcwd())
+
+        self.assertEqual(pc_file_content, expected_pc_file_content)
+
+
 class PluginMakedirsTestCase(tests.TestCase):
 
     scenarios = [
@@ -599,9 +708,9 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(0, len(state.properties))
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch('importlib.import_module')
@@ -621,10 +730,10 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_pull')
@@ -650,9 +759,9 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(0, len(state.properties))
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch('importlib.import_module')
@@ -672,10 +781,10 @@ class StateTestCase(tests.TestCase):
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertTrue('foo' in state.properties)
         self.assertEqual(state.properties['foo'], 'bar')
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_build')
@@ -710,7 +819,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
@@ -718,7 +827,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['*'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     def test_stage_state_with_stage_keyword(self):
@@ -741,14 +850,14 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.StageState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['bin/1'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
         self.assertEqual('stage', self.handler.last_step())
@@ -850,7 +959,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
@@ -859,7 +968,7 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
@@ -898,7 +1007,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
@@ -910,7 +1019,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue('lib2' in state.dependency_paths)
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
@@ -941,7 +1050,7 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertTrue(type(state.properties) is dict)
+        self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertEqual(1, len(state.directories))
@@ -949,7 +1058,7 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['bin/1'])
-        self.assertTrue(type(state.project_options) is dict)
+        self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     def test_clean_prime_state(self):
@@ -1686,6 +1795,9 @@ class CollisionTestCase(tests.TestCase):
         part1.code.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
+        with open(part1.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part1.installdir))
+            f.write('Name: File\n')
 
         part2 = pluginhandler.load_plugin('part2', 'nil')
         part2.code.installdir = tmpdir + '/install2'
@@ -1695,6 +1807,9 @@ class CollisionTestCase(tests.TestCase):
         open(part2.installdir + '/2', mode='w').close()
         with open(part2.installdir + '/a/2', mode='w') as f:
             f.write('a/2')
+        with open(part2.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part2.installdir))
+            f.write('Name: File\n')
 
         part3 = pluginhandler.load_plugin('part3', 'nil')
         part3.code.installdir = tmpdir + '/install3'
@@ -1706,9 +1821,17 @@ class CollisionTestCase(tests.TestCase):
             f.write('1')
         open(part3.installdir + '/a/2', mode='w').close()
 
+        part4 = pluginhandler.load_plugin('part4', 'nil')
+        part4.code.installdir = tmpdir + '/install4'
+        os.makedirs(part4.installdir)
+        with open(part4.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part4.installdir))
+            f.write('Name: ConflictFile\n')
+
         self.part1 = part1
         self.part2 = part2
         self.part3 = part3
+        self.part4 = part4
 
     def test_no_collisions(self):
         """No exception is expected as there are no collisions."""
@@ -1723,6 +1846,16 @@ class CollisionTestCase(tests.TestCase):
             raised.exception.__str__(),
             "Parts 'part2' and 'part3' have the following file paths in "
             "common which have different contents:\n1\na/2")
+
+    def test_collisions_between_two_parts_pc_files(self):
+        with self.assertRaises(EnvironmentError) as raised:
+            pluginhandler.check_for_collisions(
+                [self.part1, self.part4])
+
+        self.assertEqual(
+            raised.exception.__str__(),
+            "Parts 'part1' and 'part4' have the following file paths in "
+            "common which have different contents:\nfile.pc")
 
 
 class StageEnvTestCase(tests.TestCase):

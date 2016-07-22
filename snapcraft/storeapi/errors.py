@@ -15,6 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import re
+
+from simplejson.scanner import JSONDecodeError
+
+
 # TODO move to snapcraft.errors --elopio - 2016-06-20
 class SnapcraftError(Exception):
     """Base class for all storeapi exceptions.
@@ -70,3 +75,126 @@ class StoreAuthenticationError(StoreError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class StoreRegistrationError(StoreError):
+
+    __FMT_ALREADY_REGISTERED = (
+        'The name {snap_name!r} is already taken.\n\n'
+        'We can if needed rename snaps to ensure they match the expectations '
+        'of most users. If you are the publisher most users expect for '
+        '{snap_name!r} then claim the name at {register_claim_url!r}')
+
+    __FMT_RESERVED = (
+        'The name {snap_name!r} is reserved.\n\n'
+        'If you are the publisher most users expect for '
+        '{snap_name!r} then please claim the name at {register_claim_url!r}')
+
+    __FMT_RETRY_WAIT = (
+        'You must wait {retry_after} seconds before trying to register '
+        'your next snap.')
+
+    fmt = 'Registration failed.'
+
+    __error_messages = {
+        'already_registered': __FMT_ALREADY_REGISTERED,
+        'reserved_name': __FMT_RESERVED,
+        'register_window': __FMT_RETRY_WAIT,
+    }
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            response_json = {}
+
+        if response_json.get('status') == 409:
+            response_json['register_claim_url'] = self.__get_claim_url(
+                response_json.get('register_name_url', ''))
+
+        error_code = response_json.get('code')
+        if error_code:
+            # we default to self.fmt in case error_code is not mapped yet.
+            self.fmt = self.__error_messages.get(error_code, self.fmt)
+
+        super().__init__(snap_name=snap_name, **response_json)
+
+    def __get_claim_url(self, url):
+        # TODO use the store provided claim url once it is there
+        # LP: #1598905
+        return re.sub('register-name', 'register-name-dispute', url, count=0)
+
+
+class StorePushError(StoreError):
+
+    __FMT_NOT_REGISTERED = (
+        'Sorry, try `snapcraft register {snap_name}` before pushing again.')
+
+    fmt = 'Received {status_code!r}: {text!r}'
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        if response.status_code == 404:
+            self.fmt = self.__FMT_NOT_REGISTERED
+        elif response.status_code == 401 or response.status_code == 403:
+            try:
+                response_json['text'] = response.text
+            except AttributeError:
+                response_json['text'] = 'error while pushing'
+
+        super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)
+
+
+class StoreReviewError(StoreError):
+
+    __FMT_NEED_MANUAL_REVIEW = (
+        'Publishing checks failed.\n'
+        'To release this to stable channel please request a review on '
+        'the snapcraft list.\n'
+        'Use devmode in the edge or beta channels to disable confinement.')
+
+    __FMT_PROCESSING_ERROR = (
+        'There has been a problem while analyzing the snap, check the snap '
+        'and try to push again.')
+
+    __messages = {
+        'need_manual_review': __FMT_NEED_MANUAL_REVIEW,
+        'processing_error': __FMT_PROCESSING_ERROR,
+    }
+
+    def __init__(self, result):
+        self.fmt = self.__messages[result['code']]
+        super().__init__()
+
+
+class StoreReleaseError(StoreError):
+
+    __FMT_NOT_REGISTERED = (
+        'Sorry, try `snapcraft register {snap_name}` before trying to '
+        'release or choose an existing revision.')
+
+    fmt = 'Received {status_code!r}: {text!r}'
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        if response.status_code == 404:
+            self.fmt = self.__FMT_NOT_REGISTERED
+        elif response.status_code == 401 or response.status_code == 403:
+            try:
+                response_json['text'] = response.text
+            except AttributeError:
+                response_json['text'] = 'error while releasing'
+        elif 'errors' in response_json:
+            self.fmt = '{errors}'
+
+        super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)

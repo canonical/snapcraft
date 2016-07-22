@@ -23,40 +23,30 @@ class TestSnapcraftExamples(
         testscenarios.WithScenarios, snaps_tests.SnapsTestCase):
 
     scenarios = [
-        ('downloader-with-wiki-parts', {
-            'snap_content_dir': 'downloader-with-wiki-parts',
-            'name': 'downloader',
-            'version': '1.0',
-            'update_cache': True,
-            }),
         ('godd', {
             'snap_content_dir': 'godd',
             'name': 'godd',
             'version': '1.0',
-            'update_cache': False,
             }),
         ('git', {
             'snap_content_dir': 'git',
             'name': 'git',
             'version': '2.8.0',
-            'update_cache': False,
             }),
         ('py2-project', {
             'snap_content_dir': 'py2-project',
             'name': 'spongeshaker',
             'version': '0',
-            'update_cache': False,
             }),
         ('py3-project', {
             'snap_content_dir': 'py3-project',
             'name': 'spongeshaker',
             'version': '0',
-            'update_cache': False,
             }),
     ]
 
     def test_demo(self):
         # Build snap will raise an exception in case of error.
-        self.build_snap(self.snap_content_dir, self.update_cache)
+        snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
-        self.install_snap(self.snap_content_dir, self.name, self.version)
+        self.install_snap(snap_path, self.name, self.version)

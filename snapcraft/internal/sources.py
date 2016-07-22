@@ -30,7 +30,7 @@ code for that part, and how to unpack it if necessary.
   - source-type: git, bzr, hg, svn, tar, or zip
 
     In some cases the source string is not enough to identify the version
-    control system or compression algorithim. The source-type key can tell
+    control system or compression algorithm. The source-type key can tell
     snapcraft exactly how to treat that content.
 
   - source-branch: <branch-name>
@@ -70,8 +70,10 @@ import re
 import subprocess
 import tempfile
 import zipfile
+import glob
 
 from snapcraft.internal import common
+from snapcraft.internal.indicators import download_requests_stream
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -104,16 +106,12 @@ class FileBase(Base):
         self.provision(self.source_dir)
 
     def download(self):
-        req = requests.get(self.source, stream=True, allow_redirects=True)
-        if req.status_code is not 200:
-            raise EnvironmentError('unexpected http status code when '
-                                   'downloading {}'.format(req.status_code))
+        request = requests.get(self.source, stream=True, allow_redirects=True)
+        request.raise_for_status()
 
-        self.file = os.path.join(self.source_dir,
-                                 os.path.basename(self.source))
-        with open(self.file, 'wb') as f:
-            for chunk in req.iter_content(1024):
-                f.write(chunk)
+        self.file = os.path.join(
+            self.source_dir, os.path.basename(self.source))
+        download_requests_stream(request, self.file)
 
 
 class Script(FileBase):
@@ -341,17 +339,26 @@ class Zip(FileBase):
 class Local(Base):
 
     def pull(self):
-        if os.path.islink(self.source_dir):
+        if os.path.islink(self.source_dir) or os.path.isfile(self.source_dir):
             os.remove(self.source_dir)
-        elif (os.path.isdir(self.source_dir) and
-              not os.listdir(self.source_dir)):
-            os.rmdir(self.source_dir)
-        elif os.path.exists(self.source_dir):
-            raise EnvironmentError('Cannot pull to target {!r}'.format(
-                self.source_dir))
+        elif os.path.isdir(self.source_dir):
+            shutil.rmtree(self.source_dir)
 
         source_abspath = os.path.abspath(self.source)
-        os.symlink(source_abspath, self.source_dir)
+
+        def ignore(directory, files):
+            if directory is source_abspath:
+                snaps = glob.glob(os.path.join(directory, '*.snap'))
+                if snaps:
+                    snaps = [os.path.basename(s) for s in snaps]
+                    return common.SNAPCRAFT_FILES + snaps
+                else:
+                    return common.SNAPCRAFT_FILES
+            else:
+                return []
+
+        shutil.copytree(source_abspath, self.source_dir,
+                        copy_function=common.link_or_copy, ignore=ignore)
 
 
 def get(sourcedir, builddir, options):

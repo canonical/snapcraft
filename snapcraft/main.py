@@ -33,10 +33,13 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] register <snap-name>
   snapcraft [options] upload <snap-file>
+  snapcraft [options] push <snap-file> [--release <channels>]
+  snapcraft [options] release <snap-name> <revision> <channel>
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] define <part-name>
+  snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -68,6 +71,9 @@ Options specific to snapping:
   -o <snap-file>, --output <snap-file>  used in case you want to rename the
                                         snap.
 
+Options specific to store interaction:
+  --release <channels>  Comma separated list of channels to release to.
+
 The available commands are:
   help         Obtain help for a certain plugin or topic
   init         Initialize a snapcraft project.
@@ -77,7 +83,10 @@ The available commands are:
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
-  upload       Upload a snap to the Ubuntu Store.
+  push         Pushes and optionally releases a snap to the Ubuntu Store.
+  upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
+               supersedes this command.
+  release      Release a revision of a snap to a specific channel.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -93,6 +102,7 @@ The available lifecycle commands are:
 Parts ecosystem commands
   update       Updates the parts listing from the cloud.
   define       Shows the definition for the cloud part.
+  search       Searches the remotes part cache for matching parts.
 
 Calling snapcraft without a COMMAND will default to 'snap'
 
@@ -106,22 +116,21 @@ For more help, visit the documentation:
 http://developer.ubuntu.com/snappy/snapcraft
 """
 
-from contextlib import suppress
 import logging
 import os
 import pkg_resources
 import pkgutil
 import shutil
 import sys
-import subprocess
-import textwrap
 
 from docopt import docopt
 
 import snapcraft
 from snapcraft.internal import lifecycle, log, parts
 from snapcraft.internal.common import (
-    format_output_in_columns, MAX_CHARACTERS_WRAP, get_tourdir)
+    format_output_in_columns,
+    get_terminal_width,
+    get_tourdir)
 
 
 logger = logging.getLogger(__name__)
@@ -159,7 +168,7 @@ def _scaffold_examples(directory):
 
     print("Snapcraft tour initialized in {}\n"
           "Instructions are in the README, or "
-          "https://snapcraft.io/create/#begin".format(directory))
+          "http://snapcraft.io/create/#tour".format(directory))
 
 
 def _list_plugins():
@@ -169,16 +178,7 @@ def _list_plugins():
         plugins.append(modname.replace('_', '-'))
 
     # we wrap the output depending on terminal size
-    width = MAX_CHARACTERS_WRAP
-    with suppress(OSError):
-        with suppress(subprocess.CalledProcessError):
-            # this is the only way to get current terminal size reliably
-            # without duplicating a bunch of logic
-            command = ['tput', 'cols']
-            candidate_width = \
-                subprocess.check_output(command, stderr=subprocess.DEVNULL)
-            width = min(int(candidate_width), width)
-
+    width = get_terminal_width()
     for line in format_output_in_columns(plugins, max_width=width):
         print(line)
 
@@ -212,7 +212,7 @@ def main(argv=None):
         if args['--debug']:
             raise
 
-        logger.error(textwrap.fill(str(e)))
+        logger.error(str(e))
         sys.exit(1)
 
 
@@ -260,6 +260,8 @@ def run(args, project_options):  # noqa
         parts.update()
     elif args['define']:
         parts.define(args['<part-name>'])
+    elif args['search']:
+        parts.search(' '.join(args['<query>']))
     else:  # snap by default:
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
@@ -276,14 +278,25 @@ def _run_clean(args, project_options):
 
 
 def _is_store_command(args):
-    return args['register'] or args['upload']
+    commands = ('register', 'upload', 'release', 'push')
+    return any(args.get(command) for command in commands)
 
 
 def _run_store_command(args):
     if args['register']:
         snapcraft.register(args['<snap-name>'])
     elif args['upload']:
-        snapcraft.upload(args['<snap-file>'])
+        logger.warning('DEPRECATED: Use `push` instead of `upload`')
+        snapcraft.push(args['<snap-file>'])
+    elif args['push']:
+        if args['--release']:
+            release_channels = args['--release'].split(',')
+        else:
+            release_channels = []
+        snapcraft.push(args['<snap-file>'], release_channels)
+    elif args['release']:
+        snapcraft.release(
+            args['<snap-name>'], args['<revision>'], [args['<channel>']])
 
 
 if __name__ == '__main__':  # pragma: no cover

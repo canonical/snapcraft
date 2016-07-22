@@ -57,9 +57,17 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
                              '..', '..', '..', 'schema'))
         self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
 
+        self.useFixture(fixture_setup.FakeParts())
+
         patcher = mock.patch('multiprocessing.cpu_count')
         self.cpu_count = patcher.start()
         self.cpu_count.return_value = 2
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch(
+            'snapcraft.internal.indicators.ProgressBar',
+            new=SilentProgressBar)
+        patcher.start()
         self.addCleanup(patcher.stop)
 
         # These are what we expect by default

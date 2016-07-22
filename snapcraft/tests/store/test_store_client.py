@@ -16,7 +16,6 @@
 
 import logging
 import os
-import subprocess
 from unittest import mock
 
 import fixtures
@@ -167,13 +166,48 @@ class RegisterTestCase(tests.TestCase):
 
     def test_register_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        response = self.client.register('test-good-snap-name')
-        self.assertTrue(response.ok)
+        # No exception will be raised if this is succesful
+        self.client.register('test-good-snap-name')
 
-    def test_registration_failed(self):
+    def test_already_registered(self):
         self.client.login('dummy', 'test correct password')
-        response = self.client.register('test-bad-snap-name')
-        self.assertFalse(response.ok)
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-already-registered-snap-name')
+        self.assertEqual(
+            str(raised.exception),
+            "The name 'test-already-registered-snap-name' is already taken."
+            "\n\n"
+            "We can if needed rename snaps to ensure they match the "
+            "expectations of most users. If you are the publisher most users "
+            "expect for 'test-already-registered-snap-name' then claim the "
+            "name at 'https://myapps.com/register-name-dispute/'")
+
+    def test_register_a_reserved_name(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-reserved-snap-name')
+        self.assertEqual(
+            str(raised.exception),
+            "The name 'test-reserved-snap-name' is reserved."
+            "\n\n"
+            "If you are the publisher most users expect for "
+            "'test-reserved-snap-name' then please claim the "
+            "name at 'https://myapps.com/register-name-dispute/'")
+
+    def test_registering_too_fast_in_a_row(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-too-fast')
+        self.assertEqual(
+            str(raised.exception),
+            'You must wait 177 seconds before trying to register your '
+            'next snap.')
+
+    def test_unhandled_registration_error_path(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('snap-name-no-clear-error')
+        self.assertEqual(str(raised.exception), 'Registration failed.')
 
 
 class UploadTestCase(tests.TestCase):
@@ -185,33 +219,123 @@ class UploadTestCase(tests.TestCase):
         self.snap_path = os.path.join(
             os.path.dirname(tests.__file__), 'data',
             'test-snap.snap')
-        patcher = mock.patch(
+        # These should eventually converge to the same module
+        pbars = (
             'snapcraft.storeapi._upload.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_upload_unexisting_snap_raises_exception(self):
-        with self.assertRaises(subprocess.CalledProcessError):
-            self.client.upload('unexisting.snap')
+            'snapcraft.storeapi.ProgressBar',
+        )
+        for pbar in pbars:
+            patcher = mock.patch(pbar, new=tests.SilentProgressBar)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     def test_upload_without_login_raises_exception(self):
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload(self.snap_path)
+            self.client.upload('test-snap', self.snap_path)
 
     def test_upload_snap(self):
         self.client.login('dummy', 'test correct password')
-        result = self.client.upload(self.snap_path)
-        self.assertTrue(result['success'])
-        self.assertEqual('test-application-url', result['application_url'])
-        self.assertEqual('test-revision', result['revision'])
+        tracker = self.client.upload('test-snap', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        result = tracker.track()
+        expected_result = {
+            'code': 'ready_to_release',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': True,
+            'processed': True
+        }
+        self.assertEqual(result, expected_result)
+
+        # This should not raise
+        tracker.raise_for_code()
+
+    def test_upload_snap_requires_review(self):
+        self.client.login('dummy', 'test correct password')
+        tracker = self.client.upload('test-review-snap', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        result = tracker.track()
+        expected_result = {
+            'code': 'need_manual_review',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': False,
+            'processed': True
+        }
+        self.assertEqual(result, expected_result)
+
+        with self.assertRaises(errors.StoreReviewError):
+            tracker.raise_for_code()
+
+    def test_upload_unregistered_snap(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StorePushError) as raised:
+            self.client.upload('test-snap-unregistered', self.snap_path)
+        self.assertEqual(
+            str(raised.exception),
+            'Sorry, try `snapcraft register '
+            'test-snap-unregistered` before pushing again.')
 
     def test_upload_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload(self.snap_path)
+            self.client.upload('test-snap', self.snap_path)
+
+
+class ReleaseTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_release_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.release('test-snap', '19', ['beta'])
+
+    def test_release_snap(self):
+        self.client.login('dummy', 'test correct password')
+        channel_map = self.client.release('test-snap', '19', ['beta'])
+        expected_channel_map = {
+            'opened_channels': ['beta'],
+            'channel_map': [
+                {'channel': 'stable', 'info': 'none'},
+                {'channel': 'candidate', 'info': 'none'},
+                {'revision': 19, 'channel': 'beta', 'version': '0',
+                 'info': 'specific'},
+                {'channel': 'edge', 'info': 'tracking'}
+            ]
+        }
+        self.assertEqual(channel_map, expected_channel_map)
+
+    def test_release_snap_to_invalid_channel(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreReleaseError) as raised:
+            self.client.release('test-snap', '19', ['alpha'])
+
+        self.assertEqual(
+            str(raised.exception),
+            'Not a valid channel: alpha')
+
+    def test_release_unregistered_snap(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreReleaseError) as raised:
+            self.client.release('test-snap-unregistered', '19', ['alpha'])
+
+        self.assertEqual(
+            str(raised.exception),
+            'Sorry, try `snapcraft register test-snap-unregistered` '
+            'before trying to release or choose an existing '
+            'revision.')
+
+    def test_release_with_invalid_credentials_raises_exception(self):
+        conf = config.Config()
+        conf.set('macaroon', 'inval"id')
+        conf.save()
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.release('test-snap', '10', ['beta'])
 
 
 class MacaroonsTestCase(tests.TestCase):

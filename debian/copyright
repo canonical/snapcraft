@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Snapcraft
 Upstream-Contact: Snapcraft Team <snappy-devel@lists.ubuntu.com>
-Source: https://github.com/ubuntu-core/snapcraft
+Source: https://github.com/snapcore/snapcraft
 
 Files: *
 Copyright: 2015, 2016 Canonical Ltd
@@ -23,7 +23,7 @@ License: GPL-3
 
 Files: snapcraft/demos/qt4-text-editor/* snapcraft/demos/qt5-text-editor/*
 Copyright: 2015 The Qt Company Ltd.
-License: BSD
+License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  .

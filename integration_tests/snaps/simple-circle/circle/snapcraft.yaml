@@ -5,52 +5,51 @@ description: |
     in a circular dependency chain. Snapcraft should NOT
     accept this snapcraft.yaml.
 version: 1.0
-icon: icon.svg
 confinement: strict
 
 parts:
     a:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [last]
     b:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [a]
     c:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [b]
     d:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [c]
     e:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [d]
     f:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [e]
     g:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [f]
     h:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [g]
     last:
         plugin: copy
         files:
-            icon.svg: icon.svg
+            file: file
         after: [h]

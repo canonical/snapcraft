@@ -111,6 +111,7 @@ properties:
                 - on-abnormal
                 - on-abort
                 - always
+                - never
           slots:
             type: array
             minitems: 1
@@ -128,7 +129,7 @@ properties:
     minProperties: 1
     additionalProperties: false
     patternProperties:
-      ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
+      ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
         type: object
         minProperties: 1
         properties:

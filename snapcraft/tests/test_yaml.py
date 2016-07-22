@@ -28,8 +28,6 @@ import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import yaml as internal_yaml
 from snapcraft import tests
-from snapcraft.tests import fixture_setup
-
 from snapcraft._schema import SnapcraftSchemaError
 
 
@@ -92,13 +90,6 @@ parts:
 
     @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
     def test_config_composes_with_remote_parts(self, mock_loadPlugin):
-        self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -117,14 +108,27 @@ parts:
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
-    def test_config_composes_with_a_non_existent_remote_part(self):
-        self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_config_composes_with_remote_subpart(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
 
+parts:
+  project-part/part1:
+    stage-packages: [fswebcam]
+""")
+
+        parts.update()
+        internal_yaml.Config()
+
+        mock_loadPlugin.assert_called_with('project-part/part1', 'go', {
+            'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
+            'stage': [], 'snap': []})
+
+    def test_config_composes_with_a_non_existent_remote_part(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -147,13 +151,6 @@ parts:
             'to refresh'.format('non-existing-part'))
 
     def test_config_after_is_an_undefined_part(self):
-        self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -178,13 +175,6 @@ parts:
 
     @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
     def test_config_uses_remote_part_from_after(self, mock_load):
-        self.useFixture(fixture_setup.FakeParts())
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.parts.ProgressBar',
-            new=tests.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1361,7 +1351,7 @@ class TestValidation(tests.TestCase):
             }
         }
         valid_conditions = ['always', 'on-success', 'on-failure',
-                            'on-abnormal', 'on-abort']
+                            'on-abnormal', 'on-abort', 'never']
 
         for condition in valid_conditions:
             with self.subTest(key=condition):
@@ -1383,7 +1373,7 @@ class TestValidation(tests.TestCase):
         self.assertEqual(
             "The 'restart-condition' property does not match the required "
             "schema: 'on-watchdog' is not one of ['on-success', "
-            "'on-failure', 'on-abnormal', 'on-abort', 'always']",
+            "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']",
             str(raised.exception))
 
     def test_invalid_app_names(self):
@@ -1567,80 +1557,3 @@ class TestFilesets(tests.TestCase):
             raised.exception.message,
             '\'$3\' referred to in the \'stage\' fileset but it is not '
             'in filesets')
-
-
-class TestPkgConfig(tests.TestCase):
-
-    _PC_TEMPLATE = """prefix=/usr
-exec_prefix=${{prefix}}
-libdir=${{prefix}}/lib/x86_64-linux-gnu
-includedir=${{prefix}}/include
-
-Name: {module}
-Description: test
-Version: 1.0
-Libs: -L${{libdir}} -llib{module}
-Cflags: -I${{includedir}}/{module}
-"""
-
-    def setUp(self):
-        super().setUp()
-
-        self.installdir = os.path.join(os.getcwd(), 'installdir')
-        os.makedirs(self.installdir)
-
-        self.stagedir = os.path.join(os.getcwd(), 'stagedir')
-        os.makedirs(self.stagedir)
-
-        self.bindir = os.path.join(os.getcwd(), 'bin')
-        os.makedirs(self.bindir)
-
-        project_options = snapcraft.ProjectOptions()
-        env = internal_yaml._create_pkg_config_override(
-            self.bindir, self.installdir, self.stagedir,
-            project_options.arch_triplet)
-        self.assertEqual(env, ['PATH={}:$PATH'.format(self.bindir)])
-
-        self.pkg_config_bin = os.path.join(self.bindir, 'pkg-config')
-
-    def _create_pc_file(self, workdir, module):
-        pkgconfig_dir = os.path.join(workdir, 'usr', 'lib', 'pkgconfig')
-        os.makedirs(pkgconfig_dir, exist_ok=True)
-        pc_module = os.path.join(pkgconfig_dir, '{}.pc'.format(module))
-        with open(pc_module, 'w') as fn:
-            fn.write(self._PC_TEMPLATE.format(module=module))
-
-    def test_pkg_config_prefers_installdir(self):
-        self._create_pc_file(self.installdir, 'module1')
-        self._create_pc_file(self.stagedir, 'module1')
-
-        out = subprocess.check_output([
-            self.pkg_config_bin, '--cflags-only-I',
-            'module1']).decode('utf-8').strip()
-
-        self.assertEqual(
-            out, '-I{}/usr/include/module1'.format(self.installdir))
-
-    def test_pkg_config_finds_in_stagedir(self):
-        self._create_pc_file(self.installdir, 'module2')
-        self._create_pc_file(self.stagedir, 'module1')
-
-        out = subprocess.check_output([
-            self.pkg_config_bin, '--cflags-only-I',
-            'module1']).decode('utf-8').strip()
-
-        self.assertEqual(
-            out, '-I{}/usr/include/module1'.format(self.stagedir))
-
-    def test_pkg_config_works_with_two_modules(self):
-        self._create_pc_file(self.installdir, 'module1')
-        self._create_pc_file(self.installdir, 'module2')
-
-        out = subprocess.check_output([
-            self.pkg_config_bin, '--cflags-only-I',
-            'module1', 'module2']).decode('utf-8').strip()
-
-        self.assertEqual(out,
-                         '-I{dir}/usr/include/module1 '
-                         '-I{dir}/usr/include/module2'.format(
-                            dir=self.installdir))

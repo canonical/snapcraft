@@ -135,6 +135,6 @@ image size. For example:
 $ qemu-img resize xenial_core_amd64.img +1G
 ```
 
-[vm-image]: https://raw.githubusercontent.com/ubuntu-core/snapcraft/master/docs/images/ubuntucore_in_vmm.png
-[core-image]: https://raw.githubusercontent.com/ubuntu-core/snapcraft/master/docs/images/core_running_mir.png
-[clock-image]: https://raw.githubusercontent.com/ubuntu-core/snapcraft/master/docs/images/clocks_on_mir_on_ubuntucore.png
+[vm-image]: https://raw.githubusercontent.com/snapcore/snapcraft/master/docs/images/ubuntucore_in_vmm.png
+[core-image]: https://raw.githubusercontent.com/snapcore/snapcraft/master/docs/images/core_running_mir.png
+[clock-image]: https://raw.githubusercontent.com/snapcore/snapcraft/master/docs/images/clocks_on_mir_on_ubuntucore.png

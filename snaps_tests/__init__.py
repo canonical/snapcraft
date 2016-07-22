@@ -119,8 +119,9 @@ class SnapsTestCase(testtools.TestCase):
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')
 
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_SETUP_PROXIES', '1'))
+        temp_dir = fixtures.TempDir()
+        self.useFixture(temp_dir)
+        self.path = temp_dir.path
 
         self.snappy_testbed = None
         if not config.get('skip-install', False):
@@ -131,8 +132,9 @@ class SnapsTestCase(testtools.TestCase):
                 self.snappy_testbed = testbed.LocalTestbed()
             else:
                 port = config.get('port', None) or '22'
+                proxy = config.get('proxy', None)
                 self.snappy_testbed = testbed.SshTestbed(
-                    ip, port, 'ubuntu')
+                    ip, port, 'ubuntu', proxy)
             self.snappy_testbed.wait()
 
     def _set_up_qemu_testbed(self):
@@ -152,20 +154,15 @@ class SnapsTestCase(testtools.TestCase):
         self.addCleanup(snappy_testbed.delete)
         return snappy_testbed
 
-    def build_snap(self, snap_content_dir, update_cache=False):
-        working_dir = os.path.join(self.src_dir, snap_content_dir)
-        if update_cache:
-            self._update(working_dir)
-        self._clean(working_dir)
-        self._snap(working_dir)
+    def build_snap(self, snap_content_dir):
+        project_dir = os.path.join(self.src_dir, snap_content_dir)
+        tmp_project_dir = os.path.join(self.path, snap_content_dir)
+        shutil.copytree(project_dir, tmp_project_dir, symlinks=True)
 
-    def _clean(self, project_dir):
-        command = '{} {}'.format(self.snapcraft_command, 'clean')
-        self._run_command(command, project_dir)
+        self._snap(tmp_project_dir)
 
-    def _update(self, project_dir):
-        command = '{} {}'.format(self.snapcraft_command, 'update')
-        self._run_command(command, project_dir)
+        snap_glob_path = os.path.join(tmp_project_dir,  '*.snap')
+        return glob.glob(snap_glob_path)[0]
 
     def _snap(self, project_dir):
         command = '{} {}'.format(self.snapcraft_command, 'snap')
@@ -196,15 +193,11 @@ class SnapsTestCase(testtools.TestCase):
     def _add_output_detail(self, output):
         self.addDetail('output', content.text_content(str(output)))
 
-    def install_snap(self, snap_content_dir, snap_name, version,
+    def install_snap(self, snap_local_path, snap_name, version,
                      devmode=False):
         if not config.get('skip-install', False):
-            snap_file_name = '{}_{}_*.snap'.format(
-                snap_name, version)
-            snap_local_glob_path = os.path.join(
-                self.src_dir, snap_content_dir, snap_file_name)
-            snap_local_path = glob.glob(snap_local_glob_path)[0]
             self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
+            snap_file_name = os.path.basename(snap_local_path)
             snap_path_in_testbed = os.path.join(
                 '/home/ubuntu/', snap_file_name)
             # Remove the snap file from the testbed.
@@ -236,6 +229,12 @@ class SnapsTestCase(testtools.TestCase):
         if not config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(command)
             self.assertEqual(expected_output, output)
+
+    def assert_command_in_snappy_testbed_with_regex(
+            self, command, expected_regex, flags=0):
+        if not config.get('skip-install', False):
+            output = self.run_command_in_snappy_testbed(command)
+            self.assertThat(output, MatchesRegex(expected_regex, flags=flags))
 
     def run_command_in_snappy_testbed(self, command):
         if not config.get('skip-install', False):

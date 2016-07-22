@@ -18,7 +18,10 @@ import logging
 import os
 from unittest import mock
 
+import requests
+import fixtures
 import yaml
+from collections import OrderedDict
 
 from snapcraft.internal.parser import (
     _get_namespaced_partname,
@@ -26,8 +29,7 @@ from snapcraft.internal.parser import (
     PARTS_FILE,
     main,
 )
-from snapcraft.tests import TestCase
-
+from snapcraft.tests import TestCase, fixture_setup
 
 TEST_OUTPUT_PATH = os.path.join(os.getcwd(), 'test_output.wiki')
 
@@ -64,7 +66,6 @@ class TestParser(TestCase):
         subpart = 'subpart'
 
         result = _get_namespaced_partname(partname, subpart)
-        logging.warn('JOE: result: {}'.format(result))
 
         self.assertEqual('{p}{s}{sp}'.format(p=partname,
                                              s=PART_NAMESPACE_SEP,
@@ -556,3 +557,186 @@ description: example
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_partial_processing_for_malformed_yaml(self,
+                                                   mock_get,
+                                                   mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description:
+  example
+
+  Usage
+    blahblahblah
+project-part: 'main'
+---
+maintainer: John Doeson <john.doeson@example.com>
+origin: lp:snapcraft-parser-example
+description:
+  example
+
+  Usage:
+    blahblahblah
+project-part: 'main2'
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'main2': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_interactions_with_fake(self,
+                                         mock_get,
+                                         mock_get_origin_data):
+
+        fixture = fixture_setup.FakePartsWiki()
+        self.useFixture(fixture)
+
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'curl': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_with_fake_origin(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        # TODO: update this once we start encoding the origin_dir
+        origin_dir = os.path.join('/tmp', 'somepart')
+        os.makedirs(origin_dir, exist_ok=True)
+
+        # Create a fake snapcraft.yaml for _get_origin_data() to parse
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'),
+                  'w') as fp:
+            text = requests.get(origin_url).text
+            fp.write(text)
+
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part('somepart')
+        self.assertTrue(part is not None)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_duplicate_entries(self, mock_get, mock_get_origin_data):
+        """Test duplicate parts are ignored."""
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main duplicate
+project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
+        self.assertEqual('example main', part['description'])
+
+        self.assertEqual(1, _get_part_list_count())
+
+        self.assertTrue(
+            'Duplicate part found in wiki: main'
+            in fake_logger.output, 'Missing duplicate part info in output')
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_parsed_output_matches_wiki_order(
+            self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: main2
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main2
+project-part: app1
+""")
+        parts = OrderedDict()
+
+        parts_main = OrderedDict()
+        parts_main['source'] = 'lp:project'
+        parts_main['plugin'] = 'copy'
+        parts_main['files'] = ['file1', 'file2']
+        parts['main'] = parts_main
+
+        parts_main2 = OrderedDict()
+        parts_main2['source'] = 'lp:project'
+        parts_main2['plugin'] = 'copy'
+        parts_main2['files'] = ['file1', 'file2']
+        parts['main2'] = parts_main2
+
+        parts_app1 = OrderedDict()
+        parts_app1['source'] = 'lp:project'
+        parts_app1['plugin'] = 'copy'
+        parts_app1['files'] = ['file1', 'file2']
+        parts['app1'] = parts_app1
+
+        mock_get_origin_data.return_value = {
+            'parts': parts,
+        }
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(3, _get_part_list_count())
+
+        self.assertEqual(parts,
+                         _get_part_list())

@@ -21,14 +21,16 @@ Build-Depends: bash-completion,
                python3-requests-oauthlib,
                python3-requests-toolbelt,
                python3-responses,
+               python3-simplejson,
                python3-setuptools,
+               python3-tabulate,
                python3-testscenarios,
                python3-testtools,
                python3-xdg,
                python3-yaml,
                squashfs-tools,
-Homepage: https://github.com/ubuntu-core/snapcraft
-Vcs-Git: https://github.com/ubuntu-core/snapcraft
+Homepage: https://github.com/snapcore/snapcraft
+Vcs-Git: https://github.com/snapcore/snapcraft
 Standards-Version: 3.9.7
 
 Package: snapcraft
@@ -45,6 +47,8 @@ Depends: python3-apt,
          python3-requests,
          python3-requests-oauthlib,
          python3-requests-toolbelt,
+         python3-simplejson,
+         python3-tabulate,
          python3-xdg,
          python3-yaml,
          squashfs-tools,

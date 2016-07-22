@@ -85,10 +85,15 @@ class BasePlugin:
         self.project = project
         self.options = options
 
+        # The remote parts can have a '/' in them to separate the main project
+        # part with the subparts. This is rather unfortunate as it affects the
+        # the layout of parts inside the parts directory causing collisions
+        # between the main project part and its subparts.
+        part_dir = name.replace('/', '\N{BIG SOLIDUS}')
         if project:
-            self.partdir = os.path.join(project.parts_dir, self.name)
+            self.partdir = os.path.join(project.parts_dir, part_dir)
         else:
-            self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+            self.partdir = os.path.join(os.getcwd(), 'parts', part_dir)
 
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
@@ -144,6 +149,9 @@ class BasePlugin:
         if os.path.exists(self.build_basedir):
             shutil.rmtree(self.build_basedir)
 
+        # FIXME: It's not necessary to ignore here anymore since it's now done
+        # in the Local source. However, it's left here so that it continues to
+        # work on old snapcraft trees that still have src symlinks.
         def ignore(directory, files):
             if directory is self.sourcedir:
                 snaps = glob.glob(os.path.join(directory, '*.snap'))

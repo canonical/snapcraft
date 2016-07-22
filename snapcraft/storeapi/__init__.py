@@ -15,19 +15,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import hashlib
+import itertools
 import json
 import logging
 import os
-import subprocess
-import tempfile
 import urllib.parse
+from time import sleep
+from threading import Thread
+from queue import Queue
 
 import pymacaroons
 import requests
-import yaml
+from progressbar import (
+    AnimatedMarker,
+    ProgressBar,
+    UnknownLength,
+)
 
 import snapcraft
 from snapcraft import config
+from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.storeapi import (
     _upload,
     constants,
@@ -36,21 +43,6 @@ from snapcraft.storeapi import (
 
 
 logger = logging.getLogger(__name__)
-
-
-def _get_name_from_snap_file(snap_path):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output = subprocess.check_output(
-            ['unsquashfs', '-d',
-             os.path.join(temp_dir, 'squashfs-root'),
-             snap_path, '-e', os.path.join('meta', 'snap.yaml')])
-        logger.debug(output)
-        with open(os.path.join(
-                temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
-        ) as yaml_file:
-            snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
 
 
 def _macaroon_auth(conf):
@@ -154,24 +146,24 @@ class StoreClient():
         self.conf.save()
 
     def register(self, snap_name):
-        return self.sca.register(snap_name, constants.DEFAULT_SERIES)
+        self.sca.register(snap_name, constants.DEFAULT_SERIES)
 
-    def upload(self, snap_filename):
-        snap_name = _get_name_from_snap_file(snap_filename)
-
+    def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:
             raise errors.InvalidCredentialsError(
                 'Unbound discharge not in the config file')
 
-        data = _upload.upload_files(snap_filename, self.updown)
-        success = data.get('success', False)
+        updown_data = _upload.upload_files(snap_filename, self.updown)
+        success = updown_data.get('success', False)
         if not success:
-            return data
+            return updown_data
 
-        result = _upload.upload_app(self.sca, snap_name, data)
-        return result
+        return self.sca.snap_push_metadata(snap_name, updown_data)
+
+    def release(self, snap_name, revision, channels):
+        return self.sca.snap_release(snap_name, revision, channels)
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
@@ -191,12 +183,10 @@ class StoreClient():
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
-        # FIXME: Check the status code ! -- vila 2016-05-04
-        download = self.cpi.get(download_url)
-        with open(download_path, 'wb') as f:
-            # FIXME: Cough, we may want to buffer here (and a progress bar
-            # would be nice) -- vila 2016-04-26
-            f.write(download.content)
+        request = self.cpi.get(download_url, stream=True)
+        request.raise_for_status()
+        download_requests_stream(request, download_path)
+
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(
                 name, download_path))
@@ -275,11 +265,12 @@ class SnapIndexClient(Client):
         else:
             return embedded['clickindex:package'][0]
 
-    def get(self, url, headers=None, params=None):
+    def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
             headers = {}
         headers.update({'Authorization': _macaroon_auth(self.conf)})
-        response = self.request('GET', url, headers=headers, params=params)
+        response = self.request('GET', url, stream=stream,
+                                headers=headers, params=params)
         return response
 
 
@@ -324,15 +315,117 @@ class SCAClient(Client):
             'register-name/', data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json'})
+        if not response.ok:
+            raise errors.StoreRegistrationError(snap_name, response)
         # TODO handle macaroon refresh
-        # TODO raise different exceptions based on the response error codes.
-        return response
 
-    def snap_upload(self, data):
+    def snap_push_metadata(self, snap_name, updown_data):
+        data = {
+            'name': snap_name,
+            'series': constants.DEFAULT_SERIES,
+            'updown_id': updown_data['upload_id'],
+            'binary_filesize': updown_data['binary_filesize'],
+            'source_uploaded': updown_data['source_uploaded'],
+        }
         auth = _macaroon_auth(self.conf)
         response = self.post(
             'snap-push/', data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
-        return response
+        if not response.ok:
+            raise errors.StorePushError(data['name'], response)
+
+        return StatusTracker(response.json()['status_details_url'])
+
+    def snap_release(self, snap_name, revision, channels):
+        data = {
+            'name': snap_name,
+            'revision': str(revision),
+            'channels': channels,
+        }
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'snap-release/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreReleaseError(data['name'], response)
+
+        response_json = response.json()
+        success = response_json.pop('success')
+        if not success:
+            raise errors.StoreReleaseError(data['name'], response)
+
+        return response_json
+
+
+class StatusTracker:
+
+    __messages = {
+        'being_processed': 'Processing...',
+        'ready_to_release': 'Ready to release!',
+        'need_manual_review': 'Will need manual review...',
+        'processing_error': 'Error while processing...',
+    }
+
+    __error_codes = (
+        'processing_error',
+        'need_manual_review',
+    )
+
+    def __init__(self, status_details_url):
+        self.__status_details_url = status_details_url
+
+    def track(self):
+        queue = Queue()
+        thread = Thread(target=self._update_status, args=(queue,))
+        thread.start()
+
+        widgets = ['Processing...', AnimatedMarker()]
+        progress_indicator = ProgressBar(widgets=widgets, maxval=UnknownLength)
+        progress_indicator.start()
+
+        content = {}
+        for indicator_count in itertools.count():
+            if not queue.empty():
+                content = queue.get()
+                if isinstance(content, Exception):
+                    raise content
+                widgets[0] = self._get_message(content)
+            progress_indicator.update(indicator_count)
+            if content.get('processed'):
+                break
+            sleep(0.1)
+        progress_indicator.finish()
+
+        self.__content = content
+
+        return content
+
+    def raise_for_code(self):
+        if any(self.__content['code'] == k for k in self.__error_codes):
+            raise errors.StoreReviewError(self.__content)
+
+    def _get_message(self, content):
+        return self.__messages.get(content['code'], content['code'])
+
+    def _update_status(self, queue):
+        for content in self._get_status():
+            queue.put(content)
+            if content['processed']:
+                break
+            sleep(constants.SCAN_STATUS_POLL_DELAY)
+
+    def _get_status(self):
+        connection_errors_allowed = 10
+        while True:
+            try:
+                content = requests.get(self.__status_details_url).json()
+            except (requests.ConnectionError, requests.HTTPError) as e:
+                if not connection_errors_allowed:
+                    yield e
+                content = {'processed': False, 'code': 'being_processed'}
+                connection_errors_allowed -= 1
+            yield content

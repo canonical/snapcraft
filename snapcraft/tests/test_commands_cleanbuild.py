@@ -77,7 +77,7 @@ parts:
 
         main(['cleanbuild', '--debug'])
 
-        self.assertEqual(
+        self.assertIn(
             'Setting up container with project assets\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
@@ -110,7 +110,7 @@ parts:
         self.assertEqual(
             fake_logger.output,
             'The lxd package is not installed, in order to use `cleanbuild` '
-            'you\nmust install lxd onto your system. Refer to the '
-            '"Ubuntu Desktop and\nUbuntu Server" section on '
-            'https://linuxcontainers.org/lxd/getting-\nstarted-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper\nsetup.\n')
+            'you must install lxd onto your system. Refer to the '
+            '"Ubuntu Desktop and Ubuntu Server" section on '
+            'https://linuxcontainers.org/lxd/getting-started-cli/'
+            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.\n')

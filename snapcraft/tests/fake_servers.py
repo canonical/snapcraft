@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 import json
 import logging
 import http.server
@@ -44,9 +45,17 @@ class FakePartsServer(http.server.HTTPServer):
 
 class FakePartsRequestHandler(BaseHTTPRequestHandler):
 
+    _date_format = '%a, %d %b %Y %H:%M:%S GMT'
+    _parts_date = datetime(2016, 7, 7, 10, 0, 20)
+
     def do_GET(self):
         logger.debug('Handling getting parts')
-        if self.headers.get('If-None-Match') == '1111':
+        if 'If-Modified-Since' in self.headers:
+            ims_date = datetime.strptime(
+                self.headers['If-Modified-Since'], self._date_format)
+        else:
+            ims_date = None
+        if ims_date is not None and ims_date >= self._parts_date:
             self.send_response(304)
             response = {}
         else:
@@ -64,13 +73,87 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     'description': 'test entry for part1',
                     'maintainer': 'none',
                 },
+                'project-part/part1': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'test entry for part1',
+                    'maintainer': 'none',
+                },
+                'long-described-part': {
+                    'plugin': 'go',
+                    'source': 'http://source.tar.gz',
+                    'description': 'this is a repetitive description ' * 3,
+                    'maintainer': 'none',
+                },
             }
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
-            self.send_header('Content-Length', '300')
+            self.send_header('Content-Length', '1000')
+        self.send_header(
+            'Last-Modified', self._parts_date.strftime(self._date_format))
         self.send_header('ETag', '1111')
         self.end_headers()
         self.wfile.write(yaml.dump(response).encode())
+
+
+class FakePartsWikiServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiRequestHandler)
+
+
+class FakePartsWikiRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = """
+---
+origin: https://github.com/sergiusens/curl.git
+project-part: curl
+description:
+  Description here
+maintainer: none
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
+class FakePartsWikiOriginServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiOriginRequestHandler)
+
+
+class FakePartsWikiOriginRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting part origin')
+        if self.headers.get('If-None-Match') == '1111':
+            self.send_response(304)
+            response = {}
+        else:
+            self.send_response(200)
+            response = """
+parts:
+  somepart:
+    source: https://github.com/someuser/somepart.git
+    plugin: nil
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
 
 
 class FakeSSOServer(http.server.HTTPServer):
@@ -179,6 +262,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
+        release_path = urllib.parse.urljoin(self._DEV_API_PATH,
+                                            'snap-release/')
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
@@ -186,6 +271,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
             self._handle_upload_request()
+        elif parsed_path.path.startswith(release_path):
+            self._handle_release_request()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -214,8 +301,15 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         data = json.loads(string_data)
         logger.debug(
             'Handling registration request with content {}'.format(data))
-        if data['snap_name'] == 'test-bad-snap-name':
-            self._handle_failed_registration()
+
+        if data['snap_name'] == 'test-already-registered-snap-name':
+            self._handle_register_409('already_registered')
+        elif data['snap_name'] == 'test-reserved-snap-name':
+            self._handle_register_409('reserved_name')
+        elif data['snap_name'].startswith('test-too-fast'):
+            self._handle_register_429('register_window')
+        elif data['snap_name'] == 'snap-name-no-clear-error':
+            self._handle_unclear_registration_error()
         else:
             self._handle_successful_registration()
 
@@ -226,51 +320,141 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         response = {'snap_id': 'test-snap-id'}
         self.wfile.write(json.dumps(response).encode())
 
-    def _handle_failed_registration(self):
+    def _handle_register_409(self, error_code):
         self.send_response(409)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
             'status': 409,
-            'code': 'already_registered'
+            'code': error_code,
+            'register_name_url': 'https://myapps.com/register-name/',
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_register_429(self, error_code):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 429,
+            'code': error_code,
+        }
+        if error_code == 'register_window':
+            response['retry_after'] = 177
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_unclear_registration_error(self):
+        self.send_response(409)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'status': 409,
+            'code': 'unexistent_error_code',
         }
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_upload_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling upload request with content {}'.format(data))
+
+        response_code = 202
+        details_path = 'details/upload-id/good-snap'
+        if data['name'] == 'test-review-snap':
+            details_path = 'details/upload-id/review-snap'
+        elif data['name'] == 'test-snap-unregistered':
+            response_code = 404
+
         logger.debug('Handling upload request')
-        self.send_response(202)
-        self.send_header('Content-Type', 'application/json')
+        self.send_response(response_code)
+        if response_code == 404:
+            self.send_header('Content-Type', 'text/plain')
+            data = b''
+        else:
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'status_details_url': urllib.parse.urljoin(
+                    'http://localhost:{}/'.format(self.server.server_port),
+                    details_path
+                    ),
+                'success': True
+            }
+            data = json.dumps(response).encode()
         self.end_headers()
-        response = {
-            'status_url': urllib.parse.urljoin(
-                'http://localhost:{}/'.format(self.server.server_port),
-                'dev/api/click-scan-complete/updown/test-upload-id'),
-            'success': True
-        }
-        self.wfile.write(json.dumps(response).encode())
+
+        self.wfile.write(data)
+
+    def _handle_release_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling release request with content {}'.format(data))
+        response_code = 200
+        content_type = 'application/json'
+        if data['name'] == 'test-snap-unregistered':
+            response_code = 404
+            content_type = 'text/plain'
+            data = b''
+        elif 'alpha' in data['channels']:
+            response = {
+                'success': False,
+                'errors': 'Not a valid channel: alpha',
+            }
+            data = json.dumps(response).encode()
+        elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
+            response = {
+                'opened_channels': data['channels'],
+                'success': True,
+                'channel_map': [
+                    {'channel': 'stable', 'info': 'none'},
+                    {'channel': 'candidate', 'info': 'none'},
+                    {'revision': int(data['revision']), 'channel': 'beta',
+                     'version': '0', 'info': 'specific'},
+                    {'channel': 'edge', 'info': 'tracking'}
+                ]
+            }
+            data = json.dumps(response).encode()
+        else:
+            raise NotImplementedError(
+                'Cannot handle release request for {!r}'.format(data['name']))
+
+        logger.debug('Handling release request')
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
+        self.end_headers()
+
+        self.wfile.write(data)
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        scan_complete_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'click-scan-complete/updown/')
-        if parsed_path.path.startswith(scan_complete_path):
-            self._handle_scan_complete_request()
+        details_good = urllib.parse.urljoin(
+            self._DEV_API_PATH, '/details/upload-id/good-snap')
+        details_review = urllib.parse.urljoin(
+            self._DEV_API_PATH, '/details/upload-id/review-snap')
+        if parsed_path.path.startswith(details_good):
+            self._handle_scan_complete_request('ready_to_release', True)
+        elif parsed_path.path.startswith(details_review):
+            self._handle_scan_complete_request('need_manual_review', False)
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
-            raise NotImplementedError(self.path)
+            raise NotImplementedError(parsed_path)
 
-    def _handle_scan_complete_request(self):
+    def _handle_scan_complete_request(self, code, can_release):
         logger.debug('Handling scan complete request')
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'message': '',
-            'application_url': 'test-application-url',
-            'revision': 'test-revision',
-            'completed': True
+            'code': code,
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': can_release,
+            'revision': '1',
+            'processed': True
         }
         self.wfile.write(json.dumps(response).encode())
 
