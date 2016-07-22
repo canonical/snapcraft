@@ -61,6 +61,7 @@ cases you want to refer to the help text for the specific plugin.
 
 import logging
 import os
+import stat
 import os.path
 import requests
 import shutil
@@ -108,10 +109,23 @@ class FileBase(Base):
             raise EnvironmentError('unexpected http status code when '
                                    'downloading {}'.format(req.status_code))
 
-        file = os.path.join(self.source_dir, os.path.basename(self.source))
-        with open(file, 'wb') as f:
+        self.file = os.path.join(self.source_dir,
+                                 os.path.basename(self.source))
+        with open(self.file, 'wb') as f:
             for chunk in req.iter_content(1024):
                 f.write(chunk)
+
+
+class Script(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+
+    def download(self):
+        super().download()
+        st = os.stat(self.file)
+        os.chmod(self.file, st.st_mode | stat.S_IEXEC)
 
 
 class Bazaar(Base):

@@ -31,8 +31,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import snapcraft
 import shutil
+
+import snapcraft
+from snapcraft import sources
+
+_RUSTUP = "https://static.rust-lang.org/rustup.sh"
 
 
 class RustPlugin(snapcraft.BasePlugin):
@@ -55,6 +59,8 @@ class RustPlugin(snapcraft.BasePlugin):
         self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
         self._cargo = os.path.join(self._rustpath, "bin", "cargo")
         self._rustlib = os.path.join(self._rustpath, "lib")
+        self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
+        self._rustup = os.path.join(self._rustpath, "rustup.sh")
 
     def build(self):
         super().build()
@@ -92,11 +98,9 @@ class RustPlugin(snapcraft.BasePlugin):
             else:
                 raise EnvironmentError("%s is not a valid rust channel"
                                        % self.options.rust_channel)
-
-        rustup = "rustup.sh"
-        self.run(["curl", "https://static.rust-lang.org/rustup.sh",
-                  "-o", rustup])
-        self.run(["chmod", "+x", rustup])
-        self.run(["./%s" % rustup,
+        if not os.path.exists(self._rustpath):
+            os.makedirs(self._rustpath)
+        self._rustup_get.download()
+        self.run(["%s" % self._rustup,
                   "--prefix=%s" % self._rustpath,
                   "--disable-sudo", "--save"])
