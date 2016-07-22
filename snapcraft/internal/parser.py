@@ -33,6 +33,7 @@ Options:
 import logging
 import os
 import pkg_resources
+import re
 import sys
 import textwrap
 import urllib
@@ -240,9 +241,9 @@ def _process_index(output):
 
     # split the wiki into an array of entries to allow the parser to
     # proceed when invalid yaml is found.
-    entries = output.split(b'\n---\n')
+    entries = re.split(r'\r*\n---\r*\n', output.decode(), flags=re.MULTILINE)
     for entry in entries:
-        if entry != b'':
+        if entry != '':
             try:
                 data = yaml.load(entry)
             except ScannerError as e:
