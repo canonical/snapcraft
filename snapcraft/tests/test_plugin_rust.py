@@ -84,7 +84,6 @@ class RustPluginTestCase(tests.TestCase):
         plugin.options.rust_channel = []
 
         plugin.pull()
-        rustup = "rustup.sh"
 
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
