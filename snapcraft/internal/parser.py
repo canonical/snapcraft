@@ -33,7 +33,6 @@ Options:
 import logging
 import os
 import pkg_resources
-import re
 import sys
 import textwrap
 import urllib
@@ -230,40 +229,52 @@ def _process_entry(data):
     return parts_list, after_parts
 
 
+def _process_wiki_entry(entry, master_parts_list):
+    try:
+        data = yaml.load(entry)
+    except ScannerError as e:
+        logger.warning(
+            'Bad wiki entry, possibly malformed YAML: {}'.format(e))
+        return
+
+    part_name = data.get('project-part')
+    if part_name is not None and part_name in master_parts_list:
+        logger.warning("Duplicate part found in wiki: {}".format(
+            part_name))
+        return
+
+    try:
+        parts_list, after_parts = _process_entry(data)
+    except InvalidEntryError as e:
+        logger.warning('Invalid wiki entry: {}'.format(e))
+        return
+
+    if is_valid_parts_list(parts_list, after_parts):
+        master_parts_list.update(parts_list)
+
+
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
 
-    output = output.strip()
-
     output = output.replace(b"{{{", b"").replace(b"}}}", b"")
+    output = output.strip()
 
     # split the wiki into an array of entries to allow the parser to
     # proceed when invalid yaml is found.
-    entries = re.split(r'\r*\n---\r*\n', output.decode(), flags=re.MULTILINE)
-    for entry in entries:
-        if entry != '':
-            try:
-                data = yaml.load(entry)
-            except ScannerError as e:
-                logger.warning(
-                    'Bad wiki entry, possibly malformed YAML: {}'.format(e))
+    entry = ""
+    for line in output.decode().splitlines():
 
-            part_name = data.get('project-part')
-            if part_name is not None and part_name in master_parts_list:
-                logger.warning("Duplicate part found in wiki: {}".format(
-                    part_name))
-                continue
+        if line == "---":
+            if entry != "":
+                _process_wiki_entry(entry, master_parts_list)
+                entry = ""
+        else:
+            entry = "\n".join([entry, line])
 
-            try:
-                parts_list, after_parts = _process_entry(data)
-            except InvalidEntryError as e:
-                logger.warning('Invalid wiki entry: {}'.format(e))
-                continue
-
-            if is_valid_parts_list(parts_list, after_parts):
-                master_parts_list.update(parts_list)
+    if entry != "":
+        _process_wiki_entry(entry, master_parts_list)
 
     return master_parts_list
 
