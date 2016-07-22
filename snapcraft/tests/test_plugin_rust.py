@@ -86,12 +86,9 @@ class RustPluginTestCase(tests.TestCase):
         plugin.pull()
         rustup = "rustup.sh"
 
-        self.assertEqual(3, run_mock.call_count)
+        self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(["curl", "https://static.rust-lang.org/rustup.sh",
-                       "-o", rustup]),
-            mock.call(["chmod", "+x", rustup]),
-            mock.call(["./%s" % rustup,
+            mock.call(["%s" % plugin._rustup,
                        "--prefix=%s" % plugin._rustpath,
                        "--disable-sudo", "--save"])
         ])
