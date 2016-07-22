@@ -108,6 +108,26 @@ parts:
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
+    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    def test_config_composes_with_remote_subpart(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  project-part/part1:
+    stage-packages: [fswebcam]
+""")
+
+        parts.update()
+        internal_yaml.Config()
+
+        mock_loadPlugin.assert_called_with('project-part/part1', 'go', {
+            'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
+            'stage': [], 'snap': []})
+
     def test_config_composes_with_a_non_existent_remote_part(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"

@@ -29,7 +29,7 @@ The following kernel specific options are provided by this plugin:
     - kernel-initrd-modules:
       (array of string)
       list of modules to include in initrd; note that kernel snaps do not
-      provide the core bootlogic which comes from snappy Ubuntu Core
+      provide the core boot logic which comes from snappy Ubuntu Core
       OS snap. Include all modules you need for mounting rootfs here.
 
     - kernel-with-firmware:

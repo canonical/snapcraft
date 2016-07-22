@@ -162,7 +162,7 @@ def _scaffold_examples(directory):
 
     print("Snapcraft tour initialized in {}\n"
           "Instructions are in the README, or "
-          "https://snapcraft.io/create/#begin".format(directory))
+          "http://snapcraft.io/create/#tour".format(directory))
 
 
 def _list_plugins():

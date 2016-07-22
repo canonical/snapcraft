@@ -51,7 +51,7 @@ class Validator:
         """Return part-specific schema properties."""
 
         sub = self.schema['parts']['patternProperties']
-        properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-]*$']['properties']
+        properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$']['properties']
         return properties
 
     def _load_schema(self):
