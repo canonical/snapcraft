@@ -258,22 +258,21 @@ def _process_index(output):
     # should be okay for now.
     master_parts_list = OrderedDict()
 
-    output = output.replace(b"{{{", b"").replace(b"}}}", b"")
+    output = output.replace(b'{{{', b'').replace(b'}}}', b'')
     output = output.strip()
 
     # split the wiki into an array of entries to allow the parser to
     # proceed when invalid yaml is found.
-    entry = ""
+    entry = ''
     for line in output.decode().splitlines():
-
-        if line == "---":
-            if entry != "":
+        if line == '---':
+            if entry:
                 _process_wiki_entry(entry, master_parts_list)
-                entry = ""
+                entry = ''
         else:
-            entry = "\n".join([entry, line])
+            entry = '\n'.join([entry, line])
 
-    if entry != "":
+    if entry:
         _process_wiki_entry(entry, master_parts_list)
 
     return master_parts_list
