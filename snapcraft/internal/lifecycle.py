@@ -48,7 +48,7 @@ confinement: devmode  # Use "strict" to enforce system access only via \
 declared interfaces
 
 apps:
-  mypart:
+  my-part:
     command: # The command used to start the app, eg. desktop-launch my-part
 
 parts:
