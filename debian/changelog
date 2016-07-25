@@ -1,3 +1,10 @@
+snapcraft (2.13.2) xenial; urgency=medium
+
+  * Run tests from /tmp (#684)
+  * New upstream release 2.13.2 (LP: #1605107)
+
+ -- Sergio Schvezov <sergiusens@gmail.com>  Mon, 25 Jul 2016 23:58:57 +0200
+
 snapcraft (2.13.1) xenial; urgency=medium
 
   [ Joe Talbott ]
