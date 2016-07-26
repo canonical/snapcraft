@@ -10,7 +10,7 @@ To see all the commands and options, run `snapcraft --help`.
 
 - You'll need to add the following dependencies to run the tests.
 
-    sudo apt install python3-flake8 python3-fixtures python3-testscenarios python3-mock python3-responses
+    sudo apt install python3-apt python3-docopt python3-fixtures python3-flake8 python3-jsonschema python3-magic python3-mock python3-petname python3-pexpect python3-progressbar python3-pymacaroons python3-requests-oauthlib python3-requests-toolbelt python3-responses python3-simplejson python3-tabulate python3-testscenarios python3-xdg python3-yaml
 
 Simply run the top level testing script:
 
