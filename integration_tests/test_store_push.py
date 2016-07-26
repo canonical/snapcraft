@@ -26,13 +26,8 @@ from testtools.matchers import (
 
 import integration_tests
 
-from snapcraft.tests import fixture_setup
 
-
-class PushTestCase(integration_tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
+class PushTestCase(integration_tests.StoreTestCase):
 
     def test_push_without_login(self):
         project_dir = 'basic'
@@ -48,11 +43,6 @@ class PushTestCase(integration_tests.TestCase):
                       'login"?', str(error.output))
 
     def test_push_with_login(self):
-        if not os.getenv('TEST_USER_PASSWORD', None):
-            self.useFixture(fixture_setup.FakeStore())
-        else:
-            self.useFixture(fixture_setup.StagingStore())
-
         # Make a snap
         project_dir = 'basic'
         self.addCleanup(self.logout)
@@ -81,11 +71,6 @@ class PushTestCase(integration_tests.TestCase):
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_push_and_release(self):
-        if not os.getenv('TEST_USER_PASSWORD', None):
-            self.useFixture(fixture_setup.FakeStore())
-        else:
-            self.useFixture(fixture_setup.StagingStore())
-
         # Make a snap
         project_dir = 'basic'
         self.addCleanup(self.logout)
@@ -118,11 +103,6 @@ class PushTestCase(integration_tests.TestCase):
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_push_with_deprecated_upload(self):
-        if not os.getenv('TEST_USER_PASSWORD', None):
-            self.useFixture(fixture_setup.FakeStore())
-        else:
-            self.useFixture(fixture_setup.StagingStore())
-
         # Make a snap
         project_dir = 'basic'
         self.addCleanup(self.logout)
