@@ -710,6 +710,42 @@ project-part: 'somepart'
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_carriage_returns(self, mock_get, mock_get_origin_data):
+        """Test carriage returns in the wiki."""
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""\r
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main
+project-part: main\r
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main duplicate
+project-part: main
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:project',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        part = _get_part('main')
+        self.assertEqual('example main', part['description'])
+
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_duplicate_entries(self, mock_get, mock_get_origin_data):
         """Test duplicate parts are ignored."""
 

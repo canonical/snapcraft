@@ -30,7 +30,7 @@ code for that part, and how to unpack it if necessary.
   - source-type: git, bzr, hg, svn, tar, or zip
 
     In some cases the source string is not enough to identify the version
-    control system or compression algorithim. The source-type key can tell
+    control system or compression algorithm. The source-type key can tell
     snapcraft exactly how to treat that content.
 
   - source-branch: <branch-name>
@@ -61,6 +61,7 @@ cases you want to refer to the help text for the specific plugin.
 
 import logging
 import os
+import stat
 import os.path
 import requests
 import shutil
@@ -108,9 +109,21 @@ class FileBase(Base):
         request = requests.get(self.source, stream=True, allow_redirects=True)
         request.raise_for_status()
 
-        file_path = os.path.join(
+        self.file = os.path.join(
             self.source_dir, os.path.basename(self.source))
-        download_requests_stream(request, file_path)
+        download_requests_stream(request, self.file)
+
+
+class Script(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+
+    def download(self):
+        super().download()
+        st = os.stat(self.file)
+        os.chmod(self.file, st.st_mode | stat.S_IEXEC)
 
 
 class Bazaar(Base):

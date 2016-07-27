@@ -14,13 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 
-from snapcraft.internal.sources import Script      # noqa
-from snapcraft.internal.sources import Bazaar      # noqa
-from snapcraft.internal.sources import Git         # noqa
-from snapcraft.internal.sources import Mercurial   # noqa
-from snapcraft.internal.sources import Subversion  # noqa
-from snapcraft.internal.sources import Tar         # noqa
-from snapcraft.internal.sources import Local       # noqa
-from snapcraft.internal.sources import Zip         # noqa
-from snapcraft.internal.sources import get         # noqa
+from testtools.matchers import (
+    DirExists,
+    Not
+)
+
+import integration_tests
+
+
+class PkgConfigTestCase(integration_tests.TestCase):
+
+    def test_pkgconfig_pc_conflicts_1604472(self):
+        """The same pc file from stage-packages should not conflict."""
+        project_dir = 'simple-pkgconfig'
+        self.run_snapcraft('stage', project_dir)

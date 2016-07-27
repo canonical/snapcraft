@@ -102,10 +102,10 @@ class StoreRegistrationError(StoreError):
         'register_window': __FMT_RETRY_WAIT,
     }
 
-    def __init__(self, snap_name, response=None):
+    def __init__(self, snap_name, response):
         try:
             response_json = response.json()
-        except AttributeError:
+        except JSONDecodeError:
             response_json = {}
 
         if response_json.get('status') == 409:
