@@ -107,6 +107,7 @@ class _Executor:
 
     def __init__(self, config, project_options):
         self.config = config
+        project_options.project_type = config.data.get('type', '')
         self.project_options = project_options
 
     def run(self, step, part_names=None, recursed=False):

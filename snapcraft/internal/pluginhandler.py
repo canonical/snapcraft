@@ -355,8 +355,10 @@ class PluginHandler:
                 return
             repo.fix_pkg_config(self.stagedir, file_path, self.code.installdir)
 
+        keep_owner = self._project_options.project_type == 'os'
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
-                       self.stagedir, fixup_func=fixup_func)
+                       self.stagedir, fixup_func=fixup_func,
+                       keep_owner=keep_owner)
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
@@ -388,7 +390,9 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
-        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        keep_owner = self._project_options.project_type == 'os'
+        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir,
+                       keep_owner=keep_owner)
         dependencies = _find_dependencies(self.snapdir)
 
         # Split the necessary dependencies into their corresponding location.
@@ -421,7 +425,8 @@ class PluginHandler:
         # Lots of dependencies are linked with a symlink, so we need to make
         # sure we follow those symlinks when we migrate the dependencies.
         _migrate_files(system_dependencies, system_dependency_paths, '/',
-                       self.snapdir, follow_symlinks=True)
+                       self.snapdir, follow_symlinks=True,
+                       keep_owner=keep_owner)
 
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
@@ -650,15 +655,46 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
-                   follow_symlinks=False, fixup_func=lambda *args: None):
+def _migrate_files_directories(snap_dirs, srcdir, dstdir,
+                               follow_symlinks=False, keep_owner=False):
     for directory in snap_dirs:
-        os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
+        src = os.path.join(srcdir, directory)
+        dst = os.path.join(dstdir, directory)
+        os.makedirs(dst, exist_ok=True)
+        if keep_owner:
+            try:
+                st = os.stat(src, follow_symlinks=follow_symlinks)
+                uid = st.st_uid
+                gid = st.st_gid
+                os.chown(dst, uid, gid, follow_symlinks=follow_symlinks)
+            except OSError as e:
+                print("JOE: e: {}".format(e))
+                pass
 
+
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
+                   follow_symlinks=False, fixup_func=lambda *args: None,
+                   keep_owner=False):
+
+    _migrate_files_directories(snap_dirs, srcdir, dstdir,
+                               follow_symlinks=follow_symlinks,
+                               keep_owner=keep_owner)
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if keep_owner:
+            try:
+                st = os.stat(os.path.dirname(src),
+                             follow_symlinks=follow_symlinks)
+                uid = st.st_uid
+                gid = st.st_gid
+                os.chown(os.path.dirname(dst), uid, gid,
+                         follow_symlinks=follow_symlinks)
+            except OSError as e:
+                print("JOE: e: {}".format(e))
+                pass
+
         if missing_ok and not os.path.exists(src):
             continue
 
