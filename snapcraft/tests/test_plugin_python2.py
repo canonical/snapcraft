@@ -64,3 +64,24 @@ class Python2PluginTestCase(tests.TestCase):
             python2._get_python2_include('/foo')
         self.assertEqual(str(raised.exception),
                          'python development headers not installed')
+
+    def test_fileset_ignores(self):
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        expected_fileset = [
+            '-usr/bin/pip*',
+            '-usr/lib/python*/dist-packages/easy-install.pth',
+            '-usr/lib/python*/dist-packages/__pycache__/*.pyc',
+            '-usr/lib/python*/*.pyc',
+            '-usr/lib/python*/*/*.pyc',
+            '-usr/lib/python*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc',
+        ]
+        fileset = plugin.snap_fileset()
+        self.assertListEqual(expected_fileset, fileset)
