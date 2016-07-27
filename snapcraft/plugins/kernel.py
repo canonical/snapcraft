@@ -23,8 +23,8 @@ WARNING: this plugin's API is unstable. The cross compiling support is
 The following kernel specific options are provided by this plugin:
 
     - kernel-image-target:
-      (string; default: bzImage)
-      the kernel image make target to build; maps to make target.
+      (yaml object; default: bzImage)
+      a mapping of debian architecture and kernel image build targets.
 
     - kernel-initrd-modules:
       (array of string)
@@ -77,7 +77,10 @@ class KernelPlugin(kbuild.KBuildPlugin):
         schema = super().schema()
 
         schema['properties']['kernel-image-target'] = {
-            'type': 'string',
+            'oneOf': [
+                {'type': 'string'},
+                {'type': 'object'},
+            ],
             'default': 'bzImage',
         }
 
@@ -138,14 +141,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self.make_targets = [self.options.kernel_image_target, 'modules']
-        self.dtbs = ['{}.dtb'.format(i)
-                     for i in self.options.kernel_device_trees]
-        if self.dtbs:
-            self.make_targets.extend(self.dtbs)
-        self.make_install_targets = [
-            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
-        self.make_install_targets.extend(self._get_fw_install_targets())
+        self._set_kernel_targets()
 
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
         self.kernel_release = ''
@@ -157,6 +153,23 @@ class KernelPlugin(kbuild.KBuildPlugin):
             self.project.kernel_arch))
         self.make_cmd.append('CROSS_COMPILE={}'.format(
             self.project.cross_compiler_prefix))
+        self._set_kernel_targets()
+
+    def _set_kernel_targets(self):
+        if isinstance(self.options.kernel_image_target, str):
+            self.kernel_image_target = self.options.kernel_image_target
+        elif self.project.deb_arch in self.options.kernel_image_target:
+            self.kernel_image_target = \
+                self.options.kernel_image_target[self.project.deb_arch]
+
+        self.make_targets = [self.kernel_image_target, 'modules']
+        self.dtbs = ['{}.dtb'.format(i)
+                     for i in self.options.kernel_device_trees]
+        if self.dtbs:
+            self.make_targets.extend(self.dtbs)
+        self.make_install_targets = [
+            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
+        self.make_install_targets.extend(self._get_fw_install_targets())
 
     def _get_fw_install_targets(self):
         if not self.options.kernel_with_firmware:
@@ -279,9 +292,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _copy_vmlinuz(self):
         kernel = '{}-{}'.format(
-            self.options.kernel_image_target, self.kernel_release)
+            self.kernel_image_target, self.kernel_release)
         src = os.path.join(self._get_build_arch_dir(),
-                           self.options.kernel_image_target)
+                           self.kernel_image_target)
         dst = os.path.join(self.installdir, kernel)
         if not os.path.exists(src):
             raise ValueError(

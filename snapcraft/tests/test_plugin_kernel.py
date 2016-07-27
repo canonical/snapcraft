@@ -100,7 +100,8 @@ class KernelPluginTestCase(tests.TestCase):
             self.assertTrue(properties[prop]['uniqueItems'])
 
         self.assertEqual(
-            properties['kernel-image-target']['type'], 'string')
+            properties['kernel-image-target']['oneOf'],
+            [{'type': 'string'}, {'type': 'object'}])
         self.assertEqual(
             properties['kernel-image-target']['default'], 'bzImage')
 
@@ -819,6 +820,39 @@ ACCEPT=n
         self.assertEqual(
             plugin.make_cmd,
             ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
+
+    def test_kernel_image_target_as_map(self):
+        self.options.kernel_image_target = {'arm64': 'Image'}
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+
+        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+
+    def test_kernel_image_target_as_string(self):
+        self.options.kernel_image_target = 'Image'
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+
+        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+
+    def test_kernel_image_target_non_existent(self):
+        class Options:
+            build_parameters = []
+            kconfigfile = None
+            kdefconfig = []
+            kconfigs = []
+            kernel_with_firmware = True
+            kernel_initrd_modules = []
+            kernel_initrd_firmware = []
+            kernel_device_trees = []
+            kernel_initrd_compression = 'gz'
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+
+        self.assertEqual(plugin.make_targets, ['bzImage', 'modules'])
 
     @mock.patch.object(storeapi.StoreClient, 'download')
     def test_pull(self, download_mock):
