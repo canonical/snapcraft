@@ -79,3 +79,13 @@ snap run:
 e.g.; to update the list for 16.04,
 
     ./libraries/generate_lib_list.py libraries/16.04
+
+### Installing in a virtualenv
+
+Install the needed dependencies.
+
+    sudo apt install build-essential python3-dev libapt-pkg-dev
+
+Install snapcraft.
+
+    ./setup.py install
