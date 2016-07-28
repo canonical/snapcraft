@@ -65,7 +65,7 @@ Options specific to building:
 Options specific to cleaning:
   -s <step>, --step <step>              only clean the specified step and those
                                         that depend upon it. <step> can be one
-                                        of: pull, build, stage or strip.
+                                        of: pull, build, stage or prime.
 
 Options specific to snapping:
   -o <snap-file>, --output <snap-file>  used in case you want to rename the
