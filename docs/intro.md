@@ -71,9 +71,9 @@ projects to snapcraft.yaml with a local `source:` path.
 For rapid iteration one can run `snappy try` against this directory to have it
 mounted in a `snappy` capable system.
 
-### Strip
+### Prime
 
-The strip step moves the data into a `./snap` directory. It contains only
+The prime step moves the data into a `./snap` directory. It contains only
 the content that will be put into the final snap package, unlike the staging
 area which may include some development files not destined for your package.
 
