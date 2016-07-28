@@ -15,7 +15,7 @@ env:
   matrix:
   - TEST_SUITE=static DEPENDENCIES="apt install -y python3-flake8 python3-mccabe"
   - TEST_SUITE=unit DEPENDENCIES="apt build-dep -y ./ && apt install -y python3-coverage"
-  - TEST_SUITE=integration DEPENDENCIES="apt build-dep -y ./ && apt install -y bzr git mercurial python3-pexpect subversion sudo"
+  - TEST_SUITE=integration DEPENDENCIES="apt build-dep -y ./ && apt install -y bzr git mercurial python3-pexpect subversion sudo curl"
 
 install:
   - sudo apt-get -qq update

@@ -65,6 +65,27 @@ class Python2PluginTestCase(tests.TestCase):
         self.assertEqual(str(raised.exception),
                          'python development headers not installed')
 
+    def test_fileset_ignores(self):
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        expected_fileset = [
+            '-usr/bin/pip*',
+            '-usr/lib/python*/dist-packages/easy-install.pth',
+            '-usr/lib/python*/dist-packages/__pycache__/*.pyc',
+            '-usr/lib/python*/*.pyc',
+            '-usr/lib/python*/*/*.pyc',
+            '-usr/lib/python*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc',
+        ]
+        fileset = plugin.snap_fileset()
+        self.assertListEqual(expected_fileset, fileset)
+
     @mock.patch.object(python2.Python2Plugin, 'run')
     def test_build_fixes_python_shebangs(self, run_mock):
         plugin = python2.Python2Plugin('test-part', self.options,
