@@ -71,6 +71,10 @@ class Python2Plugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['process-dependency-links'] = {
+            'type': 'boolean',
+            'default': False,
+        }
         schema.pop('required')
 
         # Inform Snapcraft of the properties associated with pulling. If these
@@ -154,6 +158,9 @@ class Python2Plugin(snapcraft.BasePlugin):
                 '--constraint',
                 os.path.join(self.sourcedir, self.options.constraints),
             ]
+
+        if self.options.process_dependency_links:
+            pip_install.append('--process-dependency-links')
 
         if self.options.requirements:
             self.run(pip_install + [

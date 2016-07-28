@@ -40,6 +40,7 @@ class Python3PluginTestCase(tests.TestCase):
         class Options:
             requirements = ''
             python_packages = []
+            process_dependency_links = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -182,3 +183,12 @@ class Python3PluginTestCase(tests.TestCase):
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
+
+    @mock.patch.object(python3.Python3Plugin, 'run')
+    def test_process_dependency_links(self, run_mock):
+        self.options.process_dependency_links = True
+        plugin = python3.Python3Plugin('test-part', self.options,
+                                       self.project_options)
+        setup_directories(plugin)
+        plugin._pip()
+        self.assertIn('--process-dependency-links', run_mock.call_args[0][0])
