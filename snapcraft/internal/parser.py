@@ -63,7 +63,6 @@ class WikiError(Exception):
 logger = logging.getLogger(__name__)
 
 
-PART_NAMESPACE_SEP = '/'
 # TODO: make this a temporary directory that get's removed when finished
 BASE_DIR = "/tmp"
 PARTS_FILE = "snap-parts.yaml"
@@ -106,18 +105,6 @@ def main(argv=None):
     return run(args)
 
 
-def _get_namespaced_partname(key, partname):
-    return "{key}{sep}{partname}".format(
-        key=key,
-        sep=PART_NAMESPACE_SEP,
-        partname=partname,
-    )
-
-
-def _update_after_parts(partname, after_parts):
-    return [_get_namespaced_partname(partname, x) for x in after_parts]
-
-
 def _get_origin_data(origin_dir):
     origin_data = {}
     snapcraft_yaml_file = os.path.join(origin_dir, 'snapcraft.yaml')
@@ -153,7 +140,7 @@ def _is_local(source):
 
 
 def _update_source(part, origin):
-    # handle subparts with local sources
+    # handle entry_parts with local sources
     orig_source = part.get("source")
     if orig_source == ".":
         part["source"] = origin
@@ -164,25 +151,21 @@ def _update_source(part, origin):
     return part
 
 
-def _process_subparts(project_part, subparts, parts, origin, maintainer,
-                      description):
+def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
     after_parts = set()
     parts_list = {}
-    for part in subparts:
+    for part in entry_parts:
         source_part = parts.get(part)
-        # TODO: get any dependent parts here as well using
-        # 'project_part' to namespace them.
+
         if source_part:
             source_part = _update_source(source_part, origin)
             source_part['maintainer'] = maintainer
             source_part['description'] = description
 
-            namespaced_part = _get_namespaced_partname(project_part, part)
-            parts_list[namespaced_part] = source_part
+            parts_list[part] = source_part
             after = source_part.get("after", [])
 
             if after:
-                after = _update_after_parts(project_part, after)
                 after_parts.update(set(after))
 
     return parts_list, after_parts
@@ -193,7 +176,6 @@ def _encode_origin(origin):
 
 
 def _process_entry(data):
-    key = data.get('project-part')
     parts_list = OrderedDict()
     # Store all the parts listed in 'after' for each included part so that
     # we can check later that we aren't missing any parts.
@@ -201,16 +183,13 @@ def _process_entry(data):
     # the wiki?  They should be in the master parts list.
     after_parts = set()
 
-    logger.debug('Processing part {!r}'.format(key))
-
     # Get optional wiki entry fields.
-    subparts = data.get('parts', [])
     origin_type = data.get('origin-type')
 
     # Get required wiki entry fields.
     try:
+        entry_parts = data['parts']
         origin = data['origin']
-        project_part = data['project-part']
         maintainer = data['maintainer']
         description = data['description']
     except KeyError as e:
@@ -231,26 +210,13 @@ def _process_entry(data):
 
     origin_data = _get_origin_data(origin_dir)
 
-    parts = origin_data.get('parts', {})
+    origin_parts = origin_data.get('parts', {})
 
-    source_part = parts.get(project_part)
-    if source_part:
-        source_part = _update_source(source_part, origin)
-        source_part['maintainer'] = maintainer
-        source_part['description'] = description
-        after = source_part.get('after', [])
-
-        if after:
-            after = _update_after_parts(project_part, after)
-            after_parts.update(set(after))
-
-        parts_list[project_part] = source_part
-        subparts_list, subparts_after_list = _process_subparts(
-            project_part, subparts, parts, origin, maintainer,
-            description,
-        )
-        parts_list.update(subparts_list)
-        after_parts.update(subparts_after_list)
+    entry_parts_list, entry_parts_after_list = _process_entry_parts(
+        entry_parts, origin_parts, origin, maintainer, description,
+    )
+    parts_list.update(entry_parts_list)
+    after_parts.update(entry_parts_after_list)
 
     return parts_list, after_parts
 
@@ -263,11 +229,12 @@ def _process_wiki_entry(entry, master_parts_list):
         raise InvalidEntryError(
             'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
-    part_name = data.get('project-part')
-    if part_name is not None and part_name in master_parts_list:
-        raise InvalidEntryError(
-            'Duplicate part found in the wiki: {} in entry {}'.format(
-                part_name, entry))
+    parts = data.get('parts', [])
+    for part_name in parts:
+        if part_name and part_name in master_parts_list:
+            raise InvalidEntryError(
+                'Duplicate part found in the wiki: {} in entry {}'.format(
+                    part_name, entry))
 
     parts_list, after_parts = _process_entry(data)
 
