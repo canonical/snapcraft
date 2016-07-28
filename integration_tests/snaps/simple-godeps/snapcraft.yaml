@@ -8,4 +8,5 @@ confinement: strict
 parts:
   simple-godeps:
     plugin: godeps
+    go-importpath: bcrypt
     source: .

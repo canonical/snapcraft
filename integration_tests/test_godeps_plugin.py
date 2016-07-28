@@ -26,7 +26,7 @@ class GodepsPluginTestCase(integration_tests.TestCase):
         project_dir = 'simple-godeps'
         self.run_snapcraft('stage', project_dir)
 
-        binary = os.path.join('stage', 'bin', project_dir)
+        binary = os.path.join('stage', 'bin', 'bcrypt')
         hash_command = [binary, 'hash', '10', 'password']
 
         output = subprocess.check_output(
