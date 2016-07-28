@@ -34,8 +34,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - go-importpath:
       (string)
       This entry tells the checked out `source` to live within a certain path
-      within `GOPATH`. This is not required, but is useful if absolute imports
-      or import path checking is used.
+      within `GOPATH`. This is required in order to work with absolute imports
+      and import path checking.
 """
 
 import logging
@@ -43,6 +43,7 @@ import os
 import shutil
 
 import snapcraft
+from snapcraft import common
 
 
 logger = logging.getLogger(__name__)
@@ -59,8 +60,10 @@ class GodepsPlugin(snapcraft.BasePlugin):
         }
         schema['properties']['go-importpath'] = {
             'type': 'string',
-            'default': ''
         }
+
+        # The import path must be specified.
+        schema['required'].append('go-importpath')
 
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
@@ -79,16 +82,8 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def pull(self):
         super().pull()
 
-        if self.options.go_importpath:
-            go_package = self.options.go_importpath
-        else:
-            logger.warning(
-                'Please consider setting `go-importpath` for the {!r} '
-                'part'.format(self.name))
-            go_package = os.path.basename(
-                os.path.abspath(self.options.source))
-
-        path_in_gopath = os.path.join(self._gopath_src, go_package)
+        path_in_gopath = os.path.join(
+            self._gopath_src, self.options.go_importpath)
         os.makedirs(os.path.dirname(path_in_gopath), exist_ok=True)
         if os.path.islink(path_in_gopath):
             os.unlink(path_in_gopath)
@@ -112,11 +107,8 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        if self.options.go_importpath:
-            go_package = self.options.go_importpath
-        else:
-            go_package = os.path.basename(os.path.abspath(self.options.source))
-        self._run(['go', 'install', './{}/...'.format(go_package)])
+        self._run(['go', 'install', './{}/...'.format(
+            self.options.go_importpath)])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
@@ -145,15 +137,18 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def _build_environment(self):
         env = os.environ.copy()
         env['GOPATH'] = self._gopath
+
+        # Add $GOPATH/bin so godeps is actually callable.
         env['PATH'] = '{}:{}'.format(
             os.path.join(self._gopath, 'bin'), env.get('PATH', ''))
-        linker_flags = ' '.join([
-            '-L{0}/lib',
-            '-L{0}/usr/lib',
-            '-L{0}/lib/{1}',
-            '-L{0}/usr/lib/{1}']).format(self.installdir,
-                                         self.project.arch_triplet)
+
+        include_paths = []
+        for root in [self.installdir, self.project.stage_dir]:
+            include_paths.extend(
+                common.get_library_paths(root, self.project.arch_triplet))
+
+        flags = common.combine_paths(include_paths, '-L', ' ')
         env['CGO_LDFLAGS'] = '{} {} {}'.format(
-            env.get('CGO_LDFLAGS', ''), linker_flags, env.get('LDFLAGS', ''))
+            env.get('CGO_LDFLAGS', ''), flags, env.get('LDFLAGS', ''))
 
         return env

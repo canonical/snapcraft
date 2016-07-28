@@ -40,7 +40,7 @@ class GodepsPluginTestCase(tests.TestCase):
 
         class Options:
             source = 'src'
-            go_importpath = ''
+            go_importpath = 'github.com/foo/bar'
             godeps_file = 'dependencies.tsv'
 
         self.options = Options()
@@ -76,7 +76,7 @@ class GodepsPluginTestCase(tests.TestCase):
 
         # Check go-importpath
         go_importpath = properties['go-importpath']
-        for expected in ['type', 'default']:
+        for expected in ['type']:
             self.assertTrue(
                 expected in go_importpath,
                 "Expected {!r} to be included in 'go-importpath'".format(
@@ -87,10 +87,9 @@ class GodepsPluginTestCase(tests.TestCase):
                          'Expected "go-importpath" "type" to be "string", but '
                          'it was "{}"'.format(go_importpath_type))
 
-        go_importpath_default = go_importpath['default']
-        self.assertEqual(go_importpath_default, '',
-                         'Expected "go-importpath" "default" to be '
-                         '"", but it was "{}"'.format(go_importpath_default))
+        # go-importpath should be required
+        self.assertTrue('go-importpath' in schema['required'],
+                        'Expeced "go-importpath" to be required')
 
         # Verify both are pull dependencies
         self.assertTrue('godeps-file' in schema['pull-properties'])
@@ -101,6 +100,10 @@ class GodepsPluginTestCase(tests.TestCase):
             'test-part', self.options, self.project_options)
 
         os.makedirs(plugin.options.source)
+        os.makedirs(os.path.join(plugin.installdir, 'lib'))
+        os.makedirs(os.path.join(plugin.installdir, 'usr', 'lib'))
+        os.makedirs(os.path.join(plugin.project.stage_dir, 'lib'))
+        os.makedirs(os.path.join(plugin.project.stage_dir, 'usr', 'lib'))
         plugin.pull()
 
         self.assertEqual(2, self.run_mock.call_count)
@@ -122,17 +125,16 @@ class GodepsPluginTestCase(tests.TestCase):
             expected_flags = [
                 '-L{}/lib'.format(plugin.installdir),
                 '-L{}/usr/lib'.format(plugin.installdir),
-                '-L{}/lib/{}'.format(
-                    plugin.installdir, plugin.project.arch_triplet),
-                '-L{}/usr/lib/{}'.format(
-                    plugin.installdir, plugin.project.arch_triplet)
+                '-L{}/lib'.format(plugin.project.stage_dir),
+                '-L{}/usr/lib'.format(plugin.project.stage_dir),
             ]
             for flag in expected_flags:
                 self.assertTrue(
                     flag in env['CGO_LDFLAGS'],
-                    'Expected $CGO_LDFLAGS to include {!r}'.format(flag))
+                    'Expected $CGO_LDFLAGS to include {!r}, but it was '
+                    '"{}"'.format(flag, env['CGO_LDFLAGS']))
 
-    def setup_pull_test(self):
+    def test_pull(self):
         plugin = godeps.GodepsPlugin(
             'test-part', self.options, self.project_options)
 
@@ -140,47 +142,19 @@ class GodepsPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        return plugin
+        self.assertEqual(2, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(['go', 'get', 'github.com/rogpeppe/godeps'],
+                      cwd=plugin._gopath_src, env=mock.ANY),
+            mock.call(['godeps', '-t', '-u', os.path.join(
+                plugin.sourcedir, self.options.godeps_file)],
+                cwd=plugin._gopath_src, env=mock.ANY),
+        ])
 
-    def assert_pull_result(self, plugin):
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertFalse(os.path.exists(plugin._gopath_pkg))
         self.assertFalse(os.path.exists(plugin._gopath_bin))
-
-    def test_pull(self):
-        plugin = self.setup_pull_test()
-
-        self.assertEqual(2, self.run_mock.call_count)
-        self.run_mock.assert_has_calls([
-            mock.call(['go', 'get', 'github.com/rogpeppe/godeps'],
-                      cwd=plugin._gopath_src, env=mock.ANY),
-            mock.call(['godeps', '-t', '-u', os.path.join(
-                plugin.sourcedir, self.options.godeps_file)],
-                cwd=plugin._gopath_src, env=mock.ANY),
-        ])
-
-        self.assert_pull_result(plugin)
-
-        sourcedir = os.path.join(plugin._gopath_src, 'src')
-        self.assertTrue(os.path.islink(sourcedir))
-        self.assertEqual(plugin.sourcedir, os.readlink(sourcedir))
-
-    def test_pull_with_importpath(self):
-        self.options.go_importpath = 'github.com/foo/bar'
-
-        plugin = self.setup_pull_test()
-
-        self.assertEqual(2, self.run_mock.call_count)
-        self.run_mock.assert_has_calls([
-            mock.call(['go', 'get', 'github.com/rogpeppe/godeps'],
-                      cwd=plugin._gopath_src, env=mock.ANY),
-            mock.call(['godeps', '-t', '-u', os.path.join(
-                plugin.sourcedir, self.options.godeps_file)],
-                cwd=plugin._gopath_src, env=mock.ANY),
-        ])
-
-        self.assert_pull_result(plugin)
 
         sourcedir = os.path.join(
             plugin._gopath_src, 'github.com', 'foo', 'bar')
@@ -203,7 +177,7 @@ class GodepsPluginTestCase(tests.TestCase):
         self.assertFalse(os.path.exists(plugin.sourcedir))
         self.assertFalse(os.path.exists(plugin._gopath))
 
-    def setup_build_test(self):
+    def test_build(self):
         plugin = godeps.GodepsPlugin(
             'test-part', self.options, self.project_options)
 
@@ -220,9 +194,13 @@ class GodepsPluginTestCase(tests.TestCase):
         open(os.path.join(plugin._gopath_bin, 'godeps'), 'w').close()
         plugin.build()
 
-        return plugin
+        self.assertEqual(1, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(
+                ['go', 'install', './github.com/foo/bar/...'],
+                cwd=plugin._gopath_src, env=mock.ANY),
+        ])
 
-    def assert_build_result(self, plugin):
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertTrue(os.path.exists(plugin._gopath_bin))
@@ -232,32 +210,6 @@ class GodepsPluginTestCase(tests.TestCase):
         # Assert that the godeps binary was NOT copied
         self.assertFalse(os.path.exists(
             os.path.join(plugin.installdir, 'bin', 'godeps')))
-
-    def test_build(self):
-        plugin = self.setup_build_test()
-
-        self.assertEqual(1, self.run_mock.call_count)
-        self.run_mock.assert_has_calls([
-            mock.call(
-                ['go', 'install', './{}/...'.format(self.options.source)],
-                cwd=plugin._gopath_src, env=mock.ANY),
-        ])
-
-        self.assert_build_result(plugin)
-
-    def test_build_with_importpath(self):
-        self.options.go_importpath = 'github.com/foo/bar'
-
-        plugin = self.setup_build_test()
-
-        self.assertEqual(1, self.run_mock.call_count)
-        self.run_mock.assert_has_calls([
-            mock.call(
-                ['go', 'install', './github.com/foo/bar/...'],
-                cwd=plugin._gopath_src, env=mock.ANY),
-        ])
-
-        self.assert_build_result(plugin)
 
     def test_clean_build(self):
         plugin = godeps.GodepsPlugin(
