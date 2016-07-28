@@ -103,6 +103,7 @@ properties:
             enum:
               - simple
               - forking
+              - oneshot
           restart-condition:
               type: string
               enum:
