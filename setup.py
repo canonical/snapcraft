@@ -35,7 +35,7 @@ setup(
     name='snapcraft',
     version=version,
     description='Easily craft snaps from multiple sources',
-    author_email='snappy-devel@lists.ubuntu.com',
+    author_email='snapcraft@lists.ubuntu.com',
     url='https://github.com/snapcore/snapcraft',
     packages=['snapcraft',
               'snapcraft.internal',
