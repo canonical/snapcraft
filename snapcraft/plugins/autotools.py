@@ -36,6 +36,10 @@ In addition, this plugin uses the following plugin-specific keywords:
       (enum, 'destdir' or 'prefix')
       Whether to install via DESTDIR or by using --prefix (default is
       'destdir')
+    - disable-parallel:
+      (boolean)
+      Disable the use of -j parameter when building with make. (default is
+      'false')
 """
 
 import os
@@ -64,6 +68,11 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             'default': 'destdir',
         }
 
+        schema['properties']['disable-parallel'] = {
+            'type': 'boolean',
+            'default': False,
+        }
+
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['build-properties'].extend(['configflags', 'install-via'])
@@ -80,6 +89,7 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             'make',
         ])
 
+        self.disable_parallel = options.disable_parallel
         if options.install_via == 'destdir':
             self.install_via_destdir = True
         elif options.install_via == 'prefix':
@@ -105,7 +115,12 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
                 self.run(['autoreconf', '-i'])
 
         configure_command = ['./configure']
+        make_command = ['make']
         make_install_command = ['make', 'install']
+
+        if not self.disable_parallel:
+            make_command.append(
+                '-j{}'.format(self.project.parallel_build_count))
 
         if self.install_via_destdir:
             # Use an empty prefix since we'll install via DESTDIR
@@ -115,5 +130,5 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             configure_command.append('--prefix=' + self.installdir)
 
         self.run(configure_command + self.options.configflags)
-        self.run(['make', '-j{}'.format(self.project.parallel_build_count)])
+        self.run(make_command)
         self.run(make_install_command)

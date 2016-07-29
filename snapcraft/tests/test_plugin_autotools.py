@@ -32,6 +32,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
         class Options:
             configflags = []
             install_via = 'destdir'
+            disable_parallel = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -49,6 +50,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
                         'Expected "configflags" to be included in properties')
         self.assertTrue('install-via' in properties,
                         'Expected "install-via" to be included in properties')
+        self.assertTrue('disable-parallel' in properties,
+                        'Expected "disable-parallel" to be included in '
+                        'properties')
 
         # Check configflags property
         configflags = properties['configflags']
@@ -100,6 +104,20 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertEqual(installvia_default, 'destdir',
                          'Expected "install-via" "default" to be "destdir", '
                          'but it was "{}"'.format(installvia_default))
+
+        # Check disable-parallel property
+        disable_parallel = properties['disable-parallel']
+        self.assertTrue('type' in disable_parallel,
+                        'Expected "type" to be included in "disable-parallel"')
+        self.assertTrue('default' in disable_parallel,
+                        'Expected "default" to be included in '
+                        '"disable-parallel"')
+
+        disable_parallel_default = disable_parallel['default']
+        self.assertEqual(disable_parallel_default, False,
+                         'Expected "disable-parallel" "default" to be '
+                         '"False", but it was "{}"'.format(
+                            disable_parallel_default))
 
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
@@ -233,6 +251,20 @@ class AutotoolsPluginTestCase(tests.TestCase):
                 plugin.installdir)]),
             mock.call(['make', '-j2']),
             mock.call(['make', 'install'])
+        ])
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autoreconf_with_disable_parallel(self, run_mock):
+        self.options.disable_parallel = True
+        plugin = self.build_with_autoreconf()
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['autoreconf', '-i']),
+            mock.call(['./configure', '--prefix=']),
+            mock.call(['make']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
         ])
 
     @mock.patch('sys.stdout')
