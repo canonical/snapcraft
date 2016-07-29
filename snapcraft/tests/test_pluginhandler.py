@@ -296,7 +296,6 @@ class PluginTestCase(tests.TestCase):
         self.assertEqual(os.stat(foo).st_uid, nobody_uid)
         self.assertEqual(os.stat(foo).st_gid, nogroup_gid)
 
-
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
     @patch('snapcraft.internal.pluginhandler._get_plugin')

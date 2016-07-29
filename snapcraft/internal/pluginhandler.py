@@ -650,33 +650,21 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files_directories(snap_dirs, srcdir, dstdir,
-                               follow_symlinks=False):
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
+                   follow_symlinks=False, fixup_func=lambda *args: None):
+
     for directory in snap_dirs:
         src = os.path.join(srcdir, directory)
         dst = os.path.join(dstdir, directory)
         os.makedirs(dst, exist_ok=True)
-        try:
-            shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
-        except FileNotFoundError:
-            logger.info("src not found: {!r}".format(src))
-            pass
+        shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
 
-
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
-                   follow_symlinks=False, fixup_func=lambda *args: None):
-
-    _migrate_files_directories(snap_dirs, srcdir, dstdir,
-                               follow_symlinks=follow_symlinks)
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        try:
-            shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
-        except FileNotFoundError:
-            logger.info("src not found: {!r}".format(src))
-            pass
+        shutil.copystat(os.path.dirname(src), os.path.dirname(dst),
+                        follow_symlinks=follow_symlinks)
 
         if missing_ok and not os.path.exists(src):
             continue
