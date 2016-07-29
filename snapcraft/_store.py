@@ -73,11 +73,11 @@ def logout():
     logger.info('Credentials cleared.')
 
 
-def register(snap_name):
+def register(snap_name, is_private=False):
     logger.info('Registering {}.'.format(snap_name))
     store = storeapi.StoreClient()
     try:
-        store.register(snap_name)
+        store.register(snap_name, is_private)
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
