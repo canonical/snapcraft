@@ -151,7 +151,8 @@ class Python3Plugin(snapcraft.BasePlugin):
         os.makedirs(self.dist_packages_dir, exist_ok=True)
         self.run(
             ['python3', setup_file, 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir)], cwd=self.builddir)
+             '--prefix={}/usr'.format(self.installdir),
+             '--root={}'.format(self.installdir)], cwd=self.builddir)
 
         # Fix all shebangs to use the in-snap python.
         common.replace_in_file(self.installdir, re.compile(r''),
