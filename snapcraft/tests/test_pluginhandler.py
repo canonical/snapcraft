@@ -16,9 +16,12 @@
 
 from collections import OrderedDict
 import copy
+import grp
 import logging
 import os
+import pwd
 import shutil
+import subprocess
 import tempfile
 from unittest.mock import (
     call,
