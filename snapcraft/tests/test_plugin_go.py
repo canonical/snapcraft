@@ -38,11 +38,35 @@ class GoPluginTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+    def test_schema(self):
+        schema = go.GoPlugin.schema()
+
+        properties = schema['properties']
+        self.assertTrue('godeps' in properties,
+                        'Expected "godeps" to be included in properties')
+
+        godeps = properties['godeps']
+        self.assertTrue('type' in godeps,
+                        'Expected "type" to be included in "godeps"')
+        self.assertTrue('default' in godeps,
+                        'Expected "default" to be included in "godeps"')
+
+        godeps_type = godeps['type']
+        self.assertEqual(godeps_type, 'string',
+                         'Expected "godeps" "type" to be "string", but it '
+                         'was "{}"'.format(godeps_type))
+
+        godeps_type = godeps['default']
+        self.assertEqual(godeps_type, '',
+                         'Expected "godeps" "default" to be "", but it '
+                         'was "{}"'.format(godeps_type))
+
     def test_environment(self):
         class Options:
             source = 'http://github.com/testplug'
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test', Options(), self.project_options)
         self.assertEqual(plugin.env('myroot'), [
@@ -57,6 +81,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -79,6 +104,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = ['github.com/gotools/vet']
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -95,11 +121,38 @@ class GoPluginTestCase(tests.TestCase):
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertFalse(os.path.exists(plugin._gopath_bin))
 
+    def test_pull_godeps_dependencies(self):
+        class Options:
+            source = None
+            go_packages = []
+            go_importpath = ''
+            godeps = 'dependencies.tsv'
+
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
+                       'go', 'get', 'launchpad.net/godeps'],
+                      cwd=plugin._gopath_src),
+            mock.call(['env', 'GOPATH={}'.format(plugin._gopath), 'godeps',
+                       '-u', '{}/dependencies.tsv'.format(plugin.sourcedir)],
+                      cwd=plugin._gopath_src),
+        ])
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+        self.assertTrue(os.path.exists(plugin._gopath_src))
+        self.assertFalse(os.path.exists(plugin._gopath_bin))
+
     def test_pull_with_no_local_or_remote_sources(self):
         class Options:
             source = None
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
         plugin.pull()
@@ -115,6 +168,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -146,6 +200,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = ['github.com/gotools/vet']
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -180,6 +235,7 @@ class GoPluginTestCase(tests.TestCase):
             source = None
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -203,6 +259,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -233,6 +290,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
             go_importpath = ''
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -252,6 +310,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_packages = []
             go_importpath = 'github.com/snapcore/launcher'
+            godeps = ''
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 

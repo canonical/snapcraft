@@ -37,6 +37,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       This entry tells the checked out `source` to live within a certain path
       within `GOPATH`.
       This is not needed and does not affect `go-packages`.
+
+    - godeps:
+      (string)
+      Optional filename containing list of dependencies to install via godeps:
+      https://launchpad.net/godeps
 """
 
 import logging
@@ -64,6 +69,10 @@ class GoPlugin(snapcraft.BasePlugin):
             'default': [],
         }
         schema['properties']['go-importpath'] = {
+            'type': 'string',
+            'default': ''
+        }
+        schema['properties']['godeps'] = {
             'type': 'string',
             'default': ''
         }
@@ -111,6 +120,8 @@ class GoPlugin(snapcraft.BasePlugin):
         # use -t to also get the test-deps
         super().pull()
         os.makedirs(self._gopath_src, exist_ok=True)
+        if self.options.godeps:
+            self._godeps()
         if self.options.source is not None:
             self._local_pull()
         self._remote_pull()
@@ -136,6 +147,11 @@ class GoPlugin(snapcraft.BasePlugin):
                 os.unlink(local_path)
             os.symlink(self.sourcedir, local_path)
         self._run(['go', 'get', '-t', '-d', './{}/...'.format(go_package)])
+
+    def _godeps(self):
+        self._run(['go', 'get', 'launchpad.net/godeps'])
+        self._run(['godeps', '-u',
+                  os.path.join(self.sourcedir, self.options.godeps)])
 
     def _remote_pull(self):
         for go_package in self.options.go_packages:
