@@ -16,9 +16,12 @@
 
 from collections import OrderedDict
 import copy
+import grp
 import logging
 import os
+import pwd
 import shutil
+import subprocess
 import tempfile
 from unittest.mock import (
     call,
@@ -271,6 +274,28 @@ class PluginTestCase(tests.TestCase):
         with open(os.path.join('stage', 'bar'), 'r') as f:
             self.assertEqual(f.read(), 'installed',
                              "Expected migrated 'bar' to be a copy of 'foo'")
+
+    def test_migrate_files_preserves_ownership(self):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        nobody_uid = pwd.getpwnam('nobody').pw_uid
+        nogroup_gid = grp.getgrnam('nogroup').gr_gid
+
+        foo = os.path.join('install', 'foo')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        subprocess.check_call(['sudo', 'chown', 'nobody:nogroup', foo])
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        self.assertEqual(os.stat(foo).st_uid, nobody_uid)
+        self.assertEqual(os.stat(foo).st_gid, nogroup_gid)
+
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
