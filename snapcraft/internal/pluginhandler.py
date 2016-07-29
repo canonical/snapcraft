@@ -657,6 +657,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         src = os.path.join(srcdir, directory)
         dst = os.path.join(dstdir, directory)
         os.makedirs(dst, exist_ok=True)
+
         st = os.stat(src, follow_symlinks=follow_symlinks)
         uid = st.st_uid
         gid = st.st_gid
