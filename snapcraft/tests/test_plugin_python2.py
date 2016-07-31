@@ -64,3 +64,67 @@ class Python2PluginTestCase(tests.TestCase):
             python2._get_python2_include('/foo')
         self.assertEqual(str(raised.exception),
                          'python development headers not installed')
+
+    def test_fileset_ignores(self):
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        expected_fileset = [
+            '-usr/bin/pip*',
+            '-usr/lib/python*/dist-packages/easy-install.pth',
+            '-usr/lib/python*/dist-packages/__pycache__/*.pyc',
+            '-usr/lib/python*/*.pyc',
+            '-usr/lib/python*/*/*.pyc',
+            '-usr/lib/python*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc',
+        ]
+        fileset = plugin.snap_fileset()
+        self.assertListEqual(expected_fileset, fileset)
+
+    @mock.patch.object(python2.Python2Plugin, 'run')
+    def test_build_fixes_python_shebangs(self, run_mock):
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+        os.makedirs(os.path.join(plugin.installdir, 'bin'))
+        os.makedirs(os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2', 'dist-packages'))
+        os.makedirs(os.path.join(
+            plugin.installdir, 'usr', 'include', 'python2'))
+
+        # Place a few files with bad shebangs, and some files that shouldn't be
+        # changed.
+        files = [
+            {
+                'path': os.path.join(plugin.installdir, 'example.py'),
+                'contents': '#!/foo/bar/baz/python',
+                'expected': '#!/usr/bin/env python',
+            },
+            {
+                'path': os.path.join(plugin.installdir, 'bin/another_example'),
+                'contents': '#!/foo/baz/python2',
+                'expected': '#!/usr/bin/env python2',
+            },
+            {
+                'path': os.path.join(plugin.installdir, 'foo'),
+                'contents': 'foo',
+                'expected': 'foo',
+            }
+        ]
+
+        for file_info in files:
+            with open(file_info['path'], 'w') as f:
+                f.write(file_info['contents'])
+
+        plugin.build()
+
+        for file_info in files:
+            with open(os.path.join(plugin.installdir,
+                                   file_info['path']), 'r') as f:
+                self.assertEqual(f.read(), file_info['expected'])
