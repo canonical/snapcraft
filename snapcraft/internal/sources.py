@@ -293,8 +293,7 @@ class Tar(FileBase):
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            verify_checksum(
-                self.source_checksum, tarball)
+            verify_checksum(self.source_checksum, tarball)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
@@ -360,8 +359,7 @@ class Zip(FileBase):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
-            verify_checksum(
-                self.source_checksum, zip)
+            verify_checksum(self.source_checksum, zip)
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
@@ -496,8 +494,8 @@ def verify_checksum(source_checksum, checkfile):
         response = urllib.request.urlopen(source_checksum)
         data = response.read()
         source_checksum = data.decode('utf-8')
-        if (" " in source_checksum):
-            source_checksum = source_checksum.split(" ", 1)[0]
+        if (' ' in source_checksum):
+            source_checksum = source_checksum.split(' ', 1)[0]
         else:
             print('No file name detected in the checksum file, perhaps an '
                   'invalid checksum file?')
@@ -506,8 +504,8 @@ def verify_checksum(source_checksum, checkfile):
         try:
             filework = open(filename, 'r')
             source_checksum = filework.read()
-            if (" " in source_checksum):
-                source_checksum = source_checksum.split(" ", 1)[0]
+            if (' ' in source_checksum):
+                source_checksum = source_checksum.split(' ', 1)[0]
             else:
                 print('No file name detected in the checksum file, perhaps an '
                       'invalid checksum file?')
@@ -526,7 +524,7 @@ def verify_checksum(source_checksum, checkfile):
     try:
         checksum = _HASH_FUNCTIONS[len(source_checksum)]
     except KeyError:
-        raise IncompatibleOptionsError("Invalid checksum format")
+        raise IncompatibleOptionsError('Invalid checksum format')
 
     with open(checkfile, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
