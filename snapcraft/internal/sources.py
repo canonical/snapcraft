@@ -300,12 +300,12 @@ class Tar(FileBase):
                         m.name = m.name[len(common + '/'):]
                     # strip leading '/', './' or '../' as many times as needed
                     m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
-
-                    if m.linkname.startswith(common + '/'):
-                        m.linkname = m.linkname[len(common + '/'):]
-                    # strip leading '/', './' or '../' as many times as needed
-                    m.linkname = re.sub(r'^(\.{0,2}/)*', r'', m.linkname)
-
+                    if m.islnk() and not m.issym():
+                        if m.linkname.startswith(common + '/'):
+                            #print("Stripping %s from linkname %s" % (common, m.linkname))
+                            m.linkname = m.linkname[len(common + '/'):]
+                        # strip leading '/', './' or '../' as many times as needed
+                        m.linkname = re.sub(r'^(\.{0,2}/)*', r'', m.linkname)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
                     m.mode = m.mode | 0o200
