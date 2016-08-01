@@ -1,0 +1,14 @@
+name: python-entry-point
+version: 0
+summary: summary
+description: description
+confinement: strict
+
+parts:
+  python2-test:
+    plugin: python2
+    source: python2/
+
+  python3-test:
+    plugin: python3
+    source: python3/
