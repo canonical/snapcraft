@@ -120,18 +120,20 @@ class TestTarContentPlugin(TestCase):
         open(file_to_tar, 'w').close()
 
         file_to_link = os.path.join('src', 'test_prefix', 'link.txt')
-        os.symlink(os.path.abspath(file_to_tar), file_to_link)
+        os.symlink("./test.txt", file_to_link)
         self.assertTrue(os.path.islink(file_to_link))
 
         def check_for_symlink(tarinfo):
             self.assertTrue(tarinfo.issym())
-            self.assertEqual(os.path.abspath(file_to_link)[1:], tarinfo.name)
-            self.assertEqual(os.path.abspath(file_to_tar), tarinfo.linkname)
+            self.assertEqual(file_to_link, tarinfo.name)
+            self.assertEqual(file_to_tar, os.path.normpath(
+                os.path.join(
+                    os.path.dirname(file_to_tar), tarinfo.linkname)))
             return tarinfo
 
         tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
-        tar.add(os.path.abspath(file_to_tar))
-        tar.add(os.path.abspath(file_to_link), filter=check_for_symlink)
+        tar.add(file_to_tar)
+        tar.add(file_to_link, filter=check_for_symlink)
         tar.close()
 
         t = TarContentPlugin('tar_content', Options(),
@@ -164,9 +166,16 @@ class TestTarContentPlugin(TestCase):
         os.link(file_to_tar, file_to_link)
         self.assertTrue(os.path.exists(file_to_link))
 
+        def check_for_hardlink(tarinfo):
+            self.assertTrue(tarinfo.islnk())
+            self.assertFalse(tarinfo.issym())
+            self.assertEqual(file_to_link, tarinfo.name)
+            self.assertEqual(file_to_tar, tarinfo.linkname)
+            return tarinfo
+
         tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
         tar.add(file_to_tar)
-        tar.add(file_to_link)
+        tar.add(file_to_link, filter=check_for_hardlink)
         tar.close()
 
         t = TarContentPlugin('tar_content', Options(),
