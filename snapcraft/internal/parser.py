@@ -142,7 +142,7 @@ def _get_origin_data(origin_dir):
         yaml_file = hidden_snapcraft_yaml_file
 
     try:
-        with open(yaml_file, 'r') as fp:
+        with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
         raise InvalidEntryError(e)
