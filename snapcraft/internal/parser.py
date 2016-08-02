@@ -264,27 +264,30 @@ def _process_entry(data):
 
 
 def _process_wiki_entry(entry, master_parts_list):
+    # return the number of errors encountered
     try:
         data = yaml.load(entry)
     except ScannerError as e:
         logger.warning(
             'Bad wiki entry, possibly malformed YAML: {}'.format(e))
-        return
+        return 1
 
     part_name = data.get('project-part')
     if part_name is not None and part_name in master_parts_list:
         logger.warning("Duplicate part found in wiki: {}".format(
             part_name))
-        return
+        return 1
 
     try:
         parts_list, after_parts = _process_entry(data)
     except InvalidEntryError as e:
         logger.warning('Invalid wiki entry: {}'.format(e))
-        return
+        return 1
 
     if is_valid_parts_list(parts_list, after_parts):
         master_parts_list.update(parts_list)
+
+    return 0
 
 
 def _process_index(output):
@@ -302,13 +305,13 @@ def _process_index(output):
     for line in output.decode().splitlines():
         if line == '---':
             if entry:
-                _process_wiki_entry(entry, master_parts_list)
+                errors['wiki'] += _process_wiki_entry(entry, master_parts_list)
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
 
     if entry:
-        _process_wiki_entry(entry, master_parts_list)
+        errors['wiki'] += _process_wiki_entry(entry, master_parts_list)
 
     return (master_parts_list, errors)
 

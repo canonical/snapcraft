@@ -726,11 +726,6 @@ maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
 project-part: main\r
----
-maintainer: Jim Doe <jim.doe@example.com>
-origin: lp:snapcraft-parser-example
-description: example main duplicate
-project-part: main
 """)
         mock_get_origin_data.return_value = {
             'parts': {
