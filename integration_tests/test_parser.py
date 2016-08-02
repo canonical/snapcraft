@@ -40,7 +40,6 @@ class TestParser(integration_tests.TestCase):
     def test_hidden_snapcraft_yaml(self):
         """Test hidden .snapcraft.yaml file."""
 
-        print("JOE: pwd: %s" % os.getcwd())
         args = [self.snapcraft_parser_command, '--index',
                 os.path.join(os.path.dirname(__file__), 'hidden_parts_wiki'),
                 '--debug',
