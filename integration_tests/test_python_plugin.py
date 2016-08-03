@@ -18,7 +18,6 @@ import glob
 import os
 
 from testtools.matchers import (
-    EndsWith,
     DirExists,
     FileExists
 )
@@ -65,3 +64,21 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
                 'python3', 'dist-packages', 'jsonschema'),
             DirExists())
+
+    def test_build_rewrites_shebangs(self):
+        """Verify that LP: #1597919 doesn't come back."""
+
+        project_dir = 'python-entry-point'
+        self.run_snapcraft('stage', project_dir)
+        python2_entry_point = os.path.join(
+            project_dir, 'stage', 'usr', 'bin', 'python2_test')
+        python3_entry_point = os.path.join(
+            project_dir, 'stage', 'usr', 'bin', 'python3_test')
+
+        with open(python2_entry_point) as f:
+            python2_shebang = f.readline().strip()
+        with open(python3_entry_point) as f:
+            python3_shebang = f.readline().strip()
+
+        self.assertEqual('#!/usr/bin/env python2', python2_shebang)
+        self.assertEqual('#!/usr/bin/env python3', python3_shebang)

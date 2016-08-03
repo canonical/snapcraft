@@ -33,6 +33,7 @@ Options:
 import logging
 import os
 import pkg_resources
+import re
 import sys
 import textwrap
 import urllib
@@ -46,6 +47,14 @@ from snapcraft.internal import log, sources
 
 
 class InvalidEntryError(Exception):
+    pass
+
+
+class BadSnapcraftYAMLError(Exception):
+    pass
+
+
+class MissingSnapcraftYAMLError(Exception):
     pass
 
 
@@ -115,8 +124,25 @@ def _update_after_parts(partname, after_parts):
 
 def _get_origin_data(origin_dir):
     origin_data = {}
+    snapcraft_yaml_file = os.path.join(origin_dir, 'snapcraft.yaml')
+    hidden_snapcraft_yaml_file = os.path.join(origin_dir, '.snapcraft.yaml')
+
+    # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
+    if not os.path.exists(snapcraft_yaml_file) and not os.path.exists(
+            hidden_snapcraft_yaml_file):
+        raise MissingSnapcraftYAMLError()
+
+    if os.path.exists(snapcraft_yaml_file):
+        if os.path.exists(hidden_snapcraft_yaml_file):
+            raise BadSnapcraftYAMLError(
+                'Origin has both "snapcraft.yaml" and ".snapcraft.yaml"')
+        else:
+            yaml_file = snapcraft_yaml_file
+    elif os.path.exists(hidden_snapcraft_yaml_file):
+        yaml_file = hidden_snapcraft_yaml_file
+
     try:
-        with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
+        with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
         raise InvalidEntryError(e)
@@ -166,6 +192,10 @@ def _process_subparts(project_part, subparts, parts, origin, maintainer,
     return parts_list, after_parts
 
 
+def _encode_origin(origin):
+    return re.sub('[^A-Za-z0-9-_.]', '', origin)
+
+
 def _process_entry(data):
     key = data.get('project-part')
     parts_list = OrderedDict()
@@ -193,7 +223,7 @@ def _process_entry(data):
     # TODO: this should really be based on the origin uri not
     # the part name to avoid the situation where there are multiple
     # parts being pulled from the same repo branch.
-    origin_dir = os.path.join(BASE_DIR, key)
+    origin_dir = os.path.join(BASE_DIR, _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
     class Options:
@@ -229,40 +259,51 @@ def _process_entry(data):
     return parts_list, after_parts
 
 
+def _process_wiki_entry(entry, master_parts_list):
+    try:
+        data = yaml.load(entry)
+    except ScannerError as e:
+        logger.warning(
+            'Bad wiki entry, possibly malformed YAML: {}'.format(e))
+        return
+
+    part_name = data.get('project-part')
+    if part_name is not None and part_name in master_parts_list:
+        logger.warning("Duplicate part found in wiki: {}".format(
+            part_name))
+        return
+
+    try:
+        parts_list, after_parts = _process_entry(data)
+    except InvalidEntryError as e:
+        logger.warning('Invalid wiki entry: {}'.format(e))
+        return
+
+    if is_valid_parts_list(parts_list, after_parts):
+        master_parts_list.update(parts_list)
+
+
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
 
+    output = output.replace(b'{{{', b'').replace(b'}}}', b'')
     output = output.strip()
-
-    output = output.replace(b"{{{", b"").replace(b"}}}", b"")
 
     # split the wiki into an array of entries to allow the parser to
     # proceed when invalid yaml is found.
-    entries = output.split(b'\n---\n')
-    for entry in entries:
-        if entry != b'':
-            try:
-                data = yaml.load(entry)
-            except ScannerError as e:
-                logger.warning(
-                    'Bad wiki entry, possibly malformed YAML: {}'.format(e))
+    entry = ''
+    for line in output.decode().splitlines():
+        if line == '---':
+            if entry:
+                _process_wiki_entry(entry, master_parts_list)
+                entry = ''
+        else:
+            entry = '\n'.join([entry, line])
 
-            part_name = data.get('project-part')
-            if part_name is not None and part_name in master_parts_list:
-                logger.warning("Duplicate part found in wiki: {}".format(
-                    part_name))
-                continue
-
-            try:
-                parts_list, after_parts = _process_entry(data)
-            except InvalidEntryError as e:
-                logger.warning('Invalid wiki entry: {}'.format(e))
-                continue
-
-            if is_valid_parts_list(parts_list, after_parts):
-                master_parts_list.update(parts_list)
+    if entry:
+        _process_wiki_entry(entry, master_parts_list)
 
     return master_parts_list
 

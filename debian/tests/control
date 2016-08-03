@@ -3,6 +3,7 @@ Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,
          git,
+         curl,
          mercurial,
          subversion,
          lxd,
@@ -19,6 +20,7 @@ Tests: snapstests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          git,
+         curl,
          python3-fixtures,
          python3-pexpect,
          python3-testscenarios,

@@ -15,4 +15,6 @@ dist
 htmlcov
 __pycache__
 docs/**.html
+Cargo.lock
+target
 *.swp
