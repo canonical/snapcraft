@@ -107,10 +107,6 @@ class Python3PluginTestCase(tests.TestCase):
         prefix = os.path.join(plugin.installdir, 'usr')
 
         pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
-        include = os.path.join(
-            plugin.installdir, 'usr', 'include', 'python3.5')
-        target = os.path.join(
-            plugin.installdir, 'usr', 'lib', 'python3', 'site-packages')
         pip_install = ['python3', pip3, 'install',
                        '--root', plugin.installdir,
                        '--install-option=--prefix=usr']
