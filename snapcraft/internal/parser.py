@@ -33,6 +33,7 @@ Options:
 import logging
 import os
 import pkg_resources
+import re
 import sys
 import textwrap
 import urllib
@@ -46,6 +47,14 @@ from snapcraft.internal import log, sources
 
 
 class InvalidEntryError(Exception):
+    pass
+
+
+class BadSnapcraftYAMLError(Exception):
+    pass
+
+
+class MissingSnapcraftYAMLError(Exception):
     pass
 
 
@@ -115,8 +124,25 @@ def _update_after_parts(partname, after_parts):
 
 def _get_origin_data(origin_dir):
     origin_data = {}
+    snapcraft_yaml_file = os.path.join(origin_dir, 'snapcraft.yaml')
+    hidden_snapcraft_yaml_file = os.path.join(origin_dir, '.snapcraft.yaml')
+
+    # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
+    if not os.path.exists(snapcraft_yaml_file) and not os.path.exists(
+            hidden_snapcraft_yaml_file):
+        raise MissingSnapcraftYAMLError()
+
+    if os.path.exists(snapcraft_yaml_file):
+        if os.path.exists(hidden_snapcraft_yaml_file):
+            raise BadSnapcraftYAMLError(
+                'Origin has both "snapcraft.yaml" and ".snapcraft.yaml"')
+        else:
+            yaml_file = snapcraft_yaml_file
+    elif os.path.exists(hidden_snapcraft_yaml_file):
+        yaml_file = hidden_snapcraft_yaml_file
+
     try:
-        with open(os.path.join(origin_dir, 'snapcraft.yaml'), "r") as fp:
+        with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
         raise InvalidEntryError(e)
@@ -166,6 +192,10 @@ def _process_subparts(project_part, subparts, parts, origin, maintainer,
     return parts_list, after_parts
 
 
+def _encode_origin(origin):
+    return re.sub('[^A-Za-z0-9-_.]', '', origin)
+
+
 def _process_entry(data):
     key = data.get('project-part')
     parts_list = OrderedDict()
@@ -193,7 +223,7 @@ def _process_entry(data):
     # TODO: this should really be based on the origin uri not
     # the part name to avoid the situation where there are multiple
     # parts being pulled from the same repo branch.
-    origin_dir = os.path.join(BASE_DIR, key)
+    origin_dir = os.path.join(BASE_DIR, _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
     class Options:
