@@ -83,7 +83,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             basedir = 'war'
             jarfiles = warfiles
         else:
-            raise RuntimeError("could not find any"
+            raise RuntimeError("Could not find any "
                                "built jar files for part")
 
         targetdir = os.path.join(self.installdir, basedir)
