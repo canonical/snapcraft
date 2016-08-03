@@ -8,7 +8,7 @@ apps:
   webcam-webui:
     command: bin/webcam-webui
     daemon: simple
-    plugs: [network-bind]
+    plugs: [camera,network-bind]
 
 parts:
   cam:
