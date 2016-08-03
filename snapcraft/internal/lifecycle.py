@@ -65,6 +65,8 @@ def init():
 
     if os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
+    elif os.path.exists('.snapcraft.yaml'):
+        raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
