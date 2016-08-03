@@ -44,8 +44,7 @@ def _topic_help(module_name, devel):
 
 
 def _module_help(module_name, devel):
-    if "-" in module_name:
-        module_name.replace("-", "_")
+    module_name.replace('-', '_')
     try:
         module = importlib.import_module(
             'snapcraft.plugins.{}'.format(module_name))
