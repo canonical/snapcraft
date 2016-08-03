@@ -1,5 +1,54 @@
+snapcraft (2.13.1) xenial; urgency=medium
+
+  [ Joe Talbott ]
+  * parser - Add handling for carriage returns in wiki (#681)
+
+  [ Sergio Schvezov ]
+  * New upstream release 2.13.1 (LP: #1605107)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 25 Jul 2016 13:27:29 +0200
+
 snapcraft (2.13) xenial; urgency=medium
 
+  [ Colin Watson ]
+  * Make maven plugin honour https_proxy and proxy authentication (#642)
+
+  [ Dustin Kirkland ]
+  * add a link for filing bugs/issues (#647)
+
+  [ Joe Talbott ]
+  * parser - Handle malformed wiki entries. (#636)
+  * Use '/usr/bin/env python3' (#649)
+  * parser - Don't allow duplicate wiki entries. (#613)
+  * Preserve the ordering of the wiki entries (#596)
+
+  [ Leo Arias ]
+  * Add the test for the downloader snap (#589)
+  * Do not clean before running the snaps tests (#637)
+
+  [ Jonathan Cave ]
+  * Create Plainbox Provider plugin (#609)
+
+  [ Matthew Aguirre ]
+  * ant plugin: use python std libraries and add tests (#644)
+  * new plugin: gradle (#651)
+  * maven plugin: support maven targets (#650)
+  * Put options before jar task in command. (#655)
+
+  [ Kyle Fazzari ]
+  * Support "never" as a daemon restart condition. (#659)
+
+  [ Simon Quigley ]
+  * Fix four typos in `snapcraft help` (#667)
+
+  [ Robin Winslow ]
+  * Fix broken links to https://snapcraft.io (#665)
+
+  * Implemented `snapcraft release` (#648)
+  * Implement `snapcraft push` (#653)
+  * Allow / in parts (#666)
+  * Capture the correct exception when not being able to decode json (#672)
+  * Special handling for pc files for conflicts (#676)
   * New upstream release 2.13 (LP: #1605107)
 
  -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 21 Jul 2016 08:12:25 +0000

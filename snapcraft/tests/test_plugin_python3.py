@@ -58,3 +58,42 @@ class Python3PluginTestCase(tests.TestCase):
                          'Expected site-packages to be a relative link to '
                          '"{}", but it was a link to "{}"'.format(expected,
                                                                   link))
+
+    @mock.patch.object(python3.Python3Plugin, 'run')
+    def test_build_fixes_python_shebangs(self, run_mock):
+        plugin = python3.Python3Plugin('test-part', self.options,
+                                       self.project_options)
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+        os.makedirs(os.path.join(plugin.installdir, 'bin'))
+
+        # Place a few files with bad shebangs, and some files that shouldn't be
+        # changed.
+        files = [
+            {
+                'path': os.path.join(plugin.installdir, 'example.py'),
+                'contents': '#!/foo/bar/baz/python',
+                'expected': '#!/usr/bin/env python',
+            },
+            {
+                'path': os.path.join(plugin.installdir, 'bin/another_example'),
+                'contents': '#!/foo/baz/python2',
+                'expected': '#!/usr/bin/env python2',
+            },
+            {
+                'path': os.path.join(plugin.installdir, 'foo'),
+                'contents': 'foo',
+                'expected': 'foo',
+            }
+        ]
+
+        for file_info in files:
+            with open(file_info['path'], 'w') as f:
+                f.write(file_info['contents'])
+
+        plugin.build()
+
+        for file_info in files:
+            with open(os.path.join(plugin.installdir,
+                                   file_info['path']), 'r') as f:
+                self.assertEqual(f.read(), file_info['expected'])

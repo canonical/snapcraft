@@ -1,0 +1,6 @@
+[package]
+name = "simple-rust"
+version = "0.1.0"
+authors = ["Marius Gripsgard <mariogrip@ubuntu.com>"]
+
+[dependencies]
