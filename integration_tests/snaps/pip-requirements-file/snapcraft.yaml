@@ -11,7 +11,9 @@ confinement: strict
 parts:
   python2:
     plugin: python2
+    source: .
     requirements: requirements.txt
   python3:
     plugin: python3
+    source: .
     requirements: requirements.txt
