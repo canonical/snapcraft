@@ -526,13 +526,13 @@ def verify_checksum(source_checksum, checkfile):
     except KeyError:
         raise IncompatibleOptionsError('Invalid checksum format')
 
-    with open(checkfile, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
+    with open(checkfile, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
             checksum.update(chunk)
 
     checksum = checksum.hexdigest()
 
     if checksum != source_checksum:
         raise ChecksumDoesNotMatch(
-            "the checksum ( "+source_checksum+" ) doesn't match the file"
-            " ( "+checksum+" )")
+            "the checksum ( {0} ) doesn't match the file ( {1} )".format(
+                source_checksum, checksum))
