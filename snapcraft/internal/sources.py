@@ -296,16 +296,24 @@ class Tar(FileBase):
                 for m in members:
                     if m.name == common:
                         continue
-                    if m.name.startswith(common + '/'):
-                        m.name = m.name[len(common + '/'):]
-                    # strip leading '/', './' or '../' as many times as needed
-                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    self._strip_prefix(common, m)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
                     m.mode = m.mode | 0o200
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)
+
+    def _strip_prefix(self, common, member):
+        if member.name.startswith(common + '/'):
+            member.name = member.name[len(common + '/'):]
+        # strip leading '/', './' or '../' as many times as needed
+        member.name = re.sub(r'^(\.{0,2}/)*', r'', member.name)
+        # do the same for linkname if this is a hardlink
+        if member.islnk() and not member.issym():
+            if member.linkname.startswith(common + '/'):
+                member.linkname = member.linkname[len(common + '/'):]
+            member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
 
 
 class Zip(FileBase):
