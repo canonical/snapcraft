@@ -16,6 +16,8 @@
 
 import logging
 import os
+import shutil
+import tempfile
 from unittest import mock
 
 import requests
@@ -25,6 +27,11 @@ from collections import OrderedDict
 
 from snapcraft.internal.parser import (
     _get_namespaced_partname,
+    _get_origin_data,
+    _encode_origin,
+    BadSnapcraftYAMLError,
+    MissingSnapcraftYAMLError,
+    BASE_DIR,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
     main,
@@ -622,6 +629,57 @@ project-part: 'main2'
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.sources.get')
+    def test_missing_snapcraft_yaml(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        self.assertRaises(MissingSnapcraftYAMLError, main,
+                          ['--debug', '--index', TEST_OUTPUT_PATH])
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+project-part: 'somepart'
+""".format(origin_url=origin_url))
+
+        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        os.makedirs(origin_dir, exist_ok=True)
+
+        # Create a fake snapcraft.yaml for _get_origin_data() to parse
+        with open(os.path.join(origin_dir, 'snapcraft.yaml'),
+                  'w') as fp:
+            fp.write("bad yaml is : bad :yaml:::")
+
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+        self.assertTrue(
+            'Invalid wiki entry'
+            in fake_logger.output, 'Missing invalid wiki entry info in output')
+
+    @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_with_fake_origin(self, mock_get):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
@@ -636,8 +694,7 @@ description: example
 project-part: 'somepart'
 """.format(origin_url=origin_url))
 
-        # TODO: update this once we start encoding the origin_dir
-        origin_dir = os.path.join('/tmp', 'somepart')
+        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
@@ -776,3 +833,41 @@ project-part: app1
 
         self.assertEqual(parts,
                          _get_part_list())
+
+    def test__get_origin_data_both(self):
+        tempdir = tempfile.mkdtemp()
+        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+
+        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data, tempdir)
+        shutil.rmtree(tempdir)
+
+    def test__get_origin_data_hidden_only(self):
+        tempdir = tempfile.mkdtemp()
+        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+
+        _get_origin_data(tempdir)
+        shutil.rmtree(tempdir)
+
+    def test__get_origin_data_normal_only(self):
+        tempdir = tempfile.mkdtemp()
+        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+            fp.write("")
+
+        _get_origin_data(tempdir)
+        shutil.rmtree(tempdir)
+
+    def test__encode_origin_git(self):
+        origin = 'git@github.com:testuser/testproject.git'
+        origin_dir = _encode_origin(origin)
+
+        self.assertEqual('gitgithub.comtestusertestproject.git', origin_dir)
+
+    def test__encode_origin_lp(self):
+        origin = 'lp:~testuser/testproject/testbranch'
+        origin_dir = _encode_origin(origin)
+
+        self.assertEqual('lptestusertestprojecttestbranch', origin_dir)
