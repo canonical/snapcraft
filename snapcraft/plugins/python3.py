@@ -35,6 +35,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - python-packages:
       (list)
       A list of dependencies to get from PyPi
+    - constraints:
+      (string)
+      path or url to a constraints file to constrain installed module
+      versions.
 """
 
 import os
@@ -61,11 +65,15 @@ class Python3Plugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['constraints'] = {
+            'type': 'string',
+        }
         schema.pop('required')
 
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].extend(['requirements', 'python-packages'])
+        schema['pull-properties'].extend(['requirements', 'python-packages',
+                                          'constraints'])
 
         return schema
 
@@ -125,6 +133,9 @@ class Python3Plugin(snapcraft.BasePlugin):
         pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
         pip_install = ['python3', pip3, 'install', '--root',
                        self.installdir, "--install-option=--prefix=usr"]
+
+        if self.options.constraints:
+            pip_install += ['-c{}'.format(self.options.constraints)]
 
         if self.options.requirements:
             self.run(pip_install + ['--requirement', requirements])
