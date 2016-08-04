@@ -85,7 +85,8 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)])
+                       'DESTDIR={}'.format(plugin.installdir),
+                       'INSTALLROOT={}'.format(plugin.installdir)])
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -101,5 +102,6 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['make', '-f', 'makefile.linux', '-j2']),
             mock.call(['make', '-f', 'makefile.linux', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)])
+                       'DESTDIR={}'.format(plugin.installdir),
+                       'INSTALLROOT={}'.format(plugin.installdir)])
         ])
