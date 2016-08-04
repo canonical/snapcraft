@@ -93,6 +93,10 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath_pkg = os.path.join(self._gopath, 'pkg')
 
     def pull(self):
+        # use -d to only download (build will happen later)
+        # use -t to also get the test-deps
+        # since we are not using -u the sources will stick to the
+        # original checkout.
         super().pull()
         os.makedirs(self._gopath_src, exist_ok=True)
 
