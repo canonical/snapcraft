@@ -123,7 +123,6 @@ class GoPlugin(snapcraft.BasePlugin):
                 'Please consider setting `go-importpath` for the {!r} '
                 'part'.format(self.name))
             go_package = os.path.basename(os.path.abspath(self.options.source))
-            go_package = go_package.rstrip('.git')
         return go_package
 
     def build(self):
