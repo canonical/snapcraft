@@ -19,18 +19,15 @@ import os
 from testtools.matchers import FileExists
 
 import integration_tests
-from snapcraft.tests import fixture_setup
 
 
-class DownloadTestCase(integration_tests.TestCase):
+class DownloadTestCase(integration_tests.StoreTestCase):
 
     def setUp(self):
-        super().setUp()
-        if not os.getenv('TEST_USER_PASSWORD', None):
-            self.useFixture(fixture_setup.FakeStore())
-        else:
-            self.skipTest('There is no ubuntu-core snap in the staging server')
+        if os.getenv('TEST_STORE') == 'staging':
             # TODO add the snap to the staging server.
+            self.skipTest('There is no ubuntu-core snap in the staging server')
+        super().setUp()
         self.login()
 
     def test_download_os_snap(self):
