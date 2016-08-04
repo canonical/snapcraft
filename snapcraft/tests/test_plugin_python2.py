@@ -138,7 +138,7 @@ class Python2PluginTestCase(tests.TestCase):
                        '--global-option=build_ext',
                        '--global-option=-I{}'.format(include),
                        '--target', target]
-        requirements_path = os.path.join(os.getcwd(), 'requirements.txt')
+        requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         calls = [
             mock.call(['python2', easy_install, '--prefix', prefix, 'pip']),
             mock.call(pip_install + ['--requirement', requirements_path]),

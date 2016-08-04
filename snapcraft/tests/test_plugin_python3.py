@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,6 +23,15 @@ from snapcraft import tests
 from snapcraft.plugins import python3
 
 
+def setup_directories(plugin):
+    os.makedirs(plugin.sourcedir)
+    os.makedirs(os.path.join(
+        plugin.installdir, 'usr', 'lib', 'python3.5', 'dist-packages'))
+    os.makedirs(os.path.join(
+        plugin.installdir, 'usr', 'include', 'python3.5'))
+    open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+
+
 class Python3PluginTestCase(tests.TestCase):
 
     def setUp(self):
@@ -35,29 +44,101 @@ class Python3PluginTestCase(tests.TestCase):
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
 
-    @mock.patch.object(python3.Python3Plugin, 'run')
-    @mock.patch.object(python3.Python3Plugin, 'run_output',
-                       return_value='python3.4')
-    def test_pip_relative_site_packages_symlink(self, run_output_mock,
-                                                run_mock):
+    def test_schema(self):
+        schema = python3.Python3Plugin.schema()
+        expected_requirements = {'type': 'string'}
+        expected_python_packages = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {'type': 'string'},
+            'default': [],
+        }
+        extend_pull = ['requirements', 'python-packages']
+
+        self.assertDictEqual(expected_requirements,
+                             schema['properties']['requirements'])
+        self.assertDictEqual(expected_python_packages,
+                             schema['properties']['python-packages'])
+        self.assertTrue(
+            set(extend_pull).issubset(set(schema['pull-properties']))
+        )
+
+    def test_env(self):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
-        os.makedirs(plugin.sourcedir)
-        os.makedirs(os.path.join(plugin.installdir, 'usr', 'lib', 'python3.4'))
-        os.makedirs(os.path.join(plugin.installdir, 'usr', 'lib', 'python3',
-                                 'dist-packages'))
+        expected_env = [
+            'PYTHONPATH=/testpath/usr/lib/python3.5/dist-packages',
+            'CPPFLAGS="-I/testpath/usr/include $CPPFLAGS"',
+            'CFLAGS="-I/testpath/usr/include $CFLAGS"',
+        ]
+        env = plugin.env('/testpath')
+        self.assertListEqual(expected_env, env)
 
-        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+        env_missing_path = plugin.env('/testpath')
+        self.assertTrue('PYTHONPATH=/testpath' not in env_missing_path)
 
+    @mock.patch.object(python3.Python3Plugin, '_pip')
+    def test_pull(self, mock_pip):
+        plugin = python3.Python3Plugin('test-part', self.options,
+                                       self.project_options)
+        plugin.pull()
+        self.assertTrue(mock_pip.called)
+
+    @mock.patch.object(python3.Python3Plugin, 'run')
+    @mock.patch.object(os.path, 'exists', return_value=False)
+    def test_missing_setup_path(self, mock_path_exists, mock_run):
+        plugin = python3.Python3Plugin('test-part', self.options,
+                                       self.project_options)
+        setup_directories(plugin)
         plugin._pip()
+        self.assertFalse(mock_run.called)
 
-        link = os.readlink(os.path.join(plugin.installdir, 'usr', 'lib',
-                                        'python3.4', 'site-packages'))
-        expected = os.path.join('..', 'python3', 'dist-packages')
-        self.assertEqual(link, expected,
-                         'Expected site-packages to be a relative link to '
-                         '"{}", but it was a link to "{}"'.format(expected,
-                                                                  link))
+    @mock.patch.object(python3.Python3Plugin, 'run')
+    def test_pip(self, mock_run):
+        self.options.requirements = 'requirements.txt'
+        self.options.python_packages = ['test', 'packages']
+
+        plugin = python3.Python3Plugin('test-part', self.options,
+                                       self.project_options)
+
+        easy_install = os.path.join(
+            plugin.installdir, 'usr', 'bin', 'easy_install3')
+        prefix = os.path.join(plugin.installdir, 'usr')
+
+        pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
+        pip_install = ['python3', pip3, 'install',
+                       '--root', plugin.installdir,
+                       '--install-option=--prefix=usr']
+        requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        calls = [
+            mock.call(['python3', easy_install, '--prefix', prefix, 'pip']),
+            mock.call(pip_install + ['--requirement', requirements_path]),
+            mock.call(pip_install + ['--upgrade', 'test', 'packages']),
+            mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
+        ]
+        setup_directories(plugin)
+        plugin._pip()
+        mock_run.assert_has_calls(calls)
+
+    def test_fileset_ignores(self):
+        plugin = python3.Python3Plugin('test-part', self.options,
+                                       self.project_options)
+        expected_fileset = [
+            '-usr/bin/pip*',
+            '-usr/lib/python*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc',
+            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc',
+        ]
+        fileset = plugin.snap_fileset()
+        self.assertListEqual(expected_fileset, fileset)
 
     @mock.patch.object(python3.Python3Plugin, 'run')
     def test_build_fixes_python_shebangs(self, run_mock):
@@ -66,6 +147,10 @@ class Python3PluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
         os.makedirs(os.path.join(plugin.installdir, 'bin'))
+        os.makedirs(os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python3.5', 'dist-packages'))
+        os.makedirs(os.path.join(
+            plugin.installdir, 'usr', 'include', 'python3.5'))
 
         # Place a few files with bad shebangs, and some files that shouldn't be
         # changed.
@@ -77,8 +162,8 @@ class Python3PluginTestCase(tests.TestCase):
             },
             {
                 'path': os.path.join(plugin.installdir, 'bin/another_example'),
-                'contents': '#!/foo/baz/python2',
-                'expected': '#!/usr/bin/env python2',
+                'contents': '#!/foo/baz/python3',
+                'expected': '#!/usr/bin/env python3',
             },
             {
                 'path': os.path.join(plugin.installdir, 'foo'),
