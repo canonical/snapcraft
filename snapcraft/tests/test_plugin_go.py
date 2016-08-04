@@ -110,14 +110,12 @@ class GoPluginTestCase(tests.TestCase):
         os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
 
+        self.run_mock.reset_mock()
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['go', 'get', '-t', '-d', './dir/...'],
-                      cwd=plugin._gopath_src, env=mock.ANY),
-            mock.call(['go', 'install', './dir/...'],
-                      cwd=plugin._gopath_src, env=mock.ANY),
-        ])
+        self.run_mock.assert_called_once_with(
+            ['go', 'install', './dir/...'],
+            cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
@@ -140,14 +138,12 @@ class GoPluginTestCase(tests.TestCase):
         # fake some binaries
         open(os.path.join(plugin._gopath_bin, 'vet'), 'w').close()
 
+        self.run_mock.reset_mock()
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['go', 'get', '-t', '-d', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src, env=mock.ANY),
-            mock.call(['go', 'install', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src, env=mock.ANY),
-        ])
+        self.run_mock.assert_called_once_with(
+            ['go', 'install', plugin.options.go_packages[0]],
+            cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
