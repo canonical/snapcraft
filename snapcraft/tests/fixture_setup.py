@@ -264,3 +264,32 @@ class StagingStore(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             'https://search.apps.staging.ubuntu.com/'))
+
+
+class TestStore(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+        test_store = os.getenv('TEST_STORE', 'fake')
+        if test_store == 'fake':
+            self.useFixture(FakeStore())
+            self.register_delay = 0
+            self.reserved_snap_name = 'test-reserved-snap-name'
+        elif test_store == 'staging':
+            self.useFixture(StagingStore())
+            self.register_delay = 10
+            self.reserved_snap_name = 'bash'
+        elif test_store == 'production':
+            # Use the default server URLs
+            self.register_delay = 180
+            self.reserved_snap_name = 'bash'
+        else:
+            raise ValueError(
+                'Unknown test store option: {}'.format(test_store))
+
+        self.user_email = os.getenv(
+            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        if test_store == 'fake':
+            self.user_password = 'test correct password'
+        else:
+            self.user_password = os.getenv('TEST_USER_PASSWORD')
