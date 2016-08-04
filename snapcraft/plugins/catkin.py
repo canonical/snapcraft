@@ -139,6 +139,11 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             # and use $ROS_HOME to determine where to put them.
             'ROS_HOME=$SNAP_USER_DATA/ros',
 
+            # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll
+            # temporarily work around that bug by forcing the locale to
+            # C.UTF-8.
+            'LC_ALL=C.UTF-8',
+
             # This environment variable points to where the setup.sh and
             # _setup_util.py files are located. This is required at both build-
             # and run-time.

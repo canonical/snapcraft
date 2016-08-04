@@ -1,7 +1,7 @@
 Source: snapcraft
 Section: utils
 Priority: extra
-Maintainer: Snapcraft Team <snappy-devel@lists.ubuntu.com>
+Maintainer: Snapcraft Team <snapcraft@lists.snapcraft.io>
 Build-Depends: bash-completion,
                debhelper (>= 9),
                dh-python,
@@ -30,8 +30,9 @@ Build-Depends: bash-completion,
                python3-yaml,
                squashfs-tools,
 Homepage: https://github.com/snapcore/snapcraft
-Vcs-Git: https://github.com/snapcore/snapcraft
-Standards-Version: 3.9.7
+Vcs-Git: https://github.com/snapcore/snapcraft.git
+Vcs-Browser: https://github.com/snapcore/snapcraft
+Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
