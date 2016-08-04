@@ -112,7 +112,8 @@ class Python2Plugin(snapcraft.BasePlugin):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
         if self.options.requirements:
-            requirements = os.path.join(os.getcwd(), self.options.requirements)
+            requirements = os.path.join(self.sourcedir,
+                                        self.options.requirements)
 
         if not os.path.exists(setup) and not \
                 (self.options.requirements or self.options.python_packages):
