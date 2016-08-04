@@ -31,7 +31,7 @@ class MakePluginTestCase(tests.TestCase):
         class Options:
             makefile = None
             make_parameters = []
-            make_install_var = "DESTDIR"
+            make_install_var = 'DESTDIR'
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()

@@ -35,7 +35,7 @@ Additionally, this plugin uses the following plugin-specific keyword:
 
     - make-install-var:
       (string; default: DESTDIR)
-      Use the variable as the install target.
+      Use this variable to redirect the installation into the snap.
 """
 
 import snapcraft
