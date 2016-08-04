@@ -36,10 +36,10 @@ contain.
       command is used to start the service.
     * `daemon` (string)
       If present, integrates the runnable as a system service. Valid values are
-      `forking`, 'oneshot' and `simple`.
+      `forking`, `oneshot` and `simple`.
       If set to `simple`, it is expected that the command configured is the main
       process.
-      If set to 'oneshot', it is expected that the command configured
+      If set to `oneshot`, it is expected that the command configured
       will exit once it's done (won't be a long-lasting process).
       If set to `forking`, it is expected that the configured command will call
       fork() as part of its start-up. The parent process is expected to exit
