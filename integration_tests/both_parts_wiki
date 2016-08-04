@@ -1,5 +1,5 @@
 ---
 description: a test part
 maintainer: John Doe <john.doe@example.com>
-project-part: testpart-both
+parts: [testpart-both]
 origin: lp:~joetalbott/+junk/testpart-both
