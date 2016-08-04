@@ -31,6 +31,7 @@ class Python3PluginTestCase(tests.TestCase):
         class Options:
             requirements = ''
             python_packages = []
+            constraints = ''
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()

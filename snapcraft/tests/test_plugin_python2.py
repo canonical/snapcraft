@@ -40,6 +40,7 @@ class Python2PluginTestCase(tests.TestCase):
         class Options:
             requirements = ''
             python_packages = []
+            constraints = ''
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -71,12 +72,16 @@ class Python2PluginTestCase(tests.TestCase):
             'items': {'type': 'string'},
             'default': [],
         }
-        extend_pull = ['requirements', 'python-packages']
+        expected_constraints = {'type': 'string'}
+        extend_pull = ['requirements', 'python-packages',
+                       'constraints']
 
         self.assertDictEqual(expected_requirements,
                              schema['properties']['requirements'])
         self.assertDictEqual(expected_python_packages,
                              schema['properties']['python-packages'])
+        self.assertDictEqual(expected_constraints,
+                             schema['properties']['constraints'])
         self.assertTrue(
             set(extend_pull).issubset(set(schema['pull-properties']))
         )
@@ -121,6 +126,8 @@ class Python2PluginTestCase(tests.TestCase):
     def test_pip(self, mock_run):
         self.options.requirements = 'requirements.txt'
         self.options.python_packages = ['test', 'packages']
+        self.options.constraints = \
+            'https://github.com/myproject/myrepo/constraints.txt'
 
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
@@ -137,7 +144,8 @@ class Python2PluginTestCase(tests.TestCase):
         pip_install = ['python2', pip2, 'install',
                        '--global-option=build_ext',
                        '--global-option=-I{}'.format(include),
-                       '--target', target]
+                       '--target', target,
+                       '-chttps://github.com/myproject/myrepo/constraints.txt']
         requirements_path = os.path.join(os.getcwd(), 'requirements.txt')
         calls = [
             mock.call(['python2', easy_install, '--prefix', prefix, 'pip']),
