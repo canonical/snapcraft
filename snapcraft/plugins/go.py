@@ -158,10 +158,6 @@ class GoPlugin(snapcraft.BasePlugin):
         env = os.environ.copy()
         env['GOPATH'] = self._gopath
 
-        # Add $GOPATH/bin so godeps is actually callable.
-        env['PATH'] = '{}:{}'.format(
-            os.path.join(self._gopath, 'bin'), env.get('PATH', ''))
-
         include_paths = []
         for root in [self.installdir, self.project.stage_dir]:
             include_paths.extend(
