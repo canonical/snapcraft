@@ -275,12 +275,6 @@ class GoPluginTestCase(tests.TestCase):
             self.assertEqual(env['GOPATH'], plugin._gopath)
 
             self.assertTrue(
-                'PATH' in env, 'Expected environment to include PATH')
-            self.assertTrue(
-                os.path.join(plugin._gopath, 'bin') in env['PATH'],
-                'Expected $PATH to include $GOPATH/bin')
-
-            self.assertTrue(
                 'CGO_LDFLAGS' in env,
                 'Expected environment to include CGO_LDFLAGS')
             expected_flags = [
