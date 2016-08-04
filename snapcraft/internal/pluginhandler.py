@@ -652,13 +652,20 @@ def _migratable_filesets(fileset, srcdir):
 
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
                    follow_symlinks=False, fixup_func=lambda *args: None):
+
     for directory in snap_dirs:
-        os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
+        src = os.path.join(srcdir, directory)
+        dst = os.path.join(dstdir, directory)
+        os.makedirs(dst, exist_ok=True)
+        shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
 
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copystat(os.path.dirname(src), os.path.dirname(dst),
+                        follow_symlinks=follow_symlinks)
+
         if missing_ok and not os.path.exists(src):
             continue
 
