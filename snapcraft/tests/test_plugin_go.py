@@ -298,4 +298,3 @@ class GoPluginTestCase(tests.TestCase):
                     flag in env['CGO_LDFLAGS'],
                     'Expected $CGO_LDFLAGS to include {!r}, but it was '
                     '"{}"'.format(flag, env['CGO_LDFLAGS']))
-
