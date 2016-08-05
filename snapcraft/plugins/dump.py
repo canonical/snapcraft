@@ -25,6 +25,7 @@ one would take advantage of the core functionalities available to plugins
 such as: `filesets`, `stage`, `snap` and `organize`.
 """
 
+import os
 import shutil
 
 import snapcraft
@@ -34,5 +35,6 @@ class DumpPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
+        os.rmdir(self.installdir)
         shutil.copytree(self.builddir, self.installdir,
                         copy_function=snapcraft.common.link_or_copy)
