@@ -50,7 +50,8 @@ class DumpPluginTestCase(TestCase):
         plugin.pull()
         plugin.build()
 
-        self.assertEqual(os.listdir(plugin.installdir),
-                         ['file1', 'file2', 'dir1'])
+        contents = os.listdir(plugin.installdir)
+        contents.sort()
+        self.assertEqual(contents, ['dir1', 'file1', 'file2'])
         self.assertEqual(os.listdir(os.path.join(plugin.installdir, 'dir1')),
                          ['subfile1'])
