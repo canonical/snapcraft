@@ -23,8 +23,13 @@ WARNING: this plugin's API is unstable. The cross compiling support is
 The following kernel specific options are provided by this plugin:
 
     - kernel-image-target:
-      (yaml object; default: bzImage)
-      a mapping of debian architecture and kernel image build targets.
+      (yaml object or string; default: bzImage)
+      the default target is bzImage and can be set to any specific
+      target.
+      For more complex cases where one would want to use
+      the same snapcraft.yaml to target multiple architectures a
+      yaml object can be used. This yaml object would be a map of
+      debian architecture and kernel image build targets.
 
     - kernel-initrd-modules:
       (array of string)
@@ -153,6 +158,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
             self.project.kernel_arch))
         self.make_cmd.append('CROSS_COMPILE={}'.format(
             self.project.cross_compiler_prefix))
+        # by enabling cross compilation, the kernel_arch and deb_arch
+        # from the project options have effectively changed so we reset
+        # kernel targets.
         self._set_kernel_targets()
 
     def _set_kernel_targets(self):
