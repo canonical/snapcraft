@@ -61,6 +61,7 @@ cases you want to refer to the help text for the specific plugin.
 
 import logging
 import os
+import stat
 import os.path
 import requests
 import shutil
@@ -108,9 +109,21 @@ class FileBase(Base):
         request = requests.get(self.source, stream=True, allow_redirects=True)
         request.raise_for_status()
 
-        file_path = os.path.join(
+        self.file = os.path.join(
             self.source_dir, os.path.basename(self.source))
-        download_requests_stream(request, file_path)
+        download_requests_stream(request, self.file)
+
+
+class Script(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_branch=None):
+        super().__init__(source, source_dir, source_tag, source_branch)
+
+    def download(self):
+        super().download()
+        st = os.stat(self.file)
+        os.chmod(self.file, st.st_mode | stat.S_IEXEC)
 
 
 class Bazaar(Base):
@@ -283,16 +296,24 @@ class Tar(FileBase):
                 for m in members:
                     if m.name == common:
                         continue
-                    if m.name.startswith(common + '/'):
-                        m.name = m.name[len(common + '/'):]
-                    # strip leading '/', './' or '../' as many times as needed
-                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    self._strip_prefix(common, m)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
                     m.mode = m.mode | 0o200
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)
+
+    def _strip_prefix(self, common, member):
+        if member.name.startswith(common + '/'):
+            member.name = member.name[len(common + '/'):]
+        # strip leading '/', './' or '../' as many times as needed
+        member.name = re.sub(r'^(\.{0,2}/)*', r'', member.name)
+        # do the same for linkname if this is a hardlink
+        if member.islnk() and not member.issym():
+            if member.linkname.startswith(common + '/'):
+                member.linkname = member.linkname[len(common + '/'):]
+            member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
 
 
 class Zip(FileBase):

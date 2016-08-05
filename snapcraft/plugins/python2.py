@@ -40,6 +40,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import glob
 import logging
 import os
+import re
 
 import snapcraft
 from snapcraft import common
@@ -111,7 +112,8 @@ class Python2Plugin(snapcraft.BasePlugin):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
         if self.options.requirements:
-            requirements = os.path.join(os.getcwd(), self.options.requirements)
+            requirements = os.path.join(self.sourcedir,
+                                        self.options.requirements)
 
         if not os.path.exists(setup) and not \
                 (self.options.requirements or self.options.python_packages):
@@ -168,20 +170,26 @@ class Python2Plugin(snapcraft.BasePlugin):
              '--prefix={}/usr'.format(self.installdir),
              ], cwd=self.builddir)
 
+        # Fix all shebangs to use the in-snap python.
+        common.replace_in_file(self.installdir, re.compile(r''),
+                               re.compile(r'#!.*python'),
+                               r'#!/usr/bin/env python')
+
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-usr/bin/pip*')
         fileset.append('-usr/lib/python*/dist-packages/easy-install.pth')
-        fileset.append('-usr/lib/python*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/dist-packages/__pycache__/*.pyc')
+        fileset.append('-usr/lib/python*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc')
+        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc')
         return fileset
 
 

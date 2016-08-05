@@ -723,6 +723,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
         self.assertTrue('ROS_HOME=$SNAP_USER_DATA/ros' in environment)
 
+        self.assertTrue('LC_ALL=C.UTF-8' in environment)
+
         self.assertTrue('_CATKIN_SETUP_DIR={}'.format(os.path.join(
             plugin.installdir, 'opt', 'ros', self.properties.rosdistro))
             in environment)
