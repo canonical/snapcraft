@@ -32,7 +32,7 @@ In addition, this plugin uses the following plugin-specific keywords:
       (list of strings)
       configure flags to pass to the build such as those shown by running
       './configure --help'
-    - install-via:
+    - (deprecated) install-via:
       (enum, 'destdir' or 'prefix')
       Whether to install via DESTDIR or by using --prefix (default is
       'destdir')
@@ -40,7 +40,7 @@ In addition, this plugin uses the following plugin-specific keywords:
 
 import os
 import stat
-
+import shutil
 import snapcraft
 
 
@@ -88,6 +88,10 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             raise RuntimeError('Unsupported installation method: "{}"'.format(
                 options.install_via))
 
+    def relocate(self, src, dst):
+        for name in os.listdir(src):
+            shutil.move(os.path.join(src, name), dst)
+
     def build(self):
         super().build()
         if not os.path.exists(os.path.join(self.builddir, "configure")):
@@ -104,16 +108,16 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             else:
                 self.run(['autoreconf', '-i'])
 
-        configure_command = ['./configure']
-        make_install_command = ['make', 'install']
+        rel_prefix = os.path.join('snap', self.name, 'current')
+        prefix = os.path.join('/', rel_prefix)
+        src = os.path.join(self.installdir, rel_prefix)
+        dst = self.installdir
 
-        if self.install_via_destdir:
-            # Use an empty prefix since we'll install via DESTDIR
-            configure_command.append('--prefix=')
-            make_install_command.append('DESTDIR=' + self.installdir)
-        else:
-            configure_command.append('--prefix=' + self.installdir)
+        configure_command = ['./configure', '--prefix=' + prefix]
+        make_install_command = ['make', 'install', 'DESTDIR=' + dst]
 
         self.run(configure_command + self.options.configflags)
         self.run(['make', '-j{}'.format(self.project.parallel_build_count)])
         self.run(make_install_command)
+
+        self.relocate(src, dst)
