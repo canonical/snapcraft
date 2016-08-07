@@ -16,6 +16,8 @@
 
 """The copy plugin is useful for assets or other sources with no build system.
 
+This plugin is DEPRECATED in favor of the `dump` plugin.
+
 This plugin uses the common plugin keywords as well as those for 'sources'
 (though the 'source' keyword is optional). For more information check the
 'plugins' topic for the former and the 'sources' topic for the latter.
@@ -64,6 +66,13 @@ class CopyPlugin(snapcraft.BasePlugin):
         schema['properties']['source']['default'] = '.'
 
         return schema
+
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
+
+        logger.warning("DEPRECATED: The 'copy' plugin's functionality "
+                       "has been replaced by the 'dump' plugin, and it will "
+                       "soon be removed.")
 
     def build(self):
         super().build()
