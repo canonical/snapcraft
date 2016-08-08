@@ -143,10 +143,11 @@ class NodePluginTestCase(tests.TestCase):
                 'source-branch': {'default': '', 'type': 'string'},
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
-                'source-type': {'default': '', 'type': 'string'}},
+                'source-type': {'default': '', 'type': 'string'},
+                'disable-parallel': {'default': False, 'type': 'boolean'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir', 'node-engine'],
-            'build-properties': ['node-packages'],
+            'build-properties': ['disable-parallel', 'node-packages'],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)

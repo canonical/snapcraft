@@ -69,7 +69,8 @@ class MakePluginTestCase(tests.TestCase):
             'was "{}"'.format(make_parameters_type))
 
         build_properties = schema['build-properties']
-        self.assertEqual(2, len(build_properties))
+        self.assertEqual(3, len(build_properties))
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('makefile' in build_properties)
         self.assertTrue('make-parameters' in build_properties)
 

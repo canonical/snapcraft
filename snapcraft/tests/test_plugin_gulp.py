@@ -127,10 +127,11 @@ class GulpPluginTestCase(tests.TestCase):
                 'source-branch': {'default': '', 'type': 'string'},
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
-                'source-type': {'default': '', 'type': 'string'}},
+                'source-type': {'default': '', 'type': 'string'},
+                'disable-parallel': {'default': False, 'type': 'boolean'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir', 'node-engine'],
-            'build-properties': ['gulp-tasks'],
+            'build-properties': ['disable-parallel', 'gulp-tasks'],
             'required': ['source', 'gulp-tasks'],
             'type': 'object'}
 

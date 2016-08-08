@@ -122,8 +122,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
         build_properties = schema['build-properties']
-        self.assertEqual(2, len(build_properties))
+        self.assertEqual(3, len(build_properties))
         self.assertTrue('configflags' in build_properties)
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('install-via' in build_properties)
 
     def test_install_via_invalid_enum(self):
@@ -262,7 +263,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['autoreconf', '-i']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make']),
+            mock.call(['make', '-j1']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])
