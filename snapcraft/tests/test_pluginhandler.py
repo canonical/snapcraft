@@ -272,6 +272,23 @@ class PluginTestCase(tests.TestCase):
             self.assertEqual(f.read(), 'installed',
                              "Expected migrated 'bar' to be a copy of 'foo'")
 
+    @patch('shutil.copystat')
+    def test_migrate_files_preserves_ownership(self, copystat_mock):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        foo = os.path.join('install', 'foo')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        copystat_mock.assert_called_with('install', 'stage',
+                                         follow_symlinks=True)
+
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
     @patch('snapcraft.internal.pluginhandler._get_plugin')

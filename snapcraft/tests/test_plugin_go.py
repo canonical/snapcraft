@@ -38,20 +38,6 @@ class GoPluginTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_environment(self):
-        class Options:
-            source = 'http://github.com/testplug'
-            go_packages = []
-            go_importpath = ''
-
-        plugin = go.GoPlugin('test', Options(), self.project_options)
-        self.assertEqual(plugin.env('myroot'), [
-            'GOPATH=myroot/go',
-            'CGO_LDFLAGS="$CGO_LDFLAGS -Lmyroot/lib -Lmyroot/usr/lib '
-            '-Lmyroot/lib/{0} '
-            '-Lmyroot/usr/lib/{0} $LDFLAGS"'.format(
-                plugin.project.arch_triplet)])
-
     def test_pull_local_sources(self):
         class Options:
             source = 'dir'
@@ -66,15 +52,14 @@ class GoPluginTestCase(tests.TestCase):
         plugin.pull()
 
         self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', './dir/...'],
-                      cwd=plugin._gopath_src)])
+            mock.call(['go', 'get', '-t', '-d', './dir/...'],
+                      cwd=plugin._gopath_src, env=mock.ANY)])
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertFalse(os.path.exists(plugin._gopath_bin))
 
-    def test_pull_remote_sources(self):
+    def test_no_local_source_with_go_packages(self):
         class Options:
             source = None
             go_packages = ['github.com/gotools/vet']
@@ -87,15 +72,14 @@ class GoPluginTestCase(tests.TestCase):
         plugin.pull()
 
         self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src)])
+            mock.call(['go', 'get', '-t', '-d', plugin.options.go_packages[0]],
+                      env=mock.ANY, cwd=plugin._gopath_src)])
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertFalse(os.path.exists(plugin._gopath_bin))
 
-    def test_pull_with_no_local_or_remote_sources(self):
+    def test_pull_with_local_sources_or_go_packages(self):
         class Options:
             source = None
             go_packages = []
@@ -126,24 +110,20 @@ class GoPluginTestCase(tests.TestCase):
         os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
 
+        self.run_mock.reset_mock()
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', './dir/...'],
-                      cwd=plugin._gopath_src),
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'install', './dir/...'],
-                      cwd=plugin._gopath_src),
-        ])
+        self.run_mock.assert_called_once_with(
+            ['go', 'install', './dir/...'],
+            cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
         self.assertTrue(os.path.exists(plugin._gopath_bin))
 
-    def test_build_with_remote_sources(self):
+    def test_build_go_packages(self):
         class Options:
-            source = None
+            source = ''
             go_packages = ['github.com/gotools/vet']
             go_importpath = ''
 
@@ -158,16 +138,12 @@ class GoPluginTestCase(tests.TestCase):
         # fake some binaries
         open(os.path.join(plugin._gopath_bin, 'vet'), 'w').close()
 
+        self.run_mock.reset_mock()
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src),
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'install', plugin.options.go_packages[0]],
-                      cwd=plugin._gopath_src),
-        ])
+        self.run_mock.assert_called_once_with(
+            ['go', 'install', plugin.options.go_packages[0]],
+            cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
@@ -175,9 +151,9 @@ class GoPluginTestCase(tests.TestCase):
         vet_binary = os.path.join(plugin.installdir, 'bin', 'vet')
         self.assertTrue(os.path.exists(vet_binary))
 
-    def test_build_with_no_local_or_remote_sources(self):
+    def test_build_with_no_local_sources_or_go_packages(self):
         class Options:
-            source = None
+            source = ''
             go_packages = []
             go_importpath = ''
 
@@ -266,14 +242,49 @@ class GoPluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'get', '-t', '-d',
+            mock.call(['go', 'get', '-t', '-d',
                        './github.com/snapcore/launcher/...'],
-                      cwd=plugin._gopath_src),
-            mock.call(['env', 'GOPATH={}'.format(plugin._gopath),
-                       'go', 'install', './github.com/snapcore/launcher/...'],
-                      cwd=plugin._gopath_src),
+                      cwd=plugin._gopath_src, env=mock.ANY),
+            mock.call(['go', 'install', './github.com/snapcore/launcher/...'],
+                      cwd=plugin._gopath_src, env=mock.ANY),
         ])
 
         self.assertTrue(os.path.exists(
             os.path.join(plugin._gopath_src, plugin.options.go_importpath)))
+
+    def test_build_environment(self):
+        class Options:
+            source = 'dir'
+            go_packages = []
+            go_importpath = ''
+
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.options.source)
+        os.makedirs(os.path.join(plugin.installdir, 'lib'))
+        os.makedirs(os.path.join(plugin.installdir, 'usr', 'lib'))
+        os.makedirs(os.path.join(plugin.project.stage_dir, 'lib'))
+        os.makedirs(os.path.join(plugin.project.stage_dir, 'usr', 'lib'))
+        plugin.pull()
+
+        self.assertEqual(1, self.run_mock.call_count)
+        for call_args in self.run_mock.call_args_list:
+            env = call_args[1]['env']
+            self.assertTrue(
+                'GOPATH' in env, 'Expected environment to include GOPATH')
+            self.assertEqual(env['GOPATH'], plugin._gopath)
+
+            self.assertTrue(
+                'CGO_LDFLAGS' in env,
+                'Expected environment to include CGO_LDFLAGS')
+            expected_flags = [
+                '-L{}/lib'.format(plugin.installdir),
+                '-L{}/usr/lib'.format(plugin.installdir),
+                '-L{}/lib'.format(plugin.project.stage_dir),
+                '-L{}/usr/lib'.format(plugin.project.stage_dir),
+            ]
+            for flag in expected_flags:
+                self.assertTrue(
+                    flag in env['CGO_LDFLAGS'],
+                    'Expected $CGO_LDFLAGS to include {!r}, but it was '
+                    '"{}"'.format(flag, env['CGO_LDFLAGS']))

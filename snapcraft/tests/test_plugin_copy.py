@@ -99,7 +99,7 @@ class TestCopyPlugin(TestCase):
         }
         open('src', 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'src')))

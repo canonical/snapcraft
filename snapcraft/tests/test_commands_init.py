@@ -38,6 +38,20 @@ class InitCommandTestCase(tests.TestCase):
             fake_logger.output,
             'snapcraft.yaml already exists!\n')
 
+    def test_init_with_existing_dot_snapcraft_yaml_must_fail(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        open('.snapcraft.yaml', 'w').close()
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['init'])
+
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(
+            fake_logger.output,
+            '.snapcraft.yaml already exists!\n')
+
     def test_init_must_write_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)

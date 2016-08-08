@@ -32,6 +32,10 @@ Additionally, this plugin uses the following plugin-specific keyword:
     - make-parameters:
       (list of strings)
       Pass the given parameters to the make command.
+
+    - make-install-var:
+      (string; default: DESTDIR)
+      Use this variable to redirect the installation into the snap.
 """
 
 import snapcraft
@@ -55,10 +59,15 @@ class MakePlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['make-install-var'] = {
+            'type': 'string',
+            'default': 'DESTDIR',
+        }
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend(['makefile', 'make-parameters'])
+        schema['build-properties'].extend(
+            ['makefile', 'make-parameters', 'make-install-var'])
 
         return schema
 
@@ -78,4 +87,5 @@ class MakePlugin(snapcraft.BasePlugin):
             command.extend(self.options.make_parameters)
 
         self.run(command + ['-j{}'.format(self.parallel_build_count)])
-        self.run(command + ['install', 'DESTDIR=' + self.installdir])
+        self.run(command + [
+            'install', self.options.make_install_var + '=' + self.installdir])

@@ -87,12 +87,17 @@ class TestCase(testtools.TestCase):
             output = exception.output
         return output
 
-    def login(self, email=None,
-              password=None, expect_success=True):
-        email = email or os.getenv(
-            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
-        password = password or os.getenv(
-            'TEST_USER_PASSWORD', None) or 'test correct password'
+
+class StoreTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.test_store = fixture_setup.TestStore()
+        self.useFixture(self.test_store)
+
+    def login(self, email=None, password=None, expect_success=True):
+        email = email or self.test_store.user_email
+        password = password or self.test_store.user_password
 
         process = pexpect.spawn(self.snapcraft_command, ['login'])
 
@@ -121,7 +126,7 @@ class TestCase(testtools.TestCase):
         # sleep a few seconds to avoid hitting the store restriction on
         # following registrations.
         if wait:
-            time.sleep(10)
+            time.sleep(self.test_store.register_delay)
 
     def update_name_and_version(self, project_dir, name=None, version=None):
         unique_id = uuid.uuid4().int
@@ -140,4 +145,3 @@ class TestCase(testtools.TestCase):
             else:
                 print(line)
         return updated_project_dir
-
