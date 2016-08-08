@@ -75,8 +75,9 @@ class RustPluginTestCase(tests.TestCase):
                        '--root', plugin.installdir], env=plugin._build_env())
         ])
 
+    @mock.patch.object(rust.sources, 'Script')
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_pull(self, run_mock):
+    def test_pull(self, run_mock, script_mock):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -91,3 +92,8 @@ class RustPluginTestCase(tests.TestCase):
                        "--prefix=%s" % plugin._rustpath,
                        "--disable-sudo", "--save"])
         ])
+
+        rustdir = os.path.join(plugin.partdir, 'rust')
+        run_mock.assert_called_once_with([
+            os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
+            '--disable-sudo', '--save'])
