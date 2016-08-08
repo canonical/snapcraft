@@ -31,6 +31,7 @@ class MakePluginTestCase(tests.TestCase):
         class Options:
             makefile = None
             make_parameters = []
+            disable_parallel = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -85,6 +86,22 @@ class MakePluginTestCase(tests.TestCase):
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
+        ])
+
+    @mock.patch.object(make.MakePlugin, 'run')
+    def test_build_disable_parallel(self, run_mock):
+        self.options.disable_parallel = True
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertEqual(2, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j1']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])

@@ -50,9 +50,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
                         'Expected "configflags" to be included in properties')
         self.assertTrue('install-via' in properties,
                         'Expected "install-via" to be included in properties')
-        self.assertTrue('disable-parallel' in properties,
-                        'Expected "disable-parallel" to be included in '
-                        'properties')
 
         # Check configflags property
         configflags = properties['configflags']
@@ -104,20 +101,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertEqual(installvia_default, 'destdir',
                          'Expected "install-via" "default" to be "destdir", '
                          'but it was "{}"'.format(installvia_default))
-
-        # Check disable-parallel property
-        disable_parallel = properties['disable-parallel']
-        self.assertTrue('type' in disable_parallel,
-                        'Expected "type" to be included in "disable-parallel"')
-        self.assertTrue('default' in disable_parallel,
-                        'Expected "default" to be included in '
-                        '"disable-parallel"')
-
-        disable_parallel_default = disable_parallel['default']
-        self.assertEqual(disable_parallel_default, False,
-                         'Expected "disable-parallel" "default" to be '
-                         '"False", but it was "{}"'.format(
-                            disable_parallel_default))
 
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
