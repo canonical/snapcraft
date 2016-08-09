@@ -26,7 +26,7 @@ class ListPluginsCommandTestCase(tests.TestCase):
         'ant        catkin  copy  go      gradle  jdk     kernel  maven  '
         'nodejs             python   python3  rust   tar-content\n'
         'autotools  cmake   dump  godeps  gulp    kbuild  make    '
-        'nil    plainbox-provider  python2  qmake    scons\n'
+        'nil    plainbox-provider  python2  qmake    scons  waf\n'
     )
 
     def test_list_plugins_non_tty(self):
@@ -55,7 +55,7 @@ class ListPluginsCommandTestCase(tests.TestCase):
             'autotools  go      kbuild  nodejs             qmake      \n'
             'catkin     godeps  kernel  plainbox-provider  rust       \n'
             'cmake      gradle  make    python             scons      \n'
-            'copy       gulp    maven   python2            tar-content\n'
+            'copy       gulp    maven   python2            tar-content waf\n'
         )
 
         main(['list-plugins'])
