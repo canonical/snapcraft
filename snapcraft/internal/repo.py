@@ -151,7 +151,7 @@ class _AptCache:
         if self._use_geoip or self._sources_list:
             release = platform.linux_distribution()[2]
             sources_list = _format_sources_list(
-                self._sources_list, self._deb_arch, self._use_geopip, release)
+                self._sources_list, self._deb_arch, self._use_geoip, release)
         else:
             sources_list = _get_local_sources_list()
 
@@ -329,12 +329,13 @@ def _get_geoip_country_code_prefix():
     return ''
 
 
-def _format_sources_list(sources_list, deb_arch, use_geoip, release='xenial'):
+def _format_sources_list(sources_list, *,
+                         deb_arch, use_geoip=False, release='xenial'):
     if not sources_list:
         sources_list = _DEFAULT_SOURCES
 
     if deb_arch in ('amd64', 'i386'):
-        if project_options.use_geoip:
+        if use_geoip:
             geoip_prefix = _get_geoip_country_code_prefix()
             prefix = '{}.archive'.format(geoip_prefix)
         else:
