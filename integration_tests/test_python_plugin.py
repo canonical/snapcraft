@@ -82,3 +82,18 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
         self.assertEqual('#!/usr/bin/env python2', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
+
+    def test_build_doesnt_get_bad_install_directory_lp1586546(self):
+        """Verify that LP: #1586546 doesn't come back."""
+        project_dir = 'python-pyyaml'
+        self.run_snapcraft('stage', project_dir)
+        self.assertThat(
+            os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
+                'python2.7', 'dist-packages', 'yaml'),
+            DirExists())
+        self.assertThat(
+            os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
+                'python3', 'dist-packages', 'yaml'),
+            DirExists())

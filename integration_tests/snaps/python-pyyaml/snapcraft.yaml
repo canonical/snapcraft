@@ -1,0 +1,14 @@
+name: python-pyyaml
+version: 0
+summary: summary
+description: description
+confinement: strict
+
+parts:
+  python2:
+    plugin: python2
+    source: http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz
+
+  python3:
+    plugin: python3
+    source: http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz
