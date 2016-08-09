@@ -151,7 +151,8 @@ class _AptCache:
         if self._use_geoip or self._sources_list:
             release = platform.linux_distribution()[2]
             sources_list = _format_sources_list(
-                self._sources_list, self._deb_arch, self._use_geoip, release)
+                self._sources_list, deb_arch=self._deb_arch,
+                use_geoip=self._use_geoip, release=release)
         else:
             sources_list = _get_local_sources_list()
 
