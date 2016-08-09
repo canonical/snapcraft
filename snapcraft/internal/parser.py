@@ -270,31 +270,29 @@ def _process_wiki_entry(entry, master_parts_list):
     except ScannerError as e:
         logger.warning(
             'Bad wiki entry, possibly malformed YAML: {}'.format(e))
-        return 1
+        raise InvalidEntryError('Bad wiki entry: {}'.format(entry))
 
     part_name = data.get('project-part')
     if part_name is not None and part_name in master_parts_list:
         logger.warning("Duplicate part found in wiki: {}".format(
             part_name))
-        return 1
+        raise InvalidEntryError('duplicate entry: {}'.format(entry))
 
     try:
         parts_list, after_parts = _process_entry(data)
     except InvalidEntryError as e:
         logger.warning('Invalid wiki entry: {}'.format(e))
-        return 1
+        raise e
 
     if is_valid_parts_list(parts_list, after_parts):
         master_parts_list.update(parts_list)
-
-    return 0
 
 
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
-    errors = dict(wiki=0)
+    wiki_errors = 0
 
     output = output.replace(b'{{{', b'').replace(b'}}}', b'')
     output = output.strip()
@@ -305,15 +303,22 @@ def _process_index(output):
     for line in output.decode().splitlines():
         if line == '---':
             if entry:
-                errors['wiki'] += _process_wiki_entry(entry, master_parts_list)
+                try:
+                    _process_wiki_entry(entry, master_parts_list)
+                except InvalidEntryError:
+                    wiki_errors += 1
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
 
     if entry:
-        errors['wiki'] += _process_wiki_entry(entry, master_parts_list)
+        try:
+            _process_wiki_entry(entry, master_parts_list)
+        except InvalidEntryError:
+            wiki_errors += 1
 
-    return (master_parts_list, errors)
+    return {'master_parts_list': master_parts_list,
+            'wiki_errors': wiki_errors}
 
 
 def run(args):
@@ -331,15 +336,17 @@ def run(args):
         # XXX: fetch the index from the wiki
         output = '{}'
 
-    master_parts_list, errors = _process_index(output)
+    data = _process_index(output)
+    master_parts_list = data['master_parts_list']
+    wiki_errors = data['wiki_errors']
+
+    if wiki_errors:
+        logger.warning("{} wiki errors found!".format(wiki_errors))
 
     _write_parts_list(path, master_parts_list)
 
     if args['--debug']:
         print(yaml.dump(master_parts_list, default_flow_style=False))
-
-    if errors['wiki'] > 0:
-        raise WikiError("Wiki errors found")
 
     return args
 

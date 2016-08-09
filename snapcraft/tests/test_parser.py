@@ -34,7 +34,6 @@ from snapcraft.internal.parser import (
     BASE_DIR,
     PART_NAMESPACE_SEP,
     PARTS_FILE,
-    WikiError,
     main,
 )
 from snapcraft.tests import TestCase, fixture_setup
@@ -564,8 +563,7 @@ description: example
             }
         }
 
-        with self.assertRaises(WikiError):
-            main(['--debug', '--index', TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -607,8 +605,7 @@ project-part: 'main2'
                 },
             }
         }
-        with self.assertRaises(WikiError):
-            main(['--debug', '--index', TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -772,8 +769,7 @@ project-part: main
                 },
             }
         }
-        with self.assertRaises(WikiError):
-            main(['--debug', '--index', TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         part = _get_part('main')
         self.assertEqual('example main', part['description'])
