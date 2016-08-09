@@ -46,6 +46,10 @@ class BasePlugin:
                     'type': 'string',
                     'default': '',
                 },
+                'source-checksum': {
+                    'type': 'string',
+                    'default': '',
+                },
                 'source-branch': {
                     'type': 'string',
                     'default': '',
@@ -62,8 +66,9 @@ class BasePlugin:
             'required': [
                 'source',
             ],
-            'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir'],
+            'pull-properties': ['source', 'source-type', 'source-checksum',
+                                'source-branch', 'source-tag',
+                                'source-subdir'],
             'build-properties': []
         }
 
@@ -113,6 +118,7 @@ class BasePlugin:
         part properties to retrieve source code:
 
         - source
+        - source-checksum
         - source-branch
         - source-tag
         - source-type

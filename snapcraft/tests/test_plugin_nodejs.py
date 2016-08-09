@@ -141,11 +141,13 @@ class NodePluginTestCase(tests.TestCase):
                                   'uniqueItems': True},
                 'source': {'type': 'string'},
                 'source-branch': {'default': '', 'type': 'string'},
+                'source-checksum': {'default': '', 'type': 'string'},
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
                 'source-type': {'default': '', 'type': 'string'}},
-            'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir', 'node-engine'],
+            'pull-properties': ['source', 'source-type', 'source-checksum',
+                                'source-branch', 'source-tag',
+                                'source-subdir', 'node-engine'],
             'build-properties': ['node-packages'],
             'type': 'object'}
 

@@ -21,6 +21,9 @@ import unittest.mock
 
 import fixtures
 
+import tarfile
+import zipfile
+
 from snapcraft.internal import sources
 from snapcraft import tests
 
@@ -29,6 +32,36 @@ class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         data = 'Test fake compressed file'
+        self.send_response(200)
+        self.send_header('Content-Length', len(data))
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(data.encode())
+
+    def log_message(self, *args):
+        # Overwritten so the test does not write to stderr.
+        pass
+
+
+class FakeTarChecksumHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        data = '1276481102f218c981e0324180bafd9f checksum.tar'
+        self.send_response(200)
+        self.send_header('Content-Length', len(data))
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(data.encode())
+
+    def log_message(self, *args):
+        # Overwritten so the test does not write to stderr.
+        pass
+
+
+class FakeZipChecksumHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        data = '76cdb2bad9582d23c1f6f4d868218d6c checksum.zip'
         self.send_response(200)
         self.send_header('Content-Length', len(data))
         self.send_header('Content-type', 'text/html')
@@ -67,6 +100,92 @@ class TestTar(tests.TestCase):
         mock_prov.assert_called_once_with(dest_dir)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake compressed file', tar_file.read())
+
+    def test_checksum(self):
+        tar = tarfile.open("checksum.tar", "w")
+        tar.close()
+
+        # md5
+        source_checksum = '1276481102f218c981e0324180bafd9f'
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # sha1
+        source_checksum = '34e163be8e43c5631d8b92e9c43ab0bf0fa62b9c'
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # sha224
+        source_checksum = ('82be34614e8ca3d20d1733e52ae9b5b12902c196eeb4ee36c'
+                           '2625b5f')
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # sha256
+        source_checksum = ('84ff92691f909a05b224e1c56abb4864f01b4f8e3c854e4bb'
+                           '4c7baf1d3f6d652')
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # sha384
+        source_checksum = ('a31859d12a1176d02c2552f1bea2cba40a3ec809a7b224425'
+                           '04e7dd1c19201e6eeffce9a54d13760924ad73aad45049f')
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # sha512
+        source_checksum = ('1e543b135acb1da2d9ce119c11d6fa9de2c9ca2e97e55fdf2'
+                           '481c2944779a3d6df4a7c74f87692072ada4d494bbc3018d7'
+                           '545b3c631dac1bfb787f81e0b76530')
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # From file
+        source_checksum_write = open('CHECKSUM', 'w')
+        source_checksum_write.write('1e543b135acb1da2d9ce119c11d6fa9de2c9ca2e'
+                                    '97e55fdf2481c2944779a3d6df4a7c74f8769207'
+                                    '2ada4d494bbc3018d7545b3c631dac1bfb787f81'
+                                    'e0b76530 checksum.tar')
+        source_checksum_write.close()
+        source_checksum = 'CHECKSUM'
+
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+        # From "remote" file
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+        server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeTarChecksumHTTPRequestHandler)
+        server_thread = threading.Thread(target=server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        server_thread.start()
+
+        checksum_file_name = 'CHECKSUM'
+        source_checksum = 'http://{}:{}/{file_name}'.format(
+            *server.server_address, file_name=checksum_file_name)
+
+        sources.verify_checksum(source_checksum, "checksum.tar")
+
+    def test_non_matching_checksum(self):
+        tar = tarfile.open("checksum.tar", "w")
+        tar.close()
+
+        source_checksum = '1234481102f218c981e0324180ba1234'
+
+        with self.assertRaises(sources.ChecksumDoesNotMatch) as raised:
+            sources.verify_checksum(source_checksum, "checksum.tar")
+        expected_message = ("the checksum ( 1234481102f218c981e0324180ba1234 "
+                            ") doesn't match the file ( 1276481102f218c981e03"
+                            "24180bafd9f )")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_invalid_checksum(self):
+        tar = tarfile.open("checksum.tar", "w")
+        tar.close()
+
+        source_checksum = 'this should NOT be a valid checksum'
+
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.verify_checksum(source_checksum, "checksum.tar")
+        expected_message = ("Invalid checksum format")
+        self.assertEqual(raised.exception.message, expected_message)
 
 
 class TestZip(tests.TestCase):
@@ -113,6 +232,92 @@ class TestZip(tests.TestCase):
 
         with open(zip_download, 'r') as zip_file:
             self.assertEqual('Test fake compressed file', zip_file.read())
+
+    def test_checksum(self):
+        zipfile_check = zipfile.ZipFile('checksum.zip', 'w')
+        zipfile_check.close()
+
+        # md5
+        source_checksum = '76cdb2bad9582d23c1f6f4d868218d6c'
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # sha1
+        source_checksum = 'b04f3ee8f5e43fa3b162981b50bb72fe1acabb33'
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # sha224
+        source_checksum = ('a3cb5d98d33ad55b145b1d058d8ea50b3c212ad949ed85b6f'
+                           '7392196')
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # sha256
+        source_checksum = ('8739c76e681f900923b900c9df0ef75cf421d39cabb54650c'
+                           '4b9ad19b6a76d85')
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # sha384
+        source_checksum = ('35b38c9c2bfa0a9716fc424785c169b2f4b8cf9cd039ef63b'
+                           '502194ee482c332866f218fad8c9d00928394663ee75794')
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # sha512
+        source_checksum = ('5e2f959f36b66df0580a94f384c5fc1ceeec4b2a3925f062d'
+                           '7b68f21758b86581ac2adcfdde73a171a28496e758ef1b23c'
+                           'a4951c05455cdae9357cc3b5a5825f')
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # From file
+        source_checksum_write = open('CHECKSUM', 'w')
+        source_checksum_write.write('5e2f959f36b66df0580a94f384c5fc1ceeec4b2a'
+                                    '3925f062d7b68f21758b86581ac2adcfdde73a17'
+                                    '1a28496e758ef1b23ca4951c05455cdae9357cc3'
+                                    'b5a5825f checksum.zip')
+        source_checksum_write.close()
+        source_checksum = 'CHECKSUM'
+
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+        # From "remote" file
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+        server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeZipChecksumHTTPRequestHandler)
+        server_thread = threading.Thread(target=server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        server_thread.start()
+
+        checksum_file_name = 'CHECKSUM'
+        source_checksum = 'http://{}:{}/{file_name}'.format(
+            *server.server_address, file_name=checksum_file_name)
+
+        sources.verify_checksum(source_checksum, "checksum.zip")
+
+    def test_non_matching_checksum(self):
+        zipfile = tarfile.open("checksum.zip", "w")
+        zipfile.close()
+
+        source_checksum = '1234481102f218c981e0324180ba1234'
+
+        with self.assertRaises(sources.ChecksumDoesNotMatch) as raised:
+            sources.verify_checksum(source_checksum, "checksum.zip")
+        expected_message = ("the checksum ( 1234481102f218c981e0324180ba1234 "
+                            ") doesn't match the file ( 1276481102f218c981e03"
+                            "24180bafd9f )")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_invalid_checksum(self):
+        tar = tarfile.open("checksum.zip", "w")
+        tar.close()
+
+        source_checksum = 'this should NOT be a valid checksum'
+
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.verify_checksum(source_checksum, "checksum.zip")
+        expected_message = ("Invalid checksum format")
+        self.assertEqual(raised.exception.message, expected_message)
 
 
 class SourceTestCase(tests.TestCase):
@@ -172,6 +377,15 @@ class TestBazaar(SourceTestCase):
             sources.Bazaar('lp:mysource', 'source_dir', source_branch='branch')
 
         expected_message = 'can\'t specify a source-branch for a bzr source'
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(
+                sources.IncompatibleOptionsError) as raised:
+            sources.Bazaar('lp:mysource', 'source_dir',
+                           source_checksum='checksum')
+
+        expected_message = 'can\'t specify a source-checksum for a bzr source'
         self.assertEqual(raised.exception.message, expected_message)
 
 
@@ -255,6 +469,15 @@ class TestGit(SourceTestCase):
             'can\'t specify both source-tag and source-branch for a git source'
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Git('git://mysource', 'source_dir',
+                        source_checksum='checksum')
+
+        expected_message = \
+            'can\'t specify source-checksum for a git source'
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestMercurial(SourceTestCase):
 
@@ -323,6 +546,15 @@ class TestMercurial(SourceTestCase):
             'source')
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial(
+                'hg://mysource', 'source_dir', source_checksum='checksum')
+
+        expected_message = (
+            'can\'t specify source-checksum for a mercurial source')
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestSubversion(SourceTestCase):
 
@@ -379,6 +611,15 @@ class TestSubversion(SourceTestCase):
         expected_message = (
             "Can't specify source-tag OR source-branch for a Subversion "
             "source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_checksum_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion(
+                'svn://mysource', 'source_dir', source_checksum='checksum')
+
+        expected_message = (
+            "Can't specify source-checksum for a Subversion source")
         self.assertEqual(raised.exception.message, expected_message)
 
 

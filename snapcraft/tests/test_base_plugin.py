@@ -98,11 +98,13 @@ class GetSourceWithBranches(tests.TestCase):
     scenarios = [
         ('git with source branch and tag', {
             'source_type': 'git',
+            'source_checksum': None,
             'source_branch': 'test_branch',
             'source_tag': 'tag',
         }),
         ('hg with source branch and tag', {
             'source_type': 'mercurial',
+            'source_checksum': None,
             'source_branch': 'test_branch',
             'source_tag': 'tag',
         }),
@@ -110,7 +112,8 @@ class GetSourceWithBranches(tests.TestCase):
 
     def test_get_source_with_branch_and_tag_must_raise_error(self):
         options = tests.MockOptions('lp:source', self.source_type,
-                                    self.source_branch, self.source_tag)
+                                    self.source_checksum, self.source_branch,
+                                    self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
             plugin.pull()
@@ -126,24 +129,22 @@ class GetSourceTestCase(tests.TestCase):
     scenarios = [
         ('bzr with source branch', {
             'source_type': 'bzr',
+            'source_checksum': None,
             'source_branch': 'test_branch',
             'source_tag': None,
             'error': 'source-branch'}),
         ('tar with source branch', {
             'source_type': 'tar',
+            'source_checksum': None,
             'source_branch': 'test_branch',
             'source_tag': None,
             'error': 'source-branch'}),
-        ('tar with source tag', {
-            'source_type': 'tar',
-            'source_branch': None,
-            'source_tag': 'test_tag',
-            'error': 'source-tag'})
     ]
 
     def test_get_source_with_branch_must_raise_error(self):
         options = tests.MockOptions('lp:this', self.source_type,
-                                    self.source_branch, self.source_tag)
+                                    self.source_checksum, self.source_branch,
+                                    self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
