@@ -119,8 +119,6 @@ parts:
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
 
         project_options = mock.Mock(spec=snapcraft.ProjectOptions)
-        mock_apt_cache = mock.Mock()
-        mock_apt_progress = mock.Mock()
 
         project_options = main(['pull', 'pull1'])
 
@@ -134,9 +132,6 @@ parts:
         stage-packages: ['mir']"""
 
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
-
-        mock_apt_cache = mock.Mock()
-        mock_apt_progress = mock.Mock()
 
         project_options = main(['pull', 'pull1', '--enable-geoip'])
 
