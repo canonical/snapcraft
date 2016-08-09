@@ -35,8 +35,9 @@ In addition, this plugin uses the following plugin-specific keywords:
 import snapcraft
 
 
-class WAF(snapcraft.BasePlugin):
+class WafPlugin(snapcraft.BasePlugin):
     """plugin to build via waf build system"""
+
     @classmethod
     def schema(cls):
         schema = super().schema()
