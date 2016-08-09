@@ -29,6 +29,7 @@ import subprocess
 import sys
 import urllib
 import urllib.request
+from distutils.dir_util import copy_tree
 from contextlib import contextmanager
 
 import apt
@@ -176,9 +177,7 @@ class _AptCache:
         apt_cache.update(fetch_progress=self.progress,
                          sources_list=sources_list_file)
 
-        if os.path.exists(rootdir):
-            shutil.rmtree(rootdir)
-        shutil.copytree(apt_cache_dir, rootdir)
+        copy_tree(apt_cache_dir, rootdir, update=True)
 
         self.apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
         self.apt_cache.open()
