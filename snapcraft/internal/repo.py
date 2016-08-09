@@ -139,6 +139,8 @@ class _AptCache:
         for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
             apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
 
+        # Clear up apt's Post-Invoke-Success as we are not running
+        # on the system.
         apt.apt_pkg.config.clear('APT::Update::Post-Invoke-Success')
 
         self.progress = apt.progress.text.AcquireProgress()
@@ -147,7 +149,7 @@ class _AptCache:
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
 
-    def _setup_sources_list(self, rootdir):
+    def _setup_apt_cache(self, rootdir):
         if self._use_geoip or self._sources_list:
             release = platform.linux_distribution()[2]
             sources_list = _format_sources_list(
@@ -160,41 +162,43 @@ class _AptCache:
             sources_list.encode(sys.getfilesystemencoding())).hexdigest()
 
         cache_dir = os.path.join(self._cache_dir, sources_list_digest)
-        self.apt_cache_dir = os.path.join(cache_dir, 'apt')
-        self.package_cache_dir = os.path.join(cache_dir, 'packages')
+        apt_cache_dir = os.path.join(cache_dir, 'apt')
+        package_cache_dir = os.path.join(cache_dir, 'packages')
 
         sources_list_file = os.path.join(
-            self.apt_cache_dir, 'etc', 'apt', 'sources.list')
+            apt_cache_dir, 'etc', 'apt', 'sources.list')
 
         os.makedirs(os.path.dirname(sources_list_file), exist_ok=True)
         with open(sources_list_file, 'w') as f:
             f.write(sources_list)
 
-        apt_cache = apt.Cache(rootdir=self.apt_cache_dir, memonly=True)
+        apt_cache = apt.Cache(rootdir=apt_cache_dir, memonly=True)
         apt_cache.update(fetch_progress=self.progress,
                          sources_list=sources_list_file)
 
         if os.path.exists(rootdir):
             shutil.rmtree(rootdir)
-        shutil.copytree(self.apt_cache_dir, rootdir)
-        self.apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+        shutil.copytree(apt_cache_dir, rootdir)
 
+        self.apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
         self.apt_cache.open()
 
-    def _restore_cached_packages(self, download_dir):
+        return package_cache_dir
+
+    def _restore_cached_packages(self, package_cache_dir, download_dir):
         for pkg in self.apt_cache.get_changes():
-            src = os.path.join(self.package_cache_dir, pkg.name)
+            src = os.path.join(package_cache_dir, pkg.name)
             dst = os.path.join(download_dir, pkg.name)
             if os.path.exists(src):
                 os.link(src, dst)
 
-    def _store_cached_packages(self, download_dir):
-        os.makedirs(self.package_cache_dir, exist_ok=True)
+    def _store_cached_packages(self, package_cache_dir, download_dir):
+        os.makedirs(package_cache_dir, exist_ok=True)
         for pkg in os.listdir(download_dir):
             if not pkg.endswith('.deb'):
                 continue
             src = os.path.join(download_dir, pkg)
-            dst = os.path.join(self.package_cache_dir, pkg)
+            dst = os.path.join(package_cache_dir, pkg)
             # The dst may be an incomplete or broken so let's update
             # just in case.
             if os.path.exists(dst):
@@ -205,12 +209,12 @@ class _AptCache:
     def archive(self, rootdir, download_dir):
         try:
             self._setup_apt(download_dir)
-            self._setup_sources_list(rootdir)
-            self._restore_cached_packages(download_dir)
+            package_cache_dir = self._setup_apt_cache(rootdir)
+            self._restore_cached_packages(package_cache_dir, download_dir)
             # Create the 'partial' subdir too (LP: #1578007).
             os.makedirs(os.path.join(download_dir, 'partial'), exist_ok=True)
             yield self.apt_cache
-            self._store_cached_packages(download_dir)
+            self._store_cached_packages(package_cache_dir, download_dir)
         except Exception as e:
             logger.debug('Exception occured: {!r}'.format(e))
             raise e
