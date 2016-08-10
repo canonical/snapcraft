@@ -57,14 +57,18 @@ class BasePlugin:
                 'source-subdir': {
                     'type': 'string',
                     'default': None,
-                }
+                },
+                'disable-parallel': {
+                    'type': 'boolean',
+                    'default': False,
+                },
             },
             'required': [
                 'source',
             ],
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir'],
-            'build-properties': []
+            'build-properties': ['disable-parallel']
         }
 
     @property
@@ -85,10 +89,15 @@ class BasePlugin:
         self.project = project
         self.options = options
 
+        # The remote parts can have a '/' in them to separate the main project
+        # part with the subparts. This is rather unfortunate as it affects the
+        # the layout of parts inside the parts directory causing collisions
+        # between the main project part and its subparts.
+        part_dir = name.replace('/', '\N{BIG SOLIDUS}')
         if project:
-            self.partdir = os.path.join(project.parts_dir, self.name)
+            self.partdir = os.path.join(project.parts_dir, part_dir)
         else:
-            self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+            self.partdir = os.path.join(os.getcwd(), 'parts', part_dir)
 
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
@@ -213,6 +222,18 @@ class BasePlugin:
             'Building for a different target architecture requires '
             'a plugin specific implementation in the '
             '{!r} plugin'.format(self.name))
+
+    @property
+    def parallel_build_count(self):
+        """Number of CPU's to use for building.
+
+        Number comes from `project.parallel_build_count` unless the part
+        has defined `disable-parallel` as `True`.
+        """
+        if getattr(self.options, 'disable_parallel', False):
+            return 1
+        else:
+            return self.project.parallel_build_count
 
     # Helpers
     def run(self, cmd, cwd=None, **kwargs):

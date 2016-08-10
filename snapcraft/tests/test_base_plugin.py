@@ -38,6 +38,20 @@ class TestBasePlugin(tests.TestCase):
         self.assertEqual(raised.exception.__str__(),
                          'no handler to manage source')
 
+    def test_parallel_build_count_returns_1_when_disabled(self):
+        options = tests.MockOptions(disable_parallel=True)
+        plugin = snapcraft.BasePlugin('test_plugin', options,
+                                      self.project_options)
+        self.assertEqual(plugin.parallel_build_count, 1)
+
+    def test_parallel_build_count_returns_build_count_from_project(self):
+        options = tests.MockOptions(disable_parallel=False)
+        plugin = snapcraft.BasePlugin('test_plugin', options,
+                                      self.project_options)
+        unittest.mock.patch.object(
+            self.project_options, 'parallel_build_count', 2)
+        self.assertEqual(plugin.parallel_build_count, 2)
+
     @unittest.mock.patch('os.path.isdir')
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
         options = tests.MockOptions('file')
@@ -84,6 +98,13 @@ class TestBasePlugin(tests.TestCase):
 
         self.assertTrue(
             os.path.exists(os.path.join(plugin.build_basedir, 'file')))
+
+    def test_part_name_with_forward_slash_is_one_directory(self):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+
+        os.makedirs(plugin.sourcedir)
+
+        self.assertIn('test\N{BIG SOLIDUS}part', os.listdir('parts'))
 
 
 class GetSourceWithBranches(tests.TestCase):

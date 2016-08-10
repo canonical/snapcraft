@@ -147,7 +147,7 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.stagedir, self.snapdir, self.ubuntudir, self.statedir
+            self.stagedir, self.snapdir, self.statedir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -652,13 +652,20 @@ def _migratable_filesets(fileset, srcdir):
 
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
                    follow_symlinks=False, fixup_func=lambda *args: None):
+
     for directory in snap_dirs:
-        os.makedirs(os.path.join(dstdir, directory), exist_ok=True)
+        src = os.path.join(srcdir, directory)
+        dst = os.path.join(dstdir, directory)
+        os.makedirs(dst, exist_ok=True)
+        shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
 
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copystat(os.path.dirname(src), os.path.dirname(dst),
+                        follow_symlinks=follow_symlinks)
+
         if missing_ok and not os.path.exists(src):
             continue
 
@@ -670,7 +677,11 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         if os.path.exists(dst):
             os.remove(dst)
 
-        common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+        if src.endswith('.pc'):
+            shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
+        else:
+            common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+
         fixup_func(dst)
 
 
@@ -784,6 +795,28 @@ def _validate_relative_paths(files):
             raise PluginError('path "{}" must be relative'.format(d))
 
 
+def _file_collides(file_this, file_other):
+    if not file_this.endswith('.pc'):
+        return not filecmp.cmp(file_this, file_other, shallow=False)
+
+    pc_file_1 = open(file_this)
+    pc_file_2 = open(file_other)
+
+    try:
+        for lines in zip(pc_file_1, pc_file_2):
+            for line in zip(lines[0].split('\n'), lines[1].split('\n')):
+                if line[0].startswith('prefix='):
+                    continue
+                if line[0] != line[1]:
+                    return True
+    except Exception as e:
+        raise e from e
+    finally:
+        pc_file_1.close()
+        pc_file_2.close()
+    return False
+
+
 def check_for_collisions(parts):
     """Raises an EnvironmentError if conflicts are found between two parts."""
     parts_files = {}
@@ -802,7 +835,7 @@ def check_for_collisions(parts):
                     f)
                 if os.path.islink(this) and os.path.islink(other):
                     continue
-                if not filecmp.cmp(this, other, shallow=False):
+                if _file_collides(this, other):
                     conflict_files.append(f)
 
             if conflict_files:

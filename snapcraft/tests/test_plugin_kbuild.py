@@ -60,7 +60,8 @@ class KBuildPluginTestCase(tests.TestCase):
         self.assertTrue(properties['kconfigs']['uniqueItems'])
 
         build_properties = schema['build-properties']
-        self.assertEqual(3, len(build_properties))
+        self.assertEqual(4, len(build_properties))
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('kdefconfig' in build_properties)
         self.assertTrue('kconfigfile' in build_properties)
         self.assertTrue('kconfigs' in build_properties)

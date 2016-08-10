@@ -65,7 +65,7 @@ Options specific to building:
 Options specific to cleaning:
   -s <step>, --step <step>              only clean the specified step and those
                                         that depend upon it. <step> can be one
-                                        of: pull, build, stage or strip.
+                                        of: pull, build, stage or prime.
 
 Options specific to snapping:
   -o <snap-file>, --output <snap-file>  used in case you want to rename the
@@ -168,7 +168,7 @@ def _scaffold_examples(directory):
 
     print("Snapcraft tour initialized in {}\n"
           "Instructions are in the README, or "
-          "https://snapcraft.io/create/#begin".format(directory))
+          "http://snapcraft.io/create/#tour".format(directory))
 
 
 def _list_plugins():

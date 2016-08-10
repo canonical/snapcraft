@@ -122,7 +122,7 @@ def get_arch():
 
 def get_parallel_build_count():
     raise EnvironmentError(
-        "This plugin is outdated, use 'project.parallel_build_count'")
+        "This plugin is outdated, use 'parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):
@@ -206,6 +206,11 @@ def replace_in_file(directory, file_pattern, search_pattern, replacement):
 
 
 def _search_and_replace_contents(file_path, search_pattern, replacement):
+    # Don't bother trying to rewrite a symlink. It's either invalid or the
+    # linked file will be rewritten on its own.
+    if os.path.islink(file_path):
+        return
+
     with open(file_path, 'r+') as f:
         try:
             original = f.read()

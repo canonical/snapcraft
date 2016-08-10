@@ -93,7 +93,7 @@ class CommonMigratedTestCase(tests.TestCase):
         self.assertEqual(
             str(raised.exception),
             "This plugin is outdated, use "
-            "'project.parallel_build_count'")
+            "'parallel_build_count'")
 
     def test_deb_arch_migration_message(self):
         with self.assertRaises(EnvironmentError) as raised:
