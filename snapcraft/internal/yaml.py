@@ -109,10 +109,6 @@ class PluginNotDefinedError(Exception):
 
 class Config:
 
-    @property
-    def part_names(self):
-        return self._part_names
-
     def __init__(self, project_options=None):
         if project_options is None:
             project_options = snapcraft.ProjectOptions()
@@ -132,9 +128,17 @@ class Config:
 
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
-
-        self._remote_parts = parts.get_remote_parts()
         self._process_parts()
+
+    @property
+    def part_names(self):
+        return self._part_names
+
+    @property
+    def _remote_parts(self):
+        if getattr(self, '_remote_parts_attr', None) is None:
+            self._remote_parts_attr = parts.get_remote_parts()
+        return self._remote_parts_attr
 
     def _process_parts(self):
         for part_name in self.data.get('parts', []):

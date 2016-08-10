@@ -57,8 +57,6 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
                              '..', '..', '..', 'schema'))
         self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
 
-        self.useFixture(fixture_setup.FakeParts())
-
         patcher = mock.patch('multiprocessing.cpu_count')
         self.cpu_count = patcher.start()
         self.cpu_count.return_value = 2
@@ -90,6 +88,13 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
             self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
                             'Expected {!r} to be run for {}'.format(
                                 step, part_name))
+
+
+class TestWithFakeRemoteParts(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeParts())
 
 
 class SilentProgressBar(progressbar.ProgressBar):
