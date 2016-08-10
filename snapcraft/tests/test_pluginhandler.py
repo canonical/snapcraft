@@ -34,6 +34,7 @@ from snapcraft.internal import (
     common,
     lifecycle,
     pluginhandler,
+    repo,
     states,
 )
 from snapcraft import tests
@@ -2065,9 +2066,9 @@ class StagePackagesTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = patch('snapcraft.internal.repo._setup_apt_cache')
-        self.setup_apt_mock = patcher.start()
-        self.setup_apt_mock.return_value = ({}, None)
+        patcher = patch.object(snapcraft.internal.repo.Ubuntu, 'get')
+        setup_apt_mock = patcher.start()
+        setup_apt_mock.side_effect = repo.PackageNotFoundError('non-existing')
         self.addCleanup(patcher.stop)
 
     def test_missing_stage_package_displays_nice_error(self):
