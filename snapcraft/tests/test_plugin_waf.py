@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import stat
 
 from unittest import mock
 
@@ -25,13 +24,14 @@ from snapcraft.plugins import waf
 
 
 class WafPluginTestCase(tests.TestCase):
+    """Plugin to provide snapcraft support for the waf build system"""
 
     def setUp(self):
-        super().setUp()
+        super(WafPluginTestCase, self).setUp()
 
         class Options:
+            """Internal Options Class matching the Waf plugin"""
             configflags = []
-            install_via = 'destdir'
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -41,6 +41,7 @@ class WafPluginTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
+        """Test validity of the Waf Plugin schema"""
         schema = waf.WafPlugin.schema()
 
         # Verify the presence of all properties
@@ -89,9 +90,10 @@ class WafPluginTestCase(tests.TestCase):
         self.assertEqual(1, len(build_properties))
         self.assertTrue('configflags' in build_properties)
 
-    def build_with_configure(self):
+    def waf_build(self):
+        """Helper to call a full build"""
         plugin = waf.WafPlugin('test-part', self.options,
-                                           self.project_options)
+                               self.project_options)
         os.makedirs(plugin.sourcedir)
 
         # Create fake waf
@@ -102,8 +104,9 @@ class WafPluginTestCase(tests.TestCase):
         return plugin
 
     @mock.patch.object(waf.WafPlugin, 'run')
-    def test_build_configure_with_destdir(self, run_mock):
-        plugin = self.build_with_configure()
+    def test_build_with_destdir(self, run_mock):
+        """Test building via waf and check for known calls and destdir"""
+        plugin = self.waf_build()
 
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
