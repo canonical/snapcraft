@@ -33,6 +33,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
         class Options:
             configflags = []
             install_via = 'destdir'
+            disable_parallel = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -105,8 +106,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
         build_properties = schema['build-properties']
-        self.assertEqual(2, len(build_properties))
+        self.assertEqual(3, len(build_properties))
         self.assertTrue('configflags' in build_properties)
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('install-via' in build_properties)
 
     def test_install_via_invalid_enum(self):
@@ -264,6 +266,20 @@ class AutotoolsPluginTestCase(tests.TestCase):
                 plugin.installdir)]),
             mock.call(['make', '-j2']),
             mock.call(['make', 'install'])
+        ])
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autoreconf_with_disable_parallel(self, run_mock):
+        self.options.disable_parallel = True
+        plugin = self.build_with_autoreconf()
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['autoreconf', '-i']),
+            mock.call(['./configure', '--prefix=']),
+            mock.call(['make', '-j1']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
         ])
 
     @mock.patch('sys.stdout')
