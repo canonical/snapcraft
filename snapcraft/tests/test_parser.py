@@ -192,28 +192,6 @@ parts: [main]
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
-    def test_main_valid_default_index(self, mock_get, mock_get_origin_data):
-        _create_example_output("""
----
-maintainer: John Doe <john.doe@example.com
-origin: lp:snapcraft-parser-example
-description: example
-parts: [main]
-""")
-        mock_get_origin_data.return_value = {
-            'parts': {
-                'main': {
-                    'source': 'lp:something',
-                    'plugin': 'copy',
-                    'files': ['file1', 'file2'],
-                },
-            }
-        }
-        main(['--debug'])
-        self.assertEqual(0, _get_part_list_count())
-
-    @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
     def test_main_invalid(self,
                           mock_get,
                           mock_get_origin_data):
@@ -587,7 +565,7 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage:
+  Usage
     blahblahblah
 parts: [main]
 ---
@@ -596,7 +574,7 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage
+  Usage:
     blahblahblah
 parts: [main2]
 """)
