@@ -34,8 +34,6 @@ import logging
 import os
 import pkg_resources
 import re
-import sys
-import textwrap
 import urllib
 import yaml
 from yaml.scanner import ScannerError
