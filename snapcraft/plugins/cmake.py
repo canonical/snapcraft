@@ -78,7 +78,7 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
                  self.options.configflags, env=env)
 
         self.run(['make', '-j{}'.format(
-            self.project.parallel_build_count)], env=env)
+            self.parallel_build_count)], env=env)
 
         self.run(['make', 'install', 'DESTDIR=' + self.installdir], env=env)
 

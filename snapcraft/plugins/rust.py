@@ -65,7 +65,7 @@ class RustPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         self.run([self._cargo, "install",
-                  "-j{}".format(self.project.parallel_build_count),
+                  "-j{}".format(self.parallel_build_count),
                   "--root", self.installdir], env=self._build_env())
 
     def _build_env(self):
