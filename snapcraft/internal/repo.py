@@ -239,16 +239,16 @@ class Ubuntu:
                              use_geoip=project_options.use_geoip)
 
     def get(self, package_names):
-        with self.apt.archive(self.rootdir, self.downloaddir) as apt:
-            self._get(apt, package_names)
+        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+            self._get(apt_cache, package_names)
 
-    def _get(self, apt, package_names):
-        manifest_dep_names = self._manifest_dep_names(apt)
+    def _get(self, apt_cache, package_names):
+        manifest_dep_names = self._manifest_dep_names(apt_cache)
 
         for name in package_names:
             try:
                 logger.debug('Marking {!r} as to install'.format(name))
-                apt[name].mark_install()
+                apt_cache[name].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
 
@@ -257,10 +257,10 @@ class Ubuntu:
 
         # unmark some base packages here
         # note that this will break the consistency check inside apt_cache
-        # (self.apt_cache.broken_count will be > 0)
+        # (apt_cache.broken_count will be > 0)
         # but that is ok as it was consistent before we excluded
         # these base package
-        for pkg in apt:
+        for pkg in apt_cache:
             # those should be already on each system, it also prevents
             # diving into downloading libc6
             if (pkg.candidate.priority in 'essential' and
@@ -281,7 +281,7 @@ class Ubuntu:
             logger.debug('Skipping blacklisted from manifest packages: '
                          '{!r}'.format(skipped_blacklisted))
 
-        apt.fetch_archives(progress=self.apt.progress)
+        apt_cache.fetch_archives(progress=self.apt.progress)
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
@@ -296,14 +296,14 @@ class Ubuntu:
         _fix_xml_tools(rootdir)
         _fix_shebangs(rootdir)
 
-    def _manifest_dep_names(self, apt):
+    def _manifest_dep_names(self, apt_cache):
         manifest_dep_names = set()
 
         with open(os.path.abspath(os.path.join(__file__, '..',
                                                'manifest.txt'))) as f:
             for line in f:
                 pkg = line.strip()
-                if pkg in apt:
+                if pkg in apt_cache:
                     manifest_dep_names.add(pkg)
 
         return manifest_dep_names
