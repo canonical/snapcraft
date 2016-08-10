@@ -37,5 +37,9 @@ class DumpPlugin(snapcraft.BasePlugin):
         super().build()
         if os.path.exists(self.installdir):
             os.rmdir(self.installdir)
-        shutil.copytree(self.builddir, self.installdir,
+        if self.dest_subdir:
+            shutil.copytree(self.builddir, self.installdir + os.sep + self.dest_subdir,
+                        copy_function=snapcraft.common.link_or_copy)
+        else:
+            shutil.copytree(self.builddir, self.installdir,
                         copy_function=snapcraft.common.link_or_copy)
