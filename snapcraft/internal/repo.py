@@ -182,13 +182,11 @@ class _AptCache:
 
         copy_tree(apt_cache_dir, rootdir, update=True)
 
-        self.apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
-        self.apt_cache.open()
-
         return package_cache_dir
 
-    def _restore_cached_packages(self, package_cache_dir, download_dir):
-        for pkg in self.apt_cache.get_changes():
+    def _restore_cached_packages(self, apt_changes,
+                                 package_cache_dir, download_dir):
+        for pkg in apt_changes:
             src = os.path.join(package_cache_dir, pkg.name)
             dst = os.path.join(download_dir, pkg.name)
             if os.path.exists(src):
@@ -212,8 +210,11 @@ class _AptCache:
         try:
             self._setup_apt(download_dir)
             package_cache_dir = self._setup_apt_cache(rootdir)
-            self._restore_cached_packages(package_cache_dir, download_dir)
-            yield self.apt_cache
+            apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+            apt_cache.open()
+            self._restore_cached_packages(apt_cache.get_changes(),
+                                          package_cache_dir, download_dir)
+            yield apt_cache
             self._store_cached_packages(package_cache_dir, download_dir)
         except Exception as e:
             logger.debug('Exception occured: {!r}'.format(e))
