@@ -270,7 +270,7 @@ def snap(project_options, directory=None, output=None):
         ret = None
         if os.isatty(sys.stdout.fileno()):
             message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
-                    snap['name'])
+                snap['name'])
             progress_indicator = ProgressBar(
                 widgets=[message, AnimatedMarker()], maxval=7)
             progress_indicator.start()
