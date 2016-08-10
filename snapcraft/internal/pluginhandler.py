@@ -147,7 +147,7 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.stagedir, self.snapdir, self.ubuntudir, self.statedir
+            self.stagedir, self.snapdir, self.statedir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
