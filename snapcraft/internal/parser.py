@@ -105,13 +105,7 @@ def main(argv=None):
 
     log.configure(log_level=log_level)
 
-    try:
-        return run(args)
-    except Exception as e:
-        if args['--debug']:
-            raise
-
-        sys.exit(textwrap.fill(str(e)))
+    return run(args)
 
 
 def _get_namespaced_partname(key, partname):
@@ -334,7 +328,7 @@ def run(args):
         output = urllib.request.urlopen(index).read()
     else:
         # XXX: fetch the index from the wiki
-        output = '{}'
+        output = b'{}'
 
     data = _process_index(output)
     master_parts_list = data['master_parts_list']

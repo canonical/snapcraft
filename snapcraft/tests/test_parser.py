@@ -201,6 +201,10 @@ project-part: main
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
+    def test_main_valid_with_default_index(self):
+        main(['--debug'])
+        self.assertEqual(0, _get_part_list_count())
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_invalid(self,
@@ -578,7 +582,7 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage
+  Usage:
     blahblahblah
 project-part: 'main'
 ---
@@ -587,7 +591,7 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage:
+  Usage
     blahblahblah
 project-part: 'main2'
 """)
