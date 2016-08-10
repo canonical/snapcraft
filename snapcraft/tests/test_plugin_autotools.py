@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016 Harald Sitter <sitter@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,6 +33,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
         class Options:
             configflags = []
             install_via = 'destdir'
+            disable_parallel = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -104,8 +106,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
         build_properties = schema['build-properties']
-        self.assertEqual(2, len(build_properties))
+        self.assertEqual(3, len(build_properties))
         self.assertTrue('configflags' in build_properties)
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('install-via' in build_properties)
 
     def test_install_via_invalid_enum(self):
@@ -156,15 +159,19 @@ class AutotoolsPluginTestCase(tests.TestCase):
             mock.call(['make', 'install'])
         ])
 
-    def build_with_autogen(self):
+    def build_with_autogen(self, files=None):
         plugin = autotools.AutotoolsPlugin('test-part', self.options,
                                            self.project_options)
         os.makedirs(plugin.sourcedir)
 
+        if not files:
+            files = ['autogen.sh']
+
         # No configure-- only autogen.sh. Make sure it's executable.
-        open(os.path.join(plugin.sourcedir, 'autogen.sh'), 'w').close()
-        os.chmod(os.path.join(plugin.sourcedir, 'autogen.sh'),
-                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        for filename in files:
+            open(os.path.join(plugin.sourcedir, filename), 'w').close()
+            os.chmod(os.path.join(plugin.sourcedir, filename),
+                     stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
         plugin.build()
 
@@ -173,6 +180,32 @@ class AutotoolsPluginTestCase(tests.TestCase):
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
     def test_build_autogen_with_destdir(self, run_mock):
         plugin = self.build_with_autogen()
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
+            mock.call(['./configure', '--prefix=']),
+            mock.call(['make', '-j2']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
+        ])
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_bootstrap_with_destdir(self, run_mock):
+        plugin = self.build_with_autogen(files=['bootstrap'])
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['env', 'NOCONFIGURE=1', './bootstrap']),
+            mock.call(['./configure', '--prefix=']),
+            mock.call(['make', '-j2']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
+        ])
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_bootstrap_and_autogen_with_destdir(self, run_mock):
+        plugin = self.build_with_autogen(files=['bootstrap', 'autogen.sh'])
 
         self.assertEqual(4, run_mock.call_count)
         run_mock.assert_has_calls([
@@ -233,6 +266,20 @@ class AutotoolsPluginTestCase(tests.TestCase):
                 plugin.installdir)]),
             mock.call(['make', '-j2']),
             mock.call(['make', 'install'])
+        ])
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autoreconf_with_disable_parallel(self, run_mock):
+        self.options.disable_parallel = True
+        plugin = self.build_with_autoreconf()
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['autoreconf', '-i']),
+            mock.call(['./configure', '--prefix=']),
+            mock.call(['make', '-j1']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
         ])
 
     @mock.patch('sys.stdout')

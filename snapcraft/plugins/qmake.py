@@ -108,7 +108,7 @@ class QmakePlugin(snapcraft.BasePlugin):
                  sources, env=env)
 
         self.run(['make', '-j{}'.format(
-            self.project.parallel_build_count)], env=env)
+            self.parallel_build_count)], env=env)
 
         self.run(['make', 'install', 'INSTALL_ROOT=' + self.installdir],
                  env=env)

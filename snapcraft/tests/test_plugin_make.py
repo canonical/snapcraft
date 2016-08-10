@@ -32,6 +32,7 @@ class MakePluginTestCase(tests.TestCase):
             makefile = None
             make_parameters = []
             make_install_var = 'DESTDIR'
+            disable_parallel = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -90,7 +91,8 @@ class MakePluginTestCase(tests.TestCase):
             'was "{}"'.format(make_install_var_default))
 
         build_properties = schema['build-properties']
-        self.assertEqual(3, len(build_properties))
+        self.assertEqual(4, len(build_properties))
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('makefile' in build_properties)
         self.assertTrue('make-parameters' in build_properties)
         self.assertTrue('make-install-var' in build_properties)
@@ -106,6 +108,22 @@ class MakePluginTestCase(tests.TestCase):
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
+        ])
+
+    @mock.patch.object(make.MakePlugin, 'run')
+    def test_build_disable_parallel(self, run_mock):
+        self.options.disable_parallel = True
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertEqual(2, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j1']),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)])
         ])

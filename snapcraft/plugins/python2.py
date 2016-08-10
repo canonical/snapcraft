@@ -32,6 +32,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - requirements:
       (string)
       path to a requirements.txt file
+    - constraints:
+      (string)
+      path to a constraints file
     - python-packages:
       (list)
       A list of dependencies to get from PyPi
@@ -56,6 +59,9 @@ class Python2Plugin(snapcraft.BasePlugin):
         schema['properties']['requirements'] = {
             'type': 'string',
         }
+        schema['properties']['constraints'] = {
+            'type': 'string',
+        }
         schema['properties']['python-packages'] = {
             'type': 'array',
             'minitems': 1,
@@ -69,7 +75,11 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].extend(['requirements', 'python-packages'])
+        schema['pull-properties'].extend([
+            'requirements',
+            'constraints',
+            'python-packages'
+        ])
 
         return schema
 
@@ -106,22 +116,21 @@ class Python2Plugin(snapcraft.BasePlugin):
         super().pull()
         self._pip()
 
+    def _setup_pip(self):
+        easy_install = os.path.join(
+            self.installdir, 'usr', 'bin', 'easy_install')
+        prefix = os.path.join(self.installdir, 'usr')
+        self.run(['python2', easy_install, '--prefix', prefix, 'pip'])
+
     def _pip(self):
         setup = 'setup.py'
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if self.options.requirements:
-            requirements = os.path.join(self.sourcedir,
-                                        self.options.requirements)
-
         if not os.path.exists(setup) and not \
                 (self.options.requirements or self.options.python_packages):
             return
 
-        easy_install = os.path.join(
-            self.installdir, 'usr', 'bin', 'easy_install')
-        prefix = os.path.join(self.installdir, 'usr')
         site_packages_dir = os.path.join(
             os.path.dirname(common.get_python2_path(self.installdir)),
             'site-packages')
@@ -132,8 +141,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         if not os.path.exists(site_packages_dir):
             os.symlink('dist-packages', site_packages_dir)
 
-        self.run(['python2', easy_install, '--prefix', prefix, 'pip'])
-
+        self._setup_pip()
         pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
         pip_install = ['python2', pip2, 'install',
                        '--global-option=build_ext',
@@ -141,8 +149,17 @@ class Python2Plugin(snapcraft.BasePlugin):
                            _get_python2_include(self.installdir)),
                        '--target', site_packages_dir]
 
+        if self.options.constraints:
+            pip_install = pip_install + [
+                '--constraint',
+                os.path.join(self.sourcedir, self.options.constraints),
+            ]
+
         if self.options.requirements:
-            self.run(pip_install + ['--requirement', requirements])
+            self.run(pip_install + [
+                '--requirement',
+                os.path.join(self.sourcedir, self.options.requirements),
+            ])
 
         if self.options.python_packages:
             self.run(pip_install + ['--upgrade'] +

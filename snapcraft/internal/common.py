@@ -122,7 +122,7 @@ def get_arch():
 
 def get_parallel_build_count():
     raise EnvironmentError(
-        "This plugin is outdated, use 'project.parallel_build_count'")
+        "This plugin is outdated, use 'parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):
