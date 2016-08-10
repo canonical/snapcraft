@@ -57,13 +57,17 @@ class BasePlugin:
                 'source-subdir': {
                     'type': 'string',
                     'default': None,
+                },
+                'dest-subdir': {
+                    'type': 'string',
+                    'default': None,
                 }
             },
             'required': [
                 'source',
             ],
             'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir'],
+                                'source-tag', 'source-subdir', 'dest-subdir'],
             'build-properties': []
         }
 
@@ -104,6 +108,7 @@ class BasePlugin:
             self.builddir = os.path.join(self.build_basedir, source_subdir)
         else:
             self.builddir = self.build_basedir
+        self.dest_subdir = getattr(self.options, 'dest_subdir', None)
 
     # The API
     def pull(self):
