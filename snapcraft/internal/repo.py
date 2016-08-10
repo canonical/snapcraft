@@ -130,6 +130,9 @@ class _AptCache:
         self._use_geoip = use_geoip
 
     def _setup_apt(self, download_dir):
+        # Create the 'partial' subdir too (LP: #1578007).
+        os.makedirs(os.path.join(download_dir, 'partial'), exist_ok=True)
+
         apt.apt_pkg.config.set("Dir::Cache::Archives", download_dir)
 
         # Do not install recommends
@@ -210,8 +213,6 @@ class _AptCache:
             self._setup_apt(download_dir)
             package_cache_dir = self._setup_apt_cache(rootdir)
             self._restore_cached_packages(package_cache_dir, download_dir)
-            # Create the 'partial' subdir too (LP: #1578007).
-            os.makedirs(os.path.join(download_dir, 'partial'), exist_ok=True)
             yield self.apt_cache
             self._store_cached_packages(package_cache_dir, download_dir)
         except Exception as e:
