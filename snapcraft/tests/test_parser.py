@@ -192,6 +192,28 @@ parts: [main]
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_main_valid_default_index(self, mock_get, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+parts: [main]
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug'])
+        self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_main_invalid(self,
                           mock_get,
                           mock_get_origin_data):
@@ -616,6 +638,39 @@ parts: [main2]
         main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
         self.assertEqual(1, _get_part_list_count())
 
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_interactions_with_fake_with_slashes(self,
+                                                      mock_get,
+                                                      mock_get_origin_data):
+
+        fixture = fixture_setup.FakePartsWikiWithSlashes()
+        self.useFixture(fixture)
+
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'curl/a': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'curl-a': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index',
+              fixture.fake_parts_wiki_with_slashes_fixture.url])
+        self.assertEqual(2, _get_part_list_count())
+
+        part1 = _get_part('curl/a')
+        self.assertTrue(part1 is not None)
+
+        part2 = _get_part('curl-a')
+        self.assertTrue(part2 is not None)
+
     @mock.patch('snapcraft.internal.sources.get')
     def test_missing_snapcraft_yaml(self, mock_get):
 
@@ -633,6 +688,24 @@ parts: [somepart]
 
         self.assertRaises(MissingSnapcraftYAMLError, main,
                           ['--debug', '--index', TEST_OUTPUT_PATH])
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_missing_snapcraft_yaml_without_debug(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+parts: [somepart]
+""".format(origin_url=origin_url))
+
+        with self.assertRaises(SystemExit):
+            main(['--index', TEST_OUTPUT_PATH])
 
     @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
