@@ -39,6 +39,7 @@ class Python2PluginTestCase(tests.TestCase):
 
         class Options:
             requirements = ''
+            constraints = ''
             python_packages = []
 
         self.options = Options()
@@ -64,6 +65,7 @@ class Python2PluginTestCase(tests.TestCase):
     def test_schema(self):
         schema = python2.Python2Plugin.schema()
         expected_requirements = {'type': 'string'}
+        expected_constraints = {'type': 'string'}
         expected_python_packages = {
             'type': 'array',
             'minitems': 1,
@@ -71,10 +73,12 @@ class Python2PluginTestCase(tests.TestCase):
             'items': {'type': 'string'},
             'default': [],
         }
-        extend_pull = ['requirements', 'python-packages']
+        extend_pull = ['requirements', 'constraints', 'python-packages']
 
         self.assertDictEqual(expected_requirements,
                              schema['properties']['requirements'])
+        self.assertDictEqual(expected_constraints,
+                             schema['properties']['constraints'])
         self.assertDictEqual(expected_python_packages,
                              schema['properties']['python-packages'])
         self.assertTrue(
@@ -118,16 +122,26 @@ class Python2PluginTestCase(tests.TestCase):
         self.assertFalse(mock_run.called)
 
     @mock.patch.object(python2.Python2Plugin, 'run')
-    def test_pip(self, mock_run):
+    def test_setup_pip(self, mock_run):
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        easy_install = os.path.join(
+            plugin.installdir, 'usr', 'bin', 'easy_install')
+        prefix = os.path.join(plugin.installdir, 'usr')
+
+        plugin._setup_pip()
+        mock_run.assert_called_with(
+            ['python2', easy_install, '--prefix', prefix, 'pip'])
+
+    @mock.patch.object(python2.Python2Plugin, '_setup_pip')
+    @mock.patch.object(python2.Python2Plugin, 'run')
+    def test_pip(self, mock_run, mock_setup_pip):
         self.options.requirements = 'requirements.txt'
+        self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
 
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
-
-        easy_install = os.path.join(
-            plugin.installdir, 'usr', 'bin', 'easy_install')
-        prefix = os.path.join(plugin.installdir, 'usr')
 
         pip2 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip2')
         include = os.path.join(
@@ -138,9 +152,11 @@ class Python2PluginTestCase(tests.TestCase):
                        '--global-option=build_ext',
                        '--global-option=-I{}'.format(include),
                        '--target', target]
+
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+        pip_install = pip_install + ['--constraint', constraints_path]
         calls = [
-            mock.call(['python2', easy_install, '--prefix', prefix, 'pip']),
             mock.call(pip_install + ['--requirement', requirements_path]),
             mock.call(pip_install + ['--upgrade', 'test', 'packages']),
             mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
