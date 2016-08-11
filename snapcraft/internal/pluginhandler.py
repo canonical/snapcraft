@@ -656,15 +656,24 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
     for directory in snap_dirs:
         src = os.path.join(srcdir, directory)
         dst = os.path.join(dstdir, directory)
+
+        dir_stat = os.stat(src)
+        uid = dir_stat.st_uid
+        gid = dir_stat.st_gid
         os.makedirs(dst, exist_ok=True)
+        os.chown(dst, uid, gid, follow_symlinks=follow_symlinks)
         shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
 
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copystat(os.path.dirname(src), os.path.dirname(dst),
-                        follow_symlinks=follow_symlinks)
+
+        dir_stat = os.stat(srcdir)
+        uid = dir_stat.st_uid
+        gid = dir_stat.st_gid
+        os.makedirs(dstdir, exist_ok=True)
+        shutil.copystat(srcdir, dstdir, follow_symlinks=follow_symlinks)
+        os.chown(dstdir, uid, gid, follow_symlinks=follow_symlinks)
 
         if missing_ok and not os.path.exists(src):
             continue
