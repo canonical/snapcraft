@@ -34,7 +34,6 @@ import snapcraft.common
 
 
 class ShellPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
@@ -55,4 +54,4 @@ class ShellPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         for cmd in self.options.build_cmds:
-            self.run(cmd.split())
+            self.run(cmd.split() if ' ' in cmd else [cmd])
