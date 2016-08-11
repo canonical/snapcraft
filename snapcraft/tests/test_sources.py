@@ -384,6 +384,14 @@ class TestSubversion(SourceTestCase):
 
 class TestLocal(tests.TestCase):
 
+    def test_pull_with_source_a_parent_of_current_dir(self):
+        # Verify that the snapcraft root dir does not get copied into itself.
+        os.makedirs(os.path.join('src', 'snapcraft'))
+        local = sources.Local('..', 'src/snapcraft')
+        local.pull()
+
+        self.assertTrue('snapcraft' not in os.listdir('src/snapcraft'))
+
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
         open(os.path.join('src', 'dir', 'file'), 'w').close()
