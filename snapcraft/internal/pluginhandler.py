@@ -655,7 +655,11 @@ def _create_dirs(srcdir, dstdir, follow_symlinks=False):
     uid = dir_stat.st_uid
     gid = dir_stat.st_gid
     os.makedirs(dstdir, exist_ok=True)
-    os.chown(dstdir, uid, gid, follow_symlinks=follow_symlinks)
+    try:
+        os.chown(dstdir, uid, gid, follow_symlinks=follow_symlinks)
+    except PermissionError as e:
+        logger.warning(e)
+
     shutil.copystat(srcdir, dstdir, follow_symlinks=follow_symlinks)
 
 
