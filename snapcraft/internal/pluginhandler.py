@@ -650,21 +650,35 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
+def _create_dirs(srcdir, dstdir, follow_symlinks=False):
+    dir_stat = os.stat(srcdir, follow_symlinks=follow_symlinks)
+    uid = dir_stat.st_uid
+    gid = dir_stat.st_gid
+    os.makedirs(dstdir, exist_ok=True)
+    try:
+        os.chown(dstdir, uid, gid, follow_symlinks=follow_symlinks)
+    except PermissionError as e:
+        logger.warning('unable to chown {dstdir}: {error}'.format(
+            dstdir=dstdir, error=e))
+
+    shutil.copystat(srcdir, dstdir, follow_symlinks=follow_symlinks)
+
+
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
                    follow_symlinks=False, fixup_func=lambda *args: None):
 
     for directory in snap_dirs:
         src = os.path.join(srcdir, directory)
         dst = os.path.join(dstdir, directory)
-        os.makedirs(dst, exist_ok=True)
-        shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
+
+        _create_dirs(src, dst, follow_symlinks=follow_symlinks)
 
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copystat(os.path.dirname(src), os.path.dirname(dst),
-                        follow_symlinks=follow_symlinks)
+
+        _create_dirs(os.path.dirname(src), os.path.dirname(dst),
+                     follow_symlinks=follow_symlinks)
 
         if missing_ok and not os.path.exists(src):
             continue
