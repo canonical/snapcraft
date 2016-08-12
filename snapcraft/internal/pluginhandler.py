@@ -658,7 +658,8 @@ def _create_dirs(srcdir, dstdir, follow_symlinks=False):
     try:
         os.chown(dstdir, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as e:
-        logger.warning(e)
+        logger.warning('unable to chown {dstdir}: {error}'.format(
+            dstdir=dstdir, error=e))
 
     shutil.copystat(srcdir, dstdir, follow_symlinks=follow_symlinks)
 
