@@ -57,17 +57,32 @@ class ShellPluginTestCase(tests.TestCase):
 
     @mock.patch.object(shell.ShellPlugin, 'run')
     def test_build(self, mock_run):
-        cmds = [
-            ('singleword', ['singleword']),
-            ('three words three', ['three', 'words', 'three']),
-            ('make install', ['make', 'install']),
-            ('./waf', ['./waf'])
-        ]
-        self.options.build_cmds = list(cmd for (cmd, _) in cmds)
-        plugin = shell.ShellPlugin(
-            'test-part', self.options, self.project_options)
+        self.options.build_cmds = ['singleword', 'one two three',
+                                   'make install', './waf']
+        plugin = shell.ShellPlugin('testpart', self.options,
+                                   self.project_options)
         os.makedirs(plugin.sourcedir)
         plugin.build()
-        self.assertEqual(len(cmds), mock_run.call_count)
-        for ((_, expected), actual) in zip(cmds, mock_run.call_args_list):
-            self.assertEqual(mock.call(expected), actual)
+        env_data = {
+            'PARTNAME': plugin.name,
+            'BUILDDIR': plugin.builddir,
+            'SRCDIR': plugin.sourcedir,
+            'DESTDIR': plugin.installdir,
+        }
+        self.assertEqual(len(self.options.build_cmds), mock_run.call_count)
+        for (cmd, (call_args, call_kwargs)) in zip(
+                self.options.build_cmds,
+                [list(call) for call in mock_run.call_args_list]):
+            self.assertEqual(len(call_kwargs), 0)
+            self.assertEqual(len(call_args), 1)
+            self.assertEqual(len(call_args[0]), 3)
+            (actual_bash, actual_dash_c, actual_cmd) = call_args[0]
+            self.assertEqual(actual_bash, 'bash')
+            self.assertEqual(actual_dash_c, '-c')
+            self.assertTrue(actual_cmd.endswith(cmd))
+            self.assertEqual({
+                name: value.strip('"') for (name, value) in
+                [mapping.split('=') for mapping in
+                 (actual_cmd[:-len(cmd)]).split(';')
+                 if len(mapping) != 0]
+            }, env_data)
