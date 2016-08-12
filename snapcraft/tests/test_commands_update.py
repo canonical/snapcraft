@@ -25,7 +25,7 @@ from xdg import BaseDirectory
 from snapcraft import main, tests
 
 
-class UpdateCommandTestCase(tests.TestCase):
+class UpdateCommandTestCase(tests.TestWithFakeRemoteParts):
 
     def setUp(self):
         super().setUp()
