@@ -27,6 +27,16 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - build-cmds
       (list of strings)
       The commands to run to build and install the software.
+      Each command will be run under 'bash -c', so pipes, redirects work
+      Each command will be run with the following bash variables set:
+        - $DESTDIR
+          directory to install files into
+        - $SRCDIR
+          directory with retrieved source files
+        - $BUILDDIR
+          directory to build in
+        - $PARTNAME
+          name of part being built
 """
 
 import snapcraft
@@ -45,13 +55,21 @@ class ShellPlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['required'].append('build-cmds')
         schema['build-properties'].extend(['build-cmds'])
         return schema
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self.build_packages.append('bash')
 
     def build(self):
         super().build()
+        env_vars = ['{}="{}"'.format(*mapping) for mapping in {
+            'DESTDIR':  self.installdir,
+            'SRCDIR':   self.sourcedir,
+            'BUILDDIR': self.build_basedir,
+            'PARTNAME': self.name,
+        }.items()]
         for cmd in self.options.build_cmds:
-            self.run(cmd.split() if ' ' in cmd else [cmd])
+            self.run(['bash', '-c', ';'.join(env_vars + [cmd])])
