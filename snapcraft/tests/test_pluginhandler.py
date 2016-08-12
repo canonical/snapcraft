@@ -330,6 +330,33 @@ class PluginTestCase(tests.TestCase):
         self.assertEqual(stat.S_IMODE(
             os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
 
+    @patch('os.chown')
+    def test_migrate_files_preserves_file_mode_chown_permissions(self,
+                                                                 chown_mock):
+        chown_mock.side_effect = PermissionError("No no no")
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        foo = os.path.join('install', 'foo')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        mode = os.stat(foo).st_mode
+
+        new_mode = 0o777
+        os.chmod(foo, new_mode)
+        self.assertNotEqual(mode, new_mode)
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        self.assertEqual(stat.S_IMODE(
+            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
+
+        self.assertTrue(chown_mock.called)
+
     def test_migrate_files_preserves_directory_mode(self):
         os.makedirs('install/foo')
         os.makedirs('stage')
