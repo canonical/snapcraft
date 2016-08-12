@@ -22,7 +22,7 @@ from snapcraft import main, tests
 from snapcraft.tests import fixture_setup
 
 
-class SearchCommandTestCase(tests.TestCase):
+class SearchCommandTestCase(tests.TestWithFakeRemoteParts):
 
     def test_searching_for_a_part_that_exists(self):
         fake_terminal = fixture_setup.FakeTerminal()
