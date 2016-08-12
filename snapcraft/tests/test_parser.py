@@ -781,7 +781,7 @@ project-part: main
         self.assertEqual(1, _get_part_list_count())
 
         self.assertTrue(
-            'Duplicate part found in wiki: main'
+            'Duplicate part found in the wiki: main'
             in fake_logger.output, 'Missing duplicate part info in output')
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
