@@ -75,6 +75,22 @@ class StoreAuthenticationError(StoreError):
         super().__init__(message=message)
 
 
+class StoreKeyRegistrationError(StoreError):
+
+    fmt = 'Key registration failed.'
+
+    def __init__(self, response):
+        try:
+            response_json = response.json()
+            if 'detail' in response_json:
+                self.fmt = response_json['detail']
+        except JSONDecodeError:
+            response_json = {}
+            self.fmt = '%d %s' % (response.status_code, response.reason)
+
+        super().__init__(**response_json)
+
+
 class StoreRegistrationError(StoreError):
 
     __FMT_ALREADY_REGISTERED = (

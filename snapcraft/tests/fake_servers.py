@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 from collections import OrderedDict
 from datetime import datetime
 import json
@@ -289,6 +290,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        account_key_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'account/account-key')
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
@@ -297,6 +300,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
+        elif parsed_path.path.startswith(account_key_path):
+            self._handle_account_key_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -324,6 +329,47 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             ])
         response = {'macaroon': macaroon.serialize()}
         self.wfile.write(json.dumps(response).encode())
+
+    def _handle_account_key_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling account-key request with content {}'.format(data))
+        key_format, raw_key_data = data['key_data'].split(' ', 1)
+        assert key_format == 'openpgp'
+        key_data = base64.urlsafe_b64decode(raw_key_data.encode('ascii'))
+
+        if key_data == b'test-not-implemented':
+            self._handle_account_key_501()
+        elif key_data == b'test-invalid-data':
+            self._handle_account_key_400({
+                'detail': 'Submitted data is not valid.',
+            })
+        else:
+            self._handle_successful_account_key()
+
+    def _handle_successful_account_key(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'account_id': 'abcd',
+            'key_headers': {'public-key-sha3-384': 'hash'},
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_account_key_400(self, error):
+        self.send_response(400)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(error).encode())
+
+    def _handle_account_key_501(self):
+        self.send_response(501)
+        self.send_header('Content-Type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Not Implemented')
 
     def _handle_registration_request(self):
         string_data = self.rfile.read(

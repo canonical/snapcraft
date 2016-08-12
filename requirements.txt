@@ -5,6 +5,7 @@ jsonschema==2.5.1
 oauthlib==1.0.3
 progressbar33==2.4
 PyYAML==3.11
+pygpgme==0.3
 pyxdg==0.25
 requests==2.9.1
 https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz

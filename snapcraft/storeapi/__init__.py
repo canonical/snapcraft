@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 import hashlib
 import itertools
 import json
@@ -144,6 +145,9 @@ class StoreClient():
     def logout(self):
         self.conf.clear()
         self.conf.save()
+
+    def register_key(self, key_data):
+        self.sca.register_key(key_data)
 
     def register(self, snap_name, is_private=False):
         self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
@@ -304,6 +308,22 @@ class SCAClient(Client):
             return response.json()['macaroon']
         else:
             raise errors.StoreAuthenticationError('Failed to get macaroon')
+
+    @staticmethod
+    def _encode_key_data(key_data):
+        return 'openpgp ' + base64.urlsafe_b64encode(key_data).decode('ascii')
+
+    def register_key(self, key_data):
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'account/account-key',
+            data=json.dumps({'key_data': self._encode_key_data(key_data)}),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreKeyRegistrationError(response)
+        # TODO handle macaroon refresh
 
     def register(self, snap_name, is_private, series):
         auth = _macaroon_auth(self.conf)

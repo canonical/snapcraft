@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import getpass
+import io
 import logging
 import subprocess
 import tempfile
 import os
 
+import gpgme
 from tabulate import tabulate
 import yaml
 
@@ -71,6 +73,84 @@ def logout():
     store = storeapi.StoreClient()
     store.logout()
     logger.info('Credentials cleared.')
+
+
+def _get_usable_secret_keys(query=None):
+    ctx = gpgme.Context()
+    for key in ctx.keylist(query, True):
+        if not key.subkeys or not key.uids or key.disabled or not key.can_sign:
+            continue
+        mainkey = key.subkeys[0]
+        if (mainkey.expired or mainkey.revoked or mainkey.disabled or
+                mainkey.invalid):
+            continue
+        # We're currently only interested in RSA >= 4096-bit.
+        if mainkey.pubkey_algo != gpgme.PK_RSA or mainkey.length < 4096:
+            continue
+        yield key
+
+
+def _display_fingerprint(fingerprint):
+    assert len(fingerprint) == 40
+    chunks = [fingerprint[i:i + 4] for i in range(0, 40, 4)]
+    return '{}  {}'.format(' '.join(chunks[:5]), ' '.join(chunks[5:]))
+
+
+_display_key_algorithm = {
+    gpgme.PK_RSA: 'R',
+}
+
+
+def _display_key(key):
+    mainkey = key.subkeys[0]
+    return '%d%s: %s' % (
+        mainkey.length, _display_key_algorithm[mainkey.pubkey_algo],
+        _display_fingerprint(mainkey.fpr))
+
+
+def _select_key(keys):
+    if len(keys) > 1:
+        print('Select a key:')
+        print()
+        width = len(str(len(keys)))
+        for i, key in enumerate(keys):
+            print('{index:{width}d}. {key}'.format(
+                index=i + 1, key=_display_key(key), width=width))
+            print('{blank:{width}}  {uid}'.format(
+                blank='', uid=key.uids[0].uid, width=width))
+        print()
+        while True:
+            try:
+                keynum = int(input('Key number: ')) - 1
+            except ValueError:
+                continue
+            if keynum >= 0 and keynum < len(keys):
+                return keys[keynum]
+    else:
+        return keys[0]
+
+
+def register_key(query):
+    keys = list(_get_usable_secret_keys(query=query))
+    if not keys:
+        raise RuntimeError(
+            'You have no usable GPG secret keys matching "{}".'.format(query))
+    key = _select_key(keys)
+    fingerprint = key.subkeys[0].fpr
+    ctx = gpgme.Context()
+    key_data = io.BytesIO()
+    ctx.export(fingerprint.encode('ascii'), key_data)
+    logger.info('Registering GPG key ...')
+    store = storeapi.StoreClient()
+    try:
+        store.register_key(key_data.getvalue())
+    except storeapi.errors.InvalidCredentialsError:
+        logger.error('No valid credentials found.'
+                     ' Have you run "snapcraft login"?')
+        raise
+    logger.info(
+        'Done. The GPG key {} will be expected for signing your '
+        'assertions.'.format(_display_fingerprint(fingerprint)))
 
 
 def register(snap_name, is_private=False):

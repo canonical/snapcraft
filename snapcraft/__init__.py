@@ -235,6 +235,7 @@ from snapcraft._store import (                      # noqa
     logout,
     push,
     register,
+    register_key,
     release,
 )
 from snapcraft import common                        # noqa
