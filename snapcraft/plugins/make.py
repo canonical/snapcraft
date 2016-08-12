@@ -28,7 +28,7 @@ Additionally, this plugin uses the following plugin-specific keyword:
     - artifacts:
       (list)
       Link/copy the given files from the make output to the snap
-      intstallation directory. If specified, the 'make install'
+      installation directory. If specified, the 'make install'
       step will be skipped.
 
     - makefile:
