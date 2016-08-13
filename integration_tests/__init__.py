@@ -62,7 +62,7 @@ class TestCase(testtools.TestCase):
                 cwd = os.path.join(self.path, project_dir)
         else:
             cwd = None
-        
+
         if yaml_dir:
             cwd = os.path.join(self.path, yaml_dir)
 

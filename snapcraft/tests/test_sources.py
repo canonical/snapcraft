@@ -386,11 +386,16 @@ class TestLocal(tests.TestCase):
 
     def test_pull_with_source_a_parent_of_current_dir(self):
         # Verify that the snapcraft root dir does not get copied into itself.
-        os.makedirs(os.path.join('src', 'snapcraft'))
-        local = sources.Local('..', 'src/snapcraft')
-        local.pull()
+        os.makedirs('subdir')
 
-        self.assertTrue('snapcraft' not in os.listdir('src/snapcraft'))
+        cwd = os.getcwd()
+        os.chdir('subdir')
+        local = sources.Local('..', 'foo')
+        local.pull()
+        os.chdir(cwd)
+
+        self.assertTrue(
+            'subdir' not in os.listdir(os.path.join('subdir', 'foo')))
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
