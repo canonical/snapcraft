@@ -19,7 +19,7 @@ import os
 import snapcraft
 from snapcraft.plugins.dump import (
     DumpPlugin,
-    _linktree
+    _link_tree
 )
 from snapcraft.tests import TestCase
 
@@ -76,14 +76,16 @@ class DumpPluginTestCase(TestCase):
             {
                 'source': os.path.join('..', 'file'),
                 'link_name': os.path.join('subdir', 'relative2'),
-                'destination': os.path.join(plugin.installdir, 'subdir', 'relative2'),
+                'destination': os.path.join(
+                    plugin.installdir, 'subdir', 'relative2'),
                 'expected_realpath': os.path.join(plugin.installdir, 'file'),
                 'expected_contents': 'foo',
             },
             {
                 'source': os.path.join('..', '..', 'install', 'file'),
                 'link_name': os.path.join('subdir', 'relative3'),
-                'destination': os.path.join(plugin.installdir, 'subdir', 'relative3'),
+                'destination': os.path.join(
+                    plugin.installdir, 'subdir', 'relative3'),
                 'expected_realpath': os.path.join(plugin.installdir, 'file'),
                 'expected_contents': 'foo',
             },
@@ -191,7 +193,10 @@ class DumpPluginTestCase(TestCase):
         with self.assertRaises(FileNotFoundError) as raised:
             plugin.build()
 
-        self.assertEqual(str(raised.exception), '{!r} is a broken symlink pointing outside the snap'.format(os.path.join(plugin.builddir, 'bad_relative')))
+        self.assertEqual(
+            str(raised.exception),
+            '{!r} is a broken symlink pointing outside the snap'.format(
+                os.path.join(plugin.builddir, 'bad_relative')))
 
 
 class TestLinkTree(TestCase):
@@ -207,19 +212,19 @@ class TestLinkTree(TestCase):
 
     def test_link_file_to_file_raises(self):
         with self.assertRaises(NotADirectoryError) as raised:
-            _linktree('1', 'qux', os.getcwd())
+            _link_tree('1', 'qux', os.getcwd())
 
         self.assertEqual(str(raised.exception), "'1' is not a directory")
 
     def test_link_file_into_directory(self):
         os.mkdir('qux')
         with self.assertRaises(NotADirectoryError) as raised:
-            _linktree('1', 'qux', os.getcwd())
+            _link_tree('1', 'qux', os.getcwd())
 
         self.assertEqual(str(raised.exception), "'1' is not a directory")
 
     def test_link_directory_to_directory(self):
-        _linktree('foo', 'qux', os.getcwd())
+        _link_tree('foo', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '2')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'bar', '3')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'bar', 'baz', '4')))
@@ -227,13 +232,13 @@ class TestLinkTree(TestCase):
     def test_link_directory_overwrite_file_raises(self):
         open('qux', 'w').close()
         with self.assertRaises(NotADirectoryError) as raised:
-            _linktree('foo', 'qux', os.getcwd())
+            _link_tree('foo', 'qux', os.getcwd())
 
         self.assertEqual(
             str(raised.exception),
             "Cannot overwrite non-directory 'qux' with directory 'foo'")
 
     def test_link_subtree(self):
-        _linktree('foo/bar', 'qux', os.getcwd())
+        _link_tree('foo/bar', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '3')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'baz', '4')))
