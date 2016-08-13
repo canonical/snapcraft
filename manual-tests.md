@@ -26,3 +26,5 @@
 4. Run `snapcraft pull` again and notice the download is minimal.
 5. Wipe the cached apt data.
 6. Run `snapcraft pull` again and notice the download is as in `1.`.
+7. Run this test again, but run snapcraft on a partition separated
+   from $HOME.
