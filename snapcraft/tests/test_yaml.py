@@ -46,7 +46,7 @@ class TestYaml(tests.TestCase):
         self.part_schema = internal_yaml.Validator().part_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -65,7 +65,7 @@ parts:
             'stage': [], 'snap': [],
         })
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_loads_with_different_encodings(
             self, mock_loadPlugin):
         content = """name: test
@@ -89,7 +89,7 @@ parts:
                     'stage': [], 'snap': [],
                 })
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_composes_with_remote_parts(self, mock_loadPlugin):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
@@ -110,7 +110,7 @@ parts:
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
-    @unittest.mock.patch('snapcraft.internal.yaml.Config.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_composes_with_remote_subpart(self, mock_loadPlugin):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
@@ -146,7 +146,7 @@ parts:
 
         parts.update()
 
-        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+        with self.assertRaises(parts.SnapcraftLogicError) as raised:
             internal_yaml.Config()
         self.assertEqual(
             str(raised.exception),
@@ -170,7 +170,7 @@ parts:
 
         parts.update()
 
-        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+        with self.assertRaises(parts.SnapcraftLogicError) as raised:
             internal_yaml.Config()
         self.assertEqual(
             str(raised.exception),
@@ -343,14 +343,14 @@ parts:
     source: .
     after: [p1]
 """)
-        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
+        with self.assertRaises(parts.SnapcraftLogicError) as raised:
             internal_yaml.Config()
 
         self.assertEqual(
             raised.exception.message,
             'circular dependency chain found in parts definition')
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -372,7 +372,7 @@ parts:
         self.assertEqual(raised.exception.message,
                          "'name' is a required property")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -395,7 +395,7 @@ parts:
                          "The 'name' property does not match the required "
                          "schema: 1 is not of type 'string'")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_icon_extension(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -418,7 +418,7 @@ parts:
         self.assertEqual(raised.exception.message,
                          "'icon' must be either a .png or a .svg")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_icon(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -441,7 +441,7 @@ parts:
         self.assertEqual(raised.exception.message,
                          "Specified icon 'icon.png' does not exist")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -465,7 +465,7 @@ parts:
             "The 'name' property does not match the required schema: "
             "'myapp@me_1.0' does not match '^[a-z0-9][a-z0-9+-]*$'")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -487,7 +487,7 @@ parts:
             raised.exception.message,
             "'description' is a required property")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_missing_confinement_must_log(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -512,7 +512,7 @@ parts:
             '"confinement" property not specified: defaulting to "strict"'
             in fake_logger.output, 'Missing confinement hint in output')
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_app_names(self, mock_loadPlugin):
         valid_app_names = [
             '1', 'a', 'aa', 'aaa', 'aaaa', 'Aa', 'aA', '1a', 'a1', '1-a',
@@ -541,7 +541,7 @@ parts:
                 c = internal_yaml.Config()
                 self.assertTrue(app_name in c.data['apps'])
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_app_names(self, mock_loadPlugin):
         invalid_app_names = [
             '', '-', '--', 'a--a', 'a-', 'a ', ' a', 'a a', '日本語', '한글',
@@ -576,7 +576,7 @@ parts:
                     "The 'apps' property does not match the required "
                     "schema.*")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_confinement_types(self, mock_loadPlugin):
         valid_confinement_types = [
             'strict',
@@ -602,7 +602,7 @@ parts:
                 c = internal_yaml.Config()
                 self.assertEqual(c.data['confinement'], confinement_type)
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_confinement_types(self, mock_loadPlugin):
         invalid_confinement_types = [
             'foo',
@@ -635,7 +635,7 @@ parts:
                     "schema: '{}' is not one of ['devmode', 'strict']".format(
                         confinement_type))
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -660,7 +660,7 @@ parts:
             'found character \'\\t\' that cannot start any token '
             'on line 4 of snapcraft.yaml')
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_epochs(self, mock_loadPlugin):
         valid_epochs = [
             {
@@ -727,7 +727,7 @@ parts:
                 c = internal_yaml.Config()
                 self.assertEqual(c.data['epoch'], epoch['expected'])
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_epochs(self, mock_loadPlugin):
         invalid_epochs = [
             '0*',
@@ -769,7 +769,7 @@ parts:
                     "schema:.*is not a 'epoch' \(epochs are positive integers "
                     "followed by an optional asterisk\)")
 
-    @unittest.mock.patch('snapcraft.internal.yaml.PartsConfig.load_plugin')
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -1550,20 +1550,20 @@ class TestFilesets(tests.TestCase):
     def test_expand_var(self):
         self.properties['stage'] = ['$1']
 
-        fs = internal_yaml._expand_filesets_for('stage', self.properties)
+        fs = parts._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1', '2', '3'])
 
     def test_no_expansion(self):
         self.properties['stage'] = ['1']
 
-        fs = internal_yaml._expand_filesets_for('stage', self.properties)
+        fs = parts._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1'])
 
     def test_invalid_expansion(self):
         self.properties['stage'] = ['$3']
 
-        with self.assertRaises(internal_yaml.SnapcraftLogicError) as raised:
-            internal_yaml._expand_filesets_for('stage', self.properties)
+        with self.assertRaises(parts.SnapcraftLogicError) as raised:
+            parts._expand_filesets_for('stage', self.properties)
 
         self.assertEqual(
             raised.exception.message,
