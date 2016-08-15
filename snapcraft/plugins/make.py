@@ -19,6 +19,8 @@
 Make based projects are projects that have a Makefile that drives the
 build.
 
+This plugin always runs 'make' followed by 'make install'.
+
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
