@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import snapcraft
 from snapcraft.plugins.copy import (
@@ -352,6 +352,16 @@ class TestRecursivelyLink(TestCase):
         os.mkdir('qux')
         _recursively_link('1', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '1')))
+
+    @patch('os.chown')
+    def test_recursively_link_file_into_dir_chown_permissions(self,
+                                                              chown_mock):
+        chown_mock.side_effect = PermissionError('Nope')
+        os.mkdir('qux')
+        _recursively_link('1', 'qux', os.getcwd())
+        self.assertTrue(os.path.isfile(os.path.join('qux', '1')))
+
+        self.assertTrue(chown_mock.called)
 
     def test_recursively_link_directory_to_directory(self):
         _recursively_link('foo', 'qux', os.getcwd())

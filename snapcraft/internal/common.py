@@ -122,7 +122,7 @@ def get_arch():
 
 def get_parallel_build_count():
     raise EnvironmentError(
-        "This plugin is outdated, use 'project.parallel_build_count'")
+        "This plugin is outdated, use 'parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):
@@ -187,6 +187,13 @@ def link_or_copy(source, destination, follow_symlinks=False):
         os.link(source_path, destination, follow_symlinks=False)
     except OSError:
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+        uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
+        gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
+        try:
+            os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
+        except PermissionError as e:
+            logger.warning('unable to chown {destination}: {error}'.format(
+                destination=destination, error=e))
 
 
 def replace_in_file(directory, file_pattern, search_pattern, replacement):

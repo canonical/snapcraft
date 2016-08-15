@@ -119,7 +119,9 @@ class MavenPluginTestCase(tests.TestCase):
             'Expected "maven-targets" "uniqueItems" to be "True"')
 
         build_properties = schema['build-properties']
-        self.assertEqual(['maven-options', 'maven-targets'], build_properties)
+        self.assertEqual(
+            ['disable-parallel', 'maven-options', 'maven-targets'],
+            build_properties)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     def test_build(self, run_mock):

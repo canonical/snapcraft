@@ -21,7 +21,7 @@ from snapcraft import main, tests
 from snapcraft.internal import parts
 
 
-class DefineCommandTestCase(tests.TestCase):
+class DefineCommandTestCase(tests.TestWithFakeRemoteParts):
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_defining_a_part_that_exists(self, mock_stdout):
