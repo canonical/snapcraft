@@ -25,6 +25,12 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keyword:
 
+    - artifacts:
+      (list)
+      Link/copy the given files from the make output to the snap
+      installation directory. If specified, the 'make install'
+      step will be skipped.
+
     - makefile:
       (string)
       Use the given file as the makefile.
@@ -38,6 +44,7 @@ Additionally, this plugin uses the following plugin-specific keyword:
       Use this variable to redirect the installation into the snap.
 """
 
+import os
 import snapcraft
 import snapcraft.common
 
@@ -63,6 +70,15 @@ class MakePlugin(snapcraft.BasePlugin):
             'type': 'string',
             'default': 'DESTDIR',
         }
+        schema['properties']['artifacts'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
@@ -87,5 +103,11 @@ class MakePlugin(snapcraft.BasePlugin):
             command.extend(self.options.make_parameters)
 
         self.run(command + ['-j{}'.format(self.parallel_build_count)])
-        self.run(command + [
-            'install', self.options.make_install_var + '=' + self.installdir])
+        if self.options.artifacts:
+            for artifact in self.options.artifacts:
+                destination_path = os.path.join(self.installdir, artifact)
+                snapcraft.common.link_or_copy(artifact, destination_path)
+        else:
+            install_param = self.options.make_install_var + '=' + \
+                self.installdir
+            self.run(command + ['install', install_param])

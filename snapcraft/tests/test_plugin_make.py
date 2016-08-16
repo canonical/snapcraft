@@ -33,6 +33,7 @@ class MakePluginTestCase(tests.TestCase):
             make_parameters = []
             make_install_var = 'DESTDIR'
             disable_parallel = False
+            artifacts = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -159,3 +160,25 @@ class MakePluginTestCase(tests.TestCase):
             mock.call(['make', 'install',
                        'PREFIX={}'.format(plugin.installdir)])
         ])
+
+    @mock.patch.object(make.MakePlugin, 'run')
+    @mock.patch('snapcraft.common.link_or_copy')
+    def test_build_artifacts(self, link_or_copy_mock, run_mock):
+        self.options.artifacts = ['artifact1', 'artifact2']
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertEqual(1, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j2']),
+        ])
+        self.assertEqual(2, link_or_copy_mock.call_count)
+        for artifact in self.options.artifacts:
+            link_or_copy_mock.assert_has_calls([
+                mock.call(
+                    artifact,
+                    os.path.join(plugin.installdir, artifact),
+                )])
