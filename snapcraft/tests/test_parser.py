@@ -644,10 +644,10 @@ parts: [main2]
         self.assertEqual(2, _get_part_list_count())
 
         part1 = _get_part('curl/a')
-        self.assertTrue(part1 is not None)
+        self.assertTrue(part1)
 
         part2 = _get_part('curl-a')
-        self.assertTrue(part2 is not None)
+        self.assertTrue(part2)
 
     @mock.patch('snapcraft.internal.sources.get')
     def test_missing_snapcraft_yaml(self, mock_get):
@@ -745,7 +745,7 @@ parts: [somepart]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
         part = _get_part('somepart')
-        self.assertTrue(part is not None)
+        self.assertTrue(part)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
