@@ -356,12 +356,17 @@ class Local(Base):
 
         def ignore(directory, files):
             if directory is source_abspath:
+                ignored = common.SNAPCRAFT_FILES
+                relative_cwd = os.path.basename(os.getcwd())
+                if os.path.join(directory, relative_cwd) == os.getcwd():
+                    # Source is a parent of the working directory.
+                    # Do not recursively copy it into itself.
+                    ignored.append(relative_cwd)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
-                    return common.SNAPCRAFT_FILES + snaps
-                else:
-                    return common.SNAPCRAFT_FILES
+                    ignored += snaps
+                return ignored
             else:
                 return []
 
