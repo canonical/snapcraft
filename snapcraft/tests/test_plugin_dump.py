@@ -17,10 +17,7 @@
 import os
 
 import snapcraft
-from snapcraft.plugins.dump import (
-    DumpPlugin,
-    _link_tree
-)
+from snapcraft.plugins.dump import DumpPlugin
 from snapcraft.tests import TestCase
 
 
@@ -197,48 +194,3 @@ class DumpPluginTestCase(TestCase):
             str(raised.exception),
             '{!r} is a broken symlink pointing outside the snap'.format(
                 os.path.join(plugin.builddir, 'bad_relative')))
-
-
-class TestLinkTree(TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        os.makedirs('foo/bar/baz')
-        open('1', 'w').close()
-        open(os.path.join('foo', '2'), 'w').close()
-        open(os.path.join('foo', 'bar', '3'), 'w').close()
-        open(os.path.join('foo', 'bar', 'baz', '4'), 'w').close()
-
-    def test_link_file_to_file_raises(self):
-        with self.assertRaises(NotADirectoryError) as raised:
-            _link_tree('1', 'qux', os.getcwd())
-
-        self.assertEqual(str(raised.exception), "'1' is not a directory")
-
-    def test_link_file_into_directory(self):
-        os.mkdir('qux')
-        with self.assertRaises(NotADirectoryError) as raised:
-            _link_tree('1', 'qux', os.getcwd())
-
-        self.assertEqual(str(raised.exception), "'1' is not a directory")
-
-    def test_link_directory_to_directory(self):
-        _link_tree('foo', 'qux', os.getcwd())
-        self.assertTrue(os.path.isfile(os.path.join('qux', '2')))
-        self.assertTrue(os.path.isfile(os.path.join('qux', 'bar', '3')))
-        self.assertTrue(os.path.isfile(os.path.join('qux', 'bar', 'baz', '4')))
-
-    def test_link_directory_overwrite_file_raises(self):
-        open('qux', 'w').close()
-        with self.assertRaises(NotADirectoryError) as raised:
-            _link_tree('foo', 'qux', os.getcwd())
-
-        self.assertEqual(
-            str(raised.exception),
-            "Cannot overwrite non-directory 'qux' with directory 'foo'")
-
-    def test_link_subtree(self):
-        _link_tree('foo/bar', 'qux', os.getcwd())
-        self.assertTrue(os.path.isfile(os.path.join('qux', '3')))
-        self.assertTrue(os.path.isfile(os.path.join('qux', 'baz', '4')))

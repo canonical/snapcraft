@@ -26,7 +26,6 @@ such as: `filesets`, `stage`, `snap` and `organize`.
 """
 
 import os
-import shutil
 
 import snapcraft
 
@@ -35,48 +34,10 @@ class DumpPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        _link_tree(self.builddir, self.installdir, self.installdir)
-
-
-def _link_tree(source_tree, destination_tree, boundary):
-    """Copy a source tree into a destination, hard-linking if possile.
-
-    :param str source_tree: Source directory to be copied.
-    :param str destination_tree: Destination directory. If this directory
-                                 already exists, the files in `source_tree`
-                                 will take precedence.
-    :param str boundary: Filesystem boundary no symlinks are allowed to cross.
-    """
-    if not os.path.isdir(source_tree):
-        raise NotADirectoryError('{!r} is not a directory'.format(source_tree))
-
-    if (not os.path.isdir(destination_tree) and
-            os.path.exists(destination_tree)):
-        raise NotADirectoryError(
-            'Cannot overwrite non-directory {!r} with directory '
-            '{!r}'.format(destination_tree, source_tree))
-
-    _create_similar_directory(source_tree, destination_tree)
-
-    for root, directories, files in os.walk(source_tree):
-        for directory in directories:
-            source = os.path.join(root, directory)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
-
-            _create_similar_directory(source, destination)
-
-        for file_name in files:
-            source = os.path.join(root, file_name)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
-
-            _link_or_copy(source, destination, boundary)
-
-
-def _create_similar_directory(source, destination):
-    os.makedirs(destination, exist_ok=True)
-    shutil.copystat(source, destination, follow_symlinks=False)
+        snapcraft.file_utils.link_or_copy_tree(
+            self.builddir, self.installdir,
+            copy_function=lambda src, dst: _link_or_copy(src, dst,
+                                                         self.installdir))
 
 
 def _link_or_copy(source, destination, boundary):
@@ -95,8 +56,8 @@ def _link_or_copy(source, destination, boundary):
             follow_symlinks = True
 
     try:
-        snapcraft.common.link_or_copy(source, destination,
-                                      follow_symlinks=follow_symlinks)
+        snapcraft.file_utils.link_or_copy(source, destination,
+                                          follow_symlinks=follow_symlinks)
     except FileNotFoundError:
         raise FileNotFoundError(
             '{!r} is a broken symlink pointing outside the snap'.format(
