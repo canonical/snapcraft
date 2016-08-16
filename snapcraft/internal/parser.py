@@ -34,8 +34,6 @@ import logging
 import os
 import pkg_resources
 import re
-import sys
-import textwrap
 import urllib
 import yaml
 from yaml.scanner import ScannerError
@@ -55,6 +53,10 @@ class BadSnapcraftYAMLError(Exception):
 
 
 class MissingSnapcraftYAMLError(Exception):
+    pass
+
+
+class WikiError(Exception):
     pass
 
 
@@ -101,13 +103,7 @@ def main(argv=None):
 
     log.configure(log_level=log_level)
 
-    try:
-        return run(args)
-    except Exception as e:
-        if args['--debug']:
-            raise
-
-        sys.exit(textwrap.fill(str(e)))
+    return run(args)
 
 
 def _get_namespaced_partname(key, partname):
@@ -260,24 +256,20 @@ def _process_entry(data):
 
 
 def _process_wiki_entry(entry, master_parts_list):
+    # return the number of errors encountered
     try:
         data = yaml.load(entry)
     except ScannerError as e:
-        logger.warning(
-            'Bad wiki entry, possibly malformed YAML: {}'.format(e))
-        return
+        raise InvalidEntryError(
+            'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
     part_name = data.get('project-part')
     if part_name is not None and part_name in master_parts_list:
-        logger.warning("Duplicate part found in wiki: {}".format(
-            part_name))
-        return
+        raise InvalidEntryError(
+            'Duplicate part found in the wiki: {} in entry {}'.format(
+                part_name, entry))
 
-    try:
-        parts_list, after_parts = _process_entry(data)
-    except InvalidEntryError as e:
-        logger.warning('Invalid wiki entry: {}'.format(e))
-        return
+    parts_list, after_parts = _process_entry(data)
 
     if is_valid_parts_list(parts_list, after_parts):
         master_parts_list.update(parts_list)
@@ -287,6 +279,7 @@ def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
+    wiki_errors = 0
 
     output = output.replace(b'{{{', b'').replace(b'}}}', b'')
     output = output.strip()
@@ -297,15 +290,24 @@ def _process_index(output):
     for line in output.decode().splitlines():
         if line == '---':
             if entry:
-                _process_wiki_entry(entry, master_parts_list)
+                try:
+                    _process_wiki_entry(entry, master_parts_list)
+                except InvalidEntryError as e:
+                    logger.warning('Invalid wiki entry: {}'.format(e))
+                    wiki_errors += 1
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
 
     if entry:
-        _process_wiki_entry(entry, master_parts_list)
+        try:
+            _process_wiki_entry(entry, master_parts_list)
+        except InvalidEntryError as e:
+            logger.warning('Invalid wiki entry: {}'.format(e))
+            wiki_errors += 1
 
-    return master_parts_list
+    return {'master_parts_list': master_parts_list,
+            'wiki_errors': wiki_errors}
 
 
 def run(args):
@@ -321,9 +323,15 @@ def run(args):
         output = urllib.request.urlopen(index).read()
     else:
         # XXX: fetch the index from the wiki
-        output = '{}'
+        output = b'{}'
 
-    master_parts_list = _process_index(output)
+    data = _process_index(output)
+    master_parts_list = data['master_parts_list']
+    wiki_errors = data['wiki_errors']
+
+    if wiki_errors:
+        logger.warning("{} wiki errors found!".format(wiki_errors))
+
     _write_parts_list(path, master_parts_list)
 
     if args['--debug']:

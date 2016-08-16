@@ -1,0 +1,14 @@
+name: test-package
+version: 0.1
+summary: one line summary
+description: a longer description
+confinement: strict
+
+parts:
+  parent:
+    plugin: dump
+    source: ..
+
+  self:
+    plugin: dump
+    source: .
