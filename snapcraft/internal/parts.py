@@ -165,8 +165,6 @@ class PartsConfig:
 
     def __init__(self, parts_data, project_options, validator, build_tools,
                  snapcraft_yaml):
-        if project_options is None:
-            project_options = snapcraft.ProjectOptions()
 
         self._parts_data = parts_data
         self._project_options = project_options
