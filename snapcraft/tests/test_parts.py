@@ -20,7 +20,7 @@ import unittest.mock
 
 import snapcraft
 from snapcraft.internal import dirs
-from snapcraft.internal import yaml as internal_yaml
+from snapcraft.internal import project_loader
 from snapcraft import tests
 
 
@@ -31,11 +31,11 @@ class TestParts(tests.TestCase):
         dirs.setup_dirs()
 
         patcher = unittest.mock.patch(
-            'snapcraft.internal.yaml._get_snapcraft_yaml')
+            'snapcraft.internal.project_loader._get_snapcraft_yaml')
         self.mock_get_yaml = patcher.start()
         self.mock_get_yaml.return_value = 'snapcraft.yaml'
         self.addCleanup(patcher.stop)
-        self.part_schema = internal_yaml.Validator().part_schema
+        self.part_schema = project_loader.Validator().part_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
@@ -51,5 +51,5 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        config = internal_yaml.load_config(None)
+        config = project_loader.load_config(None)
         self.assertEqual(None, config.parts_config.get_part('not-a-part'))

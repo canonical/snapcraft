@@ -26,7 +26,7 @@ from xdg import BaseDirectory
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal import sources, pluginhandler
-from snapcraft.internal import yaml as internalyaml
+from snapcraft.internal import project_loader
 
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
@@ -309,17 +309,17 @@ class PartsConfig:
         if root_part:
             # this has to come before any {}/usr/bin
             env += part.env(part.installdir)
-            env += internalyaml._runtime_env(
+            env += project_loader._runtime_env(
                 part.installdir, self._project_options.arch_triplet)
-            env += internalyaml._runtime_env(
+            env += project_loader._runtime_env(
                 stagedir, self._project_options.arch_triplet)
-            env += internalyaml._build_env(
+            env += project_loader._build_env(
                 part.installdir, self._project_options.arch_triplet)
-            env += internalyaml._build_env_for_stage(
+            env += project_loader._build_env_for_stage(
                 stagedir, self._project_options.arch_triplet)
         else:
             env += part.env(stagedir)
-            env += internalyaml._runtime_env(
+            env += project_loader._runtime_env(
                 stagedir, self._project_options.arch_triplet)
 
         for dep_part in part.deps:
