@@ -208,7 +208,10 @@ def _process_entry(data):
     options = Options()
     sources.get(origin_dir, None, options)
 
-    origin_data = _get_origin_data(origin_dir)
+    try:
+        origin_data = _get_origin_data(origin_dir)
+    except (BadSnapcraftYAMLError, MissingSnapcraftYAMLError) as e:
+        raise InvalidEntryError('snapcraft.yaml error: {}'.format(e))
 
     origin_parts = origin_data.get('parts', {})
 
@@ -229,7 +232,11 @@ def _process_wiki_entry(entry, master_parts_list):
         raise InvalidEntryError(
             'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
-    parts = data.get('parts', [])
+    try:
+        parts = data['parts']
+    except KeyError as e:
+        raise InvalidEntryError(
+            '"parts" missing from wiki entry: {}'.format(entry))
     for part_name in parts:
         if part_name and part_name in master_parts_list:
             raise InvalidEntryError(

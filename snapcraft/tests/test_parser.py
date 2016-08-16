@@ -29,7 +29,6 @@ from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
-    MissingSnapcraftYAMLError,
     BASE_DIR,
     PARTS_FILE,
     main,
@@ -656,6 +655,9 @@ parts: [main2]
         self.useFixture(fixture)
         origin_url = fixture.fake_parts_wiki_origin_fixture.url
 
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com>
@@ -664,8 +666,12 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        self.assertRaises(MissingSnapcraftYAMLError, main,
-                          ['--debug', '--index', TEST_OUTPUT_PATH])
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+        self.assertTrue(
+            'Invalid wiki entry'
+            in fake_logger.output, 'Missing invalid wiki entry info in output')
 
     @mock.patch('snapcraft.internal.sources.get')
     def test_missing_snapcraft_yaml_without_debug(self, mock_get):
@@ -682,8 +688,8 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        with self.assertRaises(SystemExit):
-            main(['--index', TEST_OUTPUT_PATH])
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
