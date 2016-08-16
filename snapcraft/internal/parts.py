@@ -161,6 +161,9 @@ def _expand_filesets_for(step, properties):
 
 
 class PartsConfig:
+    @property
+    def part_names(self):
+        return self._part_names
 
     def __init__(self, parts_data, project_options, validator, build_tools,
                  snapcraft_yaml):

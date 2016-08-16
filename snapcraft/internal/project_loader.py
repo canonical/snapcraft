@@ -100,7 +100,7 @@ class Config:
 
     @property
     def part_names(self):
-        return self.parts_config._part_names
+        return self.parts_config.part_names
 
     @property
     def all_parts(self):
