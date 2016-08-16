@@ -19,6 +19,7 @@ import copy
 import logging
 import os
 import shutil
+import stat
 import tempfile
 from unittest.mock import (
     call,
@@ -273,8 +274,8 @@ class PluginTestCase(tests.TestCase):
             self.assertEqual(f.read(), 'installed',
                              "Expected migrated 'bar' to be a copy of 'foo'")
 
-    @patch('shutil.copystat')
-    def test_migrate_files_preserves_ownership(self, copystat_mock):
+    @patch('os.chown')
+    def test_migrate_files_preserves_ownership(self, chown_mock):
         os.makedirs('install')
         os.makedirs('stage')
 
@@ -287,8 +288,99 @@ class PluginTestCase(tests.TestCase):
         pluginhandler._migrate_files(
             files, dirs, 'install', 'stage', follow_symlinks=True)
 
-        copystat_mock.assert_called_with('install', 'stage',
-                                         follow_symlinks=True)
+        self.assertTrue(chown_mock.called)
+
+    @patch('os.chown')
+    def test_migrate_files_chown_permissions(self, chown_mock):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        chown_mock.side_effect = PermissionError("No no no")
+
+        foo = os.path.join('install', 'foo')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        self.assertTrue(chown_mock.called)
+
+    def test_migrate_files_preserves_file_mode(self):
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        foo = os.path.join('install', 'foo')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        mode = os.stat(foo).st_mode
+
+        new_mode = 0o777
+        os.chmod(foo, new_mode)
+        self.assertNotEqual(mode, new_mode)
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        self.assertEqual(stat.S_IMODE(
+            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
+
+    @patch('os.chown')
+    def test_migrate_files_preserves_file_mode_chown_permissions(self,
+                                                                 chown_mock):
+        chown_mock.side_effect = PermissionError("No no no")
+        os.makedirs('install')
+        os.makedirs('stage')
+
+        foo = os.path.join('install', 'foo')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        mode = os.stat(foo).st_mode
+
+        new_mode = 0o777
+        os.chmod(foo, new_mode)
+        self.assertNotEqual(mode, new_mode)
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        self.assertEqual(stat.S_IMODE(
+            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
+
+        self.assertTrue(chown_mock.called)
+
+    def test_migrate_files_preserves_directory_mode(self):
+        os.makedirs('install/foo')
+        os.makedirs('stage')
+
+        foo = os.path.join('install', 'foo', 'bar')
+
+        with open(foo, 'w') as f:
+            f.write('installed')
+
+        mode = os.stat(foo).st_mode
+
+        new_mode = 0o777
+        self.assertNotEqual(mode, new_mode)
+        os.chmod(os.path.dirname(foo), new_mode)
+        os.chmod(foo, new_mode)
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        self.assertEqual(stat.S_IMODE(
+            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
+        self.assertEqual(stat.S_IMODE(
+            os.stat(os.path.join('stage', 'foo', 'bar')).st_mode), new_mode)
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')

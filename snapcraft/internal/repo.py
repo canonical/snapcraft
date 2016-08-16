@@ -190,7 +190,7 @@ class _AptCache:
             src = os.path.join(package_cache_dir, pkg.name)
             dst = os.path.join(download_dir, pkg.name)
             if os.path.exists(src):
-                os.link(src, dst)
+                common.link_or_copy(src, dst)
 
     def _store_cached_packages(self, package_cache_dir, download_dir):
         os.makedirs(package_cache_dir, exist_ok=True)
@@ -203,7 +203,7 @@ class _AptCache:
             # just in case.
             if os.path.exists(dst):
                 os.unlink(dst)
-            os.link(src, dst)
+            common.link_or_copy(src, dst)
 
     @contextmanager
     def archive(self, rootdir, download_dir):

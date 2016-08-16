@@ -201,6 +201,10 @@ project-part: main
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
+    def test_main_valid_with_default_index(self):
+        main(['--debug'])
+        self.assertEqual(0, _get_part_list_count())
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_main_invalid(self,
@@ -562,6 +566,7 @@ description: example
                 },
             }
         }
+
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
@@ -577,7 +582,7 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage
+  Usage:
     blahblahblah
 project-part: 'main'
 ---
@@ -586,7 +591,7 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage:
+  Usage
     blahblahblah
 project-part: 'main2'
 """)
@@ -722,11 +727,6 @@ maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
 project-part: main\r
----
-maintainer: Jim Doe <jim.doe@example.com>
-origin: lp:snapcraft-parser-example
-description: example main duplicate
-project-part: main
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -781,7 +781,7 @@ project-part: main
         self.assertEqual(1, _get_part_list_count())
 
         self.assertTrue(
-            'Duplicate part found in wiki: main'
+            'Duplicate part found in the wiki: main'
             in fake_logger.output, 'Missing duplicate part info in output')
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
