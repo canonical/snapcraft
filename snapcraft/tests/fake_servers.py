@@ -101,12 +101,8 @@ class FakePartsWikiRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting parts')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 ---
 origin: https://github.com/sergiusens/curl.git
 parts: [curl]
@@ -132,12 +128,8 @@ class FakePartsWikiWithSlashesRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting parts')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 ---
 origin: https://github.com/sergiusens/curl.git
 parts: [curl/a]
@@ -169,12 +161,8 @@ class FakePartsWikiOriginRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting part origin')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 parts:
   somepart:
     source: https://github.com/someuser/somepart.git
