@@ -29,6 +29,7 @@ import magic
 import yaml
 
 import snapcraft
+from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     libraries,
@@ -650,20 +651,6 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _create_dirs(srcdir, dstdir, follow_symlinks=False):
-    dir_stat = os.stat(srcdir, follow_symlinks=follow_symlinks)
-    uid = dir_stat.st_uid
-    gid = dir_stat.st_gid
-    os.makedirs(dstdir, exist_ok=True)
-    try:
-        os.chown(dstdir, uid, gid, follow_symlinks=follow_symlinks)
-    except PermissionError as e:
-        logger.warning('unable to chown {dstdir}: {error}'.format(
-            dstdir=dstdir, error=e))
-
-    shutil.copystat(srcdir, dstdir, follow_symlinks=follow_symlinks)
-
-
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
                    follow_symlinks=False, fixup_func=lambda *args: None):
 
@@ -671,14 +658,14 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         src = os.path.join(srcdir, directory)
         dst = os.path.join(dstdir, directory)
 
-        _create_dirs(src, dst, follow_symlinks=follow_symlinks)
+        snapcraft.file_utils.create_similar_directory(src, dst)
 
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
 
-        _create_dirs(os.path.dirname(src), os.path.dirname(dst),
-                     follow_symlinks=follow_symlinks)
+        snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
+                                                      os.path.dirname(dst))
 
         if missing_ok and not os.path.exists(src):
             continue
@@ -694,7 +681,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         if src.endswith('.pc'):
             shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
         else:
-            common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+            file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
         fixup_func(dst)
 

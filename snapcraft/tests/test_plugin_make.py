@@ -162,7 +162,7 @@ class MakePluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
-    @mock.patch('snapcraft.common.link_or_copy')
+    @mock.patch('snapcraft.file_utils.link_or_copy')
     def test_build_artifacts(self, link_or_copy_mock, run_mock):
         self.options.artifacts = ['artifact1', 'artifact2']
         plugin = make.MakePlugin('test-part', self.options,

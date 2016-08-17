@@ -109,7 +109,7 @@ class MakePlugin(snapcraft.BasePlugin):
         if self.options.artifacts:
             for artifact in self.options.artifacts:
                 destination_path = os.path.join(self.installdir, artifact)
-                snapcraft.common.link_or_copy(artifact, destination_path)
+                snapcraft.file_utils.link_or_copy(artifact, destination_path)
         else:
             install_param = self.options.make_install_var + '=' + \
                 self.installdir
