@@ -155,6 +155,9 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
     after_parts = set()
     parts_list = {}
     for part in entry_parts:
+        if '/' in part:
+            logger.warning(
+                'A "/" in a part name is deprecated and will be removed')
         source_part = parts.get(part)
 
         if source_part:

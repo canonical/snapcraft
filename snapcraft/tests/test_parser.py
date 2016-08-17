@@ -185,6 +185,36 @@ parts: [main]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_main_slash_warning(self, mock_get, mock_get_origin_data):
+        fake_logger = fixtures.FakeLogger(level=logging.WARN)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+parts: [main/a]
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main/a': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+        self.assertTrue(
+            'A "/" in a part name is deprecated and will be removed'
+            in fake_logger.output,
+            'Missing slash deprecation warning in output')
+
     def test_main_valid_with_default_index(self):
         main(['--debug'])
         self.assertEqual(0, _get_part_list_count())
