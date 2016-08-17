@@ -29,6 +29,7 @@ import magic
 import yaml
 
 import snapcraft
+from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     libraries,
@@ -656,15 +657,15 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
     for directory in snap_dirs:
         src = os.path.join(srcdir, directory)
         dst = os.path.join(dstdir, directory)
-        os.makedirs(dst, exist_ok=True)
-        shutil.copystat(src, dst, follow_symlinks=follow_symlinks)
+
+        snapcraft.file_utils.create_similar_directory(src, dst)
 
     for snap_file in snap_files:
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copystat(os.path.dirname(src), os.path.dirname(dst),
-                        follow_symlinks=follow_symlinks)
+
+        snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
+                                                      os.path.dirname(dst))
 
         if missing_ok and not os.path.exists(src):
             continue
@@ -680,7 +681,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         if src.endswith('.pc'):
             shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
         else:
-            common.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+            file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
         fixup_func(dst)
 

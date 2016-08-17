@@ -61,6 +61,10 @@ class Python3Plugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['process-dependency-links'] = {
+            'type': 'boolean',
+            'default': False,
+        }
         schema.pop('required')
 
         # Inform Snapcraft of the properties associated with pulling. If these
@@ -80,7 +84,7 @@ class Python3Plugin(snapcraft.BasePlugin):
     def env(self, root):
         return [
             'PYTHONPATH={}'.format(os.path.join(
-                root, 'usr', 'lib', self.python_version, 'dist-packages')),
+                root, 'usr', 'lib', self.python_version, 'site-packages')),
             # This is until we figure out how to get pip to download only
             # and then build in the build step or split out pulling
             # stage-packages in an internal private step.
@@ -92,27 +96,22 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def pull(self):
         super().pull()
-        self._pip()
 
-    def _pip(self):
         setup = 'setup.py'
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if self.options.requirements:
-            requirements = os.path.join(self.sourcedir,
-                                        self.options.requirements)
+        if (os.path.exists(setup) or self.options.requirements or
+                self.options.python_packages):
+            self._pip(setup)
 
-        if not os.path.exists(setup) and not \
-                (self.options.requirements or self.options.python_packages):
-            return
-
+    def _setup_pip(self):
         easy_install = os.path.join(
             self.installdir, 'usr', 'bin', 'easy_install3')
         prefix = os.path.join(self.installdir, 'usr')
+
         site_packages_dir = os.path.join(
             prefix, 'lib', self.python_version, 'site-packages')
-
         # If site-packages doesn't exist, make sure it points to the
         # python3 dist-packages (this is a relative link so that it's still
         # valid when the .snap is installed). Note that all python3 versions
@@ -123,17 +122,29 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         self.run(['python3', easy_install, '--prefix', prefix, 'pip'])
 
+    def _get_pip_command(self):
         pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
         pip_install = ['python3', pip3, 'install', '--root',
                        self.installdir, "--install-option=--prefix=usr"]
 
+        if self.options.process_dependency_links:
+            pip_install.append('--process-dependency-links')
+
+        return pip_install
+
+    def _pip(self, setup):
+        self._setup_pip()
+        pip_install = self._get_pip_command()
+
         if self.options.requirements:
-            self.run(pip_install + ['--requirement', requirements])
+            self.run(pip_install + [
+                '--requirement',
+                os.path.join(self.sourcedir, self.options.requirements),
+            ])
 
         if self.options.python_packages:
             self.run(pip_install + ['--upgrade'] +
                      self.options.python_packages)
-
         if os.path.exists(setup):
             self.run(pip_install + ['.', ], cwd=self.sourcedir)
 

@@ -73,6 +73,7 @@ import zipfile
 import glob
 
 from snapcraft.internal import common
+from snapcraft import file_utils
 from snapcraft.internal.indicators import download_requests_stream
 
 
@@ -356,17 +357,22 @@ class Local(Base):
 
         def ignore(directory, files):
             if directory is source_abspath:
+                ignored = common.SNAPCRAFT_FILES
+                relative_cwd = os.path.basename(os.getcwd())
+                if os.path.join(directory, relative_cwd) == os.getcwd():
+                    # Source is a parent of the working directory.
+                    # Do not recursively copy it into itself.
+                    ignored.append(relative_cwd)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
-                    return common.SNAPCRAFT_FILES + snaps
-                else:
-                    return common.SNAPCRAFT_FILES
+                    ignored += snaps
+                return ignored
             else:
                 return []
 
         shutil.copytree(source_abspath, self.source_dir,
-                        copy_function=common.link_or_copy, ignore=ignore)
+                        copy_function=file_utils.link_or_copy, ignore=ignore)
 
 
 def get(sourcedir, builddir, options):
