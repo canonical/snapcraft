@@ -46,7 +46,7 @@ class RegisterTestCase(integration_tests.StoreTestCase):
             'users expect for \'test-already-registered-snap-name\' then '
             'claim the name at')
         self.assertThat(str(error.output), Contains(expected))
-        self.assertThat(str(error.output), Contains('register-name-dispute'))
+        self.assertThat(str(error.output), Contains('register-name'))
 
     def test_registration_of_reserved_name(self):
         self.login()
@@ -60,7 +60,7 @@ class RegisterTestCase(integration_tests.StoreTestCase):
             'then please claim the name at').format(
                 self.test_store.reserved_snap_name)
         self.assertThat(str(error.output), Contains(expected))
-        self.assertThat(str(error.output), Contains('register-name-dispute'))
+        self.assertThat(str(error.output), Contains('register-name'))
 
     def test_registrations_in_a_row_fail_if_too_fast(self):
         # Wait after the registration attempts, so the following registrations
