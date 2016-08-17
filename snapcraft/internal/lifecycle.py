@@ -40,21 +40,27 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = """name: my-snap  # the name of the snap
-version: 0  # the version of the snap
+_TEMPLATE_YAML = """name: my-snap  # The name of the snap
+version: 0  # The version of the snap
 summary: This is my-snap's summary  # 79 char long summary
-description: This is my-snap's description  # a longer description for the snap
-confinement: devmode  # use "strict" to enforce system access only via \
+description: This is my-snap's description  # A longer description for the snap
+confinement: devmode  # Use "strict" to enforce system access only via \
 declared interfaces
 
+apps:
+  my-part:
+    command: # The command used to start the app, eg. desktop-launch my-part
+
 parts:
-    my-part:  # Replace with a part name of your liking
-        # Get more information about plugins by running
-        # snapcraft help plugins
-        # and more information about the available plugins
-        # by running
-        # snapcraft list-plugins
-        plugin: nil
+  my-part:  # Replace with a part name of your liking. 
+    source: # Provide a file, directory, or url (tar, http, git, bzr, hg... etc.)
+    plugin: nil # Get more information about plugins by running 
+                # 'snapcraft help plugins' and see the available
+                # plugins by running 'snapcraft list-plugins'
+    build-packages: # Required build dependencies from distro repositories
+    after: # Enforces part building order, and including 'cloud' parts, eg. desktop/qt5
+
+# Get the full docs at http://snapcraft.io/docs/
 """
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
