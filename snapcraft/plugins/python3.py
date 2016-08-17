@@ -80,7 +80,7 @@ class Python3Plugin(snapcraft.BasePlugin):
     def env(self, root):
         return [
             'PYTHONPATH={}'.format(os.path.join(
-                root, 'usr', 'lib', self.python_version, 'dist-packages')),
+                root, 'usr', 'lib', self.python_version, 'site-packages')),
             # This is until we figure out how to get pip to download only
             # and then build in the build step or split out pulling
             # stage-packages in an internal private step.
