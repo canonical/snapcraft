@@ -29,7 +29,7 @@ def setup_directories(plugin):
         plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'))
     os.makedirs(os.path.join(
         plugin.installdir, 'usr', 'include', 'python2.7'))
-    open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+    open('setup.py', 'w').close()
 
 
 class Python2PluginTestCase(tests.TestCase):
@@ -38,9 +38,11 @@ class Python2PluginTestCase(tests.TestCase):
         super().setUp()
 
         class Options:
+            source = '.'
             requirements = ''
             constraints = ''
             python_packages = []
+            process_dependency_links = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -53,7 +55,7 @@ class Python2PluginTestCase(tests.TestCase):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
         setup_directories(plugin)
-        plugin._pip()
+        plugin.pull()
 
         link = os.readlink(os.path.join(plugin.installdir, 'usr', 'lib',
                                         'python2.7', 'site-packages'))
@@ -110,7 +112,9 @@ class Python2PluginTestCase(tests.TestCase):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
         plugin.pull()
-        self.assertTrue(mock_pip.called)
+        # mock_pip should not be called as there is no setup.py,
+        # requirements or python-packages defined.
+        self.assertFalse(mock_pip.called)
 
     @mock.patch.object(python2.Python2Plugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
@@ -118,7 +122,7 @@ class Python2PluginTestCase(tests.TestCase):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
         setup_directories(plugin)
-        plugin._pip()
+        plugin.pull()
         self.assertFalse(mock_run.called)
 
     @mock.patch.object(python2.Python2Plugin, 'run')
@@ -142,6 +146,7 @@ class Python2PluginTestCase(tests.TestCase):
 
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
+        setup_directories(plugin)
 
         pip2 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip2')
         include = os.path.join(
@@ -161,8 +166,7 @@ class Python2PluginTestCase(tests.TestCase):
             mock.call(pip_install + ['--upgrade', 'test', 'packages']),
             mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
         ]
-        setup_directories(plugin)
-        plugin._pip()
+        plugin.pull()
         mock_run.assert_has_calls(calls)
 
     def test_get_python2_include_missing_raises_exception(self):
@@ -234,3 +238,12 @@ class Python2PluginTestCase(tests.TestCase):
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
+
+    @mock.patch.object(python2.Python2Plugin, 'run')
+    def test_process_dependency_links(self, run_mock):
+        self.options.process_dependency_links = True
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        setup_directories(plugin)
+        plugin.pull()
+        self.assertIn('--process-dependency-links', run_mock.call_args[0][0])
