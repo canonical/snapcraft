@@ -41,7 +41,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       This is not needed and does not affect `go-packages`.
 
     - go-buildtags:
-      (string)
+      (list of strings)
       Tags to use during the go build. Default is not to use any build tags.
 """
 
@@ -75,8 +75,13 @@ class GoPlugin(snapcraft.BasePlugin):
             'default': ''
         }
         schema['properties']['go-buildtags'] = {
-            'type': 'string',
-            'default': ''
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
         }
 
         if 'required' in schema:
@@ -146,7 +151,7 @@ class GoPlugin(snapcraft.BasePlugin):
         if not self.options.go_packages:
             tags = []
             if self.options.go_buildtags:
-                tags = ['-tags', self.options.go_buildtags]
+                tags = ['-tags={}'.format(','.join(self.options.go_buildtags))]
             self._run(['go', 'install'] + tags +
                       ['./{}/...'.format(self._get_local_go_package())])
 

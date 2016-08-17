@@ -106,21 +106,40 @@ class GoPluginTestCase(tests.TestCase):
 
         # Check go-buildtags
         go_buildtags = properties['go-buildtags']
-        for expected in ['type', 'default']:
+        for expected in [
+                'type', 'default', 'minitems', 'uniqueItems', 'items']:
             self.assertTrue(
                 expected in go_buildtags,
                 "Expected {!r} to be included in 'go-buildtags'".format(
                     expected))
 
         go_buildtags_type = go_buildtags['type']
-        self.assertEqual(go_buildtags_type, 'string',
-                         'Expected "go-buildtags" "type" to be "string", but '
+        self.assertEqual(go_buildtags_type, 'array',
+                         'Expected "go-buildtags" "type" to be "array", but '
                          'it was "{}"'.format(go_buildtags_type))
 
         go_buildtags_default = go_buildtags['default']
-        self.assertEqual(go_buildtags_default, '',
-                         'Expected "go-buildtags" "default" to be "''", but '
+        self.assertEqual(go_buildtags_default, [],
+                         'Expected "go-buildtags" "default" to be "[]", but '
                          'it was "{}"'.format(go_buildtags_type))
+
+        go_buildtags_minitems = go_buildtags['minitems']
+        self.assertEqual(go_buildtags_minitems, 1,
+                         'Expected "go-buildtags" "minitems" to be 1, but '
+                         'it was {}'.format(go_buildtags_minitems))
+
+        self.assertTrue(go_buildtags['uniqueItems'])
+
+        go_buildtags_items = go_buildtags['items']
+        self.assertTrue('type' in go_buildtags_items,
+                        'Expected "type" to be included in "go-buildtags" '
+                        '"items"')
+
+        go_buildtags_items_type = go_buildtags_items['type']
+        self.assertEqual(go_buildtags_items_type, 'string',
+                         'Expected "go-buildtags" "item" "type" to be '
+                         '"string", but it was "{}"'
+                         .format(go_packages_items_type))
 
         # Check required properties
         self.assertNotIn('required', schema)
@@ -394,7 +413,7 @@ class GoPluginTestCase(tests.TestCase):
             source = 'dir'
             go_importpath = ''
             go_packages = []
-            go_buildtags = 'testbuildtag'
+            go_buildtags = ['testbuildtag1', 'testbuildtag2']
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
@@ -410,5 +429,6 @@ class GoPluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ['go', 'install', '-tags', 'testbuildtag', './dir/...'],
+            ['go', 'install',
+             '-tags=testbuildtag1,testbuildtag2', './dir/...'],
             cwd=plugin._gopath_src, env=mock.ANY)
