@@ -195,9 +195,6 @@ def _process_entry(data):
     except KeyError as e:
         raise InvalidEntryError('Missing key in wiki entry: {}'.format(e))
 
-    # TODO: this should really be based on the origin uri not
-    # the part name to avoid the situation where there are multiple
-    # parts being pulled from the same repo branch.
     origin_dir = os.path.join(BASE_DIR, _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 

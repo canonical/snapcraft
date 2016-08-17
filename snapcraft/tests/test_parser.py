@@ -538,6 +538,10 @@ parts: [main]
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
