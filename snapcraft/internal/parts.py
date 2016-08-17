@@ -213,10 +213,10 @@ class PartsConfig:
 
             self.load_plugin(part_name, plugin_name, properties)
 
-        self._compute_part_dependencies()
+        self._compute_dependencies()
         self.all_parts = self._sort_parts()
 
-    def _compute_part_dependencies(self):
+    def _compute_dependencies(self):
         '''Gather the lists of dependencies and adds to all_parts.'''
 
         for part in self.all_parts:
@@ -265,11 +265,11 @@ class PartsConfig:
 
         return sorted_parts
 
-    def part_prereqs(self, part_name):
+    def get_prereqs(self, part_name):
         """Returns a set with all of part_names' prerequisites."""
         return set(self.after_requests.get(part_name, []))
 
-    def part_dependents(self, part_name):
+    def get_dependents(self, part_name):
         """Returns a set of all the parts that depend upon part_name."""
 
         dependents = set()
@@ -286,7 +286,11 @@ class PartsConfig:
 
         return None
 
-    def validate_parts(self, part_names):
+    def clean_part(self, part_name, staged_state, primed_state, step):
+        part = self.get_part(part_name)
+        part.clean(staged_state, primed_state, step)
+
+    def validate(self, part_names):
         for part_name in part_names:
             if part_name not in self._part_names:
                 raise EnvironmentError(

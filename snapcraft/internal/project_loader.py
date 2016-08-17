@@ -100,11 +100,11 @@ class Config:
 
     @property
     def part_names(self):
-        return self.parts_config.part_names
+        return self.parts.part_names
 
     @property
     def all_parts(self):
-        return self.parts_config.all_parts
+        return self.parts.all_parts
 
     def __init__(self, project_options=None):
         if project_options is None:
@@ -123,11 +123,11 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        self.parts_config = parts.PartsConfig(self.data.get('parts', {}),
-                                              self._project_options,
-                                              self._validator,
-                                              self.build_tools,
-                                              self._snapcraft_yaml)
+        self.parts = parts.PartsConfig(self.data.get('parts', {}),
+                                       self._project_options,
+                                       self._validator,
+                                       self.build_tools,
+                                       self._snapcraft_yaml)
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
@@ -136,7 +136,7 @@ class Config:
         """Returns a dict of states for the given step of each part."""
 
         state = {}
-        for part in self.parts_config.all_parts:
+        for part in self.parts.all_parts:
             state[part.name] = part.get_state(step)
 
         return state
@@ -148,7 +148,7 @@ class Config:
         env += _runtime_env(stage_dir, self._project_options.arch_triplet)
         env += _build_env_for_stage(stage_dir,
                                     self._project_options.arch_triplet)
-        for part in self.parts_config.all_parts:
+        for part in self.parts.all_parts:
             env += part.env(stage_dir)
 
         return env
@@ -159,7 +159,7 @@ class Config:
 
         env += _runtime_env(snap_dir, self._project_options.arch_triplet)
         dependency_paths = set()
-        for part in self.parts_config.all_parts:
+        for part in self.parts.all_parts:
             env += part.env(snap_dir)
             dependency_paths |= part.get_primed_dependency_paths()
 

@@ -52,4 +52,4 @@ parts:
     stage-packages: [fswebcam]
 """)
         config = project_loader.load_config(None)
-        self.assertEqual(None, config.parts_config.get_part('not-a-part'))
+        self.assertEqual(None, config.parts.get_part('not-a-part'))

@@ -244,9 +244,9 @@ parts:
                 c = project_loader.Config()
 
                 self.assertTrue(
-                    s[1] in c.parts_config.build_tools,
+                    s[1] in c.parts.build_tools,
                     '{} not found in {}'.format(s[1],
-                                                c.parts_config.build_tools))
+                                                c.parts.build_tools))
 
     def test_config_adds_vcs_packages_to_build_packages_from_types(self):
         scenarios = [
@@ -277,9 +277,9 @@ parts:
                 c = project_loader.Config()
 
                 self.assertTrue(
-                    s[1] in c.parts_config.build_tools,
+                    s[1] in c.parts.build_tools,
                     '{} not found in {}'.format(s[1],
-                                                c.parts_config.build_tools))
+                                                c.parts.build_tools))
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
         with unittest.mock.patch('platform.machine') as machine_mock:
@@ -299,7 +299,7 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = project_loader.Config(project_options)
 
-        self.assertEqual(config.parts_config.build_tools,
+        self.assertEqual(config.parts.build_tools,
                          ['gcc-arm-linux-gnueabihf'])
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
@@ -321,7 +321,7 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = project_loader.Config(ProjectOptionsFake())
 
-        self.assertEqual(config.parts_config.build_tools, [])
+        self.assertEqual(config.parts.build_tools, [])
 
     def test_config_loop(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -803,7 +803,7 @@ parts:
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
 
-    def test_part_prereqs(self):
+    def test_get_prereqs(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -820,11 +820,11 @@ parts:
 """)
         config = project_loader.Config()
 
-        self.assertFalse(config.parts_config.part_prereqs('main'))
+        self.assertFalse(config.parts.get_prereqs('main'))
         self.assertEqual({'main'},
-                         config.parts_config.part_prereqs('dependent'))
+                         config.parts.get_prereqs('dependent'))
 
-    def test_part_dependents(self):
+    def test_get_dependents(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -841,9 +841,9 @@ parts:
 """)
         config = project_loader.Config()
 
-        self.assertFalse(config.parts_config.part_dependents('dependent'))
+        self.assertFalse(config.parts.get_dependents('dependent'))
         self.assertEqual({'dependent'},
-                         config.parts_config.part_dependents('main'))
+                         config.parts.get_dependents('main'))
 
 
 class InitTestCase(tests.TestCase):
@@ -1170,8 +1170,8 @@ parts:
 
         config = project_loader.Config()
         part2 = [part for part in
-                 config.parts_config.all_parts if part.name == 'part2'][0]
-        env = config.parts_config.build_env_for_part(part2)
+                 config.parts.all_parts if part.name == 'part2'][0]
+        env = config.parts.build_env_for_part(part2)
         env_lines = '\n'.join(['export {}\n'.format(e) for e in env])
 
         shell_env = {
