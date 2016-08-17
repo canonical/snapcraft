@@ -15,4 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft.internal import states            # noqa
-from snapcraft.internal.yaml import load_config  # noqa
+from snapcraft.internal.project_loader import load_config  # noqa
