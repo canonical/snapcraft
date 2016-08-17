@@ -29,7 +29,7 @@ def setup_directories(plugin):
         plugin.installdir, 'usr', 'lib', 'python3.5', 'dist-packages'))
     os.makedirs(os.path.join(
         plugin.installdir, 'usr', 'include', 'python3.5'))
-    open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+    open('setup.py', 'w').close()
 
 
 class Python3PluginTestCase(tests.TestCase):
@@ -38,6 +38,7 @@ class Python3PluginTestCase(tests.TestCase):
         super().setUp()
 
         class Options:
+            source = '.'
             requirements = ''
             python_packages = []
             process_dependency_links = False
@@ -84,7 +85,9 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         plugin.pull()
-        self.assertTrue(mock_pip.called)
+        # mock_pip should not be called as there is no setup.py,
+        # requirements or python-packages defined.
+        self.assertFalse(mock_pip.called)
 
     @mock.patch.object(python3.Python3Plugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
@@ -92,7 +95,7 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         setup_directories(plugin)
-        plugin._pip()
+        plugin.pull()
         self.assertFalse(mock_run.called)
 
     @mock.patch.object(python3.Python3Plugin, 'run')
@@ -102,6 +105,7 @@ class Python3PluginTestCase(tests.TestCase):
 
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
+        setup_directories(plugin)
 
         easy_install = os.path.join(
             plugin.installdir, 'usr', 'bin', 'easy_install3')
@@ -118,8 +122,7 @@ class Python3PluginTestCase(tests.TestCase):
             mock.call(pip_install + ['--upgrade', 'test', 'packages']),
             mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
         ]
-        setup_directories(plugin)
-        plugin._pip()
+        plugin.pull()
         mock_run.assert_has_calls(calls)
 
     def test_fileset_ignores(self):
@@ -190,5 +193,5 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         setup_directories(plugin)
-        plugin._pip()
+        plugin.pull()
         self.assertIn('--process-dependency-links', run_mock.call_args[0][0])

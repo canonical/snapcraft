@@ -118,7 +118,14 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     def pull(self):
         super().pull()
-        self._pip()
+
+        setup = 'setup.py'
+        if os.listdir(self.sourcedir):
+            setup = os.path.join(self.sourcedir, 'setup.py')
+
+        if (os.path.exists(setup) or self.options.requirements or
+                self.options.python_packages):
+            self._pip(setup)
 
     def _setup_pip(self):
         easy_install = os.path.join(
@@ -126,26 +133,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         prefix = os.path.join(self.installdir, 'usr')
         self.run(['python2', easy_install, '--prefix', prefix, 'pip'])
 
-    def _pip(self):
-        setup = 'setup.py'
-        if os.listdir(self.sourcedir):
-            setup = os.path.join(self.sourcedir, 'setup.py')
-
-        if not os.path.exists(setup) and not \
-                (self.options.requirements or self.options.python_packages):
-            return
-
-        site_packages_dir = os.path.join(
-            os.path.dirname(common.get_python2_path(self.installdir)),
-            'site-packages')
-
-        # If site-packages doesn't exist, make sure it points to the
-        # dist-packages in the same directory (this is a relative link so that
-        # it's still valid when the .snap is installed).
-        if not os.path.exists(site_packages_dir):
-            os.symlink('dist-packages', site_packages_dir)
-
-        self._setup_pip()
+    def _get_pip_command(self, site_packages_dir):
         pip2 = os.path.join(self.installdir, 'usr', 'bin', 'pip2')
         pip_install = ['python2', pip2, 'install',
                        '--global-option=build_ext',
@@ -161,6 +149,22 @@ class Python2Plugin(snapcraft.BasePlugin):
 
         if self.options.process_dependency_links:
             pip_install.append('--process-dependency-links')
+
+        return pip_install
+
+    def _pip(self, setup):
+        site_packages_dir = os.path.join(
+            os.path.dirname(common.get_python2_path(self.installdir)),
+            'site-packages')
+
+        # If site-packages doesn't exist, make sure it points to the
+        # dist-packages in the same directory (this is a relative link so that
+        # it's still valid when the .snap is installed).
+        if not os.path.exists(site_packages_dir):
+            os.symlink('dist-packages', site_packages_dir)
+
+        self._setup_pip()
+        pip_install = self._get_pip_command(site_packages_dir)
 
         if self.options.requirements:
             self.run(pip_install + [
