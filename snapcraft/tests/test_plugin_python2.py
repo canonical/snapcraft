@@ -41,6 +41,7 @@ class Python2PluginTestCase(tests.TestCase):
             requirements = ''
             constraints = ''
             python_packages = []
+            process_dependency_links = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -234,3 +235,12 @@ class Python2PluginTestCase(tests.TestCase):
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
+
+    @mock.patch.object(python2.Python2Plugin, 'run')
+    def test_process_dependency_links(self, run_mock):
+        self.options.process_dependency_links = True
+        plugin = python2.Python2Plugin('test-part', self.options,
+                                       self.project_options)
+        setup_directories(plugin)
+        plugin._pip()
+        self.assertIn('--process-dependency-links', run_mock.call_args[0][0])

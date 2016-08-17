@@ -61,6 +61,10 @@ class Python3Plugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['process-dependency-links'] = {
+            'type': 'boolean',
+            'default': False,
+        }
         schema.pop('required')
 
         # Inform Snapcraft of the properties associated with pulling. If these
@@ -126,6 +130,9 @@ class Python3Plugin(snapcraft.BasePlugin):
         pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
         pip_install = ['python3', pip3, 'install', '--root',
                        self.installdir, "--install-option=--prefix=usr"]
+
+        if self.options.process_dependency_links:
+            pip_install.append('--process-dependency-links')
 
         if self.options.requirements:
             self.run(pip_install + ['--requirement', requirements])
