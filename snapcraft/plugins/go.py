@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,6 +39,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
       This entry tells the checked out `source` to live within a certain path
       within `GOPATH`.
       This is not needed and does not affect `go-packages`.
+
+    - go-buildtags:
+      (list of strings)
+      Tags to use during the go build. Default is not to use any build tags.
 """
 
 import logging
@@ -70,6 +74,15 @@ class GoPlugin(snapcraft.BasePlugin):
             'type': 'string',
             'default': ''
         }
+        schema['properties']['go-buildtags'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
+        }
 
         if 'required' in schema:
             del schema['required']
@@ -80,7 +93,8 @@ class GoPlugin(snapcraft.BasePlugin):
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend(['source', 'go-packages'])
+        schema['build-properties'].extend(
+            ['source', 'go-packages', 'go-buildtags'])
 
         return schema
 
@@ -135,8 +149,11 @@ class GoPlugin(snapcraft.BasePlugin):
         for go_package in self.options.go_packages:
             self._run(['go', 'install', go_package])
         if not self.options.go_packages:
-            self._run(['go', 'install',
-                       './{}/...'.format(self._get_local_go_package())])
+            tags = []
+            if self.options.go_buildtags:
+                tags = ['-tags={}'.format(','.join(self.options.go_buildtags))]
+            self._run(['go', 'install'] + tags +
+                      ['./{}/...'.format(self._get_local_go_package())])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
