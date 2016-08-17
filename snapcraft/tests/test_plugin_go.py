@@ -50,7 +50,8 @@ class GoPluginTestCase(tests.TestCase):
 
         # Check go-packages
         go_packages = properties['go-packages']
-        for expected in ['type', 'default', 'minitems', 'uniqueItems', 'items']:
+        for expected in [
+                'type', 'default', 'minitems', 'uniqueItems', 'items']:
             self.assertTrue(
                 expected in go_packages,
                 "Expected {!r} to be included in 'go-packages'".format(
