@@ -8,6 +8,10 @@ parts:
   oneflat:
     plugin: dump
     source: oneflat.tar.bz2
+  oneflatwithstagepackages:
+    plugin: dump
+    source: oneflat.tar.bz2
+    stage-packages: [hello]
   onedeep:
     plugin: dump
     source: onedeep.tar.gz
