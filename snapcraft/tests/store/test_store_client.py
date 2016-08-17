@@ -180,7 +180,7 @@ class RegisterTestCase(tests.TestCase):
             "We can if needed rename snaps to ensure they match the "
             "expectations of most users. If you are the publisher most users "
             "expect for 'test-already-registered-snap-name' then claim the "
-            "name at 'https://myapps.com/register-name-dispute/'")
+            "name at 'https://myapps.com/register-name/'")
 
     def test_register_a_reserved_name(self):
         self.client.login('dummy', 'test correct password')
@@ -192,7 +192,7 @@ class RegisterTestCase(tests.TestCase):
             "\n\n"
             "If you are the publisher most users expect for "
             "'test-reserved-snap-name' then please claim the "
-            "name at 'https://myapps.com/register-name-dispute/'")
+            "name at 'https://myapps.com/register-name/'")
 
     def test_registering_too_fast_in_a_row(self):
         self.client.login('dummy', 'test correct password')
