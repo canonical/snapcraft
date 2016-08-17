@@ -68,7 +68,7 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         expected_env = [
-            'PYTHONPATH=/testpath/usr/lib/python3.5/dist-packages',
+            'PYTHONPATH=/testpath/usr/lib/python3.5/site-packages',
             'CPPFLAGS="-I/testpath/usr/include $CPPFLAGS"',
             'CFLAGS="-I/testpath/usr/include $CFLAGS"',
         ]
