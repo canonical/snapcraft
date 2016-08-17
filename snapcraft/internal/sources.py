@@ -73,6 +73,7 @@ import zipfile
 import glob
 
 from snapcraft.internal import common
+from snapcraft import file_utils
 from snapcraft.internal.indicators import download_requests_stream
 
 
@@ -371,7 +372,7 @@ class Local(Base):
                 return []
 
         shutil.copytree(source_abspath, self.source_dir,
-                        copy_function=common.link_or_copy, ignore=ignore)
+                        copy_function=file_utils.link_or_copy, ignore=ignore)
 
 
 def get(sourcedir, builddir, options):

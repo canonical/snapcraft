@@ -37,6 +37,7 @@ from xml.etree import ElementTree
 from xdg import BaseDirectory
 
 import snapcraft
+from snapcraft import file_utils
 from snapcraft.internal import common
 
 
@@ -190,7 +191,7 @@ class _AptCache:
             src = os.path.join(package_cache_dir, pkg.name)
             dst = os.path.join(download_dir, pkg.name)
             if os.path.exists(src):
-                common.link_or_copy(src, dst)
+                file_utils.link_or_copy(src, dst)
 
     def _store_cached_packages(self, package_cache_dir, download_dir):
         os.makedirs(package_cache_dir, exist_ok=True)
@@ -203,7 +204,7 @@ class _AptCache:
             # just in case.
             if os.path.exists(dst):
                 os.unlink(dst)
-            common.link_or_copy(src, dst)
+            file_utils.link_or_copy(src, dst)
 
     @contextmanager
     def archive(self, rootdir, download_dir):
@@ -441,9 +442,9 @@ def _fix_shebangs(path):
     """Changes hard coded shebangs for files in _BIN_PATHS to use env."""
     paths = [p for p in _BIN_PATHS if os.path.exists(os.path.join(path, p))]
     for p in [os.path.join(path, p) for p in paths]:
-        common.replace_in_file(p, re.compile(r''),
-                               re.compile(r'#!.*python\n'),
-                               r'#!/usr/bin/env python\n')
+        file_utils.replace_in_file(p, re.compile(r''),
+                                   re.compile(r'#!.*python\n'),
+                                   r'#!/usr/bin/env python\n')
 
 
 _skip_list = None
