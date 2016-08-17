@@ -22,7 +22,7 @@ install:
   - sudo apt-get install -y python3-coverage
 script:
   # Disable internet access during unit tests.
-  - if [ "$TEST_SUITE" = unit ]; then echo 0 | tee /proc/sys/net/ipv4/ip_forward; fi
+  - if [ "$TEST_SUITE" = unit ]; then echo 0 | sudo tee /proc/sys/net/ipv4/ip_forward; fi
   - docker run -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
   - pip install coveralls
