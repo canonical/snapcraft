@@ -81,8 +81,10 @@ class Cleanbuilder:
                     ['snapcraft', 'snap', '--output', self._snap_output])
             except CalledProcessError as e:
                 if self._project_options.debug:
-                    self._container_run(['bash'])
-                raise e
+                    logger.info('Debug mode enabled, dropping into a shell')
+                    self._container_run(['exec', 'bash'])
+                else:
+                    raise e
             else:
                 self._pull_snap()
 
