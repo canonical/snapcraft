@@ -68,7 +68,7 @@ def link_or_copy(source, destination, follow_symlinks=False):
         try:
             os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
         except PermissionError as e:
-            logger.warning('unable to chown {destination}: {error}'.format(
+            logger.debug('Unable to chown {destination}: {error}'.format(
                 destination=destination, error=e))
 
 
@@ -127,7 +127,7 @@ def create_similar_directory(source, destination, follow_symlinks=False):
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as exception:
-        logger.warning('Unable to chown {}: {}'.format(destination, exception))
+        logger.debug('Unable to chown {}: {}'.format(destination, exception))
 
     shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
 
