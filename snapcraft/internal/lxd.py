@@ -67,6 +67,10 @@ class Cleanbuilder:
                 self._container_name])
             yield
         finally:
+            # We do this as lxc stop does not print anything out as
+            # it does when creating the container and stopping can take
+            # a bit.
+            print('Stopping {}'.format(self._container_name))
             check_call(['lxc', 'stop', '-f', self._container_name])
             check_call(['lxc', 'remote', 'remove', remote_tmp])
 
