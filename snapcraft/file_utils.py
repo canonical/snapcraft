@@ -68,7 +68,7 @@ def link_or_copy(source, destination, follow_symlinks=False):
         try:
             os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
         except PermissionError as e:
-            logger.debug('unable to chown {destination}: {error}'.format(
+            logger.debug('Unable to chown {destination}: {error}'.format(
                 destination=destination, error=e))
 
 
