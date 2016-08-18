@@ -48,7 +48,8 @@ Options:
   -h --help                             show this help message and exit
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
-                                        (including backtraces)
+                                        (including backtraces). When calling
+                                        cleanbuild opens a shell on failures
   --target-arch ARCH                    EXPERIMENTAL: sets the target
                                         architecture. Very few plugins support
                                         this.
