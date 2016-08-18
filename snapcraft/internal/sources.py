@@ -390,7 +390,13 @@ def get(sourcedir, builddir, options):
     handler_class = _get_source_handler(source_type, options.source)
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
-    handler.pull()
+    try:
+        handler.pull()
+    except FileNotFoundError:
+        required_packages = get_required_packages(options)
+        logging.error(
+            'A required package is missing, please install these packages: {}'
+            .format(required_packages))
 
 
 def get_required_packages(options):

@@ -870,6 +870,26 @@ parts: [main]
 
         self.assertEqual(1, _get_part_list_count())
 
+    @mock.patch('snapcraft.internal.sources.Bazaar.pull')
+    def test_missing_packages(self, mock_pull):
+        mock_pull.side_effect = FileNotFoundError()
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+project-part: main
+""")
+        with self.assertRaises(MissingSnapcraftYAMLError):
+            main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        self.assertTrue(
+            'A required package is missing, please install these packages'
+            in fake_logger.output, 'No missing package info in output')
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
     def test_duplicate_entries(self, mock_get, mock_get_origin_data):
