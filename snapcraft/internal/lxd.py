@@ -82,7 +82,7 @@ class Cleanbuilder:
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
-                    self._container_run(['exec', 'bash'])
+                    self._container_run(['bash', '-i'])
                 else:
                     raise e
             else:
