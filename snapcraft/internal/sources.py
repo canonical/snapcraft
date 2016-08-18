@@ -393,10 +393,13 @@ def get(sourcedir, builddir, options):
     try:
         handler.pull()
     except FileNotFoundError:
-        required_packages = get_required_packages(options)
-        logging.error(
-            'A required package is missing, please install these packages: {}'
-            .format(required_packages))
+        if type(handler) in [Bazaar, Git, Subversion, Mercurial]:
+            required_packages = get_required_packages(options)
+            logging.error(
+                'A required package is missing, please install these packages: {}'
+                .format(required_packages))
+        else:
+            raise
 
 
 def get_required_packages(options):
