@@ -108,17 +108,18 @@ class NodePlugin(snapcraft.BasePlugin):
         self._nodejs_tar.provision(
             self.installdir, clean_target=False, keep_tarball=True)
 
+        env = os.environ.copy()
+
         # make npm use http proxy to access registry via https
         # ref. https://github.com/npm/npm/issues/2050
         if 'http_proxy' in os.environ:
             logger.info('Set http_proxy environment variable to "https-proxy"')
-            self.run(['npm', 'config', '-g', 'set', 'https-proxy',
-                     os.environ['http_proxy']])
+            env['npm_config_https_proxy'] = os.environ['http_proxy']
 
         for pkg in self.options.node_packages:
-            self.run(['npm', 'install', '-g', pkg])
+            self.run(['npm', 'install', '-g', pkg], env=env)
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
-            self.run(['npm', 'install', '-g'])
+            self.run(['npm', 'install', '-g'], env=env)
 
 
 def _get_nodejs_base(node_engine):

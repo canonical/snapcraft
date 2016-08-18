@@ -66,6 +66,8 @@ class NodePluginTestCase(tests.TestCase):
             mock.call().download()])
 
     def test_build_local_sources(self):
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+
         class Options:
             source = '.'
             node_packages = []
@@ -80,7 +82,7 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
+            mock.call(['npm', 'install', '-g'], cwd=plugin.builddir, env={})])
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
@@ -89,6 +91,8 @@ class NodePluginTestCase(tests.TestCase):
                 plugin.installdir, clean_target=False, keep_tarball=True)])
 
     def test_pull_and_build_node_packages_sources(self):
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+
         class Options:
             source = None
             node_packages = ['my-pkg']
@@ -104,7 +108,7 @@ class NodePluginTestCase(tests.TestCase):
 
         self.run_mock.assert_has_calls([
             mock.call(['npm', 'install', '-g', 'my-pkg'],
-                      cwd=plugin.builddir)])
+                      cwd=plugin.builddir, env={})])
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
@@ -114,9 +118,11 @@ class NodePluginTestCase(tests.TestCase):
                 plugin.installdir, clean_target=False, keep_tarball=True)])
 
     def test_pull_and_build_node_packages_sources_via_proxy(self):
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+
         env_vars = (
             ('http_proxy', 'http://localhost:3132'),
-            ('https_proxy', 'http://localhost:3133'),
+            ('https_proxy', 'https://localhost:3133'),
         )
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
@@ -134,12 +140,19 @@ class NodePluginTestCase(tests.TestCase):
         plugin.pull()
         plugin.build()
 
-        self.run_mock.assert_has_calls([
-            mock.call(['npm', 'config', '-g', 'set', 'https-proxy',
-                      env_vars[0][1]], cwd=plugin.builddir)])
+        for call_args in self.run_mock.call_args_list:
+            env = call_args[1]['env']
+            self.assertTrue('npm_config_https_proxy' in env,
+                            'Expected environment to include '
+                            'npm_config_https_proxy')
+            self.assertEqual(env['npm_config_https_proxy'], env_vars[0][1])
+
         self.run_mock.assert_has_calls([
             mock.call(['npm', 'install', '-g', 'my-pkg'],
-                      cwd=plugin.builddir)])
+                      cwd=plugin.builddir, env={
+                            env_vars[0][0]: env_vars[0][1],
+                            env_vars[1][0]: env_vars[1][1],
+                            'npm_config_https_proxy': env_vars[0][1]})])
 
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):

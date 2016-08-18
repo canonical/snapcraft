@@ -104,8 +104,7 @@ class GulpPlugin(snapcraft.BasePlugin):
         # ref. https://github.com/npm/npm/issues/2050
         if 'http_proxy' in os.environ:
             logger.info('Set http_proxy environment variable to "https-proxy"')
-            self.run(['npm', 'config', '-g', 'set', 'https-proxy',
-                     os.environ['http_proxy']], env=env)
+            env['npm_config_https_proxy'] = os.environ['http_proxy']
 
         self.run(['npm', 'install', '-g', 'gulp-cli'], env=env)
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
