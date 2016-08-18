@@ -99,6 +99,14 @@ class GulpPlugin(snapcraft.BasePlugin):
         env = os.environ.copy()
         env['PATH'] = '{}:{}'.format(
             os.path.join(self._npm_dir, 'bin'), env['PATH'])
+
+        # make npm use http proxy to access registry via https
+        # ref. https://github.com/npm/npm/issues/2050
+        if 'http_proxy' in os.environ:
+            logger.info('Set http_proxy environment variable to "https-proxy"')
+            self.run(['npm', 'config', '-g', 'set', 'https-proxy',
+                     os.environ['http_proxy']], env=env)
+
         self.run(['npm', 'install', '-g', 'gulp-cli'], env=env)
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
             self.run(['npm', 'install', '--only-development'], env=env)

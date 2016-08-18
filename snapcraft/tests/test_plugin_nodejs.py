@@ -19,6 +19,8 @@ import os
 from os import path
 from unittest import mock
 
+import fixtures
+
 import snapcraft
 from snapcraft.plugins import nodejs
 from snapcraft import tests
@@ -110,6 +112,34 @@ class NodePluginTestCase(tests.TestCase):
             mock.call().download(),
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
+
+    def test_pull_and_build_node_packages_sources_via_proxy(self):
+        env_vars = (
+            ('http_proxy', 'http://localhost:3132'),
+            ('https_proxy', 'http://localhost:3133'),
+        )
+        for v in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+
+        class Options:
+            source = None
+            node_packages = ['my-pkg']
+            node_engine = '4'
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['npm', 'config', '-g', 'set', 'https-proxy',
+                      env_vars[0][1]], cwd=plugin.builddir)])
+        self.run_mock.assert_has_calls([
+            mock.call(['npm', 'install', '-g', 'my-pkg'],
+                      cwd=plugin.builddir)])
 
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
