@@ -96,14 +96,13 @@ class LXDTestCase(tests.TestCase):
     @patch('snapcraft.internal.lxd.sleep')
     def test_failed_build_with_debug(self, mock_sleep, mock_run, mock_call):
         call_list = []
+
         def run_effect(*args, **kwargs):
             call_list.append(args[0])
             if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
                 raise CalledProcessError(returncode=255, cmd=args[0])
 
         mock_run.side_effect = run_effect
-
-        cb = lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64')
 
         project_options = ProjectOptions(debug=True)
         lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
@@ -115,6 +114,7 @@ class LXDTestCase(tests.TestCase):
     @patch('snapcraft.internal.lxd.sleep')
     def test_failed_build_without_debug(self, mock_sleep, mock_run, mock_call):
         call_list = []
+
         def run_effect(*args, **kwargs):
             call_list.append(args[0])
             if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
@@ -122,10 +122,7 @@ class LXDTestCase(tests.TestCase):
 
         mock_run.side_effect = run_effect
 
-        cb = lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64')
-
         project_options = ProjectOptions(debug=False)
-
         with self.assertRaises(CalledProcessError):
             lxd.Cleanbuilder('snap.snap', 'project.tar',
                              project_options).execute()
