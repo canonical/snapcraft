@@ -76,9 +76,15 @@ class Cleanbuilder:
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
-            self._container_run(
-                ['snapcraft', 'snap', '--output', self._snap_output])
-            self._pull_snap()
+            try:
+                self._container_run(
+                    ['snapcraft', 'snap', '--output', self._snap_output])
+            except CalledProcessError as e:
+                if self._project_options.debug:
+                    self._container_run(['bash'])
+                raise e
+            else:
+                self._pull_snap()
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')

@@ -188,6 +188,7 @@ def _get_project_options(args):
     options['use_geoip'] = args['--enable-geoip']
     options['parallel_builds'] = not args['--no-parallel-build']
     options['target_deb_arch'] = args['--target-arch']
+    options['debug'] = args['--debug']
 
     return snapcraft.ProjectOptions(**options)
 
