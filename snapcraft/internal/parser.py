@@ -34,7 +34,6 @@ import logging
 import os
 import pkg_resources
 import re
-import sys
 import urllib
 import yaml
 from yaml.scanner import ScannerError
@@ -356,9 +355,3 @@ def _write_parts_list(path, master_parts_list):
     with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
                  default_flow_style=False))
-
-
-if __name__ == '__main__':   # pragma: no cover
-    wiki_errors = main()     # pragma: no cover
-    if wiki_errors:          # pragma: no cover
-        sys.exit(1)          # pragma: no cover
