@@ -179,6 +179,6 @@ class MakePluginTestCase(tests.TestCase):
         for artifact in self.options.artifacts:
             link_or_copy_mock.assert_has_calls([
                 mock.call(
-                    artifact,
+                    os.path.join(plugin.builddir, artifact),
                     os.path.join(plugin.installdir, artifact),
                 )])
