@@ -358,5 +358,5 @@ def _write_parts_list(path, master_parts_list):
                  default_flow_style=False))
 
 
-if __name__ == '__main__':  # pragma: no cover
-    sys.exit(main())        # pragma: no cover
+if __name__ == '__main__':        # pragma: no cover
+    sys.exit(1 if main() else 0)  # pragma: no cover
