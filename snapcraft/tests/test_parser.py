@@ -198,8 +198,9 @@ project-part: main
                 },
             }
         }
-        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
+        self.assertEqual(0, retval)
 
     def test_main_valid_with_default_index(self):
         main(['--debug'])
@@ -567,8 +568,9 @@ description: example
             }
         }
 
-        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
+        self.assertEqual(1, retval)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
