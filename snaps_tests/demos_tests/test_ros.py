@@ -19,12 +19,16 @@ import snaps_tests
 
 import os
 import subprocess
+from platform import linux_distribution
+from unittest import skipUnless
 
 
 class ROSTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'ros'
 
+    @skipUnless(linux_distribution()[2] == 'xenial',
+                'This test fails on yakkety LP: #1614476')
     def test_ros(self):
         snap_path = self.build_snap(self.snap_content_dir)
         self.install_snap(snap_path, 'ros-example', '1.0')
