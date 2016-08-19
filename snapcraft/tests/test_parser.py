@@ -870,6 +870,24 @@ parts: [main]
 
         self.assertEqual(1, _get_part_list_count())
 
+    @mock.patch('snapcraft.internal.sources.Local.pull')
+    @mock.patch('snapcraft.internal.sources._get_source_type_from_uri')
+    def test_filenotfound_for_non_repos(self, mock_type, mock_pull):
+        mock_pull.side_effect = FileNotFoundError()
+        mock_type.return_value = None
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+project-part: main
+""")
+        with self.assertRaises(FileNotFoundError):
+            main(['--debug', '--index', TEST_OUTPUT_PATH])
+
     @mock.patch('snapcraft.internal.sources.Bazaar.pull')
     def test_missing_packages(self, mock_pull):
         mock_pull.side_effect = FileNotFoundError()
