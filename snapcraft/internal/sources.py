@@ -390,14 +390,13 @@ def get(sourcedir, builddir, options):
     handler_class = _get_source_handler(source_type, options.source)
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
+    e_msg = 'A required package is missing, please install these packages: {}'
     try:
         handler.pull()
     except FileNotFoundError:
         if type(handler) in [Bazaar, Git, Subversion, Mercurial]:
             required_packages = get_required_packages(options)
-            logging.error(
-                'A required package is missing, please install these packages: {}'
-                .format(required_packages))
+            logging.error(e_msg.format(required_packages))
         else:
             raise
 
