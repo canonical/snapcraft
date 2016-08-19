@@ -34,6 +34,7 @@ import logging
 import os
 import pkg_resources
 import re
+import sys
 import urllib
 import yaml
 from yaml.scanner import ScannerError
@@ -337,7 +338,7 @@ def run(args):
     if args['--debug']:
         print(yaml.dump(master_parts_list, default_flow_style=False))
 
-    return args
+    return wiki_errors
 
 
 def is_valid_parts_list(parts_list, parts):
@@ -358,4 +359,4 @@ def _write_parts_list(path, master_parts_list):
 
 
 if __name__ == '__main__':  # pragma: no cover
-    main()                  # pragma: no cover
+    sys.exit(main())        # pragma: no cover
