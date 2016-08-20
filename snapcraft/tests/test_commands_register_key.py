@@ -65,10 +65,9 @@ class RegisterKeyTestCase(tests.TestCase):
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
 
-    def test_register_key_successfully(self):
-        with mock.patch.object(
-                storeapi.SCAClient, 'register_key') as mock_register_key:
-            main(['register-key', 'sample.person@canonical.com'])
+    @mock.patch.object(storeapi.SCAClient, 'register_key')
+    def test_register_key_successfully(self, mock_register_key):
+        main(['register-key', 'sample.person@canonical.com'])
 
         self.assertEqual(
             'Registering GPG key ...\n'
@@ -84,17 +83,16 @@ class RegisterKeyTestCase(tests.TestCase):
             '2016-07-29 Sample Person <sample.person@canonical.com>',
             gpg_output)
 
-    def test_register_key_failed(self):
+    @mock.patch.object(storeapi.SCAClient, 'register_key')
+    def test_register_key_failed(self, mock_register_key):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         response.status_code = 500
         response.reason = 'Internal Server Error'
-        with mock.patch.object(
-                storeapi.SCAClient, 'register_key') as mock_register_key:
-            mock_register_key.side_effect = (
-                storeapi.errors.StoreKeyRegistrationError(response))
-            with self.assertRaises(SystemExit) as raised:
-                main(['register-key', 'sample.person@canonical.com'])
+        mock_register_key.side_effect = (
+            storeapi.errors.StoreKeyRegistrationError(response))
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key', 'sample.person@canonical.com'])
 
         self.assertEqual(1, raised.exception.code)
         self.assertIn('500 Internal Server Error\n', self.fake_logger.output)
@@ -119,19 +117,14 @@ class RegisterKeyTestCase(tests.TestCase):
             '"rsa-2048.person@canonical.com".\n',
             self.fake_logger.output)
 
-    def test_register_key_select_key(self):
-        patcher = mock.patch('builtins.input')
-        mock_input = patcher.start()
+    @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch('builtins.print')
+    @mock.patch('builtins.input')
+    def test_register_key_select_key(self, mock_input, mock_print,
+                                     mock_register_key):
         mock_input.return_value = '2'
-        self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('builtins.print')
-        mock_print = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        with mock.patch.object(
-                storeapi.SCAClient, 'register_key') as mock_register_key:
-            main(['register-key'])
+        main(['register-key'])
 
         mock_print.assert_has_calls([
             mock.call('Select a key:'),
