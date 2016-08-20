@@ -118,19 +118,22 @@ class StoreClient():
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, one_time_password=None):
+    def login(self, email, password, one_time_password=None, acls=None,
+              save=True):
         """Log in via the Ubuntu One SSO API."""
-        # Ask the store for the needed capabalities to be associated with the
+        if acls is None:
+            acls = ['package_upload', 'package_access']
+        # Ask the store for the needed capabilities to be associated with the
         # macaroon.
-        macaroon = self.sca.get_macaroon(
-            ['package_upload', 'package_access'])
+        macaroon = self.sca.get_macaroon(acls)
         caveat_id = self._extract_caveat_id(macaroon)
         unbound_discharge = self.sso.get_unbound_discharge(
             email, password, one_time_password, caveat_id)
         # The macaroon has been discharged, save it in the config
         self.conf.set('macaroon', macaroon)
         self.conf.set('unbound_discharge', unbound_discharge)
-        self.conf.save()
+        if save:
+            self.conf.save()
 
     def _extract_caveat_id(self, root_macaroon):
         macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)

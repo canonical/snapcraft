@@ -46,7 +46,7 @@ def _get_name_from_snap_file(snap_path):
     return snap_yaml['name']
 
 
-def login():
+def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
@@ -55,10 +55,10 @@ def login():
         'authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    store = storeapi.StoreClient()
     try:
         store.login(
-            email, password, one_time_password=one_time_password)
+            email, password, one_time_password=one_time_password, acls=acls,
+            save=save)
     except (storeapi.errors.InvalidCredentialsError,
             storeapi.errors.StoreAuthenticationError):
         logger.info('Login failed.')
@@ -66,6 +66,11 @@ def login():
     else:
         logger.info('Login successful.')
         return True
+
+
+def login():
+    store = storeapi.StoreClient()
+    return _login(store)
 
 
 def logout():
@@ -160,14 +165,11 @@ def register_key(query):
     context = gpgme.Context()
     key_data = io.BytesIO()
     context.export(fingerprint.encode('ascii'), key_data)
-    logger.info('Registering GPG key ...')
     store = storeapi.StoreClient()
-    try:
-        store.register_key(key_data.getvalue())
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
+    if not _login(store, acls=['modify_account_key'], save=False):
+        raise RuntimeError("Cannot continue without logging in successfully.")
+    logger.info('Registering GPG key ...')
+    store.register_key(key_data.getvalue())
     logger.info(
         'Done. The GPG key {} will be expected for signing your '
         'assertions.'.format(_format_fingerprint(fingerprint)))

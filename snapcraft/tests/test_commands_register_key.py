@@ -56,26 +56,32 @@ class RegisterKeyTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
         self.useFixture(TemporaryGPGFixture())
 
-    def test_register_key_without_login_raises_exception(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'sample.person@canonical.com'])
-
-        self.assertEqual(1, raised.exception.code)
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?\n',
-            self.fake_logger.output)
-
     @mock.patch.object(storeapi.SCAClient, 'register_key')
-    def test_register_key_successfully(self, mock_register_key):
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('getpass.getpass')
+    @mock.patch('builtins.print')
+    @mock.patch('builtins.input')
+    def test_register_key_successfully(self, mock_input, mock_print,
+                                       mock_getpass, mock_login,
+                                       mock_register_key):
+        mock_input.side_effect = ['sample.person@canonical.com', '123456']
+        mock_getpass.return_value = 'secret'
+
         main(['register-key', 'sample.person@canonical.com'])
 
         self.assertEqual(
+            'Authenticating against Ubuntu One SSO.\n'
+            'Login successful.\n'
             'Registering GPG key ...\n'
             'Done. The GPG key 6191 1EE6 0198 CD22 8462  '
             '19F6 A337 CC09 F1F1 2F4C will be expected for signing your '
             'assertions.\n',
             self.fake_logger.output)
 
+        mock_login.assert_called_once_with(
+            'sample.person@canonical.com', 'secret',
+            one_time_password='123456', acls=['modify_account_key'],
+            save=False)
         self.assertEqual(1, mock_register_key.call_count)
         gpg_output = subprocess.check_output(
             ['gpg'], input=mock_register_key.call_args[0][0]).decode('ascii')
@@ -84,13 +90,39 @@ class RegisterKeyTestCase(tests.TestCase):
             gpg_output)
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
-    def test_register_key_failed(self, mock_register_key):
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('getpass.getpass')
+    @mock.patch('builtins.print')
+    @mock.patch('builtins.input')
+    def test_register_key_login_failed(self, mock_input, mock_print,
+                                       mock_getpass, mock_login,
+                                       mock_register_key):
+        mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
+            'test')
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key', 'sample.person@canonical.com'])
+
+        self.assertEqual(0, mock_register_key.call_count)
+        self.assertEqual(1, raised.exception.code)
+        self.assertIn(
+            'Cannot continue without logging in successfully.\n',
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('getpass.getpass')
+    @mock.patch('builtins.print')
+    @mock.patch('builtins.input')
+    def test_register_key_failed(self, mock_input, mock_print, mock_getpass,
+                                 mock_login, mock_register_key):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         response.status_code = 500
         response.reason = 'Internal Server Error'
         mock_register_key.side_effect = (
             storeapi.errors.StoreKeyRegistrationError(response))
+
         with self.assertRaises(SystemExit) as raised:
             main(['register-key', 'sample.person@canonical.com'])
 
@@ -118,11 +150,15 @@ class RegisterKeyTestCase(tests.TestCase):
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('getpass.getpass')
     @mock.patch('builtins.print')
     @mock.patch('builtins.input')
     def test_register_key_select_key(self, mock_input, mock_print,
+                                     mock_getpass, mock_login,
                                      mock_register_key):
-        mock_input.return_value = '2'
+        mock_input.side_effect = ['2', 'sample.person@canonical.com', '']
+        mock_getpass.return_value = 'secret'
 
         main(['register-key'])
 
@@ -137,9 +173,11 @@ class RegisterKeyTestCase(tests.TestCase):
             mock.call('   Another Person <another.person@canonical.com>'),
             mock.call(),
             ])
-        mock_input.assert_called_once_with('Key number: ')
+        mock_input.assert_any_call('Key number: ')
 
         self.assertEqual(
+            'Authenticating against Ubuntu One SSO.\n'
+            'Login successful.\n'
             'Registering GPG key ...\n'
             'Done. The GPG key 4EA2 B48B FB44 8064 7BCC  '
             '8B54 7929 3F36 2153 83B8 will be expected for signing your '
