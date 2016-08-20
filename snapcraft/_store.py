@@ -75,37 +75,57 @@ def logout():
     logger.info('Credentials cleared.')
 
 
+def _is_usable_subkey(subkey):
+    """Can we use `subkey`?
+
+    A subkey is usable if it is not expired/revoked/disabled/invalid, if it
+    is RSA, and if it is at least 4096 bits.
+    """
+    if subkey.expired or subkey.revoked or subkey.disabled or subkey.invalid:
+        return False
+    # We're currently only interested in RSA >= 4096-bit.
+    if subkey.pubkey_algo != gpgme.PK_RSA or subkey.length < 4096:
+        return False
+    return True
+
+
+def _is_usable_key(key):
+    """Can we use `key`?
+
+    A key is usable if its main subkey (the first) is usable, if it has
+    UIDs, if it is not disabled, and if it has signing capabilities.
+    """
+    if not key.subkeys or not key.uids or key.disabled or not key.can_sign:
+        return False
+    return _is_usable_subkey(key.subkeys[0])
+
+
 def _get_usable_secret_keys(query=None):
-    ctx = gpgme.Context()
-    for key in ctx.keylist(query, True):
-        if not key.subkeys or not key.uids or key.disabled or not key.can_sign:
-            continue
-        mainkey = key.subkeys[0]
-        if (mainkey.expired or mainkey.revoked or mainkey.disabled or
-                mainkey.invalid):
-            continue
-        # We're currently only interested in RSA >= 4096-bit.
-        if mainkey.pubkey_algo != gpgme.PK_RSA or mainkey.length < 4096:
-            continue
-        yield key
+    context = gpgme.Context()
+    for key in context.keylist(query, True):
+        if _is_usable_key(key):
+            yield key
 
 
-def _display_fingerprint(fingerprint):
-    assert len(fingerprint) == 40
+def _format_fingerprint(fingerprint):
+    if len(fingerprint) != 40:
+        # Should never happen; GPG fingerprints are SHA-1 with length 40.
+        raise RuntimeError(
+            "GPG fingerprint has unexpected length %d" % len(fingerprint))
     chunks = [fingerprint[i:i + 4] for i in range(0, 40, 4)]
     return '{}  {}'.format(' '.join(chunks[:5]), ' '.join(chunks[5:]))
 
 
-_display_key_algorithm = {
+_format_key_algorithm = {
     gpgme.PK_RSA: 'R',
 }
 
 
-def _display_key(key):
+def _format_key(key):
     mainkey = key.subkeys[0]
     return '%d%s: %s' % (
-        mainkey.length, _display_key_algorithm[mainkey.pubkey_algo],
-        _display_fingerprint(mainkey.fpr))
+        mainkey.length, _format_key_algorithm[mainkey.pubkey_algo],
+        _format_fingerprint(mainkey.fpr))
 
 
 def _select_key(keys):
@@ -115,7 +135,7 @@ def _select_key(keys):
         width = len(str(len(keys)))
         for i, key in enumerate(keys):
             print('{index:{width}d}. {key}'.format(
-                index=i + 1, key=_display_key(key), width=width))
+                index=i + 1, key=_format_key(key), width=width))
             print('{blank:{width}}  {uid}'.format(
                 blank='', uid=key.uids[0].uid, width=width))
         print()
@@ -137,9 +157,9 @@ def register_key(query):
             'You have no usable GPG secret keys matching "{}".'.format(query))
     key = _select_key(keys)
     fingerprint = key.subkeys[0].fpr
-    ctx = gpgme.Context()
+    context = gpgme.Context()
     key_data = io.BytesIO()
-    ctx.export(fingerprint.encode('ascii'), key_data)
+    context.export(fingerprint.encode('ascii'), key_data)
     logger.info('Registering GPG key ...')
     store = storeapi.StoreClient()
     try:
@@ -150,7 +170,7 @@ def register_key(query):
         raise
     logger.info(
         'Done. The GPG key {} will be expected for signing your '
-        'assertions.'.format(_display_fingerprint(fingerprint)))
+        'assertions.'.format(_format_fingerprint(fingerprint)))
 
 
 def register(snap_name, is_private=False):
