@@ -311,6 +311,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         os.link(src, dst)
         # why oh why?
         os.link(src, os.path.join(self.installdir, 'vmlinuz'))
+        os.link(src, os.path.join(self.installdir, 'kernel.img'))
 
     def _copy_system_map(self):
         src = os.path.join(self.builddir, 'System.map')
