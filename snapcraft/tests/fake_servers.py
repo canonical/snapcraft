@@ -239,7 +239,6 @@ class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/octet-stream')
         self.end_headers()
         response = {
-            'successful': True,
             'upload_id': 'test-upload-id'
         }
         self.wfile.write(json.dumps(response).encode())
@@ -379,7 +378,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                     'http://localhost:{}/'.format(self.server.server_port),
                     details_path
                     ),
-                'success': True
             }
             data = json.dumps(response).encode()
         self.end_headers()
@@ -399,15 +397,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             content_type = 'text/plain'
             data = b''
         elif 'alpha' in data['channels']:
+            response_code = 400
             response = {
-                'success': False,
                 'errors': 'Not a valid channel: alpha',
             }
             data = json.dumps(response).encode()
         elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
             response = {
                 'opened_channels': data['channels'],
-                'success': True,
                 'channel_map': [
                     {'channel': 'stable', 'info': 'none'},
                     {'channel': 'candidate', 'info': 'none'},
