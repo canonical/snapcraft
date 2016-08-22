@@ -253,6 +253,11 @@ def _process_index(output):
                 except InvalidEntryError as e:
                     logger.warning('Invalid wiki entry: {}'.format(e))
                     wiki_errors += 1
+                except sources.MissingPackageError as e:
+                    logger.warning(
+                        'Missing package for source type: {}'.format(e))
+                    # Not really a wiki error
+                    wiki_errors += 1
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
@@ -262,6 +267,11 @@ def _process_index(output):
             _process_wiki_entry(entry, master_parts_list)
         except InvalidEntryError as e:
             logger.warning('Invalid wiki entry: {}'.format(e))
+            wiki_errors += 1
+        except sources.MissingPackageError as e:
+            logger.warning(
+                'Missing package for source type: {}'.format(e))
+            # Not really a wiki error
             wiki_errors += 1
 
     return {'master_parts_list': master_parts_list,

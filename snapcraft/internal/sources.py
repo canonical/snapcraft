@@ -87,6 +87,10 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
+class MissingPackageError(Exception):
+    pass
+
+
 class Base:
 
     def __init__(self, source, source_dir, source_tag=None,
@@ -396,7 +400,7 @@ def get(sourcedir, builddir, options):
     except FileNotFoundError:
         if type(handler) in [Bazaar, Git, Subversion, Mercurial]:
             required_packages = get_required_packages(options)
-            logging.error(e_msg.format(required_packages))
+            raise MissingPackageError(e_msg.format(required_packages))
         else:
             raise
 

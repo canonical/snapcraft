@@ -34,6 +34,7 @@ from snapcraft.internal.parser import (
     PARTS_FILE,
     main,
 )
+from snapcraft.internal.sources import MissingPackageError
 from snapcraft.tests import TestCase, fixture_setup
 
 TEST_OUTPUT_PATH = os.path.join(os.getcwd(), 'test_output.wiki')
@@ -901,8 +902,8 @@ origin: lp:not-a-real-snapcraft-parser-example
 description: example main
 project-part: main
 """)
-        with self.assertRaises(MissingSnapcraftYAMLError):
-            main(['--debug', '--index', TEST_OUTPUT_PATH])
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, retval)
 
         self.assertTrue(
             'A required package is missing, please install these packages'
