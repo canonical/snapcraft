@@ -181,7 +181,7 @@ required fields:
 
  * origin - The url where the snapcraft.yaml is located
  * description - A brief description of the part.
- * parts - A YAML list of other parts from the snapcraft.yaml that are needed.
+ * parts - A YAML list of parts from the snapcraft.yaml that are needed.
  * maintainer - The person who maintains the part's name and email address.
 
 Optional fields are:
