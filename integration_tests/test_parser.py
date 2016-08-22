@@ -56,8 +56,10 @@ class TestParser(integration_tests.TestCase):
                 os.path.join(os.path.dirname(__file__), 'both_parts_wiki'),
                 '--debug',
                 '--output', 'parts.yaml']
-        subprocess.check_call(args, stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
+        exception = self.assertRaises(
+            subprocess.CalledProcessError,
+            subprocess.check_call, args, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL)
 
         self.assertTrue(os.path.exists('parts.yaml'))
 
@@ -68,7 +70,9 @@ class TestParser(integration_tests.TestCase):
                 os.path.join(os.path.dirname(__file__), 'missing_parts_wiki'),
                 '--debug',
                 '--output', 'parts.yaml']
-        subprocess.check_call(args, stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
+        exception = self.assertRaises(
+            subprocess.CalledProcessError,
+            subprocess.check_call, args, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL)
 
         self.assertTrue(os.path.exists('parts.yaml'))
