@@ -154,18 +154,19 @@ def _update_source(part, origin):
 def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
     after_parts = set()
     parts_list = {}
-    for part in entry_parts:
-        if '/' in part:
+    for part_name in entry_parts:
+        if '/' in part_name:
             logger.warning(
-                'A "/" in a part name is deprecated and will be removed')
-        source_part = parts.get(part)
+                'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
+                    part_name))
+        source_part = parts.get(part_name)
 
         if source_part:
             source_part = _update_source(source_part, origin)
             source_part['maintainer'] = maintainer
             source_part['description'] = description
 
-            parts_list[part] = source_part
+            parts_list[part_name] = source_part
             after = source_part.get("after", [])
 
             if after:

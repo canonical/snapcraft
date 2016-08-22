@@ -189,9 +189,10 @@ class PartsConfig:
 
     def _process_parts(self):
         for part_name in self._parts_data:
+            m = 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
+                        part_name)
             if '/' in part_name:
-                logger.warning(
-                    'A "/" in a part name is deprecated and will be removed')
+                logger.warning(m)
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
 

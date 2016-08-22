@@ -75,6 +75,7 @@ parts:
         project_loader.load_config()
 
         self.assertTrue(
-            'A "/" in a part name is deprecated and will be removed'
+            'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
+                'part/1')
             in fake_logger.output,
             'Missing slash deprecation warning in output')

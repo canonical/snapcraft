@@ -211,10 +211,10 @@ parts: [main/a]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
-        self.assertTrue(
-            'A "/" in a part name is deprecated and will be removed'
-            in fake_logger.output,
-            'Missing slash deprecation warning in output')
+        m = 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
+            'main/a')
+        self.assertTrue(m in fake_logger.output,
+                        'Missing slash deprecation warning in output')
 
     def test_main_valid_with_default_index(self):
         main(['--debug'])
@@ -586,7 +586,7 @@ parts: [main]
 
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
-        self.assertEqual(1, retval)
+        self.assertEqual(2, retval)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
