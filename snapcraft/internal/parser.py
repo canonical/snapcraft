@@ -311,7 +311,7 @@ def run(args):
     if args['--debug']:
         print(yaml.dump(master_parts_list, default_flow_style=False))
 
-    return args
+    return wiki_errors
 
 
 def is_valid_parts_list(parts_list, parts):
@@ -329,7 +329,3 @@ def _write_parts_list(path, master_parts_list):
     with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
                  default_flow_style=False))
-
-
-if __name__ == '__main__':  # pragma: no cover
-    main()                  # pragma: no cover

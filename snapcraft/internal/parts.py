@@ -161,9 +161,6 @@ def _expand_filesets_for(step, properties):
 
 
 class PartsConfig:
-    @property
-    def part_names(self):
-        return self._part_names
 
     def __init__(self, parts_data, project_options, validator, build_tools,
                  snapcraft_yaml):
@@ -178,8 +175,17 @@ class PartsConfig:
         self._part_names = []
         self.after_requests = {}
 
-        self._remote_parts = get_remote_parts()
         self._process_parts()
+
+    @property
+    def part_names(self):
+        return self._part_names
+
+    @property
+    def _remote_parts(self):
+        if getattr(self, '_remote_parts_attr', None) is None:
+            self._remote_parts_attr = get_remote_parts()
+        return self._remote_parts_attr
 
     def _process_parts(self):
         for part_name in self._parts_data:
