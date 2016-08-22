@@ -108,8 +108,10 @@ class MakePlugin(snapcraft.BasePlugin):
         self.run(command + ['-j{}'.format(self.parallel_build_count)])
         if self.options.artifacts:
             for artifact in self.options.artifacts:
+                source_path = os.path.join(self.builddir, artifact)
                 destination_path = os.path.join(self.installdir, artifact)
-                snapcraft.file_utils.link_or_copy(artifact, destination_path)
+                snapcraft.file_utils.link_or_copy(
+                    source_path, destination_path)
         else:
             install_param = self.options.make_install_var + '=' + \
                 self.installdir

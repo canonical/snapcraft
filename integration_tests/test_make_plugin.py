@@ -57,3 +57,12 @@ class MakePluginTestCase(integration_tests.TestCase):
             os.path.join('stage', 'bin', 'test'),
             cwd=project_dir)
         self.assertEqual('Hello world\n', binary_output)
+
+    def test_stage_make_with_artifacts(self):
+        project_dir = 'simple-make-artifacts'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'test'),
+            cwd=project_dir)
+        self.assertEqual('Hello World!\n', binary_output)
