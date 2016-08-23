@@ -235,13 +235,18 @@ class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_upload_request(self):
         logger.info('Handling upload request')
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/octet-stream')
+        if 'UPDOWN_BROKEN' in os.environ:
+            response_code = 500
+            content_type = 'text/plain'
+            response = b'Broken'
+        else:
+            response_code = 200
+            content_type = 'application/octet-stream'
+            response = json.dumps({'upload_id': 'test-upload-id'}).encode()
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
         self.end_headers()
-        response = {
-            'upload_id': 'test-upload-id'
-        }
-        self.wfile.write(json.dumps(response).encode())
+        self.wfile.write(response)
 
 
 class FakeStoreAPIServer(http.server.HTTPServer):
