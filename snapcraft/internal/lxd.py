@@ -67,7 +67,9 @@ class Cleanbuilder:
                 self._container_name])
             yield
         finally:
-            check_call(['lxc', 'stop', self._container_name])
+            # Stopping takes a while and lxc doesn't print anything.
+            print('Stopping {}'.format(self._container_name))
+            check_call(['lxc', 'stop', '-f', self._container_name])
             check_call(['lxc', 'remote', 'remove', remote_tmp])
 
     def execute(self):
@@ -76,9 +78,17 @@ class Cleanbuilder:
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
-            self._container_run(
-                ['snapcraft', 'snap', '--output', self._snap_output])
-            self._pull_snap()
+            try:
+                self._container_run(
+                    ['snapcraft', 'snap', '--output', self._snap_output])
+            except CalledProcessError as e:
+                if self._project_options.debug:
+                    logger.info('Debug mode enabled, dropping into a shell')
+                    self._container_run(['bash', '-i'])
+                else:
+                    raise e
+            else:
+                self._pull_snap()
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
