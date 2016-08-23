@@ -31,7 +31,7 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
-  snapcraft [options] register <snap-name>
+  snapcraft [options] register <snap-name> [--private]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
@@ -284,7 +284,7 @@ def _is_store_command(args):
 
 def _run_store_command(args):
     if args['register']:
-        snapcraft.register(args['<snap-name>'])
+        snapcraft.register(args['<snap-name>'], args['--private'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
         snapcraft.push(args['<snap-file>'])
