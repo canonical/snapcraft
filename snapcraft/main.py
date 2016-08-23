@@ -48,7 +48,9 @@ Options:
   -h --help                             show this help message and exit
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
-                                        (including backtraces)
+                                        (including backtraces). When used with
+                                        cleanbuild, it opens a shell in case
+                                        of failure.
   --target-arch ARCH                    EXPERIMENTAL: sets the target
                                         architecture. Very few plugins support
                                         this.
@@ -188,6 +190,7 @@ def _get_project_options(args):
     options['use_geoip'] = args['--enable-geoip']
     options['parallel_builds'] = not args['--no-parallel-build']
     options['target_deb_arch'] = args['--target-arch']
+    options['debug'] = args['--debug']
 
     return snapcraft.ProjectOptions(**options)
 
