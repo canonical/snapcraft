@@ -120,14 +120,14 @@ description: test
 confinement: strict
 
 parts:
-  project-part/part1:
+  part1:
     stage-packages: [fswebcam]
 """)
 
         parts.update()
         project_loader.Config()
 
-        mock_loadPlugin.assert_called_with('project-part/part1', 'go', {
+        mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 

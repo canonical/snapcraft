@@ -129,6 +129,18 @@ class FakePartsWiki(fixtures.Fixture):
             'no_proxy', 'localhost,127.0.0.1'))
 
 
+class FakePartsWikiWithSlashes(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_parts_wiki_with_slashes_fixture = (
+            FakePartsWikiWithSlashesRunning())
+        self.useFixture(self.fake_parts_wiki_with_slashes_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+
 class FakePartsWikiOrigin(fixtures.Fixture):
 
     def setUp(self):
@@ -221,6 +233,11 @@ class FakePartsWikiOriginRunning(_FakeServerRunning):
 class FakePartsWikiRunning(_FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiServer
+
+
+class FakePartsWikiWithSlashesRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakePartsWikiWithSlashesServer
 
 
 class FakePartsServerRunning(_FakeServerRunning):
