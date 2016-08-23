@@ -235,14 +235,18 @@ class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_upload_request(self):
         logger.info('Handling upload request')
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/octet-stream')
+        if 'UPDOWN_BROKEN' in os.environ:
+            response_code = 500
+            content_type = 'text/plain'
+            response = b'Broken'
+        else:
+            response_code = 200
+            content_type = 'application/octet-stream'
+            response = json.dumps({'upload_id': 'test-upload-id'}).encode()
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
         self.end_headers()
-        response = {
-            'successful': True,
-            'upload_id': 'test-upload-id'
-        }
-        self.wfile.write(json.dumps(response).encode())
+        self.wfile.write(response)
 
 
 class FakeStoreAPIServer(http.server.HTTPServer):
@@ -379,7 +383,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                     'http://localhost:{}/'.format(self.server.server_port),
                     details_path
                     ),
-                'success': True
             }
             data = json.dumps(response).encode()
         self.end_headers()
@@ -399,15 +402,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             content_type = 'text/plain'
             data = b''
         elif 'alpha' in data['channels']:
+            response_code = 400
             response = {
-                'success': False,
                 'errors': 'Not a valid channel: alpha',
             }
             data = json.dumps(response).encode()
         elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
             response = {
                 'opened_channels': data['channels'],
-                'success': True,
                 'channel_map': [
                     {'channel': 'stable', 'info': 'none'},
                     {'channel': 'candidate', 'info': 'none'},

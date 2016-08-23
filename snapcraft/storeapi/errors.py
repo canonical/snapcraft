@@ -114,6 +114,17 @@ class StoreRegistrationError(StoreError):
         super().__init__(snap_name=snap_name, **response_json)
 
 
+class StoreUploadError(StoreError):
+
+    fmt = (
+        'There was an error uploading the package.\n'
+        'Reason: {reason!r}\n'
+        'Text: {text!r}')
+
+    def __init__(self, response):
+        super().__init__(reason=response.reason, text=response.text)
+
+
 class StorePushError(StoreError):
 
     __FMT_NOT_REGISTERED = (
