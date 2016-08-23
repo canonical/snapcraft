@@ -73,12 +73,6 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     'description': 'test entry for part1',
                     'maintainer': 'none',
                 },
-                'project-part/part1': {
-                    'plugin': 'go',
-                    'source': 'http://source.tar.gz',
-                    'description': 'test entry for part1',
-                    'maintainer': 'none',
-                },
                 'long-described-part': {
                     'plugin': 'go',
                     'source': 'http://source.tar.gz',
@@ -107,15 +101,44 @@ class FakePartsWikiRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting parts')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 ---
 origin: https://github.com/sergiusens/curl.git
-project-part: curl
+parts: [curl]
+description:
+  Description here
+maintainer: none
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
+class FakePartsWikiWithSlashesServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiWithSlashesRequestHandler)
+
+
+class FakePartsWikiWithSlashesRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        self.send_response(200)
+        response = """
+---
+origin: https://github.com/sergiusens/curl.git
+parts: [curl/a]
+description:
+  Description here
+maintainer: none
+---
+origin: https://github.com/sergiusens/curl.git
+parts: [curl-a]
 description:
   Description here
 maintainer: none
@@ -138,12 +161,8 @@ class FakePartsWikiOriginRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting part origin')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 parts:
   somepart:
     source: https://github.com/someuser/somepart.git
