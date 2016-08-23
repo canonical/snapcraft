@@ -1,0 +1,17 @@
+name: simple-ant
+version: 0
+summary: test ant builds
+description: |
+ Test ant builds and options.
+confinement: strict
+
+parts:
+  a:
+    plugin: ant
+    source: my-app
+    ant-properties:
+      foo: 'bar'
+    ant-dest-property: 'dist.dir'
+    ant-build-target: 'artifacts'
+    snap:
+      - foo.jar

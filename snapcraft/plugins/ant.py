@@ -22,6 +22,21 @@ The plugin requires a build.xml in the root of the source tree.
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin-specific keywords:
+
+    - properties:
+      (object)
+      A dictionary of key-value pairs. Set the following properties when
+      running ant.
+
+    - target:
+      (string)
+      Run the given ant target.
+
+    - dest-property:
+      (string)
+      The ant property for the destination directory.
 """
 
 import glob
@@ -38,21 +53,52 @@ logger = logging.getLogger(__name__)
 
 class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema['properties']['ant-properties'] = {
+            'type': 'object',
+            'default': {},
+        }
+        schema['properties']['ant-build-target'] = {
+            'type': 'string',
+        }
+        schema['properties']['ant-dest-property'] = {
+            'type': 'string',
+        }
+        return schema
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.append('ant')
 
     def build(self):
         super().build()
-        self.run(['ant'])
-        files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
-        if not files:
-            raise RuntimeError('Could not find any built jar files for part')
-        jardir = os.path.join(self.installdir, 'jar')
-        os.makedirs(jardir)
-        for f in files:
-            base = os.path.basename(f)
-            os.link(f, os.path.join(jardir, base))
+
+        command = ['ant']
+
+        if self.options.ant_build_target:
+            command.extend([self.options.ant_build_target])
+
+        if self.options.ant_dest_property:
+            destination = '-D{}={}'.format(self.options.ant_dest_property,
+                                           self.installdir)
+            command.extend([destination])
+
+        for prop, value in self.options.ant_properties.items():
+            command.extend(['-D{}={}'.format(prop, value)])
+
+        self.run(command)
+        if not self.options.ant_dest_property:
+            files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
+            if not files:
+                raise RuntimeError(
+                    'Could not find any built jar files for part')
+            jardir = os.path.join(self.installdir, 'jar')
+            os.makedirs(jardir)
+            for f in files:
+                base = os.path.basename(f)
+                os.link(f, os.path.join(jardir, base))
 
     def env(self, root):
         env = super().env(root)

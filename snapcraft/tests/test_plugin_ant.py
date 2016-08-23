@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import copy
 from unittest import mock
 
 import snapcraft
@@ -28,7 +29,9 @@ class AntPluginTestCase(tests.TestCase):
         super().setUp()
 
         class Options:
-            ant_options = []
+            ant_properties = {}
+            ant_build_target = None
+            ant_dest_property = None
         self.options = Options()
 
         self.project_options = snapcraft.ProjectOptions()
@@ -68,6 +71,26 @@ class AntPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['ant']),
         ])
+
+    @mock.patch.object(ant.AntPlugin, 'run')
+    def test_build_with_options(self, run_mock):
+        options = copy.deepcopy(self.options)
+        options.ant_build_target = 'artifacts'
+        options.ant_dest_property = 'dist.dir'
+        options.ant_properties = {'basedir': '.'}
+        plugin = ant.AntPlugin('test-part', options,
+                               self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        plugin.build()
+
+        destination = '-Ddist.dir={}'.format(plugin.installdir)
+        basedir = '-Dbasedir=.'
+        args = run_mock.call_args[0][0]
+        self.assertEqual(args[0], 'ant')
+        self.assertEqual(args[1], 'artifacts')
+        self.assertIn(destination, args)
+        self.assertIn(basedir, args)
 
     def test_env(self):
         plugin = ant.AntPlugin('test-part', self.options,
