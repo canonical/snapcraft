@@ -151,7 +151,7 @@ class KernelPluginTestCase(tests.TestCase):
 
     def _assert_common_assets(self, installdir):
         for asset in ['initrd-4.4.2.img', 'initrd.img', 'vmlinuz',
-                      'bzImage-4.4.2', 'System.map-4.4.2']:
+                      'kernel.img', 'bzImage-4.4.2', 'System.map-4.4.2']:
             self.assertTrue(os.path.exists(os.path.join(installdir, asset)),
                             'Missing {}'.format(asset))
 
