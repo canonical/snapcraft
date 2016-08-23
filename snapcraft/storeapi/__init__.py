@@ -156,9 +156,6 @@ class StoreClient():
                 'Unbound discharge not in the config file')
 
         updown_data = _upload.upload_files(snap_filename, self.updown)
-        success = updown_data.get('success', False)
-        if not success:
-            return updown_data
 
         return self.sca.snap_push_metadata(snap_name, updown_data)
 
@@ -355,9 +352,6 @@ class SCAClient(Client):
             raise errors.StoreReleaseError(data['name'], response)
 
         response_json = response.json()
-        success = response_json.pop('success')
-        if not success:
-            raise errors.StoreReleaseError(data['name'], response)
 
         return response_json
 

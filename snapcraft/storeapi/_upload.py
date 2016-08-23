@@ -25,6 +25,8 @@ from progressbar import (
 )
 from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
+from snapcraft.storeapi.errors import StoreUploadError
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +42,6 @@ def upload_files(binary_filename, updown_client):
     Submit a file to the Store upload service and return the
     corresponding upload_id.
     """
-    result = {'success': False, 'errors': []}
-
     try:
         binary_file_size = os.path.getsize(binary_filename)
         binary_file = open(binary_filename, 'rb')
@@ -71,27 +71,20 @@ def upload_files(binary_filename, updown_client):
         # Make sure progress bar shows 100% complete
         progress_bar.finish()
 
-        if response.ok:
-            response_data = response.json()
-            result.update({
-                'success': response_data.get('successful', True),
-                'upload_id': response_data['upload_id'],
-                'binary_filesize': os.path.getsize(binary_filename),
-                'source_uploaded': False,
-            })
-        else:
-            logger.error(
-                'There was an error uploading the package.\n'
-                'Reason: %s\n'
-                'Text: %s',
-                response.reason, response.text)
-            result['errors'] = [response.text]
     except Exception as err:
-        logger.exception(
-            'An unexpected error was found while uploading files.')
-        result['errors'] = [str(err)]
+        raise RuntimeError(
+            'An unexpected error was found while uploading '
+            'files: {!r}.'.format(err))
     finally:
         # Close the open file
         binary_file.close()
 
-    return result
+    if not response.ok:
+        raise StoreUploadError(response)
+
+    response_data = response.json()
+    return {
+        'upload_id': response_data['upload_id'],
+        'binary_filesize': binary_file_size,
+        'source_uploaded': False,
+    }
