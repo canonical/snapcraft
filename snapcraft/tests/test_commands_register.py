@@ -60,7 +60,19 @@ class RegisterTestCase(tests.TestCase):
             "Congratulations! You're now the publisher for 'test-snap'.\n",
             self.fake_logger.output)
 
-        mock_register.assert_called_once_with('test-snap', '16')
+        mock_register.assert_called_once_with('test-snap', False, '16')
+
+    def test_register_private_name_successfully(self):
+        with mock.patch.object(
+                storeapi.SCAClient, 'register') as mock_register:
+            main(['register', 'test-snap', '--private'])
+
+        self.assertEqual(
+            'Registering test-snap.\n'
+            "Congratulations! You're now the publisher for 'test-snap'.\n",
+            self.fake_logger.output)
+
+        mock_register.assert_called_once_with('test-snap', True, '16')
 
     def test_registration_failed(self):
         response = mock.Mock()

@@ -169,6 +169,11 @@ class RegisterTestCase(tests.TestCase):
         # No exception will be raised if this is succesful
         self.client.register('test-good-snap-name')
 
+    def test_register_private_name_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        # No exception will be raised if this is succesful
+        self.client.register('test-good-snap-name', is_private=True)
+
     def test_already_registered(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreRegistrationError) as raised:
