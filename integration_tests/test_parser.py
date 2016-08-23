@@ -56,7 +56,7 @@ class TestParser(integration_tests.TestCase):
                 os.path.join(os.path.dirname(__file__), 'both_parts_wiki'),
                 '--debug',
                 '--output', 'parts.yaml']
-        exception = self.assertRaises(
+        self.assertRaises(
             subprocess.CalledProcessError,
             subprocess.check_call, args, stderr=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL)
@@ -70,7 +70,7 @@ class TestParser(integration_tests.TestCase):
                 os.path.join(os.path.dirname(__file__), 'missing_parts_wiki'),
                 '--debug',
                 '--output', 'parts.yaml']
-        exception = self.assertRaises(
+        self.assertRaises(
             subprocess.CalledProcessError,
             subprocess.check_call, args, stderr=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL)
