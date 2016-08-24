@@ -167,9 +167,8 @@ class Python3Plugin(snapcraft.BasePlugin):
         def remove_func(dirpath, files):
             # Evaluate if a __pycache__ directory only contains .pyc files
             endswith_pyc = (x.endswith('.pyc') for x in files)
-            if dirpath.endswith('__pycache__') and all(endswith_pyc):
-                print(dirpath, files)
-            return dirpath.endswith('__pycache__') and all(endswith_pyc)
+            dirname = os.path.basename(dirpath)
+            return dirname == '__pycache__' and all(endswith_pyc):
 
         file_utils.remove_dirs(self.installdir, remove_func)
         file_utils.remove_files(self.installdir, lambda x: x.endswith('.pth'))
