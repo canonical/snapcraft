@@ -272,8 +272,7 @@ def _process_index(output):
                     wiki_errors += 1
                 entry = ''
         else:
-            # remove trailing white space
-            entry = '\n'.join([entry, line.rstrip()])
+            entry = '\n'.join([entry, line])
 
     if entry:
         try:

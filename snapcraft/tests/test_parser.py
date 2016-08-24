@@ -642,15 +642,10 @@ origin: lp:snapcraft-parser-example
 description: |
   example
 
-  Usage :
+  Usage:
     blahblahblah
 project-part: 'main'
 """
-        # add a blank at the end of the line, some editors
-        # automatically removes trailing newlines on write so
-        # get around it programatically.
-        output = output.replace('Usage :', 'Usage : ')
-        print('JOE: output: {!r}'.format(output.replace(' ', 'X')))
         _create_example_output(output)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -664,7 +659,6 @@ project-part: 'main'
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         with open('snap-parts.yaml') as fp:
             data = fp.read()
-            print("JOE: data: {!r}".format(data))
             self.assertNotIn('description: "', data)
             self.assertIn('description: |', data)
         self.assertEqual(1, _get_part_list_count())
