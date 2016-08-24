@@ -883,7 +883,7 @@ parts: [main]
 maintainer: John Doe <john.doe@example.com>
 origin: lp:not-a-real-snapcraft-parser-example
 description: example main
-project-part: main
+parts: [main]
 """)
         with self.assertRaises(FileNotFoundError):
             main(['--debug', '--index', TEST_OUTPUT_PATH])
@@ -899,12 +899,12 @@ project-part: main
 maintainer: John Doe <john.doe@example.com>
 origin: lp:not-a-real-snapcraft-parser-example
 description: example main
-project-part: main
+parts: [main]
 ---
 maintainer: John Doe <john.doe@example.com>
 origin: lp:not-a-real-snapcraft-parser-example
 description: example main
-project-part: main2
+parts: [main2]
 """)
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(2, retval)
