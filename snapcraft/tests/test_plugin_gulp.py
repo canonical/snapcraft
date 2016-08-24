@@ -96,6 +96,53 @@ class GulpPluginTestCase(tests.TestCase):
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])
 
+    def test_build_via_proxy(self):
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+        self.useFixture(fixtures.EnvironmentVariable(
+            'PATH', '/bin'))
+
+        env_vars = (
+            ('http_proxy', 'http://localhost:3132'),
+            ('https_proxy', 'https://localhost:3133'),
+        )
+        for v in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+
+        class Options:
+            source = '.'
+            gulp_tasks = []
+            node_engine = '4'
+
+        plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        plugin.build()
+
+        for call_args in self.run_mock.call_args_list:
+            env = call_args[1]['env']
+            self.assertTrue('npm_config_https_proxy' in env,
+                            'Expected environment to include '
+                            'npm_config_https_proxy')
+            self.assertEqual(env['npm_config_https_proxy'], env_vars[0][1])
+
+        path = '{}:/bin'.format(os.path.join(plugin._npm_dir, 'bin'))
+        self.run_mock.assert_has_calls([
+            mock.call(['npm', 'install', '-g', 'gulp-cli'],
+                      cwd=plugin.builddir, env={
+                            'PATH': path,
+                            env_vars[0][0]: env_vars[0][1],
+                            env_vars[1][0]: env_vars[1][1],
+                            'npm_config_https_proxy': env_vars[0][1]}),
+            mock.call(['npm', 'install', '--only-development'],
+                      cwd=plugin.builddir, env={
+                            'PATH': path,
+                            env_vars[0][0]: env_vars[0][1],
+                            env_vars[1][0]: env_vars[1][1],
+                            'npm_config_https_proxy': env_vars[0][1]}),
+        ])
+
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
         machine_mock.return_value = 'fantasy-arch'
