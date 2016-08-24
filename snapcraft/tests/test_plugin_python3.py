@@ -128,19 +128,8 @@ class Python3PluginTestCase(tests.TestCase):
     def test_fileset_ignores(self):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
-        expected_fileset = [
-            '-usr/bin/pip*',
-            '-usr/lib/python*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc',
-        ]
+
+        expected_fileset = ['-usr/bin/pip*']
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
 

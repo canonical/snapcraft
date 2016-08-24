@@ -41,7 +41,7 @@ import os
 import re
 
 import snapcraft
-from snapcraft import common
+from snapcraft import file_utils
 
 
 class Python3Plugin(snapcraft.BasePlugin):
@@ -80,6 +80,7 @@ class Python3Plugin(snapcraft.BasePlugin):
             'python3-pkg-resources',
             'python3-setuptools',
         ])
+        self._pip_dir = os.path.join(self.partdir, 'pip')
 
     def env(self, root):
         return [
@@ -166,10 +167,22 @@ class Python3Plugin(snapcraft.BasePlugin):
              '--prefix={}/usr'.format(self.installdir),
              '--root={}'.format(self.installdir)], cwd=self.builddir)
 
+        def remove_func(dirpath, files):
+            print(dirpath, files)
+            endswith_pyc = (x.endswith('.pyc') for x in files)
+            return dirpath.endswith('__pycache__') and all(endswith_pyc)
+
+        file_utils.remove_dirs(self.installdir, remove_func)
+
         # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.installdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        file_utils.replace_in_file(self.installdir, re.compile(r''),
+                                   re.compile(r'#!.*python'),
+                                   r'#!/usr/bin/env python')
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        fileset.append('-usr/bin/pip*')
+        return fileset
 
     @property
     def dist_packages_dir(self):
@@ -180,18 +193,3 @@ class Python3Plugin(snapcraft.BasePlugin):
     @property
     def python_version(self):
         return self.run_output(['py3versions', '-d'])
-
-    def snap_fileset(self):
-        fileset = super().snap_fileset()
-        fileset.append('-usr/bin/pip*')
-        fileset.append('-usr/lib/python*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        return fileset

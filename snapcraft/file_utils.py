@@ -150,3 +150,18 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
             f.seek(0)
             f.truncate()
             f.write(replaced)
+
+
+def remove_files(directory, remove_pattern_func=lambda file_name: True):
+    """Remove files from directory if remove_pattern_func returns True."""
+    for root, _, files in os.walk(directory):
+        for file_name in files:
+            if remove_pattern_func(file_name):
+                os.unlink(os.path.join(root, file_name))
+
+
+def remove_dirs(directory_tree, condition_func=lambda dirpath, files: True):
+    """Remove directories from a directory tree if condition_func is True."""
+    for root, _, files in os.walk(directory_tree):
+        if condition_func(root, files):
+            shutil.rmtree(root)

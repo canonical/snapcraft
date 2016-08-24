@@ -87,7 +87,7 @@ class Python2PluginTestCase(tests.TestCase):
             set(extend_pull).issubset(set(schema['pull-properties']))
         )
 
-    @mock.patch.object(snapcraft.common, 'get_python2_path')
+    @mock.patch.object(snapcraft.plugins.python2, 'get_python2_path')
     def test_env(self, mock_path):
         mock_path.side_effect = [
             '/testpath',
@@ -178,21 +178,8 @@ class Python2PluginTestCase(tests.TestCase):
     def test_fileset_ignores(self):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
-        expected_fileset = [
-            '-usr/bin/pip*',
-            '-usr/lib/python*/dist-packages/easy-install.pth',
-            '-usr/lib/python*/dist-packages/__pycache__/*.pyc',
-            '-usr/lib/python*/*.pyc',
-            '-usr/lib/python*/*/*.pyc',
-            '-usr/lib/python*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc',
-        ]
+
+        expected_fileset = ['-usr/bin/pip*']
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
 

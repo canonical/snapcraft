@@ -46,7 +46,8 @@ import os
 import re
 
 import snapcraft
-from snapcraft import common
+from snapcraft.common import get_python2_path
+from snapcraft import file_utils
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +111,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         # env built, even package installation, so the first runs for these
         # will likely fail.
         try:
-            env.append('PYTHONPATH={0}'.format(common.get_python2_path(root)))
+            env.append('PYTHONPATH={0}'.format(get_python2_path(root)))
         except EnvironmentError as e:
             logger.debug(e)
 
@@ -154,7 +155,7 @@ class Python2Plugin(snapcraft.BasePlugin):
 
     def _pip(self, setup):
         site_packages_dir = os.path.join(
-            os.path.dirname(common.get_python2_path(self.installdir)),
+            os.path.dirname(get_python2_path(self.installdir)),
             'site-packages')
 
         # If site-packages doesn't exist, make sure it points to the
@@ -190,7 +191,7 @@ class Python2Plugin(snapcraft.BasePlugin):
         if not os.path.exists(setup_file):
             return
 
-        os.makedirs(common.get_python2_path(self.installdir), exist_ok=True)
+        os.makedirs(get_python2_path(self.installdir), exist_ok=True)
         self.run(
             ['python2', setup_file,
              'build_ext', '-I{}'.format(_get_python2_include(self.installdir)),
@@ -198,26 +199,16 @@ class Python2Plugin(snapcraft.BasePlugin):
              '--prefix={}/usr'.format(self.installdir),
              ], cwd=self.builddir)
 
+        file_utils.remove_files(self.installdir, lambda x: x.endswith('.pyc'))
+
         # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.installdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        file_utils.replace_in_file(self.installdir, re.compile(r''),
+                                   re.compile(r'#!.*python'),
+                                   r'#!/usr/bin/env python')
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-usr/bin/pip*')
-        fileset.append('-usr/lib/python*/dist-packages/easy-install.pth')
-        fileset.append('-usr/lib/python*/dist-packages/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc')
         return fileset
 
 

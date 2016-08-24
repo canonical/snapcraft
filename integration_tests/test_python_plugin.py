@@ -83,6 +83,16 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.assertEqual('#!/usr/bin/env python2', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
 
+    def test_build_does_not_keep_pyc_files_in_install(self):
+        project_dir = 'python-entry-point'
+        self.run_snapcraft('stage', project_dir)
+
+        pyc_files = []
+        for _, _, files in os.walk(os.path.join(project_dir, 'stage')):
+            pyc_files.extend([f for f in files if f.endswith('pyc')])
+
+        self.assertEqual(pyc_files, [])
+
     def test_build_doesnt_get_bad_install_directory_lp1586546(self):
         """Verify that LP: #1586546 doesn't come back."""
         project_dir = 'python-pyyaml'
