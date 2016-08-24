@@ -50,6 +50,7 @@ _NODEJS_ARCHES = {
     'i686': 'x86',
     'x86_64': 'x64',
     'armv7l': 'armv7l',
+    'aarch64': 'arm64',
 }
 
 
