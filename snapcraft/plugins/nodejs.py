@@ -110,9 +110,11 @@ class NodePlugin(snapcraft.BasePlugin):
 
         env = os.environ.copy()
 
-        # make npm use http proxy to access registry via https
+        # Setting the "npm_config_https_proxy" environment variable with the
+        # value of "http_proxy".
         # ref. https://github.com/npm/npm/issues/2050
-        if 'http_proxy' in os.environ:
+        if ('http_proxy' in os.environ and
+                'npm_config_https_proxy' not in os.environ):
             logger.info('Set http_proxy environment variable to "https-proxy"')
             env['npm_config_https_proxy'] = os.environ['http_proxy']
 
