@@ -80,7 +80,6 @@ class Python3Plugin(snapcraft.BasePlugin):
             'python3-pkg-resources',
             'python3-setuptools',
         ])
-        self._pip_dir = os.path.join(self.partdir, 'pip')
 
     def env(self, root):
         return [
@@ -158,21 +157,22 @@ class Python3Plugin(snapcraft.BasePlugin):
         # used.
 
         setup_file = os.path.join(self.builddir, 'setup.py')
-        if not os.path.exists(setup_file):
-            return
-
-        os.makedirs(self.dist_packages_dir, exist_ok=True)
-        self.run(
-            ['python3', setup_file, 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir),
-             '--root={}'.format(self.installdir)], cwd=self.builddir)
+        if os.path.exists(setup_file):
+            os.makedirs(self.dist_packages_dir, exist_ok=True)
+            self.run(
+                ['python3', setup_file, 'install', '--install-layout=deb',
+                 '--prefix={}/usr'.format(self.installdir),
+                 '--root={}'.format(self.installdir)], cwd=self.builddir)
 
         def remove_func(dirpath, files):
-            print(dirpath, files)
+            # Evaluate if a __pycache__ directory only contains .pyc files
             endswith_pyc = (x.endswith('.pyc') for x in files)
+            if dirpath.endswith('__pycache__') and all(endswith_pyc):
+                print(dirpath, files)
             return dirpath.endswith('__pycache__') and all(endswith_pyc)
 
         file_utils.remove_dirs(self.installdir, remove_func)
+        file_utils.remove_files(self.installdir, lambda x: x.endswith('.pth'))
 
         # Fix all shebangs to use the in-snap python.
         file_utils.replace_in_file(self.installdir, re.compile(r''),

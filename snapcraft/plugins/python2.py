@@ -188,18 +188,22 @@ class Python2Plugin(snapcraft.BasePlugin):
         # used.
 
         setup_file = os.path.join(self.builddir, 'setup.py')
-        if not os.path.exists(setup_file):
-            return
+        if os.path.exists(setup_file):
+            os.makedirs(get_python2_path(self.installdir), exist_ok=True)
+            self.run(
+                ['python2', setup_file,
+                 'build_ext',
+                 '-I{}'.format(_get_python2_include(self.installdir)),
+                 'install', '--install-layout=deb',
+                 '--prefix={}/usr'.format(self.installdir),
+                 ], cwd=self.builddir)
 
-        os.makedirs(get_python2_path(self.installdir), exist_ok=True)
-        self.run(
-            ['python2', setup_file,
-             'build_ext', '-I{}'.format(_get_python2_include(self.installdir)),
-             'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir),
-             ], cwd=self.builddir)
+        def remove_func(file_name):
+            # Determine if the file_name ends with either .pyc or .pth
+            return any([file_name.endswith(match)
+                       for match in ('.pyc', '.pth')])
 
-        file_utils.remove_files(self.installdir, lambda x: x.endswith('.pyc'))
+        file_utils.remove_files(self.installdir, remove_func)
 
         # Fix all shebangs to use the in-snap python.
         file_utils.replace_in_file(self.installdir, re.compile(r''),
