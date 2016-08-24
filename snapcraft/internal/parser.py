@@ -329,7 +329,6 @@ def is_valid_parts_list(parts_list, parts):
 
 def str_presenter(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
-        data = data.rstrip()
         return dumper.represent_scalar('tag:yaml.org,2002:str', data,
                                        style='|')
     return dumper.represent_scalar('tag:yaml.org,2002:str', data)
