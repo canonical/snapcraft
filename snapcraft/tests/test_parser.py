@@ -644,7 +644,7 @@ description: |
 
   Usage:
     blahblahblah
-project-part: 'main'
+parts: [main]
 """
         _create_example_output(output)
         mock_get_origin_data.return_value = {
