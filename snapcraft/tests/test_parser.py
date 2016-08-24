@@ -632,6 +632,45 @@ parts: [main2]
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_descriptions_get_block_quotes(self,
+                                           mock_get,
+                                           mock_get_origin_data):
+        output = """
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: |
+  example
+
+  Usage :
+    blahblahblah
+project-part: 'main'
+"""
+        # add a blank at the end of the line, some editors
+        # automatically removes trailing newlines on write so
+        # get around it programatically.
+        output = output.replace('Usage :', 'Usage : ')
+        print('JOE: output: {!r}'.format(output.replace(' ', 'X')))
+        _create_example_output(output)
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        with open('snap-parts.yaml') as fp:
+            data = fp.read()
+            print("JOE: data: {!r}".format(data))
+            self.assertNotIn('description: "', data)
+            self.assertIn('description: |', data)
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_interactions_with_fake(self,
                                          mock_get,
                                          mock_get_origin_data):

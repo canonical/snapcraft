@@ -272,7 +272,8 @@ def _process_index(output):
                     wiki_errors += 1
                 entry = ''
         else:
-            entry = '\n'.join([entry, line])
+            # remove trailing white space
+            entry = '\n'.join([entry, line.rstrip()])
 
     if entry:
         try:
@@ -307,6 +308,7 @@ def run(args):
     if wiki_errors:
         logger.warning("{} wiki errors found!".format(wiki_errors))
 
+    yaml.add_representer(str, str_presenter)
     _write_parts_list(path, master_parts_list)
 
     if args['--debug']:
@@ -323,6 +325,14 @@ def is_valid_parts_list(parts_list, parts):
             return False
 
     return True
+
+
+def str_presenter(dumper, data):
+    if len(data.splitlines()) > 1:  # check for multiline string
+        data = data.rstrip()
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data,
+                                       style='|')
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
 
 def _write_parts_list(path, master_parts_list):
