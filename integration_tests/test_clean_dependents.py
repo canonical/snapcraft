@@ -117,8 +117,9 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.assertThat(
             exception.output,
             EndsWith(
-                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
-                "add each to the clean command if that's what you intended.\n"))
+                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. "
+                "Please add each to the clean command if that's what you "
+                "intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent_without_nested_dependent_raises(self):
@@ -130,8 +131,9 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.assertThat(
             exception.output,
             EndsWith(
-                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
-                "add each to the clean command if that's what you intended.\n"))
+                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. "
+                "Please add each to the clean command if that's what you "
+                "intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_main_without_any_dependent_raises(self):
@@ -170,6 +172,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.assertThat(
             exception.output,
             EndsWith(
-                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. Please "
-                "add each to the clean command if that's what you intended.\n"))
+                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. "
+                "Please add each to the clean command if that's what you "
+                "intended.\n"))
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
