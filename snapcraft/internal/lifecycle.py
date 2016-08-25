@@ -165,6 +165,8 @@ class _Executor:
             getattr(part, 'prepare_{}'.format(step))()
 
         common.env = self.parts_config.build_env_for_part(part)
+        common.env.extend(self.config.project_env())
+
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):

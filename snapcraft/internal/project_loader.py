@@ -175,6 +175,13 @@ class Config:
 
         return env
 
+    def project_env(self):
+        return [
+            'SNAPCRAFT_STAGE={}'.format(self._project_options.stage_dir),
+            'SNAPCRAFT_PROJECT_NAME={}'.format(self.data['name']),
+            'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
+        ]
+
 
 def _runtime_env(root, arch_triplet):
     """Set the environment variables required for running binaries."""
