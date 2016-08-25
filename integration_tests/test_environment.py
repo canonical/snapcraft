@@ -33,13 +33,15 @@ class EnvironmentTestCase(integration_tests.TestCase):
                                         'parts', 'env', 'install')
 
         test_name = os.path.join(stage_dir, 'test_name')
-        test_version = os.path.join(stage_dir, 'test_version')
-        test_stage = os.path.join(stage_dir, 'test_stage')
-        test_part_install = os.path.join(stage_dir, 'test_part_install')
-
         self.assertThat(test_name, FileContains('test-environment'))
+
+        test_version = os.path.join(stage_dir, 'test_version')
         self.assertThat(test_version, FileContains('0.1'))
+
+        test_stage = os.path.join(stage_dir, 'test_stage')
         self.assertThat(test_stage, FileContains(stage_dir))
+
+        test_part_install = os.path.join(stage_dir, 'test_part_install')
         self.assertThat(test_part_install, FileContains(part_install_dir))
 
     def test_project_environment_within_snapcraft(self):
