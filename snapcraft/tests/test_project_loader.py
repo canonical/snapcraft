@@ -845,6 +845,28 @@ parts:
         self.assertEqual({'dependent'},
                          config.parts.get_dependents('main'))
 
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_replace_snapcraft_variables(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  main:
+    plugin: make
+    source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION
+    make-options: [DEP=$SNAPCRAFT_STAGE]
+""")
+        config = project_loader.Config()
+
+        mock_load_plugin.assert_called_with('main', 'make', {
+            'source': 'project-name-1',
+            'stage': [], 'snap': [],
+            'make-options': ['DEP={}'.format(self.stage_dir)],
+        })
+
 
 class InitTestCase(tests.TestCase):
 
@@ -1569,3 +1591,195 @@ class TestFilesets(tests.TestCase):
             raised.exception.message,
             '\'$3\' referred to in the \'stage\' fileset but it is not '
             'in filesets')
+
+
+class SnapcraftEnvTestCase(tests.TestCase):
+
+    def test_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                'snapcraft_stage/usr/bin',
+                'snapcraft_stage/usr/bin',
+            ),
+            (
+                'replaced start',
+                '$SNAPCRAFT_STAGE/usr/bin',
+                '{}/usr/bin'.format(self.stage_dir),
+            ),
+            (
+                'replaced between',
+                '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                '--with-swig {}/usr/swig'.format(self.stage_dir),
+            ),
+            (
+                'project replacement',
+                '$SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION',
+                'project_name-version',
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(
+                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_lists_with_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                [
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ],
+                [
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced start',
+                [
+                    '$SNAPCRAFT_STAGE/usr/bin',
+                    '/usr/bin',
+                ],
+                [
+                    '{}/usr/bin'.format(self.stage_dir),
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced between',
+                [
+                    '--without-python',
+                    '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                ],
+                [
+                    '--without-python',
+                    '--with-swig {}/usr/swig'.format(self.stage_dir),
+                ],
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(
+                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_tuples_with_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                (
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ),
+                [
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced start',
+                (
+                    '$SNAPCRAFT_STAGE/usr/bin',
+                    '/usr/bin',
+                ),
+                [
+                    '{}/usr/bin'.format(self.stage_dir),
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced between',
+                (
+                    '--without-python',
+                    '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                ),
+                [
+                    '--without-python',
+                    '--with-swig {}/usr/swig'.format(self.stage_dir),
+                ],
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(
+                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_dict_with_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                {
+                    '1': 'snapcraft_stage/usr/bin',
+                    '2': '/usr/bin',
+                },
+                {
+                    '1': 'snapcraft_stage/usr/bin',
+                    '2': '/usr/bin',
+                },
+            ),
+            (
+                'replaced start',
+                {
+                    '1': '$SNAPCRAFT_STAGE/usr/bin',
+                    '2': '/usr/bin',
+                },
+                {
+                    '1': '{}/usr/bin'.format(self.stage_dir),
+                    '2': '/usr/bin',
+                },
+            ),
+            (
+                'replaced between',
+                {
+                    '1': '--without-python',
+                    '2': '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                },
+                {
+                    '1': '--without-python',
+                    '2': '--with-swig {}/usr/swig'.format(self.stage_dir),
+                },
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(
+                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_string_replacement_with_complex_data(self):
+        subject = {
+            'filesets': {
+                'files': [
+                    'somefile',
+                    '$SNAPCRAFT_STAGE/file1',
+                    'SNAPCRAFT_STAGE/really',
+                ]
+            },
+            'configflags': [
+                '--with-python',
+                '--with-swig $SNAPCRAFT_STAGE/swig',
+            ],
+        }
+
+        expected = {
+            'filesets': {
+                'files': [
+                    'somefile',
+                    '{}/file1'.format(self.stage_dir),
+                    'SNAPCRAFT_STAGE/really',
+                ]
+            },
+            'configflags': [
+                '--with-python',
+                '--with-swig {}/swig'.format(self.stage_dir),
+            ],
+        }
+
+        self.assertEqual(
+            project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+
+

@@ -41,3 +41,11 @@ class EnvironmentTestCase(integration_tests.TestCase):
         self.assertThat(test_version, FileContains('0.1'))
         self.assertThat(test_stage, FileContains(stage_dir))
         self.assertThat(test_part_install, FileContains(part_install_dir))
+
+    def test_project_environment_within_snapcraft(self):
+        """Replace the SNAPCRAFT_PROJECT_.* ocurrences in snapcraft.yaml
+
+        If the correct environment SNAPCRAFT_PROJECT values aren't replaced
+        this test will fail its pull step."""
+        project_dir = 'snapcraft-key-values'
+        self.run_snapcraft('pull', project_dir)

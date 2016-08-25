@@ -37,8 +37,6 @@ from snapcraft.internal import (
     states,
 )
 
-_SNAPCRAFT_STAGE = '$SNAPCRAFT_STAGE'
-
 logger = logging.getLogger(__name__)
 
 
@@ -118,8 +116,7 @@ class PluginHandler:
 
         plugin = _get_plugin(module)
         options, self.pull_properties, self.build_properties = _make_options(
-            self._project_options.stage_dir, part_schema, properties,
-            plugin.schema())
+            part_schema, properties, plugin.schema())
         # For backwards compatibility we add the project to the plugin
         try:
             self.code = plugin(self.name, options, self._project_options)
@@ -552,7 +549,7 @@ def _validate_step_properties(step, plugin_schema):
                 step_properties_key, list(invalid_properties)))
 
 
-def _make_options(stage_dir, part_schema, properties, plugin_schema):
+def _make_options(part_schema, properties, plugin_schema):
     if 'properties' not in plugin_schema:
         plugin_schema['properties'] = {}
     # The base part_schema takes precedense over the plugin.
@@ -566,30 +563,19 @@ def _make_options(stage_dir, part_schema, properties, plugin_schema):
         pass
     options = Options()
 
-    _populate_options(stage_dir, options, properties, plugin_schema)
+    _populate_options(options, properties, plugin_schema)
 
     return (options, plugin_schema.get('pull-properties', []),
             plugin_schema.get('build-properties', []))
 
 
-def _populate_options(stage_dir, options, properties, schema):
+def _populate_options(options, properties, schema):
     schema_properties = schema.get('properties', {})
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
-        attr_value = _expand_env(properties.get(key, default_value), stage_dir)
+        attr_value = properties.get(key, default_value)
         setattr(options, attr_name, attr_value)
-
-
-def _expand_env(attr, stage_dir):
-    if isinstance(attr, str) and _SNAPCRAFT_STAGE in attr:
-        return attr.replace(_SNAPCRAFT_STAGE, stage_dir)
-    elif isinstance(attr, list) or isinstance(attr, tuple):
-        return [_expand_env(i, stage_dir) for i in attr]
-    elif isinstance(attr, dict):
-        return {k: _expand_env(attr[k], stage_dir) for k in attr}
-
-    return attr
 
 
 def _get_plugin(module):
