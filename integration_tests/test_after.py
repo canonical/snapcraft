@@ -89,8 +89,3 @@ class AfterTestCase(integration_tests.TestCase):
         self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull', project_dir)
-
-    def test_snapcraft_stage_env_replacement(self):
-        project_dir = 'stage_env'
-
-        self.run_snapcraft('stage', project_dir)

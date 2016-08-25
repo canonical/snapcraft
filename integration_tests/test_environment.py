@@ -51,3 +51,8 @@ class EnvironmentTestCase(integration_tests.TestCase):
         this test will fail its pull step."""
         project_dir = 'snapcraft-key-values'
         self.run_snapcraft('pull', project_dir)
+
+    def test_snapcraft_stage_env_replacement(self):
+        project_dir = 'stage_env'
+
+        self.run_snapcraft('stage', project_dir)
