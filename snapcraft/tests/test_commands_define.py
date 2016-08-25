@@ -28,7 +28,7 @@ class DefineCommandTestCase(tests.TestWithFakeRemoteParts):
         main.main(['define', 'curl'])
 
         expected_output = """Maintainer: 'none'
-Description: 'test entry for curl'
+Description: test entry for curl
 
 curl:
   plugin: autotools

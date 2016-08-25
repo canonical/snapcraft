@@ -223,6 +223,9 @@ of the choice of plugin.
 
 """
 
+from collections import OrderedDict                 # noqa
+import yaml                                         # noqa
+
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
@@ -239,3 +242,29 @@ from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
 from snapcraft.internal import repo                 # noqa
+
+
+# Setup yaml module globally
+# yaml OrderedDict loading and dumping
+# from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
+_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+
+
+def dict_representer(dumper, data):
+    return dumper.represent_dict(data.items())
+
+
+def dict_constructor(loader, node):
+    return OrderedDict(loader.construct_pairs(node))
+
+
+def str_presenter(dumper, data):
+    if len(data.splitlines()) > 1:  # check for multiline string
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data,
+                                       style='|')
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+
+
+yaml.add_representer(str, str_presenter)
+yaml.add_representer(OrderedDict, dict_representer)
+yaml.add_constructor(_mapping_tag, dict_constructor)
