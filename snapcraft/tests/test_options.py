@@ -56,7 +56,7 @@ class OptionsTestCase(tests.TestCase):
     ]
 
     @mock.patch('platform.machine')
-    def test_amd64_support(self, mock_platform_machine):
+    def test_architecture_options(self, mock_platform_machine):
         mock_platform_machine.return_value = self.machine
         options = snapcraft.ProjectOptions()
         self.assertEqual(options.arch_triplet, self.expected_arch_triplet)
