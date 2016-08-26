@@ -16,9 +16,6 @@
 
 """The go plugin can be used for go projects using `go get`.
 
-This plugin uses the common plugin keywords, for more information check the
-'plugins' topic.
-
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
@@ -158,7 +155,7 @@ class GoPlugin(snapcraft.BasePlugin):
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
         os.makedirs(self._gopath_bin, exist_ok=True)
-        for binary in os.listdir(os.path.join(self._gopath_bin)):
+        for binary in os.listdir(self._gopath_bin):
             binary_path = os.path.join(self._gopath_bin, binary)
             shutil.copy2(binary_path, install_bin_path)
 
