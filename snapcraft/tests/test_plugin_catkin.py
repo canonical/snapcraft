@@ -390,9 +390,9 @@ class CatkinPluginTestCase(tests.TestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         with self.assertRaises(FileNotFoundError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
             plugin.pull()
 
         self.assertEqual(
@@ -407,9 +407,8 @@ class CatkinPluginTestCase(tests.TestCase):
         # source_space was specified to be the same as the root, this should
         # fail.
         with self.assertRaises(RuntimeError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
-            plugin.pull()
+            catkin.CatkinPlugin('test-part', self.properties,
+                                self.project_options)
 
         self.assertEqual(str(raised.exception),
                          'source-space cannot be the root of the Catkin '
