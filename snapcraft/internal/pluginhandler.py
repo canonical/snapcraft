@@ -318,6 +318,8 @@ class PluginHandler:
         self.mark_cleaned('build')
 
     def migratable_fileset_for(self, step):
+        logger.debug('Determining migratable fileset for part {!r}'.format(
+            self.name))
         plugin_fileset = self.code.snap_fileset()
         fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
         fileset.extend(plugin_fileset)
@@ -356,6 +358,7 @@ class PluginHandler:
                 return
             repo.fix_pkg_config(self.stagedir, file_path, self.code.installdir)
 
+        logger.debug('Migrating files for part {!r}'.format(self.name))
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir, fixup_func=fixup_func)
         # TODO once `snappy try` is in place we will need to copy
@@ -389,6 +392,7 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
+        logger.debug('Migrating files for part {!r}'.format(self.name))
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
         dependencies = _find_dependencies(self.snapdir)
 
