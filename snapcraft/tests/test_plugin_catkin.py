@@ -361,9 +361,9 @@ class CatkinPluginTestCase(tests.TestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and `source-space` is 'src', this
         # should fail.
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         with self.assertRaises(FileNotFoundError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
             plugin.pull()
 
         self.assertEqual(
@@ -475,14 +475,8 @@ class CatkinPluginTestCase(tests.TestCase):
             def __eq__(self, args):
                 index = args.index('--pkg')
                 packages = args[index+1:index+3]
-                if 'my_package' not in packages:
-                    self.test.fail('Expected "my_package" to be installed '
-                                   'within the same command as "package_2"')
-
-                if 'package_2' not in packages:
-                    self.test.fail('Expected "package_2" to be installed '
-                                   'within the same command as "my_package"')
-
+                self.test.assertIn('my_package', packages)
+                self.test.assertIn('package_2', packages)
                 return True
 
         bashrun_mock.assert_called_with(check_pkg_arguments(self))
@@ -668,10 +662,8 @@ class CatkinPluginTestCase(tests.TestCase):
             # that's handled.
             file_mock.return_value.read.side_effect = UnicodeDecodeError(
                 'foo', b'bar', 1, 2, 'baz')
-            try:
-                plugin._finish_build()
-            except UnicodeDecodeError:
-                self.fail('Expected _finish_build to handle binary files')
+            # An exception will be raise if build can't handle the binary file.
+            plugin._finish_build()
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
@@ -856,18 +848,13 @@ class RosdepTestCase(tests.TestCase):
 
         # Make sure running setup() again doesn't have problems with the old
         # environment
-        try:
-            self.rosdep.setup()
-        except FileExistsError:
-            self.fail('Unexpectedly raised an exception when running setup() '
-                      'multiple times')
+        # An exception will be raised if setup can't be called twice.
+        self.rosdep.setup()
 
     def test_setup_initialization_failure(self):
         def run(args, **kwargs):
             if args == ['rosdep', 'init']:
                 raise subprocess.CalledProcessError(1, 'foo', b'bar')
-
-            return mock.DEFAULT
 
         self.check_output_mock.side_effect = run
 
