@@ -298,8 +298,6 @@ class CatkinPluginTestCase(tests.TestCase):
             if package_name == 'ros_core':
                 return ['ros-core-dependency']
 
-            return None
-
         self.rosdep_mock.return_value.resolve_dependency = resolve
 
         plugin.pull()
@@ -353,14 +351,11 @@ class CatkinPluginTestCase(tests.TestCase):
     def test_valid_catkin_workspace_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it contains a 'src' directory, this is a valid Catkin workspace.
-        try:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
-            os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-            plugin.pull()
-        except FileNotFoundError:
-            self.fail('Unexpectedly raised an exception when the Catkin '
-                      'workspace was valid')
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+        # An exception will be raised if pull can't handle the valid workspace.
+        plugin.pull()
 
     def test_invalid_catkin_workspace_no_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
@@ -382,15 +377,12 @@ class CatkinPluginTestCase(tests.TestCase):
         # sourcedir is expected to be the root of the Catkin workspace.
         # Normally this would mean it contained a `src` directory, but it can
         # be remapped via the `source-space` key.
-        try:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
-            os.makedirs(os.path.join(plugin.sourcedir,
-                        self.properties.source_space))
-            plugin.pull()
-        except FileNotFoundError:
-            self.fail('Unexpectedly raised an exception when the Catkin '
-                      'src was remapped in a valid manner')
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir,
+                                 self.properties.source_space))
+        # An exception will be raised if pull can't handle the source space.
+        plugin.pull()
 
     def test_invalid_catkin_workspace_invalid_source_space(self):
         self.properties.source_space = 'foo'
