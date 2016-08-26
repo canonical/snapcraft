@@ -129,7 +129,10 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
 
-        expected_fileset = ['-usr/bin/pip*']
+        expected_fileset = [
+            '-usr/bin/pip*',
+            '-usr/lib/python3/dist-packages/__pycache__',
+        ]
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
 
