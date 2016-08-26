@@ -68,23 +68,6 @@ BASE_DIR = "/tmp"
 PARTS_FILE = "snap-parts.yaml"
 
 
-# yaml OrderedDict loading and dumping
-# from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
-_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-
-def dict_representer(dumper, data):
-    return dumper.represent_dict(data.items())
-
-
-def dict_constructor(loader, node):
-    return OrderedDict(loader.construct_pairs(node))
-
-
-yaml.add_representer(OrderedDict, dict_representer)
-yaml.add_constructor(_mapping_tag, dict_constructor)
-
-
 def _get_version():
     try:
         return pkg_resources.require('snapcraft-parser')[0].version
@@ -307,7 +290,6 @@ def run(args):
     if wiki_errors:
         logger.warning("{} wiki errors found!".format(wiki_errors))
 
-    yaml.add_representer(str, str_presenter)
     _write_parts_list(path, master_parts_list)
 
     if args['--debug']:
@@ -324,13 +306,6 @@ def is_valid_parts_list(parts_list, parts):
             return False
 
     return True
-
-
-def str_presenter(dumper, data):
-    if len(data.splitlines()) > 1:  # check for multiline string
-        return dumper.represent_scalar('tag:yaml.org,2002:str', data,
-                                       style='|')
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
 
 def _write_parts_list(path, master_parts_list):

@@ -25,6 +25,7 @@ import fixtures
 import yaml
 from collections import OrderedDict
 
+import snapcraft                           # noqa, initialize yaml
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
@@ -64,6 +65,17 @@ class TestParser(TestCase):
             os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
+
+    def test_ordereddict_yaml(self):
+        from collections import OrderedDict
+        data = OrderedDict()
+
+        data['name'] = 'test'
+        data['description'] = 'description'
+
+        output = yaml.dump(data)
+
+        self.assertTrue(isinstance(yaml.load(output), OrderedDict))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
