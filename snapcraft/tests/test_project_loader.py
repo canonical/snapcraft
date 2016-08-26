@@ -859,7 +859,7 @@ parts:
     source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION
     make-options: [DEP=$SNAPCRAFT_STAGE]
 """)
-        config = project_loader.Config()
+        project_loader.Config()
 
         mock_load_plugin.assert_called_with('main', 'make', {
             'source': 'project-name-1',
@@ -1621,8 +1621,8 @@ class SnapcraftEnvTestCase(tests.TestCase):
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(
-                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
 
     def test_lists_with_string_replacements(self):
         replacements = (
@@ -1663,8 +1663,8 @@ class SnapcraftEnvTestCase(tests.TestCase):
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(
-                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
 
     def test_tuples_with_string_replacements(self):
         replacements = (
@@ -1705,8 +1705,8 @@ class SnapcraftEnvTestCase(tests.TestCase):
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(
-                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
 
     def test_dict_with_string_replacements(self):
         replacements = (
@@ -1747,8 +1747,8 @@ class SnapcraftEnvTestCase(tests.TestCase):
 
         for test_name, subject, expected in replacements:
             self.subTest(key=test_name)
-            self.assertEqual(
-                project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
 
     def test_string_replacement_with_complex_data(self):
         subject = {
@@ -1779,7 +1779,5 @@ class SnapcraftEnvTestCase(tests.TestCase):
             ],
         }
 
-        self.assertEqual(
-            project_loader._replace_attr(subject, 'project_name', 'version', self.stage_dir), expected)
-
-
+        self.assertEqual(project_loader._replace_attr(
+            subject, 'project_name', 'version', self.stage_dir), expected)
