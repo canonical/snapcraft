@@ -26,13 +26,6 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
-class FakeUbuntuRepo:
-
-    def __init__(self, rootdir, recommends=False,
-                 sources=None, use_geoip=True):
-        self.use_geoip = use_geoip
-
-
 class PullCommandTestCase(tests.TestCase):
 
     yaml_template = """name: pull-test
