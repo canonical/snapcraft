@@ -16,9 +16,6 @@
 
 """The go plugin can be used for go projects using `go get`.
 
-This plugin uses the common plugin keywords, for more information check the
-'plugins' topic.
-
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
