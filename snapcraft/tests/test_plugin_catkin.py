@@ -298,8 +298,6 @@ class CatkinPluginTestCase(tests.TestCase):
             if package_name == 'ros_core':
                 return ['ros-core-dependency']
 
-            return None
-
         self.rosdep_mock.return_value.resolve_dependency = resolve
 
         plugin.pull()
@@ -353,22 +351,19 @@ class CatkinPluginTestCase(tests.TestCase):
     def test_valid_catkin_workspace_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it contains a 'src' directory, this is a valid Catkin workspace.
-        try:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
-            os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-            plugin.pull()
-        except FileNotFoundError:
-            self.fail('Unexpectedly raised an exception when the Catkin '
-                      'workspace was valid')
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+        # An exception will be raised if pull can't handle the valid workspace.
+        plugin.pull()
 
     def test_invalid_catkin_workspace_no_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and `source-space` is 'src', this
         # should fail.
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         with self.assertRaises(FileNotFoundError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
             plugin.pull()
 
         self.assertEqual(
@@ -382,15 +377,12 @@ class CatkinPluginTestCase(tests.TestCase):
         # sourcedir is expected to be the root of the Catkin workspace.
         # Normally this would mean it contained a `src` directory, but it can
         # be remapped via the `source-space` key.
-        try:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
-            os.makedirs(os.path.join(plugin.sourcedir,
-                        self.properties.source_space))
-            plugin.pull()
-        except FileNotFoundError:
-            self.fail('Unexpectedly raised an exception when the Catkin '
-                      'src was remapped in a valid manner')
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir,
+                                 self.properties.source_space))
+        # An exception will be raised if pull can't handle the source space.
+        plugin.pull()
 
     def test_invalid_catkin_workspace_invalid_source_space(self):
         self.properties.source_space = 'foo'
@@ -398,9 +390,9 @@ class CatkinPluginTestCase(tests.TestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
         with self.assertRaises(FileNotFoundError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
             plugin.pull()
 
         self.assertEqual(
@@ -415,9 +407,8 @@ class CatkinPluginTestCase(tests.TestCase):
         # source_space was specified to be the same as the root, this should
         # fail.
         with self.assertRaises(RuntimeError) as raised:
-            plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                         self.project_options)
-            plugin.pull()
+            catkin.CatkinPlugin('test-part', self.properties,
+                                self.project_options)
 
         self.assertEqual(str(raised.exception),
                          'source-space cannot be the root of the Catkin '
@@ -483,14 +474,8 @@ class CatkinPluginTestCase(tests.TestCase):
             def __eq__(self, args):
                 index = args.index('--pkg')
                 packages = args[index+1:index+3]
-                if 'my_package' not in packages:
-                    self.test.fail('Expected "my_package" to be installed '
-                                   'within the same command as "package_2"')
-
-                if 'package_2' not in packages:
-                    self.test.fail('Expected "package_2" to be installed '
-                                   'within the same command as "my_package"')
-
+                self.test.assertIn('my_package', packages)
+                self.test.assertIn('package_2', packages)
                 return True
 
         bashrun_mock.assert_called_with(check_pkg_arguments(self))
@@ -676,10 +661,8 @@ class CatkinPluginTestCase(tests.TestCase):
             # that's handled.
             file_mock.return_value.read.side_effect = UnicodeDecodeError(
                 'foo', b'bar', 1, 2, 'baz')
-            try:
-                plugin._finish_build()
-            except UnicodeDecodeError:
-                self.fail('Expected _finish_build to handle binary files')
+            # An exception will be raise if build can't handle the binary file.
+            plugin._finish_build()
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
@@ -864,18 +847,13 @@ class RosdepTestCase(tests.TestCase):
 
         # Make sure running setup() again doesn't have problems with the old
         # environment
-        try:
-            self.rosdep.setup()
-        except FileExistsError:
-            self.fail('Unexpectedly raised an exception when running setup() '
-                      'multiple times')
+        # An exception will be raised if setup can't be called twice.
+        self.rosdep.setup()
 
     def test_setup_initialization_failure(self):
         def run(args, **kwargs):
             if args == ['rosdep', 'init']:
                 raise subprocess.CalledProcessError(1, 'foo', b'bar')
-
-            return mock.DEFAULT
 
         self.check_output_mock.side_effect = run
 
