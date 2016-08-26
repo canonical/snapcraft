@@ -305,8 +305,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         run_mock.side_effect = _run
 
-        try:
-            plugin.build()
-        except:
-            self.fail('Expected build() to be able to handle non-executable '
-                      'autogen.sh')
+        # An exception will be raised if build can't handle the non-executable
+        # autogen.
+        plugin.build()

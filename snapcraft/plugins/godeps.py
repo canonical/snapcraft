@@ -113,7 +113,7 @@ class GodepsPlugin(snapcraft.BasePlugin):
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
         os.makedirs(self._gopath_bin, exist_ok=True)
-        for binary in os.listdir(os.path.join(self._gopath_bin)):
+        for binary in os.listdir(self._gopath_bin):
             # Skip godeps. It serves no purpose in production.
             if binary == 'godeps':
                 continue
