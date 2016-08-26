@@ -41,23 +41,23 @@ class PartsTestCase(integration_tests.TestCase):
 
         expected = (
             "Maintainer: 'Sergio Schvezov <sergio.schvezov@ubuntu.com>'\n"
-            "Description: 'A tool and a library (usable from many languages) "
+            "Description: A tool and a library (usable from many languages) "
             "for client side URL transfers, supporting FTP, FTPS, HTTP, "
-            "HTTPS, TELNET, DICT, FILE and LDAP.'\n\n"
+            "HTTPS, TELNET, DICT, FILE and LDAP.\n\n"
             "curl:\n"
+            "  plugin: autotools\n"
+            "  source: http://curl.haxx.se/download/curl-7.44.0.tar.bz2\n"
+            "  source-type: tar\n"
             "  configflags:\n"
             "  - --enable-static\n"
             "  - --enable-shared\n"
             "  - --disable-manual\n"
-            "  plugin: autotools\n"
             "  snap:\n"
             "  - -bin\n"
             "  - -lib/*.a\n"
             "  - -lib/pkgconfig\n"
             "  - -lib/*.la\n"
             "  - -include\n"
-            "  - -share\n"
-            "  source: http://curl.haxx.se/download/curl-7.44.0.tar.bz2\n"
-            "  source-type: tar\n")
+            "  - -share\n")
 
         self.assertEqual(expected, output)
