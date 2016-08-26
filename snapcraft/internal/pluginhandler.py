@@ -250,6 +250,9 @@ class PluginHandler:
         if not self.code.stage_packages:
             return
 
+        logger.debug('Fetching stage-packages {!r} for part {!r}'.format(
+            self.code.stage_packages, self.name))
+
         try:
             self.ubuntu.get(self.code.stage_packages)
         except repo.PackageNotFoundError as e:
@@ -259,6 +262,8 @@ class PluginHandler:
 
     def _unpack_stage_packages(self):
         if self.code.stage_packages:
+            logger.debug('Unpacking stage-packages for part {!r} to '
+                         '{!r}'.format(self.name, self.installdir))
             self.ubuntu.unpack(self.installdir)
 
     def prepare_pull(self, force=False):
@@ -550,6 +555,11 @@ def _validate_step_properties(step, plugin_schema):
 
 
 def _make_options(part_schema, properties, plugin_schema):
+    # Make copies as these dictionaries are tampered with
+    part_schema = part_schema.copy()
+    properties = properties.copy()
+    plugin_schema = plugin_schema.copy()
+
     if 'properties' not in plugin_schema:
         plugin_schema['properties'] = {}
     # The base part_schema takes precedense over the plugin.
@@ -559,23 +569,26 @@ def _make_options(part_schema, properties, plugin_schema):
     _validate_step_properties('build', plugin_schema)
     jsonschema.validate(properties, plugin_schema)
 
-    class Options():
-        pass
-    options = Options()
-
-    _populate_options(options, properties, plugin_schema)
+    options = _populate_options(properties, plugin_schema)
 
     return (options, plugin_schema.get('pull-properties', []),
             plugin_schema.get('build-properties', []))
 
 
-def _populate_options(options, properties, schema):
+def _populate_options(properties, schema):
+    class Options():
+        pass
+
+    options = Options()
+
     schema_properties = schema.get('properties', {})
     for key in schema_properties:
         attr_name = key.replace('-', '_')
         default_value = schema_properties[key].get('default')
         attr_value = properties.get(key, default_value)
         setattr(options, attr_name, attr_value)
+
+    return options
 
 
 def _get_plugin(module):
@@ -605,6 +618,10 @@ def load_plugin(part_name, plugin_name, properties=None,
         part_schema = {}
     if project_options is None:
         project_options = snapcraft.ProjectOptions()
+    logger.debug('Setting up part {!r} with plugin {!r} and '
+                 'properties {!r}.'.format(part_name,
+                                           plugin_name,
+                                           properties))
     return PluginHandler(plugin_name, part_name, properties,
                          project_options, part_schema)
 
