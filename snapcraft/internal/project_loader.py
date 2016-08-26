@@ -184,10 +184,9 @@ class Config:
         ]
 
     def _expand_env(self, snapcraft_yaml):
-        skip_keys = ['name', 'version']
+        environment_keys = ['name', 'version']
         for key in snapcraft_yaml:
-            # We want to skip environment keys:
-            if any((key == skip_keys for skip_key in skip_keys)):
+            if any((key == env_key for env_key in environment_keys)):
                 continue
             snapcraft_yaml[key] = _replace_attr(
                 snapcraft_yaml[key],
