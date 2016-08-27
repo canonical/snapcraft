@@ -62,6 +62,17 @@ curl       test entry for curl
             'repetitive de...\n')
         self.assertEqual(fake_terminal.getvalue(), expected_output)
 
+    def test_search_only_first_line_of_description(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        main.main(['search', 'mulitline-part'])
+
+        expected_output = (
+            'PART NAME       DESCRIPTION\n'
+            'multiline-part  this is a multiline description\n')
+        self.assertEqual(fake_terminal.getvalue(), expected_output)
+
     def test_searching_for_a_part_that_doesnt_exist_helps_out(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
