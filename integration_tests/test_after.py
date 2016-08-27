@@ -17,6 +17,8 @@
 import os
 import subprocess
 
+from testtools.matchers import Contains
+
 import integration_tests
 
 
@@ -56,7 +58,7 @@ class AfterTestCase(integration_tests.TestCase):
         expected = (
             'Issue detected while analyzing snapcraft.yaml: '
             'circular dependency chain found in parts definition\n')
-        self.assertEqual(expected, exception.output)
+        self.assertThat(exception.output, Contains(expected))
 
     def test_build_with_missing_dependencies(self):
         project_dir = self.copy_project_to_tmp('dependencies')
