@@ -317,4 +317,3 @@ class AutotoolsPluginTestCase(tests.TestCase):
         ]
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
-
