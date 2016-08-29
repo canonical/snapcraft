@@ -124,11 +124,7 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
         self.run(['make', '-j{}'.format(self.parallel_build_count)])
         self.run(make_install_command)
 
-        # Remove .la files which don't work when they are moved around
-        self._remove_la_files()
-
-    def _remove_la_files(self):
-        for root, _, files in os.walk(self.installdir):
-            for file_name in files:
-                if file_name.endswith('.la'):
-                    os.unlink(os.path.join(root, file_name))
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        fileset.append('-**/*.la')
+        return fileset

@@ -184,14 +184,6 @@ class Python3Plugin(snapcraft.BasePlugin):
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-usr/bin/pip*')
-        fileset.append('-usr/lib/python*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
+        fileset.append('-**/*.pth')
+        fileset.append('-**/__pycache__')
         return fileset
