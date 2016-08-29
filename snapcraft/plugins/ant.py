@@ -68,9 +68,6 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
             },
             'default': [],
         }
-        schema['properties']['ant-dest-property'] = {
-            'type': 'string',
-        }
         return schema
 
     def __init__(self, name, options, project):
@@ -85,20 +82,12 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         if self.options.ant_build_targets:
             command.extend(self.options.ant_build_targets)
 
-        if self.options.ant_dest_property:
-            destination = '-D{}={}'.format(self.options.ant_dest_property,
-                                           self.installdir)
-            command.extend([destination])
-
         for prop, value in self.options.ant_properties.items():
             command.extend(['-D{}={}'.format(prop, value)])
 
         self.run(command)
-        if not self.options.ant_dest_property:
-            files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
-            if not files:
-                raise RuntimeError(
-                    'Could not find any built jar files for part')
+        files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
+        if files:
             jardir = os.path.join(self.installdir, 'jar')
             os.makedirs(jardir)
             for f in files:

@@ -60,26 +60,12 @@ class AntPluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(ant.AntPlugin, 'run')
-    def test_build_fail(self, run_mock):
-        plugin = ant.AntPlugin('test-part', self.options,
-                               self.project_options)
-
-        os.makedirs(plugin.sourcedir)
-        with self.assertRaises(RuntimeError):
-            plugin.build()
-
-        run_mock.assert_has_calls([
-            mock.call(['ant']),
-        ])
-
-    @mock.patch.object(ant.AntPlugin, 'run')
     def test_build_with_options(self, run_mock):
         options = copy.deepcopy(self.options)
-        options.ant_build_targets = ['artifacts', 'jar']
-        options.ant_dest_property = 'dist.dir'
-        options.ant_properties = {'basedir': '.'}
         plugin = ant.AntPlugin('test-part', options,
                                self.project_options)
+        options.ant_build_targets = ['artifacts', 'jar']
+        options.ant_properties = {'basedir': '.', 'dist.dir': plugin.installdir}
 
         os.makedirs(plugin.sourcedir)
         plugin.build()

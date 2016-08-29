@@ -10,9 +10,6 @@ parts:
     plugin: ant
     source: my-app
     ant-properties:
-      foo: 'bar'
-    ant-dest-property: 'dist.dir'
+      dist.dir: 'target'
     ant-build-targets:
       - artifacts
-    snap:
-      - foo.jar
