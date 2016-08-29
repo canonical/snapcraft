@@ -25,6 +25,7 @@ import fixtures
 import yaml
 from collections import OrderedDict
 
+import snapcraft                           # noqa, initialize yaml
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
@@ -64,6 +65,17 @@ class TestParser(TestCase):
             os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
+
+    def test_ordereddict_yaml(self):
+        from collections import OrderedDict
+        data = OrderedDict()
+
+        data['name'] = 'test'
+        data['description'] = 'description'
+
+        output = yaml.dump(data)
+
+        self.assertTrue(isinstance(yaml.load(output), OrderedDict))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -628,6 +640,39 @@ parts: [main2]
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_descriptions_get_block_quotes(self,
+                                           mock_get,
+                                           mock_get_origin_data):
+        output = """
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: |
+  example
+
+  Usage:
+    blahblahblah
+parts: [main]
+"""
+        _create_example_output(output)
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        with open('snap-parts.yaml') as fp:
+            data = fp.read()
+            self.assertNotIn('description: "', data)
+            self.assertIn('description: |', data)
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
