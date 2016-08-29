@@ -82,9 +82,9 @@ class BasePlugin:
         self.stage_packages = []
 
         with contextlib.suppress(AttributeError):
-            self.stage_packages = options.stage_packages
+            self.stage_packages = options.stage_packages.copy()
         with contextlib.suppress(AttributeError):
-            self.build_packages = options.build_packages
+            self.build_packages = options.build_packages.copy()
 
         self.project = project
         self.options = options

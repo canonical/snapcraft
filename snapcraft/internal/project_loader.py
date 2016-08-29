@@ -114,10 +114,11 @@ class Config:
         self._project_options = project_options
 
         self._snapcraft_yaml = _get_snapcraft_yaml()
-        self.data = _snapcraft_yaml_load(self._snapcraft_yaml)
-
-        self._validator = Validator(self.data)
+        snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
+        self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
+        self.data = self._expand_env(snapcraft_yaml)
+
         _ensure_confinement_default(self.data, self._validator.schema)
 
         self.build_tools = self.data.get('build-packages', [])
@@ -174,6 +175,41 @@ class Config:
                        ':$LD_LIBRARY_PATH"')
 
         return env
+
+    def project_env(self):
+        return [
+            'SNAPCRAFT_STAGE={}'.format(self._project_options.stage_dir),
+            'SNAPCRAFT_PROJECT_NAME={}'.format(self.data['name']),
+            'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
+        ]
+
+    def _expand_env(self, snapcraft_yaml):
+        environment_keys = ['name', 'version']
+        for key in snapcraft_yaml:
+            if any((key == env_key for env_key in environment_keys)):
+                continue
+            snapcraft_yaml[key] = _replace_attr(
+                snapcraft_yaml[key],
+                snapcraft_yaml['name'],
+                snapcraft_yaml['version'],
+                self._project_options.stage_dir)
+        return snapcraft_yaml
+
+
+def _replace_attr(attr, name, version, stage_dir):
+    if isinstance(attr, str):
+        attr = attr.replace('$SNAPCRAFT_STAGE', stage_dir)
+        attr = attr.replace('$SNAPCRAFT_PROJECT_NAME', name)
+        attr = attr.replace('$SNAPCRAFT_PROJECT_VERSION', str(version))
+        return attr
+    elif isinstance(attr, list) or isinstance(attr, tuple):
+        return [_replace_attr(i, name, version, stage_dir)
+                for i in attr]
+    elif isinstance(attr, dict):
+        return {k: _replace_attr(attr[k], name, version, stage_dir)
+                for k in attr}
+
+    return attr
 
 
 def _runtime_env(root, arch_triplet):
