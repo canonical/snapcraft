@@ -30,6 +30,11 @@ import yaml
 
 import snapcraft
 from snapcraft import file_utils
+from snapcraft.internal.errors import (
+    PluginError,
+    MissingState,
+    SnapcraftPartConflictError,
+)
 from snapcraft.internal import (
     common,
     libraries,
@@ -38,14 +43,6 @@ from snapcraft.internal import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class PluginError(Exception):
-    pass
-
-
-class MissingState(Exception):
-    pass
 
 
 class PluginHandler:
@@ -843,11 +840,10 @@ def check_for_collisions(parts):
                     conflict_files.append(f)
 
             if conflict_files:
-                raise EnvironmentError(
-                    'Parts {!r} and {!r} have the following file paths in '
-                    'common which have different contents:\n{}'.format(
-                        other_part_name, part.name,
-                        '\n'.join(sorted(conflict_files))))
+                raise SnapcraftPartConflictError(
+                    other_part_name=other_part_name,
+                    part_name=part.name,
+                    conflict_files=conflict_files)
 
         # And add our files to the list
         parts_files[part.name] = {'files': part_files,

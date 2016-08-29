@@ -31,6 +31,7 @@ from unittest.mock import (
 import fixtures
 
 import snapcraft
+from snapcraft.internal.errors import SnapcraftPartConflictError
 from snapcraft.internal import (
     common,
     lifecycle,
@@ -1948,24 +1949,24 @@ class CollisionTestCase(tests.TestCase):
         pluginhandler.check_for_collisions([self.part1, self.part2])
 
     def test_collisions_between_two_parts(self):
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(SnapcraftPartConflictError) as raised:
             pluginhandler.check_for_collisions(
                 [self.part1, self.part2, self.part3])
 
-        self.assertEqual(
-            raised.exception.__str__(),
+        self.assertIn(
             "Parts 'part2' and 'part3' have the following file paths in "
-            "common which have different contents:\n1\na/2")
+            "common which have different contents:\n1\na/2",
+            raised.exception.__str__())
 
     def test_collisions_between_two_parts_pc_files(self):
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(SnapcraftPartConflictError) as raised:
             pluginhandler.check_for_collisions(
                 [self.part1, self.part4])
 
-        self.assertEqual(
-            raised.exception.__str__(),
+        self.assertIn(
             "Parts 'part1' and 'part4' have the following file paths in "
-            "common which have different contents:\nfile.pc")
+            "common which have different contents:\nfile.pc",
+            raised.exception.__str__())
 
 
 class StagePackagesTestCase(tests.TestCase):
