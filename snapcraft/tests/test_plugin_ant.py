@@ -30,7 +30,7 @@ class AntPluginTestCase(tests.TestCase):
 
         class Options:
             ant_properties = {}
-            ant_build_target = None
+            ant_build_targets = None
             ant_dest_property = None
         self.options = Options()
 
@@ -75,7 +75,7 @@ class AntPluginTestCase(tests.TestCase):
     @mock.patch.object(ant.AntPlugin, 'run')
     def test_build_with_options(self, run_mock):
         options = copy.deepcopy(self.options)
-        options.ant_build_target = 'artifacts'
+        options.ant_build_targets = ['artifacts', 'jar']
         options.ant_dest_property = 'dist.dir'
         options.ant_properties = {'basedir': '.'}
         plugin = ant.AntPlugin('test-part', options,
@@ -89,6 +89,7 @@ class AntPluginTestCase(tests.TestCase):
         args = run_mock.call_args[0][0]
         self.assertEqual(args[0], 'ant')
         self.assertEqual(args[1], 'artifacts')
+        self.assertEqual(args[2], 'jar')
         self.assertIn(destination, args)
         self.assertIn(basedir, args)
 

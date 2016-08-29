@@ -12,6 +12,7 @@ parts:
     ant-properties:
       foo: 'bar'
     ant-dest-property: 'dist.dir'
-    ant-build-target: 'artifacts'
+    ant-build-targets:
+      - artifacts
     snap:
       - foo.jar

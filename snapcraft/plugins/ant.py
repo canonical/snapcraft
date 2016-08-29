@@ -30,9 +30,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A dictionary of key-value pairs. Set the following properties when
       running ant.
 
-    - target:
-      (string)
-      Run the given ant target.
+    - targets:
+      (list of strings)
+      Run the given ant targets.
 
     - dest-property:
       (string)
@@ -60,8 +60,13 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
             'type': 'object',
             'default': {},
         }
-        schema['properties']['ant-build-target'] = {
-            'type': 'string',
+        schema['properties']['ant-build-targets'] = {
+            'type': 'array',
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
         }
         schema['properties']['ant-dest-property'] = {
             'type': 'string',
@@ -77,8 +82,8 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         command = ['ant']
 
-        if self.options.ant_build_target:
-            command.extend([self.options.ant_build_target])
+        if self.options.ant_build_targets:
+            command.extend(self.options.ant_build_targets)
 
         if self.options.ant_dest_property:
             destination = '-D{}={}'.format(self.options.ant_dest_property,
