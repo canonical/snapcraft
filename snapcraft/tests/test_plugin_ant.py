@@ -65,7 +65,8 @@ class AntPluginTestCase(tests.TestCase):
         plugin = ant.AntPlugin('test-part', options,
                                self.project_options)
         options.ant_build_targets = ['artifacts', 'jar']
-        options.ant_properties = {'basedir': '.', 'dist.dir': plugin.installdir}
+        options.ant_properties = {'basedir': '.',
+                                  'dist.dir': plugin.installdir}
 
         os.makedirs(plugin.sourcedir)
         plugin.build()
