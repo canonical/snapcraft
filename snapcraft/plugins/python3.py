@@ -41,7 +41,7 @@ import os
 import re
 
 import snapcraft
-from snapcraft import common
+from snapcraft import file_utils
 
 
 class Python3Plugin(snapcraft.BasePlugin):
@@ -148,6 +148,15 @@ class Python3Plugin(snapcraft.BasePlugin):
         if os.path.exists(setup):
             self.run(pip_install + ['.', ], cwd=self.sourcedir)
 
+        def remove_func(dirpath, files):
+            # Evaluate if a __pycache__ directory only contains .pyc files
+            endswith_pyc = (x.endswith('.pyc') for x in files)
+            dirname = os.path.basename(dirpath)
+            return dirname == '__pycache__' and all(endswith_pyc)
+
+        file_utils.remove_dirs(self.installdir, remove_func)
+        file_utils.remove_files(self.installdir, lambda x: x.endswith('.pth'))
+
     def build(self):
         super().build()
 
@@ -157,19 +166,20 @@ class Python3Plugin(snapcraft.BasePlugin):
         # used.
 
         setup_file = os.path.join(self.builddir, 'setup.py')
-        if not os.path.exists(setup_file):
-            return
-
-        os.makedirs(self.dist_packages_dir, exist_ok=True)
-        self.run(
-            ['python3', setup_file, 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir),
-             '--root={}'.format(self.installdir)], cwd=self.builddir)
+        if os.path.exists(setup_file):
+            self._pip(setup_file)
 
         # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.installdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        file_utils.replace_in_file(self.installdir, re.compile(r''),
+                                   re.compile(r'#!.*python'),
+                                   r'#!/usr/bin/env python')
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        fileset.append('-usr/bin/pip*')
+        # TODO figure out how this is created in the first place.
+        fileset.append('-usr/lib/python3/dist-packages/__pycache__')
+        return fileset
 
     @property
     def dist_packages_dir(self):
@@ -180,18 +190,3 @@ class Python3Plugin(snapcraft.BasePlugin):
     @property
     def python_version(self):
         return self.run_output(['py3versions', '-d'])
-
-    def snap_fileset(self):
-        fileset = super().snap_fileset()
-        fileset.append('-usr/bin/pip*')
-        fileset.append('-usr/lib/python*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/__pycache__/*.pyc')
-        return fileset
