@@ -334,6 +334,7 @@ class PartsConfig:
                 part.installdir, self._project_options.arch_triplet)
             env += project_loader._build_env_for_stage(
                 stagedir, self._project_options.arch_triplet)
+            env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
         else:
             env += part.env(stagedir)
             env += project_loader._runtime_env(
