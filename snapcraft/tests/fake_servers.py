@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 from datetime import datetime
 import json
 import logging
@@ -60,26 +61,32 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
             response = {}
         else:
             self.send_response(200)
-            response = {
-                'curl': {
-                    'source': 'http://curl.org',
-                    'plugin': 'autotools',
-                    'description': 'test entry for curl',
-                    'maintainer': 'none',
-                },
-                'part1': {
-                    'plugin': 'go',
-                    'source': 'http://source.tar.gz',
-                    'description': 'test entry for part1',
-                    'maintainer': 'none',
-                },
-                'long-described-part': {
-                    'plugin': 'go',
-                    'source': 'http://source.tar.gz',
-                    'description': 'this is a repetitive description ' * 3,
-                    'maintainer': 'none',
-                },
-            }
+            response = OrderedDict((
+                ('curl', OrderedDict((
+                    ('plugin', 'autotools'),
+                    ('source', 'http://curl.org'),
+                    ('description', 'test entry for curl'),
+                    ('maintainer', 'none'),
+                ))),
+                ('part1', OrderedDict((
+                    ('plugin', 'go'),
+                    ('source', 'http://source.tar.gz'),
+                    ('description', 'test entry for part1'),
+                    ('maintainer', 'none'),
+                ))),
+                ('long-described-part', OrderedDict((
+                    ('plugin', 'go'),
+                    ('source', 'http://source.tar.gz'),
+                    ('description', 'this is a repetitive description ' * 3),
+                    ('maintainer', 'none'),
+                ))),
+                ('multiline-part', OrderedDict((
+                    ('plugin', 'go'),
+                    ('source', 'http://source.tar.gz'),
+                    ('description', 'this is a multiline description\n' * 3),
+                    ('maintainer', 'none'),
+                ))),
+            ))
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
             self.send_header('Content-Length', '1000')

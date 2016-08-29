@@ -359,7 +359,7 @@ def define(part_name):
             'consider going to https://wiki.ubuntu.com/snapcraft/parts '
             'to add it.') from e
     print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
-    print('Description: {!r}'.format(remote_part.pop('description')))
+    print('Description: {}'.format(remote_part.pop('description')))
     print('')
     yaml.dump({part_name: remote_part},
               default_flow_style=False, stream=sys.stdout)
@@ -383,7 +383,7 @@ def search(part_match):
     print('{}  {}'.format(
         _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
     for part_key in matches.keys():
-        description = matches[part_key]['description']
+        description = matches[part_key]['description'].split('\n')[0]
         if len(description) > description_space:
             description = '{}...'.format(description[0:description_space])
         print('{}  {}'.format(

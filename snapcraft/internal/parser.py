@@ -68,23 +68,6 @@ BASE_DIR = "/tmp"
 PARTS_FILE = "snap-parts.yaml"
 
 
-# yaml OrderedDict loading and dumping
-# from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
-_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-
-def dict_representer(dumper, data):
-    return dumper.represent_dict(data.items())
-
-
-def dict_constructor(loader, node):
-    return OrderedDict(loader.construct_pairs(node))
-
-
-yaml.add_representer(OrderedDict, dict_representer)
-yaml.add_constructor(_mapping_tag, dict_constructor)
-
-
 def _get_version():
     try:
         return pkg_resources.require('snapcraft-parser')[0].version
