@@ -180,18 +180,8 @@ class Python2PluginTestCase(tests.TestCase):
                                        self.project_options)
         expected_fileset = [
             '-usr/bin/pip*',
-            '-usr/lib/python*/dist-packages/easy-install.pth',
-            '-usr/lib/python*/dist-packages/__pycache__/*.pyc',
-            '-usr/lib/python*/*.pyc',
-            '-usr/lib/python*/*/*.pyc',
-            '-usr/lib/python*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc',
-            '-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc',
+            '-**/*.pth',
+            '-**/*.pyc',
         ]
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
