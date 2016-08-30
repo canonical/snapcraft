@@ -101,10 +101,10 @@ The available lifecycle commands are:
   prime        Final copy and preparation for the snap.
   snap         Create a snap.
 
-Parts ecosystem commands
+Parts ecosystem commands:
   update       Updates the parts listing from the cloud.
   define       Shows the definition for the cloud part.
-  search       Searches the remotes part cache for matching parts.
+  search       Searches the remote parts cache for matching parts.
 
 Calling snapcraft without a COMMAND will default to 'snap'
 
