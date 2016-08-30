@@ -83,6 +83,24 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.assertEqual('#!/usr/bin/env python2', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
 
+    def test_build_does_not_keep_pyc_or_pth_files_in_install(self):
+        # .pyc and .pyc files collide between parts.
+        # There is no way to tell pip or setup.py to disable generation of
+        # .pyc
+        # The .pth files are only relevant if found inside the pre compiled
+        # site-packges directory so we don't want those either.
+        project_dir = 'pip-requirements-file'
+        self.run_snapcraft('stage', project_dir)
+
+        pyc_files = []
+        pth_files = []
+        for _, _, files in os.walk(os.path.join(project_dir, 'stage')):
+            pyc_files.extend([f for f in files if f.endswith('pyc')])
+            pth_files.extend([f for f in files if f.endswith('pth')])
+
+        self.assertEqual([], pyc_files)
+        self.assertEqual([], pth_files)
+
     def test_build_doesnt_get_bad_install_directory_lp1586546(self):
         """Verify that LP: #1586546 doesn't come back."""
         project_dir = 'python-pyyaml'
