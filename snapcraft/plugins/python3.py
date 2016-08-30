@@ -184,6 +184,10 @@ class Python3Plugin(snapcraft.BasePlugin):
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-usr/bin/pip*')
+        # .pth files are only read from the built-in site-packages directory.
+        # We use PYTHONPATH for everything so not needed.
         fileset.append('-**/*.pth')
+        # Holds all the .pyc files. It is a major cause of inter part
+        # conflict.
         fileset.append('-**/__pycache__')
         return fileset

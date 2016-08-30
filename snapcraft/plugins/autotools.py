@@ -126,5 +126,6 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
+        # Remove .la files which don't work when they are moved around
         fileset.append('-**/*.la')
         return fileset
