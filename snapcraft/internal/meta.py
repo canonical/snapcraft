@@ -47,6 +47,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     'slots',
     'confinement',
     'epoch',
+    'grade',
 ]
 
 _KERNEL_KEYS = {

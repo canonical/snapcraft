@@ -74,6 +74,13 @@ properties:
     enum:
       - devmode
       - strict
+  grade:
+    type: string
+    description: the quality grade of the snap
+    default: stable
+    enum:
+      - stable
+      - devel
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
