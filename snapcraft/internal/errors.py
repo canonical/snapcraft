@@ -45,17 +45,18 @@ class SnapcraftPartConflictError(SnapcraftError):
         'Parts {other_part_name!r} and {part_name!r} have the following file '
         'paths in common which have different contents:\n'
         '{file_paths}\n\n'
-        'Snapcraft offers some capabilities to solve this the following '
-        'keywords:\n'
-        '- `filesets`\n'
-        '- `stage`\n'
-        '- `snap`\n'
-        '- `organize`\n\n'
+        'Snapcraft offers some capabilities to solve this by use of the '
+        'following keywords:\n'
+        '    - `filesets`\n'
+        '    - `stage`\n'
+        '    - `snap`\n'
+        '    - `organize`\n\n'
         'Learn more about these part keywords by running '
         '`snapcraft help plugins`'
     )
 
     def __init__(self, *, part_name, other_part_name, conflict_files):
+        spaced_conflict_files = ('    {}'.format(i) for i in conflict_files)
         super().__init__(part_name=part_name,
                          other_part_name=other_part_name,
-                         file_paths='\n'.join(sorted(conflict_files)))
+                         file_paths='\n'.join(sorted(spaced_conflict_files)))

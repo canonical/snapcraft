@@ -30,7 +30,19 @@ class StageTestCase(integration_tests.TestCase):
             self.run_snapcraft, 'stage', project_dir)
 
         self.assertEqual(1, exception.returncode)
-        expected = (
+        expected_conflicts = (
             "Parts 'p1' and 'p2' have the following file paths in common "
-            "which have different contents:\nbin/test\n")
-        self.assertThat(exception.output, Contains(expected))
+            "which have different contents:\n    bin/test\n")
+        self.assertThat(exception.output, Contains(expected_conflicts))
+
+        expected_help = (
+            'Snapcraft offers some capabilities to solve this by use '
+            'of the following keywords:\n'
+            '    - `filesets`\n'
+            '    - `stage`\n'
+            '    - `snap`\n'
+            '    - `organize`\n\n'
+            'Learn more about these part keywords by running '
+            '`snapcraft help plugins`'
+        )
+        self.assertThat(exception.output, Contains(expected_help))
