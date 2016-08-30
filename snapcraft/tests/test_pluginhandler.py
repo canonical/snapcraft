@@ -1955,7 +1955,7 @@ class CollisionTestCase(tests.TestCase):
 
         self.assertIn(
             "Parts 'part2' and 'part3' have the following file paths in "
-            "common which have different contents:\n1\na/2",
+            "common which have different contents:\n    1\n    a/2",
             raised.exception.__str__())
 
     def test_collisions_between_two_parts_pc_files(self):
@@ -1965,7 +1965,7 @@ class CollisionTestCase(tests.TestCase):
 
         self.assertIn(
             "Parts 'part1' and 'part4' have the following file paths in "
-            "common which have different contents:\nfile.pc",
+            "common which have different contents:\n    file.pc",
             raised.exception.__str__())
 
 
