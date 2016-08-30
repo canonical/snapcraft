@@ -119,7 +119,9 @@ class Config:
         self._validator.validate()
         self.data = self._expand_env(snapcraft_yaml)
 
+        # both confinement type and build quality are optionals
         _ensure_confinement_default(self.data, self._validator.schema)
+        _ensure_grade_default(self.data, self._validator.schema)
 
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
@@ -337,3 +339,12 @@ def _ensure_confinement_default(yaml_data, schema):
         logger.warning('"confinement" property not specified: defaulting '
                        'to "strict"')
         yaml_data['confinement'] = schema['confinement']['default']
+
+
+def _ensure_grade_default(yaml_data, schema):
+    # Provide hint if the grade property is missing, and add the
+    # default. We use the schema here so we don't have to hard-code defaults.
+    if 'grade' not in yaml_data:
+        logger.warning('"grade" property not specified: defaulting '
+                       'to "stable"')
+        yaml_data['grade'] = schema['grade']['default']

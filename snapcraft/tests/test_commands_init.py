@@ -62,6 +62,7 @@ summary: This is my-snap's summary  # 79 char long summary
 description: This is my-snap's description  # a longer description for the snap
 confinement: devmode  # use "strict" to enforce system access only via \
 declared interfaces
+grade: devel # use "stable" to assert the snap quality
 
 parts:
     my-part:  # Replace with a part name of your liking

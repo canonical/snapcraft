@@ -43,6 +43,7 @@ summary: test
 description: test
 icon: my-icon.png
 confinement: strict
+grade: stable
 
 parts:
   part1:

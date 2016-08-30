@@ -31,6 +31,7 @@ version: 1.0
 summary: test prime
 description: if the prime is succesful the state file will be updated
 confinement: strict
+grade: stable
 
 parts:
 {parts}"""
