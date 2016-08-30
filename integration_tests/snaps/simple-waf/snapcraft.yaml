@@ -11,8 +11,6 @@ build-packages: [gcc, libc6-dev]
 # this uses the c based demo of waf as an integration test
 parts:
   waf-project:
-    plugin: waf
-    source: .
-    configflags:
-      - --progress
-      - --verbose
+    plugin: nil
+    # include waf demo bits from https://wiki.ubuntu.com/snapcraft/parts
+    after: [wafdemo]
