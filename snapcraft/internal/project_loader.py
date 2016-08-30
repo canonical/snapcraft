@@ -340,6 +340,7 @@ def _ensure_confinement_default(yaml_data, schema):
                        'to "strict"')
         yaml_data['confinement'] = schema['confinement']['default']
 
+
 def _ensure_grade_default(yaml_data, schema):
     # Provide hint if the grade property is missing, and add the
     # default. We use the schema here so we don't have to hard-code defaults.
