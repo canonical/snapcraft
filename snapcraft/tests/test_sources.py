@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import os
 import http.server
 import threading
@@ -21,7 +22,10 @@ import unittest.mock
 
 import fixtures
 
-from snapcraft.internal import sources
+from snapcraft.internal import (
+    common,
+    sources
+)
 from snapcraft import tests
 
 
@@ -385,6 +389,8 @@ class TestSubversion(SourceTestCase):
 class TestLocal(tests.TestCase):
 
     def test_pull_with_source_a_parent_of_current_dir(self):
+        snapcraft_files_before_pull = copy.copy(common.SNAPCRAFT_FILES)
+
         # Verify that the snapcraft root dir does not get copied into itself.
         os.makedirs('subdir')
 
@@ -396,6 +402,12 @@ class TestLocal(tests.TestCase):
 
         self.assertTrue(
             'subdir' not in os.listdir(os.path.join('subdir', 'foo')))
+
+        # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1614913
+        # Verify that SNAPCRAFT_FILES was not modified by the pull when there
+        # are files to ignore.
+        self.assertEqual(
+            snapcraft_files_before_pull, common.SNAPCRAFT_FILES)
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
