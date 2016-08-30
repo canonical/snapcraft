@@ -80,12 +80,17 @@ e.g.; to update the list for 16.04,
 
     ./libraries/generate_lib_list.py libraries/16.04
 
-### Installing in a virtualenv
+### Installing using pip
 
 Install the needed dependencies.
 
-    sudo apt install build-essential python3-dev libapt-pkg-dev
+    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev
 
-Install snapcraft.
+If installing to `PYTHONHOME` run:
 
-    ./setup.py install
+    pip install --user -r requirements.txt -r requirements-devel.txt
+
+If your prefer installing in a virtualenv, then in an activated environment run:
+
+    pip install -r requirements.txt -r requirements-devel.txt
+
