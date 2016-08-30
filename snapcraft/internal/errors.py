@@ -44,7 +44,7 @@ class SnapcraftPartConflictError(SnapcraftError):
     fmt = (
         'Parts {other_part_name!r} and {part_name!r} have the following file '
         'paths in common which have different contents:\n'
-        '{contents}\n\n'
+        '{file_paths}\n\n'
         'Snapcraft offers some capabilities to solve this the following '
         'keywords:\n'
         '- `filesets`\n'
@@ -58,4 +58,4 @@ class SnapcraftPartConflictError(SnapcraftError):
     def __init__(self, *, part_name, other_part_name, conflict_files):
         super().__init__(part_name=part_name,
                          other_part_name=other_part_name,
-                         contents='\n'.join(sorted(conflict_files)))
+                         file_paths='\n'.join(sorted(conflict_files)))
