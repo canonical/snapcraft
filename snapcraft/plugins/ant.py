@@ -33,10 +33,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - targets:
       (list of strings)
       Run the given ant targets.
-
-    - dest-property:
-      (string)
-      The ant property for the destination directory.
 """
 
 import glob

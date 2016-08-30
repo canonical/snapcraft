@@ -31,7 +31,6 @@ class AntPluginTestCase(tests.TestCase):
         class Options:
             ant_properties = {}
             ant_build_targets = None
-            ant_dest_property = None
         self.options = Options()
 
         self.project_options = snapcraft.ProjectOptions()
