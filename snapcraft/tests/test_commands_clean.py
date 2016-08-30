@@ -38,6 +38,7 @@ summary: test clean
 description: if the clean is succesful the state file will be updated
 icon: icon.png
 confinement: strict
+grade: stable
 
 parts:
 {parts}"""
@@ -209,6 +210,7 @@ version: 1.0
 summary: test clean
 description: test clean
 confinement: strict
+grade: stable
 
 parts:
   main:

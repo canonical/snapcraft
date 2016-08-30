@@ -33,6 +33,7 @@ summary: test cleanbuild
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']
 confinement: strict
+grade: stable
 
 parts:
     part1:

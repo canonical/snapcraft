@@ -53,6 +53,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -73,6 +74,7 @@ version: "1"
 summary: test
 description: ñoño test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -97,6 +99,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -118,6 +121,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -138,6 +142,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   non-existing-part:
@@ -161,6 +166,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -186,6 +192,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -231,6 +238,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -263,6 +271,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -291,6 +300,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -313,6 +323,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -332,6 +343,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   p1:
@@ -360,6 +372,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -382,6 +395,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -406,6 +420,7 @@ summary: test
 description: test
 icon: icon.foo
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -429,6 +444,7 @@ summary: test
 description: test
 icon: icon.png
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -451,6 +467,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -474,6 +491,7 @@ parts:
 version: "1"
 summary: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -513,6 +531,32 @@ parts:
             in fake_logger.output, 'Missing confinement hint in output')
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_missing_grade_must_log(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        c = project_loader.Config()
+
+        # Verify the default is "stable"
+        self.assertTrue('grade' in c.data,
+                        'Expected "grade" property to be in snap.yaml')
+        self.assertEqual(c.data['grade'], 'stable')
+        self.assertTrue(
+            '"grade" property not specified: defaulting to "stable"'
+            in fake_logger.output, 'Missing grade hint in output')
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_app_names(self, mock_loadPlugin):
         valid_app_names = [
             '1', 'a', 'aa', 'aaa', 'aaaa', 'Aa', 'aA', '1a', 'a1', '1-a',
@@ -529,6 +573,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 apps:
   {!r}:
@@ -559,6 +604,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 apps:
   {!r}:
@@ -593,6 +639,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: {}
+grade: stable
 
 parts:
   part1:
@@ -620,6 +667,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: {}
+grade: stable
 
 parts:
   part1:
@@ -636,6 +684,67 @@ parts:
                         confinement_type))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_valid_grade_types(self, mock_loadPlugin):
+        valid_grade_types = [
+            'stable',
+            'devel',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for grade_type in valid_grade_types:
+            with self.subTest(key=grade_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(grade_type))
+                c = project_loader.Config()
+                self.assertEqual(c.data['grade'], grade_type)
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_yaml_invalid_grade_types(self, mock_loadPlugin):
+        invalid_grade_types = [
+            'foo',
+            'unstable-',
+            '_experimental',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for grade_type in invalid_grade_types:
+            with self.subTest(key=grade_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(grade_type))
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    project_loader.Config()
+
+                self.assertEqual(
+                    raised.exception.message,
+                    "The 'grade' property does not match the required "
+                    "schema: '{}' is not one of ['stable', 'devel']".format(
+                        grade_type))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -645,6 +754,7 @@ version: "1"
 summary: test
 description: nothing
 \tconfinement: strict
+grade: stable
 
 parts:
   part1:
@@ -776,6 +886,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -809,6 +920,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -830,6 +942,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -902,6 +1015,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -917,6 +1031,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -937,6 +1052,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -1155,6 +1271,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:

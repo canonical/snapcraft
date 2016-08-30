@@ -42,6 +42,7 @@ version: 0
 summary: test
 description: test
 confinement: strict
+grade: stable
 {type}
 
 {parts}

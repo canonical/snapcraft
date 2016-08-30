@@ -639,6 +639,7 @@ version: 1.0
 summary: test pkg-config .pc
 description: when the .pc files reach stage the should be reprefixed
 confinement: strict
+grade: stable
 
 parts:
     stage-pc:

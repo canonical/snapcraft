@@ -33,6 +33,7 @@ version: 1.0
 summary: test pull
 description: if the pull is succesful the state file will be updated
 confinement: strict
+grade: stable
 
 parts:
 {parts}"""
