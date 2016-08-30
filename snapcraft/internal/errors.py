@@ -16,7 +16,7 @@
 
 
 class SnapcraftError(Exception):
-    """Base class for all storeapi exceptions.
+    """Base class for all snapcraft exceptions.
 
     :cvar fmt: A format string that daughter classes override
 
