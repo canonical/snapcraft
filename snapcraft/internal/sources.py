@@ -58,19 +58,20 @@ cases you want to refer to the help text for the specific plugin.
 
 """
 
-
+import copy
+import glob
 import logging
 import os
-import stat
 import os.path
+import stat
+import re
 import requests
 import shutil
-import tarfile
-import re
 import subprocess
 import tempfile
+import tarfile
 import zipfile
-import glob
+
 
 from snapcraft.internal import common
 from snapcraft import file_utils
@@ -357,7 +358,7 @@ class Local(Base):
 
         def ignore(directory, files):
             if directory is source_abspath:
-                ignored = common.SNAPCRAFT_FILES
+                ignored = copy.copy(common.SNAPCRAFT_FILES)
                 relative_cwd = os.path.basename(os.getcwd())
                 if os.path.join(directory, relative_cwd) == os.getcwd():
                     # Source is a parent of the working directory.
