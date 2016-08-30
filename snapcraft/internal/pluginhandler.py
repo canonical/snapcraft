@@ -16,13 +16,13 @@
 
 import contextlib
 import filecmp
-import glob
 import importlib
 import itertools
 import logging
 import os
 import shutil
 import sys
+from glob import iglob
 
 import jsonschema
 import magic
@@ -756,7 +756,8 @@ def _generate_include_set(directory, includes):
     include_files = set()
     for include in includes:
         if '*' in include:
-            matches = glob.glob(os.path.join(directory, include))
+            pattern = os.path.join(directory, include)
+            matches = iglob(pattern, recursive=True)
             include_files |= set(matches)
         else:
             include_files |= set([os.path.join(directory, include), ])
@@ -782,7 +783,8 @@ def _generate_exclude_set(directory, excludes):
     exclude_files = set()
 
     for exclude in excludes:
-        matches = glob.glob(os.path.join(directory, exclude))
+        pattern = os.path.join(directory, exclude)
+        matches = iglob(pattern, recursive=True)
         exclude_files |= set(matches)
 
     exclude_dirs = [os.path.relpath(x, directory)
