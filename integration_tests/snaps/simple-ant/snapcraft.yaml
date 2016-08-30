@@ -4,6 +4,7 @@ summary: test ant builds
 description: |
  Test ant builds and options.
 confinement: strict
+grade: stable
 
 parts:
   a:
