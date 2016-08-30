@@ -16,7 +16,7 @@
 
 import subprocess
 
-from testtools.matchers import EndsWith
+from testtools.matchers import Contains
 
 import integration_tests
 
@@ -33,4 +33,4 @@ class StageTestCase(integration_tests.TestCase):
         expected = (
             "Parts 'p1' and 'p2' have the following file paths in common "
             "which have different contents:\nbin/test\n")
-        self.assertThat(exception.output, EndsWith(expected))
+        self.assertThat(exception.output, Contains(expected))
