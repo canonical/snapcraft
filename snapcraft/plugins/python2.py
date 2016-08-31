@@ -64,7 +64,7 @@ class Python2Plugin(python3.Python3Plugin):
         return ['python']
 
     @property
-    def pip_command(self):
+    def system_pip_command(self):
         return os.path.join(os.path.sep, 'usr', 'bin', 'pip')
 
     @property

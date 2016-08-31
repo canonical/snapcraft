@@ -42,6 +42,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 import re
+import subprocess
 
 import snapcraft
 from snapcraft import common
@@ -97,7 +98,7 @@ class Python3Plugin(snapcraft.BasePlugin):
         return ['python3']
 
     @property
-    def pip_command(self):
+    def system_pip_command(self):
         return os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
 
     @property
@@ -127,8 +128,18 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         self._run_pip(setup)
 
+    def _install_pip(self):
+        env = os.environ.copy()
+        env['PYTHONUSERBASE'] = self.installdir
+
+        subprocess.check_call([
+            self.system_pip_command, 'install', '--user', '--upgrade',
+            'pip', 'setuptools', 'wheel'], env=env)
+
     def _get_pip_command(self):
-        pip_install = [self.pip_command, 'install', '--user']
+        self._install_pip()
+
+        pip_install = ['pip', 'install', '--user']
 
         if self.options.constraints:
             pip_install = pip_install + [
@@ -170,6 +181,9 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
+        fileset.append('-bin/pip*')
+        fileset.append('-bin/easy_install*')
+        fileset.append('-bin/wheel')
         # .pth files are only read from the built-in site-packages directory.
         # We use PYTHONPATH for everything so not needed.
         fileset.append('-**/*.pth')
@@ -184,14 +198,5 @@ class Python3Plugin(snapcraft.BasePlugin):
             root, self.python_lib_dir, 'site-packages')
         if os.path.exists(site_packages_dir):
             python_path += site_packages_dir
-
-        # This means we are in builder mode
-        if root == self.installdir:
-            dist_packages_dir = os.path.join(
-                os.path.sep, self.python_lib_dir, 'dist-packages')
-            if python_path:
-                python_path += ':{}'.format(dist_packages_dir)
-            else:
-                python_path = dist_packages_dir
 
         return python_path
