@@ -193,10 +193,8 @@ class Python3Plugin(snapcraft.BasePlugin):
         return fileset
 
     def _get_python_path(self, root):
-        python_path = ''
         site_packages_dir = os.path.join(
             root, self.python_lib_dir, 'site-packages')
-        if os.path.exists(site_packages_dir):
-            python_path += site_packages_dir
+        os.makedirs(site_packages_dir, exist_ok=True)
 
-        return python_path
+        return site_packages_dir
