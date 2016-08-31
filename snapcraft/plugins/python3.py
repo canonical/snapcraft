@@ -101,10 +101,6 @@ class Python3Plugin(snapcraft.BasePlugin):
     def system_pip_command(self):
         return os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
 
-    @property
-    def python_lib_dir(self):
-        return os.path.join('usr', 'lib', 'python3')
-
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(self.plugin_build_packages)
@@ -113,7 +109,7 @@ class Python3Plugin(snapcraft.BasePlugin):
     def env(self, root):
         return [
             'PYTHONUSERBASE={}'.format(root),
-            'PYTHONPATH={}'.format(self._get_python_path(root)),
+            'PYTHONHOME={}'.format(os.path.join(root, 'usr'))
         ]
 
     def pull(self):
@@ -155,10 +151,6 @@ class Python3Plugin(snapcraft.BasePlugin):
     def _run_pip(self, setup, step='build'):
         pip_install = self._get_pip_command()
 
-        # If we don't do this system packages will be taken into account
-        if step == 'pull':
-            pip_install.append('--ignore-installed')
-
         if self.options.requirements:
             self.run(pip_install + [
                 '--requirement',
@@ -166,8 +158,7 @@ class Python3Plugin(snapcraft.BasePlugin):
             ])
 
         if self.options.python_packages:
-            self.run(pip_install + ['--upgrade'] +
-                     self.options.python_packages)
+            self.run(pip_install + self.options.python_packages)
 
         if os.path.exists(setup):
             self.run(pip_install + ['.'], cwd=self.sourcedir)
@@ -195,17 +186,3 @@ class Python3Plugin(snapcraft.BasePlugin):
         # conflict.
         fileset.append('-**/__pycache__')
         return fileset
-
-    def _get_python_path(self, root):
-        dist_packages_dir = os.path.join(
-            root, self.python_lib_dir, 'dist-packages')
-        if not os.path.exists(dist_packages_dir):
-            logger.debug('dist-packages dir does not exist')
-            return ''
-
-        site_packages_dir = os.path.join(
-            root, self.python_lib_dir, 'site-packages')
-        if not os.path.exists(site_packages_dir):
-            os.symlink('dist-packages', site_packages_dir)
-
-        return site_packages_dir

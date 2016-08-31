@@ -115,3 +115,39 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 project_dir, 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml'))[0],
             DirExists())
+
+    def test_pypi_package_dep_satisfied_by_stage_package(self):
+        """yamllint depends on yaml which is a stage-package."""
+        project_dir = 'python-with-stage-packages'
+        self.run_snapcraft('stage', project_dir)
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'lib',
+                'python2*', 'site-packages', 'yamllint'))[0],
+            DirExists())
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
+                'python2*', 'dist-packages', 'yaml'))[0],
+            DirExists())
+        self.assertEqual(
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'lib',
+                'python2*', 'site-packages', 'yaml')),
+                [])
+
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'yamllint'))[0],
+            DirExists())
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
+                'python3*', 'dist-packages', 'yaml'))[0],
+            DirExists())
+        self.assertEqual(
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'yaml')),
+                [])

@@ -67,10 +67,6 @@ class Python2Plugin(python3.Python3Plugin):
     def system_pip_command(self):
         return os.path.join(os.path.sep, 'usr', 'bin', 'pip')
 
-    @property
-    def python_lib_dir(self):
-        return os.path.join('usr', 'lib', 'python2.7')
-
     def snap_fileset(self):
         fileset = super().snap_fileset()
         # This is a major cause of inter part conflict.
