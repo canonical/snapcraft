@@ -1081,7 +1081,8 @@ parts:
 
         environment = config.snap_env()
         self.assertTrue(
-            'PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(self.snap_dir)
+            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
+                self.snap_dir)
             in environment)
 
         # Ensure that LD_LIBRARY_PATH is present and it contains only the
@@ -1110,7 +1111,8 @@ parts:
 
         environment = config.snap_env()
         self.assertTrue(
-            'PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(self.snap_dir)
+            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
+                self.snap_dir)
             in environment,
             'Current PATH is {!r}'.format(environment))
         for e in environment:
@@ -1223,7 +1225,7 @@ parts:
         environment = config.stage_env()
 
         self.assertTrue(
-            'PATH="{0}/bin:{0}/usr/bin:$PATH"'.format(
+            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
                 self.stage_dir) in environment)
         self.assertTrue(
             'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{stage_dir}/lib:'
