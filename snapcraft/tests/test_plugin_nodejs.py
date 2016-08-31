@@ -78,7 +78,8 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
+            mock.call(['npm', '--cache-min=Infinity', 'install', '--global'],
+                      cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
@@ -101,8 +102,8 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['npm', 'install', '-g', 'my-pkg'],
-                      cwd=plugin.builddir)])
+            mock.call(['npm', '--cache-min=Infinity', 'install', '--global',
+                       'my-pkg'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
