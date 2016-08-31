@@ -219,8 +219,10 @@ def _runtime_env(root, arch_triplet):
     env = []
 
     env.append('PATH="' + ':'.join([
-        '{0}/bin',
+        '{0}/usr/sbin',
         '{0}/usr/bin',
+        '{0}/sbin',
+        '{0}/bin',
         '$PATH'
     ]).format(root) + '"')
 
