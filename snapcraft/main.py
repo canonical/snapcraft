@@ -31,7 +31,7 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
-  snapcraft [options] register <snap-name>
+  snapcraft [options] register <snap-name> [--private]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
@@ -48,7 +48,9 @@ Options:
   -h --help                             show this help message and exit
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
-                                        (including backtraces)
+                                        (including backtraces). When used with
+                                        cleanbuild, it opens a shell in case
+                                        of failure.
   --target-arch ARCH                    EXPERIMENTAL: sets the target
                                         architecture. Very few plugins support
                                         this.
@@ -99,10 +101,10 @@ The available lifecycle commands are:
   prime        Final copy and preparation for the snap.
   snap         Create a snap.
 
-Parts ecosystem commands
+Parts ecosystem commands:
   update       Updates the parts listing from the cloud.
   define       Shows the definition for the cloud part.
-  search       Searches the remotes part cache for matching parts.
+  search       Searches the remote parts cache for matching parts.
 
 Calling snapcraft without a COMMAND will default to 'snap'
 
@@ -188,6 +190,7 @@ def _get_project_options(args):
     options['use_geoip'] = args['--enable-geoip']
     options['parallel_builds'] = not args['--no-parallel-build']
     options['target_deb_arch'] = args['--target-arch']
+    options['debug'] = args['--debug']
 
     return snapcraft.ProjectOptions(**options)
 
@@ -284,7 +287,7 @@ def _is_store_command(args):
 
 def _run_store_command(args):
     if args['register']:
-        snapcraft.register(args['<snap-name>'])
+        snapcraft.register(args['<snap-name>'], args['--private'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
         snapcraft.push(args['<snap-file>'])

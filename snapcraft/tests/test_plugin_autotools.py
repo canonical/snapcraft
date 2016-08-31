@@ -305,8 +305,15 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         run_mock.side_effect = _run
 
-        try:
-            plugin.build()
-        except:
-            self.fail('Expected build() to be able to handle non-executable '
-                      'autogen.sh')
+        # An exception will be raised if build can't handle the non-executable
+        # autogen.
+        plugin.build()
+
+    def test_fileset_ignores(self):
+        plugin = autotools.AutotoolsPlugin('test-part', self.options,
+                                           self.project_options)
+        expected_fileset = [
+            '-**/*.la',
+        ]
+        fileset = plugin.snap_fileset()
+        self.assertListEqual(expected_fileset, fileset)

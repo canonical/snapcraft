@@ -78,7 +78,8 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['npm', 'install', '-g'], cwd=plugin.builddir)])
+            mock.call(['npm', '--cache-min=Infinity', 'install', '--global'],
+                      cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
@@ -101,8 +102,8 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
-            mock.call(['npm', 'install', '-g', 'my-pkg'],
-                      cwd=plugin.builddir)])
+            mock.call(['npm', '--cache-min=Infinity', 'install', '--global',
+                       'my-pkg'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(plugin.options.node_engine),
@@ -179,3 +180,39 @@ class NodePluginTestCase(tests.TestCase):
         plugin.clean_pull()
 
         self.assertFalse(os.path.exists(plugin._npm_dir))
+
+
+class NodeReleaseTestCase(tests.TestCase):
+
+    scenarios = [
+        ('i686', dict(
+            machine='i686',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-x86.tar.gz'))),
+        ('x86_64', dict(
+            machine='x86_64',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-x64.tar.gz'))),
+        ('armv7l', dict(
+             machine='armv7l',
+             engine='4.4.4',
+             expected_url=(
+                 'https://nodejs.org/dist/v4.4.4/'
+                 'node-v4.4.4-linux-armv7l.tar.gz'))),
+        ('aarch64', dict(
+            machine='aarch64',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-arm64.tar.gz'))),
+    ]
+
+    @mock.patch('platform.machine')
+    def test_get_nodejs_release(self, machine_mock):
+        machine_mock.return_value = self.machine
+        node_url = nodejs.get_nodejs_release(self.engine)
+        self.assertEqual(node_url, self.expected_url)

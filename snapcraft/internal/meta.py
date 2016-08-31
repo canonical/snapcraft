@@ -47,15 +47,8 @@ _OPTIONAL_PACKAGE_KEYS = [
     'slots',
     'confinement',
     'epoch',
+    'grade',
 ]
-
-_KERNEL_KEYS = {
-    'kernel': 'vmlinuz',
-    'initrd': 'initrd.img',
-    'modules': 'lib/modules/{}',
-    'firmware': 'lib/firmware',
-    'dtbs': 'dtbs',
-}
 
 
 class CommandError(Exception):
@@ -163,17 +156,7 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
-        if self._config_data.get('type', '') == 'kernel':
-            snap_yaml.update(self._get_kernel_keys())
-
         return snap_yaml
-
-    def _get_kernel_keys(self):
-        kernel_keys = _KERNEL_KEYS.copy()
-        version = os.listdir(os.path.join(self._snap_dir, 'lib', 'modules'))
-        kernel_keys['modules'] = kernel_keys['modules'].format(version[0])
-
-        return kernel_keys
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):

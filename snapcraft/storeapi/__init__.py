@@ -145,8 +145,8 @@ class StoreClient():
         self.conf.clear()
         self.conf.save()
 
-    def register(self, snap_name):
-        self.sca.register(snap_name, constants.DEFAULT_SERIES)
+    def register(self, snap_name, is_private=False):
+        self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
 
     def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
@@ -156,9 +156,6 @@ class StoreClient():
                 'Unbound discharge not in the config file')
 
         updown_data = _upload.upload_files(snap_filename, self.updown)
-        success = updown_data.get('success', False)
-        if not success:
-            return updown_data
 
         return self.sca.snap_push_metadata(snap_name, updown_data)
 
@@ -308,9 +305,10 @@ class SCAClient(Client):
         else:
             raise errors.StoreAuthenticationError('Failed to get macaroon')
 
-    def register(self, snap_name, series):
+    def register(self, snap_name, is_private, series):
         auth = _macaroon_auth(self.conf)
-        data = dict(snap_name=snap_name, series=series)
+        data = dict(snap_name=snap_name, is_private=is_private,
+                    series=series)
         response = self.post(
             'register-name/', data=json.dumps(data),
             headers={'Authorization': auth,
@@ -354,9 +352,6 @@ class SCAClient(Client):
             raise errors.StoreReleaseError(data['name'], response)
 
         response_json = response.json()
-        success = response_json.pop('success')
-        if not success:
-            raise errors.StoreReleaseError(data['name'], response)
 
         return response_json
 

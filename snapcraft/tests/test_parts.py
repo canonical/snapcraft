@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import unittest
 import unittest.mock
 
+import fixtures
 
 import snapcraft
 from snapcraft.internal import dirs
@@ -53,3 +55,27 @@ parts:
 """)
         config = project_loader.load_config(None)
         self.assertEqual(None, config.parts.get_part('not-a-part'))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_slash_warning(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.WARN)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  part/1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        project_loader.load_config()
+
+        self.assertTrue(
+            'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
+                'part/1')
+            in fake_logger.output,
+            'Missing slash deprecation warning in output')

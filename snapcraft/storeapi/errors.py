@@ -14,25 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from simplejson.scanner import JSONDecodeError
 
-
-# TODO move to snapcraft.errors --elopio - 2016-06-20
-class SnapcraftError(Exception):
-    """Base class for all storeapi exceptions.
-
-    :cvar fmt: A format string that daughter classes override
-
-    """
-    fmt = 'Daughter classes should redefine this'
-
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __str__(self):
-        return self.fmt.format([], **self.__dict__)
+from snapcraft.internal.errors import SnapcraftError
 
 
 class InvalidCredentialsError(SnapcraftError):
@@ -112,6 +96,17 @@ class StoreRegistrationError(StoreError):
             self.fmt = self.__error_messages.get(error_code, self.fmt)
 
         super().__init__(snap_name=snap_name, **response_json)
+
+
+class StoreUploadError(StoreError):
+
+    fmt = (
+        'There was an error uploading the package.\n'
+        'Reason: {reason!r}\n'
+        'Text: {text!r}')
+
+    def __init__(self, response):
+        super().__init__(reason=response.reason, text=response.text)
 
 
 class StorePushError(StoreError):

@@ -36,8 +36,8 @@ class RpathTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(primedir, 'lib', 'libfoo.so'), FileExists())
 
-        # Assert that the $ORIGIN rpath did not result in the library being pulled
-        # in twice.
+        # Assert that the $ORIGIN rpath did not result in the library being
+        # pulled in twice.
         self.assertThat(
             os.path.join(primedir, os.path.abspath(primedir).lstrip('/')),
             Not(DirExists()))

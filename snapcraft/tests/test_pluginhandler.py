@@ -31,6 +31,7 @@ from unittest.mock import (
 import fixtures
 
 import snapcraft
+from snapcraft.internal.errors import SnapcraftPartConflictError
 from snapcraft.internal import (
     common,
     lifecycle,
@@ -639,6 +640,7 @@ version: 1.0
 summary: test pkg-config .pc
 description: when the .pc files reach stage the should be reprefixed
 confinement: strict
+grade: stable
 
 parts:
     stage-pc:
@@ -1948,209 +1950,24 @@ class CollisionTestCase(tests.TestCase):
         pluginhandler.check_for_collisions([self.part1, self.part2])
 
     def test_collisions_between_two_parts(self):
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(SnapcraftPartConflictError) as raised:
             pluginhandler.check_for_collisions(
                 [self.part1, self.part2, self.part3])
 
-        self.assertEqual(
-            raised.exception.__str__(),
+        self.assertIn(
             "Parts 'part2' and 'part3' have the following file paths in "
-            "common which have different contents:\n1\na/2")
+            "common which have different contents:\n    1\n    a/2",
+            raised.exception.__str__())
 
     def test_collisions_between_two_parts_pc_files(self):
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(SnapcraftPartConflictError) as raised:
             pluginhandler.check_for_collisions(
                 [self.part1, self.part4])
 
-        self.assertEqual(
-            raised.exception.__str__(),
+        self.assertIn(
             "Parts 'part1' and 'part4' have the following file paths in "
-            "common which have different contents:\nfile.pc")
-
-
-class StageEnvTestCase(tests.TestCase):
-
-    def test_string_replacements(self):
-        replacements = (
-            (
-                'no replacement',
-                'snapcraft_stage/usr/bin',
-                'snapcraft_stage/usr/bin',
-            ),
-            (
-                'replaced start',
-                '$SNAPCRAFT_STAGE/usr/bin',
-                '{}/usr/bin'.format(self.stage_dir),
-            ),
-            (
-                'replaced between',
-                '--with-swig $SNAPCRAFT_STAGE/usr/swig',
-                '--with-swig {}/usr/swig'.format(self.stage_dir),
-            ),
-        )
-
-        for test_name, subject, expected in replacements:
-            self.subTest(key=test_name)
-            self.assertEqual(
-                pluginhandler._expand_env(subject, self.stage_dir), expected)
-
-    def test_lists_with_string_replacements(self):
-        replacements = (
-            (
-                'no replacement',
-                [
-                    'snapcraft_stage/usr/bin',
-                    '/usr/bin',
-                ],
-                [
-                    'snapcraft_stage/usr/bin',
-                    '/usr/bin',
-                ],
-            ),
-            (
-                'replaced start',
-                [
-                    '$SNAPCRAFT_STAGE/usr/bin',
-                    '/usr/bin',
-                ],
-                [
-                    '{}/usr/bin'.format(self.stage_dir),
-                    '/usr/bin',
-                ],
-            ),
-            (
-                'replaced between',
-                [
-                    '--without-python',
-                    '--with-swig $SNAPCRAFT_STAGE/usr/swig',
-                ],
-                [
-                    '--without-python',
-                    '--with-swig {}/usr/swig'.format(self.stage_dir),
-                ],
-            ),
-        )
-
-        for test_name, subject, expected in replacements:
-            self.subTest(key=test_name)
-            self.assertEqual(
-                pluginhandler._expand_env(subject, self.stage_dir), expected)
-
-    def test_tuples_with_string_replacements(self):
-        replacements = (
-            (
-                'no replacement',
-                (
-                    'snapcraft_stage/usr/bin',
-                    '/usr/bin',
-                ),
-                [
-                    'snapcraft_stage/usr/bin',
-                    '/usr/bin',
-                ],
-            ),
-            (
-                'replaced start',
-                (
-                    '$SNAPCRAFT_STAGE/usr/bin',
-                    '/usr/bin',
-                ),
-                [
-                    '{}/usr/bin'.format(self.stage_dir),
-                    '/usr/bin',
-                ],
-            ),
-            (
-                'replaced between',
-                (
-                    '--without-python',
-                    '--with-swig $SNAPCRAFT_STAGE/usr/swig',
-                ),
-                [
-                    '--without-python',
-                    '--with-swig {}/usr/swig'.format(self.stage_dir),
-                ],
-            ),
-        )
-
-        for test_name, subject, expected in replacements:
-            self.subTest(key=test_name)
-            self.assertEqual(
-                pluginhandler._expand_env(subject, self.stage_dir), expected)
-
-    def test_dict_with_string_replacements(self):
-        replacements = (
-            (
-                'no replacement',
-                {
-                    '1': 'snapcraft_stage/usr/bin',
-                    '2': '/usr/bin',
-                },
-                {
-                    '1': 'snapcraft_stage/usr/bin',
-                    '2': '/usr/bin',
-                },
-            ),
-            (
-                'replaced start',
-                {
-                    '1': '$SNAPCRAFT_STAGE/usr/bin',
-                    '2': '/usr/bin',
-                },
-                {
-                    '1': '{}/usr/bin'.format(self.stage_dir),
-                    '2': '/usr/bin',
-                },
-            ),
-            (
-                'replaced between',
-                {
-                    '1': '--without-python',
-                    '2': '--with-swig $SNAPCRAFT_STAGE/usr/swig',
-                },
-                {
-                    '1': '--without-python',
-                    '2': '--with-swig {}/usr/swig'.format(self.stage_dir),
-                },
-            ),
-        )
-
-        for test_name, subject, expected in replacements:
-            self.subTest(key=test_name)
-            self.assertEqual(
-                pluginhandler._expand_env(subject, self.stage_dir), expected)
-
-    def test_string_replacement_with_complex_data(self):
-        subject = {
-            'filesets': {
-                'files': [
-                    'somefile',
-                    '$SNAPCRAFT_STAGE/file1',
-                    'SNAPCRAFT_STAGE/really',
-                ]
-            },
-            'configflags': [
-                '--with-python',
-                '--with-swig $SNAPCRAFT_STAGE/swig',
-            ],
-        }
-
-        expected = {
-            'filesets': {
-                'files': [
-                    'somefile',
-                    '{}/file1'.format(self.stage_dir),
-                    'SNAPCRAFT_STAGE/really',
-                ]
-            },
-            'configflags': [
-                '--with-python',
-                '--with-swig {}/swig'.format(self.stage_dir),
-            ],
-        }
-
-        self.assertEqual(
-            pluginhandler._expand_env(subject, self.stage_dir), expected)
+            "common which have different contents:\n    file.pc",
+            raised.exception.__str__())
 
 
 class StagePackagesTestCase(tests.TestCase):

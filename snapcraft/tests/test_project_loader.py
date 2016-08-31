@@ -53,6 +53,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -73,6 +74,7 @@ version: "1"
 summary: test
 description: ñoño test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -97,6 +99,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -118,16 +121,17 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
-  project-part/part1:
+  part1:
     stage-packages: [fswebcam]
 """)
 
         parts.update()
         project_loader.Config()
 
-        mock_loadPlugin.assert_called_with('project-part/part1', 'go', {
+        mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
@@ -138,6 +142,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   non-existing-part:
@@ -161,6 +166,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -186,6 +192,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -231,6 +238,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -263,6 +271,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -291,6 +300,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -313,6 +323,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -332,6 +343,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   p1:
@@ -360,6 +372,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -382,6 +395,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -406,6 +420,7 @@ summary: test
 description: test
 icon: icon.foo
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -429,6 +444,7 @@ summary: test
 description: test
 icon: icon.png
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -451,6 +467,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -474,6 +491,7 @@ parts:
 version: "1"
 summary: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -513,6 +531,32 @@ parts:
             in fake_logger.output, 'Missing confinement hint in output')
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_missing_grade_must_log(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        c = project_loader.Config()
+
+        # Verify the default is "stable"
+        self.assertTrue('grade' in c.data,
+                        'Expected "grade" property to be in snap.yaml')
+        self.assertEqual(c.data['grade'], 'stable')
+        self.assertTrue(
+            '"grade" property not specified: defaulting to "stable"'
+            in fake_logger.output, 'Missing grade hint in output')
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_app_names(self, mock_loadPlugin):
         valid_app_names = [
             '1', 'a', 'aa', 'aaa', 'aaaa', 'Aa', 'aA', '1a', 'a1', '1-a',
@@ -529,6 +573,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 apps:
   {!r}:
@@ -559,6 +604,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: strict
+grade: stable
 
 apps:
   {!r}:
@@ -593,6 +639,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: {}
+grade: stable
 
 parts:
   part1:
@@ -620,6 +667,7 @@ version: "1"
 summary: test
 description: nothing
 confinement: {}
+grade: stable
 
 parts:
   part1:
@@ -636,6 +684,67 @@ parts:
                         confinement_type))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_valid_grade_types(self, mock_loadPlugin):
+        valid_grade_types = [
+            'stable',
+            'devel',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for grade_type in valid_grade_types:
+            with self.subTest(key=grade_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(grade_type))
+                c = project_loader.Config()
+                self.assertEqual(c.data['grade'], grade_type)
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_yaml_invalid_grade_types(self, mock_loadPlugin):
+        invalid_grade_types = [
+            'foo',
+            'unstable-',
+            '_experimental',
+        ]
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        for grade_type in invalid_grade_types:
+            with self.subTest(key=grade_type):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: {}
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""".format(grade_type))
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    project_loader.Config()
+
+                self.assertEqual(
+                    raised.exception.message,
+                    "The 'grade' property does not match the required "
+                    "schema: '{}' is not one of ['stable', 'devel']".format(
+                        grade_type))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_tab_in_yaml(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -645,6 +754,7 @@ version: "1"
 summary: test
 description: nothing
 \tconfinement: strict
+grade: stable
 
 parts:
   part1:
@@ -776,6 +886,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -809,6 +920,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -830,6 +942,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -844,6 +957,28 @@ parts:
         self.assertFalse(config.parts.get_dependents('dependent'))
         self.assertEqual({'dependent'},
                          config.parts.get_dependents('main'))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_replace_snapcraft_variables(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  main:
+    plugin: make
+    source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION
+    make-options: [DEP=$SNAPCRAFT_STAGE]
+""")
+        project_loader.Config()
+
+        mock_load_plugin.assert_called_with('main', 'make', {
+            'source': 'project-name-1',
+            'stage': [], 'snap': [],
+            'make-options': ['DEP={}'.format(self.stage_dir)],
+        })
 
 
 class InitTestCase(tests.TestCase):
@@ -880,6 +1015,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -895,6 +1031,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -915,6 +1052,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -1133,6 +1271,7 @@ version: "1"
 summary: test
 description: test
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -1569,3 +1708,193 @@ class TestFilesets(tests.TestCase):
             raised.exception.message,
             '\'$3\' referred to in the \'stage\' fileset but it is not '
             'in filesets')
+
+
+class SnapcraftEnvTestCase(tests.TestCase):
+
+    def test_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                'snapcraft_stage/usr/bin',
+                'snapcraft_stage/usr/bin',
+            ),
+            (
+                'replaced start',
+                '$SNAPCRAFT_STAGE/usr/bin',
+                '{}/usr/bin'.format(self.stage_dir),
+            ),
+            (
+                'replaced between',
+                '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                '--with-swig {}/usr/swig'.format(self.stage_dir),
+            ),
+            (
+                'project replacement',
+                '$SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION',
+                'project_name-version',
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_lists_with_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                [
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ],
+                [
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced start',
+                [
+                    '$SNAPCRAFT_STAGE/usr/bin',
+                    '/usr/bin',
+                ],
+                [
+                    '{}/usr/bin'.format(self.stage_dir),
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced between',
+                [
+                    '--without-python',
+                    '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                ],
+                [
+                    '--without-python',
+                    '--with-swig {}/usr/swig'.format(self.stage_dir),
+                ],
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_tuples_with_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                (
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ),
+                [
+                    'snapcraft_stage/usr/bin',
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced start',
+                (
+                    '$SNAPCRAFT_STAGE/usr/bin',
+                    '/usr/bin',
+                ),
+                [
+                    '{}/usr/bin'.format(self.stage_dir),
+                    '/usr/bin',
+                ],
+            ),
+            (
+                'replaced between',
+                (
+                    '--without-python',
+                    '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                ),
+                [
+                    '--without-python',
+                    '--with-swig {}/usr/swig'.format(self.stage_dir),
+                ],
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_dict_with_string_replacements(self):
+        replacements = (
+            (
+                'no replacement',
+                {
+                    '1': 'snapcraft_stage/usr/bin',
+                    '2': '/usr/bin',
+                },
+                {
+                    '1': 'snapcraft_stage/usr/bin',
+                    '2': '/usr/bin',
+                },
+            ),
+            (
+                'replaced start',
+                {
+                    '1': '$SNAPCRAFT_STAGE/usr/bin',
+                    '2': '/usr/bin',
+                },
+                {
+                    '1': '{}/usr/bin'.format(self.stage_dir),
+                    '2': '/usr/bin',
+                },
+            ),
+            (
+                'replaced between',
+                {
+                    '1': '--without-python',
+                    '2': '--with-swig $SNAPCRAFT_STAGE/usr/swig',
+                },
+                {
+                    '1': '--without-python',
+                    '2': '--with-swig {}/usr/swig'.format(self.stage_dir),
+                },
+            ),
+        )
+
+        for test_name, subject, expected in replacements:
+            self.subTest(key=test_name)
+            self.assertEqual(project_loader._replace_attr(
+                subject, 'project_name', 'version', self.stage_dir), expected)
+
+    def test_string_replacement_with_complex_data(self):
+        subject = {
+            'filesets': {
+                'files': [
+                    'somefile',
+                    '$SNAPCRAFT_STAGE/file1',
+                    'SNAPCRAFT_STAGE/really',
+                ]
+            },
+            'configflags': [
+                '--with-python',
+                '--with-swig $SNAPCRAFT_STAGE/swig',
+            ],
+        }
+
+        expected = {
+            'filesets': {
+                'files': [
+                    'somefile',
+                    '{}/file1'.format(self.stage_dir),
+                    'SNAPCRAFT_STAGE/really',
+                ]
+            },
+            'configflags': [
+                '--with-python',
+                '--with-swig {}/swig'.format(self.stage_dir),
+            ],
+        }
+
+        self.assertEqual(project_loader._replace_attr(
+            subject, 'project_name', 'version', self.stage_dir), expected)

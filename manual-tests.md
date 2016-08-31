@@ -28,3 +28,13 @@
 6. Run `snapcraft pull` again and notice the download is as in `1.`.
 7. Run this test again, but run snapcraft on a partition separated
    from $HOME.
+
+# Test cleanbuild with debug shell
+
+1. Run `snapcraft cleanbuild --debug` for a snap.
+2. Insert an error such that the code will fail to compile or
+   mistype the name of an entry in `stage-packages`.
+3. Run `snapcraft cleanbuild --debug` again.
+4. Ensure you are dropped into a debug shell.
+5. Exit the shell.
+6. Ensure you are dropped back into your original shell session.

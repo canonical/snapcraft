@@ -169,6 +169,11 @@ class RegisterTestCase(tests.TestCase):
         # No exception will be raised if this is succesful
         self.client.register('test-good-snap-name')
 
+    def test_register_private_name_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        # No exception will be raised if this is succesful
+        self.client.register('test-good-snap-name', is_private=True)
+
     def test_already_registered(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreRegistrationError) as raised:
@@ -249,6 +254,21 @@ class UploadTestCase(tests.TestCase):
 
         # This should not raise
         tracker.raise_for_code()
+
+    def test_upload_snap_fails_due_to_upload_fail(self):
+        # Tells the fake updown server to return a 5xx response
+        self.useFixture(fixtures.EnvironmentVariable('UPDOWN_BROKEN', '1'))
+
+        self.client.login('dummy', 'test correct password')
+
+        with self.assertRaises(errors.StoreUploadError) as raised:
+            self.client.upload('test-snap', self.snap_path)
+
+        self.assertEqual(
+            str(raised.exception),
+            'There was an error uploading the package.\n'
+            'Reason: \'Internal Server Error\'\n'
+            'Text: \'Broken\'')
 
     def test_upload_snap_requires_review(self):
         self.client.login('dummy', 'test correct password')

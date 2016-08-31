@@ -50,6 +50,7 @@ _NODEJS_ARCHES = {
     'i686': 'x86',
     'x86_64': 'x64',
     'armv7l': 'armv7l',
+    'aarch64': 'arm64',
 }
 
 
@@ -95,6 +96,8 @@ class NodePlugin(snapcraft.BasePlugin):
         super().pull()
         os.makedirs(self._npm_dir, exist_ok=True)
         self._nodejs_tar.download()
+        # do the install in the pull phase to download all dependencies.
+        self._npm_install()
 
     def clean_pull(self):
         super().clean_pull()
@@ -105,12 +108,16 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
+        self._npm_install()
+
+    def _npm_install(self):
         self._nodejs_tar.provision(
             self.installdir, clean_target=False, keep_tarball=True)
+        npm_install = ['npm', '--cache-min=Infinity', 'install', '--global']
         for pkg in self.options.node_packages:
-            self.run(['npm', 'install', '-g', pkg])
+            self.run(npm_install + [pkg])
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
-            self.run(['npm', 'install', '-g'])
+            self.run(npm_install)
 
 
 def _get_nodejs_base(node_engine):

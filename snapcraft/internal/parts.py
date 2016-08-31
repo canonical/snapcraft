@@ -189,6 +189,10 @@ class PartsConfig:
 
     def _process_parts(self):
         for part_name in self._parts_data:
+            if '/' in part_name:
+                logger.warning('DEPRECATED: Found a "/" '
+                               'in the name of the {!r} part'.format(
+                                part_name))
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
 
@@ -330,6 +334,7 @@ class PartsConfig:
                 part.installdir, self._project_options.arch_triplet)
             env += project_loader._build_env_for_stage(
                 stagedir, self._project_options.arch_triplet)
+            env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
         else:
             env += part.env(stagedir)
             env += project_loader._runtime_env(
@@ -355,7 +360,7 @@ def define(part_name):
             'consider going to https://wiki.ubuntu.com/snapcraft/parts '
             'to add it.') from e
     print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
-    print('Description: {!r}'.format(remote_part.pop('description')))
+    print('Description: {}'.format(remote_part.pop('description')))
     print('')
     yaml.dump({part_name: remote_part},
               default_flow_style=False, stream=sys.stdout)
@@ -379,7 +384,7 @@ def search(part_match):
     print('{}  {}'.format(
         _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
     for part_key in matches.keys():
-        description = matches[part_key]['description']
+        description = matches[part_key]['description'].split('\n')[0]
         if len(description) > description_space:
             description = '{}...'.format(description[0:description_space])
         print('{}  {}'.format(

@@ -206,18 +206,11 @@ class Python2Plugin(snapcraft.BasePlugin):
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-usr/bin/pip*')
-        fileset.append('-usr/lib/python*/dist-packages/easy-install.pth')
-        fileset.append('-usr/lib/python*/dist-packages/__pycache__/*.pyc')
-        fileset.append('-usr/lib/python*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*.pyc')
-        fileset.append('-usr/lib/python*/*/*/*/*/*/*/*/*/*/*.pyc')
+        # .pth files are only read from the built-in site-packages directory.
+        # We use PYTHONPATH for everything so not needed.
+        fileset.append('-**/*.pth')
+        # This is a major cause of inter part conflict.
+        fileset.append('-**/*.pyc')
         return fileset
 
 

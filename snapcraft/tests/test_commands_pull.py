@@ -26,13 +26,6 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
-class FakeUbuntuRepo:
-
-    def __init__(self, rootdir, recommends=False,
-                 sources=None, use_geoip=True):
-        self.use_geoip = use_geoip
-
-
 class PullCommandTestCase(tests.TestCase):
 
     yaml_template = """name: pull-test
@@ -40,6 +33,7 @@ version: 1.0
 summary: test pull
 description: if the pull is succesful the state file will be updated
 confinement: strict
+grade: stable
 
 parts:
 {parts}"""

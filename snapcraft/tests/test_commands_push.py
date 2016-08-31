@@ -28,6 +28,7 @@ from snapcraft import (
     tests
 )
 from snapcraft.main import main
+from snapcraft.storeapi.errors import StoreUploadError
 from snapcraft.tests import fixture_setup
 
 
@@ -93,6 +94,28 @@ class PushCommandTestCase(tests.TestCase):
     def test_push_nonexisting_snap_must_raise_exception(self):
         with self.assertRaises(SystemExit):
             main(['push', 'test-unexisting-snap'])
+
+    def test_push_with_updown_error(self):
+        # We really don't know of a reason why this would fail
+        # aside from a 5xx style error on the server.
+        self.useFixture(fixture_setup.FakeTerminal())
+
+        class MockResponse:
+            text = 'stub error'
+            reason = 'stub reason'
+
+        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
+        mock_upload = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_upload.side_effect = StoreUploadError(MockResponse())
+
+        # Create a snap
+        main(['init'])
+        main(['snap'])
+        snap_file = glob.glob('*.snap')[0]
+
+        with self.assertRaises(SystemExit):
+            main(['push', snap_file])
 
     def test_upload_raises_deprecation_warning(self):
         self.useFixture(fixture_setup.FakeTerminal())

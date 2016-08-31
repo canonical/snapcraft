@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 from datetime import datetime
 import json
 import logging
@@ -60,32 +61,32 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
             response = {}
         else:
             self.send_response(200)
-            response = {
-                'curl': {
-                    'source': 'http://curl.org',
-                    'plugin': 'autotools',
-                    'description': 'test entry for curl',
-                    'maintainer': 'none',
-                },
-                'part1': {
-                    'plugin': 'go',
-                    'source': 'http://source.tar.gz',
-                    'description': 'test entry for part1',
-                    'maintainer': 'none',
-                },
-                'project-part/part1': {
-                    'plugin': 'go',
-                    'source': 'http://source.tar.gz',
-                    'description': 'test entry for part1',
-                    'maintainer': 'none',
-                },
-                'long-described-part': {
-                    'plugin': 'go',
-                    'source': 'http://source.tar.gz',
-                    'description': 'this is a repetitive description ' * 3,
-                    'maintainer': 'none',
-                },
-            }
+            response = OrderedDict((
+                ('curl', OrderedDict((
+                    ('plugin', 'autotools'),
+                    ('source', 'http://curl.org'),
+                    ('description', 'test entry for curl'),
+                    ('maintainer', 'none'),
+                ))),
+                ('part1', OrderedDict((
+                    ('plugin', 'go'),
+                    ('source', 'http://source.tar.gz'),
+                    ('description', 'test entry for part1'),
+                    ('maintainer', 'none'),
+                ))),
+                ('long-described-part', OrderedDict((
+                    ('plugin', 'go'),
+                    ('source', 'http://source.tar.gz'),
+                    ('description', 'this is a repetitive description ' * 3),
+                    ('maintainer', 'none'),
+                ))),
+                ('multiline-part', OrderedDict((
+                    ('plugin', 'go'),
+                    ('source', 'http://source.tar.gz'),
+                    ('description', 'this is a multiline description\n' * 3),
+                    ('maintainer', 'none'),
+                ))),
+            ))
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
             self.send_header('Content-Length', '1000')
@@ -107,15 +108,44 @@ class FakePartsWikiRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting parts')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 ---
 origin: https://github.com/sergiusens/curl.git
-project-part: curl
+parts: [curl]
+description:
+  Description here
+maintainer: none
+"""
+        self.send_header('Content-Type', 'text/plain')
+        if 'NO_CONTENT_LENGTH' not in os.environ:
+            self.send_header('Content-Length', len(response.encode()))
+        self.end_headers()
+        self.wfile.write(response.encode())
+
+
+class FakePartsWikiWithSlashesServer(http.server.HTTPServer):
+
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, FakePartsWikiWithSlashesRequestHandler)
+
+
+class FakePartsWikiWithSlashesRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        logger.debug('Handling getting parts')
+        self.send_response(200)
+        response = """
+---
+origin: https://github.com/sergiusens/curl.git
+parts: [curl/a]
+description:
+  Description here
+maintainer: none
+---
+origin: https://github.com/sergiusens/curl.git
+parts: [curl-a]
 description:
   Description here
 maintainer: none
@@ -138,12 +168,8 @@ class FakePartsWikiOriginRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('Handling getting part origin')
-        if self.headers.get('If-None-Match') == '1111':
-            self.send_response(304)
-            response = {}
-        else:
-            self.send_response(200)
-            response = """
+        self.send_response(200)
+        response = """
 parts:
   somepart:
     source: https://github.com/someuser/somepart.git
@@ -235,14 +261,18 @@ class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_upload_request(self):
         logger.info('Handling upload request')
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/octet-stream')
+        if 'UPDOWN_BROKEN' in os.environ:
+            response_code = 500
+            content_type = 'text/plain'
+            response = b'Broken'
+        else:
+            response_code = 200
+            content_type = 'application/octet-stream'
+            response = json.dumps({'upload_id': 'test-upload-id'}).encode()
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
         self.end_headers()
-        response = {
-            'successful': True,
-            'upload_id': 'test-upload-id'
-        }
-        self.wfile.write(json.dumps(response).encode())
+        self.wfile.write(response)
 
 
 class FakeStoreAPIServer(http.server.HTTPServer):
@@ -379,7 +409,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                     'http://localhost:{}/'.format(self.server.server_port),
                     details_path
                     ),
-                'success': True
             }
             data = json.dumps(response).encode()
         self.end_headers()
@@ -399,15 +428,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             content_type = 'text/plain'
             data = b''
         elif 'alpha' in data['channels']:
+            response_code = 400
             response = {
-                'success': False,
                 'errors': 'Not a valid channel: alpha',
             }
             data = json.dumps(response).encode()
         elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
             response = {
                 'opened_channels': data['channels'],
-                'success': True,
                 'channel_map': [
                     {'channel': 'stable', 'info': 'none'},
                     {'channel': 'candidate', 'info': 'none'},

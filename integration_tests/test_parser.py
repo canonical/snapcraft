@@ -57,10 +57,11 @@ class TestParser(integration_tests.TestCase):
                 '--debug',
                 '--output', 'parts.yaml']
         self.assertRaises(
-            subprocess.CalledProcessError, subprocess.check_call,
-            args, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            subprocess.CalledProcessError,
+            subprocess.check_call, args, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL)
 
-        self.assertTrue(not os.path.exists('parts.yaml'))
+        self.assertTrue(os.path.exists('parts.yaml'))
 
     def test_missing_snapcraft_yaml(self):
         """Test missing .snapcraft.yaml file."""
@@ -70,7 +71,8 @@ class TestParser(integration_tests.TestCase):
                 '--debug',
                 '--output', 'parts.yaml']
         self.assertRaises(
-            subprocess.CalledProcessError, subprocess.check_call,
-            args, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            subprocess.CalledProcessError,
+            subprocess.check_call, args, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL)
 
-        self.assertTrue(not os.path.exists('parts.yaml'))
+        self.assertTrue(os.path.exists('parts.yaml'))

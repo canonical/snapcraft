@@ -137,8 +137,6 @@ class HelpCommandTestCase(tests.TestCase):
             mock_stdout.seek(0)
             with self.subTest(key=key):
                 main(['help', key])
-                try:
-                    mock_stdout.getvalue().encode('ascii')
-                except UnicodeEncodeError:
-                    self.fail('Non-ASCII characters in help text for '
-                              '{!r}'.format(key))
+                # An UnicodeEncodeError will be raised if the help text has
+                # non-ASCII characters.
+                mock_stdout.getvalue().encode('ascii')

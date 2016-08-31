@@ -25,14 +25,12 @@ import fixtures
 import yaml
 from collections import OrderedDict
 
+import snapcraft                           # noqa, initialize yaml
 from snapcraft.internal.parser import (
-    _get_namespaced_partname,
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
-    MissingSnapcraftYAMLError,
     BASE_DIR,
-    PART_NAMESPACE_SEP,
     PARTS_FILE,
     main,
 )
@@ -68,16 +66,16 @@ class TestParser(TestCase):
         except FileNotFoundError:
             pass
 
-    def test_namespace(self):
-        partname = 'part'
-        subpart = 'subpart'
+    def test_ordereddict_yaml(self):
+        from collections import OrderedDict
+        data = OrderedDict()
 
-        result = _get_namespaced_partname(partname, subpart)
+        data['name'] = 'test'
+        data['description'] = 'description'
 
-        self.assertEqual('{p}{s}{sp}'.format(p=partname,
-                                             s=PART_NAMESPACE_SEP,
-                                             sp=subpart),
-                         result)
+        output = yaml.dump(data)
+
+        self.assertTrue(isinstance(yaml.load(output), OrderedDict))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -111,8 +109,7 @@ class TestParser(TestCase):
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
-parts: [part1, part2]
+parts: [main, part1, part2]
 """)
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(3, _get_part_list_count())
@@ -149,8 +146,7 @@ parts: [part1, part2]
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
-parts: [part1]
+parts: [main, part1]
 """)
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
@@ -164,7 +160,7 @@ parts: [part1]
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 }}}
 """)
         mock_get_origin_data.return_value = {
@@ -187,7 +183,7 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -201,6 +197,36 @@ project-part: main
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
         self.assertEqual(0, retval)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_main_slash_warning(self, mock_get, mock_get_origin_data):
+        fake_logger = fixtures.FakeLogger(level=logging.WARN)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+parts: [main/a]
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main/a': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+        m = 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
+            'main/a')
+        self.assertTrue(m in fake_logger.output,
+                        'Missing slash deprecation warning in output')
 
     def test_main_valid_with_default_index(self):
         main(['--debug'])
@@ -216,8 +242,7 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
-parts: [part1]
+parts: [main, part1]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -243,7 +268,7 @@ parts: [part1]
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -269,8 +294,7 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
-parts: ['subpart']
+parts: ['main', 'subpart']
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -302,7 +326,7 @@ parts: ['subpart']
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -332,7 +356,7 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -361,7 +385,7 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -390,7 +414,7 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -420,12 +444,12 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 ---
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main2
+parts: [main2]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -455,12 +479,12 @@ project-part: main2
 maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
-project-part: main
+parts: [main]
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main2
-project-part: main2
+parts: [main2]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -496,12 +520,12 @@ project-part: main2
 maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
-project-part: main
+parts: [main]
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main2
-project-part: main2
+parts: [main2]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -535,7 +559,7 @@ project-part: main2
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -557,6 +581,10 @@ project-part: main
 maintainer: John Doe <john.doe@example.com
 origin: lp:snapcraft-parser-example
 description: example
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -570,7 +598,7 @@ description: example
 
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
-        self.assertEqual(1, retval)
+        self.assertEqual(2, retval)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -584,18 +612,18 @@ origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage:
+  Usage
     blahblahblah
-project-part: 'main'
+parts: [main]
 ---
 maintainer: John Doeson <john.doeson@example.com>
 origin: lp:snapcraft-parser-example
 description:
   example
 
-  Usage
+  Usage:
     blahblahblah
-project-part: 'main2'
+parts: [main2]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -612,6 +640,39 @@ project-part: 'main2'
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_descriptions_get_block_quotes(self,
+                                           mock_get,
+                                           mock_get_origin_data):
+        output = """
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: |
+  example
+
+  Usage:
+    blahblahblah
+parts: [main]
+"""
+        _create_example_output(output)
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        with open('snap-parts.yaml') as fp:
+            data = fp.read()
+            self.assertNotIn('description: "', data)
+            self.assertIn('description: |', data)
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -635,8 +696,66 @@ project-part: 'main2'
         main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
         self.assertEqual(1, _get_part_list_count())
 
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_wiki_interactions_with_fake_with_slashes(self,
+                                                      mock_get,
+                                                      mock_get_origin_data):
+
+        fixture = fixture_setup.FakePartsWikiWithSlashes()
+        self.useFixture(fixture)
+
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'curl/a': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+                'curl-a': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index',
+              fixture.fake_parts_wiki_with_slashes_fixture.url])
+        self.assertEqual(2, _get_part_list_count())
+
+        part1 = _get_part('curl/a')
+        self.assertTrue(part1)
+
+        part2 = _get_part('curl-a')
+        self.assertTrue(part2)
+
     @mock.patch('snapcraft.internal.sources.get')
     def test_missing_snapcraft_yaml(self, mock_get):
+
+        fixture = fixture_setup.FakePartsWikiOrigin()
+        self.useFixture(fixture)
+        origin_url = fixture.fake_parts_wiki_origin_fixture.url
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: {origin_url}
+description: example
+parts: [somepart]
+""".format(origin_url=origin_url))
+
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+        self.assertTrue(
+            'Invalid wiki entry'
+            in fake_logger.output, 'Missing invalid wiki entry info in output')
+
+    @mock.patch('snapcraft.internal.sources.get')
+    def test_missing_snapcraft_yaml_without_debug(self, mock_get):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -647,11 +766,11 @@ project-part: 'main2'
 maintainer: John Doe <john.doe@example.com>
 origin: {origin_url}
 description: example
-project-part: 'somepart'
+parts: [somepart]
 """.format(origin_url=origin_url))
 
-        self.assertRaises(MissingSnapcraftYAMLError, main,
-                          ['--debug', '--index', TEST_OUTPUT_PATH])
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.sources.get')
     def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
@@ -668,7 +787,7 @@ project-part: 'somepart'
 maintainer: John Doe <john.doe@example.com>
 origin: {origin_url}
 description: example
-project-part: 'somepart'
+parts: [somepart]
 """.format(origin_url=origin_url))
 
         origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
@@ -698,7 +817,7 @@ project-part: 'somepart'
 maintainer: John Doe <john.doe@example.com>
 origin: {origin_url}
 description: example
-project-part: 'somepart'
+parts: [somepart]
 """.format(origin_url=origin_url))
 
         origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
@@ -713,7 +832,7 @@ project-part: 'somepart'
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
         part = _get_part('somepart')
-        self.assertTrue(part is not None)
+        self.assertTrue(part)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
@@ -727,8 +846,13 @@ project-part: 'somepart'
 ---
 maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
-description: example main
-project-part: main\r
+description: example main\r
+parts: [main]\r
+---
+maintainer: Jim Doe <jim.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example main duplicate
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -759,12 +883,12 @@ project-part: main\r
 maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
-project-part: main
+parts: [main]
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main duplicate
-project-part: main
+parts: [main]
 """)
         mock_get_origin_data.return_value = {
             'parts': {
@@ -795,17 +919,17 @@ project-part: main
 maintainer: John Doe <john.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main
-project-part: main
+parts: [main]
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main2
-project-part: main2
+parts: [main2]
 ---
 maintainer: Jim Doe <jim.doe@example.com>
 origin: lp:snapcraft-parser-example
 description: example main2
-project-part: app1
+parts: [app1]
 """)
         parts = OrderedDict()
 
