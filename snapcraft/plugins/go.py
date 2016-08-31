@@ -175,6 +175,7 @@ class GoPlugin(snapcraft.BasePlugin):
     def _build_environment(self):
         env = os.environ.copy()
         env['GOPATH'] = self._gopath
+        env['GOBIN'] = self._gopath_bin
 
         include_paths = []
         for root in [self.installdir, self.project.stage_dir]:
