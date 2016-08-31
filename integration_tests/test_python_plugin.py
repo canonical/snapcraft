@@ -80,7 +80,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
         with open(python3_entry_point) as f:
             python3_shebang = f.readline().strip()
 
-        self.assertEqual('#!/usr/bin/env python2', python2_shebang)
+        self.assertEqual('#!/usr/bin/env python', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
 
     def test_build_does_not_keep_pyc_or_pth_files_in_install(self):

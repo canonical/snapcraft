@@ -111,13 +111,10 @@ class Python3Plugin(snapcraft.BasePlugin):
         self.stage_packages.extend(self.plugin_stage_packages)
 
     def env(self, root):
-        env = ['PYTHONUSERBASE={}'.format(root)]
-
-        python_path = self._get_python_path(root)
-        if python_path:
-            env.append('PYTHONPATH={}'.format(python_path))
-
-        return env
+        return [
+            'PYTHONUSERBASE={}'.format(root),
+            'PYTHONPATH={}'.format(self._get_python_path(root)),
+        ]
 
     def pull(self):
         super().pull()
@@ -126,20 +123,23 @@ class Python3Plugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        self._run_pip(setup)
+        self._run_pip(setup, step='pull')
 
     def _install_pip(self):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
 
         subprocess.check_call([
-            self.system_pip_command, 'install', '--user', '--upgrade',
+            self.system_pip_command, 'install', '--user',
+            '--ignore-installed',
+            '--disable-pip-version-check',
             'pip', 'setuptools', 'wheel'], env=env)
 
     def _get_pip_command(self):
         self._install_pip()
 
-        pip_install = ['pip', 'install', '--user']
+        pip_install = ['pip', 'install', '--user',
+                       '--disable-pip-version-check']
 
         if self.options.constraints:
             pip_install = pip_install + [
@@ -152,8 +152,12 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         return pip_install
 
-    def _run_pip(self, setup):
+    def _run_pip(self, setup, step='build'):
         pip_install = self._get_pip_command()
+
+        # If we don't do this system packages will be taken into account
+        if step == 'pull':
+            pip_install.append('--ignore-installed')
 
         if self.options.requirements:
             self.run(pip_install + [
@@ -193,8 +197,15 @@ class Python3Plugin(snapcraft.BasePlugin):
         return fileset
 
     def _get_python_path(self, root):
+        dist_packages_dir = os.path.join(
+            root, self.python_lib_dir, 'dist-packages')
+        if not os.path.exists(dist_packages_dir):
+            logger.debug('dist-packages dir does not exist')
+            return ''
+
         site_packages_dir = os.path.join(
             root, self.python_lib_dir, 'site-packages')
-        os.makedirs(site_packages_dir, exist_ok=True)
+        if not os.path.exists(site_packages_dir):
+            os.symlink('dist-packages', site_packages_dir)
 
         return site_packages_dir
