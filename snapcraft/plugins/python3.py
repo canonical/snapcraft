@@ -32,6 +32,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - requirements:
       (string)
       path to a requirements.txt file
+    - constraints:
+      (string)
+      path to a constraints file
     - python-packages:
       (list)
       A list of dependencies to get from PyPi
@@ -52,6 +55,9 @@ class Python3Plugin(snapcraft.BasePlugin):
         schema['properties']['requirements'] = {
             'type': 'string',
         }
+        schema['properties']['constraints'] = {
+            'type': 'string',
+        }
         schema['properties']['python-packages'] = {
             'type': 'array',
             'minitems': 1,
@@ -69,18 +75,39 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].extend(['requirements', 'python-packages'])
+        schema['pull-properties'].extend([
+            'requirements',
+            'constraints',
+            'python-packages'
+        ])
 
         return schema
 
-    def __init__(self, name, options, project):
-        super().__init__(name, options, project)
-        self.build_packages.extend([
+    @property
+    def plugin_build_packages(self):
+        return [
             'python3-dev',
+            'python3-pip',
             'python3-pkg-resources',
             'python3-setuptools',
-        ])
-        self.stage_packages.extend(['python3'])
+        ]
+
+    @property
+    def plugin_stage_packages(self):
+        return ['python3']
+
+    @property
+    def pip_command(self):
+        return os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
+
+    @property
+    def python_lib_dir(self):
+        return os.path.join('usr', 'lib', 'python3')
+
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
+        self.build_packages.extend(self.plugin_build_packages)
+        self.stage_packages.extend(self.plugin_stage_packages)
 
     def env(self, root):
         env = ['PYTHONUSERBASE={}'.format(root)]
@@ -101,8 +128,13 @@ class Python3Plugin(snapcraft.BasePlugin):
         self._run_pip(setup)
 
     def _get_pip_command(self):
-        pip3 = os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
-        pip_install = [pip3, 'install', '--user']
+        pip_install = [self.pip_command, 'install', '--user']
+
+        if self.options.constraints:
+            pip_install = pip_install + [
+                '--constraint',
+                os.path.join(self.sourcedir, self.options.constraints),
+            ]
 
         if self.options.process_dependency_links:
             pip_install.append('--process-dependency-links')
@@ -148,15 +180,15 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def _get_python_path(self, root):
         python_path = ''
-        python_lib_dir = os.path.join('usr', 'lib', 'python3')
-        site_packages_dir = os.path.join(root, python_lib_dir, 'site-packages')
+        site_packages_dir = os.path.join(
+            root, self.python_lib_dir, 'site-packages')
         if os.path.exists(site_packages_dir):
             python_path += site_packages_dir
 
         # This means we are in builder mode
         if root == self.installdir:
             dist_packages_dir = os.path.join(
-                os.path.sep, python_lib_dir, 'dist-packages')
+                os.path.sep, self.python_lib_dir, 'dist-packages')
             if python_path:
                 python_path += ':{}'.format(dist_packages_dir)
             else:
