@@ -25,12 +25,12 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - properties:
+    - ant-properties:
       (object)
       A dictionary of key-value pairs. Set the following properties when
       running ant.
 
-    - targets:
+    - ant-build-targets:
       (list of strings)
       Run the given ant targets.
 """

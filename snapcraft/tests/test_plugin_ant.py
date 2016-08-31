@@ -39,6 +39,24 @@ class AntPluginTestCase(tests.TestCase):
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+    def test_schema(self):
+        schema = ant.AntPlugin.schema()
+
+        properties = schema['properties']
+        for expected in ['ant-properties', 'ant-build-targets']:
+            self.assertTrue(
+                expected in properties,
+                'Expected {!r} to be included in properties'.format(expected))
+
+        properties_type = schema['properties']['ant-properties']['type']
+        self.assertEqual(properties_type, 'object',
+            'Expected "ant-properties" "type" to be "object", but '
+            'it was "{}"'.format(properties_type))
+        build_targets_type = schema['properties']['ant-build-targets']['type']
+        self.assertEqual(build_targets_type, 'array',
+            'Expected "ant-build-targets" "type" to be "object", but '
+            'it was "{}"'.format(build_targets_type))
+
     @mock.patch.object(ant.AntPlugin, 'run')
     def test_build(self, run_mock):
         plugin = ant.AntPlugin('test-part', self.options,
