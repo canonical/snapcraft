@@ -309,8 +309,6 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 'kernel build did not output a vmlinux binary in top level '
                 'dir, expected {!r}'.format(src))
         os.link(src, dst)
-        # why oh why?
-        os.link(src, os.path.join(self.installdir, 'vmlinuz'))
         os.link(src, os.path.join(self.installdir, 'kernel.img'))
 
     def _copy_system_map(self):
