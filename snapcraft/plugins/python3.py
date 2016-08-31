@@ -75,24 +75,21 @@ class Python3Plugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.stage_packages.extend([
+        self.build_packages.extend([
             'python3-dev',
             'python3-pkg-resources',
             'python3-setuptools',
         ])
+        self.stage_packages.extend(['python3'])
 
     def env(self, root):
-        return [
-            'PYTHONPATH={}'.format(os.path.join(
-                root, 'usr', 'lib', self.python_version, 'site-packages')),
-            # This is until we figure out how to get pip to download only
-            # and then build in the build step or split out pulling
-            # stage-packages in an internal private step.
-            'CPPFLAGS="-I{} $CPPFLAGS"'.format(os.path.join(
-                root, 'usr', 'include')),
-            'CFLAGS="-I{} $CFLAGS"'.format(os.path.join(
-                root, 'usr', 'include')),
-        ]
+        env = ['PYTHONUSERBASE={}'.format(root)]
+
+        python_path = self._get_python_path(root)
+        if python_path:
+            env.append('PYTHONPATH={}'.format(python_path))
+
+        return env
 
     def pull(self):
         super().pull()
@@ -101,39 +98,18 @@ class Python3Plugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        if (os.path.exists(setup) or self.options.requirements or
-                self.options.python_packages):
-            self._pip(setup)
-
-    def _setup_pip(self):
-        easy_install = os.path.join(
-            self.installdir, 'usr', 'bin', 'easy_install3')
-        prefix = os.path.join(self.installdir, 'usr')
-
-        site_packages_dir = os.path.join(
-            prefix, 'lib', self.python_version, 'site-packages')
-        # If site-packages doesn't exist, make sure it points to the
-        # python3 dist-packages (this is a relative link so that it's still
-        # valid when the .snap is installed). Note that all python3 versions
-        # share the same dist-packages (e.g. in python3, not python3.4).
-        if not os.path.exists(site_packages_dir):
-            os.symlink(os.path.join('..', 'python3', 'dist-packages'),
-                       site_packages_dir)
-
-        self.run(['python3', easy_install, '--prefix', prefix, 'pip'])
+        self._run_pip(setup)
 
     def _get_pip_command(self):
-        pip3 = os.path.join(self.installdir, 'usr', 'bin', 'pip3')
-        pip_install = ['python3', pip3, 'install', '--root',
-                       self.installdir, "--install-option=--prefix=usr"]
+        pip3 = os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
+        pip_install = [pip3, 'install', '--user']
 
         if self.options.process_dependency_links:
             pip_install.append('--process-dependency-links')
 
         return pip_install
 
-    def _pip(self, setup):
-        self._setup_pip()
+    def _run_pip(self, setup):
         pip_install = self._get_pip_command()
 
         if self.options.requirements:
@@ -145,45 +121,23 @@ class Python3Plugin(snapcraft.BasePlugin):
         if self.options.python_packages:
             self.run(pip_install + ['--upgrade'] +
                      self.options.python_packages)
+
         if os.path.exists(setup):
-            self.run(pip_install + ['.', ], cwd=self.sourcedir)
+            self.run(pip_install + ['.'], cwd=self.sourcedir)
 
     def build(self):
         super().build()
 
-        # If setuptools is used, it tries to create files in the
-        # dist-packages dir and import from there, so it needs to exist
-        # and be in the PYTHONPATH. It's harmless if setuptools isn't
-        # used.
-
         setup_file = os.path.join(self.builddir, 'setup.py')
-        if not os.path.exists(setup_file):
-            return
-
-        os.makedirs(self.dist_packages_dir, exist_ok=True)
-        self.run(
-            ['python3', setup_file, 'install', '--install-layout=deb',
-             '--prefix={}/usr'.format(self.installdir),
-             '--root={}'.format(self.installdir)], cwd=self.builddir)
+        self._run_pip(setup_file)
 
         # Fix all shebangs to use the in-snap python.
         common.replace_in_file(self.installdir, re.compile(r''),
                                re.compile(r'#!.*python'),
                                r'#!/usr/bin/env python')
 
-    @property
-    def dist_packages_dir(self):
-        return os.path.join(
-            self.installdir, 'usr', 'lib', self.python_version,
-            'dist-packages')
-
-    @property
-    def python_version(self):
-        return self.run_output(['py3versions', '-d'])
-
     def snap_fileset(self):
         fileset = super().snap_fileset()
-        fileset.append('-usr/bin/pip*')
         # .pth files are only read from the built-in site-packages directory.
         # We use PYTHONPATH for everything so not needed.
         fileset.append('-**/*.pth')
@@ -191,3 +145,21 @@ class Python3Plugin(snapcraft.BasePlugin):
         # conflict.
         fileset.append('-**/__pycache__')
         return fileset
+
+    def _get_python_path(self, root):
+        python_path = ''
+        python_lib_dir = os.path.join('usr', 'lib', 'python3')
+        site_packages_dir = os.path.join(root, python_lib_dir, 'site-packages')
+        if os.path.exists(site_packages_dir):
+            python_path += site_packages_dir
+
+        # This means we are in builder mode
+        if root == self.installdir:
+            dist_packages_dir = os.path.join(
+                os.path.sep, python_lib_dir, 'dist-packages')
+            if python_path:
+                python_path += ':{}'.format(dist_packages_dir)
+            else:
+                python_path = dist_packages_dir
+
+        return python_path
