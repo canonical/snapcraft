@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import glob
 import os
+from glob import glob
 
 from testtools.matchers import (
     DirExists,
@@ -31,38 +31,38 @@ class PythonPluginTestCase(integration_tests.TestCase):
         project_dir = 'pip-requirements-file'
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
-                'python2.7', 'argparse.py'),
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'lib',
+                'python2*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
-            glob.glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3*', 'argparse.py'))[0],
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
 
     def test_pull_with_pip_requirements_list(self):
         project_dir = 'pip-requirements-list'
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
-                'python2.7', 'argparse.py'),
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'lib',
+                'python2*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
-                'python2.7', 'dist-packages', 'jsonschema'),
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'lib',
+                'python2*', 'site-packages', 'jsonschema'))[0],
             DirExists())
         self.assertThat(
-            glob.glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3*', 'argparse.py'))[0],
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3', 'dist-packages', 'jsonschema'),
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'jsonschema'))[0],
             DirExists())
 
     def test_build_rewrites_shebangs(self):
@@ -71,9 +71,9 @@ class PythonPluginTestCase(integration_tests.TestCase):
         project_dir = 'python-entry-point'
         self.run_snapcraft('stage', project_dir)
         python2_entry_point = os.path.join(
-            project_dir, 'stage', 'usr', 'bin', 'python2_test')
+            project_dir, 'stage', 'bin', 'python2_test')
         python3_entry_point = os.path.join(
-            project_dir, 'stage', 'usr', 'bin', 'python3_test')
+            project_dir, 'stage', 'bin', 'python3_test')
 
         with open(python2_entry_point) as f:
             python2_shebang = f.readline().strip()
@@ -106,12 +106,12 @@ class PythonPluginTestCase(integration_tests.TestCase):
         project_dir = 'python-pyyaml'
         self.run_snapcraft('stage', project_dir)
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
-                'python2.7', 'dist-packages', 'yaml'),
+            glob(os.path.join(
+                project_dir, 'parts', 'python2', 'install', 'lib',
+                'python2*', 'site-packages', 'yaml'))[0],
             DirExists())
         self.assertThat(
-            os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3', 'dist-packages', 'yaml'),
+            glob(os.path.join(
+                project_dir, 'parts', 'python3', 'install', 'lib',
+                'python3*', 'site-packages', 'yaml'))[0],
             DirExists())
