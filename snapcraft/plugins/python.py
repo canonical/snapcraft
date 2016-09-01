@@ -16,8 +16,7 @@
 
 """The python plugin can be used for python 2 or 3 based parts.
 
-The python plugin can be used for python projects where you would
-want to do:
+It can be used for python projects where you would want to do:
 
     - import python modules with a requirements.txt
     - build a python project that has a setup.py
