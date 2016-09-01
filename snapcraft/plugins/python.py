@@ -114,7 +114,8 @@ class PythonPlugin(snapcraft.BasePlugin):
                 'python-setuptools',
             ]
         else:
-            return []
+            raise AssertionError('python-version has a value of {!r}'.format(
+                self.options.python_version))
 
     @property
     def plugin_stage_packages(self):
@@ -123,7 +124,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         elif self.options.python_version == 'python2':
             return ['python2']
         else:
-            return []
+            raise AssertionError('python-version has a value of {!r}'.format(
+                self.options.python_version))
 
     @property
     def system_pip_command(self):
