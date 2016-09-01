@@ -239,8 +239,7 @@ class BasePlugin:
     def run(self, cmd, cwd=None, **kwargs):
         if not cwd:
             cwd = self.builddir
-        if True:
-            print(' '.join(cmd))
+        print(' '.join(cmd))
         os.makedirs(cwd, exist_ok=True)
         return common.run(cmd, cwd=cwd, **kwargs)
 
