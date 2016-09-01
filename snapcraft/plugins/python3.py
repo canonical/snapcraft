@@ -43,6 +43,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import os
 import re
 import subprocess
+from glob import glob
 
 import snapcraft
 from snapcraft import common
@@ -98,6 +99,10 @@ class Python3Plugin(snapcraft.BasePlugin):
         return ['python3']
 
     @property
+    def python_version(self):
+        return 'python3'
+
+    @property
     def system_pip_command(self):
         return os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
 
@@ -148,20 +153,32 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         return pip_install
 
+    def _get_build_env(self):
+        env = os.environ.copy()
+        headers = glob(os.path.join(
+            os.path.sep, 'usr', 'include', '{}*'.format(self.python_version)))
+        if headers:
+            env['CPPFLAGS'] = '-I{} {}'.format(
+                headers[0], env.get('CPPFLAGS', ''))
+
+        return env
+
     def _run_pip(self, setup):
         pip_install = self._get_pip_command()
+
+        env = self._get_build_env()
 
         if self.options.requirements:
             self.run(pip_install + [
                 '--requirement',
                 os.path.join(self.sourcedir, self.options.requirements),
-            ])
+            ], env=env)
 
         if self.options.python_packages:
-            self.run(pip_install + self.options.python_packages)
+            self.run(pip_install + self.options.python_packages, env=env)
 
         if os.path.exists(setup):
-            self.run(pip_install + ['.'], cwd=self.sourcedir)
+            self.run(pip_install + ['.'], cwd=self.sourcedir, env=env)
 
     def build(self):
         super().build()

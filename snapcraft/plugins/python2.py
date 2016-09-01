@@ -40,12 +40,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A list of dependencies to get from PyPi
 """
 
-import logging
 import os
 
 from snapcraft.plugins import python3
-
-logger = logging.getLogger(__name__)
 
 
 class Python2Plugin(python3.Python3Plugin):
@@ -62,6 +59,10 @@ class Python2Plugin(python3.Python3Plugin):
     @property
     def plugin_stage_packages(self):
         return ['python']
+
+    @property
+    def python_version(self):
+        return 'python2'
 
     @property
     def system_pip_command(self):

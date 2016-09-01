@@ -117,9 +117,12 @@ class Python3PluginTestCase(tests.TestCase):
         pip_install = pip_install + ['--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_install + ['--requirement', requirements_path]),
-            mock.call(pip_install + ['test', 'packages']),
-            mock.call(pip_install + ['.'], cwd=plugin.sourcedir),
+            mock.call(pip_install + ['--requirement', requirements_path],
+                      env=mock.ANY),
+            mock.call(pip_install + ['test', 'packages'],
+                      env=mock.ANY),
+            mock.call(pip_install + ['.'], cwd=plugin.sourcedir,
+                      env=mock.ANY),
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)

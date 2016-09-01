@@ -124,19 +124,17 @@ class Python2PluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        calls = [
-            mock.call(pip_install + ['--requirement', requirements_path]),
-            mock.call(pip_install + ['test', 'packages']),
-            mock.call(pip_install + ['.'], cwd=plugin.sourcedir),
-        ]
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
         pip_install = pip_install + ['--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_install + ['--requirement', requirements_path]),
-            mock.call(pip_install + ['test', 'packages']),
-            mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
+            mock.call(pip_install + ['--requirement', requirements_path],
+                      env=mock.ANY),
+            mock.call(pip_install + ['test', 'packages'],
+                      env=mock.ANY),
+            mock.call(pip_install + ['.'], cwd=plugin.sourcedir,
+                      env=mock.ANY),
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)
