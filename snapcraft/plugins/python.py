@@ -235,4 +235,3 @@ class PythonPlugin(snapcraft.BasePlugin):
         elif self.options.python_version == 'python2':
             fileset.append('-**/*.pyc')
         return fileset
-
