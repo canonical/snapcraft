@@ -74,14 +74,19 @@ class PythonPluginTestCase(integration_tests.TestCase):
             project_dir, 'stage', 'bin', 'python2_test')
         python3_entry_point = os.path.join(
             project_dir, 'stage', 'bin', 'python3_test')
+        python_entry_point = os.path.join(
+            project_dir, 'stage', 'bin', 'python_test')
 
         with open(python2_entry_point) as f:
             python2_shebang = f.readline().strip()
         with open(python3_entry_point) as f:
             python3_shebang = f.readline().strip()
+        with open(python_entry_point) as f:
+            python_shebang = f.readline().strip()
 
         self.assertEqual('#!/usr/bin/env python', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
+        self.assertEqual('#!/usr/bin/env python3', python_shebang)
 
     def test_build_does_not_keep_pyc_or_pth_files_in_install(self):
         # .pyc and .pyc files collide between parts.
