@@ -54,6 +54,7 @@ class Python3Plugin(python.PythonPlugin):
     def schema(cls):
         schema = super().schema()
         del schema['properties']['python-version']
+        schema['pull-properties'].remove('python-version')
 
         return schema
 
