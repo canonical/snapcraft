@@ -40,11 +40,16 @@ class Python3PluginTestCase(tests.TestCase):
         class Options:
             source = '.'
             requirements = ''
+            constraints = ''
             python_packages = []
             process_dependency_links = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
+
+        patcher = mock.patch('subprocess.check_call')
+        self.mock_call = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_schema(self):
         schema = python3.Python3Plugin.schema()
@@ -70,9 +75,8 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         expected_env = [
-            'PYTHONPATH=/testpath/usr/lib/python3.5/site-packages',
-            'CPPFLAGS="-I/testpath/usr/include $CPPFLAGS"',
-            'CFLAGS="-I/testpath/usr/include $CFLAGS"',
+            'PYTHONUSERBASE=/testpath',
+            'PYTHONHOME=/testpath/usr',
         ]
         env = plugin.env('/testpath')
         self.assertListEqual(expected_env, env)
@@ -80,14 +84,12 @@ class Python3PluginTestCase(tests.TestCase):
         env_missing_path = plugin.env('/testpath')
         self.assertTrue('PYTHONPATH=/testpath' not in env_missing_path)
 
-    @mock.patch.object(python3.Python3Plugin, '_pip')
+    @mock.patch.object(python3.Python3Plugin, '_run_pip')
     def test_pull(self, mock_pip):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         plugin.pull()
-        # mock_pip should not be called as there is no setup.py,
-        # requirements or python-packages defined.
-        self.assertFalse(mock_pip.called)
+        self.assertTrue(mock_pip.called)
 
     @mock.patch.object(python3.Python3Plugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
@@ -101,26 +103,23 @@ class Python3PluginTestCase(tests.TestCase):
     @mock.patch.object(python3.Python3Plugin, 'run')
     def test_pip(self, mock_run):
         self.options.requirements = 'requirements.txt'
+        self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
 
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         setup_directories(plugin)
 
-        easy_install = os.path.join(
-            plugin.installdir, 'usr', 'bin', 'easy_install3')
-        prefix = os.path.join(plugin.installdir, 'usr')
-
-        pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
-        pip_install = ['python3', pip3, 'install',
-                       '--root', plugin.installdir,
-                       '--install-option=--prefix=usr']
+        pip_install = ['pip', 'install', '--user',
+                       '--disable-pip-version-check']
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+        pip_install = pip_install + ['--constraint', constraints_path]
+
         calls = [
-            mock.call(['python3', easy_install, '--prefix', prefix, 'pip']),
             mock.call(pip_install + ['--requirement', requirements_path]),
-            mock.call(pip_install + ['--upgrade', 'test', 'packages']),
-            mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
+            mock.call(pip_install + ['test', 'packages']),
+            mock.call(pip_install + ['.'], cwd=plugin.sourcedir),
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)
@@ -129,7 +128,9 @@ class Python3PluginTestCase(tests.TestCase):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
         expected_fileset = [
-            '-usr/bin/pip*',
+            '-bin/pip*',
+            '-bin/easy_install*',
+            '-bin/wheel',
             '-**/*.pth',
             '-**/__pycache__',
         ]

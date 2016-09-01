@@ -119,7 +119,7 @@ class Python3Plugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        self._run_pip(setup, step='pull')
+        self._run_pip(setup)
 
     def _install_pip(self):
         env = os.environ.copy()
@@ -148,7 +148,7 @@ class Python3Plugin(snapcraft.BasePlugin):
 
         return pip_install
 
-    def _run_pip(self, setup, step='build'):
+    def _run_pip(self, setup):
         pip_install = self._get_pip_command()
 
         if self.options.requirements:

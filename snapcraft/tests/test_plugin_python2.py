@@ -47,22 +47,9 @@ class Python2PluginTestCase(tests.TestCase):
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
 
-    @mock.patch.object(python2.Python2Plugin, 'run')
-    @mock.patch.object(python2.Python2Plugin, 'run_output',
-                       return_value='python2.7')
-    def test_pip_relative_site_packages_symlink(self, run_output_mock,
-                                                run_mock):
-        plugin = python2.Python2Plugin('test-part', self.options,
-                                       self.project_options)
-        setup_directories(plugin)
-        plugin.pull()
-
-        link = os.readlink(os.path.join(plugin.installdir, 'usr', 'lib',
-                                        'python2.7', 'site-packages'))
-        self.assertEqual(link, 'dist-packages',
-                         'Expected site-packages to be a relative link to '
-                         '"dist-packages", but it was a link to "{}"'
-                         .format(link))
+        patcher = mock.patch('subprocess.check_call')
+        self.mock_call = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_schema(self):
         schema = python2.Python2Plugin.schema()
@@ -97,9 +84,8 @@ class Python2PluginTestCase(tests.TestCase):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
         expected_env = [
-            'CPPFLAGS="-I/testpath/usr/include $CPPFLAGS"',
-            'CFLAGS="-I/testpath/usr/include $CFLAGS"',
-            'PYTHONPATH=/testpath',
+            'PYTHONUSERBASE=/testpath',
+            'PYTHONHOME=/testpath/usr',
         ]
         env = plugin.env('/testpath')
         self.assertListEqual(expected_env, env)
@@ -107,14 +93,12 @@ class Python2PluginTestCase(tests.TestCase):
         env_missing_path = plugin.env('/testpath')
         self.assertTrue('PYTHONPATH=/testpath' not in env_missing_path)
 
-    @mock.patch.object(python2.Python2Plugin, '_pip')
+    @mock.patch.object(python2.Python2Plugin, '_run_pip')
     def test_pull(self, mock_pip):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
         plugin.pull()
-        # mock_pip should not be called as there is no setup.py,
-        # requirements or python-packages defined.
-        self.assertFalse(mock_pip.called)
+        self.assertTrue(mock_pip.called)
 
     @mock.patch.object(python2.Python2Plugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
@@ -126,20 +110,7 @@ class Python2PluginTestCase(tests.TestCase):
         self.assertFalse(mock_run.called)
 
     @mock.patch.object(python2.Python2Plugin, 'run')
-    def test_setup_pip(self, mock_run):
-        plugin = python2.Python2Plugin('test-part', self.options,
-                                       self.project_options)
-        easy_install = os.path.join(
-            plugin.installdir, 'usr', 'bin', 'easy_install')
-        prefix = os.path.join(plugin.installdir, 'usr')
-
-        plugin._setup_pip()
-        mock_run.assert_called_with(
-            ['python2', easy_install, '--prefix', prefix, 'pip'])
-
-    @mock.patch.object(python2.Python2Plugin, '_setup_pip')
-    @mock.patch.object(python2.Python2Plugin, 'run')
-    def test_pip(self, mock_run, mock_setup_pip):
+    def test_pip(self, mock_run):
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -148,39 +119,37 @@ class Python2PluginTestCase(tests.TestCase):
                                        self.project_options)
         setup_directories(plugin)
 
-        pip2 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip2')
-        include = os.path.join(
-            plugin.installdir, 'usr', 'include', 'python2.7')
-        target = os.path.join(
-            plugin.installdir, 'usr', 'lib', 'python2.7', 'site-packages')
-        pip_install = ['python2', pip2, 'install',
-                       '--global-option=build_ext',
-                       '--global-option=-I{}'.format(include),
-                       '--target', target]
+        pip_install = ['pip', 'install', '--user',
+                       '--disable-pip-version-check']
+        requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
+        calls = [
+            mock.call(pip_install + ['--requirement', requirements_path]),
+            mock.call(pip_install + ['test', 'packages']),
+            mock.call(pip_install + ['.'], cwd=plugin.sourcedir),
+        ]
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
         pip_install = pip_install + ['--constraint', constraints_path]
+
         calls = [
             mock.call(pip_install + ['--requirement', requirements_path]),
-            mock.call(pip_install + ['--upgrade', 'test', 'packages']),
+            mock.call(pip_install + ['test', 'packages']),
             mock.call(pip_install + ['.'], cwd=plugin.sourcedir)
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)
 
-    def test_get_python2_include_missing_raises_exception(self):
-        with self.assertRaises(EnvironmentError) as raised:
-            python2._get_python2_include('/foo')
-        self.assertEqual(str(raised.exception),
-                         'python development headers not installed')
-
     def test_fileset_ignores(self):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
         expected_fileset = [
-            '-usr/bin/pip*',
+            '-bin/pip*',
+            '-bin/easy_install*',
+            '-bin/wheel',
             '-**/*.pth',
+            '-**/__pycache__',
             '-**/*.pyc',
         ]
         fileset = plugin.snap_fileset()
