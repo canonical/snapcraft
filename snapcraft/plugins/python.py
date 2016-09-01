@@ -206,7 +206,8 @@ class PythonPlugin(snapcraft.BasePlugin):
             self.run(pip_install + self.options.python_packages, env=env)
 
         if os.path.exists(setup):
-            self.run(pip_install + ['.'], cwd=self.sourcedir, env=env)
+            cwd = os.path.dirname(setup)
+            self.run(pip_install + ['.'], cwd=cwd, env=env)
 
     def build(self):
         super().build()
