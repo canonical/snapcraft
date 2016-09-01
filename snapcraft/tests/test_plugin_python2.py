@@ -147,7 +147,6 @@ class Python2PluginTestCase(tests.TestCase):
             '-bin/easy_install*',
             '-bin/wheel',
             '-**/*.pth',
-            '-**/__pycache__',
             '-**/*.pyc',
         ]
         fileset = plugin.snap_fileset()

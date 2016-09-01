@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The python2 plugin can be used for python 2 based parts.
+
+This plugin is DEPRECATED in favor of the python plugin.
 
 The python2 plugin can be used for python 2 projects where you would
 want to do:
@@ -31,45 +33,30 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - requirements:
       (string)
-      path to a requirements.txt file
+      Path to a requirements.txt file
     - constraints:
       (string)
-      path to a constraints file
+      Path to a constraints file
+    - process-dependency-links:
+      (bool; default: false)
+      Enable the processing of dependency links.
     - python-packages:
       (list)
       A list of dependencies to get from PyPi
 """
 
-import os
-
-from snapcraft.plugins import python3
+from snapcraft.plugins import python
 
 
-class Python2Plugin(python3.Python3Plugin):
+class Python2Plugin(python.PythonPlugin):
 
-    @property
-    def plugin_build_packages(self):
-        return [
-            'python-dev',
-            'python-pip',
-            'python-pkg-resources',
-            'python-setuptools',
-        ]
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        del schema['properties']['python-version']
 
-    @property
-    def plugin_stage_packages(self):
-        return ['python']
+        return schema
 
-    @property
-    def python_version(self):
-        return 'python2'
-
-    @property
-    def system_pip_command(self):
-        return os.path.join(os.path.sep, 'usr', 'bin', 'pip')
-
-    def snap_fileset(self):
-        fileset = super().snap_fileset()
-        # This is a major cause of inter part conflict.
-        fileset.append('-**/*.pyc')
-        return fileset
+    def __init__(self, name, options, project):
+        setattr(options, 'python_version', 'python2')
+        super().__init__(name, options, project)
