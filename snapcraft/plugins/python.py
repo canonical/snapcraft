@@ -122,7 +122,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         if self.options.python_version == 'python3':
             return ['python3']
         elif self.options.python_version == 'python2':
-            return ['python2']
+            return ['python']
         else:
             raise AssertionError('python-version has a value of {!r}'.format(
                 self.options.python_version))
