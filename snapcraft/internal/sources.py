@@ -75,6 +75,7 @@ import zipfile
 
 from snapcraft.internal import common
 from snapcraft import file_utils
+from snapcraft.internal.errors import MissingPackageError
 from snapcraft.internal.indicators import download_requests_stream
 
 
@@ -85,10 +86,6 @@ class IncompatibleOptionsError(Exception):
 
     def __init__(self, message):
         self.message = message
-
-
-class MissingPackageError(Exception):
-    pass
 
 
 class Base:
@@ -394,13 +391,12 @@ def get(sourcedir, builddir, options):
     handler_class = _get_source_handler(source_type, options.source)
     handler = handler_class(options.source, sourcedir, source_tag,
                             source_branch)
-    e_msg = 'A required package is missing, please install these packages: {}'
     try:
         handler.pull()
     except FileNotFoundError:
         if type(handler) in [Bazaar, Git, Subversion, Mercurial]:
             required_packages = get_required_packages(options)
-            raise MissingPackageError(e_msg.format(required_packages))
+            raise MissingPackageError(required_packages)
         else:
             raise
 

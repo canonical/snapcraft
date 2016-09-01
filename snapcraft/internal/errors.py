@@ -60,3 +60,14 @@ class SnapcraftPartConflictError(SnapcraftError):
         super().__init__(part_name=part_name,
                          other_part_name=other_part_name,
                          file_paths='\n'.join(sorted(spaced_conflict_files)))
+
+
+class MissingPackageError(SnapcraftError):
+
+    fmt = (
+        'A required package is missing, please install these packages:'
+        ' {required_packages!r}'
+    )
+
+    def __init__(self, required_packages):
+        super().__init__(required_packages=required_packages)

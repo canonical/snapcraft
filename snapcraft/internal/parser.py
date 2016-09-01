@@ -241,8 +241,7 @@ def _handle_wiki_entry(entry, master_parts_list):
         logger.warning('Invalid wiki entry: {!r}'.format(e))
         wiki_errors = 1
     except sources.MissingPackageError as e:
-        logger.warning(
-            'Missing package for source type: {!r}'.format(e))
+        logger.warning(e)
         # TODO: support multiple types of errors, see
         # https://bugs.launchpad.net/snapcraft/+bug/1616613
         wiki_errors = 1
