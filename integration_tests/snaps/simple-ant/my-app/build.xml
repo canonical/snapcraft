@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="init" name="my-app"
+         xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+    <property environment="env"/>
+    <property name="basedir" value="."/>
+    <property name="build.dir" value="${basedir}/build"/>
+    <property name="dist.dir" value="${build.dir}/dist"/>
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+    <target name="clean">
+        <delete dir="${build.dir}" />
+    </target>
+    <target name="artifacts" depends="init">
+        <touch file="${dist.dir}/foo.jar"/>
+    </target>
+</project>
