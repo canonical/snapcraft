@@ -134,7 +134,24 @@ def _update_source(part, origin):
     return part
 
 
-def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
+def _replace_variables(item, name, version):
+    if isinstance(item, dict):
+        for key, value in item.items():
+            item[key] = _replace_variables(value, name, version)
+    elif isinstance(item, list):
+        for index in range(len(item)):
+            item[index] = _replace_variables(item[index], name, version)
+    elif isinstance(item, str):
+        if name:
+            item = item.replace('$SNAPCRAFT_PROJECT_NAME', name)
+        if version:
+            item = item.replace('$SNAPCRAFT_PROJECT_VERSION', version)
+
+    return item
+
+
+def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
+                         origin_name, origin_version):
     after_parts = set()
     parts_list = {}
     for part_name in entry_parts:
@@ -143,6 +160,8 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
                 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
                     part_name))
         source_part = parts.get(part_name)
+        source_part = _replace_variables(source_part, origin_name,
+                                         origin_version)
 
         if source_part:
             source_part = _update_source(source_part, origin)
@@ -198,9 +217,12 @@ def _process_entry(data):
         raise InvalidEntryError('snapcraft.yaml error: {}'.format(e))
 
     origin_parts = origin_data.get('parts', {})
+    origin_name = origin_data.get('name')
+    origin_version = origin_data.get('version')
 
     entry_parts_list, entry_parts_after_list = _process_entry_parts(
         entry_parts, origin_parts, origin, maintainer, description,
+        origin_name, origin_version,
     )
     parts_list.update(entry_parts_list)
     after_parts.update(entry_parts_after_list)

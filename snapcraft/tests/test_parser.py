@@ -177,6 +177,37 @@ parts: [main]
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_main_valid_variable_substition(self, mock_get,
+                                            mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+parts: [main]
+""")
+        mock_get_origin_data.return_value = {
+            'name': 'something',
+            'version': '0.1',
+            'parts': {
+                'main': {
+                    'source': 'lp:$SNAPCRAFT_PROJECT_NAME'
+                              '/r$SNAPCRAFT_PROJECT_VERSION',
+
+                    'plugin': 'copy',
+                    'files': ['$SNAPCRAFT_PROJECT_NAME/file1', 'file2'],
+                },
+            }
+        }
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part('main')
+        self.assertEqual(part['source'], 'lp:something/r0.1')
+        self.assertIn('something/file1', part['files'])
+        self.assertEqual(0, retval)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_main_valid(self, mock_get, mock_get_origin_data):
         _create_example_output("""
 ---
