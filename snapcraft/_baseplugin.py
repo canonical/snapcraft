@@ -240,7 +240,6 @@ class BasePlugin:
         if not cwd:
             cwd = self.builddir
         print(' '.join(cmd))
-        print('working directory', cwd)
         os.makedirs(cwd, exist_ok=True)
         return common.run(cmd, cwd=cwd, **kwargs)
 
