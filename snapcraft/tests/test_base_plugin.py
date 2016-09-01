@@ -134,6 +134,7 @@ class TestBasePlugin(tests.TestCase):
 
         mock_run.assert_called_once_with(['ls'], cwd=plugin.sourcedir)
 
+
 class GetSourceWithBranches(tests.TestCase):
 
     scenarios = [
