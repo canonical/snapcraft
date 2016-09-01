@@ -134,7 +134,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
             glob(os.path.join(
                 project_dir, 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yaml')),
-                [])
+            [])
 
         self.assertThat(
             glob(os.path.join(
@@ -150,4 +150,4 @@ class PythonPluginTestCase(integration_tests.TestCase):
             glob(os.path.join(
                 project_dir, 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml')),
-                [])
+            [])
