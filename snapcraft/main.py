@@ -38,6 +38,7 @@ Usage:
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
+  snapcraft [options] validate <snap-name> [<snap-revision> ...]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -281,7 +282,7 @@ def _run_clean(args, project_options):
 
 
 def _is_store_command(args):
-    commands = ('register', 'upload', 'release', 'push')
+    commands = ('register', 'upload', 'release', 'push', 'validate')
     return any(args.get(command) for command in commands)
 
 
@@ -300,6 +301,8 @@ def _run_store_command(args):
     elif args['release']:
         snapcraft.release(
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
+    elif args['validate']:
+        snapcraft.validate(args['<snap-name>'], args['<snap-revision>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

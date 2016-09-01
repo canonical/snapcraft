@@ -188,3 +188,39 @@ def download(snap_name, channel, download_path, arch):
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
                 snap_name, download_path))
+
+
+def validate(snap_name, validations):
+    """Generate, sign and upload validation assertions."""
+    store = storeapi.StoreClient()
+
+    def get_snap_data(name):
+        # XXX FIXME error handling
+        search_results = store.cpi.search_package(name, 'stable', None)
+        details_url = search_results['_links']['self']['href']
+        return store.cpi.get(details_url).json()
+
+    # First, figure out the latest revision for snap_name
+    snap_data = get_snap_data(snap_name)
+    revision = snap_data['revision']
+    release = snap_data['release']
+    snap_id = snap_data['snap_id']
+
+    # Then, for each requested validation, generate assertion
+    # XXX FIXME: ensure validations are of the form name=number
+    for validation in validations:
+        name, rev = validations.split('=', 1)
+        approved_data = get_snap_data(name)
+        assertion = {
+            'type': 'validation',
+            'authority-id': 'XXX FIXME',
+            'series': release,
+            'snap-id': snap_id,
+            'approved-snap-id': approved_data['snap_id'],
+            'approved-snap-revision': rev,
+            'valid': True
+        }
+
+        # XXX TODO sign the assertion using "snap sign"
+
+        # XXX TODO send the signed assertion to SCA's API

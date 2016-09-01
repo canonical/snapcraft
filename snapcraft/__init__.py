@@ -236,6 +236,7 @@ from snapcraft._store import (                      # noqa
     push,
     register,
     release,
+    validate,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
