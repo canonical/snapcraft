@@ -28,6 +28,7 @@ Build-Depends: bash-completion,
                python3-testtools,
                python3-xdg,
                python3-yaml,
+               snapd (>= 2.14.2),
                squashfs-tools,
 Homepage: https://github.com/snapcore/snapcraft
 Vcs-Git: https://github.com/snapcore/snapcraft.git
@@ -56,7 +57,7 @@ Depends: python3-apt,
          sudo,
          ${misc:Depends},
          ${python3:Depends}
-Suggests: lxd, snapd
+Suggests: lxd, snapd (>= 2.14.2)
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
