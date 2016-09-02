@@ -162,26 +162,31 @@ class RegisterKeyTestCase(tests.TestCase):
 
     def test_register_key_without_login_raises_exception(self):
         with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.register_key(b'dummy')
+            self.client.register_key('dummy')
 
     def test_register_key_successfully(self):
         self.client.login('dummy', 'test correct password')
         # No exception will be raised if this is successful.
-        self.client.register_key(b'test-good-key')
+        self.client.register_key('test-good-key')
 
     def test_not_implemented(self):
         # If the enable_account_key feature switch is off in the store, we
         # will get a 501 Not Implemented response.
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreKeyRegistrationError) as raised:
-            self.client.register_key(b'test-not-implemented')
-        self.assertEqual(str(raised.exception), '501 Not Implemented')
+            self.client.register_key('test-not-implemented')
+        self.assertEqual(
+            str(raised.exception),
+            'Key registration failed: 501 Not Implemented')
 
     def test_invalid_data(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreKeyRegistrationError) as raised:
-            self.client.register_key(b'test-invalid-data')
-        self.assertEqual(str(raised.exception), 'Submitted data is not valid.')
+            self.client.register_key('test-invalid-data')
+        self.assertEqual(
+            str(raised.exception),
+            'Key registration failed: '
+            'The account-key-request assertion is not valid.')
 
 
 class RegisterTestCase(tests.TestCase):

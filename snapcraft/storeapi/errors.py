@@ -75,20 +75,36 @@ class StoreAuthenticationError(StoreError):
         super().__init__(message=message)
 
 
-class StoreKeyRegistrationError(StoreError):
+class StoreAccountInformationError(StoreError):
 
-    fmt = 'Key registration failed.'
+    fmt = 'Error fetching account information from store: {error}'
 
     def __init__(self, response):
+        error = '%d %s' % (response.status_code, response.reason)
         try:
             response_json = response.json()
-            if 'detail' in response_json:
-                self.fmt = response_json['detail']
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
         except JSONDecodeError:
-            response_json = {}
-            self.fmt = '%d %s' % (response.status_code, response.reason)
+            pass
+        super().__init__(error=error)
 
-        super().__init__(**response_json)
+
+class StoreKeyRegistrationError(StoreError):
+
+    fmt = 'Key registration failed: {error}'
+
+    def __init__(self, response):
+        error = '%d %s' % (response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
 
 
 class StoreRegistrationError(StoreError):

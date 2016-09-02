@@ -10,7 +10,6 @@ Build-Depends: bash-completion,
                python3-apt,
                python3-docopt,
                python3-fixtures,
-               python3-gpgme,
                python3-jsonschema,
                python3-lxml,
                python3-magic,
@@ -39,7 +38,6 @@ Package: snapcraft
 Architecture: all
 Depends: python3-apt,
          python3-docopt,
-         python3-gpgme,
          python3-jsonschema,
          python3-lxml,
          python3-magic,
@@ -58,7 +56,7 @@ Depends: python3-apt,
          sudo,
          ${misc:Depends},
          ${python3:Depends}
-Suggests: lxd
+Suggests: lxd, snapd
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the

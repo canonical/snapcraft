@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
-import os.path
-import shutil
-import subprocess
+from textwrap import dedent
 from unittest import mock
 
 import fixtures
@@ -30,22 +29,49 @@ from snapcraft import (
 )
 
 
-class TemporaryGPGFixture(fixtures.Fixture):
-    """Set up a temporary local GPG environment with sample data."""
+_sample_keys = [
+    {
+        'name': 'default',
+        'sha3-384': (
+            'vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZ'
+            'ZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp'),
+    },
+    {
+        'name': 'another',
+        'sha3-384': (
+            'JsfToV5hO2eN9l89pYYCKXUioTERrZII'
+            'HUgQQd47jW8YNNBskupiIjWYd3KXLY_D'),
+    },
+]
 
-    def _setUp(self):
-        home = self.useFixture(fixtures.TempDir()).path
-        gpg_conf_path = os.path.join(home, 'gpg.conf')
-        with open(gpg_conf_path, 'w') as gpg_conf:
-            gpg_conf.write(
-                'no-use-agent\n'
-                'no-auto-check-trustdb\n')
-        for name in 'pubring.gpg', 'secring.gpg':
-            shutil.copy2(
-                os.path.join(
-                    os.path.dirname(tests.__file__), 'data', 'sample-' + name),
-                os.path.join(home, name))
-        self.useFixture(fixtures.EnvironmentVariable('GNUPGHOME', home))
+
+def _get_sample_key(name):
+    for key in _sample_keys:
+        if key['name'] == name:
+            return key
+    raise KeyError(name)
+
+
+def _mock_snap_output(command, *args, **kwargs):
+    if command == ['snap', 'keys', '--json']:
+        return json.dumps(_sample_keys)
+    elif command[:2] == ['snap', 'export-key']:
+        if not command[2].startswith('--account='):
+            raise AssertionError('Unhandled command: {}'.format(command))
+        account_id = command[2][len('--account='):]
+        name = command[3]
+        # This isn't a full account-key-request assertion, but it's enough
+        # for testing.
+        return dedent('''\
+            type: account-key-request
+            account-id: {account_id}
+            name: {name}
+            public-key-sha3-384: {sha3_384}
+            ''').format(
+                account_id=account_id, name=name,
+                sha3_384=_get_sample_key(name)['sha3-384'])
+    else:
+        raise AssertionError('Unhandled command: {}'.format(command))
 
 
 class RegisterKeyTestCase(tests.TestCase):
@@ -54,28 +80,32 @@ class RegisterKeyTestCase(tests.TestCase):
         super().setUp()
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
-        self.useFixture(TemporaryGPGFixture())
+        self.fake_terminal = tests.fixture_setup.FakeTerminal()
+        self.useFixture(self.fake_terminal)
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
-    @mock.patch('builtins.print')
     @mock.patch('builtins.input')
-    def test_register_key_successfully(self, mock_input, mock_print,
-                                       mock_getpass, mock_login,
+    def test_register_key_successfully(self, mock_input, mock_getpass,
+                                       mock_check_output, mock_login,
+                                       mock_get_account_information,
                                        mock_register_key):
         mock_input.side_effect = ['sample.person@canonical.com', '123456']
         mock_getpass.return_value = 'secret'
+        mock_check_output.side_effect = _mock_snap_output
+        mock_get_account_information.return_value = {'account_id': 'abcd'}
 
-        main(['register-key', 'sample.person@canonical.com'])
+        main(['register-key', 'default'])
 
         self.assertEqual(
             'Authenticating against Ubuntu One SSO.\n'
             'Login successful.\n'
-            'Registering GPG key ...\n'
-            'Done. The GPG key 6191 1EE6 0198 CD22 8462  '
-            '19F6 A337 CC09 F1F1 2F4C will be expected for signing your '
-            'assertions.\n',
+            'Registering key ...\n'
+            'Done. The key "default" ({}) may be used to sign your '
+            'assertions.\n'.format(_get_sample_key('default')['sha3-384']),
             self.fake_logger.output)
 
         mock_login.assert_called_once_with(
@@ -83,26 +113,32 @@ class RegisterKeyTestCase(tests.TestCase):
             one_time_password='123456', acls=['modify_account_key'],
             save=False)
         self.assertEqual(1, mock_register_key.call_count)
-        gpg_output = subprocess.check_output(
-            ['gpg'], input=mock_register_key.call_args[0][0]).decode('ascii')
-        self.assertIn(
-            '2016-07-29 Sample Person <sample.person@canonical.com>',
-            gpg_output)
+        expected_assertion = dedent('''\
+            type: account-key-request
+            account-id: abcd
+            name: default
+            public-key-sha3-384: {}
+            ''').format(_get_sample_key('default')['sha3-384'])
+        mock_register_key.assert_called_once_with(expected_assertion)
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
-    @mock.patch('builtins.print')
     @mock.patch('builtins.input')
-    def test_register_key_login_failed(self, mock_input, mock_print,
-                                       mock_getpass, mock_login,
+    def test_register_key_login_failed(self, mock_input, mock_getpass,
+                                       mock_check_output, mock_login,
+                                       mock_get_account_information,
                                        mock_register_key):
+        mock_check_output.side_effect = _mock_snap_output
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'test')
 
         with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'sample.person@canonical.com'])
+            main(['register-key', 'default'])
 
+        self.assertEqual(0, mock_get_account_information.call_count)
         self.assertEqual(0, mock_register_key.call_count)
         self.assertEqual(1, raised.exception.code)
         self.assertIn(
@@ -110,12 +146,17 @@ class RegisterKeyTestCase(tests.TestCase):
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
-    @mock.patch('builtins.print')
     @mock.patch('builtins.input')
-    def test_register_key_failed(self, mock_input, mock_print, mock_getpass,
-                                 mock_login, mock_register_key):
+    def test_register_key_failed(self, mock_input, mock_getpass,
+                                 mock_check_output, mock_login,
+                                 mock_get_account_information,
+                                 mock_register_key):
+        mock_check_output.side_effect = _mock_snap_output
+        mock_get_account_information.return_value = {'account_id': 'abcd'}
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         response.status_code = 500
@@ -124,69 +165,58 @@ class RegisterKeyTestCase(tests.TestCase):
             storeapi.errors.StoreKeyRegistrationError(response))
 
         with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'sample.person@canonical.com'])
-
-        self.assertEqual(1, raised.exception.code)
-        self.assertIn('500 Internal Server Error\n', self.fake_logger.output)
-
-    def test_register_key_excludes_dsa(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'dsa.person@canonical.com'])
+            main(['register-key', 'default'])
 
         self.assertEqual(1, raised.exception.code)
         self.assertIn(
-            'You have no usable GPG secret keys matching '
-            '"dsa.person@canonical.com".\n',
-            self.fake_logger.output)
-
-    def test_register_key_excludes_weak_rsa(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'rsa-2048.person@canonical.com'])
-
-        self.assertEqual(1, raised.exception.code)
-        self.assertIn(
-            'You have no usable GPG secret keys matching '
-            '"rsa-2048.person@canonical.com".\n',
+            'Key registration failed: 500 Internal Server Error\n',
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
-    @mock.patch('builtins.print')
     @mock.patch('builtins.input')
-    def test_register_key_select_key(self, mock_input, mock_print,
-                                     mock_getpass, mock_login,
+    def test_register_key_select_key(self, mock_input, mock_getpass,
+                                     mock_check_output, mock_login,
+                                     mock_get_account_information,
                                      mock_register_key):
         mock_input.side_effect = ['2', 'sample.person@canonical.com', '']
         mock_getpass.return_value = 'secret'
+        mock_check_output.side_effect = _mock_snap_output
+        mock_get_account_information.return_value = {'account_id': 'abcd'}
 
         main(['register-key'])
 
-        mock_print.assert_has_calls([
-            mock.call('Select a key:'),
-            mock.call(),
-            mock.call('1. 4096R: '
-                      '6191 1EE6 0198 CD22 8462  19F6 A337 CC09 F1F1 2F4C'),
-            mock.call('   Sample Person <sample.person@canonical.com>'),
-            mock.call('2. 4096R: '
-                      '4EA2 B48B FB44 8064 7BCC  8B54 7929 3F36 2153 83B8'),
-            mock.call('   Another Person <another.person@canonical.com>'),
-            mock.call(),
-            ])
+        expected_output = dedent('''\
+            Select a key:
+
+              Number  Name     SHA3-384 fingerprint
+            --------  -------  {sha3_384_line}
+                   1  default  {default_sha3_384}
+                   2  another  {another_sha3_384}
+
+            ''').format(
+                sha3_384_line='-' * 64,
+                default_sha3_384=_get_sample_key('default')['sha3-384'],
+                another_sha3_384=_get_sample_key('another')['sha3-384'])
+        self.assertIn(expected_output, self.fake_terminal.getvalue())
         mock_input.assert_any_call('Key number: ')
 
         self.assertEqual(
             'Authenticating against Ubuntu One SSO.\n'
             'Login successful.\n'
-            'Registering GPG key ...\n'
-            'Done. The GPG key 4EA2 B48B FB44 8064 7BCC  '
-            '8B54 7929 3F36 2153 83B8 will be expected for signing your '
-            'assertions.\n',
+            'Registering key ...\n'
+            'Done. The key "another" ({}) may be used to sign your '
+            'assertions.\n'.format(_get_sample_key('another')['sha3-384']),
             self.fake_logger.output)
 
         self.assertEqual(1, mock_register_key.call_count)
-        gpg_output = subprocess.check_output(
-            ['gpg'], input=mock_register_key.call_args[0][0]).decode('ascii')
-        self.assertIn(
-            '2016-08-12 Another Person <another.person@canonical.com>',
-            gpg_output)
+        expected_assertion = dedent('''\
+            type: account-key-request
+            account-id: abcd
+            name: another
+            public-key-sha3-384: {}
+            ''').format(_get_sample_key('another')['sha3-384'])
+        mock_register_key.assert_called_once_with(expected_assertion)

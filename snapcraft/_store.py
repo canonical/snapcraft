@@ -15,17 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import getpass
-import io
+import json
 import logging
+import os
 import subprocess
 import tempfile
-import os
 
-import gpgme
 from tabulate import tabulate
 import yaml
 
 from snapcraft import storeapi
+from snapcraft.internal import repo
 
 
 logger = logging.getLogger(__name__)
@@ -80,69 +80,22 @@ def logout():
     logger.info('Credentials cleared.')
 
 
-def _is_usable_subkey(subkey):
-    """Can we use `subkey`?
-
-    A subkey is usable if it is not expired/revoked/disabled/invalid, if it
-    is RSA, and if it is at least 4096 bits.
-    """
-    if subkey.expired or subkey.revoked or subkey.disabled or subkey.invalid:
-        return False
-    # We're currently only interested in RSA >= 4096-bit.
-    if subkey.pubkey_algo != gpgme.PK_RSA or subkey.length < 4096:
-        return False
-    return True
-
-
-def _is_usable_key(key):
-    """Can we use `key`?
-
-    A key is usable if its main subkey (the first) is usable, if it has
-    UIDs, if it is not disabled, and if it has signing capabilities.
-    """
-    if not key.subkeys or not key.uids or key.disabled or not key.can_sign:
-        return False
-    return _is_usable_subkey(key.subkeys[0])
-
-
-def _get_usable_secret_keys(query=None):
-    context = gpgme.Context()
-    for key in context.keylist(query, True):
-        if _is_usable_key(key):
+def _get_usable_keys(query=None):
+    for key in json.loads(subprocess.check_output(
+            ['snap', 'keys', '--json'], universal_newlines=True)):
+        if query is None or query == key['name']:
             yield key
-
-
-def _format_fingerprint(fingerprint):
-    if len(fingerprint) != 40:
-        # Should never happen; GPG fingerprints are SHA-1 with length 40.
-        raise RuntimeError(
-            "GPG fingerprint has unexpected length %d" % len(fingerprint))
-    chunks = [fingerprint[i:i + 4] for i in range(0, 40, 4)]
-    return '{}  {}'.format(' '.join(chunks[:5]), ' '.join(chunks[5:]))
-
-
-_format_key_algorithm = {
-    gpgme.PK_RSA: 'R',
-}
-
-
-def _format_key(key):
-    mainkey = key.subkeys[0]
-    return '%d%s: %s' % (
-        mainkey.length, _format_key_algorithm[mainkey.pubkey_algo],
-        _format_fingerprint(mainkey.fpr))
 
 
 def _select_key(keys):
     if len(keys) > 1:
         print('Select a key:')
         print()
-        width = len(str(len(keys)))
-        for i, key in enumerate(keys):
-            print('{index:{width}d}. {key}'.format(
-                index=i + 1, key=_format_key(key), width=width))
-            print('{blank:{width}}  {uid}'.format(
-                blank='', uid=key.uids[0].uid, width=width))
+        tabulated_keys = tabulate(
+            [(i + 1, key['name'], key['sha3-384'])
+             for i, key in enumerate(keys)],
+            headers=["Number", "Name", "SHA3-384 fingerprint"])
+        print(tabulated_keys)
         print()
         while True:
             try:
@@ -155,24 +108,32 @@ def _select_key(keys):
         return keys[0]
 
 
+def _export_key(name, account_id):
+    return subprocess.check_output(
+        ['snap', 'export-key', '--account={}'.format(account_id), name],
+        universal_newlines=True)
+
+
 def register_key(query):
-    keys = list(_get_usable_secret_keys(query=query))
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`register-key`, you must run `apt install snapd`.')
+    keys = list(_get_usable_keys(query=query))
     if not keys:
         raise RuntimeError(
-            'You have no usable GPG secret keys matching "{}".'.format(query))
+            'You have no usable keys matching "{}".'.format(query))
     key = _select_key(keys)
-    fingerprint = key.subkeys[0].fpr
-    context = gpgme.Context()
-    key_data = io.BytesIO()
-    context.export(fingerprint.encode('ascii'), key_data)
     store = storeapi.StoreClient()
     if not _login(store, acls=['modify_account_key'], save=False):
-        raise RuntimeError("Cannot continue without logging in successfully.")
-    logger.info('Registering GPG key ...')
-    store.register_key(key_data.getvalue())
+        raise RuntimeError('Cannot continue without logging in successfully.')
+    logger.info('Registering key ...')
+    account_info = store.get_account_information()
+    account_key_request = _export_key(key['name'], account_info['account_id'])
+    store.register_key(account_key_request)
     logger.info(
-        'Done. The GPG key {} will be expected for signing your '
-        'assertions.'.format(_format_fingerprint(fingerprint)))
+        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
+            key['name'], key['sha3-384']))
 
 
 def register(snap_name, is_private=False):

@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import base64
 from collections import OrderedDict
 from datetime import datetime
 import json
@@ -290,6 +289,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
         register_path = urllib.parse.urljoin(
@@ -300,7 +300,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
-        elif parsed_path.path.startswith(account_key_path):
+        elif parsed_path.path == account_path:
+            self._handle_account_request()
+        elif parsed_path.path == account_key_path:
             self._handle_account_key_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
@@ -330,22 +332,29 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         response = {'macaroon': macaroon.serialize()}
         self.wfile.write(json.dumps(response).encode())
 
+    def _handle_account_request(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({'account_id': 'abcd'}).encode())
+
     def _handle_account_key_request(self):
         string_data = self.rfile.read(
             int(self.headers['Content-Length'])).decode('utf8')
         data = json.loads(string_data)
         logger.debug(
             'Handling account-key request with content {}'.format(data))
-        key_format, raw_key_data = data['key_data'].split(' ', 1)
-        assert key_format == 'openpgp'
-        key_data = base64.urlsafe_b64decode(raw_key_data.encode('ascii'))
+        account_key_request = data['account_key_request']
 
-        if key_data == b'test-not-implemented':
+        if account_key_request == 'test-not-implemented':
             self._handle_account_key_501()
-        elif key_data == b'test-invalid-data':
-            self._handle_account_key_400({
-                'detail': 'Submitted data is not valid.',
-            })
+        elif account_key_request == 'test-invalid-data':
+            error = {
+                'code': 'invalid-field',
+                'message': 'The account-key-request assertion is not valid.',
+            }
+            self._handle_account_key_400({'error_list': [error]})
         else:
             self._handle_successful_account_key()
 
@@ -354,8 +363,11 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'account_id': 'abcd',
-            'key_headers': {'public-key-sha3-384': 'hash'},
+            'account_key': {
+                'account-id': 'abcd',
+                'name': 'default',
+                'public-key-sha3-384': 'hash',
+            },
         }
         self.wfile.write(json.dumps(response).encode())
 
