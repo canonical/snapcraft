@@ -26,6 +26,7 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
+from snapcraft.internal.errors import MissingPackageError
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
@@ -888,9 +889,9 @@ parts: [main]
         with self.assertRaises(FileNotFoundError):
             main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-    @mock.patch('snapcraft.internal.sources.Bazaar.pull')
-    def test_missing_packages(self, mock_pull):
-        mock_pull.side_effect = FileNotFoundError()
+    @mock.patch('snapcraft.internal.sources.Bazaar.__init__')
+    def test_missing_packages(self, mock_init):
+        mock_init.side_effect = MissingPackageError('bzr')
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -910,7 +911,7 @@ parts: [main2]
         self.assertEqual(2, retval)
 
         self.assertTrue(
-            'A required package is missing, please install these packages'
+            'One or more required packages are missing, please install'
             in fake_logger.output, 'No missing package info in output')
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')

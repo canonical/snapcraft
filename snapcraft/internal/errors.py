@@ -65,7 +65,7 @@ class SnapcraftPartConflictError(SnapcraftError):
 class MissingPackageError(SnapcraftError):
 
     fmt = (
-        'A required package is missing, please install these packages:'
+        'One or more required packages are missing, please install:'
         ' {required_packages!r}'
     )
 
