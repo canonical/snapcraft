@@ -134,18 +134,17 @@ def _update_source(part, origin):
     return part
 
 
-def _replace_variables(item, name, version):
+def _replace_variables(item, replacements):
     if isinstance(item, dict):
         for key, value in item.items():
-            item[key] = _replace_variables(value, name, version)
+            item[key] = _replace_variables(value, replacements)
     elif isinstance(item, list):
         for index in range(len(item)):
-            item[index] = _replace_variables(item[index], name, version)
+            item[index] = _replace_variables(item[index], replacements)
     elif isinstance(item, str):
-        if name:
-            item = item.replace('$SNAPCRAFT_PROJECT_NAME', name)
-        if version:
-            item = item.replace('$SNAPCRAFT_PROJECT_VERSION', version)
+        for replacement in replacements:
+            if replacement[1]:
+                item = item.replace(replacement[0], replacement[1])
 
     return item
 
@@ -160,8 +159,12 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
                 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
                     part_name))
         source_part = parts.get(part_name)
-        source_part = _replace_variables(source_part, origin_name,
-                                         origin_version)
+        replacements = [
+            ('$SNAPCRAFT_PROJECT_NAME', origin_name),
+            ('$SNAPCRAFT_PROJECT_VERSION', origin_version),
+        ]
+
+        source_part = _replace_variables(source_part, replacements)
 
         if source_part:
             source_part = _update_source(source_part, origin)
