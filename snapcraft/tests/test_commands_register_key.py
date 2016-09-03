@@ -209,7 +209,7 @@ class RegisterKeyTestCase(tests.TestCase):
                                      mock_check_output, mock_login,
                                      mock_get_account_information,
                                      mock_register_key):
-        mock_input.side_effect = ['2', 'sample.person@canonical.com', '']
+        mock_input.side_effect = ['x', '2', 'sample.person@canonical.com', '']
         mock_getpass.return_value = 'secret'
         mock_check_output.side_effect = _mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
@@ -229,7 +229,8 @@ class RegisterKeyTestCase(tests.TestCase):
                 default_sha3_384=_get_sample_key('default')['sha3-384'],
                 another_sha3_384=_get_sample_key('another')['sha3-384'])
         self.assertIn(expected_output, self.fake_terminal.getvalue())
-        mock_input.assert_any_call('Key number: ')
+        mock_input.assert_has_calls(
+            [mock.call('Key number: '), mock.call('Key number: ')])
 
         self.assertEqual(
             'Authenticating against Ubuntu One SSO.\n'
