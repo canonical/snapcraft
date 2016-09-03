@@ -28,7 +28,6 @@ Build-Depends: bash-completion,
                python3-testtools,
                python3-xdg,
                python3-yaml,
-               snapd (>= 2.14.2),
                squashfs-tools,
 Homepage: https://github.com/snapcore/snapcraft
 Vcs-Git: https://github.com/snapcore/snapcraft.git

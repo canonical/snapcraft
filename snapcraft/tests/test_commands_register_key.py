@@ -83,16 +83,34 @@ class RegisterKeyTestCase(tests.TestCase):
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
 
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_snapd_not_installed(self, mock_installed,
+                                              mock_check_output):
+        mock_installed.return_value = False
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key'])
+
+        mock_installed.assert_called_with('snapd')
+        self.assertEqual(0, mock_check_output.call_count)
+        self.assertEqual(1, raised.exception.code)
+        self.assertIn(
+            'The snapd package is not installed.', self.fake_logger.output)
+
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    def test_register_key_successfully(self, mock_input, mock_getpass,
-                                       mock_check_output, mock_login,
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_successfully(self, mock_installed, mock_input,
+                                       mock_getpass, mock_check_output,
+                                       mock_login,
                                        mock_get_account_information,
                                        mock_register_key):
+        mock_installed.return_value = True
         mock_input.side_effect = ['sample.person@canonical.com', '123456']
         mock_getpass.return_value = 'secret'
         mock_check_output.side_effect = _mock_snap_output
@@ -127,10 +145,13 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    def test_register_key_login_failed(self, mock_input, mock_getpass,
-                                       mock_check_output, mock_login,
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_login_failed(self, mock_installed, mock_input,
+                                       mock_getpass, mock_check_output,
+                                       mock_login,
                                        mock_get_account_information,
                                        mock_register_key):
+        mock_installed.return_value = True
         mock_check_output.side_effect = _mock_snap_output
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'test')
@@ -151,10 +172,13 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    def test_register_key_account_info_failed(self, mock_input, mock_getpass,
-                                              mock_check_output, mock_login,
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_account_info_failed(self, mock_installed, mock_input,
+                                              mock_getpass, mock_check_output,
+                                              mock_login,
                                               mock_get_account_information,
                                               mock_register_key):
+        mock_installed.return_value = True
         mock_check_output.side_effect = _mock_snap_output
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
@@ -178,10 +202,12 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    def test_register_key_failed(self, mock_input, mock_getpass,
-                                 mock_check_output, mock_login,
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_failed(self, mock_installed, mock_input,
+                                 mock_getpass, mock_check_output, mock_login,
                                  mock_get_account_information,
                                  mock_register_key):
+        mock_installed.return_value = True
         mock_check_output.side_effect = _mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
         response = mock.Mock()
@@ -205,10 +231,12 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    def test_register_key_select_key(self, mock_input, mock_getpass,
-                                     mock_check_output, mock_login,
-                                     mock_get_account_information,
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_select_key(self, mock_installed, mock_input,
+                                     mock_getpass, mock_check_output,
+                                     mock_login, mock_get_account_information,
                                      mock_register_key):
+        mock_installed.return_value = True
         mock_input.side_effect = ['x', '2', 'sample.person@canonical.com', '']
         mock_getpass.return_value = 'secret'
         mock_check_output.side_effect = _mock_snap_output
