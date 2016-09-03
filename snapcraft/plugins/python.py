@@ -47,11 +47,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 import re
+import stat
 import subprocess
 from glob import glob
 
 import snapcraft
-from snapcraft import common
+from snapcraft import file_utils
 
 
 class PythonPlugin(snapcraft.BasePlugin):
@@ -209,16 +210,25 @@ class PythonPlugin(snapcraft.BasePlugin):
             cwd = os.path.dirname(setup)
             self.run(pip_install + ['.'], cwd=cwd, env=env)
 
+    def _fix_permissions(self):
+        for root, dirs, files in os.walk(self.installdir):
+            for filename in files:
+                _replicate_owner_mode(os.path.join(root, filename))
+            for dirname in dirs:
+                _replicate_owner_mode(os.path.join(root, dirname))
+
     def build(self):
         super().build()
 
         setup_file = os.path.join(self.builddir, 'setup.py')
         self._run_pip(setup_file)
 
+        self._fix_permissions()
+
         # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.installdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        file_utils.replace_in_file(self.installdir, re.compile(r''),
+                                   re.compile(r'#!.*python'),
+                                   r'#!/usr/bin/env python')
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
@@ -235,3 +245,16 @@ class PythonPlugin(snapcraft.BasePlugin):
         elif self.options.python_version == 'python2':
             fileset.append('-**/*.pyc')
         return fileset
+
+
+def _replicate_owner_mode(path):
+    if not os.path.exists(path):
+        return
+
+    file_mode = os.stat(path).st_mode
+    new_mode = file_mode & stat.S_IWUSR
+    if file_mode & stat.S_IXUSR:
+        new_mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    if file_mode & stat.S_IRUSR:
+        new_mode |= stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+    os.chmod(path, new_mode)
