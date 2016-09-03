@@ -151,6 +151,33 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
+    def test_register_key_account_info_failed(self, mock_input, mock_getpass,
+                                              mock_check_output, mock_login,
+                                              mock_get_account_information,
+                                              mock_register_key):
+        mock_check_output.side_effect = _mock_snap_output
+        response = mock.Mock()
+        response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
+        response.status_code = 500
+        response.reason = 'Internal Server Error'
+        mock_get_account_information.side_effect = (
+            storeapi.errors.StoreAccountInformationError(response))
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key', 'default'])
+
+        self.assertEqual(1, raised.exception.code)
+        self.assertIn(
+            'Error fetching account information from store: '
+            '500 Internal Server Error\n',
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.SCAClient, 'register_key')
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('getpass.getpass')
+    @mock.patch('builtins.input')
     def test_register_key_failed(self, mock_input, mock_getpass,
                                  mock_check_output, mock_login,
                                  mock_get_account_information,
