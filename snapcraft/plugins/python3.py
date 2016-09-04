@@ -100,6 +100,10 @@ class Python3Plugin(snapcraft.BasePlugin):
         setup = 'setup.py'
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
+            self.source_subdir = getattr(self.options, 'source_subdir', None)
+            if self.source_subdir:
+                setup = os.path.join(
+                    self.sourcedir, self.source_subdir, 'setup.py')
 
         if (os.path.exists(setup) or self.options.requirements or
                 self.options.python_packages):
@@ -146,7 +150,10 @@ class Python3Plugin(snapcraft.BasePlugin):
             self.run(pip_install + ['--upgrade'] +
                      self.options.python_packages)
         if os.path.exists(setup):
-            self.run(pip_install + ['.', ], cwd=self.sourcedir)
+            cwd = self.sourcedir
+            if self.source_subdir:
+                cwd = os.path.join(self.sourcedir, self.source_subdir)
+            self.run(pip_install + ['.', ], cwd=cwd)
 
     def build(self):
         super().build()
