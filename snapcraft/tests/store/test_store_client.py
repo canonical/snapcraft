@@ -153,6 +153,23 @@ class DownloadTestCase(tests.TestCase):
                 'test-snap', 'test-channel', download_path)
 
 
+class GetAccountInformationTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_get_account_information_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.get_account_information()
+
+    def test_get_account_information_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            {'account_id': 'abcd'}, self.client.get_account_information())
+
+
 class RegisterKeyTestCase(tests.TestCase):
 
     def setUp(self):
