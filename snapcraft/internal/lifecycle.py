@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 
 _TEMPLATE_YAML = """name: my-snap  # the name of the snap
-version: 0  # the version of the snap
+version: "0.1"  # the version of the snap
 summary: This is my-snap's summary  # 79 char long summary
 description: This is my-snap's description  # a longer description for the snap
 confinement: devmode  # use "strict" to enforce system access only via \

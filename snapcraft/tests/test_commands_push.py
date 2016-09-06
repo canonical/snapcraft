@@ -75,7 +75,7 @@ class PushCommandTestCase(tests.TestCase):
             main(['push', snap_file])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
+            'Uploading my-snap_0.1_amd64.snap.\n'
             'Revision 9 of \'my-snap\' created.',
             self.fake_logger.output)
 
@@ -143,7 +143,7 @@ class PushCommandTestCase(tests.TestCase):
             main(['upload', snap_file])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
+            'Uploading my-snap_0.1_amd64.snap.\n'
             'Revision 9 of \'my-snap\' created.',
             self.fake_logger.output)
 
@@ -189,7 +189,7 @@ class PushCommandTestCase(tests.TestCase):
             main(['push', snap_file, '--release', 'beta'])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
+            'Uploading my-snap_0.1_amd64.snap.\n'
             'Revision 9 of \'my-snap\' created.',
             self.fake_logger.output)
 
@@ -238,7 +238,7 @@ class PushCommandTestCase(tests.TestCase):
             main(['push', snap_file, '--release', 'edge,beta,candidate'])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
+            'Uploading my-snap_0.1_amd64.snap.\n'
             'Revision 9 of \'my-snap\' created.',
             self.fake_logger.output)
 
