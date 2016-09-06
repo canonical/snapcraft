@@ -33,6 +33,10 @@ class RegisterKeyTestCase(integration_tests.StoreTestCase):
             'SNAP_GNUPG_HOME', temp_keys_dir))
 
     def test_successful_key_registration(self):
+        if os.getenv('TEST_STORE', 'fake') != 'fake':
+            self.skipTest(
+                'Cannot register test keys against staging/production until '
+                'we have a way to delete them again.')
         self.assertEqual(0, self.register_key('default'))
 
     def test_failed_login_for_key_registration(self):
