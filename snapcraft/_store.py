@@ -121,8 +121,11 @@ def register_key(query):
             '`register-key`, you must run `apt install snapd`.')
     keys = list(_get_usable_keys(query=query))
     if not keys:
-        raise RuntimeError(
-            'You have no usable keys matching "{}".'.format(query))
+        if query is not None:
+            raise RuntimeError(
+                'You have no usable key named "{}".'.format(query))
+        else:
+            raise RuntimeError('You have no usable keys.')
     key = _select_key(keys)
     store = storeapi.StoreClient()
     if not _login(store, acls=['modify_account_key'], save=False):

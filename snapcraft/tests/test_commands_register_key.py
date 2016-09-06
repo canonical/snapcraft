@@ -139,6 +139,38 @@ class RegisterKeyTestCase(tests.TestCase):
             ''').format(_get_sample_key('default')['sha3-384'])
         mock_register_key.assert_called_once_with(expected_assertion)
 
+    @mock.patch('subprocess.check_output')
+    @mock.patch('builtins.input')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_no_keys(self, mock_installed, mock_input,
+                                  mock_check_output):
+        mock_installed.return_value = True
+        mock_check_output.return_value = json.dumps([])
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key'])
+
+        self.assertEqual(0, mock_input.call_count)
+        self.assertEqual(1, raised.exception.code)
+        self.assertIn('You have no usable keys.\n', self.fake_logger.output)
+
+    @mock.patch('subprocess.check_output')
+    @mock.patch('builtins.input')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_no_keys_named_query(self, mock_installed, mock_input,
+                                              mock_check_output):
+        mock_installed.return_value = True
+        mock_check_output.side_effect = _mock_snap_output
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key', 'nonexistent'])
+
+        self.assertEqual(0, mock_input.call_count)
+        self.assertEqual(1, raised.exception.code)
+        self.assertIn(
+            'You have no usable key named "nonexistent".\n',
+            self.fake_logger.output)
+
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
