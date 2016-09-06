@@ -50,14 +50,6 @@ from snapcraft.plugins import python
 
 class Python2Plugin(python.PythonPlugin):
 
-    @classmethod
-    def schema(cls):
-        schema = super().schema()
-        del schema['properties']['python-version']
-        schema['pull-properties'].remove('python-version')
-
-        return schema
-
     def __init__(self, name, options, project):
-        setattr(options, 'python_version', 'python2')
+        options.python_version = 'python2'
         super().__init__(name, options, project)
