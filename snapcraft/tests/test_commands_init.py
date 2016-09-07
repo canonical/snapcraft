@@ -57,7 +57,7 @@ class InitCommandTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         expected_yaml = """name: my-snap-name # you probably want to 'snapcraft register <name>'
-version: "0.1" # just for humans, typically '1.2+git' or '1.3.2'
+version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
 summary: Single-line elevator pitch for your amazing snap # 79 char long summary
 description: |
   This is my-snap's description. You have a paragraph or two to tell the
