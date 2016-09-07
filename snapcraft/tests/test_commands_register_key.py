@@ -157,8 +157,8 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
-    def test_register_key_no_keys_named_query(self, mock_installed, mock_input,
-                                              mock_check_output):
+    def test_register_key_no_keys_with_name(self, mock_installed, mock_input,
+                                            mock_check_output):
         mock_installed.return_value = True
         mock_check_output.side_effect = _mock_snap_output
 

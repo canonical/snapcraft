@@ -80,10 +80,10 @@ def logout():
     logger.info('Credentials cleared.')
 
 
-def _get_usable_keys(query=None):
+def _get_usable_keys(name=None):
     for key in json.loads(subprocess.check_output(
             ['snap', 'keys', '--json'], universal_newlines=True)):
-        if query is None or query == key['name']:
+        if name is None or name == key['name']:
             yield key
 
 
@@ -114,16 +114,16 @@ def _export_key(name, account_id):
         universal_newlines=True)
 
 
-def register_key(query):
+def register_key(name):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`register-key`, you must run `apt install snapd`.')
-    keys = list(_get_usable_keys(query=query))
+    keys = list(_get_usable_keys(name=name))
     if not keys:
-        if query is not None:
+        if name is not None:
             raise RuntimeError(
-                'You have no usable key named "{}".'.format(query))
+                'You have no usable key named "{}".'.format(name))
         else:
             raise RuntimeError('You have no usable keys.')
     key = _select_key(keys)
