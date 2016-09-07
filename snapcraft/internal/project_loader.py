@@ -190,25 +190,26 @@ class Config:
         for key in snapcraft_yaml:
             if any((key == env_key for env_key in environment_keys)):
                 continue
-            snapcraft_yaml[key] = _replace_attr(
+            snapcraft_yaml[key] = replace_attr(
                 snapcraft_yaml[key],
-                snapcraft_yaml['name'],
-                snapcraft_yaml['version'],
-                self._project_options.stage_dir)
+                [
+                    ('$SNAPCRAFT_PROJECT_NAME', snapcraft_yaml['name']),
+                    ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml['version']),
+                    ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
+                ])
         return snapcraft_yaml
 
 
-def _replace_attr(attr, name, version, stage_dir):
+def replace_attr(attr, replacements):
     if isinstance(attr, str):
-        attr = attr.replace('$SNAPCRAFT_STAGE', stage_dir)
-        attr = attr.replace('$SNAPCRAFT_PROJECT_NAME', name)
-        attr = attr.replace('$SNAPCRAFT_PROJECT_VERSION', str(version))
+        for replacement in replacements:
+            attr = attr.replace(replacement[0], str(replacement[1]))
         return attr
     elif isinstance(attr, list) or isinstance(attr, tuple):
-        return [_replace_attr(i, name, version, stage_dir)
+        return [replace_attr(i, replacements)
                 for i in attr]
     elif isinstance(attr, dict):
-        return {k: _replace_attr(attr[k], name, version, stage_dir)
+        return {k: replace_attr(attr[k], replacements)
                 for k in attr}
 
     return attr

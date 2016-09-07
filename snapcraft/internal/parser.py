@@ -42,6 +42,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 from snapcraft.internal import log, sources
+from snapcraft.internal.project_loader import replace_attr
 
 
 class InvalidEntryError(Exception):
@@ -134,21 +135,6 @@ def _update_source(part, origin):
     return part
 
 
-def _replace_variables(item, replacements):
-    if isinstance(item, dict):
-        for key, value in item.items():
-            item[key] = _replace_variables(value, replacements)
-    elif isinstance(item, list):
-        for index in range(len(item)):
-            item[index] = _replace_variables(item[index], replacements)
-    elif isinstance(item, str):
-        for replacement in replacements:
-            if replacement[1]:
-                item = item.replace(replacement[0], replacement[1])
-
-    return item
-
-
 def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
                          origin_name, origin_version):
     after_parts = set()
@@ -164,7 +150,7 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
             ('$SNAPCRAFT_PROJECT_VERSION', origin_version),
         ]
 
-        source_part = _replace_variables(source_part, replacements)
+        source_part = replace_attr(source_part, replacements)
 
         if source_part:
             source_part = _update_source(source_part, origin)
