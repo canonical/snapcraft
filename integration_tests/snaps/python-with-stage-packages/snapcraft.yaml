@@ -1,0 +1,22 @@
+name: python-with-stage-packages
+version: 0
+summary: this will install yamllint from pypi
+description: |
+    Install yamllint from pypi but use pyyaml as a stage-packages entry.
+confinement: strict
+grade: devel
+
+parts:
+  python2:
+    plugin: python2
+    stage-packages: [python-yaml]
+    python-packages: ['yamllint']
+    stage:
+        - -bin/yamllint
+    snap:
+        - -bin/yamllint
+
+  python3:
+    plugin: python3
+    stage-packages: [python3-yaml]
+    python-packages: ['yamllint']
