@@ -106,6 +106,34 @@ class TestBasePlugin(tests.TestCase):
 
         self.assertIn('test\N{BIG SOLIDUS}part', os.listdir('parts'))
 
+    @unittest.mock.patch('snapcraft.internal.common.run')
+    def test_run_without_specifying_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run(['ls'])
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.builddir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run')
+    def test_run_specifying_a_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run(['ls'], cwd=plugin.sourcedir)
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.sourcedir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run_output')
+    def test_run_output_without_specifying_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run_output(['ls'])
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.builddir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run_output')
+    def test_run_output_specifying_a_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run_output(['ls'], cwd=plugin.sourcedir)
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.sourcedir)
+
 
 class GetSourceWithBranches(tests.TestCase):
 
