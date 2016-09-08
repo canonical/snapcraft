@@ -153,6 +153,59 @@ class DownloadTestCase(tests.TestCase):
                 'test-snap', 'test-channel', download_path)
 
 
+class GetAccountInformationTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_get_account_information_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.get_account_information()
+
+    def test_get_account_information_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            {'account_id': 'abcd'}, self.client.get_account_information())
+
+
+class RegisterKeyTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_register_key_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.register_key('dummy')
+
+    def test_register_key_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        # No exception will be raised if this is successful.
+        self.client.register_key('test-good-key')
+
+    def test_not_implemented(self):
+        # If the enable_account_key feature switch is off in the store, we
+        # will get a 501 Not Implemented response.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreKeyRegistrationError) as raised:
+            self.client.register_key('test-not-implemented')
+        self.assertEqual(
+            str(raised.exception),
+            'Key registration failed: 501 Not Implemented')
+
+    def test_invalid_data(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreKeyRegistrationError) as raised:
+            self.client.register_key('test-invalid-data')
+        self.assertEqual(
+            str(raised.exception),
+            'Key registration failed: '
+            'The account-key-request assertion is not valid.')
+
+
 class RegisterTestCase(tests.TestCase):
 
     def setUp(self):

@@ -15,15 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import getpass
+import json
 import logging
+import os
 import subprocess
 import tempfile
-import os
 
 from tabulate import tabulate
 import yaml
 
 from snapcraft import storeapi
+from snapcraft.internal import repo
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +46,7 @@ def _get_name_from_snap_file(snap_path):
     return snap_yaml['name']
 
 
-def login():
+def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
@@ -53,10 +55,10 @@ def login():
         'authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    store = storeapi.StoreClient()
     try:
         store.login(
-            email, password, one_time_password=one_time_password)
+            email, password, one_time_password=one_time_password, acls=acls,
+            save=save)
     except (storeapi.errors.InvalidCredentialsError,
             storeapi.errors.StoreAuthenticationError):
         logger.info('Login failed.')
@@ -66,11 +68,78 @@ def login():
         return True
 
 
+def login():
+    store = storeapi.StoreClient()
+    return _login(store)
+
+
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
     store = storeapi.StoreClient()
     store.logout()
     logger.info('Credentials cleared.')
+
+
+def _get_usable_keys(name=None):
+    keys = json.loads(subprocess.check_output(
+        ['snap', 'keys', '--json'], universal_newlines=True))
+    if keys is not None:
+        for key in keys:
+            if name is None or name == key['name']:
+                yield key
+
+
+def _select_key(keys):
+    if len(keys) > 1:
+        print('Select a key:')
+        print()
+        tabulated_keys = tabulate(
+            [(i + 1, key['name'], key['sha3-384'])
+             for i, key in enumerate(keys)],
+            headers=["Number", "Name", "SHA3-384 fingerprint"],
+            tablefmt="plain")
+        print(tabulated_keys)
+        print()
+        while True:
+            try:
+                keynum = int(input('Key number: ')) - 1
+            except ValueError:
+                continue
+            if keynum >= 0 and keynum < len(keys):
+                return keys[keynum]
+    else:
+        return keys[0]
+
+
+def _export_key(name, account_id):
+    return subprocess.check_output(
+        ['snap', 'export-key', '--account={}'.format(account_id), name],
+        universal_newlines=True)
+
+
+def register_key(name):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`register-key`, you must run `apt install snapd`.')
+    keys = list(_get_usable_keys(name=name))
+    if not keys:
+        if name is not None:
+            raise RuntimeError(
+                'You have no usable key named "{}".'.format(name))
+        else:
+            raise RuntimeError('You have no usable keys.')
+    key = _select_key(keys)
+    store = storeapi.StoreClient()
+    if not _login(store, acls=['modify_account_key'], save=False):
+        raise RuntimeError('Cannot continue without logging in successfully.')
+    logger.info('Registering key ...')
+    account_info = store.get_account_information()
+    account_key_request = _export_key(key['name'], account_info['account_id'])
+    store.register_key(account_key_request)
+    logger.info(
+        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
+            key['name'], key['sha3-384']))
 
 
 def register(snap_name, is_private=False):

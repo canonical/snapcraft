@@ -117,19 +117,22 @@ class StoreClient():
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, one_time_password=None):
+    def login(self, email, password, one_time_password=None, acls=None,
+              save=True):
         """Log in via the Ubuntu One SSO API."""
-        # Ask the store for the needed capabalities to be associated with the
+        if acls is None:
+            acls = ['package_upload', 'package_access']
+        # Ask the store for the needed capabilities to be associated with the
         # macaroon.
-        macaroon = self.sca.get_macaroon(
-            ['package_upload', 'package_access'])
+        macaroon = self.sca.get_macaroon(acls)
         caveat_id = self._extract_caveat_id(macaroon)
         unbound_discharge = self.sso.get_unbound_discharge(
             email, password, one_time_password, caveat_id)
         # The macaroon has been discharged, save it in the config
         self.conf.set('macaroon', macaroon)
         self.conf.set('unbound_discharge', unbound_discharge)
-        self.conf.save()
+        if save:
+            self.conf.save()
 
     def _extract_caveat_id(self, root_macaroon):
         macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)
@@ -144,6 +147,12 @@ class StoreClient():
     def logout(self):
         self.conf.clear()
         self.conf.save()
+
+    def get_account_information(self):
+        return self.sca.get_account_information()
+
+    def register_key(self, account_key_request):
+        self.sca.register_key(account_key_request)
 
     def register(self, snap_name, is_private=False):
         self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
@@ -304,6 +313,29 @@ class SCAClient(Client):
             return response.json()['macaroon']
         else:
             raise errors.StoreAuthenticationError('Failed to get macaroon')
+
+    def get_account_information(self):
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            'account',
+            headers={'Authorization': auth,
+                     'Accept': 'application/json'})
+        if response.ok:
+            return response.json()
+        else:
+            raise errors.StoreAccountInformationError(response)
+
+    def register_key(self, account_key_request):
+        data = {'account_key_request': account_key_request}
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'account/account-key', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreKeyRegistrationError(response)
+        # TODO handle macaroon refresh
 
     def register(self, snap_name, is_private, series):
         auth = _macaroon_auth(self.conf)
