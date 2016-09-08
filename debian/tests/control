@@ -22,4 +22,4 @@ Depends: @,
          python3-fixtures,
          python3-pexpect,
          python3-testscenarios,
-         snapd
+         snapd (>= 2.14.2~)
