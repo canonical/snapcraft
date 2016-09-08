@@ -663,7 +663,7 @@ class OrganizeTestCase(tests.TestCase):
             },
             expected=[
                 (['bin'], ''),
-                (['bar', 'foo', 'basefoo'], 'bin'),
+                (['bar', 'basefoo', 'foo'], 'bin'),
             ]
         )),
         ('overwrite_existing_file', dict(
@@ -693,7 +693,9 @@ class OrganizeTestCase(tests.TestCase):
             pluginhandler._organize_filesets(self.organize_set, base_dir)
             for expect in self.expected:
                 dir_path = os.path.join(base_dir, expect[1])
-                self.assertEqual(expect[0], os.listdir(dir_path))
+                dir_contents = os.listdir(dir_path)
+                dir_contents.sort()
+                self.assertEqual(expect[0], dir_contents)
 
 
 class RealStageTestCase(tests.TestCase):
