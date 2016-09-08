@@ -671,6 +671,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
 
         fixup_func(dst)
 
+
 def _organize_filesets(fileset, base_dir):
     for key in fileset:
         src = os.path.join(base_dir, key)
@@ -690,6 +691,7 @@ def _organize_filesets(fileset, base_dir):
         else:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.move(src, dst)
+
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:
