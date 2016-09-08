@@ -157,6 +157,23 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_register_key_no_keys_null(self, mock_installed, mock_input,
+                                       mock_check_output):
+        # Some versions of snapd serialise an empty list as "null" rather
+        # than "[]".
+        mock_installed.return_value = True
+        mock_check_output.return_value = json.dumps(None)
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['register-key'])
+
+        self.assertEqual(0, mock_input.call_count)
+        self.assertEqual(1, raised.exception.code)
+        self.assertIn('You have no usable keys.\n', self.fake_logger.output)
+
+    @mock.patch('subprocess.check_output')
+    @mock.patch('builtins.input')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_register_key_no_keys_with_name(self, mock_installed, mock_input,
                                             mock_check_output):
         mock_installed.return_value = True

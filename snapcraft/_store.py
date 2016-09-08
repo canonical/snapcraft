@@ -81,10 +81,12 @@ def logout():
 
 
 def _get_usable_keys(name=None):
-    for key in json.loads(subprocess.check_output(
-            ['snap', 'keys', '--json'], universal_newlines=True)):
-        if name is None or name == key['name']:
-            yield key
+    keys = json.loads(subprocess.check_output(
+        ['snap', 'keys', '--json'], universal_newlines=True))
+    if keys is not None:
+        for key in keys:
+            if name is None or name == key['name']:
+                yield key
 
 
 def _select_key(keys):
