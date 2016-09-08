@@ -99,6 +99,7 @@ class GulpPlugin(snapcraft.BasePlugin):
         env = os.environ.copy()
         env['PATH'] = '{}:{}'.format(
             os.path.join(self._npm_dir, 'bin'), env['PATH'])
+        env['NPM_CONFIG_PREFIX'] = self._npm_dir
         self.run(['npm', 'install', '-g', 'gulp-cli'], env=env)
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
             self.run(['npm', 'install', '--only-development'], env=env)
