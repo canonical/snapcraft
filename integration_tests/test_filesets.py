@@ -32,9 +32,9 @@ class FilesetsTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
 
         expected_dirs = (
-            os.path.join('stage', 'new', 'dir1'),
-            os.path.join('stage', 'new', 'dir2'),
-            os.path.join('prime', 'new', 'dir2'),
+            os.path.join('stage', 'share'),
+            os.path.join('stage', 'bin'),
+            os.path.join('prime', 'bin'),
         )
         for expected_dir in expected_dirs:
             self.assertThat(
@@ -42,16 +42,16 @@ class FilesetsTestCase(integration_tests.TestCase):
                 DirExists())
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'new', 'dir1'),
+            os.path.join(project_dir, 'prime', 'share'),
             Not(DirExists()))
 
         expected_files = (
-            (os.path.join('stage', 'share', 'file1'), 'file1\n'),
-            (os.path.join('stage', 'share', 'file2'), 'file2\n'),
-            (os.path.join('stage', 'new', 'dir2', 'file1'), 'file1\n'),
-            (os.path.join('prime', 'share', 'file1'), 'file1\n'),
-            (os.path.join('prime', 'share', 'file2'), 'file2\n'),
-            (os.path.join('prime', 'new', 'dir2', 'file1'), 'file1\n'),
+            (os.path.join('stage', 'share', 'share1'), 'share1\n'),
+            (os.path.join('stage', 'share', 'share2'), 'share2\n'),
+            (os.path.join('stage', 'bin', 'bin1'), 'bin1\n'),
+            (os.path.join('stage', 'bin', 'bin2'), 'bin2\n'),
+            (os.path.join('prime', 'bin', 'bin1'), 'bin1\n'),
+            (os.path.join('prime', 'bin', 'bin2'), 'bin2\n'),
         )
         for path, content in expected_files:
             self.assertThat(
