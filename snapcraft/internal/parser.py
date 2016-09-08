@@ -42,6 +42,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 from snapcraft.internal import log, sources
+from snapcraft.internal.project_loader import replace_attr
 
 
 class InvalidEntryError(Exception):
@@ -134,7 +135,8 @@ def _update_source(part, origin):
     return part
 
 
-def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
+def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
+                         origin_name, origin_version):
     after_parts = set()
     parts_list = {}
     for part_name in entry_parts:
@@ -143,6 +145,12 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description):
                 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
                     part_name))
         source_part = parts.get(part_name)
+        replacements = [
+            ('$SNAPCRAFT_PROJECT_NAME', origin_name),
+            ('$SNAPCRAFT_PROJECT_VERSION', origin_version),
+        ]
+
+        source_part = replace_attr(source_part, replacements)
 
         if source_part:
             source_part = _update_source(source_part, origin)
@@ -198,9 +206,12 @@ def _process_entry(data):
         raise InvalidEntryError('snapcraft.yaml error: {}'.format(e))
 
     origin_parts = origin_data.get('parts', {})
+    origin_name = origin_data.get('name')
+    origin_version = origin_data.get('version')
 
     entry_parts_list, entry_parts_after_list = _process_entry_parts(
         entry_parts, origin_parts, origin, maintainer, description,
+        origin_name, origin_version,
     )
     parts_list.update(entry_parts_list)
     after_parts.update(entry_parts_after_list)
