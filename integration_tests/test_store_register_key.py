@@ -34,6 +34,7 @@ class RegisterKeyTestCase(integration_tests.StoreTestCase):
 
     def test_successful_key_registration(self):
         if os.getenv('TEST_STORE', 'fake') != 'fake':
+            # https://bugs.launchpad.net/bugs/1621441
             self.skipTest(
                 'Cannot register test keys against staging/production until '
                 'we have a way to delete them again.')
