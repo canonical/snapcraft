@@ -80,7 +80,7 @@ class StoreAccountInformationError(StoreError):
     fmt = 'Error fetching account information from store: {error}'
 
     def __init__(self, response):
-        error = '%d %s' % (response.status_code, response.reason)
+        error = '{} {}'.format(response.status_code, response.reason)
         try:
             response_json = response.json()
             if 'error_list' in response_json:
@@ -96,7 +96,7 @@ class StoreKeyRegistrationError(StoreError):
     fmt = 'Key registration failed: {error}'
 
     def __init__(self, response):
-        error = '%d %s' % (response.status_code, response.reason)
+        error = '{} {}'.format(response.status_code, response.reason)
         try:
             response_json = response.json()
             if 'error_list' in response_json:
