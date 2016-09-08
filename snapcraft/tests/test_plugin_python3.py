@@ -110,7 +110,7 @@ class Python3PluginTestCase(tests.TestCase):
                                        self.project_options)
         setup_directories(plugin)
 
-        pip_install = ['pip', 'install', '--user',
+        pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check']
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
