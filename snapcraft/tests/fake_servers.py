@@ -289,6 +289,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
+        account_key_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'account/account-key')
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
@@ -297,6 +299,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
+        elif parsed_path.path == account_key_path:
+            self._handle_account_key_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -324,6 +328,50 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             ])
         response = {'macaroon': macaroon.serialize()}
         self.wfile.write(json.dumps(response).encode())
+
+    def _handle_account_key_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        logger.debug(
+            'Handling account-key request with content {}'.format(data))
+        account_key_request = data['account_key_request']
+
+        if account_key_request == 'test-not-implemented':
+            self._handle_account_key_501()
+        elif account_key_request == 'test-invalid-data':
+            error = {
+                'code': 'invalid-field',
+                'message': 'The account-key-request assertion is not valid.',
+            }
+            self._handle_account_key_400({'error_list': [error]})
+        else:
+            self._handle_successful_account_key()
+
+    def _handle_successful_account_key(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'account_key': {
+                'account-id': 'abcd',
+                'name': 'default',
+                'public-key-sha3-384': 'hash',
+            },
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_account_key_400(self, error):
+        self.send_response(400)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(error).encode())
+
+    def _handle_account_key_501(self):
+        self.send_response(501)
+        self.send_header('Content-Type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Not Implemented')
 
     def _handle_registration_request(self):
         string_data = self.rfile.read(
@@ -462,10 +510,13 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, '/details/upload-id/good-snap')
         details_review = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/review-snap')
+        account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
         elif parsed_path.path.startswith(details_review):
             self._handle_scan_complete_request('need_manual_review', False)
+        elif parsed_path.path == account_path:
+            self._handle_account_request()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -485,6 +536,13 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'processed': True
         }
         self.wfile.write(json.dumps(response).encode())
+
+    def _handle_account_request(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({'account_id': 'abcd'}).encode())
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):
