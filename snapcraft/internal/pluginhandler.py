@@ -678,8 +678,9 @@ def _organize_filesets(fileset, base_dir):
 
         if os.path.isfile(dst):
             raise EnvironmentError(
-                'Stepping over existing file for organization %r',
-                os.path.relpath(dst, base_dir))
+                'Trying to organize file {!r} to {!r}, '
+                'but it already exists'.format(
+                    key, os.path.relpath(dst, base_dir)))
 
         if os.path.isdir(src):
             file_utils.link_or_copy_tree(src, dst)
