@@ -324,23 +324,9 @@ class PluginHandler:
         return _migratable_filesets(fileset, self.code.installdir)
 
     def _organize(self):
-        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
+        fileset = getattr(self.code.options, 'organize', {}) or {}
 
-        for key in organize_fileset:
-            src = os.path.join(self.code.installdir, key)
-            dst = os.path.join(self.code.installdir, organize_fileset[key])
-
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-
-            if os.path.exists(dst):
-                logger.warning(
-                    'Stepping over existing file for organization %r',
-                    os.path.relpath(dst, self.code.installdir))
-                if os.path.isdir(dst):
-                    shutil.rmtree(dst)
-                else:
-                    os.remove(dst)
-            shutil.move(src, dst)
+        _organize_filesets(fileset.copy(), self.code.installdir)
 
     def stage(self, force=False):
         self.makedirs()
@@ -685,6 +671,24 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
 
         fixup_func(dst)
 
+def _organize_filesets(fileset, base_dir):
+    for key in fileset:
+        src = os.path.join(base_dir, key)
+        dst = os.path.join(base_dir, fileset[key])
+
+        if os.path.isfile(dst):
+            raise EnvironmentError(
+                'Stepping over existing file for organization %r',
+                os.path.relpath(dst, base_dir))
+
+        if os.path.isdir(src):
+            file_utils.link_or_copy_tree(src, dst)
+            # TODO create alternate organization location to avoid
+            # deletions.
+            shutil.rmtree(src)
+        else:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.move(src, dst)
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:

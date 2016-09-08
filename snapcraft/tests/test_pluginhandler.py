@@ -631,6 +631,71 @@ class MigratableFilesetsTestCase(tests.TestCase):
         self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
 
 
+class OrganizeTestCase(tests.TestCase):
+
+    scenarios = [
+        ('simple_file', dict(
+            setup_dirs=[],
+            setup_files=['foo'],
+            organize_set={'foo': 'bar'},
+            expected=[(['bar'], '')]
+        )),
+        ('simple_dir_with_file', dict(
+            setup_dirs=['foodir'],
+            setup_files=[os.path.join('foodir', 'foo')],
+            organize_set={'foodir': 'bardir'},
+            expected=[
+                (['bardir'], ''),
+                (['foo'], 'bardir'),
+            ]
+        )),
+        ('organize_to_the_same_directory', dict(
+            setup_dirs=['bardir', 'foodir'],
+            setup_files=[
+                os.path.join('foodir', 'foo'),
+                os.path.join('bardir', 'bar'),
+                'basefoo',
+            ],
+            organize_set={
+                'foodir': 'bin',
+                'bardir': 'bin',
+                'basefoo': 'bin/basefoo'
+            },
+            expected=[
+                (['bin'], ''),
+                (['bar', 'foo', 'basefoo'], 'bin'),
+            ]
+        )),
+        ('overwrite_existing_file', dict(
+            setup_dirs=[],
+            setup_files=['foo', 'bar'],
+            organize_set={'foo': 'bar'},
+            expected=EnvironmentError,
+        ))
+    ]
+
+    def test_organize_file(self):
+        base_dir = 'install'
+        os.makedirs(base_dir)
+
+        for directory in self.setup_dirs:
+            os.makedirs(os.path.join(base_dir, directory))
+
+        for file_entry in self.setup_files:
+            with open(os.path.join(base_dir, file_entry), 'w') as f:
+                f.write(file_entry)
+
+        if (isinstance(self.expected, type) and
+                issubclass(self.expected, Exception)):
+            with self.assertRaises(self.expected):
+                pluginhandler._organize_filesets(self.organize_set, base_dir)
+        else:
+            pluginhandler._organize_filesets(self.organize_set, base_dir)
+            for expect in self.expected:
+                dir_path = os.path.join(base_dir, expect[1])
+                self.assertEqual(expect[0], os.listdir(dir_path))
+
+
 class RealStageTestCase(tests.TestCase):
 
     def setUp(self):
