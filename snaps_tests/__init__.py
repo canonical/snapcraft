@@ -204,7 +204,8 @@ class SnapsTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', snap_path_in_testbed])
-            cmd = ['sudo', 'snap', 'install', snap_path_in_testbed]
+            cmd = ['sudo', 'snap', 'install', '--force-dangerous',
+                   snap_path_in_testbed]
             if devmode:
                 cmd.append('--devmode')
             try:
