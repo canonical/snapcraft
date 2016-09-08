@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,23 +40,23 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = """name: my-snap  # the name of the snap
-version: 0  # the version of the snap
-summary: This is my-snap's summary  # 79 char long summary
-description: This is my-snap's description  # a longer description for the snap
-confinement: devmode  # use "strict" to enforce system access only via \
-declared interfaces
-grade: devel # use "stable" to assert the snap quality
+_TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
+version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+description: |
+  This is my-snap's description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  we live in tweetspace and your description wants to look good in the snap
+  store.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
 
 parts:
-    my-part:  # Replace with a part name of your liking
-        # Get more information about plugins by running
-        # snapcraft help plugins
-        # and more information about the available plugins
-        # by running
-        # snapcraft list-plugins
-        plugin: nil
-"""
+  my-part:
+    # See 'snapcraft plugins'
+    plugin: nil
+"""  # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
