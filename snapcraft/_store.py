@@ -96,7 +96,8 @@ def _select_key(keys):
         tabulated_keys = tabulate(
             [(i + 1, key['name'], key['sha3-384'])
              for i, key in enumerate(keys)],
-            headers=["Number", "Name", "SHA3-384 fingerprint"])
+            headers=["Number", "Name", "SHA3-384 fingerprint"],
+            tablefmt="plain")
         print(tabulated_keys)
         print()
         while True:

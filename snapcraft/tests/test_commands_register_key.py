@@ -297,12 +297,10 @@ class RegisterKeyTestCase(tests.TestCase):
             Select a key:
 
               Number  Name     SHA3-384 fingerprint
-            --------  -------  {sha3_384_line}
                    1  default  {default_sha3_384}
                    2  another  {another_sha3_384}
 
             ''').format(
-                sha3_384_line='-' * 64,
                 default_sha3_384=_get_sample_key('default')['sha3-384'],
                 another_sha3_384=_get_sample_key('another')['sha3-384'])
         self.assertIn(expected_output, self.fake_terminal.getvalue())
