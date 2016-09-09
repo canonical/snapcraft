@@ -673,24 +673,26 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
 
 
 def _organize_filesets(fileset, base_dir):
-    for key in fileset:
+    for key in sorted(fileset, key=lambda x: ['*' in x, x]):
         src = os.path.join(base_dir, key)
         dst = os.path.join(base_dir, fileset[key])
 
-        if os.path.isfile(dst):
-            raise EnvironmentError(
-                'Trying to organize file {!r} to {!r}, '
-                'but it already exists'.format(
-                    key, os.path.relpath(dst, base_dir)))
+        sources = iglob(src, recursive=True)
 
-        if os.path.isdir(src):
-            file_utils.link_or_copy_tree(src, dst)
-            # TODO create alternate organization location to avoid
-            # deletions.
-            shutil.rmtree(src)
-        else:
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.move(src, dst)
+        for src in sources:
+            if os.path.isdir(src) and '*' not in key:
+                file_utils.link_or_copy_tree(src, dst)
+                # TODO create alternate organization location to avoid
+                # deletions.
+                shutil.rmtree(src)
+            elif os.path.isfile(dst):
+                raise EnvironmentError(
+                    'Trying to organize file {key!r} to {dst!r}, '
+                    'but {dst!r} already exists'.format(
+                        key=key, dst=os.path.relpath(dst, base_dir)))
+            else:
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.move(src, dst)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
