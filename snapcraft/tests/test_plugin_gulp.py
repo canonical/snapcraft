@@ -85,10 +85,12 @@ class GulpPluginTestCase(tests.TestCase):
         self.run_mock.assert_has_calls([
             mock.call(['npm', 'install', '-g', 'gulp-cli'],
                       cwd=plugin.builddir,
-                      env={'PATH': path, 'NPM_CONFIG_PREFIX': plugin._npm_dir}),
+                      env={'PATH': path,
+                           'NPM_CONFIG_PREFIX': plugin._npm_dir}),
             mock.call(['npm', 'install', '--only-development'],
                       cwd=plugin.builddir,
-                      env={'PATH': path, 'NPM_CONFIG_PREFIX': plugin._npm_dir}),
+                      env={'PATH': path,
+                           'NPM_CONFIG_PREFIX': plugin._npm_dir}),
         ])
 
         self.tar_mock.assert_has_calls([
