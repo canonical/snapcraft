@@ -122,7 +122,9 @@ class GetSourceWithBranches(tests.TestCase):
         }),
     ]
 
-    def test_get_source_with_branch_and_tag_must_raise_error(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_get_source_with_branch_and_tag_must_raise_error(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions('lp:source', self.source_type,
                                     self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)

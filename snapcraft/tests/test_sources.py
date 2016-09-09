@@ -129,6 +129,11 @@ class SourceTestCase(tests.TestCase):
         self.mock_run.return_value = True
         self.addCleanup(patcher.stop)
 
+        patcher = unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+        self.mock_check = patcher.start()
+        self.mock_check.side_effect = None
+        self.addCleanup(patcher.stop)
+
         patcher = unittest.mock.patch('os.rmdir')
         self.mock_rmdir = patcher.start()
         self.addCleanup(patcher.stop)
@@ -564,8 +569,10 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Subversion.pull')
-    def test_get_svn_source_from_uri(self, mock_pull):
+    def test_get_svn_source_from_uri(self, mock_pull, mock_check):
+        mock_check.side_effect = None
         test_sources = [
             'svn://sylpheed.sraoss.jp/sylpheed/trunk'
         ]

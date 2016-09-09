@@ -88,6 +88,15 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
+def _check_for_package(command):
+    try:
+        subprocess.check_call(['which', command],
+                              stderr=subprocess.DEVNULL,
+                              stdout=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        raise MissingPackageError([command])
+
+
 class Base:
 
     def __init__(self, source, source_dir, source_tag=None,
@@ -99,10 +108,7 @@ class Base:
         self.command = command
 
         if self.command:
-            try:
-                subprocess.check_output(['which', self.command])
-            except subprocess.CalledProcessError:
-                raise MissingPackageError([self.command])
+            _check_for_package(self.command)
 
 
 class FileBase(Base):
