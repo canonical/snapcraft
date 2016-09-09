@@ -671,7 +671,54 @@ class OrganizeTestCase(tests.TestCase):
             setup_files=['foo', 'bar'],
             organize_set={'foo': 'bar'},
             expected=EnvironmentError,
-        ))
+        )),
+        ('*_for_files', dict(
+            setup_dirs=[],
+            setup_files=['foo.conf', 'bar.conf'],
+            organize_set={'*.conf': 'dir/'},
+            expected=[
+                (['dir'], ''),
+                (['bar.conf', 'foo.conf'], 'dir'),
+            ]
+        )),
+        ('*_for_files_with_non_dir_dst', dict(
+            setup_dirs=[],
+            setup_files=['foo.conf', 'bar.conf'],
+            organize_set={'*.conf': 'dir'},
+            expected=EnvironmentError,
+        )),
+        ('*_for_directories', dict(
+            setup_dirs=['dir1', 'dir2'],
+            setup_files=[
+                os.path.join('dir1', 'foo'),
+                os.path.join('dir2', 'bar'),
+            ],
+            organize_set={'dir*': 'dir/'},
+            expected=[
+                (['dir'], ''),
+                (['dir1', 'dir2'], 'dir'),
+                (['foo'], os.path.join('dir', 'dir1')),
+                (['bar'], os.path.join('dir', 'dir2')),
+            ]
+        )),
+        ('combined_*_with_file', dict(
+            setup_dirs=['dir1', 'dir2'],
+            setup_files=[
+                os.path.join('dir1', 'foo'),
+                os.path.join('dir1', 'bar'),
+                os.path.join('dir2', 'bar'),
+            ],
+            organize_set={
+                'dir*': 'dir/',
+                'dir1/bar': '.'
+            },
+            expected=[
+                (['bar', 'dir'], ''),
+                (['dir1', 'dir2'], 'dir'),
+                (['foo'], os.path.join('dir', 'dir1')),
+                (['bar'], os.path.join('dir', 'dir2')),
+            ]
+        )),
     ]
 
     def test_organize_file(self):
