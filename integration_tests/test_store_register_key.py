@@ -39,6 +39,16 @@ class RegisterKeyTestCase(integration_tests.StoreTestCase):
                 'Cannot register test keys against staging/production until '
                 'we have a way to delete them again.')
         self.assertEqual(0, self.register_key('default'))
+        self.addCleanup(self.logout)
+        self.login()
+        self.assertEqual(0, self.list_keys([
+            (True, 'default',
+             '2MEtiEuR7eCBUocloPokPhqPSTpkj7Kk'
+             'TPQNZYOiZshFHdfzxlEhc8ITzpHq5azq'),
+            (False, 'another',
+             'OR59L-ompOW_CHbQ4pNDW5B-7BVY_V3Q'
+             'kPu5-7uOFrZEEEAoI4h3yc_RQv3qmAFJ'),
+        ]))
 
     def test_failed_login_for_key_registration(self):
         status = self.register_key(

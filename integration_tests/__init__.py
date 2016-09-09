@@ -164,6 +164,16 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
+    def list_keys(self, expected_keys):
+        process = pexpect.spawn(self.snapcraft_command, ['list-keys'])
+
+        for enabled, key_name, key_id in expected_keys:
+            process.expect('{} *{} *{}'.format(
+                '\*' if enabled else '-', key_name, key_id))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
     def update_name_and_version(self, project_dir, name=None, version=None):
         unique_id = uuid.uuid4().int
         if name is None:

@@ -16,6 +16,7 @@
 
 import logging
 import os
+from textwrap import dedent
 from unittest import mock
 
 import fixtures
@@ -167,7 +168,8 @@ class GetAccountInformationTestCase(tests.TestCase):
     def test_get_account_information_successfully(self):
         self.client.login('dummy', 'test correct password')
         self.assertEqual(
-            {'account_id': 'abcd'}, self.client.get_account_information())
+            {'account_id': 'abcd', 'account_keys': []},
+            self.client.get_account_information())
 
 
 class RegisterKeyTestCase(tests.TestCase):
@@ -184,7 +186,10 @@ class RegisterKeyTestCase(tests.TestCase):
     def test_register_key_successfully(self):
         self.client.login('dummy', 'test correct password')
         # No exception will be raised if this is successful.
-        self.client.register_key('test-good-key')
+        self.client.register_key(dedent('''\
+            name: default
+            public-key-sha3-384: abcd
+            '''))
 
     def test_not_implemented(self):
         # If the enable_account_key feature switch is off in the store, we
