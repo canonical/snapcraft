@@ -153,7 +153,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         env['PYTHONUSERBASE'] = self.installdir
 
         subprocess.check_call([
-            self.system_pip_command, 'install', '--user',
+            self.system_pip_command, 'install', '--user', '--no-compile',
             '--ignore-installed',
             '--disable-pip-version-check',
             'pip', 'setuptools', 'wheel'], env=env)
@@ -161,7 +161,7 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _get_pip_command(self):
         self._install_pip()
 
-        pip_install = ['pip', 'install', '--user',
+        pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check']
 
         if self.options.constraints:
