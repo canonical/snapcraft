@@ -45,14 +45,14 @@ _sample_keys = [
 ]
 
 
-def _get_sample_key(name):
+def get_sample_key(name):
     for key in _sample_keys:
         if key['name'] == name:
             return key
     raise KeyError(name)
 
 
-def _mock_snap_output(command, *args, **kwargs):
+def mock_snap_output(command, *args, **kwargs):
     if command == ['snap', 'keys', '--json']:
         return json.dumps(_sample_keys)
     elif command[:2] == ['snap', 'export-key']:
@@ -69,7 +69,7 @@ def _mock_snap_output(command, *args, **kwargs):
             public-key-sha3-384: {sha3_384}
             ''').format(
                 account_id=account_id, name=name,
-                sha3_384=_get_sample_key(name)['sha3-384'])
+                sha3_384=get_sample_key(name)['sha3-384'])
     else:
         raise AssertionError('Unhandled command: {}'.format(command))
 
@@ -113,7 +113,7 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_input.side_effect = ['sample.person@canonical.com', '123456']
         mock_getpass.return_value = 'secret'
-        mock_check_output.side_effect = _mock_snap_output
+        mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
 
         main(['register-key', 'default'])
@@ -123,7 +123,7 @@ class RegisterKeyTestCase(tests.TestCase):
             'Login successful.\n'
             'Registering key ...\n'
             'Done. The key "default" ({}) may be used to sign your '
-            'assertions.\n'.format(_get_sample_key('default')['sha3-384']),
+            'assertions.\n'.format(get_sample_key('default')['sha3-384']),
             self.fake_logger.output)
 
         mock_login.assert_called_once_with(
@@ -136,7 +136,7 @@ class RegisterKeyTestCase(tests.TestCase):
             account-id: abcd
             name: default
             public-key-sha3-384: {}
-            ''').format(_get_sample_key('default')['sha3-384'])
+            ''').format(get_sample_key('default')['sha3-384'])
         mock_register_key.assert_called_once_with(expected_assertion)
 
     @mock.patch('subprocess.check_output')
@@ -177,7 +177,7 @@ class RegisterKeyTestCase(tests.TestCase):
     def test_register_key_no_keys_with_name(self, mock_installed, mock_input,
                                             mock_check_output):
         mock_installed.return_value = True
-        mock_check_output.side_effect = _mock_snap_output
+        mock_check_output.side_effect = mock_snap_output
 
         with self.assertRaises(SystemExit) as raised:
             main(['register-key', 'nonexistent'])
@@ -201,7 +201,7 @@ class RegisterKeyTestCase(tests.TestCase):
                                        mock_get_account_information,
                                        mock_register_key):
         mock_installed.return_value = True
-        mock_check_output.side_effect = _mock_snap_output
+        mock_check_output.side_effect = mock_snap_output
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'test')
 
@@ -228,7 +228,7 @@ class RegisterKeyTestCase(tests.TestCase):
                                               mock_get_account_information,
                                               mock_register_key):
         mock_installed.return_value = True
-        mock_check_output.side_effect = _mock_snap_output
+        mock_check_output.side_effect = mock_snap_output
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         response.status_code = 500
@@ -257,7 +257,7 @@ class RegisterKeyTestCase(tests.TestCase):
                                  mock_get_account_information,
                                  mock_register_key):
         mock_installed.return_value = True
-        mock_check_output.side_effect = _mock_snap_output
+        mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
@@ -288,7 +288,7 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_input.side_effect = ['x', '2', 'sample.person@canonical.com', '']
         mock_getpass.return_value = 'secret'
-        mock_check_output.side_effect = _mock_snap_output
+        mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
 
         main(['register-key'])
@@ -301,8 +301,8 @@ class RegisterKeyTestCase(tests.TestCase):
                    2  another  {another_sha3_384}
 
             ''').format(
-                default_sha3_384=_get_sample_key('default')['sha3-384'],
-                another_sha3_384=_get_sample_key('another')['sha3-384'])
+                default_sha3_384=get_sample_key('default')['sha3-384'],
+                another_sha3_384=get_sample_key('another')['sha3-384'])
         self.assertIn(expected_output, self.fake_terminal.getvalue())
         mock_input.assert_has_calls(
             [mock.call('Key number: '), mock.call('Key number: ')])
@@ -312,7 +312,7 @@ class RegisterKeyTestCase(tests.TestCase):
             'Login successful.\n'
             'Registering key ...\n'
             'Done. The key "another" ({}) may be used to sign your '
-            'assertions.\n'.format(_get_sample_key('another')['sha3-384']),
+            'assertions.\n'.format(get_sample_key('another')['sha3-384']),
             self.fake_logger.output)
 
         self.assertEqual(1, mock_register_key.call_count)
@@ -321,5 +321,5 @@ class RegisterKeyTestCase(tests.TestCase):
             account-id: abcd
             name: another
             public-key-sha3-384: {}
-            ''').format(_get_sample_key('another')['sha3-384'])
+            ''').format(get_sample_key('another')['sha3-384'])
         mock_register_key.assert_called_once_with(expected_assertion)

@@ -20,6 +20,7 @@ import json
 import logging
 import http.server
 import os
+import re
 import urllib.parse
 
 import pymacaroons
@@ -280,6 +281,7 @@ class FakeStoreAPIServer(http.server.HTTPServer):
     def __init__(self, server_address):
         super().__init__(
             server_address, FakeStoreAPIRequestHandler)
+        self.account_keys = []
 
 
 class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
@@ -346,17 +348,26 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             }
             self._handle_account_key_400({'error_list': [error]})
         else:
-            self._handle_successful_account_key()
+            self._handle_successful_account_key(account_key_request)
 
-    def _handle_successful_account_key(self):
+    def _handle_successful_account_key(self, account_key_request):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
+        # Extremely basic assertion parsing, just enough to make tests work.
+        # Don't copy this.
+        key_name = re.search(
+            '^name: (.*)$', account_key_request, flags=re.MULTILINE).group(1)
+        key_id = re.search(
+            '^public-key-sha3-384: (.*)$', account_key_request,
+            flags=re.MULTILINE).group(1)
+        self.server.account_keys.append(
+            {'name': key_name, 'public-key-sha3-384': key_id})
         response = {
             'account_key': {
                 'account-id': 'abcd',
-                'name': 'default',
-                'public-key-sha3-384': 'hash',
+                'name': key_name,
+                'public-key-sha3-384': key_id,
             },
         }
         self.wfile.write(json.dumps(response).encode())
@@ -542,7 +553,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        self.wfile.write(json.dumps({'account_id': 'abcd'}).encode())
+        self.wfile.write(json.dumps({
+            'account_id': 'abcd',
+            'account_keys': self.server.account_keys,
+        }).encode())
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):

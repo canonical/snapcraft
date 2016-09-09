@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import contextmanager
 import getpass
 import json
 import logging
@@ -80,6 +81,16 @@ def logout():
     logger.info('Credentials cleared.')
 
 
+@contextmanager
+def _requires_login():
+    try:
+        yield
+    except storeapi.errors.InvalidCredentialsError:
+        logger.error('No valid credentials found.'
+                     ' Have you run "snapcraft login"?')
+        raise
+
+
 def _get_usable_keys(name=None):
     keys = json.loads(subprocess.check_output(
         ['snap', 'keys', '--json'], universal_newlines=True))
@@ -117,6 +128,28 @@ def _export_key(name, account_id):
         universal_newlines=True)
 
 
+def list_keys():
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use `list-keys`, '
+            'you must run `apt install snapd`.')
+    keys = list(_get_usable_keys())
+    store = storeapi.StoreClient()
+    with _requires_login():
+        account_info = store.get_account_information()
+    enabled_keys = {
+        account_key['public-key-sha3-384']
+        for account_key in account_info['account_keys']}
+    tabulated_keys = tabulate(
+        [('*' if key['sha3-384'] in enabled_keys else '-',
+          key['name'], key['sha3-384'],
+          '' if key['sha3-384'] in enabled_keys else '(not enabled)')
+         for key in keys],
+        headers=["", "Name", "SHA3-384 fingerprint", ""],
+        tablefmt="plain")
+    print(tabulated_keys)
+
+
 def register_key(name):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
@@ -145,12 +178,8 @@ def register_key(name):
 def register(snap_name, is_private=False):
     logger.info('Registering {}.'.format(snap_name))
     store = storeapi.StoreClient()
-    try:
+    with _requires_login():
         store.register(snap_name, is_private)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
     logger.info("Congratulations! You're now the publisher for {!r}.".format(
         snap_name))
 
@@ -168,13 +197,9 @@ def push(snap_filename, release_channels=None):
     logger.info('Uploading {}.'.format(snap_filename))
 
     snap_name = _get_name_from_snap_file(snap_filename)
-    try:
-        store = storeapi.StoreClient()
+    store = storeapi.StoreClient()
+    with _requires_login():
         tracker = store.upload(snap_name, snap_filename)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
 
     result = tracker.track()
     # This is workaround until LP: #1599875 is solved
@@ -217,13 +242,9 @@ def _get_text_for_channel(channel):
 
 
 def release(snap_name, revision, release_channels):
-    try:
-        store = storeapi.StoreClient()
+    store = storeapi.StoreClient()
+    with _requires_login():
         channels = store.release(snap_name, revision, release_channels)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
 
     if 'opened_channels' in channels:
         logger.info(
@@ -241,13 +262,10 @@ def release(snap_name, revision, release_channels):
 
 def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
+    store = storeapi.StoreClient()
     try:
-        store = storeapi.StoreClient()
-        store.download(snap_name, channel, download_path, arch)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
+        with _requires_login():
+            store.download(snap_name, channel, download_path, arch)
     except storeapi.errors.SnapNotFoundError:
         raise RuntimeError(
             'Snap {name} for {arch} cannot be found'
