@@ -128,6 +128,28 @@ def _export_key(name, account_id):
         universal_newlines=True)
 
 
+def list_keys():
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use `keys`, you '
+            'must run `apt install snapd`.')
+    keys = list(_get_usable_keys())
+    store = storeapi.StoreClient()
+    with _requires_login():
+        account_info = store.get_account_information()
+    enabled_keys = {
+        account_key['public-key-sha3-384']
+        for account_key in account_info['account_keys']}
+    tabulated_keys = tabulate(
+        [('*' if key['sha3-384'] in enabled_keys else '-',
+          key['name'], key['sha3-384'],
+          '' if key['sha3-384'] in enabled_keys else '(not enabled)')
+         for key in keys],
+        headers=["", "Name", "SHA3-384 fingerprint", ""],
+        tablefmt="plain")
+    print(tabulated_keys)
+
+
 def register_key(name):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
