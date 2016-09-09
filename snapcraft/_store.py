@@ -131,8 +131,8 @@ def _export_key(name, account_id):
 def list_keys():
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
-            'The snapd package is not installed. In order to use `keys`, you '
-            'must run `apt install snapd`.')
+            'The snapd package is not installed. In order to use `list-keys`, '
+            'you must run `apt install snapd`.')
     keys = list(_get_usable_keys())
     store = storeapi.StoreClient()
     with _requires_login():
