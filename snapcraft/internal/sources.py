@@ -181,11 +181,16 @@ class Git(Base):
         else:
             branch_opts = []
             if self.source_tag or self.source_branch:
-                branch_opts = ['--branch',
+                branch_opts = ['--single-branch', '--branch',
                                self.source_tag or self.source_branch]
-            subprocess.check_call(['git', 'clone', '--depth', '1',
-                                  '--recursive'] + branch_opts +
-                                  [self.source, self.source_dir])
+            if self.source.startswith('git://'):
+                subprocess.check_call(['git', 'clone', '--depth', '1',
+                                      '--recursive'] + branch_opts +
+                                      [self.source, self.source_dir])
+            else:
+                subprocess.check_call(['git', 'clone',
+                                      '--recursive'] + branch_opts +
+                                      [self.source, self.source_dir])
 
 
 class Mercurial(Base):
