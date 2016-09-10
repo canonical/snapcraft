@@ -1,3 +1,31 @@
+snapcraft (2.17) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Python plugin improvements (#771)
+  * Organize without removing files on target (#780)
+  * Support globbing for organize (#784)
+  * New upstream release 2.17 (LP: #1621985)
+
+  [ Leo Arias ]
+  * Use --force-dangerous when testing the installation of snaps (#778)
+  * Updated the contents of the snapcraft init template (#776)
+  * Add an integration test for autotools (#783)
+
+  [ Colin Watson ]
+  * Implement basic form of `snapcraft register-key` (#726)
+  * Add `snapcraft list-keys` (#786)
+
+  [ Joe Talbott ]
+  * parser - Handle project name and version variables (#773)
+
+  [ Sam Yaple ]
+  * python plugin: do not compile pyc files when installing with pip (#779)
+
+  [ Alexandre Abreu ]
+  * gulp plugin: fix the npm install prefix (#782)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 09 Sep 2016 19:25:24 +0000
+
 snapcraft (2.16) xenial; urgency=medium
 
   [ Sergio Schvezov ]
