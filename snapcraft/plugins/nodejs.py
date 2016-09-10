@@ -116,7 +116,10 @@ class NodePlugin(snapcraft.BasePlugin):
         npm_install = ['npm', '--cache-min=Infinity', 'install', '--global']
         for pkg in self.options.node_packages:
             self.run(npm_install + [pkg])
-        if os.path.exists(os.path.join(self.builddir, 'package.json')):
+        if (
+            os.path.exists(os.path.join(self.builddir, 'package.json')) or
+            os.path.exists(os.path.join(self.builddir, 'npm-shrinkwrap.json'))
+        ):
             self.run(npm_install)
 
 
