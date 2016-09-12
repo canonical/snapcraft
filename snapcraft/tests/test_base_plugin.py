@@ -157,7 +157,9 @@ class GetSourceTestCase(tests.TestCase):
             'error': 'source-tag'})
     ]
 
-    def test_get_source_with_branch_must_raise_error(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_get_source_with_branch_must_raise_error(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions('lp:this', self.source_type,
                                     self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
@@ -173,7 +175,9 @@ class GetSourceTestCase(tests.TestCase):
 
 class BuildTestCase(tests.TestCase):
 
-    def test_do_not_follow_links(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_do_not_follow_links(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions(source='.')
         plugin = snapcraft.BasePlugin('test_plugin', options)
 

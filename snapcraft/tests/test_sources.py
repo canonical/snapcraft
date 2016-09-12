@@ -129,7 +129,8 @@ class SourceTestCase(tests.TestCase):
         self.mock_run.return_value = True
         self.addCleanup(patcher.stop)
 
-        patcher = unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.sources._check_for_package')
         self.mock_check = patcher.start()
         self.mock_check.side_effect = None
         self.addCleanup(patcher.stop)
@@ -532,8 +533,10 @@ class TestUri(tests.TestCase):
                 self.assertEqual(
                     sources._get_source_type_from_uri(source), 'tar')
 
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Git.pull')
-    def test_get_git_source_from_uri(self, mock_pull):
+    def test_get_git_source_from_uri(self, mock_pull, mock_check):
+        mock_check.side_effect = None
         test_sources = [
             'git://github.com:ubuntu-core/snapcraft.git',
             'git@github.com:ubuntu-core/snapcraft.git',
@@ -551,8 +554,10 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Bazaar.pull')
-    def test_get_bzr_source_from_uri(self, mock_pull):
+    def test_get_bzr_source_from_uri(self, mock_pull, mock_check):
+        mock_check.side_effect = None
         test_sources = [
             'lp:snapcraft_test_source',
             'bzr:dummy-source'
