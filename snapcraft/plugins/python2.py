@@ -45,7 +45,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A list of dependencies to get from PyPi
 """
 
+import logging
+
 from snapcraft.plugins import python
+
+logger = logging.getLogger(__name__)
 
 
 class Python2Plugin(python.PythonPlugin):
@@ -53,3 +57,6 @@ class Python2Plugin(python.PythonPlugin):
     def __init__(self, name, options, project):
         options.python_version = 'python2'
         super().__init__(name, options, project)
+        logger.warning("DEPRECATED: The 'python2' plugin's functionality "
+                       "has been replaced by the 'python' plugin, and it will "
+                       "soon be removed.")
