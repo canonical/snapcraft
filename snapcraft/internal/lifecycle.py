@@ -112,31 +112,37 @@ class _Executor:
         self.config = config
         self.project_options = project_options
         self.parts_config = config.parts
+        self._steps_run = {p: set() for p in self.config.part_names}
 
     def run(self, step, part_names=None, recursed=False):
         if part_names:
             self.parts_config.validate(part_names)
-            parts = {p for p in self.config.all_parts if p.name in part_names}
+            parts = [p for p in self.config.all_parts if p.name in part_names]
         else:
             parts = self.config.all_parts
             part_names = self.config.part_names
 
-        dirty = {p.name for p in parts if p.should_step_run('stage')}
+        run_stage = {p for p in parts if p.should_step_run('stage')}
+
         step_index = common.COMMAND_ORDER.index(step) + 1
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
-                self._run_step(step, part, part_names, dirty, recursed)
+                self._run_step(step, part, part_names, run_stage, recursed)
 
         self._create_meta(step, part_names)
 
-    def _run_step(self, step, part, part_names, dirty, recursed):
+    def _run_step(self, step, part, part_names, run_stage, recursed):
+        if step in self._steps_run[part.name]:
+            return
+
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
         if recursed:
-            prereqs = prereqs & dirty
+            prereqs = prereqs & run_stage
+        prereqs = {p for p in prereqs if 'stage' not in self._steps_run[p]}
         if prereqs and not prereqs.issubset(part_names):
             for prereq in self.config.all_parts:
                 if prereq.name in prereqs and prereq.should_step_run('stage'):
@@ -169,6 +175,7 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         getattr(part, step)()
+        self._steps_run[part.name].add(step)
 
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:

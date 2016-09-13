@@ -101,6 +101,10 @@ grade: stable
     plugin: nil
     after:
       - part1
+  part3:
+    plugin: nil
+    after:
+      - part2
 """)
 
         snap_info = lifecycle.execute('pull', self.project_options)
@@ -117,12 +121,17 @@ grade: stable
             'Preparing to pull part1 \n'
             'Pulling part1 \n'
             '\'part2\' has prerequisites that need to be staged: part1\n'
-            'Skipping pull part1 (already ran)\n'
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Preparing to pull part2 \n'
-            'Pulling part2 \n',
+            'Pulling part2 \n'
+            '\'part3\' has prerequisites that need to be staged: part2\n'
+            'Preparing to build part2 \n'
+            'Building part2 \n'
+            'Staging part2 \n'
+            'Preparing to pull part3 \n'
+            'Pulling part3 \n',
             self.fake_logger.output)
 
     def test_os_type_returned_by_lifecycle(self):
