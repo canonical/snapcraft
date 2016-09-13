@@ -156,8 +156,8 @@ class _Executor:
                             if 'stage' not in self._steps_run[p]}
 
         if unstaged_prereqs and not unstaged_prereqs.issubset(part_names):
-            missing_parts = [part.name for part in self.config.all_parts
-                             if part.name in unstaged_prereqs]
+            missing_parts = [part_name for part_name in self.config.part_names
+                             if part_name in unstaged_prereqs]
             if any(missing_parts):
                 raise RuntimeError(
                     'Requested {!r} of {!r} but there are unsatisfied '
