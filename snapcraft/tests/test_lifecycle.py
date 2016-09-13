@@ -89,6 +89,10 @@ grade: stable
                               part_names=['part2'])
 
         self.assertEqual(
+            'Skipping pull part1 (already ran)\n'
+            'Skipping build part1 (already ran)\n'
+            'Skipping stage part1 (already ran)\n'
+            'Skipping prime part1 (already ran)\n'
             'Preparing to pull part2 \n'
             'Pulling part2 \n',
             self.fake_logger.output)
@@ -421,6 +425,10 @@ grade: stable
             'Skipping cleaning priming area for part1 (out of date) '
             '(already clean)\n'
             'Cleaning staging area for part1 (out of date)\n'
+            'Skipping cleaning priming area for part2 (out of date) '
+            '(already clean)\n'
+            'Skipping cleaning staging area for part2 (out of date) '
+            '(already clean)\n'
             'Staging part1 \n',
             self.fake_logger.output)
 

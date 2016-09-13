@@ -112,7 +112,22 @@ class _Executor:
         self.config = config
         self.project_options = project_options
         self.parts_config = config.parts
-        self._steps_run = {p: set() for p in self.config.part_names}
+        self._steps_run = self._init_run_states()
+
+    def _init_run_states(self):
+        steps_run = {}
+
+        for part in self.config.all_parts:
+            steps_run[part.name] = set()
+            for step in common.COMMAND_ORDER:
+                if part.is_dirty(step):
+                    self._handle_dirty(part, step)
+                elif not (part.should_step_run(step)):
+                    steps_run[part.name].add(step)
+                    part.notify_part_progress('Skipping {}'.format(step),
+                                              '(already ran)')
+
+        return steps_run
 
     def run(self, step, part_names=None):
         if part_names:
@@ -128,42 +143,34 @@ class _Executor:
             if step == 'stage':
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
-                self._run_step(step, part, part_names)
+                if step not in self._steps_run[part.name]:
+                    self._run_step(step, part, part_names)
+                    self._steps_run[part.name].add(step)
 
         self._create_meta(step, part_names)
 
     def _run_step(self, step, part, part_names):
-        if step in self._steps_run[part.name]:
-            return
-
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
-        prereqs = {p for p in prereqs if 'stage' not in self._steps_run[p]}
+        unstaged_prereqs = {p for p in prereqs
+                            if 'stage' not in self._steps_run[p]}
 
-        if prereqs and not prereqs.issubset(part_names):
-            for prereq in self.config.all_parts:
-                if prereq.name in prereqs and prereq.should_step_run('stage'):
-                    raise RuntimeError(
-                        'Requested {!r} of {!r} but there are unsatisfied '
-                        'prerequisites: {!r}'.format(
-                            step, part.name, ' '.join(prereqs)))
-        elif prereqs:
+        if unstaged_prereqs and not unstaged_prereqs.issubset(part_names):
+            missing_parts = [part.name for part in self.config.all_parts
+                             if part.name in unstaged_prereqs]
+            if any(missing_parts):
+                raise RuntimeError(
+                    'Requested {!r} of {!r} but there are unsatisfied '
+                    'prerequisites: {!r}'.format(
+                        step, part.name, ' '.join(missing_parts)))
+        elif unstaged_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
             logger.info(
                 '{!r} has prerequisites that need to be staged: '
-                '{}'.format(part.name, ' '.join(prereqs)))
-            self.run('stage', prereqs)
-
-        if part.is_dirty(step):
-            self._handle_dirty(part, step)
-
-        if not part.should_step_run(step):
-            part.notify_part_progress('Skipping {}'.format(step),
-                                      '(already ran)')
-            self._steps_run[part.name].add(step)
-            return
+                '{}'.format(part.name, ' '.join(unstaged_prereqs)))
+            self.run('stage', unstaged_prereqs)
 
         # Run the preparation function for this step (if implemented)
         with contextlib.suppress(AttributeError):
@@ -173,7 +180,6 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         getattr(part, step)()
-        self._steps_run[part.name].add(step)
 
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
