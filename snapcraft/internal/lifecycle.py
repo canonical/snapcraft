@@ -276,6 +276,15 @@ def snap(project_options, directory=None, output=None):
 
     snap_name = output or common.format_snap_name(snap)
 
+    # If a .snap-build exists at this point, when we are about to override
+    # the snap blob, it is stale. We rename it so user have a chance to
+    # recover accidentally lost assertions.
+    snap_build = snap_name + '-build'
+    if os.path.isfile(snap_build):
+        _new = '{}.{}'.format(snap_build, int(time.time()))
+        logger.warning('Renaming stale build assertion to {}'.format(_new))
+        os.rename(snap_build, _new)
+
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
