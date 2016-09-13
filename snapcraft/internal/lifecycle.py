@@ -114,7 +114,7 @@ class _Executor:
         self.parts_config = config.parts
         self._steps_run = {p: set() for p in self.config.part_names}
 
-    def run(self, step, part_names=None, recursed=False):
+    def run(self, step, part_names=None):
         if part_names:
             self.parts_config.validate(part_names)
             parts = [p for p in self.config.all_parts if p.name in part_names]
@@ -122,27 +122,24 @@ class _Executor:
             parts = self.config.all_parts
             part_names = self.config.part_names
 
-        run_stage = {p for p in parts if p.should_step_run('stage')}
-
         step_index = common.COMMAND_ORDER.index(step) + 1
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
-                self._run_step(step, part, part_names, run_stage, recursed)
+                self._run_step(step, part, part_names)
 
         self._create_meta(step, part_names)
 
-    def _run_step(self, step, part, part_names, run_stage, recursed):
+    def _run_step(self, step, part, part_names):
         if step in self._steps_run[part.name]:
             return
 
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
-        if recursed:
-            prereqs = prereqs & run_stage
         prereqs = {p for p in prereqs if 'stage' not in self._steps_run[p]}
+
         if prereqs and not prereqs.issubset(part_names):
             for prereq in self.config.all_parts:
                 if prereq.name in prereqs and prereq.should_step_run('stage'):
@@ -157,7 +154,7 @@ class _Executor:
             logger.info(
                 '{!r} has prerequisites that need to be staged: '
                 '{}'.format(part.name, ' '.join(prereqs)))
-            self.run('stage', prereqs, recursed=True)
+            self.run('stage', prereqs)
 
         if part.is_dirty(step):
             self._handle_dirty(part, step)
@@ -165,6 +162,7 @@ class _Executor:
         if not part.should_step_run(step):
             part.notify_part_progress('Skipping {}'.format(step),
                                       '(already ran)')
+            self._steps_run[part.name].add(step)
             return
 
         # Run the preparation function for this step (if implemented)
