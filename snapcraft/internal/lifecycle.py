@@ -132,6 +132,8 @@ class _Executor:
     def run(self, step, part_names=None):
         if part_names:
             self.parts_config.validate(part_names)
+            # self.config.all_parts is already ordered, let's not lose that
+            # and keep using a list.
             parts = [p for p in self.config.all_parts if p.name in part_names]
         else:
             parts = self.config.all_parts
@@ -158,7 +160,7 @@ class _Executor:
         if unstaged_prereqs and not unstaged_prereqs.issubset(part_names):
             missing_parts = [part_name for part_name in self.config.part_names
                              if part_name in unstaged_prereqs]
-            if any(missing_parts):
+            if missing_parts:
                 raise RuntimeError(
                     'Requested {!r} of {!r} but there are unsatisfied '
                     'prerequisites: {!r}'.format(
