@@ -214,3 +214,27 @@ class StoreReleaseError(StoreError):
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)
+
+
+class SnapBuildError(StoreError):
+
+    __FMT_ALREADY_ASSERTED = (
+        'A build with this exact same content and revision '
+        'of {snap_name} has been asserted already.')
+
+    fmt = 'Could not assert build: "{text!r}".'
+
+    def __init__(self, snap_name, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        print(response_json)
+        if response.status_code == 409:
+            self.fmt = self.__FMT_ALREADY_ASSERTED
+        elif 'errors' in response_json:
+            self.fmt = '{errors}'
+
+        super().__init__(snap_name=snap_name, text=response.content,
+                         **response_json)
