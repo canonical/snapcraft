@@ -29,7 +29,8 @@ class BusyBoxTestCase(snaps_tests.SnapsTestCase):
             '/snap/bin/busybox.touch', '/tmp/'])
         self.assert_command_in_snappy_testbed(
             ['/snap/bin/busybox.touch',
-             '~/snap/busybox/$(ls ~/snap/busybox)/busybox.test'],
+             '~/snap/busybox/$(ls ~/snap/busybox | grep x | tail -n 1)/'
+             'busybox.test'],
             '')
         self.addCleanup(
             self.run_command_in_snappy_testbed,
