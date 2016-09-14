@@ -19,13 +19,13 @@ apps:
 
 parts:
   mosquitto:
-    plugin: copy
+    source: conf
+    plugin: dump
     stage-packages: [mosquitto]
-    files:
-      mosquitto.conf: mosquitto.conf
   mqtt-client:
-    plugin: copy
-    files:
+    source: launchers
+    plugin: dump
+    organize:
       subscribe.py: bin/subscribe
       publish.py: bin/publish
     after: [mqtt-paho/python3]
