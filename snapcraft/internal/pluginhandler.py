@@ -17,7 +17,6 @@
 import contextlib
 import filecmp
 import importlib
-import itertools
 import logging
 import os
 import shutil
@@ -375,7 +374,7 @@ class PluginHandler:
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
-        dependencies = _find_dependencies(self.snapdir)
+        dependencies = _find_dependencies(self.snapdir, snap_files)
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -710,27 +709,30 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
             os.rmdir(migrated_directory)
 
 
-def _find_dependencies(workdir):
+def _find_dependencies(root, part_files):
     ms = magic.open(magic.NONE)
     if ms.load() != 0:
         raise RuntimeError('Cannot load magic header detection')
 
     elf_files = set()
-    fs_encoding = sys.getfilesystemencoding()
 
-    for root, dirs, files in os.walk(workdir.encode(fs_encoding)):
+    for part_file in part_files:
         # Filter out object (*.o) files-- we only care about binaries.
-        entries = (entry for entry in itertools.chain(files, dirs)
-                   if not entry.endswith(b'.o'))
-        for entry in entries:
-            path = os.path.join(root, entry)
-            if os.path.islink(path):
-                logger.debug('Skipped link {!r} when parsing {!r}'.format(
-                    path, workdir))
-                continue
-            file_m = ms.file(path)
-            if file_m.startswith('ELF') and 'dynamically linked' in file_m:
-                elf_files.add(path)
+        if part_file.endswith('.o'):
+            continue
+
+        # No need to crawl links-- the original should be here, too.
+        path = os.path.join(root, part_file)
+        if os.path.islink(path):
+            logger.debug('Skipped link {!r} while finding dependencies'.format(
+                path))
+            continue
+
+        # Finally, make sure this is actually an ELF before queueing it up
+        # for an ldd call.
+        file_m = ms.file(path)
+        if file_m.startswith('ELF') and 'dynamically linked' in file_m:
+            elf_files.add(path)
 
     dependencies = []
     for elf_file in elf_files:
