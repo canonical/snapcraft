@@ -72,26 +72,26 @@ class PartsWithFilesetsTestCase(integration_tests.TestCase):
 
         expected = (
             "Maintainer: 'Jonathan Cave <jonathan.cave@canonical.com>'\n"
-            "Description: 'The filesets test from the integration test suite.'"
+            "Description: The filesets test from the integration test suite."
             "\n\n"
             "simple-make-filesets:\n"
+            "  plugin: make\n"
             "  filesets:\n"
             "    files:\n"
             "    - share/file1\n"
             "    - share/file2\n"
-            "  organize:\n"
-            "    dir1: new/dir1\n"
-            "    dir2: new/dir2\n"
-            "    file1: share/file1\n"
-            "    file2: share/file2\n"
-            "  plugin: make\n"
-            "  snap:\n"
-            "  - -new/dir1\n"
-            "  source: https://github.com/jocave/simple-make-filesets.git\n"
             "  stage:\n"
             "  - $files\n"
             "  - new/dir1\n"
-            "  - new/dir2\n")
+            "  - new/dir2\n"
+            "  snap:\n"
+            "  - -new/dir1\n"
+            "  organize:\n"
+            "    file1: share/file1\n"
+            "    file2: share/file2\n"
+            "    dir1: new/dir1\n"
+            "    dir2: new/dir2\n"
+            "  source: https://github.com/jocave/simple-make-filesets.git\n")
 
         self.assertEqual(expected, output)
 
