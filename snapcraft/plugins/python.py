@@ -239,10 +239,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         fileset.append('-**/*.pth')
         # Holds all the .pyc files. It is a major cause of inter part
         # conflict.
-        if self.options.python_version == 'python3':
-            fileset.append('-**/__pycache__')
-        elif self.options.python_version == 'python2':
-            fileset.append('-**/*.pyc')
+        fileset.append('-**/__pycache__')
+        fileset.append('-**/*.pyc')
         return fileset
 
 
