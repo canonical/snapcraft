@@ -61,3 +61,39 @@ class PartsTestCase(integration_tests.TestCase):
             "  - -share\n")
 
         self.assertEqual(expected, output)
+
+
+class PartsWithFilesetsTestCase(integration_tests.TestCase):
+
+    def test_part_with_fileset(self):
+        self.run_snapcraft('update')
+
+        output = self.run_snapcraft(['define', 'simple-make-filesets'])
+
+        expected = (
+            "Maintainer: 'Jonathan Cave <jonathan.cave@canonical.com>'\n"
+            "Description: The filesets test from the integration test suite."
+            "\n\n"
+            "simple-make-filesets:\n"
+            "  plugin: make\n"
+            "  filesets:\n"
+            "    files:\n"
+            "    - share/file1\n"
+            "    - share/file2\n"
+            "  stage:\n"
+            "  - $files\n"
+            "  - new/dir1\n"
+            "  - new/dir2\n"
+            "  snap:\n"
+            "  - -new/dir1\n"
+            "  organize:\n"
+            "    file1: share/file1\n"
+            "    file2: share/file2\n"
+            "    dir1: new/dir1\n"
+            "    dir2: new/dir2\n"
+            "  source: https://github.com/jocave/simple-make-filesets.git\n")
+
+        self.assertEqual(expected, output)
+
+        project_dir = 'wiki-filesets'
+        self.run_snapcraft('snap', project_dir)
