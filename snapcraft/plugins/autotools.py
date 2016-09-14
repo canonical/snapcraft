@@ -98,6 +98,8 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
                 path = os.path.join(self.builddir, script)
                 if not os.path.exists(path):
                     continue
+                if os.path.isdir(path):
+                    continue
                 # Make sure it's executable
                 if not os.access(path, os.X_OK):
                     os.chmod(path,

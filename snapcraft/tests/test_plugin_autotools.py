@@ -159,23 +159,40 @@ class AutotoolsPluginTestCase(tests.TestCase):
             mock.call(['make', 'install'])
         ])
 
-    def build_with_autogen(self, files=None):
+    def build_with_autogen(self, files=None, dirs=None):
         plugin = autotools.AutotoolsPlugin('test-part', self.options,
                                            self.project_options)
         os.makedirs(plugin.sourcedir)
 
         if not files:
             files = ['autogen.sh']
+        if not dirs:
+            dirs = []
 
         # No configure-- only autogen.sh. Make sure it's executable.
         for filename in files:
             open(os.path.join(plugin.sourcedir, filename), 'w').close()
             os.chmod(os.path.join(plugin.sourcedir, filename),
                      stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        for directory in dirs:
+            os.makedirs(os.path.join(plugin.sourcedir, directory))
 
         plugin.build()
 
         return plugin
+
+    @mock.patch.object(autotools.AutotoolsPlugin, 'run')
+    def test_build_autogen_with_bootstrap_dir(self, run_mock):
+        plugin = self.build_with_autogen(files=['README'], dirs=['bootstrap'])
+
+        self.assertEqual(4, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['autoreconf', '-i']),
+            mock.call(['./configure', '--prefix=']),
+            mock.call(['make', '-j2']),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)])
+        ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
     def test_build_autogen_with_destdir(self, run_mock):
