@@ -32,7 +32,7 @@ parts:
       - $go-server
       - -usr/share/doc
   glue:
-    source: .
     plugin: dump
+    source: .
     organize:
       webcam-webui: bin/webcam-webui

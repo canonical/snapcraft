@@ -184,8 +184,8 @@ parts:
     stage-packages:
       - fswebcam
   glue:
-    source: .
     plugin: dump
+    source: .
     organize:
       webcam-webui: bin/webcam-webui
 ```
@@ -231,8 +231,8 @@ parts:
       - $fswebcam
       - $go-server
   glue:
-    source: .
     plugin: dump
+    source: .
     organize:
       webcam-webui: bin/webcam-webui
 ```
@@ -279,8 +279,8 @@ parts:
     stage-packages:
      - fswebcam
   glue:
-    source: .
     plugin: dump
+    source: .
     organize:
       webcam-webui: bin/webcam-webui
 ```

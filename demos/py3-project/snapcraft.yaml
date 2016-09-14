@@ -15,7 +15,7 @@ parts:
     source-type: git
     build-packages: [gcc, libc6-dev]
   sha3:
-    source: .
     plugin: dump
+    source: .
     organize:
      sha3sum.py: bin/sha3sum
