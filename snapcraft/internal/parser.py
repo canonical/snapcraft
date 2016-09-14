@@ -42,10 +42,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 from snapcraft.internal import log, sources
-
-
-class InvalidEntryError(Exception):
-    pass
+from snapcraft.internal.errors import SnapcraftError, InvalidEntryError
 
 
 class BadSnapcraftYAMLError(Exception):
@@ -53,10 +50,6 @@ class BadSnapcraftYAMLError(Exception):
 
 
 class MissingSnapcraftYAMLError(Exception):
-    pass
-
-
-class WikiError(Exception):
     pass
 
 
@@ -234,23 +227,6 @@ def _process_wiki_entry(entry, master_parts_list):
         master_parts_list.update(parts_list)
 
 
-def _handle_wiki_entry(entry, master_parts_list):
-    """Process the wiki entry and track errors"""
-    wiki_errors = 0
-    try:
-        _process_wiki_entry(entry, master_parts_list)
-    except InvalidEntryError as e:
-        logger.warning('Invalid wiki entry: {!r}'.format(e))
-        wiki_errors = 1
-    except sources.MissingPackageError as e:
-        logger.warning(e)
-        # TODO: support multiple types of errors, see
-        # https://bugs.launchpad.net/snapcraft/+bug/1616613
-        wiki_errors = 1
-
-    return wiki_errors
-
-
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
@@ -266,13 +242,22 @@ def _process_index(output):
     for line in output.decode().splitlines():
         if line == '---':
             if entry:
-                wiki_errors += _handle_wiki_entry(entry, master_parts_list)
+                try:
+                    _process_wiki_entry(entry, master_parts_list)
+                except SnapcraftError as e:
+                    logger.warning(e)
+                    wiki_errors += 1
+
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
 
     if entry:
-        wiki_errors += _handle_wiki_entry(entry, master_parts_list)
+        try:
+            _process_wiki_entry(entry, master_parts_list)
+        except SnapcraftError as e:
+            logger.warning(e)
+            wiki_errors += 1
 
     return {'master_parts_list': master_parts_list,
             'wiki_errors': wiki_errors}
