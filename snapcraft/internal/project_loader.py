@@ -32,6 +32,7 @@ from snapcraft.internal import (
     pluginhandler,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError
+from snapcraft.internal.parts import get_remote_parts
 
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,12 @@ class Config:
     def all_parts(self):
         return self.parts.all_parts
 
+    @property
+    def _remote_parts(self):
+        if getattr(self, '_remote_parts_attr', None) is None:
+            self._remote_parts_attr = get_remote_parts()
+        return self._remote_parts_attr
+
     def __init__(self, project_options=None):
         if project_options is None:
             project_options = snapcraft.ProjectOptions()
@@ -115,8 +122,11 @@ class Config:
 
         self._snapcraft_yaml = _get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
+
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
+
+        snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
 
         # both confinement type and build quality are optionals
@@ -197,6 +207,24 @@ class Config:
                     ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml['version']),
                     ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
                 ])
+        return snapcraft_yaml
+
+    def _process_remote_parts(self, snapcraft_yaml):
+        parts = snapcraft_yaml.get('parts', {})
+
+        for part_name in parts:
+            if 'plugin' not in parts[part_name]:
+                properties = self._remote_parts.compose(part_name,
+                                                        parts[part_name])
+                parts[part_name] = properties
+
+            after_parts = parts[part_name].get('after', [])
+            after_remote_parts = [p for p in after_parts if p not in parts]
+
+            for after_part in after_remote_parts:
+                properties = self._remote_parts.get_part(after_part)
+                parts[after_part] = properties
+
         return snapcraft_yaml
 
 
