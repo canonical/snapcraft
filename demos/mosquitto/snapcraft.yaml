@@ -19,12 +19,12 @@ apps:
 
 parts:
   mosquitto:
-    source: conf
     plugin: dump
+    source: conf
     stage-packages: [mosquitto]
   mqtt-client:
-    source: launchers
     plugin: dump
+    source: launchers
     organize:
       subscribe.py: bin/subscribe
       publish.py: bin/publish

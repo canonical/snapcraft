@@ -28,8 +28,8 @@ parts:
     plugin: dump
     source: .
     organize:
-        gopaste: bin/
+      gopaste: bin/
     filesets:
-        bin: [bin/gopaste]
+      bin: [bin/gopaste]
     stage: [$bin]
     snap: [$bin]
