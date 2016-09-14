@@ -209,7 +209,7 @@ def _process_entry(data):
 
 
 def _process_wiki_entry(entry, master_parts_list):
-    '''Add valid wiki entries to the master parts list'''
+    """Add valid wiki entries to the master parts list"""
     # return the number of errors encountered
     try:
         data = yaml.load(entry)
@@ -235,7 +235,7 @@ def _process_wiki_entry(entry, master_parts_list):
 
 
 def _handle_wiki_entry(entry, master_parts_list):
-    '''Process the wiki entry and track errors'''
+    """Process the wiki entry and track errors"""
     wiki_errors = 0
     try:
         _process_wiki_entry(entry, master_parts_list)
