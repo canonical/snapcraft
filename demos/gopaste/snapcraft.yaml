@@ -21,9 +21,9 @@ parts:
     plugin: dump
     source: https://github.com/wisnij/gopaste.git
     source-type: git
-    organize:
-      static: .
-      web.template: .
+    snap:
+      - static
+      - web.template
   glue:
     plugin: dump
     source: .
