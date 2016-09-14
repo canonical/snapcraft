@@ -631,6 +631,120 @@ class MigratableFilesetsTestCase(tests.TestCase):
         self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
 
 
+class OrganizeTestCase(tests.TestCase):
+
+    scenarios = [
+        ('simple_file', dict(
+            setup_dirs=[],
+            setup_files=['foo'],
+            organize_set={'foo': 'bar'},
+            expected=[(['bar'], '')]
+        )),
+        ('simple_dir_with_file', dict(
+            setup_dirs=['foodir'],
+            setup_files=[os.path.join('foodir', 'foo')],
+            organize_set={'foodir': 'bardir'},
+            expected=[
+                (['bardir'], ''),
+                (['foo'], 'bardir'),
+            ]
+        )),
+        ('organize_to_the_same_directory', dict(
+            setup_dirs=['bardir', 'foodir'],
+            setup_files=[
+                os.path.join('foodir', 'foo'),
+                os.path.join('bardir', 'bar'),
+                'basefoo',
+            ],
+            organize_set={
+                'foodir': 'bin',
+                'bardir': 'bin',
+                'basefoo': 'bin/basefoo'
+            },
+            expected=[
+                (['bin'], ''),
+                (['bar', 'basefoo', 'foo'], 'bin'),
+            ]
+        )),
+        ('overwrite_existing_file', dict(
+            setup_dirs=[],
+            setup_files=['foo', 'bar'],
+            organize_set={'foo': 'bar'},
+            expected=EnvironmentError,
+        )),
+        ('*_for_files', dict(
+            setup_dirs=[],
+            setup_files=['foo.conf', 'bar.conf'],
+            organize_set={'*.conf': 'dir/'},
+            expected=[
+                (['dir'], ''),
+                (['bar.conf', 'foo.conf'], 'dir'),
+            ]
+        )),
+        ('*_for_files_with_non_dir_dst', dict(
+            setup_dirs=[],
+            setup_files=['foo.conf', 'bar.conf'],
+            organize_set={'*.conf': 'dir'},
+            expected=EnvironmentError,
+        )),
+        ('*_for_directories', dict(
+            setup_dirs=['dir1', 'dir2'],
+            setup_files=[
+                os.path.join('dir1', 'foo'),
+                os.path.join('dir2', 'bar'),
+            ],
+            organize_set={'dir*': 'dir/'},
+            expected=[
+                (['dir'], ''),
+                (['dir1', 'dir2'], 'dir'),
+                (['foo'], os.path.join('dir', 'dir1')),
+                (['bar'], os.path.join('dir', 'dir2')),
+            ]
+        )),
+        ('combined_*_with_file', dict(
+            setup_dirs=['dir1', 'dir2'],
+            setup_files=[
+                os.path.join('dir1', 'foo'),
+                os.path.join('dir1', 'bar'),
+                os.path.join('dir2', 'bar'),
+            ],
+            organize_set={
+                'dir*': 'dir/',
+                'dir1/bar': '.'
+            },
+            expected=[
+                (['bar', 'dir'], ''),
+                (['dir1', 'dir2'], 'dir'),
+                (['foo'], os.path.join('dir', 'dir1')),
+                (['bar'], os.path.join('dir', 'dir2')),
+            ]
+        )),
+    ]
+
+    def test_organize_file(self):
+        base_dir = 'install'
+        os.makedirs(base_dir)
+
+        for directory in self.setup_dirs:
+            os.makedirs(os.path.join(base_dir, directory))
+
+        for file_entry in self.setup_files:
+            with open(os.path.join(base_dir, file_entry), 'w') as f:
+                f.write(file_entry)
+
+        if (isinstance(self.expected, type) and
+                issubclass(self.expected, Exception)):
+            with self.assertRaises(self.expected):
+                pluginhandler._organize_filesets(self.organize_set, base_dir)
+        else:
+            pluginhandler._organize_filesets(self.organize_set, base_dir)
+            for expect in self.expected:
+                dir_path = os.path.join(base_dir, expect[1])
+                dir_contents = os.listdir(dir_path)
+                dir_contents.sort()
+                self.assertEqual(expect[0], dir_contents)
+
+
 class RealStageTestCase(tests.TestCase):
 
     def setUp(self):
@@ -1062,7 +1176,8 @@ class StateTestCase(tests.TestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
+        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+                                                       {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
 
         state = self.handler.get_state('prime')
@@ -1075,6 +1190,49 @@ class StateTestCase(tests.TestCase):
         self.assertEqual(2, len(state.files))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
+        self.assertEqual(1, len(state.directories))
+        self.assertTrue('bin' in state.directories)
+        self.assertEqual(0, len(state.dependency_paths))
+        self.assertTrue('snap' in state.properties)
+        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue(type(state.project_options) is OrderedDict)
+        self.assertEqual(0, len(state.project_options))
+
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('shutil.copy')
+    def test_prime_state_with_stuff_already_primed(self, mock_copy,
+                                                   mock_find_dependencies):
+        mock_find_dependencies.return_value = set()
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        bindir = os.path.join(self.handler.snapdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '2'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        self.handler.prime()
+
+        self.assertEqual('prime', self.handler.last_step())
+        # bin/2 shouldn't be in this list as it was already primed by another
+        # part.
+        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+                                                       {'bin/1'})
+        self.assertFalse(mock_copy.called)
+
+        state = self.handler.get_state('prime')
+
+        self.assertTrue(type(state) is states.PrimeState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.dependency_paths) is set)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertEqual(1, len(state.files))
+        self.assertTrue('bin/1' in state.files)
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
@@ -1105,7 +1263,8 @@ class StateTestCase(tests.TestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
                  self.handler.snapdir),
@@ -1153,7 +1312,8 @@ class StateTestCase(tests.TestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir)
+        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+                                                       {'bin/1'})
         self.assertFalse(mock_copy.called)
 
         state = self.handler.get_state('prime')
@@ -2025,9 +2185,9 @@ class FindDependenciesTestCase(tests.TestCase):
 
         mock_dependencies.return_value = ['/usr/lib/libDepends.so']
 
-        dependencies = pluginhandler._find_dependencies(workdir)
+        dependencies = pluginhandler._find_dependencies(workdir, {'linked'})
 
-        mock_ms.file.assert_called_once_with(bytes(linked_elf_path, 'utf-8'))
+        mock_ms.file.assert_called_once_with(linked_elf_path)
         self.assertEqual(dependencies, {'/usr/lib/libDepends.so'})
 
     @patch('magic.open')
@@ -2048,7 +2208,8 @@ class FindDependenciesTestCase(tests.TestCase):
 
         mock_dependencies.return_value = ['/usr/lib/libDepends.so']
 
-        dependencies = pluginhandler._find_dependencies(workdir)
+        dependencies = pluginhandler._find_dependencies(
+            workdir, {'object_file.o'})
 
         self.assertFalse(mock_ms.file.called,
                          'Expected object file to be skipped')
@@ -2072,10 +2233,10 @@ class FindDependenciesTestCase(tests.TestCase):
             'statically linked, for GNU/Linux 2.6.32, '
             'BuildID[sha1]=XYZ, stripped')
 
-        dependencies = pluginhandler._find_dependencies(workdir)
+        dependencies = pluginhandler._find_dependencies(
+            workdir, {'statically-linked'})
 
-        mock_ms.file.assert_called_once_with(
-            bytes(statically_linked_elf_path, 'utf-8'))
+        mock_ms.file.assert_called_once_with(statically_linked_elf_path)
 
         self.assertFalse(
             mock_dependencies.called,
@@ -2098,9 +2259,9 @@ class FindDependenciesTestCase(tests.TestCase):
         mock_ms.load.return_value = 0
         mock_ms.file.return_value = 'JPEG image data, Exif standard: ...'
 
-        dependencies = pluginhandler._find_dependencies(workdir)
+        dependencies = pluginhandler._find_dependencies(workdir, {'non-elf'})
 
-        mock_ms.file.assert_called_once_with(bytes(non_elf_path, 'utf-8'))
+        mock_ms.file.assert_called_once_with(non_elf_path)
 
         self.assertFalse(
             mock_dependencies.called,
@@ -2124,7 +2285,7 @@ class FindDependenciesTestCase(tests.TestCase):
         mock_magic.return_value = mock_ms
         mock_ms.load.return_value = 0
 
-        dependencies = pluginhandler._find_dependencies(workdir)
+        dependencies = pluginhandler._find_dependencies(workdir, {'symlinked'})
 
         self.assertFalse(
             mock_ms.file.called, 'magic is not needed for symlinks')
@@ -2142,7 +2303,7 @@ class FindDependenciesTestCase(tests.TestCase):
         mock_magic.return_value.load.return_value = 1
 
         with self.assertRaises(RuntimeError) as raised:
-            pluginhandler._find_dependencies('.')
+            pluginhandler._find_dependencies('.', set())
 
         self.assertEqual(
             raised.exception.__str__(), 'Cannot load magic header detection')

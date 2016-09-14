@@ -14,16 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import contextmanager
 import getpass
+import json
 import logging
+import os
 import subprocess
 import tempfile
-import os
 
 from tabulate import tabulate
 import yaml
 
 from snapcraft import storeapi
+from snapcraft.internal import repo
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +47,7 @@ def _get_name_from_snap_file(snap_path):
     return snap_yaml['name']
 
 
-def login():
+def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
@@ -53,10 +56,10 @@ def login():
         'authentication): ')
 
     logger.info('Authenticating against Ubuntu One SSO.')
-    store = storeapi.StoreClient()
     try:
         store.login(
-            email, password, one_time_password=one_time_password)
+            email, password, one_time_password=one_time_password, acls=acls,
+            save=save)
     except (storeapi.errors.InvalidCredentialsError,
             storeapi.errors.StoreAuthenticationError):
         logger.info('Login failed.')
@@ -66,6 +69,11 @@ def login():
         return True
 
 
+def login():
+    store = storeapi.StoreClient()
+    return _login(store)
+
+
 def logout():
     logger.info('Clearing credentials for Ubuntu One SSO.')
     store = storeapi.StoreClient()
@@ -73,15 +81,105 @@ def logout():
     logger.info('Credentials cleared.')
 
 
-def register(snap_name, is_private=False):
-    logger.info('Registering {}.'.format(snap_name))
-    store = storeapi.StoreClient()
+@contextmanager
+def _requires_login():
     try:
-        store.register(snap_name, is_private)
+        yield
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
+
+
+def _get_usable_keys(name=None):
+    keys = json.loads(subprocess.check_output(
+        ['snap', 'keys', '--json'], universal_newlines=True))
+    if keys is not None:
+        for key in keys:
+            if name is None or name == key['name']:
+                yield key
+
+
+def _select_key(keys):
+    if len(keys) > 1:
+        print('Select a key:')
+        print()
+        tabulated_keys = tabulate(
+            [(i + 1, key['name'], key['sha3-384'])
+             for i, key in enumerate(keys)],
+            headers=["Number", "Name", "SHA3-384 fingerprint"],
+            tablefmt="plain")
+        print(tabulated_keys)
+        print()
+        while True:
+            try:
+                keynum = int(input('Key number: ')) - 1
+            except ValueError:
+                continue
+            if keynum >= 0 and keynum < len(keys):
+                return keys[keynum]
+    else:
+        return keys[0]
+
+
+def _export_key(name, account_id):
+    return subprocess.check_output(
+        ['snap', 'export-key', '--account={}'.format(account_id), name],
+        universal_newlines=True)
+
+
+def list_keys():
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use `list-keys`, '
+            'you must run `apt install snapd`.')
+    keys = list(_get_usable_keys())
+    store = storeapi.StoreClient()
+    with _requires_login():
+        account_info = store.get_account_information()
+    enabled_keys = {
+        account_key['public-key-sha3-384']
+        for account_key in account_info['account_keys']}
+    tabulated_keys = tabulate(
+        [('*' if key['sha3-384'] in enabled_keys else '-',
+          key['name'], key['sha3-384'],
+          '' if key['sha3-384'] in enabled_keys else '(not enabled)')
+         for key in keys],
+        headers=["", "Name", "SHA3-384 fingerprint", ""],
+        tablefmt="plain")
+    print(tabulated_keys)
+
+
+def register_key(name):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`register-key`, you must run `apt install snapd`.')
+    keys = list(_get_usable_keys(name=name))
+    if not keys:
+        if name is not None:
+            raise RuntimeError(
+                'You have no usable key named "{}".'.format(name))
+        else:
+            raise RuntimeError('You have no usable keys.')
+    key = _select_key(keys)
+    store = storeapi.StoreClient()
+    if not _login(store, acls=['modify_account_key'], save=False):
+        raise RuntimeError('Cannot continue without logging in successfully.')
+    logger.info('Registering key ...')
+    account_info = store.get_account_information()
+    account_key_request = _export_key(key['name'], account_info['account_id'])
+    store.register_key(account_key_request)
+    logger.info(
+        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
+            key['name'], key['sha3-384']))
+
+
+def register(snap_name, is_private=False):
+    logger.info('Registering {}.'.format(snap_name))
+    store = storeapi.StoreClient()
+    with _requires_login():
+        store.register(snap_name, is_private)
     logger.info("Congratulations! You're now the publisher for {!r}.".format(
         snap_name))
 
@@ -99,13 +197,9 @@ def push(snap_filename, release_channels=None):
     logger.info('Uploading {}.'.format(snap_filename))
 
     snap_name = _get_name_from_snap_file(snap_filename)
-    try:
-        store = storeapi.StoreClient()
+    store = storeapi.StoreClient()
+    with _requires_login():
         tracker = store.upload(snap_name, snap_filename)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
 
     result = tracker.track()
     # This is workaround until LP: #1599875 is solved
@@ -148,13 +242,9 @@ def _get_text_for_channel(channel):
 
 
 def release(snap_name, revision, release_channels):
-    try:
-        store = storeapi.StoreClient()
+    store = storeapi.StoreClient()
+    with _requires_login():
         channels = store.release(snap_name, revision, release_channels)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
 
     if 'opened_channels' in channels:
         logger.info(
@@ -172,13 +262,10 @@ def release(snap_name, revision, release_channels):
 
 def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
+    store = storeapi.StoreClient()
     try:
-        store = storeapi.StoreClient()
-        store.download(snap_name, channel, download_path, arch)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
+        with _requires_login():
+            store.download(snap_name, channel, download_path, arch)
     except storeapi.errors.SnapNotFoundError:
         raise RuntimeError(
             'Snap {name} for {arch} cannot be found'

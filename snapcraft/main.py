@@ -31,6 +31,9 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] list-keys
+  snapcraft [options] keys
+  snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
@@ -82,6 +85,9 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  list-keys    List keys available for signing snaps.
+  keys         Alias for list-keys.
+  register-key Register a key for signing snaps.
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
@@ -281,12 +287,18 @@ def _run_clean(args, project_options):
 
 
 def _is_store_command(args):
-    commands = ('register', 'upload', 'release', 'push')
+    commands = (
+        'list-keys', 'keys', 'register-key',
+        'register', 'upload', 'release', 'push')
     return any(args.get(command) for command in commands)
 
 
 def _run_store_command(args):
-    if args['register']:
+    if args['list-keys'] or args['keys']:
+        snapcraft.list_keys()
+    elif args['register-key']:
+        snapcraft.register_key(args['<key-name>'])
+    elif args['register']:
         snapcraft.register(args['<snap-name>'], args['--private'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')

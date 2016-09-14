@@ -178,6 +178,37 @@ parts: [main]
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')
+    def test_main_valid_variable_substition(self, mock_get,
+                                            mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+description: example
+parts: [main]
+""")
+        mock_get_origin_data.return_value = {
+            'name': 'something',
+            'version': '0.1',
+            'parts': {
+                'main': {
+                    'source': 'lp:$SNAPCRAFT_PROJECT_NAME'
+                              '/r$SNAPCRAFT_PROJECT_VERSION',
+
+                    'plugin': 'copy',
+                    'files': ['$SNAPCRAFT_PROJECT_NAME/file1', 'file2'],
+                },
+            }
+        }
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(1, _get_part_list_count())
+        part = _get_part('main')
+        self.assertEqual(part['source'], 'lp:something/r0.1')
+        self.assertIn('something/file1', part['files'])
+        self.assertEqual(0, retval)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    @mock.patch('snapcraft.internal.sources.get')
     def test_main_valid(self, mock_get, mock_get_origin_data):
         _create_example_output("""
 ---
@@ -978,21 +1009,27 @@ parts: [app1]
         parts = OrderedDict()
 
         parts_main = OrderedDict()
-        parts_main['source'] = 'lp:project'
-        parts_main['plugin'] = 'copy'
+        parts_main['description'] = 'example main'
         parts_main['files'] = ['file1', 'file2']
+        parts_main['maintainer'] = 'John Doe <john.doe@example.com>'
+        parts_main['plugin'] = 'copy'
+        parts_main['source'] = 'lp:project'
         parts['main'] = parts_main
 
         parts_main2 = OrderedDict()
-        parts_main2['source'] = 'lp:project'
-        parts_main2['plugin'] = 'copy'
+        parts_main2['description'] = 'example main2'
         parts_main2['files'] = ['file1', 'file2']
+        parts_main2['maintainer'] = 'Jim Doe <jim.doe@example.com>'
+        parts_main2['plugin'] = 'copy'
+        parts_main2['source'] = 'lp:project'
         parts['main2'] = parts_main2
 
         parts_app1 = OrderedDict()
-        parts_app1['source'] = 'lp:project'
-        parts_app1['plugin'] = 'copy'
+        parts_app1['description'] = 'example main2'
         parts_app1['files'] = ['file1', 'file2']
+        parts_app1['maintainer'] = 'Jim Doe <jim.doe@example.com>'
+        parts_app1['plugin'] = 'copy'
+        parts_app1['source'] = 'lp:project'
         parts['app1'] = parts_app1
 
         mock_get_origin_data.return_value = {

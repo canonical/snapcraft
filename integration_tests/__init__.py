@@ -132,6 +132,48 @@ class StoreTestCase(TestCase):
         if wait:
             time.sleep(self.test_store.register_delay)
 
+    def register_key(self, key_name, email=None, password=None,
+                     expect_success=True):
+        email = email or self.test_store.user_email
+        password = password or self.test_store.user_password
+
+        process = pexpect.spawn(
+            self.snapcraft_command, ['register-key', key_name])
+
+        process.expect_exact(
+            'Enter your Ubuntu One SSO credentials.\r\n'
+            'Email: ')
+        process.sendline(email)
+        process.expect_exact('Password: ')
+        process.sendline(password)
+        process.expect_exact(
+            "One-time password (just press enter if you don't use two-factor "
+            "authentication): ")
+        process.sendline('')
+        process.expect_exact('Authenticating against Ubuntu One SSO.')
+        if expect_success:
+            process.expect_exact('Login successful.')
+            process.expect(
+                r'Done\. The key "{}" .* may be used to sign your '
+                r'assertions\.'.format(key_name))
+        else:
+            process.expect_exact('Login failed.')
+            process.expect_exact(
+                'Cannot continue without logging in successfully.')
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def list_keys(self, expected_keys):
+        process = pexpect.spawn(self.snapcraft_command, ['list-keys'])
+
+        for enabled, key_name, key_id in expected_keys:
+            process.expect('{} *{} *{}'.format(
+                '\*' if enabled else '-', key_name, key_id))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
     def update_name_and_version(self, project_dir, name=None, version=None):
         unique_id = uuid.uuid4().int
         if name is None:

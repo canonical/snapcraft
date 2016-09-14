@@ -17,7 +17,6 @@
 import contextlib
 import filecmp
 import importlib
-import itertools
 import logging
 import os
 import shutil
@@ -324,23 +323,9 @@ class PluginHandler:
         return _migratable_filesets(fileset, self.code.installdir)
 
     def _organize(self):
-        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
+        fileset = getattr(self.code.options, 'organize', {}) or {}
 
-        for key in organize_fileset:
-            src = os.path.join(self.code.installdir, key)
-            dst = os.path.join(self.code.installdir, organize_fileset[key])
-
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-
-            if os.path.exists(dst):
-                logger.warning(
-                    'Stepping over existing file for organization %r',
-                    os.path.relpath(dst, self.code.installdir))
-                if os.path.isdir(dst):
-                    shutil.rmtree(dst)
-                else:
-                    os.remove(dst)
-            shutil.move(src, dst)
+        _organize_filesets(fileset.copy(), self.code.installdir)
 
     def stage(self, force=False):
         self.makedirs()
@@ -389,7 +374,7 @@ class PluginHandler:
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
-        dependencies = _find_dependencies(self.snapdir)
+        dependencies = _find_dependencies(self.snapdir, snap_files)
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -686,6 +671,29 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         fixup_func(dst)
 
 
+def _organize_filesets(fileset, base_dir):
+    for key in sorted(fileset, key=lambda x: ['*' in x, x]):
+        src = os.path.join(base_dir, key)
+        dst = os.path.join(base_dir, fileset[key])
+
+        sources = iglob(src, recursive=True)
+
+        for src in sources:
+            if os.path.isdir(src) and '*' not in key:
+                file_utils.link_or_copy_tree(src, dst)
+                # TODO create alternate organization location to avoid
+                # deletions.
+                shutil.rmtree(src)
+            elif os.path.isfile(dst):
+                raise EnvironmentError(
+                    'Trying to organize file {key!r} to {dst!r}, '
+                    'but {dst!r} already exists'.format(
+                        key=key, dst=os.path.relpath(dst, base_dir)))
+            else:
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.move(src, dst)
+
+
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:
         os.remove(os.path.join(directory, snap_file))
@@ -701,27 +709,30 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
             os.rmdir(migrated_directory)
 
 
-def _find_dependencies(workdir):
+def _find_dependencies(root, part_files):
     ms = magic.open(magic.NONE)
     if ms.load() != 0:
         raise RuntimeError('Cannot load magic header detection')
 
     elf_files = set()
-    fs_encoding = sys.getfilesystemencoding()
 
-    for root, dirs, files in os.walk(workdir.encode(fs_encoding)):
+    for part_file in part_files:
         # Filter out object (*.o) files-- we only care about binaries.
-        entries = (entry for entry in itertools.chain(files, dirs)
-                   if not entry.endswith(b'.o'))
-        for entry in entries:
-            path = os.path.join(root, entry)
-            if os.path.islink(path):
-                logger.debug('Skipped link {!r} when parsing {!r}'.format(
-                    path, workdir))
-                continue
-            file_m = ms.file(path)
-            if file_m.startswith('ELF') and 'dynamically linked' in file_m:
-                elf_files.add(path)
+        if part_file.endswith('.o'):
+            continue
+
+        # No need to crawl links-- the original should be here, too.
+        path = os.path.join(root, part_file)
+        if os.path.islink(path):
+            logger.debug('Skipped link {!r} while finding dependencies'.format(
+                path))
+            continue
+
+        # Finally, make sure this is actually an ELF before queueing it up
+        # for an ldd call.
+        file_m = ms.file(path)
+        if file_m.startswith('ELF') and 'dynamically linked' in file_m:
+            elf_files.add(path)
 
     dependencies = []
     for elf_file in elf_files:

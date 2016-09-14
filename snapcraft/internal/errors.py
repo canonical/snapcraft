@@ -39,6 +39,15 @@ class MissingState(Exception):
     pass
 
 
+class SnapcraftPartMissingError(SnapcraftError):
+
+    fmt = (
+        'Cannot find the definition for part {part_name!r}.\n'
+        'It may be a remote part, run `snapcraft update` '
+        'to refresh the remote parts cache.'
+    )
+
+
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (

@@ -59,6 +59,38 @@ class StoreAuthenticationError(StoreError):
         super().__init__(message=message)
 
 
+class StoreAccountInformationError(StoreError):
+
+    fmt = 'Error fetching account information from store: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
+
+
+class StoreKeyRegistrationError(StoreError):
+
+    fmt = 'Key registration failed: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
+
+
 class StoreRegistrationError(StoreError):
 
     __FMT_ALREADY_REGISTERED = (
