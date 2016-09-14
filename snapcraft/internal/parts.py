@@ -145,25 +145,6 @@ class SnapcraftLogicError(Exception):
         self._message = message
 
 
-def _expand_filesets_for(step, properties):
-    filesets = properties.get('filesets', {})
-    fileset_for_step = properties.get(step, {})
-    new_step_set = []
-
-    for item in fileset_for_step:
-        if item.startswith('$'):
-            try:
-                new_step_set.extend(filesets[item[1:]])
-            except KeyError:
-                raise SnapcraftLogicError(
-                    '\'{}\' referred to in the \'{}\' fileset but it is not '
-                    'in filesets'.format(item, step))
-        else:
-            new_step_set.append(item)
-
-    return new_step_set
-
-
 class PartsConfig:
 
     def __init__(self, parts_data, project_options, validator, build_tools,
@@ -198,9 +179,6 @@ class PartsConfig:
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
-
-            properties['stage'] = _expand_filesets_for('stage', properties)
-            properties['snap'] = _expand_filesets_for('snap', properties)
 
             if 'filesets' in properties:
                 del properties['filesets']

@@ -1691,20 +1691,20 @@ class TestFilesets(tests.TestCase):
     def test_expand_var(self):
         self.properties['stage'] = ['$1']
 
-        fs = parts._expand_filesets_for('stage', self.properties)
+        fs = project_loader._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1', '2', '3'])
 
     def test_no_expansion(self):
         self.properties['stage'] = ['1']
 
-        fs = parts._expand_filesets_for('stage', self.properties)
+        fs = project_loader._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1'])
 
     def test_invalid_expansion(self):
         self.properties['stage'] = ['$3']
 
         with self.assertRaises(parts.SnapcraftLogicError) as raised:
-            parts._expand_filesets_for('stage', self.properties)
+            project_loader._expand_filesets_for('stage', self.properties)
 
         self.assertEqual(
             raised.exception.message,
