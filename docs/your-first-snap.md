@@ -151,7 +151,7 @@ into your snap. If you look at `./stage`, you'll see a lot more files now:
     $ ls stage
     bin  etc  lib  usr  var
 
-### A Part using the dump plugin
+### A part using the dump plugin
 
 OK, so we have the two programs in our staging area. But how do we make them
 work together?
@@ -191,7 +191,7 @@ parts:
 ```
 
 The `dump` plugin just literally dumps the specified source into the target.
-We will take advantage of the built-in `organize` keyword to but our glue
+We will take advantage of the built-in `organize` keyword to put our glue
 script in the `bin/` directory.
 
 If we run Snapcraft again, we won't be surprised:
