@@ -24,6 +24,7 @@ import fixtures
 
 from snapcraft.internal import (
     common,
+    errors,
     sources
 )
 from snapcraft import tests
@@ -592,3 +593,10 @@ class TestUri(tests.TestCase):
 
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
+
+    def test__check_for_package_not_installed(self):
+        with self.assertRaises(errors.MissingPackageError):
+            sources._check_for_package('not-a-package')
+
+    def test__check_for_package_installed(self):
+        sources._check_for_package('snapcraft')
