@@ -61,6 +61,12 @@ class LoginTestCase(tests.TestCase):
 
         self.assertTrue(config.Config().is_empty())
 
+    def test_failed_login_requires_one_time_password(self):
+        with self.assertRaises(errors.StoreTwoFactorAuthenticationRequired):
+            self.client.login('dummy email', 'test requires 2fa')
+
+        self.assertTrue(config.Config().is_empty())
+
     def test_failed_login_with_wrong_one_time_password(self):
         with self.assertRaises(errors.StoreAuthenticationError):
             self.client.login(

@@ -24,13 +24,14 @@ from time import sleep
 from threading import Thread
 from queue import Queue
 
-import pymacaroons
-import requests
 from progressbar import (
     AnimatedMarker,
     ProgressBar,
     UnknownLength,
 )
+import pymacaroons
+import requests
+from simplejson.scanner import JSONDecodeError
 
 import snapcraft
 from snapcraft import config
@@ -212,7 +213,7 @@ class StoreClient():
 
 
 class SSOClient(Client):
-    """The Single Sign On server deals with authentification.
+    """The Single Sign On server deals with authentication.
 
     It is used directly or indirectly by other servers.
 
@@ -232,11 +233,20 @@ class SSOClient(Client):
             'tokens/discharge', data=json.dumps(data),
             headers={'Content-Type': 'application/json',
                      'Accept': 'application/json'})
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            response_json = {}
         if response.ok:
-            return response.json()['discharge_macaroon']
+            return response_json['discharge_macaroon']
         else:
-            raise errors.StoreAuthenticationError(
-                'Failed to get unbound discharge: '.format(response.text))
+            if (response.status_code == requests.codes.unauthorized and
+                any(error.get('code') == 'twofactor-required'
+                    for error in response_json.get('error_list', []))):
+                raise errors.StoreTwoFactorAuthenticationRequired()
+            else:
+                raise errors.StoreAuthenticationError(
+                    'Failed to get unbound discharge: '.format(response.text))
 
 
 class SnapIndexClient(Client):

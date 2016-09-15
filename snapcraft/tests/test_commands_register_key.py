@@ -114,19 +114,20 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_input.side_effect = ['sample.person@canonical.com', '123456']
         mock_getpass.return_value = 'secret'
         mock_check_output.side_effect = mock_snap_output
+        mock_login.side_effect = [
+            storeapi.errors.StoreTwoFactorAuthenticationRequired(), None]
         mock_get_account_information.return_value = {'account_id': 'abcd'}
 
         main(['register-key', 'default'])
 
         self.assertEqual(
-            'Authenticating against Ubuntu One SSO.\n'
             'Login successful.\n'
             'Registering key ...\n'
             'Done. The key "default" ({}) may be used to sign your '
             'assertions.\n'.format(get_sample_key('default')['sha3-384']),
             self.fake_logger.output)
 
-        mock_login.assert_called_once_with(
+        mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
             save=False)
@@ -286,7 +287,7 @@ class RegisterKeyTestCase(tests.TestCase):
                                      mock_login, mock_get_account_information,
                                      mock_register_key):
         mock_installed.return_value = True
-        mock_input.side_effect = ['x', '2', 'sample.person@canonical.com', '']
+        mock_input.side_effect = ['x', '2', 'sample.person@canonical.com']
         mock_getpass.return_value = 'secret'
         mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
@@ -308,7 +309,8 @@ class RegisterKeyTestCase(tests.TestCase):
             [mock.call('Key number: '), mock.call('Key number: ')])
 
         self.assertEqual(
-            'Authenticating against Ubuntu One SSO.\n'
+            'We strongly recommend enabling multi-factor authentication: '
+            'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
             'Login successful.\n'
             'Registering key ...\n'
             'Done. The key "another" ({}) may be used to sign your '
