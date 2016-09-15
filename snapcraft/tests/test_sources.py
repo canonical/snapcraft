@@ -599,4 +599,4 @@ class TestUri(tests.TestCase):
             sources._check_for_package('not-a-package')
 
     def test__check_for_package_installed(self):
-        sources._check_for_package('snapcraft')
+        sources._check_for_package('sh')
