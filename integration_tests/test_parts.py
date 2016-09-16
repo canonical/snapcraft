@@ -16,6 +16,9 @@
 
 import os
 
+from testtools.matchers import StartsWith
+import yaml
+
 import integration_tests
 
 
@@ -39,28 +42,35 @@ class PartsTestCase(integration_tests.TestCase):
         self.run_snapcraft('update')
         output = self.run_snapcraft(['define', 'curl'])
 
-        expected = (
+        expected_prefix = (
             "Maintainer: 'Sergio Schvezov <sergio.schvezov@ubuntu.com>'\n"
             "Description: A tool and a library (usable from many languages) "
             "for client side URL transfers, supporting FTP, FTPS, HTTP, "
-            "HTTPS, TELNET, DICT, FILE and LDAP.\n\n"
-            "curl:\n"
-            "  plugin: autotools\n"
-            "  source: http://curl.haxx.se/download/curl-7.44.0.tar.bz2\n"
-            "  source-type: tar\n"
-            "  configflags:\n"
-            "  - --enable-static\n"
-            "  - --enable-shared\n"
-            "  - --disable-manual\n"
-            "  snap:\n"
-            "  - -bin\n"
-            "  - -lib/*.a\n"
-            "  - -lib/pkgconfig\n"
-            "  - -lib/*.la\n"
-            "  - -include\n"
-            "  - -share\n")
+            "HTTPS, TELNET, DICT, FILE and LDAP.\n\n")
+        self.assertThat(output, StartsWith(expected_prefix))
 
-        self.assertEqual(expected, output)
+        part = yaml.safe_load(output[len(expected_prefix):])
+        expected_part = {
+            "curl": {
+                "plugin": "autotools",
+                "source": "http://curl.haxx.se/download/curl-7.44.0.tar.bz2",
+                "source-type": "tar",
+                "configflags": [
+                    "--enable-static",
+                    "--enable-shared",
+                    "--disable-manual",
+                ],
+                "snap": [
+                    "-bin",
+                    "-lib/*.a",
+                    "-lib/pkgconfig",
+                    "-lib/*.la",
+                    "-include",
+                    "-share",
+                ],
+            },
+        }
+        self.assertEqual(expected_part, part)
 
 
 class PartsWithFilesetsTestCase(integration_tests.TestCase):
@@ -70,30 +80,40 @@ class PartsWithFilesetsTestCase(integration_tests.TestCase):
 
         output = self.run_snapcraft(['define', 'simple-make-filesets'])
 
-        expected = (
+        expected_prefix = (
             "Maintainer: 'Jonathan Cave <jonathan.cave@canonical.com>'\n"
             "Description: The filesets test from the integration test suite."
-            "\n\n"
-            "simple-make-filesets:\n"
-            "  plugin: make\n"
-            "  filesets:\n"
-            "    files:\n"
-            "    - share/file1\n"
-            "    - share/file2\n"
-            "  stage:\n"
-            "  - $files\n"
-            "  - new/dir1\n"
-            "  - new/dir2\n"
-            "  snap:\n"
-            "  - -new/dir1\n"
-            "  organize:\n"
-            "    file1: share/file1\n"
-            "    file2: share/file2\n"
-            "    dir1: new/dir1\n"
-            "    dir2: new/dir2\n"
-            "  source: https://github.com/jocave/simple-make-filesets.git\n")
+            "\n\n")
+        self.assertThat(output, StartsWith(expected_prefix))
 
-        self.assertEqual(expected, output)
+        part = yaml.safe_load(output[len(expected_prefix):])
+        expected_part = {
+            "simple-make-filesets": {
+                "plugin": "make",
+                "filesets": {
+                    "files": [
+                        "share/file1",
+                        "share/file2",
+                    ],
+                },
+                "stage": [
+                    "$files",
+                    "new/dir1",
+                    "new/dir2",
+                ],
+                "snap": [
+                    "-new/dir1",
+                ],
+                "organize": {
+                    "file1": "share/file1",
+                    "file2": "share/file2",
+                    "dir1": "new/dir1",
+                    "dir2": "new/dir2",
+                },
+                "source": "https://github.com/jocave/simple-make-filesets.git",
+            },
+        }
+        self.assertEqual(expected_part, part)
 
         project_dir = 'wiki-filesets'
         self.run_snapcraft('snap', project_dir)
