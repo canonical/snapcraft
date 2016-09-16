@@ -26,11 +26,11 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
+from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
-    BASE_DIR,
     PARTS_FILE,
     main,
 )
@@ -65,6 +65,15 @@ class TestParser(TestCase):
             os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
+
+    def setUp(self):
+        super().setUp()
+        tempdir = tempfile.mkdtemp()
+        patcher = mock.patch('snapcraft.internal.parser._get_base_dir')
+        base_dir = patcher.start()
+        base_dir.return_value = tempdir
+        self.addCleanup(patcher.stop)
+        self.addCleanup(shutil.rmtree, tempdir)
 
     def test_ordereddict_yaml(self):
         from collections import OrderedDict
@@ -804,7 +813,8 @@ parts: [somepart]
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
+    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(
+            self, mock_get):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -821,8 +831,10 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        origin_dir = os.path.join(parser._get_base_dir(),
+                                  _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
+        self.addCleanup(shutil.rmtree, origin_dir)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
         with open(os.path.join(origin_dir, 'snapcraft.yaml'),
@@ -851,8 +863,10 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        origin_dir = os.path.join(parser._get_base_dir(),
+                                  _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
+        self.addCleanup(shutil.rmtree, origin_dir)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
         with open(os.path.join(origin_dir, 'snapcraft.yaml'),
