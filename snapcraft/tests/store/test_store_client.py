@@ -76,6 +76,12 @@ class LoginTestCase(tests.TestCase):
 
         self.assertTrue(config.Config().is_empty())
 
+    def test_failed_login_with_invalid_json(self):
+        with self.assertRaises(errors.StoreAuthenticationError):
+            self.client.login('dummy email', 'test 401 invalid json')
+
+        self.assertTrue(config.Config().is_empty())
+
 
 class DownloadTestCase(tests.TestCase):
 
