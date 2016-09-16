@@ -58,6 +58,11 @@ def _get_part_list_count(path=PARTS_FILE):
     return len(_get_part_list(path))
 
 
+class TestParserBaseDir(TestCase):
+    def test__get_base_dir(self):
+        self.assertEqual('/tmp', parser._get_base_dir())
+
+
 class TestParser(TestCase):
     def tearDown(self):
         try:
