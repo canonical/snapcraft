@@ -216,11 +216,8 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
             ('otp' not in data or
              data['otp'] == 'test correct one-time password')):
             self._send_tokens_discharge(data)
-        elif data['password'] == 'test requires 2fa' and 'otp' not in data:
+        elif data['password'] == 'test requires 2fa':
             self._send_twofactor_required_error()
-        elif (data['password'] == 'test requires 2fa' and
-              data['otp'] == 'test correct one-time password'):
-            self._send_tokens_discharge(data)
         else:
             self._send_invalid_credentials_error()
 
