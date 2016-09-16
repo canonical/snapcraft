@@ -113,11 +113,12 @@ class NodePlugin(snapcraft.BasePlugin):
     def _npm_install(self):
         self._nodejs_tar.provision(
             self.installdir, clean_target=False, keep_tarball=True)
-        npm_install = ['npm', '--cache-min=Infinity', 'install', '--global']
+        npm_install = ['npm', '--cache-min=Infinity', 'install']
         for pkg in self.options.node_packages:
-            self.run(npm_install + [pkg])
+            self.run(npm_install + ['--global'] + [pkg])
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
             self.run(npm_install)
+            self.run(npm_install + ['--global'])
 
 
 def _get_nodejs_base(node_engine):
