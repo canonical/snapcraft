@@ -357,8 +357,8 @@ class SCAClient(Client):
     def _is_needs_refresh_response(response):
         return (
             response.status_code == requests.codes.unauthorized and
-            response.headers.get('WWW-Authenticate') ==
-                'Macaroon needs_refresh=1')
+            response.headers.get('WWW-Authenticate') == (
+                'Macaroon needs_refresh=1'))
 
     def request(self, *args, **kwargs):
         response = super().request(*args, **kwargs)
