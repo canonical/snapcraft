@@ -2,14 +2,12 @@ configparser==3.5.0
 docopt==0.6.2
 file-magic==0.3.0
 jsonschema==2.5.1
-oauthlib==1.0.3
 progressbar33==2.4
 PyYAML==3.11
 pyxdg==0.25
 requests==2.9.1
 https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz
 https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz
-requests-oauthlib==0.4.0
 requests-toolbelt==0.6.0
 responses==0.5.1
 petname==1.12
