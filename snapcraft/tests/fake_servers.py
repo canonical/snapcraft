@@ -216,6 +216,10 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
             ('otp' not in data or
              data['otp'] == 'test correct one-time password')):
             self._send_tokens_discharge(data)
+        elif data['password'] == 'test requires 2fa':
+            self._send_twofactor_required_error()
+        elif data['password'] == 'test 401 invalid json':
+            self._send_401_invalid_json()
         else:
             self._send_invalid_credentials_error()
 
@@ -229,14 +233,33 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(
             json.dumps(response).encode())
 
+    def _send_twofactor_required_error(self):
+        self.send_response(401)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'error_list': [{
+                'code': 'twofactor-required',
+                'message': '2-factor authentication required.',
+            }],
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _send_401_invalid_json(self):
+        self.send_response(401)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(b'invalid{json')
+
     def _send_invalid_credentials_error(self):
         self.send_response(401)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'code': 'INVALID_CREDENTIALS',
-            'message': 'Provided email/password is not correct.',
-            'message': 'Provided email/password is not correct.',
+            'error_list': [{
+                'code': 'invalid-credentials',
+                'message': 'Provided email/password is not correct.',
+            }],
         }
         self.wfile.write(json.dumps(response).encode())
 
