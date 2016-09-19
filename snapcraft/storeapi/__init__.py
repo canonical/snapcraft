@@ -161,15 +161,7 @@ class StoreClient():
         self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
 
     def sign_build(self, account_info, snap_name, snap_filename,
-                   grade=None, key_name=None, local=False):
-
-        if grade is None:
-            # sane default akin to strict
-            grade = 'stable'
-
-        if key_name is None:
-            # what register-key would create
-            key_name = 'default'
+                   grade, key_name='default', local=False):
 
         # XXX: how to better provide account_info for both sign-build tasks?
         self.sca.generate_snap_build(
