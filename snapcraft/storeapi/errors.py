@@ -233,8 +233,4 @@ class SnapBuildError(StoreError):
         except JSONDecodeError:
             pass
 
-        import pdb; pdb.set_trace()
-        if response.status_code == 409:
-            self.fmt = self.__FMT_NOT_REGISTERED
-
         super().__init__(error=error)
