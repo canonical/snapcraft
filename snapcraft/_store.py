@@ -183,7 +183,7 @@ def register(snap_name, is_private=False):
         snap_name))
 
 
-def sign_build(snap_filename, key_name=None, local=False):
+def sign_build(snap_filename, key_name='default', local=False):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
