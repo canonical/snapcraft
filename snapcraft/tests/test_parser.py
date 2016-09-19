@@ -73,12 +73,12 @@ class TestParser(TestCase):
     def setUp(self):
         super().setUp()
         tempdir = fixtures.TempDir()
-        tempdir.setUp()
+        self.useFixture(tempdir)
+        self.tempdir_path = tempdir.path
         patcher = mock.patch('snapcraft.internal.parser._get_base_dir')
         base_dir = patcher.start()
         base_dir.return_value = tempdir.path
         self.addCleanup(patcher.stop)
-        self.addCleanup(tempdir.cleanUp)
 
     def test_ordereddict_yaml(self):
         from collections import OrderedDict
@@ -1017,34 +1017,29 @@ parts: [app1]
                          _get_part_list())
 
     def test__get_origin_data_both(self):
-        tempdir = fixtures.TempDir()
-        tempdir.setUp()
-        self.addCleanup(tempdir.cleanUp)
-        with open(os.path.join(tempdir.path, '.snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  '.snapcraft.yaml'), 'w') as fp:
             fp.write("")
-        with open(os.path.join(tempdir.path, 'snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
         self.assertRaises(BadSnapcraftYAMLError, _get_origin_data,
-                          tempdir.path)
+                          self.tempdir_path)
 
     def test__get_origin_data_hidden_only(self):
-        tempdir = fixtures.TempDir()
-        tempdir.setUp()
-        self.addCleanup(tempdir.cleanUp)
-        with open(os.path.join(tempdir.path, '.snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  '.snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        _get_origin_data(tempdir.path)
+        _get_origin_data(self.tempdir_path)
 
     def test__get_origin_data_normal_only(self):
-        tempdir = fixtures.TempDir()
-        tempdir.setUp()
-        self.addCleanup(tempdir.cleanUp)
-        with open(os.path.join(tempdir.path, 'snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        _get_origin_data(tempdir.path)
+        _get_origin_data(self.tempdir_path)
 
     def test__encode_origin_git(self):
         origin = 'git@github.com:testuser/testproject.git'
