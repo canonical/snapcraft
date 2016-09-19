@@ -22,6 +22,7 @@ import os
 import subprocess
 import urllib.parse
 
+from re import sub
 from time import sleep
 from threading import Thread
 from queue import Queue
@@ -159,17 +160,30 @@ class StoreClient():
     def register(self, snap_name, is_private=False):
         self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
 
+    def sign_build(self, account_info, snap_name, snap_filename,
+                   grade=None, key_name=None, local=False):
+
+        if grade is None:
+            # sane default akin to strict
+            grade = 'stable'
+
+        if key_name is None:
+            # what register-key would create
+            key_name = 'default'
+
+        # XXX: how to better provide account_info for both sign-build tasks?
+        self.sca.generate_snap_build(
+            account_info, snap_name, snap_filename, grade, key_name)
+        if not local:
+            self.sca.push_snap_build(
+                account_info, snap_name, snap_filename)
+
     def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:
             raise errors.InvalidCredentialsError(
                 'Unbound discharge not in the config file')
-
-        # XXX test calls
-        # push needs an option to only generate and not also push it?
-        self.sca.generate_snap_build(snap_name, snap_filename)
-        self.sca.push_snap_build(snap_name, snap_filename)
 
         updown_data = _upload.upload_files(snap_filename, self.updown)
 
@@ -394,63 +408,57 @@ class SCAClient(Client):
 
         return response_json
 
-    # XXX test
-    def generate_snap_build(self, snap_name, snap_filename):
-        assertion_file = snap_filename + '.build'
+    def generate_snap_build(self, account_info, snap_name,
+                            snap_filename, grade, key_name):
+        assertion_file = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
         if os.path.isfile(assertion_file):
             logger.debug('Skipping snap-build generation, it already exists')
             return
 
-        # collect all the data required by snap-build that snap
-        # assert itself cannot infer from the actual snap content
-        account_info = self.get_account_information()
         authority_id = account_info['account_id']
         snaps = account_info['snaps'][constants.DEFAULT_SERIES]
         snap_id = snaps[snap_name]['snap-id']
 
         with open(assertion_file, 'w+') as outfile:
             try:
-                # snap-digest is calculated by snap assert itself
-                # snap-size is calculated by snap assert itself
-                # timestamp is taken by snap assert itself
-                # grade must be a supported push option?
-                # custom key name must be supported
+                # snap-digest is calculated by snap sign-build itself
+                # snap-size is calculated by snap sign-build itself
+                # timestamp is taken by snap sign-build itself
                 cmd = ['snap', 'sign-build',
                        '--developer-id=' + authority_id,
                        '--snap-id=' + snap_id,
-                       '--grade', 'stable',
-                       '-k', 'default',
+                       '--grade=' + grade,
+                       '-k', key_name,
                        snap_filename]
+                # XXX: if the key is not passwordless snapcraft swallows
+                # the snapd password prompt here... must be fixed...
+                logger.debug('Signing build assertion: {}'.format(cmd))
                 snapcraft.internal.common.run(cmd, stdout=outfile)
             except subprocess.CalledProcessError:
-                msg = 'Failed signing assertion {}'.format(assertion_file)
+                msg = 'Failed to sign build assertion {}'.format(assertion_file)
                 raise snapcraft.internal.meta.CommandError(msg)
-        logger.debug('Saved {} assertion on disk'.format(assertion_file))
+        logger.info('Assertion {} saved to disk.'.format(assertion_file))
 
-    # XXX test
-    def push_snap_build(self, snap_name, snap_filename):
-        account_info = self.get_account_information()
+    def push_snap_build(self, account_info, snap_name, snap_filename):
+        assertion_file = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
         snaps = account_info['snaps'][constants.DEFAULT_SERIES]
         snap_id = snaps[snap_name]['snap-id']
-        assertion_file = snap_filename + '.build'
 
         try:
             with open(assertion_file, 'r') as blob:
-                data = {'assertion': blob.read()}
+                data = json.dumps({"assertion": blob.read()})
                 logger.debug(data)
         except IOError as err:
             raise snapcraft.internal.meta.CommandError(err)
         url = 'snaps/{}/builds'.format(snap_id)
         auth = _macaroon_auth(self.conf)
-        # XXX test call
         response = self.post(url, data=data,
                              headers={'Authorization': auth,
                                       'Content-Type': 'application/json'})
         logger.debug(response.content)
         if not response.ok:
-            # XXX test UX
-            raise errors.SnapBuildError(snap_name, response)
-        logger.debug('Pushed local assertion {}'.format(assertion_file))
+            raise errors.SnapBuildError(response)
+        logger.debug('Assertion {} pushed.'.format(assertion_file))
 
 
 class StatusTracker:

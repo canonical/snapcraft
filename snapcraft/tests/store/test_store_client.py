@@ -153,6 +153,15 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'test-snap', 'test-channel', download_path)
 
+class SignBuildTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.Storeclient()
+
+    def test_sign_build(self):
+        pass
+
 
 class GetAccountInformationTestCase(tests.TestCase):
 

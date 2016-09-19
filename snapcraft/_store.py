@@ -32,7 +32,7 @@ from snapcraft.internal import repo
 logger = logging.getLogger(__name__)
 
 
-def _get_name_from_snap_file(snap_path):
+def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         output = subprocess.check_output(
             ['unsquashfs', '-d',
@@ -43,8 +43,7 @@ def _get_name_from_snap_file(snap_path):
                 temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
         ) as yaml_file:
             snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
+    return snap_yaml
 
 
 def _login(store, acls=None, save=True):
@@ -184,6 +183,26 @@ def register(snap_name, is_private=False):
         snap_name))
 
 
+def sign_build(snap_filename, key_name=None, local=False):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`sign-build`, you must run `apt install snapd`.')
+
+    # we pass account_info to sign_build so we call it only once
+    # for both generating/signing and pushing the assertion data
+    store = storeapi.StoreClient()
+    account_info = store.get_account_information()
+
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_name = snap_yaml['name']
+    grade = snap_yaml['grade']
+
+    with _requires_login():
+        store.sign_build(
+            account_info, snap_name, snap_filename, grade, key_name, local)
+
+
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
@@ -196,7 +215,8 @@ def push(snap_filename, release_channels=None):
 
     logger.info('Uploading {}.'.format(snap_filename))
 
-    snap_name = _get_name_from_snap_file(snap_filename)
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
     with _requires_login():
         tracker = store.upload(snap_name, snap_filename)

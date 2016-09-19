@@ -21,7 +21,7 @@ from snapcraft.internal.errors import SnapcraftError
 
 class InvalidCredentialsError(SnapcraftError):
 
-    fmt = 'Invalid credentials: {}.'
+    fmt = 'Invalid credentials: {message}.'
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -218,23 +218,23 @@ class StoreReleaseError(StoreError):
 
 class SnapBuildError(StoreError):
 
-    __FMT_ALREADY_ASSERTED = (
-        'A build with this exact same content and revision '
-        'of {snap_name} has been asserted already.')
+    __FMT_NOT_REGISTERED = 'Lalalala {error}'
 
-    fmt = 'Could not assert build: "{text!r}".'
+    fmt = 'Could not assert build: {error}'
 
-    def __init__(self, snap_name, response):
+    def __init__(self, response):
+        import pdb; pdb.set_trace()
+        error = '{} {}'.format(response.status_code, response.reason)
         try:
             response_json = response.json()
-        except (AttributeError, JSONDecodeError):
-            response_json = {}
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
 
-        print(response_json)
+        import pdb; pdb.set_trace()
         if response.status_code == 409:
-            self.fmt = self.__FMT_ALREADY_ASSERTED
-        elif 'errors' in response_json:
-            self.fmt = '{errors}'
+            self.fmt = self.__FMT_NOT_REGISTERED
 
-        super().__init__(snap_name=snap_name, text=response.content,
-                         **response_json)
+        super().__init__(error=error)

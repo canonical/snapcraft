@@ -174,6 +174,9 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
+    def sign_build(self):
+        pass
+
     def update_name_and_version(self, project_dir, name=None, version=None):
         unique_id = uuid.uuid4().int
         if name is None:
