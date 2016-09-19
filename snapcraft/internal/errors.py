@@ -84,10 +84,7 @@ class MissingPackageError(SnapcraftError):
 
 class InvalidEntryError(SnapcraftError):
 
-    fmt = (
-        'Invalid wiki entry:'
-        ' {error!r}'
-    )
+    fmt = 'Invalid wiki entry: {error!r}'
 
     def __init__(self, error=None):
         super().__init__(error=error)
