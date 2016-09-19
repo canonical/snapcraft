@@ -16,7 +16,6 @@
 
 import logging
 import os
-import shutil
 from unittest import mock
 
 import requests
@@ -818,8 +817,7 @@ parts: [somepart]
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(
-            self, mock_get):
+    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -839,7 +837,6 @@ parts: [somepart]
         origin_dir = os.path.join(parser._get_base_dir(),
                                   _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
-        self.addCleanup(shutil.rmtree, origin_dir)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
         with open(os.path.join(origin_dir, 'snapcraft.yaml'),
@@ -871,7 +868,6 @@ parts: [somepart]
         origin_dir = os.path.join(parser._get_base_dir(),
                                   _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
-        self.addCleanup(shutil.rmtree, origin_dir)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
         with open(os.path.join(origin_dir, 'snapcraft.yaml'),
