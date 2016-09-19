@@ -433,7 +433,8 @@ class SCAClient(Client):
                 # XXX: if the key is not passwordless snapcraft swallows
                 # the snapd password prompt here... must be fixed...
                 logger.debug('Signing build assertion: {}'.format(cmd))
-                snapcraft.internal.common.run(cmd, stdout=outfile)
+                snapcraft.internal.common.run(
+                    cmd, stdout=outfile, stdin=subprocess.PIPE)
             except subprocess.CalledProcessError:
                 msg = 'Failed to sign build assertion {}'.format(assertion_file)
                 raise snapcraft.internal.meta.CommandError(msg)
