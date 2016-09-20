@@ -197,7 +197,7 @@ class StoreTestCase(TestCase):
         if local:
             # only sign it, no pushing
             cmd.append('--local')
-        process = pexpect.spawnu(self.snapcraft_command, cmd)
+        process = pexpect.spawn(self.snapcraft_command, cmd)
         if local:
             process.expect(
                 'Assertion basic_0.1_all.snap-build saved to disk.')
