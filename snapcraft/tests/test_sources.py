@@ -30,7 +30,7 @@ from snapcraft.internal import (
 from snapcraft import tests
 
 
-class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         data = 'Test fake compressed file'
@@ -52,7 +52,7 @@ class TestTar(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(server.server_close)
@@ -81,7 +81,7 @@ class TestZip(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=self.server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(self.server.server_close)
@@ -118,6 +118,55 @@ class TestZip(tests.TestCase):
 
         with open(zip_download, 'r') as zip_file:
             self.assertEqual('Test fake compressed file', zip_file.read())
+
+
+class TestDeb(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+        self.server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+        server_thread.start()
+
+        patcher = unittest.mock.patch('apt_inst.DebFile')
+        self.mock_deb = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_pull_debfile_must_download_and_extract(self):
+        dest_dir = 'src'
+        os.makedirs(dest_dir)
+        deb_file_name = 'test.deb'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=deb_file_name)
+        deb_source = sources.Deb(source, dest_dir)
+
+        deb_source.pull()
+
+        self.mock_deb.assert_called_once_with(
+            os.path.join(deb_source.source_dir, deb_file_name))
+
+    def test_extract_and_keep_debfile(self):
+        deb_file_name = 'test.deb'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=deb_file_name)
+        dest_dir = os.path.abspath(os.curdir)
+        deb_source = sources.Deb(source, dest_dir)
+
+        deb_source.download()
+        deb_source.provision(dst=dest_dir, keep_deb=True)
+
+        deb_download = os.path.join(deb_source.source_dir, deb_file_name)
+        self.mock_deb.assert_called_once_with(
+            os.path.join(deb_source.source_dir, deb_file_name))
+
+        with open(deb_download, 'r') as deb_file:
+            self.assertEqual('Test fake compressed file', deb_file.read())
 
 
 class SourceTestCase(tests.TestCase):
