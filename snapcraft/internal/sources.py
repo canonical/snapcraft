@@ -76,6 +76,7 @@ import apt_inst
 
 from snapcraft.internal import common
 from snapcraft import file_utils
+from snapcraft.internal.errors import MissingPackageError
 from snapcraft.internal.indicators import download_requests_stream
 
 
@@ -88,14 +89,27 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
+def _check_for_package(command):
+    try:
+        subprocess.check_call(['which', command],
+                              stderr=subprocess.DEVNULL,
+                              stdout=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        raise MissingPackageError([command])
+
+
 class Base:
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
+                 source_branch=None, command=None):
         self.source = source
         self.source_dir = source_dir
         self.source_tag = source_tag
         self.source_branch = source_branch
+        self.command = command
+
+        if self.command:
+            _check_for_package(self.command)
 
 
 class FileBase(Base):
@@ -130,10 +144,9 @@ class Script(FileBase):
 
 
 class Bazaar(Base):
-
     def __init__(self, source, source_dir, source_tag=None,
                  source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+        super().__init__(source, source_dir, source_tag, source_branch, 'bzr')
         if source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
@@ -143,21 +156,20 @@ class Bazaar(Base):
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
         if os.path.exists(os.path.join(self.source_dir, '.bzr')):
-            cmd = ['bzr', 'pull'] + tag_opts + \
+            cmd = [self.command, 'pull'] + tag_opts + \
                   [self.source, '-d', self.source_dir]
         else:
             os.rmdir(self.source_dir)
-            cmd = ['bzr', 'branch'] + tag_opts + \
+            cmd = [self.command, 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
         subprocess.check_call(cmd)
 
 
 class Git(Base):
-
     def __init__(self, source, source_dir, source_tag=None,
                  source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+        super().__init__(source, source_dir, source_tag, source_branch, 'git')
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
@@ -172,28 +184,27 @@ class Git(Base):
                 refspec = 'refs/tags/' + self.source_tag
 
             # Pull changes to this repository and any submodules.
-            subprocess.check_call(['git', '-C', self.source_dir, 'pull',
-                                   '--recurse-submodules=yes', self.source,
-                                   refspec])
+            subprocess.check_call([self.command, '-C', self.source_dir,
+                                   'pull', '--recurse-submodules=yes',
+                                   self.source, refspec])
 
             # Merge any updates for the submodules (if any).
-            subprocess.check_call(['git', '-C', self.source_dir, 'submodule',
-                                   'update'])
+            subprocess.check_call([self.command, '-C', self.source_dir,
+                                   'submodule', 'update'])
         else:
             branch_opts = []
             if self.source_tag or self.source_branch:
                 branch_opts = ['--branch',
                                self.source_tag or self.source_branch]
-            subprocess.check_call(['git', 'clone', '--depth', '1',
+            subprocess.check_call([self.command, 'clone', '--depth', '1',
                                   '--recursive'] + branch_opts +
                                   [self.source, self.source_dir])
 
 
 class Mercurial(Base):
-
     def __init__(self, source, source_dir, source_tag=None,
                  source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+        super().__init__(source, source_dir, source_tag, source_branch, 'hg')
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
@@ -206,21 +217,21 @@ class Mercurial(Base):
                 ref = ['-r', self.source_tag]
             elif self.source_branch:
                 ref = ['-b', self.source_branch]
-            cmd = ['hg', 'pull'] + ref + [self.source, ]
+            cmd = [self.command, 'pull'] + ref + [self.source, ]
         else:
             ref = []
             if self.source_tag or self.source_branch:
                 ref = ['-u', self.source_tag or self.source_branch]
-            cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
+            cmd = [self.command, 'clone'] + ref + [self.source,
+                                                   self.source_dir]
 
         subprocess.check_call(cmd)
 
 
 class Subversion(Base):
-
     def __init__(self, source, source_dir, source_tag=None,
                  source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+        super().__init__(source, source_dir, source_tag, source_branch, 'svn')
         if source_tag:
             if source_branch:
                 raise IncompatibleOptionsError(
@@ -236,16 +247,16 @@ class Subversion(Base):
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
-                ['svn', 'update'], cwd=self.source_dir)
+                [self.command, 'update'], cwd=self.source_dir)
         else:
             if os.path.isdir(self.source):
                 subprocess.check_call(
-                    ['svn', 'checkout',
+                    [self.command, 'checkout',
                      'file://{}'.format(os.path.abspath(self.source)),
                      self.source_dir])
             else:
                 subprocess.check_call(
-                    ['svn', 'checkout', self.source, self.source_dir])
+                    [self.command, 'checkout', self.source, self.source_dir])
 
 
 class Tar(FileBase):
