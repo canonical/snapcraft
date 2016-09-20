@@ -440,7 +440,6 @@ class SCAClient(Client):
         try:
             with open(assertion_file, 'r') as blob:
                 data = json.dumps({"assertion": blob.read()})
-                logger.debug(data)
         except IOError as err:
             raise snapcraft.internal.meta.CommandError(err)
         url = 'snaps/{}/builds'.format(snap_id)
@@ -448,7 +447,6 @@ class SCAClient(Client):
         response = self.post(url, data=data,
                              headers={'Authorization': auth,
                                       'Content-Type': 'application/json'})
-        logger.debug(response.content)
         if not response.ok:
             raise errors.SnapBuildError(response)
         logger.info('Assertion {} pushed.'.format(assertion_file))
