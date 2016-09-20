@@ -162,12 +162,15 @@ class MakePluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
+    @mock.patch('snapcraft.file_utils.link_or_copy_tree')
     @mock.patch('snapcraft.file_utils.link_or_copy')
-    def test_build_artifacts(self, link_or_copy_mock, run_mock):
-        self.options.artifacts = ['artifact1', 'artifact2']
+    def test_build_artifacts(self, link_or_copy_mock,
+                             link_or_copy_tree_mock, run_mock):
+        self.options.artifacts = ['dir_artifact', 'file_artifact']
         plugin = make.MakePlugin('test-part', self.options,
                                  self.project_options)
-        os.makedirs(plugin.sourcedir)
+
+        os.makedirs(os.path.join(plugin.sourcedir, 'dir_artifact'))
 
         plugin.build()
 
@@ -175,10 +178,15 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
         ])
-        self.assertEqual(2, link_or_copy_mock.call_count)
-        for artifact in self.options.artifacts:
-            link_or_copy_mock.assert_has_calls([
-                mock.call(
-                    os.path.join(plugin.builddir, artifact),
-                    os.path.join(plugin.installdir, artifact),
-                )])
+        self.assertEqual(1, link_or_copy_mock.call_count)
+        link_or_copy_mock.assert_has_calls([
+            mock.call(
+                os.path.join(plugin.builddir, 'file_artifact'),
+                os.path.join(plugin.installdir, 'file_artifact'),
+            )])
+        self.assertEqual(1, link_or_copy_tree_mock.call_count)
+        link_or_copy_tree_mock.assert_has_calls([
+            mock.call(
+                os.path.join(plugin.builddir, 'dir_artifact'),
+                os.path.join(plugin.installdir, 'dir_artifact'),
+            )])
