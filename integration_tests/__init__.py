@@ -174,9 +174,6 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
-    def sign_build(self):
-        pass
-
     def update_name_and_version(self, project_dir, name=None, version=None):
         unique_id = uuid.uuid4().int
         if name is None:
@@ -194,3 +191,12 @@ class StoreTestCase(TestCase):
             else:
                 print(line)
         return updated_project_dir
+
+    def sign_build(self, snap_filename, key_name='default', local=False):
+        process = pexpect.spawn(
+            self.snapcraft_command, ['sign-build', snap_filename, key_name])
+        assertion = '{}_0.1_amd64.snap-build'.format(snap_filename)
+        process.expect_exact('Assertion {} saved to disk.'.format(assertion))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
