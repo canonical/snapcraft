@@ -102,3 +102,19 @@ class TestLinkOrCopyTree(tests.TestCase):
         file_utils.link_or_copy_tree('foo/bar', 'qux')
         self.assertTrue(os.path.isfile(os.path.join('qux', '3')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'baz', '4')))
+
+
+class TestLinkOrCopy(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        os.makedirs('foo/bar/baz')
+        open('1', 'w').close()
+        open(os.path.join('foo', '2'), 'w').close()
+        open(os.path.join('foo', 'bar', '3'), 'w').close()
+        open(os.path.join('foo', 'bar', 'baz', '4'), 'w').close()
+
+    def test_copy_nested_file(self):
+        file_utils.link_or_copy('foo/bar/baz/4', 'foo2/bar/baz/4')
+        self.assertTrue(os.path.isfile('foo2/bar/baz/4'))

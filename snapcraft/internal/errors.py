@@ -69,3 +69,22 @@ class SnapcraftPartConflictError(SnapcraftError):
         super().__init__(part_name=part_name,
                          other_part_name=other_part_name,
                          file_paths='\n'.join(sorted(spaced_conflict_files)))
+
+
+class MissingPackageError(SnapcraftError):
+
+    fmt = (
+        'One or more required packages are missing, please install:'
+        ' {required_packages!r}'
+    )
+
+    def __init__(self, required_packages):
+        super().__init__(required_packages=required_packages)
+
+
+class InvalidWikiEntryError(SnapcraftError):
+
+    fmt = 'Invalid wiki entry: {error!r}'
+
+    def __init__(self, error=None):
+        super().__init__(error=error)
