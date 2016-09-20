@@ -96,7 +96,7 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             scripts = ["autogen.sh", "bootstrap"]
             for script in scripts:
                 path = os.path.join(self.builddir, script)
-                if not os.path.exists(path):
+                if not os.path.exists(path) or os.path.isdir(path):
                     continue
                 # Make sure it's executable
                 if not os.access(path, os.X_OK):

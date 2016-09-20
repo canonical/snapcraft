@@ -185,9 +185,10 @@ parts:
 
 class FakeSSOServer(http.server.HTTPServer):
 
-    def __init__(self, server_address):
+    def __init__(self, fake_store, server_address):
         super().__init__(
             server_address, FakeSSORequestHandler)
+        self.fake_store = fake_store
 
 
 class FakeSSORequestHandler(BaseHTTPRequestHandler):
@@ -198,8 +199,12 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         parsed_path = urllib.parse.urlparse(self.path)
         tokens_discharge_path = urllib.parse.urljoin(
             self._API_PATH, 'tokens/discharge')
+        tokens_refresh_path = urllib.parse.urljoin(
+            self._API_PATH, 'tokens/refresh')
         if parsed_path.path.startswith(tokens_discharge_path):
             self._handle_tokens_discharge_request()
+        elif parsed_path.path.startswith(tokens_refresh_path):
+            self._handle_tokens_refresh_request()
         else:
             logger.error('Not implemented path in fake SSO server: {}'.format(
                 self.path))
@@ -215,11 +220,15 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         if (data['password'] == 'test correct password' and
             ('otp' not in data or
              data['otp'] == 'test correct one-time password')):
-            self._send_tokens_discharge(data)
+            self._send_tokens_discharge()
+        elif data['password'] == 'test requires 2fa':
+            self._send_twofactor_required_error()
+        elif data['password'] == 'test 401 invalid json':
+            self._send_401_invalid_json()
         else:
             self._send_invalid_credentials_error()
 
-    def _send_tokens_discharge(self, data):
+    def _send_tokens_discharge(self):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -229,16 +238,39 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(
             json.dumps(response).encode())
 
+    def _send_twofactor_required_error(self):
+        self.send_response(401)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'error_list': [{
+                'code': 'twofactor-required',
+                'message': '2-factor authentication required.',
+            }],
+        }
+        self.wfile.write(json.dumps(response).encode())
+
+    def _send_401_invalid_json(self):
+        self.send_response(401)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(b'invalid{json')
+
     def _send_invalid_credentials_error(self):
         self.send_response(401)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
-            'code': 'INVALID_CREDENTIALS',
-            'message': 'Provided email/password is not correct.',
-            'message': 'Provided email/password is not correct.',
+            'error_list': [{
+                'code': 'invalid-credentials',
+                'message': 'Provided email/password is not correct.',
+            }],
         }
         self.wfile.write(json.dumps(response).encode())
+
+    def _handle_tokens_refresh_request(self):
+        self._send_tokens_discharge()
+        self.server.fake_store.needs_refresh = False
 
 
 class FakeStoreUploadServer(http.server.HTTPServer):
@@ -278,9 +310,10 @@ class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
 
 class FakeStoreAPIServer(http.server.HTTPServer):
 
-    def __init__(self, server_address):
+    def __init__(self, fake_store, server_address):
         super().__init__(
             server_address, FakeStoreAPIRequestHandler)
+        self.fake_store = fake_store
         self.account_keys = []
 
 
@@ -289,6 +322,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     _DEV_API_PATH = '/dev/api/'
 
     def do_POST(self):
+        if self.server.fake_store.needs_refresh:
+            self._handle_needs_refresh()
+            return
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
@@ -314,6 +350,17 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
             raise NotImplementedError(self.path)
+
+    def _handle_needs_refresh(self):
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Macaroon needs_refresh=1')
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        error = {
+            'code': 'macaroon-permission-required',
+            'message': 'Authorization Required',
+        }
+        self.wfile.write(json.dumps({'error_list': [error]}).encode())
 
     def _handle_acl_request(self, permission):
         logger.debug(
@@ -516,6 +563,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        if self.server.fake_store.needs_refresh:
+            self._handle_needs_refresh()
+            return
         parsed_path = urllib.parse.urlparse(self.path)
         details_good = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/good-snap')

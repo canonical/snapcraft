@@ -16,8 +16,6 @@
 
 import logging
 import os
-import shutil
-import tempfile
 from unittest import mock
 
 import requests
@@ -27,11 +25,11 @@ from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
 from snapcraft.internal.errors import MissingPackageError
+from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
-    BASE_DIR,
     PARTS_FILE,
     main,
 )
@@ -59,6 +57,11 @@ def _get_part_list_count(path=PARTS_FILE):
     return len(_get_part_list(path))
 
 
+class TestParserBaseDir(TestCase):
+    def test__get_base_dir(self):
+        self.assertEqual('/tmp', parser._get_base_dir())
+
+
 class TestParser(TestCase):
     def tearDown(self):
         try:
@@ -66,6 +69,16 @@ class TestParser(TestCase):
             os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
+
+    def setUp(self):
+        super().setUp()
+        tempdir = fixtures.TempDir()
+        self.useFixture(tempdir)
+        self.tempdir_path = tempdir.path
+        patcher = mock.patch('snapcraft.internal.parser._get_base_dir')
+        base_dir = patcher.start()
+        base_dir.return_value = tempdir.path
+        self.addCleanup(patcher.stop)
 
     def test_ordereddict_yaml(self):
         from collections import OrderedDict
@@ -822,7 +835,8 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        origin_dir = os.path.join(parser._get_base_dir(),
+                                  _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
@@ -852,7 +866,8 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        origin_dir = os.path.join(parser._get_base_dir(),
+                                  _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
@@ -1042,30 +1057,29 @@ parts: [app1]
                          _get_part_list())
 
     def test__get_origin_data_both(self):
-        tempdir = tempfile.mkdtemp()
-        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  '.snapcraft.yaml'), 'w') as fp:
             fp.write("")
-        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data, tempdir)
-        shutil.rmtree(tempdir)
+        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data,
+                          self.tempdir_path)
 
     def test__get_origin_data_hidden_only(self):
-        tempdir = tempfile.mkdtemp()
-        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  '.snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        _get_origin_data(tempdir)
-        shutil.rmtree(tempdir)
+        _get_origin_data(self.tempdir_path)
 
     def test__get_origin_data_normal_only(self):
-        tempdir = tempfile.mkdtemp()
-        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        _get_origin_data(tempdir)
-        shutil.rmtree(tempdir)
+        _get_origin_data(self.tempdir_path)
 
     def test__encode_origin_git(self):
         origin = 'git@github.com:testuser/testproject.git'

@@ -62,6 +62,11 @@ BASE_DIR = "/tmp"
 PARTS_FILE = "snap-parts.yaml"
 
 
+def _get_base_dir():
+    """The location to which sources are downloaded"""
+    return BASE_DIR
+
+
 def _get_version():
     try:
         return pkg_resources.require('snapcraft-parser')[0].version
@@ -183,7 +188,7 @@ def _process_entry(data):
     except KeyError as e:
         raise InvalidEntryError('Missing key in wiki entry: {}'.format(e))
 
-    origin_dir = os.path.join(BASE_DIR, _encode_origin(origin))
+    origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
     class Options:

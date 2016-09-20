@@ -59,6 +59,17 @@ class StoreAuthenticationError(StoreError):
         super().__init__(message=message)
 
 
+class StoreTwoFactorAuthenticationRequired(StoreAuthenticationError):
+
+    def __init__(self):
+        super().__init__("Two-factor authentication required.")
+
+
+class StoreMacaroonNeedsRefreshError(StoreError):
+
+    fmt = 'Authentication macaroon needs to be refreshed.'
+
+
 class StoreAccountInformationError(StoreError):
 
     fmt = 'Error fetching account information from store: {error}'
