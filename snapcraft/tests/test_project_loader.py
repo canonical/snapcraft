@@ -768,7 +768,7 @@ parts:
         self.assertEqual(
             raised.exception.message,
             'found character \'\\t\' that cannot start any token '
-            'on line 4 of snapcraft.yaml')
+            'on line 5 of snapcraft.yaml')
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_epochs(self, mock_loadPlugin):
