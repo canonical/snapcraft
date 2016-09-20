@@ -182,6 +182,16 @@ class GetSourceTestCase(tests.TestCase):
             'source_type': 'tar',
             'source_branch': None,
             'source_tag': 'test_tag',
+            'error': 'source-tag'}),
+        ('deb with source branch', {
+            'source_type': 'deb',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'error': 'source-branch'}),
+        ('deb with source tag', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': 'test_tag',
             'error': 'source-tag'})
     ]
 
