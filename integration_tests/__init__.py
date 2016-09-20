@@ -196,7 +196,9 @@ class StoreTestCase(TestCase):
         process = pexpect.spawn(
             self.snapcraft_command, ['sign-build', snap_filename, key_name])
         assertion = '{}_0.1_amd64.snap-build'.format(snap_filename)
-        process.expect_exact('Assertion {} saved to disk.'.format(assertion))
+        process.expect_exact(
+            'Assertion {} saved to disk.\r\n'
+            'Assertion {} pushed.'.format(assertion, assertion))
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
