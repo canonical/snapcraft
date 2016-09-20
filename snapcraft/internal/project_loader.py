@@ -344,7 +344,7 @@ def _snapcraft_yaml_load(yaml_file):
     except yaml.scanner.ScannerError as e:
         raise SnapcraftSchemaError(
             '{} on line {} of {}'.format(
-                e.problem, e.problem_mark.line, yaml_file))
+                e.problem, e.problem_mark.line + 1, yaml_file))
 
 
 def load_config(project_options=None):
