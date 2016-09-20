@@ -218,12 +218,9 @@ class StoreReleaseError(StoreError):
 
 class SnapBuildError(StoreError):
 
-    __FMT_NOT_REGISTERED = 'Lalalala {error}'
-
     fmt = 'Could not assert build: {error}'
 
     def __init__(self, response):
-        import pdb; pdb.set_trace()
         error = '{} {}'.format(response.status_code, response.reason)
         try:
             response_json = response.json()
