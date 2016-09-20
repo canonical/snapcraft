@@ -406,9 +406,13 @@ class SCAClient(Client):
             logger.debug('Skipping snap-build generation, it already exists')
             return
 
-        authority_id = account_info['account_id']
-        snaps = account_info['snaps'][constants.DEFAULT_SERIES]
-        snap_id = snaps[snap_name]['snap-id']
+        try:
+            authority_id = account_info['account_id']
+            snaps = account_info['snaps'][constants.DEFAULT_SERIES]
+            snap_id = snaps[snap_name]['snap-id']
+        except KeyError as err:
+            msg = 'Could not get all account information needed'
+            raise snapcraft.internal.meta.CommandError(msg)
 
         with open(assertion_file, 'w+') as outfile:
             try:
@@ -431,8 +435,12 @@ class SCAClient(Client):
 
     def push_snap_build(self, account_info, snap_name, snap_filename):
         assertion_file = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
-        snaps = account_info['snaps'][constants.DEFAULT_SERIES]
-        snap_id = snaps[snap_name]['snap-id']
+        try:
+            snaps = account_info['snaps'][constants.DEFAULT_SERIES]
+            snap_id = snaps[snap_name]['snap-id']
+        except KeyError as err:
+            msg = 'Could not get all account information needed'
+            raise snapcraft.internal.meta.CommandError(msg)
 
         try:
             with open(assertion_file, 'r') as blob:
