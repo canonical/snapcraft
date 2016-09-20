@@ -170,7 +170,7 @@ class GetAccountInformationTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
 
     def test_get_account_information_without_login_raises_exception(self):
@@ -183,12 +183,20 @@ class GetAccountInformationTestCase(tests.TestCase):
             {'account_id': 'abcd', 'account_keys': []},
             self.client.get_account_information())
 
+    def test_get_account_information_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.assertEqual(
+            {'account_id': 'abcd', 'account_keys': []},
+            self.client.get_account_information())
+        self.assertFalse(self.fake_store.needs_refresh)
+
 
 class RegisterKeyTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
 
     def test_register_key_without_login_raises_exception(self):
@@ -202,6 +210,15 @@ class RegisterKeyTestCase(tests.TestCase):
             name: default
             public-key-sha3-384: abcd
             '''))
+
+    def test_register_key_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.client.register_key(dedent('''\
+            name: default
+            public-key-sha3-384: abcd
+            '''))
+        self.assertFalse(self.fake_store.needs_refresh)
 
     def test_not_implemented(self):
         # If the enable_account_key feature switch is off in the store, we
@@ -227,7 +244,7 @@ class RegisterTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
 
     def test_register_without_login_raises_exception(self):
@@ -243,6 +260,12 @@ class RegisterTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         # No exception will be raised if this is succesful
         self.client.register('test-good-snap-name', is_private=True)
+
+    def test_register_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.client.register('test-good-snap-name')
+        self.assertFalse(self.fake_store.needs_refresh)
 
     def test_already_registered(self):
         self.client.login('dummy', 'test correct password')
@@ -289,7 +312,7 @@ class UploadTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
         self.snap_path = os.path.join(
             os.path.dirname(tests.__file__), 'data',
@@ -324,6 +347,25 @@ class UploadTestCase(tests.TestCase):
 
         # This should not raise
         tracker.raise_for_code()
+
+    def test_upload_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        tracker = self.client.upload('test-snap', self.snap_path)
+        result = tracker.track()
+        expected_result = {
+            'code': 'ready_to_release',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': True,
+            'processed': True
+        }
+        self.assertEqual(result, expected_result)
+
+        # This should not raise
+        tracker.raise_for_code()
+
+        self.assertFalse(self.fake_store.needs_refresh)
 
     def test_upload_snap_fails_due_to_upload_fail(self):
         # Tells the fake updown server to return a 5xx response
@@ -378,7 +420,7 @@ class ReleaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
 
     def test_release_without_login_raises_exception(self):
@@ -399,6 +441,23 @@ class ReleaseTestCase(tests.TestCase):
             ]
         }
         self.assertEqual(channel_map, expected_channel_map)
+
+    def test_release_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        channel_map = self.client.release('test-snap', '19', ['beta'])
+        expected_channel_map = {
+            'opened_channels': ['beta'],
+            'channel_map': [
+                {'channel': 'stable', 'info': 'none'},
+                {'channel': 'candidate', 'info': 'none'},
+                {'revision': 19, 'channel': 'beta', 'version': '0',
+                 'info': 'specific'},
+                {'channel': 'edge', 'info': 'tracking'}
+            ]
+        }
+        self.assertEqual(channel_map, expected_channel_map)
+        self.assertFalse(self.fake_store.needs_refresh)
 
     def test_release_snap_to_invalid_channel(self):
         self.client.login('dummy', 'test correct password')
