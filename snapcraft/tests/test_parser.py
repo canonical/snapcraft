@@ -24,6 +24,7 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
+from snapcraft.internal.errors import MissingPackageError
 from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
@@ -915,6 +916,49 @@ parts: [main]
         self.assertEqual('example main', part['description'])
 
         self.assertEqual(1, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.sources.Local.pull')
+    @mock.patch('snapcraft.internal.sources._get_source_type_from_uri')
+    def test_filenotfound_for_non_repos(self, mock_type, mock_pull):
+        mock_pull.side_effect = FileNotFoundError()
+        mock_type.return_value = None
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+parts: [main]
+""")
+        with self.assertRaises(FileNotFoundError):
+            main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+    @mock.patch('snapcraft.internal.sources.Bazaar.__init__')
+    def test_missing_packages(self, mock_init):
+        mock_init.side_effect = MissingPackageError('bzr')
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+parts: [main]
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+parts: [main2]
+""")
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(2, retval)
+
+        self.assertTrue(
+            'One or more required packages are missing, please install'
+            in fake_logger.output, 'No missing package info in output')
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     @mock.patch('snapcraft.internal.sources.get')

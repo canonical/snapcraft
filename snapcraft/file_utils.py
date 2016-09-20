@@ -57,6 +57,10 @@ def link_or_copy(source, destination, follow_symlinks=False):
         if follow_symlinks:
             source_path = os.path.realpath(source)
 
+        if not os.path.exists(os.path.dirname(destination)):
+            create_similar_directory(
+                os.path.dirname(source_path),
+                os.path.dirname(destination))
         # Setting follow_symlinks=False in case this bug is ever fixed
         # upstream-- we want this function to continue supporting NOT following
         # symlinks.
