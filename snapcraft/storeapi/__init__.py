@@ -429,7 +429,7 @@ class SCAClient(Client):
                 snapcraft.internal.common.run(
                     cmd, stdout=outfile, stdin=subprocess.PIPE)
             except subprocess.CalledProcessError:
-                msg = 'Failed to sign build assertion {}'.format(assertion_file)
+                msg = 'Failed to sign build assertion {}.'.format(assertion_file)
                 raise snapcraft.internal.meta.CommandError(msg)
         logger.info('Assertion {} saved to disk.'.format(assertion_file))
 
