@@ -29,7 +29,7 @@ from snapcraft.internal import (
 from snapcraft import tests
 
 
-class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         data = 'Test fake compressed file'
@@ -51,7 +51,7 @@ class TestTar(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(server.server_close)
@@ -80,7 +80,7 @@ class TestZip(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=self.server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(self.server.server_close)
@@ -126,7 +126,7 @@ class TestDeb(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=self.server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(self.server.server_close)

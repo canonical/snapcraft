@@ -58,7 +58,6 @@ cases you want to refer to the help text for the specific plugin.
 
 """
 
-import apt_inst
 import copy
 import glob
 import logging
@@ -72,6 +71,8 @@ import subprocess
 import tempfile
 import tarfile
 import zipfile
+
+import apt_inst
 
 from snapcraft.internal import common
 from snapcraft import file_utils
@@ -369,7 +370,6 @@ class Deb(FileBase):
             shutil.move(tmp_deb, deb_file)
 
         deb = apt_inst.DebFile(deb_file)
-        print(deb, deb.data)
         deb.data.extractall(dst)
 
         if not keep_deb:
