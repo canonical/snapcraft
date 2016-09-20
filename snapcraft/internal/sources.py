@@ -33,6 +33,11 @@ code for that part, and how to unpack it if necessary.
     control system or compression algorithm. The source-type key can tell
     snapcraft exactly how to treat that content.
 
+  - source-depth: <integer>
+
+    By default clones or branches with full history, specifying a depth
+    will truncate the history to the specified number of commits.
+
   - source-branch: <branch-name>
 
     Snapcraft will checkout a specific branch from the source tree. This
@@ -90,11 +95,12 @@ class IncompatibleOptionsError(Exception):
 class Base:
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
+                 source_branch=None, source_depth=None):
         self.source = source
         self.source_dir = source_dir
         self.source_tag = source_tag
         self.source_branch = source_branch
+        self.source_depth = source_depth
 
 
 class FileBase(Base):
@@ -119,8 +125,9 @@ class FileBase(Base):
 class Script(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
 
     def download(self):
         super().download()
@@ -131,11 +138,15 @@ class Script(FileBase):
 class Bazaar(Base):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
         if source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-depth for a bzr source')
 
     def pull(self):
         tag_opts = []
@@ -155,8 +166,9 @@ class Bazaar(Base):
 class Git(Base):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
@@ -179,24 +191,28 @@ class Git(Base):
             subprocess.check_call(['git', '-C', self.source_dir, 'submodule',
                                    'update'])
         else:
-            branch_opts = []
+            command = ['git', 'clone', '--recursive']
             if self.source_tag or self.source_branch:
-                branch_opts = ['--branch',
-                               self.source_tag or self.source_branch]
-            subprocess.check_call(['git', 'clone', '--depth', '1',
-                                  '--recursive'] + branch_opts +
-                                  [self.source, self.source_dir])
+                command.extend([
+                    '--branch', self.source_tag or self.source_branch])
+            if self.source_depth:
+                command.extend(['--depth', self.source_depth])
+            subprocess.check_call(command + [self.source, self.source_dir])
 
 
 class Mercurial(Base):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
                 'mercurial source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-depth for a mercurial source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):
@@ -218,8 +234,9 @@ class Mercurial(Base):
 class Subversion(Base):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
         if source_tag:
             if source_branch:
                 raise IncompatibleOptionsError(
@@ -231,6 +248,9 @@ class Subversion(Base):
         elif source_branch:
             raise IncompatibleOptionsError(
                 "Can't specify source-branch for a Subversion source")
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-depth for a Subversion source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
@@ -250,14 +270,18 @@ class Subversion(Base):
 class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a tar source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-depth for a tar source')
 
     def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
@@ -321,14 +345,18 @@ class Tar(FileBase):
 class Zip(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag,
+                         source_branch, source_depth)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a zip source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-depth for a zip source')
 
     def provision(self, dst, clean_target=True, keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
@@ -383,13 +411,16 @@ def get(sourcedir, builddir, options):
     :param str builddir: The build directory to use.
     :param options: source options.
     """
+
     source_type = getattr(options, 'source_type', None)
-    source_tag = getattr(options, 'source_tag', None)
-    source_branch = getattr(options, 'source_branch', None)
+    source_attributes = dict(
+        source_depth=getattr(options, 'source_depth', None),
+        source_tag=getattr(options, 'source_tag', None),
+        source_branch=getattr(options, 'source_branch', None),
+    )
 
     handler_class = _get_source_handler(source_type, options.source)
-    handler = handler_class(options.source, sourcedir, source_tag,
-                            source_branch)
+    handler = handler_class(options.source, sourcedir, **source_attributes)
     handler.pull()
 
 
