@@ -294,7 +294,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
         sign_build_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'snaps/{}/builds'.format())
+            self._DEV_API_PATH, 'snaps/basic-id/builds'.format())
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
@@ -336,7 +336,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_sign_build_request(self):
-        pass
+        logger.debug('Handling snap-build request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
 
     def _handle_account_key_request(self):
         string_data = self.rfile.read(
@@ -563,6 +566,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
+            'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}},
         }).encode())
 
 
