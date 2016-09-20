@@ -163,7 +163,6 @@ class StoreClient():
     def sign_build(self, account_info, snap_name, snap_filename,
                    grade, key_name, local):
 
-        # XXX: how to better provide account_info for both sign-build tasks?
         self.sca.generate_snap_build(
             account_info, snap_name, snap_filename, grade, key_name)
         if not local:
@@ -422,8 +421,6 @@ class SCAClient(Client):
                        '--grade=' + grade,
                        '-k', key_name,
                        snap_filename]
-                # XXX: if the key is not passwordless snapcraft swallows
-                # the snapd password prompt here... must be fixed...
                 logger.debug('Signing build assertion: {}'.format(cmd))
                 snapcraft.internal.common.run(
                     cmd, stdout=outfile, stdin=subprocess.PIPE)
