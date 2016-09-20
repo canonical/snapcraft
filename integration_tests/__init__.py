@@ -194,7 +194,7 @@ class StoreTestCase(TestCase):
 
     def sign_build(self, snap_filename, key_name='default', local=False):
         process = pexpect.spawn(
-            self.snapcraft_command, ['sign-build', snap_filename, key_name])
+            self.snapcraft_command, ['sign-build', snap_filename])
         assertion = '{}_0.1_amd64.snap-build'.format(snap_filename)
         process.expect_exact(
             'Assertion {} saved to disk.\r\n'
