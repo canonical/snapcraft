@@ -42,7 +42,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 from snapcraft.internal import log, sources
-from snapcraft.internal.errors import SnapcraftError, InvalidEntryError
+from snapcraft.internal.errors import SnapcraftError, InvalidWikiEntryError
 from snapcraft.internal.project_loader import replace_attr
 
 
@@ -110,7 +110,7 @@ def _get_origin_data(origin_dir):
         with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
-        raise InvalidEntryError(e)
+        raise InvalidWikiEntryError(e)
 
     return origin_data
 
@@ -186,7 +186,7 @@ def _process_entry(data):
         maintainer = data['maintainer']
         description = data['description']
     except KeyError as e:
-        raise InvalidEntryError('Missing key in wiki entry: {}'.format(e))
+        raise InvalidWikiEntryError('Missing key in wiki entry: {}'.format(e))
 
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
@@ -201,7 +201,7 @@ def _process_entry(data):
     try:
         origin_data = _get_origin_data(origin_dir)
     except (BadSnapcraftYAMLError, MissingSnapcraftYAMLError) as e:
-        raise InvalidEntryError('snapcraft.yaml error: {}'.format(e))
+        raise InvalidWikiEntryError('snapcraft.yaml error: {}'.format(e))
 
     origin_parts = origin_data.get('parts', {})
     origin_name = origin_data.get('name')
@@ -223,17 +223,17 @@ def _process_wiki_entry(entry, master_parts_list):
     try:
         data = yaml.load(entry)
     except ScannerError as e:
-        raise InvalidEntryError(
+        raise InvalidWikiEntryError(
             'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
     try:
         parts = data['parts']
     except KeyError as e:
-        raise InvalidEntryError(
+        raise InvalidWikiEntryError(
             '"parts" missing from wiki entry: {}'.format(entry))
     for part_name in parts:
         if part_name and part_name in master_parts_list:
-            raise InvalidEntryError(
+            raise InvalidWikiEntryError(
                 'Duplicate part found in the wiki: {} in entry {}'.format(
                     part_name, entry))
 
