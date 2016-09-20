@@ -189,6 +189,10 @@ def sign_build(snap_filename, key_name='default', local=False):
             'The snapd package is not installed. In order to use '
             '`sign-build`, you must run `apt install snapd`.')
 
+    if not os.path.exists(snap_filename):
+        raise FileNotFoundError(
+            'The file {!r} does not exist.'.format(snap_filename))
+
     # we pass account_info to sign_build so we call it only once
     # for both generating/signing and pushing the assertion data
     store = storeapi.StoreClient()
