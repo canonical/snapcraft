@@ -451,7 +451,7 @@ class SCAClient(Client):
         logger.debug(response.content)
         if not response.ok:
             raise errors.SnapBuildError(response)
-        logger.debug('Assertion {} pushed.'.format(assertion_file))
+        logger.info('Assertion {} pushed.'.format(assertion_file))
 
 
 class StatusTracker:
