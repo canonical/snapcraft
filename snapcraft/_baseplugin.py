@@ -46,6 +46,10 @@ class BasePlugin:
                     'type': 'string',
                     'default': '',
                 },
+                'source-depth': {
+                    'type': 'integer',
+                    'default': 0,
+                },
                 'source-branch': {
                     'type': 'string',
                     'default': '',
