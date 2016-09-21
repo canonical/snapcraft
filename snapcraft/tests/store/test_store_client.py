@@ -166,6 +166,7 @@ class DownloadTestCase(tests.TestCase):
                 'test-snap', 'test-channel', download_path)
 
 class SignBuildTestCase(tests.TestCase):
+
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.FakeStore())

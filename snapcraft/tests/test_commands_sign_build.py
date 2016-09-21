@@ -15,14 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import glob
-import json
 import logging
-from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from simplejson.scanner import JSONDecodeError
 
 from snapcraft.main import main
 from snapcraft import (
@@ -35,32 +31,40 @@ class SignBuildTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    @mock.patch.object(storeapi.StoreClient, 'sign_build')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch('subprocess.check_output')
-    @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
+    @mock.patch('getpass.getpass')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
-    def test_sign_build_successfully(self, mock_installed, mock_input,
-                                     mock_getpass, mock_check_output,
+    def test_sign_build_successfully(self,
+                                     mock_installed,
+                                     mock_input,
+                                     mock_getpass,
                                      mock_login,
-                                     mock_get_account_information,
-                                     mock_sign_build):
+                                     mock_get_account_information):
+        account_info = {'account_id': 'abcd',
+                        'snaps': {'16': {
+                            'basic': {
+                                'snap-id': 'snap-id',
+                                }
+                            }
+                        }}
+
+        mock_input.side_effect = ['sample.person@canonical.com', '123456']
+        mock_getpass.return_value = '123456'
         mock_installed.return_value = True
-        mock_check_output.side_effect = "lalalala"
-        mock_get_account_information.return_value = {'account_id': 'abcd'}
+        mock_get_account_information.return_value = account_info
 
-        main(['init'])
-        main([])
-        #self.assertEqual("XXXXX", self.fake_logger.output)
+        snap_path = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
 
-        # create a sample snap and then sign its build
-        main(['sign-build', 'my-snap-name_0.1_amd64.snap'])
-
-        self.assertEqual("XXXXX", self.fake_logger.output)
+        with self.assertRaises(SystemExit):
+            main(['login'])
+            main(['sign-build', snap_path, '-d'])
+        self.assertIn(
+            'Assertion test_snap.snap-build pushed.', self.fake_logger.output)
