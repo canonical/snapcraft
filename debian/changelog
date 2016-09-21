@@ -1,3 +1,53 @@
+snapcraft (2.18) xenial; urgency=medium
+
+  [ Sam Yaple ]
+  * Check if option is url for pip (#785)
+  * Unify python plugin test (#793)
+
+  [ Sergio Schvezov ]
+  * Improve lifecycle execution of steps (#794)
+  * Load project information in one location (#799)
+  * Replace uses of copy with dump (#798)
+  * Report the proper line number on bad yaml errors (#816)
+  * Support deb files as sources (#811)
+  * lxd: use built-in image streams. (#817)
+  * Make source-depth a parameter and opt-in (#814)
+  * New upstream release 2.18 (LP: #1626224)
+
+  [ Kyle Fazzari ]
+  * Only discover dependencies once per file. (#796)
+
+  [ Leo Arias ]
+  * In the busybox test, use the last installed data dir (#801)
+  * Add the TEST_STORE environment variable to the travis script (#802)
+
+  [ Evan ]
+  * autotools plugin: Do not run the bootstrap directory as a script. (#803)
+
+  [ Jonathon Love ]
+  * nodejs plugin: fix to install of dev-deps in package.json (#800)
+
+  [ Colin Watson ]
+  * Fix parts integration tests (#807)
+  * Remove snapcraft.storeapi.common (#806)
+  * Adjust login to conform to UX specification (#804)
+  * Refresh discharge macaroon if necessary (#805)
+
+  [ Joe Talbott ]
+  * Don't litter /tmp with test artifacts. (#808)
+  * Handle missing source type packages in the parser (#742)
+
+  [ James Lucas ]
+  * make plugin: allow copying artifact dirs (#809)
+
+  [ Enrique Hernández Bello ]
+  * Enable crosscompilation for dump and copy plugins (#791)
+
+  [ Celso Providelo ]
+  * Replacing deprecated API for searching snaps. (#815)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 21 Sep 2016 15:55:08 +0000
+
 snapcraft (2.17) xenial; urgency=medium
 
   [ Sergio Schvezov ]
