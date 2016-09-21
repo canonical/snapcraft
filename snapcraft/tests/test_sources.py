@@ -234,6 +234,14 @@ class TestBazaar(SourceTestCase):
         expected_message = 'can\'t specify a source-branch for a bzr source'
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_depth_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Bazaar('lp://mysource', 'source_dir', source_depth=2)
+
+        expected_message = (
+            'can\'t specify source-depth for a bzr source')
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestGit(SourceTestCase):
 
@@ -243,7 +251,16 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--recursive', 'git://my-source',
+            ['git', 'clone', '--recursive', 'git://my-source',
+             'source_dir'])
+
+    def test_pull_with_depth(self):
+        git = sources.Git('git://my-source', 'source_dir', source_depth=2)
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ['git', 'clone', '--recursive', '--depth', 2, 'git://my-source',
              'source_dir'])
 
     def test_pull_branch(self):
@@ -252,7 +269,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--recursive', '--branch',
+            ['git', 'clone', '--recursive', '--branch',
              'my-branch', 'git://my-source', 'source_dir'])
 
     def test_pull_tag(self):
@@ -260,7 +277,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--recursive', '--branch', 'tag',
+            ['git', 'clone', '--recursive', '--branch', 'tag',
              'git://my-source', 'source_dir'])
 
     def test_pull_existing(self):
@@ -383,6 +400,14 @@ class TestMercurial(SourceTestCase):
             'source')
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_depth_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial('hg://mysource', 'source_dir', source_depth=2)
+
+        expected_message = (
+            'can\'t specify source-depth for a mercurial source')
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestSubversion(SourceTestCase):
 
@@ -439,6 +464,14 @@ class TestSubversion(SourceTestCase):
         expected_message = (
             "Can't specify source-tag OR source-branch for a Subversion "
             "source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_depth_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion('svn://mysource', 'source_dir', source_depth=2)
+
+        expected_message = (
+            'can\'t specify source-depth for a Subversion source')
         self.assertEqual(raised.exception.message, expected_message)
 
 

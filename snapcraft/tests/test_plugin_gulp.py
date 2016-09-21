@@ -132,6 +132,7 @@ class GulpPluginTestCase(tests.TestCase):
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
                 'source-type': {'default': '', 'type': 'string'},
+                'source-depth': {'default': 0, 'type': 'integer'},
                 'disable-parallel': {'default': False, 'type': 'boolean'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir', 'node-engine'],
