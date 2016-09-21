@@ -12,6 +12,7 @@ snapcraft (2.18) xenial; urgency=medium
   * Support deb files as sources (#811)
   * lxd: use built-in image streams. (#817)
   * Make source-depth a parameter and opt-in (#814)
+  * New upstream release 2.18 (LP: #1626224)
 
   [ Kyle Fazzari ]
   * Only discover dependencies once per file. (#796)
