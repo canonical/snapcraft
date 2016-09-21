@@ -625,37 +625,35 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
-        search_path = urllib.parse.urljoin(self._API_PATH,  'search')
+        details_path = urllib.parse.urljoin(self._API_PATH,  'snaps/details/')
         download_path = '/download-snap/'
-        if parsed_path.path.startswith(search_path):
-            self._handle_search_request(
-                urllib.parse.parse_qs(parsed_path.query)['q'])
+        if parsed_path.path.startswith(details_path):
+            self._handle_details_request(
+                parsed_path.path[len(details_path):])
         elif parsed_path.path.startswith(download_path):
-            self._handle_download_request(parsed_path[len(download_path):])
+            self._handle_download_request(
+                parsed_path.path[len(download_path):])
         else:
             logger.error(
                 'Not implemented path in fake Store Search server: {}'.format(
                     self.path))
             raise NotImplementedError(self.path)
 
-    def _handle_search_request(self, query):
-        if len(query) > 1 or 'package_name:' not in query[0]:
-            logger.error(
-                'Not implemented query in fake Store Search server: {}'.format(
-                    query))
-            raise NotImplementedError(query)
-        query = query[0]
-        package = query.split('package_name:')[1].strip('"')
+    def _handle_details_request(self, package):
         logger.debug(
-            'Handling search request for package {}, with headers {}'.format(
+            'Handling details request for package {}, with headers {}'.format(
                 package, self.headers))
+        response = self._get_details_response(package)
+        if response is None:
+            self.send_response(404)
+            self.end_headers()
+            return
         self.send_response(200)
         self.send_header('Content-Type', 'application/hal+json')
         self.end_headers()
-        response = self._get_search_response(package)
         self.wfile.write(json.dumps(response).encode())
 
-    def _get_search_response(self, package):
+    def _get_details_response(self, package):
         # ubuntu-core is used in integration tests with fake servers.
         if package in ('test-snap', 'ubuntu-core'):
             # sha512sum snapcraft/tests/data/test-snap.snap
@@ -666,13 +664,13 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
         elif package == 'test-snap-with-wrong-sha':
             sha512 = 'wrong sha'
         else:
-            return {}
-        response = {'_embedded': {
-            'clickindex:package': [
-                {'download_url': urllib.parse.urljoin(
-                    'http://localhost:{}'.format(self.server.server_port),
-                    'download-snap/test-snap.snap'),
-                 'download_sha512': sha512}]}}
+            return None
+        response = {
+            'download_url': urllib.parse.urljoin(
+                'http://localhost:{}'.format(self.server.server_port),
+                'download-snap/test-snap.snap'),
+            'download_sha512': sha512,
+        }
         return response
 
     def _handle_download_request(self, snap):
