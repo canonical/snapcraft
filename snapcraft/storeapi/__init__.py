@@ -160,14 +160,19 @@ class StoreClient():
     def register(self, snap_name, is_private=False):
         self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
 
-    def sign_build(self, account_info, snap_name, snap_filename,
-                   grade, key_name, local):
+    def sign_build(self, authority_id, snap_id, snap_name,
+                   snap_filename, grade, key_name, local):
 
-        self.sca.generate_snap_build(
-            account_info, snap_name, snap_filename, grade, key_name)
+        assertion = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
+        if os.path.isfile(assertion):
+            logger.debug('Skipping snap-build generation, it already exists')
+        else:
+            self.sca.generate_snap_build(
+                authority_id, snap_id, snap_name,
+                snap_filename, grade, key_name, assertion)
+
         if not local:
-            self.sca.push_snap_build(
-                account_info, snap_name, snap_filename)
+            self.sca.push_snap_build(snap_id, assertion)
 
     def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
@@ -399,22 +404,9 @@ class SCAClient(Client):
 
         return response_json
 
-    def generate_snap_build(self, account_info, snap_name,
-                            snap_filename, grade, key_name):
-        assertion_file = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
-        if os.path.isfile(assertion_file):
-            logger.debug('Skipping snap-build generation, it already exists')
-            return
-
-        try:
-            authority_id = account_info['account_id']
-            snaps = account_info['snaps'][constants.DEFAULT_SERIES]
-            snap_id = snaps[snap_name]['snap-id']
-        except KeyError as err:
-            msg = 'Could not get all account information needed'
-            raise snapcraft.internal.meta.CommandError(msg)
-
-        with open(assertion_file, 'w+') as outfile:
+    def generate_snap_build(self, authority_id, snap_id, snap_name,
+                            snap_filename, grade, key_name, assertion):
+        with open(assertion, 'w+') as outfile:
             try:
                 # snap-digest is calculated by snap sign-build itself
                 # snap-size is calculated by snap sign-build itself
@@ -429,21 +421,13 @@ class SCAClient(Client):
                 snapcraft.internal.common.run(
                     cmd, stdout=outfile, stdin=subprocess.PIPE)
             except subprocess.CalledProcessError:
-                msg = 'Failed to sign build assertion {}.'.format(assertion_file)
+                msg = 'Failed to sign build assertion {}.'.format(assertion)
                 raise snapcraft.internal.meta.CommandError(msg)
-        logger.info('Assertion {} saved to disk.'.format(assertion_file))
+        logger.info('Assertion {} saved to disk.'.format(assertion))
 
-    def push_snap_build(self, account_info, snap_name, snap_filename):
-        assertion_file = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
+    def push_snap_build(self, snap_id, assertion):
         try:
-            snaps = account_info['snaps'][constants.DEFAULT_SERIES]
-            snap_id = snaps[snap_name]['snap-id']
-        except KeyError as err:
-            msg = 'Could not get all account information needed'
-            raise snapcraft.internal.meta.CommandError(msg)
-
-        try:
-            with open(assertion_file, 'r') as blob:
+            with open(assertion, 'r') as blob:
                 data = json.dumps({"assertion": blob.read()})
         except IOError as err:
             raise snapcraft.internal.meta.CommandError(err)
@@ -454,7 +438,7 @@ class SCAClient(Client):
                                       'Content-Type': 'application/json'})
         if not response.ok:
             raise errors.SnapBuildError(response)
-        logger.info('Assertion {} pushed.'.format(assertion_file))
+        logger.info('Assertion {} pushed.'.format(assertion))
 
 
 class StatusTracker:

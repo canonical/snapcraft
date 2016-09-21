@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
+
 import getpass
 import json
 import logging
@@ -193,18 +194,22 @@ def sign_build(snap_filename, key_name='default', local=False):
         raise FileNotFoundError(
             'The file {!r} does not exist.'.format(snap_filename))
 
-    # we pass account_info to sign_build so we call it only once
-    # for both generating/signing and pushing the assertion data
-    store = storeapi.StoreClient()
-    account_info = store.get_account_information()
-
+    snap_series = storeapi.constants.DEFAULT_SERIES
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
     grade = snap_yaml['grade']
 
+    store = storeapi.StoreClient()
     with _requires_login():
-        store.sign_build(
-            account_info, snap_name, snap_filename, grade, key_name, local)
+        try:
+            info = store.get_account_information()
+            authority_id = info['account_id']
+            snap_id = info['snaps'][snap_series][snap_name]['snap-id']
+        except KeyError:
+            raise RuntimeError('Could not obtain account information.')
+
+    store.sign_build(authority_id, snap_id, snap_name,
+                     snap_filename, grade, key_name, local)
 
 
 def push(snap_filename, release_channels=None):
