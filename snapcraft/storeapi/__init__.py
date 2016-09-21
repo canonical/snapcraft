@@ -191,9 +191,7 @@ class StoreClient():
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
-        package = self.cpi.search_package(snap_name, channel, arch)
-        if package is None:
-            raise errors.SnapNotFoundError(snap_name, channel, arch)
+        package = self.cpi.get_package(snap_name, channel, arch)
         self._download_snap(
             snap_name, channel, arch, download_path,
             package['download_url'], package['download_sha512'])
@@ -290,25 +288,22 @@ class SnapIndexClient(Client):
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
-    def search_package(self, snap_name, channel, arch):
+    def get_package(self, snap_name, channel, arch):
         headers = {
             'Accept': 'application/hal+json',
             'X-Ubuntu-Architecture': arch,
             'X-Ubuntu-Release': constants.DEFAULT_SERIES,
-            'X-Ubuntu-Device-Channel': channel,
         }
         params = {
-            'q': 'package_name:"{}"'.format(snap_name),
+            'channel': channel,
             'fields': 'status,download_url,download_sha512',
-            'size': 1,
         }
         logger.info('Getting details for {}'.format(snap_name))
-        resp = self.get('api/v1/search', headers=headers, params=params)
-        embedded = resp.json().get('_embedded', None)
-        if embedded is None:
-            return None
-        else:
-            return embedded['clickindex:package'][0]
+        url = 'api/v1/snaps/details/{}'.format(snap_name)
+        resp = self.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            raise errors.SnapNotFoundError(snap_name, channel, arch)
+        return resp.json()
 
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
