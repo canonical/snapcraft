@@ -212,7 +212,8 @@ def sign_build(snap_filename, key_name='default', local=False):
             authority_id = info['account_id']
             snap_id = info['snaps'][snap_series][snap_name]['snap-id']
         except KeyError:
-            raise RuntimeError('Could not obtain account information.')
+            raise RuntimeError(
+                'Your account lacks information to assert this snap.')
 
     # XXX: we will need some sort of caching for the account_info here
     # if we really want to support a true --local parameter to avoid
