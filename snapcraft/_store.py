@@ -208,6 +208,9 @@ def sign_build(snap_filename, key_name='default', local=False):
         except KeyError:
             raise RuntimeError('Could not obtain account information.')
 
+    # XXX: we will need some sort of caching for the account_info here
+    # if we really want to support a true --local parameter to avoid
+    # pushing the assertion or ever talking to the store
     store.sign_build(authority_id, snap_id, snap_name,
                      snap_filename, grade, key_name, local)
 
