@@ -111,11 +111,9 @@ class StoreTestCase(TestCase):
         process.sendline(email)
         process.expect_exact('Password: ')
         process.sendline(password)
-        process.expect_exact(
-            "One-time password (just press enter if you don't use two-factor "
-            "authentication): ")
-        process.sendline('')
-        process.expect_exact('Authenticating against Ubuntu One SSO.')
+        if expect_success:
+            process.expect_exact(
+                'We strongly recommend enabling multi-factor authentication:')
         result = 'successful' if expect_success else 'failed'
         process.expect_exact('Login {}.'.format(result))
 
@@ -146,12 +144,9 @@ class StoreTestCase(TestCase):
         process.sendline(email)
         process.expect_exact('Password: ')
         process.sendline(password)
-        process.expect_exact(
-            "One-time password (just press enter if you don't use two-factor "
-            "authentication): ")
-        process.sendline('')
-        process.expect_exact('Authenticating against Ubuntu One SSO.')
         if expect_success:
+            process.expect_exact(
+                'We strongly recommend enabling multi-factor authentication:')
             process.expect_exact('Login successful.')
             process.expect(
                 r'Done\. The key "{}" .* may be used to sign your '

@@ -151,13 +151,13 @@ parts:
 
         parts.update()
 
-        with self.assertRaises(parts.SnapcraftLogicError) as raised:
+        with self.assertRaises(parts.SnapcraftPartMissingError) as raised:
             project_loader.Config()
         self.assertEqual(
-            str(raised.exception),
-            '{!r} is missing the `plugin` entry and is not defined in the '
-            'current remote parts cache, try to run `snapcraft update` '
-            'to refresh'.format('non-existing-part'))
+            'Cannot find the definition for part {!r}.\n'
+            'It may be a remote part, run `snapcraft update` to refresh '
+            'the remote parts cache.'.format('non-existing-part'),
+            str(raised.exception))
 
     def test_config_after_is_an_undefined_part(self):
         self.useFixture(fixture_setup.FakeParts())
@@ -176,13 +176,13 @@ parts:
 
         parts.update()
 
-        with self.assertRaises(parts.SnapcraftLogicError) as raised:
+        with self.assertRaises(parts.SnapcraftPartMissingError) as raised:
             project_loader.Config()
         self.assertEqual(
-            str(raised.exception),
-            'Cannot find definition for part {!r}. It may be a '
-            'remote part, run `snapcraft update` to '
-            'refresh the remote parts cache'.format('non-existing-part'))
+            'Cannot find the definition for part {!r}.\n'
+            'It may be a remote part, run `snapcraft update` to refresh '
+            'the remote parts cache.'.format('non-existing-part'),
+            str(raised.exception))
 
     @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
     def test_config_uses_remote_part_from_after(self, mock_load):
@@ -217,14 +217,14 @@ parts:
         parts.update()
         project_loader.Config(project_options)
 
-        call1 = unittest.mock.call('part1', 'go', {
+        call1 = unittest.mock.call('curl', 'autotools', {
+            'stage': [], 'snap': [], 'source': 'http://curl.org'},
+            project_options, self.part_schema)
+        call2 = unittest.mock.call('part1', 'go', {
             'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
             project_options, self.part_schema)
-        call2 = unittest.mock.call('curl', 'autotools', {
-            'source': 'http://curl.org'},
-            project_options, self.part_schema)
 
-        mock_load.assert_has_calls([call1, call2])
+        mock_load.assert_has_calls([call1, call2], any_order=True)
 
     def test_config_adds_vcs_packages_to_build_packages(self):
         scenarios = [
@@ -768,7 +768,7 @@ parts:
         self.assertEqual(
             raised.exception.message,
             'found character \'\\t\' that cannot start any token '
-            'on line 4 of snapcraft.yaml')
+            'on line 5 of snapcraft.yaml')
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_epochs(self, mock_loadPlugin):
@@ -1691,20 +1691,20 @@ class TestFilesets(tests.TestCase):
     def test_expand_var(self):
         self.properties['stage'] = ['$1']
 
-        fs = parts._expand_filesets_for('stage', self.properties)
+        fs = project_loader._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1', '2', '3'])
 
     def test_no_expansion(self):
         self.properties['stage'] = ['1']
 
-        fs = parts._expand_filesets_for('stage', self.properties)
+        fs = project_loader._expand_filesets_for('stage', self.properties)
         self.assertEqual(fs, ['1'])
 
     def test_invalid_expansion(self):
         self.properties['stage'] = ['$3']
 
         with self.assertRaises(parts.SnapcraftLogicError) as raised:
-            parts._expand_filesets_for('stage', self.properties)
+            project_loader._expand_filesets_for('stage', self.properties)
 
         self.assertEqual(
             raised.exception.message,

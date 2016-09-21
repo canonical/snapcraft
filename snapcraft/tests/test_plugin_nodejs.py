@@ -78,6 +78,8 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_has_calls([
+            mock.call(['npm', '--cache-min=Infinity', 'install'],
+                      cwd=plugin.builddir),
             mock.call(['npm', '--cache-min=Infinity', 'install', '--global'],
                       cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
@@ -145,6 +147,7 @@ class NodePluginTestCase(tests.TestCase):
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
                 'source-type': {'default': '', 'type': 'string'},
+                'source-depth': {'default': 0, 'type': 'integer'},
                 'disable-parallel': {'default': False, 'type': 'boolean'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir', 'node-engine'],

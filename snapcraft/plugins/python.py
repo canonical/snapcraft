@@ -53,6 +53,7 @@ from glob import glob
 
 import snapcraft
 from snapcraft import file_utils
+from snapcraft.common import isurl
 
 
 class PythonPlugin(snapcraft.BasePlugin):
@@ -165,10 +166,12 @@ class PythonPlugin(snapcraft.BasePlugin):
                        '--disable-pip-version-check']
 
         if self.options.constraints:
-            pip_install = pip_install + [
-                '--constraint',
-                os.path.join(self.sourcedir, self.options.constraints),
-            ]
+            if isurl(self.options.constraints):
+                constraints = self.options.constraints
+            else:
+                constraints = os.path.join(self.sourcedir,
+                                           self.options.constraints)
+            pip_install = pip_install + ['--constraint', constraints]
 
         if self.options.process_dependency_links:
             pip_install.append('--process-dependency-links')
@@ -192,10 +195,12 @@ class PythonPlugin(snapcraft.BasePlugin):
         env = self._get_build_env()
 
         if self.options.requirements:
-            self.run(pip_install + [
-                '--requirement',
-                os.path.join(self.sourcedir, self.options.requirements),
-            ], env=env)
+            if isurl(self.options.requirements):
+                requirements = self.options.requirements
+            else:
+                requirements = os.path.join(self.sourcedir,
+                                            self.options.requirements)
+            self.run(pip_install + ['--requirement', requirements], env=env)
 
         if self.options.python_packages:
             self.run(pip_install + self.options.python_packages, env=env)
@@ -234,10 +239,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         fileset.append('-**/*.pth')
         # Holds all the .pyc files. It is a major cause of inter part
         # conflict.
-        if self.options.python_version == 'python3':
-            fileset.append('-**/__pycache__')
-        elif self.options.python_version == 'python2':
-            fileset.append('-**/*.pyc')
+        fileset.append('-**/__pycache__')
+        fileset.append('-**/*.pyc')
         return fileset
 
 

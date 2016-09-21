@@ -112,54 +112,67 @@ class _Executor:
         self.config = config
         self.project_options = project_options
         self.parts_config = config.parts
+        self._steps_run = self._init_run_states()
 
-    def run(self, step, part_names=None, recursed=False):
+    def _init_run_states(self):
+        steps_run = {}
+
+        for part in self.config.all_parts:
+            steps_run[part.name] = set()
+            for step in common.COMMAND_ORDER:
+                if part.is_dirty(step):
+                    self._handle_dirty(part, step)
+                elif not (part.should_step_run(step)):
+                    steps_run[part.name].add(step)
+                    part.notify_part_progress('Skipping {}'.format(step),
+                                              '(already ran)')
+
+        return steps_run
+
+    def run(self, step, part_names=None):
         if part_names:
             self.parts_config.validate(part_names)
-            parts = {p for p in self.config.all_parts if p.name in part_names}
+            # self.config.all_parts is already ordered, let's not lose that
+            # and keep using a list.
+            parts = [p for p in self.config.all_parts if p.name in part_names]
         else:
             parts = self.config.all_parts
             part_names = self.config.part_names
 
-        dirty = {p.name for p in parts if p.should_step_run('stage')}
         step_index = common.COMMAND_ORDER.index(step) + 1
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
-                self._run_step(step, part, part_names, dirty, recursed)
+                if step not in self._steps_run[part.name]:
+                    self._run_step(step, part, part_names)
+                    self._steps_run[part.name].add(step)
 
         self._create_meta(step, part_names)
 
-    def _run_step(self, step, part, part_names, dirty, recursed):
+    def _run_step(self, step, part, part_names):
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
-        if recursed:
-            prereqs = prereqs & dirty
-        if prereqs and not prereqs.issubset(part_names):
-            for prereq in self.config.all_parts:
-                if prereq.name in prereqs and prereq.should_step_run('stage'):
-                    raise RuntimeError(
-                        'Requested {!r} of {!r} but there are unsatisfied '
-                        'prerequisites: {!r}'.format(
-                            step, part.name, ' '.join(prereqs)))
-        elif prereqs:
+        unstaged_prereqs = {p for p in prereqs
+                            if 'stage' not in self._steps_run[p]}
+
+        if unstaged_prereqs and not unstaged_prereqs.issubset(part_names):
+            missing_parts = [part_name for part_name in self.config.part_names
+                             if part_name in unstaged_prereqs]
+            if missing_parts:
+                raise RuntimeError(
+                    'Requested {!r} of {!r} but there are unsatisfied '
+                    'prerequisites: {!r}'.format(
+                        step, part.name, ' '.join(missing_parts)))
+        elif unstaged_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
             logger.info(
                 '{!r} has prerequisites that need to be staged: '
-                '{}'.format(part.name, ' '.join(prereqs)))
-            self.run('stage', prereqs, recursed=True)
-
-        if part.is_dirty(step):
-            self._handle_dirty(part, step)
-
-        if not part.should_step_run(step):
-            part.notify_part_progress('Skipping {}'.format(step),
-                                      '(already ran)')
-            return
+                '{}'.format(part.name, ' '.join(unstaged_prereqs)))
+            self.run('stage', unstaged_prereqs)
 
         # Run the preparation function for this step (if implemented)
         with contextlib.suppress(AttributeError):

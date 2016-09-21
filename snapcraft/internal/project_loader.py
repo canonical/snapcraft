@@ -32,6 +32,7 @@ from snapcraft.internal import (
     pluginhandler,
 )
 from snapcraft._schema import Validator, SnapcraftSchemaError
+from snapcraft.internal.parts import SnapcraftLogicError, get_remote_parts
 
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,12 @@ class Config:
     def all_parts(self):
         return self.parts.all_parts
 
+    @property
+    def _remote_parts(self):
+        if getattr(self, '_remote_parts_attr', None) is None:
+            self._remote_parts_attr = get_remote_parts()
+        return self._remote_parts_attr
+
     def __init__(self, project_options=None):
         if project_options is None:
             project_options = snapcraft.ProjectOptions()
@@ -115,8 +122,12 @@ class Config:
 
         self._snapcraft_yaml = _get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
+
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
+
+        snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
+        snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
 
         # both confinement type and build quality are optionals
@@ -197,6 +208,34 @@ class Config:
                     ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml['version']),
                     ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
                 ])
+        return snapcraft_yaml
+
+    def _expand_filesets(self, snapcraft_yaml):
+        parts = snapcraft_yaml.get('parts', {})
+
+        for part_name in parts:
+            for step in ('stage', 'snap'):
+                step_fileset = _expand_filesets_for(step, parts[part_name])
+                parts[part_name][step] = step_fileset
+
+        return snapcraft_yaml
+
+    def _process_remote_parts(self, snapcraft_yaml):
+        parts = snapcraft_yaml.get('parts', {})
+
+        for part_name in parts:
+            if 'plugin' not in parts[part_name]:
+                properties = self._remote_parts.compose(part_name,
+                                                        parts[part_name])
+                parts[part_name] = properties
+
+            after_parts = parts[part_name].get('after', [])
+            after_remote_parts = [p for p in after_parts if p not in parts]
+
+            for after_part in after_remote_parts:
+                properties = self._remote_parts.get_part(after_part)
+                parts[after_part] = properties
+
         return snapcraft_yaml
 
 
@@ -305,7 +344,7 @@ def _snapcraft_yaml_load(yaml_file):
     except yaml.scanner.ScannerError as e:
         raise SnapcraftSchemaError(
             '{} on line {} of {}'.format(
-                e.problem, e.problem_mark.line, yaml_file))
+                e.problem, e.problem_mark.line + 1, yaml_file))
 
 
 def load_config(project_options=None):
@@ -351,3 +390,22 @@ def _ensure_grade_default(yaml_data, schema):
         logger.warning('"grade" property not specified: defaulting '
                        'to "stable"')
         yaml_data['grade'] = schema['grade']['default']
+
+
+def _expand_filesets_for(step, properties):
+    filesets = properties.get('filesets', {})
+    fileset_for_step = properties.get(step, {})
+    new_step_set = []
+
+    for item in fileset_for_step:
+        if item.startswith('$'):
+            try:
+                new_step_set.extend(filesets[item[1:]])
+            except KeyError:
+                raise SnapcraftLogicError(
+                    '\'{}\' referred to in the \'{}\' fileset but it is not '
+                    'in filesets'.format(item, step))
+        else:
+            new_step_set.append(item)
+
+    return new_step_set

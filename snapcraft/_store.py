@@ -51,20 +51,26 @@ def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
-    one_time_password = input(
-        'One-time password (just press enter if you don\'t use two-factor '
-        'authentication): ')
 
-    logger.info('Authenticating against Ubuntu One SSO.')
     try:
-        store.login(
-            email, password, one_time_password=one_time_password, acls=acls,
-            save=save)
+        try:
+            store.login(email, password, acls=acls, save=save)
+            print()
+            logger.info(
+                'We strongly recommend enabling multi-factor authentication: '
+                'https://help.ubuntu.com/community/SSO/FAQs/2FA')
+        except storeapi.errors.StoreTwoFactorAuthenticationRequired:
+            one_time_password = input('Second-factor auth: ')
+            store.login(
+                email, password, one_time_password=one_time_password,
+                acls=acls, save=save)
     except (storeapi.errors.InvalidCredentialsError,
             storeapi.errors.StoreAuthenticationError):
+        print()
         logger.info('Login failed.')
         return False
     else:
+        print()
         logger.info('Login successful.')
         return True
 

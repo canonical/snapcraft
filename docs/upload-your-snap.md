@@ -22,8 +22,8 @@ store on your behalf:
     Enter your Ubuntu One SSO credentials.
     Email: me@example.com
     Password:
-    One-time password (just press enter if you don't use two-factor authentication):
-    Authenticating against Ubuntu One SSO.
+    Second-factor auth:
+
     Login successful.
 
 These credentials will remain valid until you revoke them, which you can do

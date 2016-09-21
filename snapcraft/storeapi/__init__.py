@@ -27,13 +27,14 @@ from time import sleep
 from threading import Thread
 from queue import Queue
 
-import pymacaroons
-import requests
 from progressbar import (
     AnimatedMarker,
     ProgressBar,
     UnknownLength,
 )
+import pymacaroons
+import requests
+from simplejson.scanner import JSONDecodeError
 
 import snapcraft
 from snapcraft import config
@@ -151,14 +152,27 @@ class StoreClient():
         self.conf.clear()
         self.conf.save()
 
+    def _refresh_if_necessary(self, func, *args, **kwargs):
+        """Make a request, refreshing macaroons if necessary."""
+        try:
+            return func(*args, **kwargs)
+        except errors.StoreMacaroonNeedsRefreshError:
+            unbound_discharge = self.sso.refresh_unbound_discharge(
+                self.conf.get('unbound_discharge'))
+            self.conf.set('unbound_discharge', unbound_discharge)
+            self.conf.save()
+            return func(*args, **kwargs)
+
     def get_account_information(self):
-        return self.sca.get_account_information()
+        return self._refresh_if_necessary(self.sca.get_account_information)
 
     def register_key(self, account_key_request):
-        self.sca.register_key(account_key_request)
+        return self._refresh_if_necessary(
+            self.sca.register_key, account_key_request)
 
     def register(self, snap_name, is_private=False):
-        self.sca.register(snap_name, is_private, constants.DEFAULT_SERIES)
+        return self._refresh_if_necessary(
+            self.sca.register, snap_name, is_private, constants.DEFAULT_SERIES)
 
     def sign_build(self, authority_id, snap_id, snap_name,
                    snap_filename, grade, key_name, local):
@@ -183,18 +197,18 @@ class StoreClient():
 
         updown_data = _upload.upload_files(snap_filename, self.updown)
 
-        return self.sca.snap_push_metadata(snap_name, updown_data)
+        return self._refresh_if_necessary(
+            self.sca.snap_push_metadata, snap_name, updown_data)
 
     def release(self, snap_name, revision, channels):
-        return self.sca.snap_release(snap_name, revision, channels)
+        return self._refresh_if_necessary(
+            self.sca.snap_release, snap_name, revision, channels)
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
-        package = self.cpi.search_package(snap_name, channel, arch)
-        if package is None:
-            raise errors.SnapNotFoundError(snap_name, channel, arch)
+        package = self.cpi.get_package(snap_name, channel, arch)
         self._download_snap(
             snap_name, channel, arch, download_path,
             package['download_url'], package['download_sha512'])
@@ -229,7 +243,7 @@ class StoreClient():
 
 
 class SSOClient(Client):
-    """The Single Sign On server deals with authentification.
+    """The Single Sign On server deals with authentication.
 
     It is used directly or indirectly by other servers.
 
@@ -249,11 +263,34 @@ class SSOClient(Client):
             'tokens/discharge', data=json.dumps(data),
             headers={'Content-Type': 'application/json',
                      'Accept': 'application/json'})
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            response_json = {}
+        if response.ok:
+            return response_json['discharge_macaroon']
+        else:
+            if (response.status_code == requests.codes.unauthorized and
+                any(error.get('code') == 'twofactor-required'
+                    for error in response_json.get('error_list', []))):
+                raise errors.StoreTwoFactorAuthenticationRequired()
+            else:
+                raise errors.StoreAuthenticationError(
+                    'Failed to get unbound discharge: {}'.format(
+                        response.text))
+
+    def refresh_unbound_discharge(self, unbound_discharge):
+        data = {'discharge_macaroon': unbound_discharge}
+        response = self.post(
+            'tokens/refresh', data=json.dumps(data),
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
         if response.ok:
             return response.json()['discharge_macaroon']
         else:
             raise errors.StoreAuthenticationError(
-                'Failed to get unbound discharge: '.format(response.text))
+                'Failed to refresh unbound discharge: {}'.format(
+                    response.text))
 
 
 class SnapIndexClient(Client):
@@ -268,25 +305,22 @@ class SnapIndexClient(Client):
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
-    def search_package(self, snap_name, channel, arch):
+    def get_package(self, snap_name, channel, arch):
         headers = {
             'Accept': 'application/hal+json',
             'X-Ubuntu-Architecture': arch,
             'X-Ubuntu-Release': constants.DEFAULT_SERIES,
-            'X-Ubuntu-Device-Channel': channel,
         }
         params = {
-            'q': 'package_name:"{}"'.format(snap_name),
+            'channel': channel,
             'fields': 'status,download_url,download_sha512',
-            'size': 1,
         }
         logger.info('Getting details for {}'.format(snap_name))
-        resp = self.get('api/v1/search', headers=headers, params=params)
-        embedded = resp.json().get('_embedded', None)
-        if embedded is None:
-            return None
-        else:
-            return embedded['clickindex:package'][0]
+        url = 'api/v1/snaps/details/{}'.format(snap_name)
+        resp = self.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            raise errors.SnapNotFoundError(snap_name, channel, arch)
+        return resp.json()
 
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
@@ -331,6 +365,19 @@ class SCAClient(Client):
         else:
             raise errors.StoreAuthenticationError('Failed to get macaroon')
 
+    @staticmethod
+    def _is_needs_refresh_response(response):
+        return (
+            response.status_code == requests.codes.unauthorized and
+            response.headers.get('WWW-Authenticate') == (
+                'Macaroon needs_refresh=1'))
+
+    def request(self, *args, **kwargs):
+        response = super().request(*args, **kwargs)
+        if self._is_needs_refresh_response(response):
+            raise errors.StoreMacaroonNeedsRefreshError()
+        return response
+
     def get_account_information(self):
         auth = _macaroon_auth(self.conf)
         response = self.get(
@@ -352,7 +399,6 @@ class SCAClient(Client):
                      'Accept': 'application/json'})
         if not response.ok:
             raise errors.StoreKeyRegistrationError(response)
-        # TODO handle macaroon refresh
 
     def register(self, snap_name, is_private, series):
         auth = _macaroon_auth(self.conf)
@@ -364,7 +410,6 @@ class SCAClient(Client):
                      'Content-Type': 'application/json'})
         if not response.ok:
             raise errors.StoreRegistrationError(snap_name, response)
-        # TODO handle macaroon refresh
 
     def snap_push_metadata(self, snap_name, updown_data):
         data = {
