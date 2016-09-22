@@ -191,7 +191,7 @@ def register(snap_name, is_private=False):
 
 def generate_snap_build(authority_id, snap_id, grade, key_name,
                         snap_filename):
-    """  """
+    """Return the signed snap-build declaration for a snap on disk."""
     cmd = [
         'snap', 'sign-build',
         '--developer-id=' + authority_id,
@@ -237,6 +237,9 @@ def sign_build(snap_filename, key_name='default', local=False):
                  'build assertions for this snap.'))
 
     snap_build_path = snap_filename + '-build'
+    # XXX cprov 20160922: the local cache/check is needed here
+    # to figure out if the snap-build on disk (named by version)
+    # corresponding to the existing snap blob.
     if not os.path.isfile(snap_build_path):
         with open(snap_build_path, 'w+') as fd:
             snap_build_content = generate_snap_build(
@@ -251,7 +254,7 @@ def sign_build(snap_filename, key_name='default', local=False):
 
     if not local:
         store.push_snap_build(snap_id, snap_build_content)
-
+        logger.info('Build assertion {} pushed.'.format(snap_build_path))
 
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.

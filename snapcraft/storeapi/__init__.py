@@ -446,8 +446,7 @@ class SCAClient(Client):
         }
         response = self.post(url, data=data, headers=headers)
         if not response.ok:
-            raise errors.SnapBuildError(response)
-        logger.info('Build assertion {} pushed.'.format(assertion))
+            raise errors.StoreSnapBuildError(response)
 
 
 class StatusTracker:

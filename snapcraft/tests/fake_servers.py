@@ -330,7 +330,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
         sign_build_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'snaps/basic-id/builds'.format())
+            self._DEV_API_PATH, 'snaps/snap-id/builds'.format())
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
@@ -384,9 +384,35 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_sign_build_request(self):
         logger.debug('Handling snap-build request')
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        snap_build = json.loads(string_data)['assertion']
+
+        if snap_build == 'test-not-implemented':
+            self.send_response(501)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'Not Implemented'
+        elif snap_build == 'test-invalid-data':
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            error = {
+                'error_list': [
+                    # XXX cprov 20160922: fix endpoint error handler.
+                    {'code': None,
+                     'message': 'The snap-build assertion is not valid.'},
+                ],
+            }
+            content = json.dumps(error).encode()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'type': 'snap-build',
+                'foo': 'bar',
+            }
+            content = json.dumps(response).encode()
         self.end_headers()
+        self.wfile.write(content)
 
     def _handle_account_key_request(self):
         string_data = self.rfile.read(
