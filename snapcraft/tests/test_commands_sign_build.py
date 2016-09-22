@@ -19,12 +19,22 @@ import logging
 from unittest import mock
 
 import fixtures
+import tempfile
+import shutil
 
 from snapcraft.main import main
 from snapcraft import (
     storeapi,
     tests,
 )
+
+
+def mock_snapd_output(command, *args, **kwargs):
+    if command[:2] == ['snap', 'sign-build']:
+        return
+    else:
+        raise AssertionError('Unhandled command: {}'.format(command))
+
 
 
 class SignBuildTestCase(tests.TestCase):
@@ -37,35 +47,40 @@ class SignBuildTestCase(tests.TestCase):
         self.useFixture(self.fake_terminal)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch('builtins.input')
-    @mock.patch('getpass.getpass')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
-    def test_sign_build_saved(self, mock_installed,
-                              mock_input, mock_getpass, mock_login,
-                              mock_get_account_information):
-        account_info = {'account_id': 'abcd',
-                        'snaps': {'16': {
-                            'basic': {
-                                'snap-id': 'snap-id',
-                                }
-                            }
-                        }}
-
-        mock_login.side_effect = [
-            storeapi.errors.StoreTwoFactorAuthenticationRequired(), None]
-        mock_input.side_effect = ['sample.person@canonical.com', '123456']
+    def test_sign_build_saved(
+            self, mock_installed, mock_get_snap_data, mock_check_output,
+            mock_get_account_info):
         mock_installed.return_value = True
-        mock_get_account_information.return_value = account_info
+        mock_get_account_info.return_value = {
+            'account_id': 'abcd',
+            'snaps': {
+                '16': {
+                    'test-snap': {'snap-id': 'snap-id'},
+                }
+            }
+        }
+        mock_get_snap_data.return_value = {
+            'name': 'test-snap',
+            'grade': 'stable',
+        }
+        mock_check_output.side_effect = mock_snapd_output
 
-        snap_path = os.path.join(
-            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
-        snap_build_path = snap_path + '-build'
-        self.addCleanup(os.remove, snap_build_path)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Copy testing snap.
+            test_snap = os.path.join(
+                os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+            snap_path = os.path.join(temp_dir, 'test-snap.snap')
+            shutil.copyfile(test_snap, snap_path)
+            # Trace and clean 
+            snap_build_path = os.path.join(temp_dir, 'test-snap.snap-build')
+            self.addCleanup(os.remove, snap_build_path)
 
-        with self.assertRaises(SystemExit):
-            main(['login'])
-            # XXX: apparently failing to type registered key password at the moment
-            main(['sign-build', snap_path, '--local', '-d'])
-            msg = 'Assertion test_snap.snap-build saved to disk.'
-            self.assertIn(msg, self.fake_logger.output)
+            with self.assertRaises(SystemExit):
+                main(['sign-build', snap_path, '--local'])
+
+            self.assertEqual([
+                'Assertion {} saved to disk.'.format(snap_build_path),
+            ], self.fake_logger.output.splitlines())
