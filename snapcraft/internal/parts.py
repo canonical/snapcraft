@@ -330,7 +330,7 @@ def search(part_match):
 
     print('{}  {}'.format(
         _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
-    for part_key in matches.keys():
+    for part_key in sorted(matches.keys()):
         description = matches[part_key]['description'].split('\n')[0]
         if len(description) > description_space:
             description = '{}...'.format(description[0:description_space])
