@@ -19,7 +19,12 @@ import fixtures
 import shutil
 import integration_tests
 
-from testtools.matchers import FileExists
+from testtools.matchers import (
+    Contains,
+    FileContains,
+    FileExists,
+    Not,
+)
 
 class SignBuildTestCase(integration_tests.StoreTestCase):
 
@@ -30,41 +35,59 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         shutil.copytree(keys_dir, temp_keys_dir)
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAP_GNUPG_HOME', temp_keys_dir))
-        self.snap_path = 'basic_0.1_all.snap'
+        self.project_dir = 'basic'
+        self.snap_path = '{}_0.1_all.snap'.format(self.project_dir)
+        self.snap_build_path = '{}-build'.format(self.snap_path)
 
-    def test_unsuccessful_sign_build(self):
-        project_dir = 'basic'
-        self.addCleanup(self.logout)
-        self.login()
-
-        self.run_snapcraft('snap', project_dir)
-        os.chdir(project_dir)
+    def test_unsuccessful_sign_build_no_login(self):
+        self.run_snapcraft('snap', self.project_dir)
+        os.chdir(self.project_dir)
         self.assertThat(self.snap_path, FileExists())
-        message = 'Failed to sign build assertion basic_0.1_all.snap-build.'
-        output = self.sign_build(self.snap_path)
-        self.assertEqual(output, message)
+
+        status = self.sign_build(
+            self.snap_path, local=True, expect_success=False)
+        self.assertEqual(1, status)
+        self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_local(self):
-        project_dir = 'basic'
+        self.run_snapcraft('snap', self.project_dir)
+        os.chdir(self.project_dir)
+        self.assertThat(self.snap_path, FileExists())
+
         self.addCleanup(self.logout)
         self.login()
 
-        self.run_snapcraft('snap', project_dir)
-        os.chdir(project_dir)
+        status = self.sign_build(self.snap_path, local=True)
+        self.assertEqual(0, status)
+        self.assertThat(self.snap_build_path, FileExists())
+        self.assertThat(self.snap_build_path,
+                        FileContains(matcher=Contains('type: snap-build')))
+
+    def test_unsuccessful_sign_build_push_no_login(self):
+        self.run_snapcraft('snap', self.project_dir)
+        os.chdir(self.project_dir)
         self.assertThat(self.snap_path, FileExists())
-        message = 'Build assertion basic_0.1_all.snap-build saved to disk.'
-        output = self.sign_build(self.snap_path, local=True)
-        self.assertEqual(output, message)
+
+        status = self.sign_build(self.snap_path, expect_success=False)
+        self.assertEqual(1, status)
+        self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_push(self):
-        project_dir = 'basic'
+        if os.getenv('TEST_STORE', 'fake') != 'fake':
+            # https://bugs.launchpad.net/bugs/1621441
+            self.skipTest(
+                'Cannot push signed assertion against staging/production until '
+                'we have a way to delete them again.')
+
+        self.run_snapcraft('snap', self.project_dir)
+        os.chdir(self.project_dir)
+        self.assertThat(self.snap_path, FileExists())
+
         self.addCleanup(self.logout)
         self.login()
 
-        self.run_snapcraft('snap', project_dir)
-        os.chdir(project_dir)
-        self.assertThat(self.snap_path, FileExists())
-        self.assertEqual(0, self.register_key('default'))
-        message = 'Build assertion basic_0.1_all.snap-build pushed.'
-        output = self.sign_build(self.snap_path)
-        self.assertEqual(output, message)
+        status = self.sign_build(self.snap_path)
+        self.assertEqual(0, status)
+        self.assertThat(self.snap_build_path, FileExists())
+        self.assertThat(self.snap_build_path,
+                        FileContains(matcher=Contains('type: snap-build')))

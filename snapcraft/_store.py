@@ -244,16 +244,16 @@ def sign_build(snap_filename, key_name='default', local=False):
         with open(snap_build_path, 'w+') as fd:
             snap_build_content = generate_snap_build(
                 authority_id, snap_id, grade, key_name, snap_filename)
-            fd.write(snap_build_content)
+            fd.write(snap_build_content.decode())
         logger.info('Build assertion {} saved to disk.'.format(snap_build_path))
     else:
-        with open(snap_build_path) as fd:
+        with open(snap_build_path, 'rb') as fd:
             snap_build_content = fd.read()
         logger.info(
             'A signed build assertion for this snap already exists.')
 
     if not local:
-        store.push_snap_build(snap_id, snap_build_content)
+        store.push_snap_build(snap_id, snap_build_content.decode())
         logger.info('Build assertion {} pushed.'.format(snap_build_path))
 
 def push(snap_filename, release_channels=None):

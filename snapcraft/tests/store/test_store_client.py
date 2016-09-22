@@ -221,7 +221,7 @@ class GetAccountInformationTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         self.assertEqual(
             {'account_id': 'abcd', 'account_keys': [],
-             'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}}},
+             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}}},
             self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
@@ -229,7 +229,7 @@ class GetAccountInformationTestCase(tests.TestCase):
         self.fake_store.needs_refresh = True
         self.assertEqual(
             {'account_id': 'abcd', 'account_keys': [],
-             'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}}},
+             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}}},
             self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 

@@ -58,7 +58,7 @@ class SignBuildTestCase(tests.TestCase):
             'name': 'test-snap',
             'grade': 'stable',
         }
-        mock_check_output.return_value = 'Mocked assertion'
+        mock_check_output.return_value = b'Mocked assertion'
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Copy testing snap.
