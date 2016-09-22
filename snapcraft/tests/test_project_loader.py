@@ -135,6 +135,28 @@ parts:
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'stage': [], 'snap': []})
 
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_chaining_remotes_with_non_composed(self, mock_loadPlugin):
+        self.useFixture(fixture_setup.FakeParts())
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    after: [curl]
+  curl:
+    after: [long-described-part]
+  part2:
+    plugin: nil
+""")
+
+        parts.update()
+        project_loader.Config()
+
     def test_config_composes_with_a_non_existent_remote_part(self):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
