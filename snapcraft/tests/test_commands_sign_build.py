@@ -28,11 +28,6 @@ from snapcraft import (
     tests,
 )
 
-from snapcraft.tests.test_commands_register_key import (
-    get_sample_key,
-    mock_snap_output
-)
-
 
 class SignBuildTestCase(tests.TestCase):
 
