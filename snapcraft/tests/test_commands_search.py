@@ -21,6 +21,7 @@ import fixtures
 from snapcraft import main, tests
 from snapcraft.tests import fixture_setup
 
+
 class SearchCommandTestCase(tests.TestWithFakeRemoteParts):
 
     def test_searching_for_a_part_that_exists(self):
@@ -97,7 +98,6 @@ curl       test entry for curl
         self.assertEqual(fake_terminal.getvalue(), expected_output)
 
     def test_search_output_alphabetical_order(self):
-        logger.info('My test')
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
 
@@ -106,7 +106,8 @@ curl       test entry for curl
         expected_output = (
             'PART NAME            DESCRIPTION\n'
             'curl                 test entry for curl\n'
-            'long-described-part  this is a repetitive description this is a repetitive de...\n'
+            'long-described-part  this is a repetitive description this is a '
+            'repetitive de...\n'
             'multiline-part       this is a multiline description\n'
             'part1                test entry for part1\n')
 
