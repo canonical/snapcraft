@@ -165,15 +165,45 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'test-snap', 'test-channel', download_path)
 
-class SignBuildTestCase(tests.TestCase):
+class PushSnapBuildTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.Storeclient()
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
 
-    def test_sign_build(self):
-        pass
+    def test_push_snap_build_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.push_snap_build('snap-id', 'dummy')
+
+    def test_push_snap_build_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.client.push_snap_build('snap-id', 'dummy')
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    def test_push_snap_build_not_implemented(self):
+        # If the "enable_snap_build" feature switch is off in the store, we
+        # will get a 501 Not Implemented response.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreSnapBuildError) as raised:
+            self.client.push_snap_build('snap-id', 'test-not-implemented')
+        self.assertEqual(
+            str(raised.exception),
+            'Could not assert build: 501 Not Implemented')
+
+    def test_push_snap_build_invalid_data(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreSnapBuildError) as raised:
+            self.client.push_snap_build('snap-id', 'test-invalid-data')
+        self.assertEqual(
+            str(raised.exception),
+            'Could not assert build: The snap-build assertion is not valid.')
+
+    def test_push_snap_build_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        # No exception will be raised if this is successful.
+        self.client.push_snap_build('snap-id', 'dummy')
 
 
 class GetAccountInformationTestCase(tests.TestCase):

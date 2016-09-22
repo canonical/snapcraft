@@ -227,7 +227,7 @@ class StoreReleaseError(StoreError):
                          **response_json)
 
 
-class SnapBuildError(StoreError):
+class StoreSnapBuildError(StoreError):
 
     fmt = 'Could not assert build: {error}'
 
