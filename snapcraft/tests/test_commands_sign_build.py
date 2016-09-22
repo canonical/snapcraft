@@ -28,13 +28,10 @@ from snapcraft import (
     tests,
 )
 
-
-def mock_snapd_output(command, *args, **kwargs):
-    if command[:2] == ['snap', 'sign-build']:
-        return
-    else:
-        raise AssertionError('Unhandled command: {}'.format(command))
-
+from snapcraft.tests.test_commands_register_key import (
+    get_sample_key,
+    mock_snap_output
+)
 
 
 class SignBuildTestCase(tests.TestCase):
@@ -66,7 +63,7 @@ class SignBuildTestCase(tests.TestCase):
             'name': 'test-snap',
             'grade': 'stable',
         }
-        mock_check_output.side_effect = mock_snapd_output
+        mock_check_output.return_value = 'Mocked assertion'
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Copy testing snap.
@@ -74,13 +71,14 @@ class SignBuildTestCase(tests.TestCase):
                 os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
             snap_path = os.path.join(temp_dir, 'test-snap.snap')
             shutil.copyfile(test_snap, snap_path)
-            # Trace and clean 
-            snap_build_path = os.path.join(temp_dir, 'test-snap.snap-build')
-            self.addCleanup(os.remove, snap_build_path)
 
-            with self.assertRaises(SystemExit):
-                main(['sign-build', snap_path, '--local'])
+            main(['sign-build', snap_path, '--local'])
+
+            # Trace snap-build assertion file.
+            snap_build_path = os.path.join(temp_dir, 'test-snap.snap-build')
+            with open(snap_build_path) as snap_build:
+                self.assertEqual('Mocked assertion', snap_build.read())
 
             self.assertEqual([
-                'Assertion {} saved to disk.'.format(snap_build_path),
+                'Build assertion {} saved to disk.'.format(snap_build_path),
             ], self.fake_logger.output.splitlines())

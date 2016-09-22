@@ -52,9 +52,8 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.run_snapcraft('snap', project_dir)
         os.chdir(project_dir)
         self.assertThat(self.snap_path, FileExists())
-        self.assertEqual(0, self.register_key('default'))
-        message = 'Assertion basic_0.1_all.snap-build saved to disk.'
-        output = self.sign_build(self.snap_path)
+        message = 'Build assertion basic_0.1_all.snap-build saved to disk.'
+        output = self.sign_build(self.snap_path, local=True)
         self.assertEqual(output, message)
 
     def test_successful_sign_build_push(self):
@@ -66,6 +65,6 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         os.chdir(project_dir)
         self.assertThat(self.snap_path, FileExists())
         self.assertEqual(0, self.register_key('default'))
-        message = 'Assertion basic_0.1_all.snap-build pushed.'
+        message = 'Build assertion basic_0.1_all.snap-build pushed.'
         output = self.sign_build(self.snap_path)
         self.assertEqual(output, message)

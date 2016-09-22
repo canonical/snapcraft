@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
-
 import getpass
 import json
 import logging
@@ -203,7 +202,10 @@ def sign_build(snap_filename, key_name='default', local=False):
     snap_series = storeapi.constants.DEFAULT_SERIES
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
-    grade = snap_yaml['grade']
+
+    # test snap has no grade, and so other old snaps that
+    # might need to be asserted once snap-build is supported
+    grade = snap_yaml.get('grade', 'stable')
 
     store = storeapi.StoreClient()
     with _requires_login():
@@ -213,7 +215,8 @@ def sign_build(snap_filename, key_name='default', local=False):
             snap_id = info['snaps'][snap_series][snap_name]['snap-id']
         except KeyError:
             raise RuntimeError(
-                'Your account lacks information to assert this snap.')
+                ('Your account lacks information to sign '
+                 'build assertions for this snap.'))
 
     # XXX: we will need some sort of caching for the account_info here
     # if we really want to support a true --local parameter to avoid
