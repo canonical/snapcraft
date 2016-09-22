@@ -195,10 +195,10 @@ class StoreTestCase(TestCase):
         process = pexpect.spawn(self.snapcraft_command, cmd)
         if local:
             process.expect(
-                'Assertion basic_0.1_all.snap-build saved to disk.')
+                'Build assertion basic_0.1_all.snap-build saved to disk.')
         else:
             process.expect(
-                'Assertion basic_0.1_all.snap-build pushed.')
+                'Build assertion basic_0.1_all.snap-build pushed.')
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
