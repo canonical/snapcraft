@@ -189,6 +189,25 @@ def register(snap_name, is_private=False):
         snap_name))
 
 
+def generate_snap_build(authority_id, snap_id, grade, key_name,
+                        snap_filename):
+    """  """
+    cmd = [
+        'snap', 'sign-build',
+        '--developer-id=' + authority_id,
+        '--snap-id=' + snap_id,
+        '--grade=' + grade
+    ]
+    if key_name:
+        cmd.extend(['-k', key_name])
+    cmd.append(snap_filename)
+    try:
+        return subprocess.check_output(cmd)
+    except subprocess.CalledProcessError:
+        msg = 'Failed to sign build assertion {}.'.format(assertion)
+        raise snapcraft.internal.meta.CommandError(msg)
+
+
 def sign_build(snap_filename, key_name='default', local=False):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
@@ -202,7 +221,6 @@ def sign_build(snap_filename, key_name='default', local=False):
     snap_series = storeapi.constants.DEFAULT_SERIES
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
-
     # test snap has no grade, and so other old snaps that
     # might need to be asserted once snap-build is supported
     grade = snap_yaml.get('grade', 'stable')
@@ -218,11 +236,21 @@ def sign_build(snap_filename, key_name='default', local=False):
                 ('Your account lacks information to sign '
                  'build assertions for this snap.'))
 
-    # XXX: we will need some sort of caching for the account_info here
-    # if we really want to support a true --local parameter to avoid
-    # pushing the assertion or ever talking to the store
-    store.sign_build(authority_id, snap_id, snap_name,
-                     snap_filename, grade, key_name, local)
+    snap_build_path = snap_filename + '-build'
+    if not os.path.isfile(snap_build_path):
+        with open(snap_build_path, 'w+') as fd:
+            snap_build_content = generate_snap_build(
+                authority_id, snap_id, grade, key_name, snap_filename)
+            fd.write(snap_build_content)
+        logger.info('Build assertion {} saved to disk.'.format(snap_build_path))
+    else:
+        with open(snap_build_path) as fd:
+            snap_build_content = fd.read()
+        logger.info(
+            'A signed build assertion for this snap already exists.')
+
+    if not local:
+        store.push_snap_build(snap_id, snap_build_content)
 
 
 def push(snap_filename, release_channels=None):
