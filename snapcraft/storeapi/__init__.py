@@ -453,15 +453,16 @@ class SCAClient(Client):
                 # snap-digest is calculated by snap sign-build itself
                 # snap-size is calculated by snap sign-build itself
                 # timestamp is taken by snap sign-build itself
-                cmd = ['snap', 'sign-build',
-                       '--developer-id=' + authority_id,
-                       '--snap-id=' + snap_id,
-                       '--grade=' + grade,
-                       '-k', key_name,
-                       snap_filename]
-                logger.debug('Signing build assertion: {}'.format(cmd))
-                snapcraft.internal.common.run(
-                    cmd, stdout=outfile, stdin=subprocess.PIPE)
+                cmd = [
+                    'snap', 'sign-build',
+                    '--developer-id=' + authority_id,
+                    '--snap-id=' + snap_id,
+                    '--grade=' + grade
+                ]
+                if key_name:
+                    cmd.extend(['-k', key_name])
+                cmd.append(snap_filename)
+                outfile.write(subprocess.check_output(cmd))
             except subprocess.CalledProcessError:
                 msg = 'Failed to sign build assertion {}.'.format(assertion)
                 raise snapcraft.internal.meta.CommandError(msg)
