@@ -1,0 +1,13 @@
+name: test-package
+version: 0.1
+summary: A simple nodejs project.
+description: |
+  Proves that it is possible to build a snap using local nodejs sources.
+confinement: strict
+
+parts:
+  nodejs-with-run:
+    plugin: nodejs
+    source: .
+    npm-run:
+        - run-command
