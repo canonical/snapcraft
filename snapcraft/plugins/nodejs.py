@@ -33,7 +33,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The version of nodejs you want the snap to run on.
     - npm-run:
       (list)
-      A list of targets to `npm run`
+      A list of targets to `npm run`.
+      These targets will be run in order, after `npm install`
 """
 
 import logging
