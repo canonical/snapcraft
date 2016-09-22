@@ -18,6 +18,7 @@ import integration_tests
 import os
 from testtools.matchers import FileExists
 
+
 class NodeJSPluginTestCase(integration_tests.TestCase):
 
     def test_rebuilding_possible(self):
@@ -30,8 +31,10 @@ class NodeJSPluginTestCase(integration_tests.TestCase):
         project_dir = 'nodejs-with-run-commands'
         self.run_snapcraft('build', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'parts', 'nodejs-with-run', 'build', 'command-one-run'),
+            os.path.join(project_dir, 'parts', 'nodejs-with-run', 'build',
+                         'command-one-run'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'parts', 'nodejs-with-run', 'build', 'command-two-run'),
+            os.path.join(project_dir, 'parts', 'nodejs-with-run', 'build',
+                         'command-two-run'),
             FileExists())
