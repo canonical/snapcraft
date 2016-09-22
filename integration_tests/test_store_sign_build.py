@@ -53,7 +53,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         os.chdir(project_dir)
         self.assertThat(self.snap_path, FileExists())
         message = 'Build assertion basic_0.1_all.snap-build saved to disk.'
-        output = self.sign_build(self.snap_path)
+        output = self.sign_build(self.snap_path, local=True)
         self.assertEqual(output, message)
 
     def test_successful_sign_build_push(self):
