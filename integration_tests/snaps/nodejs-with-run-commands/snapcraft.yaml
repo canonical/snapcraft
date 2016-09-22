@@ -1,8 +1,9 @@
 name: test-package
 version: 0.1
-summary: A simple nodejs project.
+summary: A more complex nodejs project.
 description: |
-  Proves that it is possible to build a snap using local nodejs sources.
+  Proves that it is possible to build a snap using local nodejs sources
+  and a set of “npm run” build steps.
 confinement: strict
 
 parts:
