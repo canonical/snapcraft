@@ -222,20 +222,24 @@ class Config:
 
     def _process_remote_parts(self, snapcraft_yaml):
         parts = snapcraft_yaml.get('parts', {})
+        new_parts = {}
 
         for part_name in parts:
             if 'plugin' not in parts[part_name]:
                 properties = self._remote_parts.compose(part_name,
                                                         parts[part_name])
-                parts[part_name] = properties
+                new_parts[part_name] = properties
+            else:
+                new_parts[part_name] = parts[part_name].copy()
 
             after_parts = parts[part_name].get('after', [])
             after_remote_parts = [p for p in after_parts if p not in parts]
 
             for after_part in after_remote_parts:
                 properties = self._remote_parts.get_part(after_part)
-                parts[after_part] = properties
+                new_parts[after_part] = properties
 
+        snapcraft_yaml['parts'] = new_parts
         return snapcraft_yaml
 
 
