@@ -10,4 +10,6 @@ parts:
     plugin: nodejs
     source: .
     npm-run:
-        - run-command
+        - run-command-one
+        - run-command-two
+        - run-command-three

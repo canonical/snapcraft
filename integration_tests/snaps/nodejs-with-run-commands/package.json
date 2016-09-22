@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run-command": "touch command-run"
+    "run-command-one": "touch command-one-run",
+    "run-command-two": "touch command-two-run",
+    "run-command-three": "test -f command-one-run -a -f command-two-run"
   },
   "author": "",
   "license": "GPL-3.0"
