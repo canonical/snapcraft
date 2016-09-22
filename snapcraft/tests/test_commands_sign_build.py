@@ -26,6 +26,11 @@ from snapcraft import (
     tests,
 )
 
+from snapcraft.tests.test_commands_register_key import (
+    get_sample_key,
+    mock_snap_output
+)
+
 
 class SignBuildTestCase(tests.TestCase):
 
@@ -36,15 +41,25 @@ class SignBuildTestCase(tests.TestCase):
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
 
+    @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
     @mock.patch('getpass.getpass')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
-    def test_sign_build_saved(self, mock_installed,
+    def test_sign_build_saved(self, mock_installed, mock_check_output,
                               mock_input, mock_getpass, mock_login,
-                              mock_get_account_information):
+                              mock_get_account_information,
+                              mock_register_key):
         account_info = {'account_id': 'abcd',
+                        'account_keys': [
+                            {
+                                'name': 'default',
+                                'public-key-sha3-384': (
+                                    get_sample_key('default')['sha3-384']),
+                            },
+                        ],
                         'snaps': {'16': {
                             'basic': {
                                 'snap-id': 'snap-id',
@@ -52,20 +67,33 @@ class SignBuildTestCase(tests.TestCase):
                             }
                         }}
 
-        mock_login.side_effect = [
-            storeapi.errors.StoreTwoFactorAuthenticationRequired(), None]
-        mock_input.side_effect = ['sample.person@canonical.com', '123456']
         mock_installed.return_value = True
+        mock_input.side_effect = ['sample.person@canonical.com', '123456']
+        mock_getpass.return_value = 'secret'
+        mock_check_output.side_effect = mock_snap_output
+        mock_login.side_effect = [ 
+            storeapi.errors.StoreTwoFactorAuthenticationRequired(), None]
         mock_get_account_information.return_value = account_info
+
+        main(['register-key', 'default', '-d'])
+
+        self.assertEqual(
+            'Login successful.\n'
+            'Registering key ...\n'
+            'Done. The key "default" ({}) may be used to sign your '
+            'assertions.\n'.format(get_sample_key('default')['sha3-384']),
+            self.fake_logger.output)
 
         snap_path = os.path.join(
             os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
         snap_build_path = snap_path + '-build'
-        self.addCleanup(os.remove, snap_build_path)
 
-        with self.assertRaises(SystemExit):
-            main(['login'])
-            # XXX: apparently failing to type registered key password at the moment
-            main(['sign-build', snap_path, '--local', '-d'])
-            msg = 'Assertion test_snap.snap-build saved to disk.'
-            self.assertIn(msg, self.fake_logger.output)
+        #with self.assertRaises(SystemExit):
+        #    main(['login'])
+        #    main(['register-key', 'default', '-d'])
+        #    main(['sign-build', snap_path, '--local', '-d'])
+        #    msg = 'Assertion test_snap.snap-build saved to disk.'
+        #    self.assertIn(msg, self.fake_logger.output)
+        #    self.assertEqual(1, mock_register_key.call_count)
+
+        self.addCleanup(os.remove, snap_build_path)

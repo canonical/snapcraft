@@ -179,7 +179,7 @@ class StoreClient():
 
         assertion = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
         if os.path.isfile(assertion):
-            logger.debug('Skipping snap-build generation, it already exists')
+            logger.info('A signed assertion for this snap already exists.')
         else:
             self.sca.generate_snap_build(
                 authority_id, snap_id, snap_name,
