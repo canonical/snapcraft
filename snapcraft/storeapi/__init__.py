@@ -21,8 +21,6 @@ import logging
 import os
 import subprocess
 import urllib.parse
-
-from re import sub
 from time import sleep
 from threading import Thread
 from queue import Queue
@@ -176,15 +174,14 @@ class StoreClient():
 
     def sign_build(self, authority_id, snap_id, snap_name,
                    snap_filename, grade, key_name, local):
-
-        assertion = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
+        assertion = snap_filename + '-build'
         if os.path.isfile(assertion):
-            logger.info('A signed assertion for this snap already exists.')
+            logger.info(
+                'A signed build assertion for this snap already exists.')
         else:
             self.sca.generate_snap_build(
                 authority_id, snap_id, snap_name,
                 snap_filename, grade, key_name, assertion)
-
         if not local:
             self.sca.push_snap_build(snap_id, assertion)
 
@@ -468,7 +465,7 @@ class SCAClient(Client):
             except subprocess.CalledProcessError:
                 msg = 'Failed to sign build assertion {}.'.format(assertion)
                 raise snapcraft.internal.meta.CommandError(msg)
-        logger.info('Assertion {} saved to disk.'.format(assertion))
+        logger.info('Build assertion {} saved to disk.'.format(assertion))
 
     def push_snap_build(self, snap_id, assertion):
         try:
@@ -483,7 +480,7 @@ class SCAClient(Client):
                                       'Content-Type': 'application/json'})
         if not response.ok:
             raise errors.SnapBuildError(response)
-        logger.info('Assertion {} pushed.'.format(assertion))
+        logger.info('Build assertion {} pushed.'.format(assertion))
 
 
 class StatusTracker:
