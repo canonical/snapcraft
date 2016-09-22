@@ -136,7 +136,8 @@ parts:
             'stage': [], 'snap': []})
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
-    def test_chaining_remotes_with_non_composed(self, mock_loadPlugin):
+    def test_chaining_remotes_not_locally_declared(self, mock_loadPlugin):
+        """Test to verify we can load non locally declared chained remotes."""
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
 version: "1"
