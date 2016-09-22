@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
+
 import getpass
 import json
 import logging
@@ -32,7 +33,7 @@ from snapcraft.internal import repo
 logger = logging.getLogger(__name__)
 
 
-def _get_name_from_snap_file(snap_path):
+def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         output = subprocess.check_output(
             ['unsquashfs', '-d',
@@ -43,8 +44,7 @@ def _get_name_from_snap_file(snap_path):
                 temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
         ) as yaml_file:
             snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
+    return snap_yaml
 
 
 def _login(store, acls=None, save=True):
@@ -190,6 +190,38 @@ def register(snap_name, is_private=False):
         snap_name))
 
 
+def sign_build(snap_filename, key_name='default', local=False):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`sign-build`, you must run `apt install snapd`.')
+
+    if not os.path.exists(snap_filename):
+        raise FileNotFoundError(
+            'The file {!r} does not exist.'.format(snap_filename))
+
+    snap_series = storeapi.constants.DEFAULT_SERIES
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_name = snap_yaml['name']
+    grade = snap_yaml['grade']
+
+    store = storeapi.StoreClient()
+    with _requires_login():
+        try:
+            info = store.get_account_information()
+            authority_id = info['account_id']
+            snap_id = info['snaps'][snap_series][snap_name]['snap-id']
+        except KeyError:
+            raise RuntimeError(
+                'Your account lacks information to assert this snap.')
+
+    # XXX: we will need some sort of caching for the account_info here
+    # if we really want to support a true --local parameter to avoid
+    # pushing the assertion or ever talking to the store
+    store.sign_build(authority_id, snap_id, snap_name,
+                     snap_filename, grade, key_name, local)
+
+
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
@@ -202,7 +234,8 @@ def push(snap_filename, release_channels=None):
 
     logger.info('Uploading {}.'.format(snap_filename))
 
-    snap_name = _get_name_from_snap_file(snap_filename)
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
     with _requires_login():
         tracker = store.upload(snap_name, snap_filename)

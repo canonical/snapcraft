@@ -165,6 +165,16 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'test-snap', 'test-channel', download_path)
 
+class SignBuildTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.Storeclient()
+
+    def test_sign_build(self):
+        pass
+
 
 class GetAccountInformationTestCase(tests.TestCase):
 
@@ -180,14 +190,16 @@ class GetAccountInformationTestCase(tests.TestCase):
     def test_get_account_information_successfully(self):
         self.client.login('dummy', 'test correct password')
         self.assertEqual(
-            {'account_id': 'abcd', 'account_keys': []},
+            {'account_id': 'abcd', 'account_keys': [],
+             'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}}},
             self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
         self.fake_store.needs_refresh = True
         self.assertEqual(
-            {'account_id': 'abcd', 'account_keys': []},
+            {'account_id': 'abcd', 'account_keys': [],
+             'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}}},
             self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 

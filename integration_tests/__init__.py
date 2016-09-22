@@ -186,3 +186,19 @@ class StoreTestCase(TestCase):
             else:
                 print(line)
         return updated_project_dir
+
+    def sign_build(self, snap_filename, key_name='default', local=False):
+        cmd = ['sign-build', snap_filename, '--key-name', key_name]
+        if local:
+            # only sign it, no pushing
+            cmd.append('--local')
+        process = pexpect.spawn(self.snapcraft_command, cmd)
+        if local:
+            process.expect(
+                'Assertion basic_0.1_all.snap-build saved to disk.')
+        else:
+            process.expect(
+                'Assertion basic_0.1_all.snap-build pushed.')
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus

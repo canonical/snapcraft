@@ -19,7 +19,10 @@ import itertools
 import json
 import logging
 import os
+import subprocess
 import urllib.parse
+
+from re import sub
 from time import sleep
 from threading import Thread
 from queue import Queue
@@ -170,6 +173,20 @@ class StoreClient():
     def register(self, snap_name, is_private=False):
         return self._refresh_if_necessary(
             self.sca.register, snap_name, is_private, constants.DEFAULT_SERIES)
+
+    def sign_build(self, authority_id, snap_id, snap_name,
+                   snap_filename, grade, key_name, local):
+
+        assertion = sub(r"(.*).snap$", r"\1.snap-build", snap_filename)
+        if os.path.isfile(assertion):
+            logger.debug('Skipping snap-build generation, it already exists')
+        else:
+            self.sca.generate_snap_build(
+                authority_id, snap_id, snap_name,
+                snap_filename, grade, key_name, assertion)
+
+        if not local:
+            self.sca.push_snap_build(snap_id, assertion)
 
     def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
@@ -431,6 +448,42 @@ class SCAClient(Client):
         response_json = response.json()
 
         return response_json
+
+    def generate_snap_build(self, authority_id, snap_id, snap_name,
+                            snap_filename, grade, key_name, assertion):
+        with open(assertion, 'w+') as outfile:
+            try:
+                # snap-digest is calculated by snap sign-build itself
+                # snap-size is calculated by snap sign-build itself
+                # timestamp is taken by snap sign-build itself
+                cmd = ['snap', 'sign-build',
+                       '--developer-id=' + authority_id,
+                       '--snap-id=' + snap_id,
+                       '--grade=' + grade,
+                       '-k', key_name,
+                       snap_filename]
+                logger.debug('Signing build assertion: {}'.format(cmd))
+                snapcraft.internal.common.run(
+                    cmd, stdout=outfile, stdin=subprocess.PIPE)
+            except subprocess.CalledProcessError:
+                msg = 'Failed to sign build assertion {}.'.format(assertion)
+                raise snapcraft.internal.meta.CommandError(msg)
+        logger.info('Assertion {} saved to disk.'.format(assertion))
+
+    def push_snap_build(self, snap_id, assertion):
+        try:
+            with open(assertion, 'r') as blob:
+                data = json.dumps({"assertion": blob.read()})
+        except IOError as err:
+            raise snapcraft.internal.meta.CommandError(err)
+        url = 'snaps/{}/builds'.format(snap_id)
+        auth = _macaroon_auth(self.conf)
+        response = self.post(url, data=data,
+                             headers={'Authorization': auth,
+                                      'Content-Type': 'application/json'})
+        if not response.ok:
+            raise errors.SnapBuildError(response)
+        logger.info('Assertion {} pushed.'.format(assertion))
 
 
 class StatusTracker:

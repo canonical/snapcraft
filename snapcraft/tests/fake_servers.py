@@ -329,6 +329,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
+        sign_build_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/basic-id/builds'.format())
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
@@ -339,6 +341,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_acl_request(permission)
         elif parsed_path.path == account_key_path:
             self._handle_account_key_request()
+        elif parsed_path.path == sign_build_path:
+            self._handle_sign_build_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -377,6 +381,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             ])
         response = {'macaroon': macaroon.serialize()}
         self.wfile.write(json.dumps(response).encode())
+
+    def _handle_sign_build_request(self):
+        logger.debug('Handling snap-build request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
 
     def _handle_account_key_request(self):
         string_data = self.rfile.read(
@@ -606,6 +616,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
+            'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}},
         }).encode())
 
 
