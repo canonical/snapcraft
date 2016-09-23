@@ -642,7 +642,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
-            'snaps': {'16': {'basic': {'snap-id': 'basic-id'}}},
+            'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}},
         }).encode())
 
 
