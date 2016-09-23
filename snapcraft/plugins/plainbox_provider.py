@@ -29,7 +29,10 @@ For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 """
 
+import re
+
 import snapcraft
+from snapcraft import file_utils
 
 
 class PlainboxProviderPlugin(snapcraft.BasePlugin):
@@ -46,3 +49,8 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
             "python3", "manage.py", "install", "--layout=relocatable",
             "--prefix=/providers/{}".format(self.name),
             "--root={}".format(self.installdir)])
+
+        # Fix all shebangs to use the in-snap python.
+        file_utils.replace_in_file(self.installdir, re.compile(r''),
+                                   re.compile(r'^#!.*python'),
+                                   r'#!/usr/bin/env python')
