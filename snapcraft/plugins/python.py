@@ -234,9 +234,6 @@ class PythonPlugin(snapcraft.BasePlugin):
         fileset.append('-bin/pip*')
         fileset.append('-bin/easy_install*')
         fileset.append('-bin/wheel')
-        # .pth files are only read from the built-in site-packages directory.
-        # We use PYTHONPATH for everything so not needed.
-        fileset.append('-**/*.pth')
         # Holds all the .pyc files. It is a major cause of inter part
         # conflict.
         fileset.append('-**/__pycache__')
