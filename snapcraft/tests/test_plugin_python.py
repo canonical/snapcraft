@@ -175,7 +175,6 @@ class PythonPluginTestCase(tests.TestCase):
             '-bin/pip*',
             '-bin/easy_install*',
             '-bin/wheel',
-            '-**/*.pth',
             '-**/__pycache__',
             '-**/*.pyc',
         ]
