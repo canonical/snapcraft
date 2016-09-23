@@ -159,6 +159,36 @@ def list_keys():
     print(tabulated_keys)
 
 
+def create_key(name):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`create-key`, you must run `apt install snapd`.')
+    if name is None:
+        name = 'default'
+    keys = list(_get_usable_keys(name=name))
+    if keys:
+        # `snap create-key` would eventually fail, but we can save the user
+        # some time in this obvious error case by not bothering to talk to
+        # the store first.
+        raise RuntimeError('You already have a key named "{}".'.format(name))
+    store = storeapi.StoreClient()
+    try:
+        account_info = store.get_account_information()
+        enabled_names = {
+            account_key['name']
+            for account_key in account_info['account_keys']}
+    except storeapi.errors.InvalidCredentialsError:
+        # Don't require a login here; if they don't have valid credentials,
+        # then they probably also don't have a key registered with the store
+        # yet.
+        enabled_names = set()
+    if name in enabled_names:
+        raise RuntimeError(
+            'You have already registered a key named "{}".'.format(name))
+    subprocess.check_call(['snap', 'create-key', name])
+
+
 def register_key(name):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
