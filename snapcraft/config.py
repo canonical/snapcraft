@@ -15,12 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import configparser
+import logging
 import os
 import urllib.parse
 
 from xdg import BaseDirectory
 
 from snapcraft.storeapi import constants
+
+
+logger = logging.getLogger(__name__)
 
 
 class Config(object):
@@ -66,6 +70,18 @@ class Config(object):
         return True
 
     def load(self):
+        # Local configurations (per project) are supposed to be static.
+        # That's why it's only checked for 'loading' and never written to.
+        # Essentially, all authentication-related changes, like login/logout
+        # or macaroon-refresh, will not be persisted for the next runs.
+        local_config = '.snapcraft.cfg'
+        if os.path.exists(local_config):
+            self.parser.read(local_config)
+            logger.warn(
+                'Using local configuration (`.snapcraft.cfg`), changes will '
+                'not be persisted.')
+            return
+
         self.filename = BaseDirectory.load_first_config(
             'snapcraft', 'snapcraft.cfg')
         if self.filename and os.path.exists(self.filename):
