@@ -1,3 +1,18 @@
+snapcraft (2.18.1) xenial; urgency=medium
+
+  [ Carlo Lobrano ]
+  * snapcraft search: return ordered results (#820)
+
+  [ Sam Yaple ]
+  * python plugin: Don't filter .pth files (#822)
+
+  [ Sergio Schvezov ]
+  * Make copies of remote parts to avoid ordering issues (#821)
+  * plainbox-provider plugin: rewrite python shebangs (#823)
+  * New upstream release 2.18.1 (LP: #1626224)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 23 Sep 2016 13:50:26 -0300
+
 snapcraft (2.18) xenial; urgency=medium
 
   [ Sam Yaple ]
