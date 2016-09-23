@@ -13,3 +13,8 @@ parts:
     source: my-app
     maven-options:
       - -DskipTests
+  m2:
+    plugin: maven
+    source: my-app
+    maven-properties:
+      skipTests: true
