@@ -226,7 +226,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         # Fix all shebangs to use the in-snap python.
         file_utils.replace_in_file(self.installdir, re.compile(r''),
-                                   re.compile(r'#!.*python'),
+                                   re.compile(r'^#!.*python'),
                                    r'#!/usr/bin/env python')
 
     def snap_fileset(self):
