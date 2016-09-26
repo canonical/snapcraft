@@ -1547,8 +1547,8 @@ class TestValidation(tests.TestCase):
             project_loader.Validator(self.data).validate()
 
         self.assertEqual(
-            "The 'restart-condition' property does not match the required "
-            "schema: 'on-watchdog' is not one of ['on-success', "
+            "The 'apps/service1/restart-condition' property does not match "
+            "the required schema: 'on-watchdog' is not one of ['on-success', "
             "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']",
             str(raised.exception))
 
@@ -1581,7 +1581,7 @@ class TestValidation(tests.TestCase):
         with self.assertRaises(SnapcraftSchemaError) as raised:
             project_loader.Validator(self.data).validate()
 
-        expected_message = ("The 'service1' property does not match the "
+        expected_message = ("The 'apps/service1' property does not match the "
                             "required schema: 'command' is a required "
                             "property")
         self.assertEqual(raised.exception.message, expected_message,
