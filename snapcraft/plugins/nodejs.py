@@ -31,6 +31,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - node-engine:
       (string)
       The version of nodejs you want the snap to run on.
+    - npm-run:
+      (list)
+      A list of targets to `npm run`.
+      These targets will be run in order, after `npm install`
 """
 
 import logging
@@ -73,13 +77,22 @@ class NodePlugin(snapcraft.BasePlugin):
             'type': 'string',
             'default': _NODEJS_VERSION
         }
+        schema['properties']['npm-run'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': False,
+            'items': {
+                'type': 'string'
+            },
+            'default': []
+        }
 
         if 'required' in schema:
             del schema['required']
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append('node-packages')
+        schema['build-properties'].extend(['node-packages', 'npm-run'])
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['pull-properties'].append('node-engine')
@@ -119,6 +132,8 @@ class NodePlugin(snapcraft.BasePlugin):
         if os.path.exists(os.path.join(self.builddir, 'package.json')):
             self.run(npm_install)
             self.run(npm_install + ['--global'])
+        for target in self.options.npm_run:
+            self.run(['npm', 'run', target])
 
 
 def _get_nodejs_base(node_engine):
