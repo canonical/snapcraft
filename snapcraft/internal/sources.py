@@ -213,7 +213,7 @@ class Git(Base):
                 command.extend([
                     '--branch', self.source_tag or self.source_branch])
             if self.source_depth:
-                command.extend(['--depth', self.source_depth])
+                command.extend(['--depth', str(self.source_depth)])
             subprocess.check_call(command + [self.source, self.source_dir])
 
 

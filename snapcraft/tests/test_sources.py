@@ -260,7 +260,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--recursive', '--depth', 2, 'git://my-source',
+            ['git', 'clone', '--recursive', '--depth', '2', 'git://my-source',
              'source_dir'])
 
     def test_pull_branch(self):
