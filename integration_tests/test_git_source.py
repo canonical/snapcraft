@@ -116,3 +116,18 @@ class GitSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
         revno = self._get_git_revno('parts/git/src', revrange='-2')
         self.assertEqual('"3"\n"1"', revno)
+
+    def test_pull_git_with_depth(self):
+        """Regression test for LP: #1627772."""
+        project_dir = self.copy_project_to_tmp('git-depth')
+        os.chdir(project_dir)
+
+        self._init_and_config_git()
+        subprocess.check_call(
+            ['git', 'commit', '-m', '"1"', '--allow-empty'],
+            stdout=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['git', 'commit', '-m', '"2"', '--allow-empty'],
+            stdout=subprocess.DEVNULL)
+
+        self.run_snapcraft('pull', project_dir)
