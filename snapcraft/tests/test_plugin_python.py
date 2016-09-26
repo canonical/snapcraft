@@ -217,6 +217,11 @@ class PythonPluginTestCase(tests.TestCase):
                 'path': os.path.join(plugin.installdir, 'foo'),
                 'contents': 'foo',
                 'expected': 'foo',
+            },
+            {
+                'path': os.path.join(plugin.installdir, 'bar'),
+                'contents': 'bar\n#!/usr/bin/python3',
+                'expected': 'bar\n#!/usr/bin/python3',
             }
         ]
 
