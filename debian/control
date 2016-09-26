@@ -54,7 +54,7 @@ Depends: python3-apt,
          sudo,
          ${misc:Depends},
          ${python3:Depends}
-Suggests: lxd, snapd (>= 2.14.2~)
+Suggests: lxd, snapd (>= 2.15~)
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
