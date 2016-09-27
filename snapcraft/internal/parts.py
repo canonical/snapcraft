@@ -25,6 +25,7 @@ from xdg import BaseDirectory
 
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
+from snapcraft.internal.errors import SnapcraftPartMissingError
 from snapcraft.internal import sources, pluginhandler
 from snapcraft.internal import project_loader
 
@@ -94,7 +95,10 @@ class _RemoteParts(_Base):
             self._parts = yaml.load(parts_file)
 
     def get_part(self, part_name, full=False):
-        remote_part = self._parts[part_name].copy()
+        try:
+            remote_part = self._parts[part_name].copy()
+        except KeyError:
+            raise SnapcraftPartMissingError(part_name=part_name)
         if not full:
             for key in ['description', 'maintainer']:
                 remote_part.pop(key)
@@ -141,25 +145,6 @@ class SnapcraftLogicError(Exception):
         self._message = message
 
 
-def _expand_filesets_for(step, properties):
-    filesets = properties.get('filesets', {})
-    fileset_for_step = properties.get(step, {})
-    new_step_set = []
-
-    for item in fileset_for_step:
-        if item.startswith('$'):
-            try:
-                new_step_set.extend(filesets[item[1:]])
-            except KeyError:
-                raise SnapcraftLogicError(
-                    '\'{}\' referred to in the \'{}\' fileset but it is not '
-                    'in filesets'.format(item, step))
-        else:
-            new_step_set.append(item)
-
-    return new_step_set
-
-
 class PartsConfig:
 
     def __init__(self, parts_data, project_options, validator, build_tools,
@@ -181,12 +166,6 @@ class PartsConfig:
     def part_names(self):
         return self._part_names
 
-    @property
-    def _remote_parts(self):
-        if getattr(self, '_remote_parts_attr', None) is None:
-            self._remote_parts_attr = get_remote_parts()
-        return self._remote_parts_attr
-
     def _process_parts(self):
         for part_name in self._parts_data:
             if '/' in part_name:
@@ -197,26 +176,9 @@ class PartsConfig:
             properties = self._parts_data[part_name] or {}
 
             plugin_name = properties.pop('plugin', None)
-            if not plugin_name:
-                logger.info(
-                    'Searching in the remote parts cache for part '
-                    '{!r}'.format(part_name))
-                try:
-                    properties = self._remote_parts.compose(
-                        part_name, properties)
-                    plugin_name = properties.pop('plugin', None)
-                except KeyError as e:
-                    raise SnapcraftLogicError(
-                        '{!r} is missing the `plugin` entry and is not '
-                        'defined in the current remote parts cache, try to '
-                        'run `snapcraft update` to '
-                        'refresh'.format(part_name)) from e
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
-
-            properties['stage'] = _expand_filesets_for('stage', properties)
-            properties['snap'] = _expand_filesets_for('snap', properties)
 
             if 'filesets' in properties:
                 del properties['filesets']
@@ -232,25 +194,10 @@ class PartsConfig:
         for part in self.all_parts:
             dep_names = self.after_requests.get(part.name, [])
             for dep in dep_names:
-                found = False
                 for i in range(len(self.all_parts)):
                     if dep == self.all_parts[i].name:
                         part.deps.append(self.all_parts[i])
-                        found = True
                         break
-                if not found:
-                    try:
-                        remote_part = self._remote_parts.get_part(dep)
-                    except KeyError as e:
-                        raise SnapcraftLogicError(
-                            'Cannot find definition for part {!r}. '
-                            'It may be a remote part, run `snapcraft update` '
-                            'to refresh the remote parts '
-                            'cache'.format(dep)) from e
-                    plugin_name = remote_part.pop('plugin')
-                    part.deps.append(self.load_plugin(
-                        dep, plugin_name, remote_part))
-                    self._part_names.append(dep)
 
     def _sort_parts(self):
         '''Performs an inneficient but easy to follow sorting of parts.'''
@@ -354,7 +301,7 @@ def update():
 def define(part_name):
     try:
         remote_part = _RemoteParts().get_part(part_name, full=True)
-    except KeyError as e:
+    except SnapcraftPartMissingError as e:
         raise RuntimeError(
             'Cannot find the part name {!r} in the cache. Please '
             'consider going to https://wiki.ubuntu.com/snapcraft/parts '
@@ -383,7 +330,7 @@ def search(part_match):
 
     print('{}  {}'.format(
         _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
-    for part_key in matches.keys():
+    for part_key in sorted(matches.keys()):
         description = matches[part_key]['description'].split('\n')[0]
         if len(description) > description_space:
             description = '{}...'.format(description[0:description_space])

@@ -1,0 +1,13 @@
+name: bad-yaml
+version: '0.1'
+summary: This is an error case snap
+description: |
+    This has bad yaml and should fail to load. There is a tab indenting the
+    `plugin` line.
+
+grade: devel
+confinement: devmode
+
+parts:
+  my-part:
+	plugin: nil

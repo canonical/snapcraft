@@ -37,10 +37,14 @@ class StoreError(SnapcraftError):
 
 class SnapNotFoundError(StoreError):
 
-    fmt = 'The "{name}" for {arch} was not found in {channel}.'
+    fmt = 'Snap "{name!r}" for {arch!r} cannot be found in the {channel!r} channel.'
 
     def __init__(self, name, channel, arch):
-        super().__init__(name=name, channel=channel, arch=arch)
+        if arch:
+            super().__init__(name=name, channel=channel, arch=arch)
+        else:
+            self.fmt = 'Snap {name!r} was not found in the {channel!r} channel.'
+            super().__init__(name=name, channel=channel, arch=arch)
 
 
 class SHAMismatchError(StoreError):
@@ -57,6 +61,49 @@ class StoreAuthenticationError(StoreError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class StoreTwoFactorAuthenticationRequired(StoreAuthenticationError):
+
+    def __init__(self):
+        super().__init__("Two-factor authentication required.")
+
+
+class StoreMacaroonNeedsRefreshError(StoreError):
+
+    fmt = 'Authentication macaroon needs to be refreshed.'
+
+
+class StoreAccountInformationError(StoreError):
+
+    fmt = 'Error fetching account information from store: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
+
+
+class StoreKeyRegistrationError(StoreError):
+
+    fmt = 'Key registration failed: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
 
 
 class StoreRegistrationError(StoreError):
@@ -181,4 +228,20 @@ class StoreReleaseError(StoreError):
             self.fmt = '{errors}'
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)
+
+
+class StoreValidationError(StoreError):
+
+    fmt = 'Received error {status_code!r}: {text!r}'
+
+    def __init__(self, snap_id, response, message=None):
+        try:
+            response_json = response.json()
+            # XXX This error is insanely verbose, SCA needs to trim it down
+            response_json['text'] = response.json()['error_list'][0]['message']
+        except (AttributeError, JSONDecodeError):
+            response_json = {'text': message or response}
+
+        super().__init__(status_code=response.status_code,
                          **response_json)

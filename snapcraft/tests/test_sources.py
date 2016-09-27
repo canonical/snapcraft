@@ -24,12 +24,13 @@ import fixtures
 
 from snapcraft.internal import (
     common,
+    errors,
     sources
 )
 from snapcraft import tests
 
 
-class FakeTarballHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         data = 'Test fake compressed file'
@@ -51,7 +52,7 @@ class TestTar(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(server.server_close)
@@ -80,7 +81,7 @@ class TestZip(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeTarballHTTPRequestHandler)
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
         server_thread = threading.Thread(target=self.server.serve_forever)
         self.addCleanup(server_thread.join)
         self.addCleanup(self.server.server_close)
@@ -119,6 +120,55 @@ class TestZip(tests.TestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
 
+class TestDeb(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+        self.server = http.server.HTTPServer(
+            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+        server_thread.start()
+
+        patcher = unittest.mock.patch('apt_inst.DebFile')
+        self.mock_deb = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_pull_debfile_must_download_and_extract(self):
+        dest_dir = 'src'
+        os.makedirs(dest_dir)
+        deb_file_name = 'test.deb'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=deb_file_name)
+        deb_source = sources.Deb(source, dest_dir)
+
+        deb_source.pull()
+
+        self.mock_deb.assert_called_once_with(
+            os.path.join(deb_source.source_dir, deb_file_name))
+
+    def test_extract_and_keep_debfile(self):
+        deb_file_name = 'test.deb'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=deb_file_name)
+        dest_dir = os.path.abspath(os.curdir)
+        deb_source = sources.Deb(source, dest_dir)
+
+        deb_source.download()
+        deb_source.provision(dst=dest_dir, keep_deb=True)
+
+        deb_download = os.path.join(deb_source.source_dir, deb_file_name)
+        self.mock_deb.assert_called_once_with(
+            os.path.join(deb_source.source_dir, deb_file_name))
+
+        with open(deb_download, 'r') as deb_file:
+            self.assertEqual('Test fake compressed file', deb_file.read())
+
+
 class SourceTestCase(tests.TestCase):
 
     def setUp(self):
@@ -127,6 +177,12 @@ class SourceTestCase(tests.TestCase):
         patcher = unittest.mock.patch('subprocess.check_call')
         self.mock_run = patcher.start()
         self.mock_run.return_value = True
+        self.addCleanup(patcher.stop)
+
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.sources._check_for_package')
+        self.mock_check = patcher.start()
+        self.mock_check.side_effect = None
         self.addCleanup(patcher.stop)
 
         patcher = unittest.mock.patch('os.rmdir')
@@ -178,6 +234,14 @@ class TestBazaar(SourceTestCase):
         expected_message = 'can\'t specify a source-branch for a bzr source'
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_depth_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Bazaar('lp://mysource', 'source_dir', source_depth=2)
+
+        expected_message = (
+            'can\'t specify source-depth for a bzr source')
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestGit(SourceTestCase):
 
@@ -187,7 +251,16 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--recursive', 'git://my-source',
+            ['git', 'clone', '--recursive', 'git://my-source',
+             'source_dir'])
+
+    def test_pull_with_depth(self):
+        git = sources.Git('git://my-source', 'source_dir', source_depth=2)
+
+        git.pull()
+
+        self.mock_run.assert_called_once_with(
+            ['git', 'clone', '--recursive', '--depth', '2', 'git://my-source',
              'source_dir'])
 
     def test_pull_branch(self):
@@ -196,7 +269,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--recursive', '--branch',
+            ['git', 'clone', '--recursive', '--branch',
              'my-branch', 'git://my-source', 'source_dir'])
 
     def test_pull_tag(self):
@@ -204,7 +277,7 @@ class TestGit(SourceTestCase):
         git.pull()
 
         self.mock_run.assert_called_once_with(
-            ['git', 'clone', '--depth', '1', '--recursive', '--branch', 'tag',
+            ['git', 'clone', '--recursive', '--branch', 'tag',
              'git://my-source', 'source_dir'])
 
     def test_pull_existing(self):
@@ -327,6 +400,14 @@ class TestMercurial(SourceTestCase):
             'source')
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_depth_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial('hg://mysource', 'source_dir', source_depth=2)
+
+        expected_message = (
+            'can\'t specify source-depth for a mercurial source')
+        self.assertEqual(raised.exception.message, expected_message)
+
 
 class TestSubversion(SourceTestCase):
 
@@ -383,6 +464,14 @@ class TestSubversion(SourceTestCase):
         expected_message = (
             "Can't specify source-tag OR source-branch for a Subversion "
             "source")
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_depth_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Subversion('svn://mysource', 'source_dir', source_depth=2)
+
+        expected_message = (
+            'can\'t specify source-depth for a Subversion source')
         self.assertEqual(raised.exception.message, expected_message)
 
 
@@ -527,8 +616,10 @@ class TestUri(tests.TestCase):
                 self.assertEqual(
                     sources._get_source_type_from_uri(source), 'tar')
 
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Git.pull')
-    def test_get_git_source_from_uri(self, mock_pull):
+    def test_get_git_source_from_uri(self, mock_pull, mock_check):
+        mock_check.side_effect = None
         test_sources = [
             'git://github.com:ubuntu-core/snapcraft.git',
             'git@github.com:ubuntu-core/snapcraft.git',
@@ -546,8 +637,10 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Bazaar.pull')
-    def test_get_bzr_source_from_uri(self, mock_pull):
+    def test_get_bzr_source_from_uri(self, mock_pull, mock_check):
+        mock_check.side_effect = None
         test_sources = [
             'lp:snapcraft_test_source',
             'bzr:dummy-source'
@@ -564,8 +657,10 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Subversion.pull')
-    def test_get_svn_source_from_uri(self, mock_pull):
+    def test_get_svn_source_from_uri(self, mock_pull, mock_check):
+        mock_check.side_effect = None
         test_sources = [
             'svn://sylpheed.sraoss.jp/sylpheed/trunk'
         ]
@@ -580,3 +675,10 @@ class TestUri(tests.TestCase):
 
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
+
+    def test__check_for_package_not_installed(self):
+        with self.assertRaises(errors.MissingPackageError):
+            sources._check_for_package('not-a-package')
+
+    def test__check_for_package_installed(self):
+        sources._check_for_package('sh')

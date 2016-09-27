@@ -31,6 +31,9 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] list-keys
+  snapcraft [options] keys
+  snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
@@ -38,7 +41,9 @@ Usage:
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
-  snapcraft [options] validate <snap-name> [<snap-revision> ...]
+  snapcraft [options] gated <snap-name>
+  snapcraft [options] validate <snap-name> [--key-name=<key-name>] """ \
+"""[<snap-revision> ...]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -83,6 +88,9 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  list-keys    List keys available for signing snaps.
+  keys         Alias for list-keys.
+  register-key Register a key for signing snaps.
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
@@ -282,12 +290,20 @@ def _run_clean(args, project_options):
 
 
 def _is_store_command(args):
-    commands = ('register', 'upload', 'release', 'push', 'validate')
+    commands = (
+        'list-keys', 'keys', 'register-key',
+        'register', 'upload', 'release', 'push', 'validate', 'gated')
     return any(args.get(command) for command in commands)
 
 
-def _run_store_command(args):
-    if args['register']:
+# This function's complexity is correlated to the number of
+# commands, no point in checking that.
+def _run_store_command(args):  # noqa: C901
+    if args['list-keys'] or args['keys']:
+        snapcraft.list_keys()
+    elif args['register-key']:
+        snapcraft.register_key(args['<key-name>'])
+    elif args['register']:
         snapcraft.register(args['<snap-name>'], args['--private'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
@@ -302,7 +318,10 @@ def _run_store_command(args):
         snapcraft.release(
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
     elif args['validate']:
-        snapcraft.validate(args['<snap-name>'], args['<snap-revision>'])
+        snapcraft.validate(args['<snap-name>'], args['<snap-revision>'],
+                           key=args['<key-name>'])
+    elif args['gated']:
+        snapcraft.gated(args['<snap-name>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

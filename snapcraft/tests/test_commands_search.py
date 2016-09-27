@@ -96,3 +96,19 @@ curl       test entry for curl
 curl       test entry for curl
 """
         self.assertEqual(fake_terminal.getvalue(), expected_output)
+
+    def test_search_output_alphabetical_order(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        main.main(['search'])
+        output = fake_terminal.getvalue()
+        expected_output = (
+            'PART NAME            DESCRIPTION\n'
+            'curl                 test entry for curl\n'
+            'long-described-part  this is a repetitive description this is a '
+            'repetitive de...\n'
+            'multiline-part       this is a multiline description\n'
+            'part1                test entry for part1\n')
+
+        self.assertEqual(output, expected_output)

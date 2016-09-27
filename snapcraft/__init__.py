@@ -231,10 +231,13 @@ from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
 from snapcraft._store import (                      # noqa
     download,
+    gated,
+    list_keys,
     login,
     logout,
     push,
     register,
+    register_key,
     release,
     validate,
 )

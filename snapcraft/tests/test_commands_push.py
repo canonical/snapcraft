@@ -75,11 +75,11 @@ class PushCommandTestCase(tests.TestCase):
             main(['push', snap_file])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
-            'Revision 9 of \'my-snap\' created.',
+            'Uploading my-snap-name_0.1_amd64.snap.\n'
+            'Revision 9 of \'my-snap-name\' created.',
             self.fake_logger.output)
 
-        mock_upload.assert_called_once_with('my-snap', snap_file)
+        mock_upload.assert_called_once_with('my-snap-name', snap_file)
 
     def test_push_without_login_must_raise_exception(self):
         snap_path = os.path.join(
@@ -143,11 +143,11 @@ class PushCommandTestCase(tests.TestCase):
             main(['upload', snap_file])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
-            'Revision 9 of \'my-snap\' created.',
+            'Uploading my-snap-name_0.1_amd64.snap.\n'
+            'Revision 9 of \'my-snap-name\' created.',
             self.fake_logger.output)
 
-        mock_upload.assert_called_once_with('my-snap', snap_file)
+        mock_upload.assert_called_once_with('my-snap-name', snap_file)
 
     def test_push_and_release_a_snap(self):
         self.useFixture(fixture_setup.FakeTerminal())
@@ -189,12 +189,12 @@ class PushCommandTestCase(tests.TestCase):
             main(['push', snap_file, '--release', 'beta'])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
-            'Revision 9 of \'my-snap\' created.',
+            'Uploading my-snap-name_0.1_amd64.snap.\n'
+            'Revision 9 of \'my-snap-name\' created.',
             self.fake_logger.output)
 
-        mock_upload.assert_called_once_with('my-snap', snap_file)
-        mock_release.assert_called_once_with('my-snap', 9, ['beta'])
+        mock_upload.assert_called_once_with('my-snap-name', snap_file)
+        mock_release.assert_called_once_with('my-snap-name', 9, ['beta'])
 
     def test_push_and_release_a_snap_to_N_channels(self):
         self.useFixture(fixture_setup.FakeTerminal())
@@ -238,10 +238,10 @@ class PushCommandTestCase(tests.TestCase):
             main(['push', snap_file, '--release', 'edge,beta,candidate'])
 
         self.assertIn(
-            'Uploading my-snap_0_amd64.snap.\n'
-            'Revision 9 of \'my-snap\' created.',
+            'Uploading my-snap-name_0.1_amd64.snap.\n'
+            'Revision 9 of \'my-snap-name\' created.',
             self.fake_logger.output)
 
-        mock_upload.assert_called_once_with('my-snap', snap_file)
-        mock_release.assert_called_once_with('my-snap', 9,
+        mock_upload.assert_called_once_with('my-snap-name', snap_file)
+        mock_release.assert_called_once_with('my-snap-name', 9,
                                              ['edge', 'beta', 'candidate'])

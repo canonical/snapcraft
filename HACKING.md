@@ -53,6 +53,7 @@ that, make sure you have an account on the
 environment variables:
 
     UBUNTU_STORE_API_ROOT_URL='https://myapps.developer.staging.ubuntu.com/dev/api/'
+    UBUNTU_STORE_SEARCH_ROOT_URL=https://search.apps.staging.ubuntu.com/
     UBUNTU_STORE_UPLOAD_ROOT_URL='https://upload.apps.staging.ubuntu.com/'
     UBUNTU_SSO_API_ROOT_URL='https://login.staging.ubuntu.com/api/v2/'
 

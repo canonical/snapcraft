@@ -14,16 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import contextmanager
+import datetime
 import getpass
+import json
 import logging
+import os
+import re
 import subprocess
 import tempfile
-import os
 
 from tabulate import tabulate
 import yaml
 
 from snapcraft import storeapi
+from snapcraft.internal import repo
 
 
 logger = logging.getLogger(__name__)
@@ -44,26 +49,37 @@ def _get_name_from_snap_file(snap_path):
     return snap_yaml['name']
 
 
-def login():
+def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
-    one_time_password = input(
-        'One-time password (just press enter if you don\'t use two-factor '
-        'authentication): ')
 
-    logger.info('Authenticating against Ubuntu One SSO.')
-    store = storeapi.StoreClient()
     try:
-        store.login(
-            email, password, one_time_password=one_time_password)
+        try:
+            store.login(email, password, acls=acls, save=save)
+            print()
+            logger.info(
+                'We strongly recommend enabling multi-factor authentication: '
+                'https://help.ubuntu.com/community/SSO/FAQs/2FA')
+        except storeapi.errors.StoreTwoFactorAuthenticationRequired:
+            one_time_password = input('Second-factor auth: ')
+            store.login(
+                email, password, one_time_password=one_time_password,
+                acls=acls, save=save)
     except (storeapi.errors.InvalidCredentialsError,
             storeapi.errors.StoreAuthenticationError):
+        print()
         logger.info('Login failed.')
         return False
     else:
+        print()
         logger.info('Login successful.')
         return True
+
+
+def login():
+    store = storeapi.StoreClient()
+    return _login(store)
 
 
 def logout():
@@ -73,15 +89,105 @@ def logout():
     logger.info('Credentials cleared.')
 
 
-def register(snap_name, is_private=False):
-    logger.info('Registering {}.'.format(snap_name))
-    store = storeapi.StoreClient()
+@contextmanager
+def _requires_login():
     try:
-        store.register(snap_name, is_private)
+        yield
     except storeapi.errors.InvalidCredentialsError:
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
+
+
+def _get_usable_keys(name=None):
+    keys = json.loads(subprocess.check_output(
+        ['snap', 'keys', '--json'], universal_newlines=True))
+    if keys is not None:
+        for key in keys:
+            if name is None or name == key['name']:
+                yield key
+
+
+def _select_key(keys):
+    if len(keys) > 1:
+        print('Select a key:')
+        print()
+        tabulated_keys = tabulate(
+            [(i + 1, key['name'], key['sha3-384'])
+             for i, key in enumerate(keys)],
+            headers=["Number", "Name", "SHA3-384 fingerprint"],
+            tablefmt="plain")
+        print(tabulated_keys)
+        print()
+        while True:
+            try:
+                keynum = int(input('Key number: ')) - 1
+            except ValueError:
+                continue
+            if keynum >= 0 and keynum < len(keys):
+                return keys[keynum]
+    else:
+        return keys[0]
+
+
+def _export_key(name, account_id):
+    return subprocess.check_output(
+        ['snap', 'export-key', '--account={}'.format(account_id), name],
+        universal_newlines=True)
+
+
+def list_keys():
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use `list-keys`, '
+            'you must run `apt install snapd`.')
+    keys = list(_get_usable_keys())
+    store = storeapi.StoreClient()
+    with _requires_login():
+        account_info = store.get_account_information()
+    enabled_keys = {
+        account_key['public-key-sha3-384']
+        for account_key in account_info['account_keys']}
+    tabulated_keys = tabulate(
+        [('*' if key['sha3-384'] in enabled_keys else '-',
+          key['name'], key['sha3-384'],
+          '' if key['sha3-384'] in enabled_keys else '(not enabled)')
+         for key in keys],
+        headers=["", "Name", "SHA3-384 fingerprint", ""],
+        tablefmt="plain")
+    print(tabulated_keys)
+
+
+def register_key(name):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`register-key`, you must run `apt install snapd`.')
+    keys = list(_get_usable_keys(name=name))
+    if not keys:
+        if name is not None:
+            raise RuntimeError(
+                'You have no usable key named "{}".'.format(name))
+        else:
+            raise RuntimeError('You have no usable keys.')
+    key = _select_key(keys)
+    store = storeapi.StoreClient()
+    if not _login(store, acls=['modify_account_key'], save=False):
+        raise RuntimeError('Cannot continue without logging in successfully.')
+    logger.info('Registering key ...')
+    account_info = store.get_account_information()
+    account_key_request = _export_key(key['name'], account_info['account_id'])
+    store.register_key(account_key_request)
+    logger.info(
+        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
+            key['name'], key['sha3-384']))
+
+
+def register(snap_name, is_private=False):
+    logger.info('Registering {}.'.format(snap_name))
+    store = storeapi.StoreClient()
+    with _requires_login():
+        store.register(snap_name, is_private)
     logger.info("Congratulations! You're now the publisher for {!r}.".format(
         snap_name))
 
@@ -99,13 +205,9 @@ def push(snap_filename, release_channels=None):
     logger.info('Uploading {}.'.format(snap_filename))
 
     snap_name = _get_name_from_snap_file(snap_filename)
-    try:
-        store = storeapi.StoreClient()
+    store = storeapi.StoreClient()
+    with _requires_login():
         tracker = store.upload(snap_name, snap_filename)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
 
     result = tracker.track()
     # This is workaround until LP: #1599875 is solved
@@ -148,13 +250,9 @@ def _get_text_for_channel(channel):
 
 
 def release(snap_name, revision, release_channels):
-    try:
-        store = storeapi.StoreClient()
+    store = storeapi.StoreClient()
+    with _requires_login():
         channels = store.release(snap_name, revision, release_channels)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
 
     if 'opened_channels' in channels:
         logger.info(
@@ -172,55 +270,92 @@ def release(snap_name, revision, release_channels):
 
 def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
+    store = storeapi.StoreClient()
     try:
-        store = storeapi.StoreClient()
-        store.download(snap_name, channel, download_path, arch)
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
-        raise
-    except storeapi.errors.SnapNotFoundError:
-        raise RuntimeError(
-            'Snap {name} for {arch} cannot be found'
-            ' in the {channel} channel'.format(name=snap_name, arch=arch,
-                                               channel=channel))
+        with _requires_login():
+            store.download(snap_name, channel, download_path, arch)
     except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
                 snap_name, download_path))
 
 
-def validate(snap_name, validations):
+def gated(snap_name):
+    """Print list of snaps gated by snap_name."""
+    store = storeapi.StoreClient()
+    # Get data for the gating snap
+    with _requires_login():
+        snap_data = store.cpi.get_package(snap_name, 'stable', None)
+    snap_id = snap_data['snap_id']
+    validations = store.get_validations(snap_id)
+
+    table_data = []
+    for v in validations:
+        table_data.append([v['approved-snap-name'],
+                           v['approved-snap-revision']])
+    tabulated = tabulate(table_data, headers=['Name', 'Approved'],
+                         tablefmt="plain")
+    print(tabulated)
+
+
+def validate(snap_name, validations, revoke=False, key=None):
     """Generate, sign and upload validation assertions."""
+
+    # Check validations format
+    validation_re = re.compile('^[^=]+=[0-9]+$')
+    invalids = [v for v in validations if not validation_re.match(v)]
+    if invalids:
+        for v in invalids:
+            logger.error('Invalid validation request "{}", format must be'
+                         ' name=revision'.format(v))
+        raise RuntimeError()
+
     store = storeapi.StoreClient()
 
-    def get_snap_data(name):
-        # XXX FIXME error handling
-        search_results = store.cpi.search_package(name, 'stable', None)
-        details_url = search_results['_links']['self']['href']
-        return store.cpi.get(details_url).json()
-
-    # First, figure out the latest revision for snap_name
-    snap_data = get_snap_data(snap_name)
-    revision = snap_data['revision']
-    release = snap_data['release']
+    # Get data for the gating snap
+    with _requires_login():
+        snap_data = store.cpi.get_package(snap_name, 'stable', None)
+    release = str(snap_data['release'][0])
     snap_id = snap_data['snap_id']
 
+    # Need the ID of the logged in user.
+    with _requires_login():
+        account_info = store.get_account_information()
+    authority_id = account_info['account_id']
+
     # Then, for each requested validation, generate assertion
-    # XXX FIXME: ensure validations are of the form name=number
     for validation in validations:
-        name, rev = validations.split('=', 1)
-        approved_data = get_snap_data(name)
+        gated_name, rev = validation.split('=', 1)
+        approved_data = store.cpi.get_package(gated_name, 'stable', None)
         assertion = {
             'type': 'validation',
-            'authority-id': 'XXX FIXME',
+            'authority-id': authority_id,
             'series': release,
             'snap-id': snap_id,
             'approved-snap-id': approved_data['snap_id'],
             'approved-snap-revision': rev,
-            'valid': True
+            'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'revoked': "false"
         }
+        if revoke:
+            assertion['revoked'] = "true"
 
-        # XXX TODO sign the assertion using "snap sign"
+        cmdline = ['snap', 'sign']
+        if key:
+            cmdline += ['-k', key]
+        snap_sign = subprocess.Popen(
+            cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        data = json.dumps(assertion).encode('utf8')
+        logger.info('Signing validation {}'.format(validation))
+        assertion, err = snap_sign.communicate(input=data)
+        if snap_sign.returncode != 0:
+            err = err.decode('ascii', errors='replace')
+            raise RuntimeError('Error signing assertion: {!s}'.format(err))
 
-        # XXX TODO send the signed assertion to SCA's API
+        # Save assertion to a properly named file
+        fname = '{}-{}-r{}.assertion'.format(snap_name, gated_name, rev)
+        with open(fname, 'wb') as f:
+            f.write(assertion)
+
+        store.push_validation(snap_id, assertion)

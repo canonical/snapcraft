@@ -32,6 +32,9 @@ import snapcraft
 
 class DumpPlugin(snapcraft.BasePlugin):
 
+    def enable_cross_compilation(self):
+        pass
+
     def build(self):
         super().build()
         snapcraft.file_utils.link_or_copy_tree(

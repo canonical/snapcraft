@@ -53,6 +53,7 @@ from glob import glob
 
 import snapcraft
 from snapcraft import file_utils
+from snapcraft.common import isurl
 
 
 class PythonPlugin(snapcraft.BasePlugin):
@@ -153,7 +154,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         env['PYTHONUSERBASE'] = self.installdir
 
         subprocess.check_call([
-            self.system_pip_command, 'install', '--user',
+            self.system_pip_command, 'install', '--user', '--no-compile',
             '--ignore-installed',
             '--disable-pip-version-check',
             'pip', 'setuptools', 'wheel'], env=env)
@@ -161,14 +162,16 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _get_pip_command(self):
         self._install_pip()
 
-        pip_install = ['pip', 'install', '--user',
+        pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check']
 
         if self.options.constraints:
-            pip_install = pip_install + [
-                '--constraint',
-                os.path.join(self.sourcedir, self.options.constraints),
-            ]
+            if isurl(self.options.constraints):
+                constraints = self.options.constraints
+            else:
+                constraints = os.path.join(self.sourcedir,
+                                           self.options.constraints)
+            pip_install = pip_install + ['--constraint', constraints]
 
         if self.options.process_dependency_links:
             pip_install.append('--process-dependency-links')
@@ -192,10 +195,12 @@ class PythonPlugin(snapcraft.BasePlugin):
         env = self._get_build_env()
 
         if self.options.requirements:
-            self.run(pip_install + [
-                '--requirement',
-                os.path.join(self.sourcedir, self.options.requirements),
-            ], env=env)
+            if isurl(self.options.requirements):
+                requirements = self.options.requirements
+            else:
+                requirements = os.path.join(self.sourcedir,
+                                            self.options.requirements)
+            self.run(pip_install + ['--requirement', requirements], env=env)
 
         if self.options.python_packages:
             self.run(pip_install + self.options.python_packages, env=env)
@@ -221,7 +226,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         # Fix all shebangs to use the in-snap python.
         file_utils.replace_in_file(self.installdir, re.compile(r''),
-                                   re.compile(r'#!.*python'),
+                                   re.compile(r'^#!.*python'),
                                    r'#!/usr/bin/env python')
 
     def snap_fileset(self):
@@ -229,15 +234,10 @@ class PythonPlugin(snapcraft.BasePlugin):
         fileset.append('-bin/pip*')
         fileset.append('-bin/easy_install*')
         fileset.append('-bin/wheel')
-        # .pth files are only read from the built-in site-packages directory.
-        # We use PYTHONPATH for everything so not needed.
-        fileset.append('-**/*.pth')
         # Holds all the .pyc files. It is a major cause of inter part
         # conflict.
-        if self.options.python_version == 'python3':
-            fileset.append('-**/__pycache__')
-        elif self.options.python_version == 'python2':
-            fileset.append('-**/*.pyc')
+        fileset.append('-**/__pycache__')
+        fileset.append('-**/*.pyc')
         return fileset
 
 
