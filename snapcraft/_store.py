@@ -164,7 +164,7 @@ def create_key(name):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`create-key`, you must run `apt install snapd`.')
-    if name is None:
+    if not name:
         name = 'default'
     keys = list(_get_usable_keys(name=name))
     if keys:
