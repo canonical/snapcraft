@@ -148,7 +148,6 @@ class PythonPlugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        os.makedirs(self._python_package_dir, exist_ok=True)
         self._run_pip(setup, download=True)
 
     def _install_pip(self, download):
@@ -162,8 +161,7 @@ class PythonPlugin(snapcraft.BasePlugin):
                    package_dir=self._python_package_dir, env=env,
                    extra_install_args=['--ignore-installed'])
 
-        if download or not os.path.exists(self._python_package_dir):
-            download = ['--download', self._python_package_dir]
+        if download:
             pip.wheel(args)
         pip.install(args)
 
@@ -202,20 +200,26 @@ class PythonPlugin(snapcraft.BasePlugin):
             else:
                 requirements = os.path.join(self.sourcedir,
                                             self.options.requirements)
-            if download or not os.path.exists(self._python_package_dir):
+            if download:
+                pip.download(['--requirement', requirements])
+            else:
                 pip.wheel(['--requirement', requirements])
-            pip.install(['--requirement', requirements])
+                pip.install(['--requirement', requirements])
 
         if self.options.python_packages:
-            if download or not os.path.exists(self._python_package_dir):
+            if download:
+                pip.download(self.options.python_packages)
+            else:
                 pip.wheel(self.options.python_packages)
-            pip.install(self.options.python_packages)
+                pip.install(self.options.python_packages)
 
         if os.path.exists(setup):
             cwd = os.path.dirname(setup)
-            if download or not os.path.exists(self._python_package_dir):
+            if download:
+                pip.download(['.'], cwd=cwd)
+            else:
                 pip.wheel(['.'], cwd=cwd)
-            pip.install(['.'], cwd=cwd)
+                pip.install(['.'], cwd=cwd)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -270,6 +274,19 @@ class _Pip:
         cmd = [self._runnable, 'wheel', '--wheel-dir', self._package_dir]
         cmd.extend(args)
 
+        os.makedirs(self._package_dir, exist_ok=True)
+        self._exec_func(cmd, env=self._env, **kwargs)
+
+    def download(self, args, **kwargs):
+        cmd = [
+            self._runnable, 'download',
+            '--disable-pip-version-check',
+            '--dest', self._package_dir,
+        ]
+        cmd.extend(self._extra_install_args)
+        cmd.extend(args)
+
+        os.makedirs(self._package_dir, exist_ok=True)
         self._exec_func(cmd, env=self._env, **kwargs)
 
     def install(self, args, **kwargs):
