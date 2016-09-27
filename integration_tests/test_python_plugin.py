@@ -29,7 +29,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
     def test_pull_with_pip_requirements_file(self):
         project_dir = 'pip-requirements-file'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
                 project_dir, 'parts', 'python2', 'install', 'lib',
@@ -43,7 +43,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
     def test_pull_with_pip_requirements_list(self):
         project_dir = 'pip-requirements-list'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
                 project_dir, 'parts', 'python2', 'install', 'lib',
