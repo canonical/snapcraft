@@ -130,14 +130,25 @@ class PythonPluginTestCase(tests.TestCase):
 
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+
+        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir]
+
         pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check',
+                       '--no-index',
+                       '--find-links', plugin._python_package_dir,
                        '--constraint', constraints_path]
 
         calls = [
+            mock.call(pip_wheel + ['--requirement', requirements_path],
+                      env=mock.ANY),
             mock.call(pip_install + ['--requirement', requirements_path],
                       env=mock.ANY),
+            mock.call(pip_wheel + ['test', 'packages'],
+                      env=mock.ANY),
             mock.call(pip_install + ['test', 'packages'],
+                      env=mock.ANY),
+            mock.call(pip_wheel + ['.'], cwd=plugin.sourcedir,
                       env=mock.ANY),
             mock.call(pip_install + ['.'], cwd=plugin.sourcedir,
                       env=mock.ANY),
@@ -154,13 +165,22 @@ class PythonPluginTestCase(tests.TestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
+        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir]
+
         pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check',
+                       '--no-index',
+                       '--find-links', plugin._python_package_dir,
                        '--constraint', 'http://test.com/constraints.txt']
 
         calls = [
+            mock.call(pip_wheel + ['--requirement',
+                                   'https://test.com/requirements.txt'],
+                      env=mock.ANY),
             mock.call(pip_install + ['--requirement',
                                      'https://test.com/requirements.txt'],
+                      env=mock.ANY),
+            mock.call(pip_wheel + ['.'], cwd=plugin.sourcedir,
                       env=mock.ANY),
             mock.call(pip_install + ['.'], cwd=plugin.sourcedir,
                       env=mock.ANY),
