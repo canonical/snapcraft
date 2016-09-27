@@ -48,6 +48,7 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
             node_packages = []
             node_engine = '4'
+            npm_run = []
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -68,6 +69,7 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
             node_packages = []
             node_engine = '4'
+            npm_run = []
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -94,6 +96,7 @@ class NodePluginTestCase(tests.TestCase):
             source = None
             node_packages = ['my-pkg']
             node_engine = '4'
+            npm_run = []
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
@@ -114,6 +117,27 @@ class NodePluginTestCase(tests.TestCase):
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
 
+    def test_build_executes_npm_run_commands(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = ['command_one', 'avocado']
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(['npm', 'run', 'command_one'],
+                      cwd=plugin.builddir),
+            mock.call(['npm', 'run', 'avocado'],
+                      cwd=plugin.builddir)])
+
     @mock.patch('platform.machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
         machine_mock.return_value = 'fantasy-arch'
@@ -122,6 +146,7 @@ class NodePluginTestCase(tests.TestCase):
             source = None
             node_packages = []
             node_engine = '4'
+            npm_run = []
 
         with self.assertRaises(EnvironmentError) as raised:
             nodejs.NodePlugin('test-part', Options(),
@@ -142,6 +167,11 @@ class NodePluginTestCase(tests.TestCase):
                                   'minitems': 1,
                                   'type': 'array',
                                   'uniqueItems': True},
+                'npm-run': {'default': [],
+                            'items': {'type': 'string'},
+                            'minitems': 1,
+                            'type': 'array',
+                            'uniqueItems': False},
                 'source': {'type': 'string'},
                 'source-branch': {'default': '', 'type': 'string'},
                 'source-subdir': {'default': None, 'type': 'string'},
@@ -151,7 +181,8 @@ class NodePluginTestCase(tests.TestCase):
                 'disable-parallel': {'default': False, 'type': 'boolean'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
                                 'source-tag', 'source-subdir', 'node-engine'],
-            'build-properties': ['disable-parallel', 'node-packages'],
+            'build-properties': ['disable-parallel', 'node-packages',
+                                 'npm-run'],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)
@@ -170,6 +201,7 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
             node_packages = []
             node_engine = '4'
+            npm_run = []
 
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
