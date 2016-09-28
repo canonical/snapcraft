@@ -21,7 +21,7 @@ from snapcraft.internal.errors import SnapcraftError
 
 class InvalidCredentialsError(SnapcraftError):
 
-    fmt = 'Invalid credentials: {}.'
+    fmt = 'Invalid credentials: {message}.'
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -225,3 +225,20 @@ class StoreReleaseError(StoreError):
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)
+
+
+class StoreSnapBuildError(StoreError):
+
+    fmt = 'Could not assert build: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+
+        super().__init__(error=error)

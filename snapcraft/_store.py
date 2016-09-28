@@ -32,7 +32,7 @@ from snapcraft.internal import repo
 logger = logging.getLogger(__name__)
 
 
-def _get_name_from_snap_file(snap_path):
+def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         output = subprocess.check_output(
             ['unsquashfs', '-d',
@@ -43,8 +43,7 @@ def _get_name_from_snap_file(snap_path):
                 temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
         ) as yaml_file:
             snap_yaml = yaml.load(yaml_file)
-
-    return snap_yaml['name']
+    return snap_yaml
 
 
 def _login(store, acls=None, save=True):
@@ -190,6 +189,72 @@ def register(snap_name, is_private=False):
         snap_name))
 
 
+def _generate_snap_build(authority_id, snap_id, grade, key_name,
+                         snap_filename):
+    """Return the signed snap-build declaration for a snap on disk."""
+    cmd = [
+        'snap', 'sign-build',
+        '--developer-id=' + authority_id,
+        '--snap-id=' + snap_id,
+        '--grade=' + grade
+    ]
+    if key_name:
+        cmd.extend(['-k', key_name])
+    cmd.append(snap_filename)
+    try:
+        return subprocess.check_output(cmd)
+    except subprocess.CalledProcessError:
+        raise RuntimeError(
+            'Failed to sign build assertion for {}.'.format(snap_filename))
+
+
+def sign_build(snap_filename, key_name='default', local=False):
+    if not repo.is_package_installed('snapd'):
+        raise EnvironmentError(
+            'The snapd package is not installed. In order to use '
+            '`sign-build`, you must run `apt install snapd`.')
+
+    if not os.path.exists(snap_filename):
+        raise FileNotFoundError(
+            'The file {!r} does not exist.'.format(snap_filename))
+
+    snap_series = storeapi.constants.DEFAULT_SERIES
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_name = snap_yaml['name']
+    grade = snap_yaml.get('grade', 'stable')
+
+    store = storeapi.StoreClient()
+    with _requires_login():
+        try:
+            info = store.get_account_information()
+            authority_id = info['account_id']
+            snap_id = info['snaps'][snap_series][snap_name]['snap-id']
+        except KeyError:
+            raise RuntimeError(
+                'Your account lacks permission to assert builds for this '
+                'snap. Make sure you are logged in as the publisher of '
+                '\'{}\' for series \'{}\'.'.format(snap_name, snap_series))
+
+    snap_build_path = snap_filename + '-build'
+    if os.path.isfile(snap_build_path):
+        with open(snap_build_path, 'rb') as fd:
+            snap_build_content = fd.read()
+        logger.info(
+            'A signed build assertion for this snap already exists.')
+    else:
+        with open(snap_build_path, 'w+') as fd:
+            snap_build_content = _generate_snap_build(
+                authority_id, snap_id, grade, key_name, snap_filename)
+            fd.write(snap_build_content.decode())
+        logger.info(
+            'Build assertion {} saved to disk.'.format(snap_build_path))
+
+    if not local:
+        store.push_snap_build(snap_id, snap_build_content.decode())
+        logger.info(
+            'Build assertion {} pushed to the Store.'.format(snap_build_path))
+
+
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
@@ -202,7 +267,8 @@ def push(snap_filename, release_channels=None):
 
     logger.info('Uploading {}.'.format(snap_filename))
 
-    snap_name = _get_name_from_snap_file(snap_filename)
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
     with _requires_login():
         tracker = store.upload(snap_name, snap_filename)
