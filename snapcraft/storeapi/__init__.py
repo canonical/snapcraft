@@ -171,6 +171,10 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.register, snap_name, is_private, constants.DEFAULT_SERIES)
 
+    def push_snap_build(self, snap_id, snap_build):
+        return self._refresh_if_necessary(
+            self.sca.push_snap_build, snap_id, snap_build)
+
     def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
@@ -431,6 +435,17 @@ class SCAClient(Client):
         response_json = response.json()
 
         return response_json
+
+    def push_snap_build(self, snap_id, snap_build):
+        url = 'snaps/{}/builds'.format(snap_id)
+        data = json.dumps({"assertion": snap_build})
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+            'Content-Type': 'application/json'
+        }
+        response = self.post(url, data=data, headers=headers)
+        if not response.ok:
+            raise errors.StoreSnapBuildError(response)
 
 
 class StatusTracker:
