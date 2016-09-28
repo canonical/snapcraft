@@ -494,7 +494,14 @@ class StatusTracker:
         connection_errors_allowed = 10
         while True:
             try:
-                content = requests.get(self.__status_details_url).json()
+                response = requests.get(self.__status_details_url)
+                # There's a race condition in the store that means that the
+                # status_details_url may not be available right away. If we get
+                # a 404 response, treat it as an error.
+                if response.status_code == 404:
+                    yield RuntimeError(
+                        'Store has not created package upload record yet.')
+                content = response.json()
             except (requests.ConnectionError, requests.HTTPError) as e:
                 if not connection_errors_allowed:
                     yield e
