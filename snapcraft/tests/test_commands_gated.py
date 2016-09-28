@@ -45,7 +45,7 @@ class GatedTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(SystemExit):
             main([self.command_name, 'unknown'])
-        self.assertIn('Snap unknown was not found in the stable channel.',
+        self.assertIn("Snap 'unknown' was not found in the 'stable' channel.",
                       self.fake_logger.output)
 
     def test_gated_success(self):

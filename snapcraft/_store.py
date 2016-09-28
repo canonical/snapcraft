@@ -302,13 +302,7 @@ def validate(snap_name, validations, revoke=False, key=None):
     """Generate, sign and upload validation assertions."""
 
     # Check validations format
-    validation_re = re.compile('^[^=]+=[0-9]+$')
-    invalids = [v for v in validations if not validation_re.match(v)]
-    if invalids:
-        for v in invalids:
-            logger.error('Invalid validation request "{}", format must be'
-                         ' name=revision'.format(v))
-        raise RuntimeError()
+    _check_validations(validations)
 
     store = storeapi.StoreClient()
 
@@ -340,18 +334,7 @@ def validate(snap_name, validations, revoke=False, key=None):
         if revoke:
             assertion['revoked'] = "true"
 
-        cmdline = ['snap', 'sign']
-        if key:
-            cmdline += ['-k', key]
-        snap_sign = subprocess.Popen(
-            cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        data = json.dumps(assertion).encode('utf8')
-        logger.info('Signing validation {}'.format(validation))
-        assertion, err = snap_sign.communicate(input=data)
-        if snap_sign.returncode != 0:
-            err = err.decode('ascii', errors='replace')
-            raise RuntimeError('Error signing assertion: {!s}'.format(err))
+        assertion = _sign_validation(validation, assertion, key)
 
         # Save assertion to a properly named file
         fname = '{}-{}-r{}.assertion'.format(snap_name, gated_name, rev)
@@ -359,3 +342,31 @@ def validate(snap_name, validations, revoke=False, key=None):
             f.write(assertion)
 
         store.push_validation(snap_id, assertion)
+
+
+validation_re = re.compile('^[^=]+=[0-9]+$')
+
+
+def _check_validations(validations):
+    invalids = [v for v in validations if not validation_re.match(v)]
+    if invalids:
+        for v in invalids:
+            logger.error('Invalid validation request "{}", format must be'
+                         ' name=revision'.format(v))
+        raise RuntimeError()
+
+
+def _sign_validation(validation, assertion, key):
+    cmdline = ['snap', 'sign']
+    if key:
+        cmdline += ['-k', key]
+    snap_sign = subprocess.Popen(
+        cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    data = json.dumps(assertion).encode('utf8')
+    logger.info('Signing validation {}'.format(validation))
+    assertion, err = snap_sign.communicate(input=data)
+    if snap_sign.returncode != 0:
+        err = err.decode('ascii', errors='replace')
+        raise RuntimeError('Error signing assertion: {!s}'.format(err))
+    return assertion
