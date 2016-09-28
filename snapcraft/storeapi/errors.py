@@ -37,7 +37,7 @@ class StoreError(SnapcraftError):
 
 class SnapNotFoundError(StoreError):
 
-    fmt = 'Snap "{name!r}" for {arch!r} cannot be found in the {channel!r} channel.'  # NOQA
+    fmt = 'Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel.'  # NOQA
 
     def __init__(self, name, channel, arch):
         if arch:

@@ -107,8 +107,8 @@ class DownloadTestCase(tests.TestCase):
             self.client.download(
                 'unexisting-snap', 'test-channel', 'dummy', 'test-arch')
         self.assertEqual(
-            'Snap "unexisting-snap" for test-arch cannot be found in '
-            'the test-channel channel.',
+            "Snap 'unexisting-snap' for 'test-arch' cannot be found in "
+            "the 'test-channel' channel.",
             str(e.exception))
 
     def test_download_snap(self):
