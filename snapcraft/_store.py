@@ -285,8 +285,20 @@ def gated(snap_name):
     store = storeapi.StoreClient()
     # Get data for the gating snap
     with _requires_login():
-        snap_data = store.cpi.get_package(snap_name, 'stable', None)
-    snap_id = snap_data['snap_id']
+        snaps = store.get_account_information().get('snaps', {})
+
+    # Resolve name to snap-id
+    snap_id = None
+    for snaps_for_series in snaps.values():
+        for name, snap in snaps_for_series.items():
+            if name == snap_name:
+                snap_id = snap['snap-id']
+                break
+        if snap_id:
+            break
+    else:
+        raise storeapi.errors.SnapNotFoundError(snap_name)
+
     validations = store.get_validations(snap_id)
 
     table_data = []
@@ -308,7 +320,7 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     # Get data for the gating snap
     with _requires_login():
-        snap_data = store.cpi.get_package(snap_name, 'stable', None)
+        snap_data = store.cpi.get_package(snap_name, 'stable')
     release = str(snap_data['release'][0])
     snap_id = snap_data['snap_id']
 
@@ -320,7 +332,7 @@ def validate(snap_name, validations, revoke=False, key=None):
     # Then, for each requested validation, generate assertion
     for validation in validations:
         gated_name, rev = validation.split('=', 1)
-        approved_data = store.cpi.get_package(gated_name, 'stable', None)
+        approved_data = store.cpi.get_package(gated_name, 'stable')
         assertion = {
             'type': 'validation',
             'authority-id': authority_id,

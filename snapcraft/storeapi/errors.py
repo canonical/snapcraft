@@ -39,12 +39,12 @@ class SnapNotFoundError(StoreError):
 
     fmt = 'Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel.'  # NOQA
 
-    def __init__(self, name, channel, arch):
-        if arch:
-            super().__init__(name=name, channel=channel, arch=arch)
-        else:
+    def __init__(self, name, channel=None, arch=None):
+        if not arch and not channel:
+            self.fmt = 'Snap {name!r} was not found.'
+        elif not arch:
             self.fmt = 'Snap {name!r} was not found in the {channel!r} channel.'  # NOQA
-            super().__init__(name=name, channel=channel, arch=arch)
+        super().__init__(name=name, channel=channel, arch=arch)
 
 
 class SHAMismatchError(StoreError):

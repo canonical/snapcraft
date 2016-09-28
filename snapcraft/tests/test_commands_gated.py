@@ -26,6 +26,14 @@ from snapcraft import (
     tests,
 )
 
+account_info_data = {
+    'snaps': {
+        '16': {
+            'ubuntu-core': {'snap-id': 'good'},
+        }
+    }
+}
+
 
 class GatedTestCase(tests.TestCase):
 
@@ -43,9 +51,10 @@ class GatedTestCase(tests.TestCase):
 
     def test_gated_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
+
         with self.assertRaises(SystemExit):
             main([self.command_name, 'unknown'])
-        self.assertIn("Snap 'unknown' was not found in the 'stable' channel.",
+        self.assertIn("Snap 'unknown' was not found.",
                       self.fake_logger.output)
 
     def test_gated_success(self):

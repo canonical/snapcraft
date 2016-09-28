@@ -22,7 +22,7 @@ import integration_tests
 class GatedTestCase(integration_tests.StoreTestCase):
 
     def setUp(self):
-        if os.getenv('TEST_STORE') != 'fake':
+        if os.getenv('TEST_STORE', 'fake') != 'fake':
             self.skipTest('Right combination of snaps and IDs is not '
                           'available in real stores.')
         super().setUp()
@@ -41,4 +41,4 @@ class GatedTestCase(integration_tests.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
         self.assertEqual(1, self.gated(
-            'unknown', expected_error='Snap unknown was not found'))
+            'unknown', expected_error="Snap 'unknown' was not found"))

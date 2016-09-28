@@ -25,7 +25,7 @@ import integration_tests
 class ValidateTestCase(integration_tests.StoreTestCase):
 
     def setUp(self):
-        if os.getenv('TEST_STORE') != 'fake':
+        if os.getenv('TEST_STORE', 'fake') != 'fake':
             self.skipTest('Right combination of snaps and IDs is not '
                           'available in real stores.')
         super().setUp()
@@ -46,7 +46,7 @@ class ValidateTestCase(integration_tests.StoreTestCase):
         self.login()
         self.assertEqual(1, self.validate('unknown', [
             "ubuntu-core=3", "test-snap=4"],
-            expected_error='Snap unknown was not found'))
+            expected_error="Snap 'unknown' was not found."))
 
     def test_validate_bad_argument(self):
         self.addCleanup(self.logout)
