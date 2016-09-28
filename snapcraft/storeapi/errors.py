@@ -238,7 +238,6 @@ class StoreValidationError(StoreError):
     def __init__(self, snap_id, response, message=None):
         try:
             response_json = response.json()
-            # XXX This error is insanely verbose, SCA needs to trim it down
             response_json['text'] = response.json()['error_list'][0]['message']
         except (AttributeError, JSONDecodeError):
             response_json = {'text': message or response}
