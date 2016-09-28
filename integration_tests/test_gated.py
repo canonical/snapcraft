@@ -30,8 +30,8 @@ class GatedTestCase(integration_tests.StoreTestCase):
     def test_gated_success(self):
         self.addCleanup(self.logout)
         self.login()
-        validations = [('snap-1', '3'), ('snap-2', '5')] 
-        self.assertEqual(0, self.gated('ubuntu-core', validations)) 
+        validations = [('snap-1', '3'), ('snap-2', '5')]
+        self.assertEqual(0, self.gated('ubuntu-core', validations))
 
     def test_gated_no_login_failure(self):
         self.assertEqual(1, self.gated(
