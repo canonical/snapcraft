@@ -1,0 +1,60 @@
+#!/bin/sh
+
+# Prepare snapcraft source package in current directory for testing an upstream
+# commit, branch, or PR. This replaces everything except the debian/ directory
+# with an upstream checkout. NEVER run this in your actual packaging work
+# directory! This is only meant for upstream CI.
+#
+# Based on the work by Martin Pitt on systemd.
+
+set -eu
+test -x debian/rules
+
+readonly UPSTREAM_REPO='https://github.com/snapcore/snapcraft.git'
+
+if [ -z "${TEST_UPSTREAM:-}" ]; then
+  echo "Not in upstream testing mode." >&2
+  echo "Do *not* run this script unless you know what you are doing." >&2
+  exit 1
+fi
+
+if [ -n "${UPSTREAM_PULL_REQUEST:-}" ]; then
+  FETCH="git fetch -fu origin refs/pull/$UPSTREAM_PULL_REQUEST/head:pr"
+  CO='git checkout pr'
+  DESC="PR #$UPSTREAM_PULL_REQUEST"
+elif [ -n "${UPSTREAM_HEAD:-}" ]; then
+  FETCH=''
+  CO="git checkout $UPSTREAM_HEAD"
+  DESC="$UPSTREAM_HEAD"
+else
+  echo "WARNING: $0: Neither UPSTREAM_PULL_REQUEST nor UPSTREAM_HEAD set, ignoring" >&2
+  exit 0
+fi
+
+mkdir -p debian/tmp
+upstream
+(cd debian/tmp
+ git clone "$UPSTREAM_REPO" upstream || (rm -rf upstream; sleep 60; git clone "$UPSTREAM_REPO" upstream)
+ cd upstream
+ $FETCH
+ $CO)
+UPSTREAM_VER=$(cd debian/tmp/upstream; git describe)
+
+# clean out original upstream sources
+find -mindepth 1 -maxdepth 1 -name debian -prune -o -print0 | xargs -0n1 rm -rf
+
+# replace with checkout
+mv debian/tmp/upstream/* .
+rm -rf debian/tmp
+
+# craft changelog
+cat << EOF > debian/changelog.new
+snapcraft (${UPSTREAM_VER}-0) UNRELEASED; urgency=low
+
+  * Automatic build from upstream $DESC
+
+ -- snapcraft test <leo.arias@canonical.com>  $(date -R)
+
+EOF
+cat debian/changelog >> debian/changelog.new
+mv debian/changelog.new debian/changelog
