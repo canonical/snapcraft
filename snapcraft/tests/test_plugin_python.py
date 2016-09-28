@@ -144,7 +144,6 @@ class PythonPluginTestCase(tests.TestCase):
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(python.snapcraft.BasePlugin, 'build')
     def test_build(self, mock_base_build, mock_run):
-        os.environ = {}
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -161,7 +160,10 @@ class PythonPluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir]
+        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir,
+                     '--disable-pip-version-check', '--no-index',
+                     '--find-links', plugin._python_package_dir,
+                     '--constraint', constraints_path]
 
         pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check', '--no-index',

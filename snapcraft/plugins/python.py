@@ -162,7 +162,8 @@ class PythonPlugin(snapcraft.BasePlugin):
                    extra_install_args=['--ignore-installed'])
 
         if download:
-            pip.wheel(args)
+            pip.download(args)
+        pip.wheel(args)
         pip.install(args)
 
     def _get_build_env(self):
@@ -264,14 +265,21 @@ class _Pip:
         self._env = env
 
         self._extra_install_args = extra_install_args or []
+
+        self._extra_pip_args = []
         if constraints:
-            self._extra_install_args.extend(['--constraint', constraints])
+            self._extra_pip_args.extend(['--constraint', constraints])
 
         if dependency_links:
-            self._extra_install_args.append('--process-dependency-links')
+            self._extra_pip_args.append('--process-dependency-links')
 
     def wheel(self, args, **kwargs):
-        cmd = [self._runnable, 'wheel', '--wheel-dir', self._package_dir]
+        cmd = [
+            self._runnable, 'wheel', '--wheel-dir', self._package_dir,
+            '--disable-pip-version-check', '--no-index',
+            '--find-links', self._package_dir,
+        ]
+        cmd.extend(self._extra_pip_args)
         cmd.extend(args)
 
         os.makedirs(self._package_dir, exist_ok=True)
@@ -283,7 +291,7 @@ class _Pip:
             '--disable-pip-version-check',
             '--dest', self._package_dir,
         ]
-        cmd.extend(self._extra_install_args)
+        cmd.extend(self._extra_pip_args)
         cmd.extend(args)
 
         os.makedirs(self._package_dir, exist_ok=True)
@@ -295,6 +303,7 @@ class _Pip:
             '--disable-pip-version-check', '--no-index',
             '--find-links', self._package_dir,
         ]
+        cmd.extend(self._extra_pip_args)
         cmd.extend(self._extra_install_args)
         cmd.extend(args)
 
