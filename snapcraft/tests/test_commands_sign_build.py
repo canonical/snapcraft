@@ -112,8 +112,9 @@ class SignBuildTestCase(tests.TestCase):
         self.assertEqual(0, mock_check_output.call_count)
         self.assertEqual(1, raised.exception.code)
         self.assertIn(
-            'Your account lacks information to sign build assertions for '
-            'this snap.',
+            'Your account lacks permission to assert builds for this '
+            'snap. Make sure you are logged in as the publisher of '
+            "'test-snap' for series '16'",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')

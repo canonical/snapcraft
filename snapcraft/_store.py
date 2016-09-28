@@ -231,8 +231,9 @@ def sign_build(snap_filename, key_name='default', local=False):
             snap_id = info['snaps'][snap_series][snap_name]['snap-id']
         except KeyError:
             raise RuntimeError(
-                ('Your account lacks information to sign build assertions '
-                 'for this snap.'))
+                'Your account lacks permission to assert builds for this '
+                'snap. Make sure you are logged in as the publisher of '
+                '\'{}\' for series \'{}\'.'.format(snap_name, snap_series))
 
     snap_build_path = snap_filename + '-build'
     if os.path.isfile(snap_build_path):
