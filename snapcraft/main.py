@@ -43,7 +43,7 @@ Usage:
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] gated <snap-name>
-  snapcraft [options] validate <snap-name> [--key-name=<key-name>] [<snap-revision> ...]
+  snapcraft [options] validate <snap-name> [--key-name <key-name>] [<snap-revision> ...]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
