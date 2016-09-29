@@ -75,11 +75,6 @@ class BasePlugin:
             'build-properties': ['disable-parallel']
         }
 
-    @property
-    def PLUGIN_STAGE_SOURCES(self):
-        """Define additional sources.list."""
-        return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
-
     def __init__(self, name, options, project=None):
         self.name = name
         self.build_packages = []
@@ -226,6 +221,10 @@ class BasePlugin:
             'Building for a different target architecture requires '
             'a plugin specific implementation in the '
             '{!r} plugin'.format(self.name))
+
+    def get_stage_sources(self):
+        """Define additional sources.list entries (as a string template)."""
+        return ""
 
     @property
     def parallel_build_count(self):

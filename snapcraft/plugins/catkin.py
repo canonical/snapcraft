@@ -49,16 +49,15 @@ from snapcraft import (
 
 logger = logging.getLogger(__name__)
 
+# Map ROS releases to Ubuntu releases
+_ROS_RELEASE_MAP = {
+    'indigo': 'trusty',
+    'jade': 'trusty',
+    'kinetic': 'xenial'
+}
+
 
 class CatkinPlugin(snapcraft.BasePlugin):
-
-    _PLUGIN_STAGE_SOURCES = '''
-deb http://packages.ros.org/ros/ubuntu/ trusty main
-deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe
-deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe
-deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe
-deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
-'''
 
     @classmethod
     def schema(cls):
@@ -179,6 +178,15 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         return env
 
+    def get_stage_sources(self):
+        return '''
+deb http://packages.ros.org/ros/${{suffix}}/ {0} main
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0} main universe
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-updates main universe
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-security main universe
+deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
+'''.format(_ROS_RELEASE_MAP[self.options.rosdistro])
+
     def pull(self):
         """Copy source into build directory and fetch dependencies.
 
@@ -199,7 +207,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         # Use rosdep for dependency detection and resolution
         rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
-                         self._rosdep_path, self.PLUGIN_STAGE_SOURCES,
+                         self._rosdep_path, self.get_stage_sources(),
                          self.project)
         rosdep.setup()
 
@@ -225,7 +233,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             logger.info('Preparing to fetch package dependencies...')
             ubuntu = repo.Ubuntu(
                 ubuntudir, self.project,
-                sources=self.PLUGIN_STAGE_SOURCES,
+                sources=self.get_stage_sources(),
                 project_options=self.project)
 
             logger.info('Fetching package dependencies...')
@@ -507,12 +515,14 @@ class _Rosdep:
             #
             # 1) The dependency we're trying to lookup.
             # 2) The rosdistro being used.
-            # 3) The version of Ubuntu being used. We're currently using only
-            #    the Trusty ROS sources, so we're telling rosdep to resolve
-            #    dependencies using Trusty (even if we're running on something
-            #    else).
+            # 3) The version of Ubuntu being used. We're telling rosdep to
+            #    resolve dependencies using the version of Ubuntu that
+            #    corresponds to the ROS release (even if we're running on
+            #    something else).
             output = self._run(['resolve', dependency_name, '--rosdistro',
-                                self._ros_distro, '--os', 'ubuntu:trusty'])
+                                self._ros_distro, '--os',
+                                'ubuntu:{}'.format(
+                                    _ROS_RELEASE_MAP[self._ros_distro])])
         except subprocess.CalledProcessError:
             raise SystemDependencyNotFound(
                 '{!r} does not resolve to a system dependency'.format(

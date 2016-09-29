@@ -211,6 +211,24 @@ class CatkinPluginTestCase(tests.TestCase):
         self.assertTrue('source-space' in pull_properties)
         self.assertTrue('include-roscore' in pull_properties)
 
+    def test_get_stage_sources_indigo(self):
+        self.properties.rosdistro = 'indigo'
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        self.assertTrue('trusty' in plugin.get_stage_sources())
+
+    def test_get_stage_sources_jade(self):
+        self.properties.rosdistro = 'jade'
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        self.assertTrue('trusty' in plugin.get_stage_sources())
+
+    def test_get_stage_sources_kinetic(self):
+        self.properties.rosdistro = 'kinetic'
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        self.assertTrue('xenial' in plugin.get_stage_sources())
+
     def test_pull_debian_dependencies(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
@@ -224,7 +242,7 @@ class CatkinPluginTestCase(tests.TestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
-            plugin.PLUGIN_STAGE_SOURCES)
+            plugin.get_stage_sources())
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -255,7 +273,7 @@ class CatkinPluginTestCase(tests.TestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
-            plugin.PLUGIN_STAGE_SOURCES)
+            plugin.get_stage_sources())
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -306,7 +324,7 @@ class CatkinPluginTestCase(tests.TestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
-            plugin.PLUGIN_STAGE_SOURCES)
+            plugin.get_stage_sources())
 
         # Verify that roscore was installed
         self.ubuntu_mock.return_value.get.assert_called_with(
@@ -539,7 +557,64 @@ class CatkinPluginTestCase(tests.TestCase):
 
         self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
 
-    def test_prepare_build(self):
+    def test_use_in_snap_python_rewrites_shebangs(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.rosdir, 'bin'))
+
+        # Place a few files with bad shebangs, and some files that shouldn't be
+        # changed.
+        files = [
+            {
+                'path': os.path.join(plugin.rosdir, '_setup_util.py'),
+                'contents': '#!/foo/bar/baz/python',
+                'expected': '#!/usr/bin/env python',
+            },
+            {
+                'path': os.path.join(plugin.rosdir, 'bin/catkin_find'),
+                'contents': '#!/foo/baz/python',
+                'expected': '#!/usr/bin/env python',
+            },
+            {
+                'path': os.path.join(plugin.rosdir, 'foo'),
+                'contents': 'foo',
+                'expected': 'foo',
+            }
+        ]
+
+        for file_info in files:
+            with open(file_info['path'], 'w') as f:
+                f.write(file_info['contents'])
+
+        plugin._use_in_snap_python()
+
+        for file_info in files:
+            with open(os.path.join(plugin.rosdir,
+                                   file_info['path']), 'r') as f:
+                self.assertEqual(f.read(), file_info['expected'])
+
+    def test_use_in_snap_python_rewrites_10_ros_sh(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d'))
+
+        ros_profile = os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d',
+                                   '10.ros.sh')
+
+        # Place 10.ros.sh with an absolute path to python
+        with open(ros_profile, 'w') as f:
+            f.write('/usr/bin/python foo')
+
+        plugin._use_in_snap_python()
+
+        # Verify that the absolute path in 10.ros.sh was rewritten correctly
+        with open(ros_profile, 'r') as f:
+            self.assertEqual(f.read(), 'python foo',
+                             'The absolute path to python was not replaced as '
+                             'expected')
+
+    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
+    def test_prepare_build(self, use_in_snap_python_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
         os.makedirs(os.path.join(plugin.rosdir, 'test'))
@@ -581,73 +656,17 @@ class CatkinPluginTestCase(tests.TestCase):
 
         plugin._prepare_build()
 
+        self.assertTrue(use_in_snap_python_mock.called)
+
         for fileInfo in files:
             with open(os.path.join(plugin.rosdir, fileInfo['path']), 'r') as f:
                 self.assertEqual(f.read(), fileInfo['expected'])
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build_python_shebangs(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.rosdir, 'bin'))
-
-        # Place a few files with bad shebangs, and some files that shouldn't be
-        # changed.
-        files = [
-            {
-                'path': os.path.join(plugin.rosdir, '_setup_util.py'),
-                'contents': '#!/foo/bar/baz/python',
-                'expected': '#!/usr/bin/env python',
-            },
-            {
-                'path': os.path.join(plugin.rosdir, 'bin/catkin_find'),
-                'contents': '#!/foo/baz/python',
-                'expected': '#!/usr/bin/env python',
-            },
-            {
-                'path': os.path.join(plugin.rosdir, 'foo'),
-                'contents': 'foo',
-                'expected': 'foo',
-            }
-        ]
-
-        for file_info in files:
-            with open(file_info['path'], 'w') as f:
-                f.write(file_info['contents'])
-
-        plugin._finish_build()
-
-        for file_info in files:
-            with open(os.path.join(plugin.rosdir,
-                                   file_info['path']), 'r') as f:
-                self.assertEqual(f.read(), file_info['expected'])
-
-    @mock.patch.object(catkin.CatkinPlugin, 'run')
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build_absolute_python(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d'))
-
-        ros_profile = os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d',
-                                   '10.ros.sh')
-
-        # Place 10.ros.sh with an absolute path to python
-        with open(ros_profile, 'w') as f:
-            f.write('/usr/bin/python foo')
-
-        plugin._finish_build()
-
-        # Verify that the absolute path in 10.ros.sh was rewritten correctly
-        with open(ros_profile, 'r') as f:
-            self.assertEqual(f.read(), 'python foo',
-                             'The absolute path to python was not replaced as '
-                             'expected')
-
-    @mock.patch.object(catkin.CatkinPlugin, 'run')
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build_binary(self, run_output_mock, run_mock):
+    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
+    def test_finish_build_binary(self, use_in_snap_python_mock,
+                                 run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
         os.makedirs(plugin.rosdir)
@@ -661,12 +680,16 @@ class CatkinPluginTestCase(tests.TestCase):
             # that's handled.
             file_mock.return_value.read.side_effect = UnicodeDecodeError(
                 'foo', b'bar', 1, 2, 'baz')
-            # An exception will be raise if build can't handle the binary file.
+            # An exception will be raised if build can't handle the binary
+            # file.
             plugin._finish_build()
+            self.assertTrue(use_in_snap_python_mock.called)
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    def test_finish_build_cmake_prefix_path(self, run_output_mock, run_mock):
+    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
+    def test_finish_build_cmake_prefix_path(self, use_in_snap_python_mock,
+                                            run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
 
@@ -678,6 +701,8 @@ class CatkinPluginTestCase(tests.TestCase):
                 plugin.rosdir, plugin.options.rosdistro))
 
         plugin._finish_build()
+
+        self.assertTrue(use_in_snap_python_mock.called)
 
         expected = 'CMAKE_PREFIX_PATH = []\n'
 
@@ -807,7 +832,7 @@ class RosdepTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.project = snapcraft.ProjectOptions()
-        self.rosdep = catkin._Rosdep('ros_distro', 'package_path',
+        self.rosdep = catkin._Rosdep('kinetic', 'package_path',
                                      'rosdep_path', 'sources',
                                      self.project)
 
@@ -908,8 +933,8 @@ class RosdepTestCase(tests.TestCase):
         self.assertEqual(self.rosdep.resolve_dependency('foo'), ['mylib-dev'])
 
         self.check_output_mock.assert_called_with(
-            ['rosdep', 'resolve', 'foo', '--rosdistro', 'ros_distro', '--os',
-             'ubuntu:trusty'],
+            ['rosdep', 'resolve', 'foo', '--rosdistro', 'kinetic', '--os',
+             'ubuntu:xenial'],
             env=mock.ANY)
 
     def test_resolve_invalid_dependency(self):

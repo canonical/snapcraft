@@ -58,7 +58,7 @@ class PluginHandler:
     def ubuntu(self):
         if not self._ubuntu:
             self._ubuntu = repo.Ubuntu(
-                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES,
+                self.ubuntudir, sources=self.code.get_stage_sources(),
                 project_options=self._project_options)
 
         return self._ubuntu
