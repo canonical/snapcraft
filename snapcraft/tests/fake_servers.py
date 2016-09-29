@@ -315,6 +315,7 @@ class FakeStoreAPIServer(http.server.HTTPServer):
             server_address, FakeStoreAPIRequestHandler)
         self.fake_store = fake_store
         self.account_keys = []
+        self.registered_names = []
 
 
 class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
@@ -390,19 +391,29 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
         if snap_build == 'test-not-implemented':
             self.send_response(501)
-            self.send_header('Content-Type', 'text/plain')
-            content = b'Not Implemented'
+            self.send_header('Content-Type', 'application/json')
+            error = {
+                'error_list': [
+                    {'code': 'feature-disabled',
+                     'message': ('The snap-build assertions are currently '
+                                 'disabled.')},
+                ],
+            }
+            content = json.dumps(error).encode()
         elif snap_build == 'test-invalid-data':
             self.send_response(400)
             self.send_header('Content-Type', 'application/json')
             error = {
                 'error_list': [
-                    # XXX cprov 20160922: fix endpoint error handler.
-                    {'code': None,
+                    {'code': 'invalid-field',
                      'message': 'The snap-build assertion is not valid.'},
                 ],
             }
             content = json.dumps(error).encode()
+        elif snap_build == 'test-unexpected-data':
+            self.send_response(500)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'unexpected chunk of data'
         else:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -473,6 +484,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         data = json.loads(string_data)
         logger.debug(
             'Handling registration request with content {}'.format(data))
+        snap_name = data['snap_name']
 
         if data['snap_name'] == 'test-already-registered-snap-name':
             self._handle_register_409('already_registered')
@@ -483,9 +495,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif data['snap_name'] == 'snap-name-no-clear-error':
             self._handle_unclear_registration_error()
         else:
-            self._handle_successful_registration()
+            self._handle_successful_registration(snap_name)
 
-    def _handle_successful_registration(self):
+    def _handle_successful_registration(self, name):
+        self.server.registered_names.append(name)
         self.send_response(201)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -639,10 +652,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
+        snaps = {'basic': {'snap-id': 'snap-id'}}
+        snaps.update({
+            n: {'snap-id': 'fake-snap-id'}
+            for n in self.server.registered_names})
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
-            'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}},
+            'snaps': {'16': snaps},
         }).encode())
 
 
