@@ -53,8 +53,8 @@ class GatedTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
 
         with self.assertRaises(SystemExit):
-            main([self.command_name, 'unknown'])
-        self.assertIn("Snap 'unknown' was not found.",
+            main([self.command_name, 'notfound'])
+        self.assertIn("Snap 'notfound' was not found.",
                       self.fake_logger.output)
 
     def test_gated_success(self):

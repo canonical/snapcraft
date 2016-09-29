@@ -64,10 +64,10 @@ class ValidateTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
 
         with self.assertRaises(SystemExit):
-            main([self.command_name, 'unknown', "ubuntu-core=3",
+            main([self.command_name, 'notfound', "ubuntu-core=3",
                  "test-snap=4"])
 
-        self.assertIn("Snap 'unknown' was not found", self.fake_logger.output)
+        self.assertIn("Snap 'notfound' was not found", self.fake_logger.output)
 
     def test_validate_bad_argument(self):
         self.client.login('dummy', 'test correct password')
