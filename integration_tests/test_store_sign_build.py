@@ -17,7 +17,7 @@
 import os
 import fixtures
 import shutil
-import integration_tests
+import uuid
 
 from testtools.matchers import (
     Contains,
@@ -25,6 +25,8 @@ from testtools.matchers import (
     FileExists,
     Not,
 )
+
+import integration_tests
 
 
 class SignBuildTestCase(integration_tests.StoreTestCase):
@@ -51,17 +53,27 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_local(self):
-        self.run_snapcraft('snap', self.project_dir)
-        os.chdir(self.project_dir)
-        self.assertThat(self.snap_path, FileExists())
-
         self.addCleanup(self.logout)
         self.login()
 
-        status = self.sign_build(self.snap_path, local=True)
+        # Build a random snap and register it.
+        unique_id = uuid.uuid4().int
+        name = 'u1test-{}'.format(unique_id)
+        version = str(unique_id)[:32]
+        project_dir = self.update_name_and_version(
+            self.project_dir, name, version)
+        os.chdir(project_dir)
+        self.run_snapcraft('snap', project_dir)
+        snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        self.assertThat(snap_path, FileExists())
+        self.register(name)
+
+        status = self.sign_build(snap_path, local=True)
         self.assertEqual(0, status)
-        self.assertThat(self.snap_build_path, FileExists())
-        self.assertThat(self.snap_build_path,
+
+        snap_build_path = '{}-build'.format(snap_path)
+        self.assertThat(snap_build_path, FileExists())
+        self.assertThat(snap_build_path,
                         FileContains(matcher=Contains('type: snap-build')))
 
     def test_unsuccessful_sign_build_push_no_login(self):

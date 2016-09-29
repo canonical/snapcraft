@@ -186,13 +186,14 @@ class PushSnapBuildTestCase(tests.TestCase):
 
     def test_push_snap_build_not_implemented(self):
         # If the "enable_snap_build" feature switch is off in the store, we
-        # will get a 501 Not Implemented response.
+        # will get a descriptive error message.
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreSnapBuildError) as raised:
             self.client.push_snap_build('snap-id', 'test-not-implemented')
         self.assertEqual(
             str(raised.exception),
-            'Could not assert build: 501 Not Implemented')
+            'Could not assert build: The snap-build assertions are '
+            'currently disabled.')
 
     def test_push_snap_build_invalid_data(self):
         self.client.login('dummy', 'test correct password')
@@ -201,6 +202,16 @@ class PushSnapBuildTestCase(tests.TestCase):
         self.assertEqual(
             str(raised.exception),
             'Could not assert build: The snap-build assertion is not valid.')
+
+    def test_push_snap_build_unexpected_data(self):
+        # The endpoint in SCA would never return plain/text, however anything
+        # might happen in the internet, so we are a little defensive.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreSnapBuildError) as raised:
+            self.client.push_snap_build('snap-id', 'test-unexpected-data')
+        self.assertEqual(
+            str(raised.exception),
+            'Could not assert build: 500 Internal Server Error')
 
     def test_push_snap_build_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -225,7 +236,7 @@ class GetAccountInformationTestCase(tests.TestCase):
             'account_id': 'abcd',
             'account_keys': [],
             'snaps': {'16': {
-                'ubuntu-core': {'snap-id': 'good'}}}},
+                'basic': {'snap-id': 'snap-id'}}}},
             self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
@@ -235,7 +246,7 @@ class GetAccountInformationTestCase(tests.TestCase):
             'account_id': 'abcd',
             'account_keys': [],
             'snaps': {'16': {
-                'ubuntu-core': {'snap-id': 'good'}}}},
+                'basic': {'snap-id': 'snap-id'}}}},
             self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 
