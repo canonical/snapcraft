@@ -43,6 +43,7 @@ import subprocess
 import snapcraft
 from snapcraft import (
     common,
+    file_utils,
     repo,
 )
 
@@ -302,9 +303,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             return '"' + ';'.join(paths) + '"'
 
         # Looking for any path-like string
-        common.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
-                               re.compile(r'"(.*?/.*?)"'),
-                               rewrite_paths)
+        file_utils.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
+                                   re.compile(r'"(.*?/.*?)"'),
+                                   rewrite_paths)
 
     def _finish_build(self):
         self._use_in_snap_python()
@@ -322,9 +323,9 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def _use_in_snap_python(self):
         # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.rosdir, re.compile(r''),
-                               re.compile(r'^#!.*python'),
-                               r'#!/usr/bin/env python')
+        file_utils.replace_in_file(self.rosdir, re.compile(r''),
+                                   re.compile(r'^#!.*python'),
+                                   r'#!/usr/bin/env python')
 
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         ros10_file = os.path.join(self.rosdir,
