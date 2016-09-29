@@ -621,12 +621,18 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         details_review = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/review-snap')
         account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
+        snap_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snaps')
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
         elif parsed_path.path.startswith(details_review):
             self._handle_scan_complete_request('need_manual_review', False)
         elif parsed_path.path == account_path:
             self._handle_account_request()
+        elif parsed_path.path.startswith(snap_path):
+            if parsed_path.path.endswith('/history'):
+                self._handle_snap_history()
+            if parsed_path.path.endswith('/status'):
+                self._handle_snap_status()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -661,6 +667,92 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'account_keys': self.server.account_keys,
             'snaps': {'16': snaps},
         }).encode())
+
+    def _handle_snap_history(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        revisions = [{
+            'series': ['16'],
+            'channels': [],
+            'version': '2.0.1',
+            'timestamp': '2016-09-27T19:23:40.409',
+            'current_channels': ['beta', 'edge'],
+            'arch': 'i386',
+            'revision': 2
+        }, {
+            'series': ['16'],
+            'channels': ['stable', 'edge'],
+            'version': '2.0.1-test',
+            'timestamp': '2016-09-27T18:38:43.388',
+            'current_channels': ['stable', 'candidate', 'beta'],
+            'arch': 'amd64',
+            'revision': 1,
+        }]
+
+        parsed_qs = urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query)
+        if 'arch' in parsed_qs:
+            output = [
+                rev for rev in revisions if rev['arch'] in parsed_qs['arch']]
+        else:
+            output = revisions
+        self.wfile.write(json.dumps(output).encode())
+
+    def _handle_snap_status(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        channel_map = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.0-i386',
+                    'channel': 'edge',
+                    'revision': 3
+                },
+            ],
+            'amd64': [
+                {
+                    'info': 'specific',
+                    'version': '1.0-amd64',
+                    'channel': 'stable',
+                    'revision': 2
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.1-amd64',
+                    'channel': 'beta',
+                    'revision': 4
+                },
+                {
+                    'info': 'tracking',
+                    'channel': 'edge'
+                },
+            ],
+        }
+
+        parsed_qs = urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query)
+        if 'arch' in parsed_qs:
+            arch = parsed_qs['arch'][0]
+            if arch in channel_map:
+                output = {arch: channel_map[arch]}
+            else:
+                output = {}
+        else:
+            output = channel_map
+        self.wfile.write(json.dumps(output).encode())
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):

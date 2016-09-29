@@ -39,6 +39,8 @@ Usage:
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
+  snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
@@ -97,6 +99,8 @@ The available commands are:
   upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
                supersedes this command.
   release      Release a revision of a snap to a specific channel.
+  history      List all revisions of a snap.
+  status       Show the current status of a snap per channel and architecture.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -292,11 +296,11 @@ def _is_store_command(args):
     commands = (
         'list-keys', 'keys', 'register-key',
         'register', 'sign-build', 'upload',
-        'release', 'push')
+        'release', 'push', 'history', 'status')
     return any(args.get(command) for command in commands)
 
 
-def _run_store_command(args):
+def _run_store_command(args):  # noqa: C901
     if args['list-keys'] or args['keys']:
         snapcraft.list_keys()
     elif args['register-key']:
@@ -318,6 +322,12 @@ def _run_store_command(args):
     elif args['release']:
         snapcraft.release(
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
+    elif args['history']:
+        snapcraft.history(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['status']:
+        snapcraft.status(
+            args['<snap-name>'], args['--series'], args['--arch'])
 
 
 if __name__ == '__main__':  # pragma: no cover

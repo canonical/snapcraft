@@ -4,7 +4,7 @@ _snapcraft()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="help init list-plugins login logout register-key register tour push release clean cleanbuild pull build sign-build stage prime snap update define search"
+    opts="help init list-plugins login logout register-key register tour push release clean cleanbuild pull build sign-build stage prime snap update define search history status"
 
     COMPREPLY=( $(compgen -W "$opts" -- $cur) )
     return 0
