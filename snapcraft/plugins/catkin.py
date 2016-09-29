@@ -43,6 +43,7 @@ import subprocess
 import snapcraft
 from snapcraft import (
     common,
+    file_utils,
     repo,
 )
 
@@ -101,6 +102,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self.build_packages.extend(['gcc', 'libc6-dev', 'make'])
 
         # Get a unique set of packages
         self.catkin_packages = set(options.catkin_packages)
@@ -149,13 +151,6 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             # and run-time.
             '_CATKIN_SETUP_DIR={}'.format(os.path.join(
                 root, 'opt', 'ros', self.options.rosdistro)),
-
-            # FIXME: Nasty hack to source ROS's setup.sh (since each of these
-            # lines is prepended with "export"). There's got to be a better way
-            # to do this.
-            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
-                os.path.join(
-                    root, 'opt', 'ros', self.options.rosdistro, 'setup.sh'))
         ]
 
         # There's a chicken and egg problem here, everything run get's an
@@ -169,6 +164,18 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 common.get_python2_path(root)))
         except EnvironmentError as e:
             logger.debug(e)
+
+        # The setup.sh we source below requires the in-snap python. Here we
+        # make sure it's in the PATH before it's run.
+        env.append('PATH=$PATH:{}/usr/bin'.format(root))
+
+        # FIXME: Nasty hack to source ROS's setup.sh (since each of these
+        # lines is prepended with "export"). There's got to be a better way
+        # to do this.
+        env.append(
+            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
+                os.path.join(
+                    root, 'opt', 'ros', self.options.rosdistro, 'setup.sh')))
 
         return env
 
@@ -277,6 +284,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._finish_build()
 
     def _prepare_build(self):
+        self._use_in_snap_python()
+
         # Each Catkin package distributes .cmake files so they can be found via
         # find_package(). However, the Ubuntu packages pulled down as
         # dependencies contain .cmake files pointing to system paths (e.g.
@@ -294,15 +303,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             return '"' + ';'.join(paths) + '"'
 
         # Looking for any path-like string
-        common.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
-                               re.compile(r'"(.*?/.*?)"'),
-                               rewrite_paths)
+        file_utils.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
+                                   re.compile(r'"(.*?/.*?)"'),
+                                   rewrite_paths)
 
     def _finish_build(self):
-        # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.rosdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        self._use_in_snap_python()
 
         # Replace the CMAKE_PREFIX_PATH in _setup_util.sh
         setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
@@ -314,6 +320,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
+
+    def _use_in_snap_python(self):
+        # Fix all shebangs to use the in-snap python.
+        file_utils.replace_in_file(self.rosdir, re.compile(r''),
+                                   re.compile(r'^#!.*python'),
+                                   r'#!/usr/bin/env python')
 
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         ros10_file = os.path.join(self.rosdir,
