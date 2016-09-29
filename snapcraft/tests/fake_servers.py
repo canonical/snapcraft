@@ -747,8 +747,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(response)
-            'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}},
-        }).encode())
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):

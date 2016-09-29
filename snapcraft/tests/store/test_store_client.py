@@ -221,33 +221,21 @@ class GetAccountInformationTestCase(tests.TestCase):
 
     def test_get_account_information_successfully(self):
         self.client.login('dummy', 'test correct password')
-<<<<<<< HEAD
         self.assertEqual({
             'account_id': 'abcd',
             'account_keys': [],
             'snaps': {'16': {
                 'ubuntu-core': {'snap-id': 'good'}}}},
-=======
-        self.assertEqual(
-            {'account_id': 'abcd', 'account_keys': [],
-             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}}},
->>>>>>> ded7281c93aa34e6c05d46f0ec5e0b131d362942
             self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
         self.fake_store.needs_refresh = True
-<<<<<<< HEAD
         self.assertEqual({
             'account_id': 'abcd',
             'account_keys': [],
             'snaps': {'16': {
                 'ubuntu-core': {'snap-id': 'good'}}}},
-=======
-        self.assertEqual(
-            {'account_id': 'abcd', 'account_keys': [],
-             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}}},
->>>>>>> ded7281c93aa34e6c05d46f0ec5e0b131d362942
             self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 
