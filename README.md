@@ -25,6 +25,15 @@ transactional update system.
 * [Hacking guide](HACKING.md) to contribute if you're interested in developing Snapcraft.
 * [Launchpad](https://bugs.launchpad.net/snapcraft) to submit bugs or issues.
 
+## Get in touch
+
+We're friendly! Talk to us on [IRC](https://webchat.freenode.net/?channels=snappy)
+or on [our mailing list](https://lists.snapcraft.io/mailman/listinfo/snapcraft).
+
+Get news and stay up to date on [Twitter](https://twitter.com/snapcraftio),
+[Google+](https://plus.google.com/+SnapcraftIo) or
+[Facebook](https://www.facebook.com/snapcraftio).
+
 [travis-image]: https://travis-ci.org/snapcore/snapcraft.svg?branch=master
 [travis-url]: https://travis-ci.org/snapcore/snapcraft
 

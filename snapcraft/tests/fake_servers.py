@@ -329,6 +329,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
+        sign_build_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/snap-id/builds'.format())
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
@@ -340,6 +342,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_acl_request(permission)
         elif parsed_path.path == account_key_path:
             self._handle_account_key_request()
+        elif parsed_path.path == sign_build_path:
+            self._handle_sign_build_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -378,6 +382,38 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             ])
         response = {'macaroon': macaroon.serialize()}
         self.wfile.write(json.dumps(response).encode())
+
+    def _handle_sign_build_request(self):
+        logger.debug('Handling snap-build request')
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        snap_build = json.loads(string_data)['assertion']
+
+        if snap_build == 'test-not-implemented':
+            self.send_response(501)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'Not Implemented'
+        elif snap_build == 'test-invalid-data':
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            error = {
+                'error_list': [
+                    # XXX cprov 20160922: fix endpoint error handler.
+                    {'code': None,
+                     'message': 'The snap-build assertion is not valid.'},
+                ],
+            }
+            content = json.dumps(error).encode()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'type': 'snap-build',
+                'foo': 'bar',
+            }
+            content = json.dumps(response).encode()
+        self.end_headers()
+        self.wfile.write(content)
 
     def _handle_account_key_request(self):
         string_data = self.rfile.read(
@@ -668,6 +704,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
+<<<<<<< HEAD
             'snaps': {'16': {'ubuntu-core': {'snap-id': 'good'}}}}).encode())
 
     def do_PUT(self):
@@ -711,6 +748,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(response)
+=======
+            'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}},
+        }).encode())
+>>>>>>> ded7281c93aa34e6c05d46f0ec5e0b131d362942
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):

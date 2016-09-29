@@ -35,6 +35,7 @@ Usage:
   snapcraft [options] keys
   snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
+  snapcraft [options] sign-build <snap-file> [--key-name <key-name>] [--local]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
@@ -93,6 +94,7 @@ The available commands are:
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
+  sign-build   Sign a built snap file and assert it using the developer's key.
   push         Pushes and optionally releases a snap to the Ubuntu Store.
   upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
                supersedes this command.
@@ -290,8 +292,8 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'register-key',
-        'register', 'upload', 'release', 'push', 'validate', 'gated')
+        'list-keys', 'keys', 'register-key', 'register', 'sign-build', 'upload',
+        'release', 'push', 'validate', 'gated')
     return any(args.get(command) for command in commands)
 
 
@@ -304,6 +306,9 @@ def _run_store_command(args):  # noqa: C901
         snapcraft.register_key(args['<key-name>'])
     elif args['register']:
         snapcraft.register(args['<snap-name>'], args['--private'])
+    elif args['sign-build']:
+        snapcraft.sign_build(
+            args['<snap-file>'], args['<key-name>'], args['--local'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
         snapcraft.push(args['<snap-file>'])
