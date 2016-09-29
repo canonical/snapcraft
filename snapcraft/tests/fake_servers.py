@@ -704,7 +704,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
-<<<<<<< HEAD
             'snaps': {'16': {'ubuntu-core': {'snap-id': 'good'}}}}).encode())
 
     def do_PUT(self):
@@ -748,10 +747,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(response)
-=======
             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}},
         }).encode())
->>>>>>> ded7281c93aa34e6c05d46f0ec5e0b131d362942
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):
