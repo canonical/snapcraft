@@ -716,6 +716,8 @@ def _find_dependencies(root, part_files):
 
     elf_files = set()
 
+    fs_encoding = sys.getfilesystemencoding()
+
     for part_file in part_files:
         # Filter out object (*.o) files-- we only care about binaries.
         if part_file.endswith('.o'):
@@ -728,6 +730,7 @@ def _find_dependencies(root, part_files):
                 path))
             continue
 
+        path = path.encode(fs_encoding, errors='surrogateescape')
         # Finally, make sure this is actually an ELF before queueing it up
         # for an ldd call.
         file_m = ms.file(path)
