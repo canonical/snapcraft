@@ -236,7 +236,8 @@ class GetAccountInformationTestCase(tests.TestCase):
             'account_id': 'abcd',
             'account_keys': [],
             'snaps': {'16': {
-                'basic': {'snap-id': 'snap-id'}}}},
+                'basic': {'snap-id': 'snap-id'},
+                'ubuntu-core': {'snap-id': 'good'}}}},
             self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
@@ -246,7 +247,8 @@ class GetAccountInformationTestCase(tests.TestCase):
             'account_id': 'abcd',
             'account_keys': [],
             'snaps': {'16': {
-                'basic': {'snap-id': 'snap-id'}}}},
+                'basic': {'snap-id': 'snap-id'},
+                'ubuntu-core': {'snap-id': 'good'}}}},
             self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 
