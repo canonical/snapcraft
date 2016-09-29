@@ -628,8 +628,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snaps/bad/validations')
         err_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/err/validations')
-        notfound_validations_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'snaps/notfound/validations')
 
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
@@ -643,8 +641,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('bad')
         elif parsed_path.path.startswith(err_validations_path):
             self._handle_validation_request('err')
-        elif parsed_path.path.startswith(notfound_validations_path):
-            self._handle_validation_request('notfound')
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -682,10 +678,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif code == 'bad':
             response = 'foo'.encode()
             status = 200
-        elif code == 'notfound':
-            response = {'error_list': [{'message': 'error'}]}
-            response = json.dumps(response).encode()
-            status = 404
         elif code == 'err':
             status = 503
             response = {'error_list': [{'message': 'error'}]}
