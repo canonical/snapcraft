@@ -283,21 +283,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._finish_build()
 
     def _prepare_build(self):
-        # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.rosdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
-
-        # Also replace the python usage in 10.ros.sh to use the in-snap python.
-        ros10_file = os.path.join(self.rosdir,
-                                  'etc/catkin/profile.d/10.ros.sh')
-        if os.path.isfile(ros10_file):
-            with open(ros10_file, 'r+') as f:
-                pattern = re.compile(r'/usr/bin/python')
-                replaced = pattern.sub(r'python', f.read())
-                f.seek(0)
-                f.truncate()
-                f.write(replaced)
+        self._use_in_snap_python()
 
         # Each Catkin package distributes .cmake files so they can be found via
         # find_package(). However, the Ubuntu packages pulled down as
@@ -321,10 +307,7 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                                rewrite_paths)
 
     def _finish_build(self):
-        # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.rosdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        self._use_in_snap_python()
 
         # Replace the CMAKE_PREFIX_PATH in _setup_util.sh
         setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
@@ -337,16 +320,24 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 f.truncate()
                 f.write(replaced)
 
+    def _use_in_snap_python(self):
+        # Fix all shebangs to use the in-snap python.
+        common.replace_in_file(self.rosdir, re.compile(r''),
+                               re.compile(r'^#!.*python'),
+                               r'#!/usr/bin/env python')
+
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         ros10_file = os.path.join(self.rosdir,
                                   'etc/catkin/profile.d/10.ros.sh')
-        if os.path.isfile(ros10_file):
+        try:
             with open(ros10_file, 'r+') as f:
                 pattern = re.compile(r'/usr/bin/python')
                 replaced = pattern.sub(r'python', f.read())
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
+        except OSError:
+            pass
 
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified
