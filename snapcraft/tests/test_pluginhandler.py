@@ -20,6 +20,7 @@ import logging
 import os
 import shutil
 import stat
+import sys
 import tempfile
 from unittest.mock import (
     call,
@@ -2175,6 +2176,8 @@ class FindDependenciesTestCase(tests.TestCase):
         linked_elf_path = os.path.join(workdir, 'linked')
         open(linked_elf_path, 'w').close()
 
+        linked_elf_path_b = linked_elf_path.encode(sys.getfilesystemencoding())
+
         mock_ms = Mock()
         mock_magic.return_value = mock_ms
         mock_ms.load.return_value = 0
@@ -2187,7 +2190,7 @@ class FindDependenciesTestCase(tests.TestCase):
 
         dependencies = pluginhandler._find_dependencies(workdir, {'linked'})
 
-        mock_ms.file.assert_called_once_with(linked_elf_path)
+        mock_ms.file.assert_called_once_with(linked_elf_path_b)
         self.assertEqual(dependencies, {'/usr/lib/libDepends.so'})
 
     @patch('magic.open')
@@ -2225,6 +2228,9 @@ class FindDependenciesTestCase(tests.TestCase):
         statically_linked_elf_path = os.path.join(workdir, 'statically-linked')
         open(statically_linked_elf_path, 'w').close()
 
+        statically_linked_elf_path_b = statically_linked_elf_path.encode(
+            sys.getfilesystemencoding())
+
         mock_ms = Mock()
         mock_magic.return_value = mock_ms
         mock_ms.load.return_value = 0
@@ -2236,7 +2242,7 @@ class FindDependenciesTestCase(tests.TestCase):
         dependencies = pluginhandler._find_dependencies(
             workdir, {'statically-linked'})
 
-        mock_ms.file.assert_called_once_with(statically_linked_elf_path)
+        mock_ms.file.assert_called_once_with(statically_linked_elf_path_b)
 
         self.assertFalse(
             mock_dependencies.called,
@@ -2254,6 +2260,8 @@ class FindDependenciesTestCase(tests.TestCase):
         non_elf_path = os.path.join(workdir, 'non-elf')
         open(non_elf_path, 'w').close()
 
+        non_elf_path_b = non_elf_path.encode(sys.getfilesystemencoding())
+
         mock_ms = Mock()
         mock_magic.return_value = mock_ms
         mock_ms.load.return_value = 0
@@ -2261,7 +2269,7 @@ class FindDependenciesTestCase(tests.TestCase):
 
         dependencies = pluginhandler._find_dependencies(workdir, {'non-elf'})
 
-        mock_ms.file.assert_called_once_with(non_elf_path)
+        mock_ms.file.assert_called_once_with(non_elf_path_b)
 
         self.assertFalse(
             mock_dependencies.called,
