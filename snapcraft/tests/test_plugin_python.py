@@ -26,6 +26,7 @@ from snapcraft.plugins import python
 def setup_directories(plugin, python_version):
     version = '2.7' if python_version == 'python2' else '3.5'
     os.makedirs(plugin.sourcedir)
+    os.makedirs(plugin.builddir)
     os.makedirs(os.path.join(
         plugin.installdir, 'usr', 'lib', 'python' + version, 'dist-packages'))
     os.makedirs(os.path.join(
@@ -102,13 +103,6 @@ class PythonPluginTestCase(tests.TestCase):
         pip_command = os.path.join(os.path.sep, 'usr', 'bin', 'pip')
         self.assertEqual(plugin.system_pip_command, pip_command)
 
-    @mock.patch.object(python.PythonPlugin, '_run_pip')
-    def test_pull(self, mock_pip):
-        plugin = python.PythonPlugin('test-part', self.options,
-                                     self.project_options)
-        plugin.pull()
-        self.assertTrue(mock_pip.called)
-
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
     def test_missing_setup_path(self, mock_path_exists, mock_run):
@@ -119,7 +113,7 @@ class PythonPluginTestCase(tests.TestCase):
         self.assertFalse(mock_run.called)
 
     @mock.patch.object(python.PythonPlugin, 'run')
-    def test_pip(self, mock_run):
+    def test_pull(self, mock_run):
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -130,19 +124,67 @@ class PythonPluginTestCase(tests.TestCase):
 
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
-        pip_install = ['pip', 'install', '--user', '--no-compile',
-                       '--disable-pip-version-check',
-                       '--constraint', constraints_path]
+
+        pip_download = ['pip', 'download',
+                        '--disable-pip-version-check',
+                        '--dest', plugin._python_package_dir,
+                        '--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_install + ['--requirement', requirements_path],
+            mock.call(pip_download + ['--requirement', requirements_path],
                       env=mock.ANY),
-            mock.call(pip_install + ['test', 'packages'],
+            mock.call(pip_download + ['test', 'packages'],
                       env=mock.ANY),
-            mock.call(pip_install + ['.'], cwd=plugin.sourcedir,
+            mock.call(pip_download + ['.'], cwd=plugin.sourcedir,
                       env=mock.ANY),
         ]
         plugin.pull()
+        mock_run.assert_has_calls(calls)
+
+    @mock.patch.object(python.PythonPlugin, 'run')
+    @mock.patch.object(python.snapcraft.BasePlugin, 'build')
+    def test_build(self, mock_base_build, mock_run):
+        self.options.requirements = 'requirements.txt'
+        self.options.constraints = 'constraints.txt'
+        self.options.python_packages = ['test', 'packages']
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        def build_side_effect():
+            open(os.path.join(plugin.builddir, 'setup.py'), 'w').close()
+
+        mock_base_build.side_effect = build_side_effect
+
+        requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+
+        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir,
+                     '--disable-pip-version-check', '--no-index',
+                     '--find-links', plugin._python_package_dir,
+                     '--constraint', constraints_path]
+
+        pip_install = ['pip', 'install', '--user', '--no-compile',
+                       '--disable-pip-version-check', '--no-index',
+                       '--find-links', plugin._python_package_dir,
+                       '--constraint', constraints_path]
+
+        calls = [
+            mock.call(pip_wheel + ['--requirement', requirements_path],
+                      env=mock.ANY),
+            mock.call(pip_install + ['--requirement', requirements_path],
+                      env=mock.ANY),
+            mock.call(pip_wheel + ['test', 'packages'],
+                      env=mock.ANY),
+            mock.call(pip_install + ['test', 'packages'],
+                      env=mock.ANY),
+            mock.call(pip_wheel + ['.'], cwd=plugin.builddir,
+                      env=mock.ANY),
+            mock.call(pip_install + ['.'], cwd=plugin.builddir,
+                      env=mock.ANY),
+        ]
+        plugin.build()
         mock_run.assert_has_calls(calls)
 
     @mock.patch.object(python.PythonPlugin, 'run')
@@ -154,15 +196,16 @@ class PythonPluginTestCase(tests.TestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        pip_install = ['pip', 'install', '--user', '--no-compile',
-                       '--disable-pip-version-check',
-                       '--constraint', 'http://test.com/constraints.txt']
+        pip_download = ['pip', 'download',
+                        '--disable-pip-version-check',
+                        '--dest', plugin._python_package_dir,
+                        '--constraint', 'http://test.com/constraints.txt']
 
         calls = [
-            mock.call(pip_install + ['--requirement',
-                                     'https://test.com/requirements.txt'],
+            mock.call(pip_download + ['--requirement',
+                                      'https://test.com/requirements.txt'],
                       env=mock.ANY),
-            mock.call(pip_install + ['.'], cwd=plugin.sourcedir,
+            mock.call(pip_download + ['.'], cwd=plugin.sourcedir,
                       env=mock.ANY),
         ]
         plugin.pull()

@@ -133,6 +133,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self.build_packages.extend(self.plugin_build_packages)
         self.stage_packages.extend(self.plugin_stage_packages)
+        self._python_package_dir = os.path.join(self.partdir, 'packages')
 
     def env(self, root):
         return [
@@ -147,36 +148,23 @@ class PythonPlugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
 
-        self._run_pip(setup)
+        self._run_pip(setup, download=True)
 
-    def _install_pip(self):
+    def _install_pip(self, download):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
 
-        subprocess.check_call([
-            self.system_pip_command, 'install', '--user', '--no-compile',
-            '--ignore-installed',
-            '--disable-pip-version-check',
-            'pip', 'setuptools', 'wheel'], env=env)
+        args = ['pip', 'setuptools', 'wheel']
 
-    def _get_pip_command(self):
-        self._install_pip()
+        pip = _Pip(exec_func=subprocess.check_call,
+                   runnable=self.system_pip_command,
+                   package_dir=self._python_package_dir, env=env,
+                   extra_install_args=['--ignore-installed'])
 
-        pip_install = ['pip', 'install', '--user', '--no-compile',
-                       '--disable-pip-version-check']
-
-        if self.options.constraints:
-            if isurl(self.options.constraints):
-                constraints = self.options.constraints
-            else:
-                constraints = os.path.join(self.sourcedir,
-                                           self.options.constraints)
-            pip_install = pip_install + ['--constraint', constraints]
-
-        if self.options.process_dependency_links:
-            pip_install.append('--process-dependency-links')
-
-        return pip_install
+        if download:
+            pip.download(args)
+        pip.wheel(args)
+        pip.install(args)
 
     def _get_build_env(self):
         env = os.environ.copy()
@@ -189,10 +177,23 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         return env
 
-    def _run_pip(self, setup):
-        pip_install = self._get_pip_command()
+    def _run_pip(self, setup, download=False):
+        self._install_pip(download)
 
         env = self._get_build_env()
+
+        constraints = []
+        if self.options.constraints:
+            if isurl(self.options.constraints):
+                constraints = self.options.constraints
+            else:
+                constraints = os.path.join(self.sourcedir,
+                                           self.options.constraints)
+
+        pip = _Pip(exec_func=self.run, runnable='pip',
+                   package_dir=self._python_package_dir, env=env,
+                   constraints=constraints,
+                   dependency_links=self.options.process_dependency_links)
 
         if self.options.requirements:
             if isurl(self.options.requirements):
@@ -200,14 +201,26 @@ class PythonPlugin(snapcraft.BasePlugin):
             else:
                 requirements = os.path.join(self.sourcedir,
                                             self.options.requirements)
-            self.run(pip_install + ['--requirement', requirements], env=env)
+            if download:
+                pip.download(['--requirement', requirements])
+            else:
+                pip.wheel(['--requirement', requirements])
+                pip.install(['--requirement', requirements])
 
         if self.options.python_packages:
-            self.run(pip_install + self.options.python_packages, env=env)
+            if download:
+                pip.download(self.options.python_packages)
+            else:
+                pip.wheel(self.options.python_packages)
+                pip.install(self.options.python_packages)
 
         if os.path.exists(setup):
             cwd = os.path.dirname(setup)
-            self.run(pip_install + ['.'], cwd=cwd, env=env)
+            if download:
+                pip.download(['.'], cwd=cwd)
+            else:
+                pip.wheel(['.'], cwd=cwd)
+                pip.install(['.'], cwd=cwd)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -239,6 +252,62 @@ class PythonPlugin(snapcraft.BasePlugin):
         fileset.append('-**/__pycache__')
         fileset.append('-**/*.pyc')
         return fileset
+
+
+class _Pip:
+
+    def __init__(self, *, exec_func, runnable, package_dir, env,
+                 constraints=None, dependency_links=None,
+                 extra_install_args=None):
+        self._exec_func = exec_func
+        self._runnable = runnable
+        self._package_dir = package_dir
+        self._env = env
+
+        self._extra_install_args = extra_install_args or []
+
+        self._extra_pip_args = []
+        if constraints:
+            self._extra_pip_args.extend(['--constraint', constraints])
+
+        if dependency_links:
+            self._extra_pip_args.append('--process-dependency-links')
+
+    def wheel(self, args, **kwargs):
+        cmd = [
+            self._runnable, 'wheel', '--wheel-dir', self._package_dir,
+            '--disable-pip-version-check', '--no-index',
+            '--find-links', self._package_dir,
+        ]
+        cmd.extend(self._extra_pip_args)
+        cmd.extend(args)
+
+        os.makedirs(self._package_dir, exist_ok=True)
+        self._exec_func(cmd, env=self._env, **kwargs)
+
+    def download(self, args, **kwargs):
+        cmd = [
+            self._runnable, 'download',
+            '--disable-pip-version-check',
+            '--dest', self._package_dir,
+        ]
+        cmd.extend(self._extra_pip_args)
+        cmd.extend(args)
+
+        os.makedirs(self._package_dir, exist_ok=True)
+        self._exec_func(cmd, env=self._env, **kwargs)
+
+    def install(self, args, **kwargs):
+        cmd = [
+            self._runnable, 'install', '--user', '--no-compile',
+            '--disable-pip-version-check', '--no-index',
+            '--find-links', self._package_dir,
+        ]
+        cmd.extend(self._extra_pip_args)
+        cmd.extend(self._extra_install_args)
+        cmd.extend(args)
+
+        self._exec_func(cmd, env=self._env, **kwargs)
 
 
 def _replicate_owner_mode(path):
