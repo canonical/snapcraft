@@ -330,15 +330,13 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         ros10_file = os.path.join(self.rosdir,
                                   'etc/catkin/profile.d/10.ros.sh')
-        try:
+        if os.path.isfile(ros10_file):
             with open(ros10_file, 'r+') as f:
                 pattern = re.compile(r'/usr/bin/python')
                 replaced = pattern.sub(r'python', f.read())
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
-        except OSError:
-            pass
 
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified
