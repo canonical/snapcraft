@@ -99,6 +99,16 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         return schema
 
+    @property
+    def PLUGIN_STAGE_SOURCES(self):
+        return """
+deb http://packages.ros.org/ros/${{suffix}}/ {0} main
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0} main universe
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-updates main universe
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-security main universe
+deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
+""".format(_ROS_RELEASE_MAP[self.options.rosdistro])
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(['gcc', 'libc6-dev', 'make'])
@@ -178,15 +188,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         return env
 
-    def get_stage_sources(self):
-        return '''
-deb http://packages.ros.org/ros/${{suffix}}/ {0} main
-deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0} main universe
-deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-updates main universe
-deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-security main universe
-deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
-'''.format(_ROS_RELEASE_MAP[self.options.rosdistro])
-
     def pull(self):
         """Copy source into build directory and fetch dependencies.
 
@@ -207,7 +208,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # Use rosdep for dependency detection and resolution
         rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
-                         self._rosdep_path, self.get_stage_sources(),
+                         self._rosdep_path, self.PLUGIN_STAGE_SOURCES,
                          self.project)
         rosdep.setup()
 
@@ -233,7 +234,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             logger.info('Preparing to fetch package dependencies...')
             ubuntu = repo.Ubuntu(
                 ubuntudir, self.project,
-                sources=self.get_stage_sources(),
+                sources=self.PLUGIN_STAGE_SOURCES,
                 project_options=self.project)
 
             logger.info('Fetching package dependencies...')

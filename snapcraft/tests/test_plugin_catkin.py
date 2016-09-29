@@ -215,19 +215,19 @@ class CatkinPluginTestCase(tests.TestCase):
         self.properties.rosdistro = 'indigo'
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
-        self.assertTrue('trusty' in plugin.get_stage_sources())
+        self.assertTrue('trusty' in plugin.PLUGIN_STAGE_SOURCES)
 
     def test_get_stage_sources_jade(self):
         self.properties.rosdistro = 'jade'
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
-        self.assertTrue('trusty' in plugin.get_stage_sources())
+        self.assertTrue('trusty' in plugin.PLUGIN_STAGE_SOURCES)
 
     def test_get_stage_sources_kinetic(self):
         self.properties.rosdistro = 'kinetic'
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
-        self.assertTrue('xenial' in plugin.get_stage_sources())
+        self.assertTrue('xenial' in plugin.PLUGIN_STAGE_SOURCES)
 
     def test_pull_debian_dependencies(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
@@ -242,7 +242,7 @@ class CatkinPluginTestCase(tests.TestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
-            plugin.get_stage_sources())
+            plugin.PLUGIN_STAGE_SOURCES)
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -273,7 +273,7 @@ class CatkinPluginTestCase(tests.TestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
-            plugin.get_stage_sources())
+            plugin.PLUGIN_STAGE_SOURCES)
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -324,7 +324,7 @@ class CatkinPluginTestCase(tests.TestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
-            plugin.get_stage_sources())
+            plugin.PLUGIN_STAGE_SOURCES)
 
         # Verify that roscore was installed
         self.ubuntu_mock.return_value.get.assert_called_with(
