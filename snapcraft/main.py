@@ -43,7 +43,7 @@ Usage:
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] gated <snap-name>
-  snapcraft [options] validate <snap-name> [<snap-revision> ...] [--key-name=<key-name>]
+  snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -322,7 +322,7 @@ def _run_store_command(args):  # noqa: C901
         snapcraft.release(
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
     elif args['validate']:
-        snapcraft.validate(args['<snap-name>'], args['<snap-revision>'],
+        snapcraft.validate(args['<snap-name>'], args['<validation>'],
                            key=args['--key-name'])
     elif args['gated']:
         snapcraft.gated(args['<snap-name>'])
