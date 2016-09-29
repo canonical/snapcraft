@@ -16,6 +16,9 @@
 
 
 import logging
+import subprocess
+
+from unittest import mock
 
 import fixtures
 
@@ -39,6 +42,10 @@ class ValidateTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
+        patcher = mock.patch('snapcraft._store.subprocess.Popen',
+                             new=mock.Mock(wraps=subprocess.Popen))
+        self.popen_spy = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_validate_success(self):
         self.client.login('dummy', 'test correct password')

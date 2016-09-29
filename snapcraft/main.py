@@ -35,7 +35,7 @@ Usage:
   snapcraft [options] keys
   snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
-  snapcraft [options] sign-build <snap-file> [--key-name <key-name>] [--local]
+  snapcraft [options] sign-build <snap-file> [--key-name=<key-name>] [--local]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
@@ -43,7 +43,7 @@ Usage:
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] gated <snap-name>
-  snapcraft [options] validate <snap-name> [--key-name <key-name>] [<snap-revision> ...]
+  snapcraft [options] validate <snap-name> [<snap-revision> ...] [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -308,7 +308,7 @@ def _run_store_command(args):  # noqa: C901
         snapcraft.register(args['<snap-name>'], args['--private'])
     elif args['sign-build']:
         snapcraft.sign_build(
-            args['<snap-file>'], args['<key-name>'], args['--local'])
+            args['<snap-file>'], args['--key-name'], args['--local'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
         snapcraft.push(args['<snap-file>'])
@@ -323,7 +323,7 @@ def _run_store_command(args):  # noqa: C901
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
     elif args['validate']:
         snapcraft.validate(args['<snap-name>'], args['<snap-revision>'],
-                           key=args['<key-name>'])
+                           key=args['--key-name'])
     elif args['gated']:
         snapcraft.gated(args['<snap-name>'])
 
