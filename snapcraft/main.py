@@ -292,8 +292,8 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'register-key', 'register', 'sign-build', 'upload',
-        'release', 'push', 'validate', 'gated')
+        'list-keys', 'keys', 'register-key', 'register', 'sign-build',
+        'upload', 'release', 'push', 'validate', 'gated')
     return any(args.get(command) for command in commands)
 
 

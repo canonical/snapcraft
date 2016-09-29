@@ -245,6 +245,7 @@ class StoreValidationError(StoreError):
         super().__init__(status_code=response.status_code,
                          **response_json)
 
+
 class StoreSnapBuildError(StoreError):
 
     fmt = 'Could not assert build: {error}'
