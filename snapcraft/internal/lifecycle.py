@@ -107,6 +107,16 @@ def execute(step, project_options, part_names=None):
             'type': config.data.get('type', '')}
 
 
+def _replace_in_part(part):
+    for key, value in part.code.options.__dict__.items():
+        value = replace_attr(value, [
+            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+        ])
+        setattr(part.code.options, key, value)
+
+    return part
+
+
 class _Executor:
 
     def __init__(self, config, project_options):
@@ -182,19 +192,8 @@ class _Executor:
         common.env = self.parts_config.build_env_for_part(part)
         common.env.extend(self.config.project_env())
 
-        part = self._replace_in_part(part)
+        part = _replace_in_part(part)
         getattr(part, step)()
-
-    def _replace_in_part(self, part):
-
-        for key in part.code.options.__dict__:
-            attr = getattr(part.code.options, key)
-            attr = replace_attr(attr, [
-                ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
-            ])
-            setattr(part.code.options, key, attr)
-
-        return part
 
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
