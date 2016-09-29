@@ -24,6 +24,8 @@ import re
 import subprocess
 import tempfile
 
+from subprocess import Popen
+
 from tabulate import tabulate
 import yaml
 
@@ -438,7 +440,7 @@ def _sign_validation(validation, assertion, key):
     cmdline = ['snap', 'sign']
     if key:
         cmdline += ['-k', key]
-    snap_sign = subprocess.Popen(
+    snap_sign = Popen(
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
