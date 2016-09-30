@@ -50,6 +50,25 @@ grade: stable
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
 
+    def test__replace_in_parts(self):
+        class Options:
+            def __init__(self):
+                self.source = '$SNAPCRAFT_PART_INSTALL'
+
+        class Code:
+            def __init__(self):
+                self.options = Options()
+                self.installdir = '/tmp'
+
+        class Part:
+            def __init__(self):
+                self.code = Code()
+
+        part = Part()
+        new_part = lifecycle._replace_in_part(part)
+
+        self.assertEqual(part.code.installdir, new_part.code.options.source)
+
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""parts:
   part1:
