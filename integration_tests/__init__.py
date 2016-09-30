@@ -187,6 +187,30 @@ class StoreTestCase(TestCase):
                 print(line)
         return updated_project_dir
 
+    def gated(self, snap_name, expected_validations=[], expected_error=None):
+        process = pexpect.spawn(self.snapcraft_command, ['gated', snap_name])
+
+        if expected_error:
+            process.expect(expected_error)
+        else:
+            for name, revision in expected_validations:
+                process.expect('{} *{}'.format(name, revision))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def validate(self, snap_name, validations, expected_error=None):
+        process = pexpect.spawn(self.snapcraft_command,
+                                ['validate', snap_name] + validations)
+        if expected_error:
+            process.expect(expected_error)
+        else:
+            for v in validations:
+                process.expect('Signing validation {}'.format(v))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
     def sign_build(self, snap_filename, key_name='default', local=False,
                    expect_success=True):
         cmd = ['sign-build', snap_filename, '--key-name', key_name]

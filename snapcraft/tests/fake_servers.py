@@ -337,6 +337,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
         release_path = urllib.parse.urljoin(self._DEV_API_PATH,
                                             'snap-release/')
+
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
@@ -621,17 +622,70 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         details_review = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/review-snap')
         account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
+        good_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/good/validations')
+        bad_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/bad/validations')
+        err_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/err/validations')
+
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
         elif parsed_path.path.startswith(details_review):
             self._handle_scan_complete_request('need_manual_review', False)
         elif parsed_path.path == account_path:
             self._handle_account_request()
+        elif parsed_path.path.startswith(good_validations_path):
+            self._handle_validation_request('good')
+        elif parsed_path.path.startswith(bad_validations_path):
+            self._handle_validation_request('bad')
+        elif parsed_path.path.startswith(err_validations_path):
+            self._handle_validation_request('err')
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
             raise NotImplementedError(parsed_path)
+
+    def _handle_validation_request(self, code):
+        logger.debug('Handling validation request')
+        if code == 'good':
+            response = [{
+                "approved-snap-id": "snap-id-1",
+                "approved-snap-revision": "3",
+                "approved-snap-name": "snap-1",
+                "authority-id": "dev-1",
+                "series": "16",
+                "sign-key-sha3-384": "1234567890",
+                "snap-id": "snap-id-gating",
+                "timestamp": "2016-09-19T21:07:27.756001Z",
+                "type": "validation",
+                "revoked": "false"
+            }, {
+                "approved-snap-id": "snap-id-2",
+                "approved-snap-revision": "5",
+                "approved-snap-name": "snap-2",
+                "authority-id": "dev-1",
+                "series": "16",
+                "sign-key-sha3-384": "1234567890",
+                "snap-id": "snap-id-gating",
+                "timestamp": "2016-09-19T21:07:27.756001Z",
+                "type": "validation",
+                "revoked": "false"
+            }]
+            response = json.dumps(response).encode()
+            status = 200
+        elif code == 'bad':
+            response = 'foo'.encode()
+            status = 200
+        elif code == 'err':
+            status = 503
+            response = {'error_list': [{'message': 'error'}]}
+            response = json.dumps(response).encode()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(response)
 
     def _handle_scan_complete_request(self, code, can_release):
         logger.debug('Handling scan complete request')
@@ -652,7 +706,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        snaps = {'basic': {'snap-id': 'snap-id'}}
+        snaps = {
+            'basic': {'snap-id': 'snap-id'},
+            'ubuntu-core': {'snap-id': 'good'},
+            }
         snaps.update({
             n: {'snap-id': 'fake-snap-id'}
             for n in self.server.registered_names})
@@ -661,6 +718,48 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'account_keys': self.server.account_keys,
             'snaps': {'16': snaps},
         }).encode())
+
+    def do_PUT(self):
+        if self.server.fake_store.needs_refresh:
+            self._handle_needs_refresh()
+            return
+        parsed_path = urllib.parse.urlparse(self.path)
+        good_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/good/validations')
+        bad_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/bad/validations')
+        err_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/err/validations')
+
+        if parsed_path.path.startswith(good_validations_path):
+            self._handle_push_validation_request('good')
+        elif parsed_path.path.startswith(bad_validations_path):
+            self._handle_push_validation_request('bad')
+        elif parsed_path.path.startswith(err_validations_path):
+            self._handle_push_validation_request('err')
+        else:
+            logger.error(
+                'Not implemented path in fake Store API server: {}'.format(
+                    self.path))
+            raise NotImplementedError(parsed_path)
+
+    def _handle_push_validation_request(self, code):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length']))
+        if code == 'good':
+            response = string_data
+            status = 200
+        elif code == 'err':
+            response = {'error_list': [{'message': 'error'}]}
+            response = json.dumps(response).encode()
+            status = 501
+        elif code == 'bad':
+            response = 'foo'.encode()
+            status = 200
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(response)
 
 
 class FakeStoreSearchServer(http.server.HTTPServer):
@@ -724,6 +823,9 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
                 'http://localhost:{}'.format(self.server.server_port),
                 'download-snap/test-snap.snap'),
             'download_sha512': sha512,
+            'snap_id': 'good',
+            'developer_id': package + '-developer-id',
+            'release': ['16'],
         }
         return response
 
