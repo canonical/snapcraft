@@ -99,6 +99,30 @@ class HistoryCommandTestCase(tests.TestCase):
             "Snap 'snap-test' was not found in '15' series.",
             self.fake_logger.output)
 
+    @mock.patch.object(storeapi.SCAClient, 'snap_history')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_history_by_unknown_arch(self, mock_account_api, mock_history):
+        mock_history.return_value = {}
+
+        with self.assertRaises(SystemExit):
+            main(['history', 'snap-test', '--arch=some-arch'])
+
+        self.assertIn(
+            "Snap 'snap-test' for 'some-arch' was not found.",
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.SCAClient, 'snap_history')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_history_by_unknown_series(self, mock_account_api, mock_history):
+        mock_history.return_value = {}
+
+        with self.assertRaises(SystemExit):
+            main(['history', 'snap-test', '--series=some-series'])
+
+        self.assertIn(
+            "Snap 'snap-test' was not found in 'some-series' series.",
+            self.fake_logger.output)
+
     @mock.patch.object(storeapi.StoreClient, 'get_snap_history')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_history(self, mock_account_api, mock_history):

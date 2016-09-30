@@ -118,6 +118,30 @@ class StatusCommandTestCase(tests.TestCase):
             "Snap 'snap-test' was not found in '15' series.",
             self.fake_logger.output)
 
+    @mock.patch.object(storeapi.SCAClient, 'snap_status')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_status_by_unknown_arch(self, mock_account_api, mock_status):
+        mock_status.return_value = {}
+
+        with self.assertRaises(SystemExit):
+            main(['status', 'snap-test', '--arch=some-arch'])
+
+        self.assertIn(
+            "Snap 'snap-test' for 'some-arch' was not found.",
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.SCAClient, 'snap_status')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_status_by_unknown_series(self, mock_account_api, mock_status):
+        mock_status.return_value = {}
+
+        with self.assertRaises(SystemExit):
+            main(['status', 'snap-test', '--series=some-series'])
+
+        self.assertIn(
+            "Snap 'snap-test' was not found in 'some-series' series.",
+            self.fake_logger.output)
+
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status(self, mock_account_api, mock_status):
@@ -187,15 +211,3 @@ i386    stable     -          -
         edge       1.0-i386   3
 """
         self.assertIn(expected_output.strip(), terminal_output)
-
-    @mock.patch.object(storeapi.SCAClient, 'snap_status')
-    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_status_by_unknown_arch(self, mock_account_api, mock_status):
-        mock_status.return_value = {}
-
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test', '--arch=some-arch'])
-
-        self.assertIn(
-            "Snap 'snap-test' for 'some-arch' was not found.",
-            self.fake_logger.output)
