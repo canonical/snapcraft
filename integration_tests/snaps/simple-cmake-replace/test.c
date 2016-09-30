@@ -1,4 +1,4 @@
 #include <stdio.h>
 int main() {
-    printf("It's a CMake world\n");
+    printf("When I was built I was installed to PART_INSTALL\n");
 }

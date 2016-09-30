@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
 from testtools.matchers import FileContains
 
@@ -56,3 +57,14 @@ class EnvironmentTestCase(integration_tests.TestCase):
         project_dir = 'stage_env'
 
         self.run_snapcraft('stage', project_dir)
+
+    def test_stage_cmake_plugin_with_replace(self):
+        """Replace SNAPCRAFT_PART_INSTALL in the part's attributes"""
+        project_dir = 'simple-cmake-replace'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = subprocess.check_output([
+            os.path.join(project_dir, 'stage','bin', 'simple-cmake-replace')])
+        self.assertEqual(
+            b"When I was built I was installed to PART_INSTALL\n",
+            binary_output)
