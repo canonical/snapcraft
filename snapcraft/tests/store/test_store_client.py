@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
 import os
 from textwrap import dedent
@@ -231,17 +232,23 @@ class GetAccountInformationTestCase(tests.TestCase):
 
     def test_get_account_information_successfully(self):
         self.client.login('dummy', 'test correct password')
-        self.assertEqual(
-            {'account_id': 'abcd', 'account_keys': [],
-             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}}},
+        self.assertEqual({
+            'account_id': 'abcd',
+            'account_keys': [],
+            'snaps': {'16': {
+                'basic': {'snap-id': 'snap-id'},
+                'ubuntu-core': {'snap-id': 'good'}}}},
             self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
         self.fake_store.needs_refresh = True
-        self.assertEqual(
-            {'account_id': 'abcd', 'account_keys': [],
-             'snaps': {'16': {'basic': {'snap-id': 'snap-id'}}}},
+        self.assertEqual({
+            'account_id': 'abcd',
+            'account_keys': [],
+            'snaps': {'16': {
+                'basic': {'snap-id': 'snap-id'},
+                'ubuntu-core': {'snap-id': 'good'}}}},
             self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 
@@ -360,6 +367,96 @@ class RegisterTestCase(tests.TestCase):
         with self.assertRaises(errors.StoreRegistrationError) as raised:
             self.client.register('snap-name-no-clear-error')
         self.assertEqual(str(raised.exception), 'Registration failed.')
+
+
+class ValidationsTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_get_success(self):
+        self.client.login('dummy', 'test correct password')
+        expected = [{
+            "approved-snap-id": "snap-id-1",
+            "approved-snap-revision": "3",
+            "approved-snap-name": "snap-1",
+            "authority-id": "dev-1",
+            "series": "16",
+            "sign-key-sha3-384": "1234567890",
+            "snap-id": "snap-id-gating",
+            "timestamp": "2016-09-19T21:07:27.756001Z",
+            "type": "validation",
+            "revoked": "false"
+        }, {
+            "approved-snap-id": "snap-id-2",
+            "approved-snap-revision": "5",
+            "approved-snap-name": "snap-2",
+            "authority-id": "dev-1",
+            "series": "16",
+            "sign-key-sha3-384": "1234567890",
+            "snap-id": "snap-id-gating",
+            "timestamp": "2016-09-19T21:07:27.756001Z",
+            "type": "validation",
+            "revoked": "false"
+        }]
+        result = self.client.get_validations('good')
+        self.assertEqual(result, expected)
+
+    def test_get_bad_response(self):
+        self.client.login('dummy', 'test correct password')
+
+        with self.assertRaises(errors.StoreValidationError) as err:
+            self.client.get_validations('bad')
+
+        expected = ("Received error 200: 'Invalid response from the server'")
+        self.assertEqual(str(err.exception), expected)
+        self.assertIn(
+            'Invalid response from the server', self.fake_logger.output)
+
+    def test_get_error_response(self):
+        self.client.login('dummy', 'test correct password')
+        expected = []
+
+        with self.assertRaises(errors.StoreValidationError) as err:
+            self.client.get_validations('err')
+
+        expected = ("Received error 503: 'error'")
+        self.assertEqual(str(err.exception), expected)
+
+    def test_push_success(self):
+        self.client.login('dummy', 'test correct password')
+        assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
+
+        result = self.client.push_validation('good', assertion)
+
+        expected = {'assertion': '{"foo": "bar"}'}
+        self.assertEqual(result, expected)
+
+    def test_push_bad_response(self):
+        self.client.login('dummy', 'test correct password')
+        assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
+
+        with self.assertRaises(errors.StoreValidationError) as err:
+            self.client.push_validation('bad', assertion)
+
+        expected = ("Received error 200: 'Invalid response from the server'")
+        self.assertEqual(str(err.exception), expected)
+        self.assertIn(
+            'Invalid response from the server', self.fake_logger.output)
+
+    def test_push_error_response(self):
+        self.client.login('dummy', 'test correct password')
+        assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
+
+        with self.assertRaises(errors.StoreValidationError) as err:
+            self.client.push_validation('err', assertion)
+
+        expected = ("Received error 501: 'error'")
+        self.assertEqual(str(err.exception), expected)
 
 
 class UploadTestCase(tests.TestCase):

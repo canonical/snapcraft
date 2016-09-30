@@ -56,7 +56,7 @@ class SnapNotFoundError(StoreError):
         elif series:
             self.fmt = self.__FMT_SERIES
 
-        super().__init__(name=name, arch=arch, channel=channel, series=series)
+        super().__init__(name=name, channel=channel, arch=arch, series=series)
 
 
 class SHAMismatchError(StoreError):
@@ -240,6 +240,21 @@ class StoreReleaseError(StoreError):
             self.fmt = '{errors}'
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)
+
+
+class StoreValidationError(StoreError):
+
+    fmt = 'Received error {status_code!r}: {text!r}'
+
+    def __init__(self, snap_id, response, message=None):
+        try:
+            response_json = response.json()
+            response_json['text'] = response.json()['error_list'][0]['message']
+        except (AttributeError, JSONDecodeError):
+            response_json = {'text': message or response}
+
+        super().__init__(status_code=response.status_code,
                          **response_json)
 
 

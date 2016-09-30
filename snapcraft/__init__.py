@@ -232,6 +232,7 @@ from snapcraft._help import topic_help              # noqa
 from snapcraft._store import (                      # noqa
     download,
     history,
+    gated,
     list_keys,
     login,
     logout,
@@ -241,6 +242,7 @@ from snapcraft._store import (                      # noqa
     release,
     sign_build,
     status,
+    validate,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa

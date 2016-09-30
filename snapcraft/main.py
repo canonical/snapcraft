@@ -35,7 +35,7 @@ Usage:
   snapcraft [options] keys
   snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
-  snapcraft [options] sign-build <snap-file> [--key-name <key-name>] [--local]
+  snapcraft [options] sign-build <snap-file> [--key-name=<key-name>] [--local]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
@@ -44,6 +44,8 @@ Usage:
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
+  snapcraft [options] gated <snap-name>
+  snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -128,7 +130,7 @@ to get started.
 
 For more help, visit the documentation:
 http://developer.ubuntu.com/snappy/snapcraft
-"""
+"""  # NOQA
 
 import logging
 import os
@@ -294,12 +296,14 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'register-key',
-        'register', 'sign-build', 'upload',
-        'release', 'push', 'history', 'status')
+        'list-keys', 'keys', 'register-key', 'register', 'sign-build',
+        'upload', 'release', 'push', 'validate', 'gated',
+        'history', 'status')
     return any(args.get(command) for command in commands)
 
 
+# This function's complexity is correlated to the number of
+# commands, no point in checking that.
 def _run_store_command(args):  # noqa: C901
     if args['list-keys'] or args['keys']:
         snapcraft.list_keys()
@@ -309,7 +313,7 @@ def _run_store_command(args):  # noqa: C901
         snapcraft.register(args['<snap-name>'], args['--private'])
     elif args['sign-build']:
         snapcraft.sign_build(
-            args['<snap-file>'], args['<key-name>'], args['--local'])
+            args['<snap-file>'], args['--key-name'], args['--local'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
         snapcraft.push(args['<snap-file>'])
@@ -322,6 +326,11 @@ def _run_store_command(args):  # noqa: C901
     elif args['release']:
         snapcraft.release(
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
+    elif args['validate']:
+        snapcraft.validate(args['<snap-name>'], args['<validation>'],
+                           key=args['--key-name'])
+    elif args['gated']:
+        snapcraft.gated(args['<snap-name>'])
     elif args['history']:
         snapcraft.history(
             args['<snap-name>'], args['--series'], args['--arch'])

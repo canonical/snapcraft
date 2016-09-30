@@ -15,12 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
+import datetime
 import getpass
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
+
+from subprocess import Popen
 
 from tabulate import tabulate
 import yaml
@@ -351,11 +355,6 @@ def download(snap_name, channel, download_path, arch):
     try:
         with _requires_login():
             store.download(snap_name, channel, download_path, arch)
-    except storeapi.errors.SnapNotFoundError:
-        raise RuntimeError(
-            'Snap {name} for {arch} cannot be found'
-            ' in the {channel} channel'.format(name=snap_name, arch=arch,
-                                               channel=channel))
     except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
@@ -393,3 +392,107 @@ def status(snap_name, series, arch):
     tabulated_channels = tabulate(
         parsed_channels, headers=['Arch', 'Channel', 'Version', 'Revision'])
     print(tabulated_channels)
+
+
+def gated(snap_name):
+    """Print list of snaps gated by snap_name."""
+    store = storeapi.StoreClient()
+    # Get data for the gating snap
+    with _requires_login():
+        snaps = store.get_account_information().get('snaps', {})
+
+    # Resolve name to snap-id
+    snap_id = None
+    for snaps_for_series in snaps.values():
+        for name, snap in snaps_for_series.items():
+            if name == snap_name:
+                snap_id = snap['snap-id']
+                break
+        if snap_id:
+            break
+    else:
+        raise storeapi.errors.SnapNotFoundError(snap_name)
+
+    validations = store.get_validations(snap_id)
+
+    table_data = []
+    for v in validations:
+        table_data.append([v['approved-snap-name'],
+                           v['approved-snap-revision']])
+    tabulated = tabulate(table_data, headers=['Name', 'Approved'],
+                         tablefmt="plain")
+    print(tabulated)
+
+
+def validate(snap_name, validations, revoke=False, key=None):
+    """Generate, sign and upload validation assertions."""
+
+    # Check validations format
+    _check_validations(validations)
+
+    store = storeapi.StoreClient()
+
+    # Get data for the gating snap
+    with _requires_login():
+        snap_data = store.cpi.get_package(snap_name, 'stable')
+    release = str(snap_data['release'][0])
+    snap_id = snap_data['snap_id']
+
+    # Need the ID of the logged in user.
+    with _requires_login():
+        account_info = store.get_account_information()
+    authority_id = account_info['account_id']
+
+    # Then, for each requested validation, generate assertion
+    for validation in validations:
+        gated_name, rev = validation.split('=', 1)
+        approved_data = store.cpi.get_package(gated_name, 'stable')
+        assertion = {
+            'type': 'validation',
+            'authority-id': authority_id,
+            'series': release,
+            'snap-id': snap_id,
+            'approved-snap-id': approved_data['snap_id'],
+            'approved-snap-revision': rev,
+            'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'revoked': "false"
+        }
+        if revoke:
+            assertion['revoked'] = "true"
+
+        assertion = _sign_validation(validation, assertion, key)
+
+        # Save assertion to a properly named file
+        fname = '{}-{}-r{}.assertion'.format(snap_name, gated_name, rev)
+        with open(fname, 'wb') as f:
+            f.write(assertion)
+
+        store.push_validation(snap_id, assertion)
+
+
+validation_re = re.compile('^[^=]+=[0-9]+$')
+
+
+def _check_validations(validations):
+    invalids = [v for v in validations if not validation_re.match(v)]
+    if invalids:
+        for v in invalids:
+            logger.error('Invalid validation request "{}", format must be'
+                         ' name=revision'.format(v))
+        raise RuntimeError()
+
+
+def _sign_validation(validation, assertion, key):
+    cmdline = ['snap', 'sign']
+    if key:
+        cmdline += ['-k', key]
+    snap_sign = Popen(
+        cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    data = json.dumps(assertion).encode('utf8')
+    logger.info('Signing validation {}'.format(validation))
+    assertion, err = snap_sign.communicate(input=data)
+    if snap_sign.returncode != 0:
+        err = err.decode('ascii', errors='replace')
+        raise RuntimeError('Error signing assertion: {!s}'.format(err))
+    return assertion
