@@ -650,17 +650,19 @@ class CatkinPluginTestCase(tests.TestCase):
             }
         ]
 
-        for fileInfo in files:
-            with open(os.path.join(plugin.rosdir, fileInfo['path']), 'w') as f:
-                f.write(fileInfo['contents'])
+        for file_info in files:
+            path = os.path.join(plugin.rosdir, file_info['path'])
+            with open(path, 'w') as f:
+                f.write(file_info['contents'])
 
         plugin._prepare_build()
 
         self.assertTrue(use_in_snap_python_mock.called)
 
-        for fileInfo in files:
-            with open(os.path.join(plugin.rosdir, fileInfo['path']), 'r') as f:
-                self.assertEqual(f.read(), fileInfo['expected'])
+        for file_info in files:
+            path = os.path.join(plugin.rosdir, file_info['path'])
+            with open(path, 'r') as f:
+                self.assertEqual(f.read(), file_info['expected'])
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
