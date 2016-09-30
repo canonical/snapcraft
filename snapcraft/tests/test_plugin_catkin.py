@@ -593,6 +593,26 @@ class CatkinPluginTestCase(tests.TestCase):
                                    file_info['path']), 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
 
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    def test_use_in_snap_python_skips_binarys(self, run_output_mock, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(plugin.rosdir)
+
+        # Place a file to be discovered by _use_in_snap_python().
+        open(os.path.join(plugin.rosdir, 'foo'), 'w').close()
+
+        file_mock = mock.mock_open()
+        with mock.patch.object(builtins, 'open', file_mock):
+            # Reading a binary file may throw a UnicodeDecodeError. Make sure
+            # that's handled.
+            file_mock.return_value.read.side_effect = UnicodeDecodeError(
+                'foo', b'bar', 1, 2, 'baz')
+            # An exception will be raised if the function can't handle the
+            # binary file.
+            plugin._use_in_snap_python()
+
     def test_use_in_snap_python_rewrites_10_ros_sh(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
@@ -663,29 +683,6 @@ class CatkinPluginTestCase(tests.TestCase):
             path = os.path.join(plugin.rosdir, file_info['path'])
             with open(path, 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
-
-    @mock.patch.object(catkin.CatkinPlugin, 'run')
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
-    def test_finish_build_binary(self, use_in_snap_python_mock,
-                                 run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(plugin.rosdir)
-
-        # Place a file to be discovered by _finish_build().
-        open(os.path.join(plugin.rosdir, 'foo'), 'w').close()
-
-        file_mock = mock.mock_open()
-        with mock.patch.object(builtins, 'open', file_mock):
-            # Reading a binary file may throw a UnicodeDecodeError. Make sure
-            # that's handled.
-            file_mock.return_value.read.side_effect = UnicodeDecodeError(
-                'foo', b'bar', 1, 2, 'baz')
-            # An exception will be raised if build can't handle the binary
-            # file.
-            plugin._finish_build()
-            self.assertTrue(use_in_snap_python_mock.called)
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
