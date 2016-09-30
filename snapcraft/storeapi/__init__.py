@@ -194,6 +194,31 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.snap_release, snap_name, revision, channels)
 
+    def get_snap_status(self, snap_name, series=None, arch=None):
+        account_info = self.get_account_information()
+        snap_id = None
+        try:
+            if series:
+                snap_id = account_info['snaps'][series][snap_name]['snap-id']
+            else:
+                snap_id = None
+                for key, value in account_info['snaps'].items():
+                    if snap_name in value:
+                        snap_id = value[snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        if snap_id is None:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        response = self._refresh_if_necessary(
+            self.sca.snap_status, snap_id, series, arch)
+
+        if not response:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return response
+
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
@@ -502,6 +527,28 @@ class SCAClient(Client):
         response = self.post(url, data=data, headers=headers)
         if not response.ok:
             raise errors.StoreSnapBuildError(response)
+
+    def snap_status(self, snap_id, series, arch):
+        qs = {}
+        if series:
+            qs['series'] = series
+        if arch:
+            qs['arch'] = arch
+        url = 'snaps/' + snap_id + '/status'
+        if qs:
+            url += '?' + urllib.parse.urlencode(qs)
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreSnapStatusError(response, snap_id, series, arch)
+
+        response_json = response.json()
+
+        return response_json
 
 
 class StatusTracker:

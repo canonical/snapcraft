@@ -622,6 +622,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         details_review = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/review-snap')
         account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
+        snap_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snaps')
         good_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/good/validations')
         bad_validations_path = urllib.parse.urljoin(
@@ -641,6 +642,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('bad')
         elif parsed_path.path.startswith(err_validations_path):
             self._handle_validation_request('err')
+        elif parsed_path.path.startswith(snap_path):
+            if parsed_path.path.endswith('/status'):
+                self._handle_snap_status()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -718,6 +722,60 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'account_keys': self.server.account_keys,
             'snaps': {'16': snaps},
         }).encode())
+
+    def _handle_snap_status(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        channel_map = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.0-i386',
+                    'channel': 'edge',
+                    'revision': 3
+                },
+            ],
+            'amd64': [
+                {
+                    'info': 'specific',
+                    'version': '1.0-amd64',
+                    'channel': 'stable',
+                    'revision': 2
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.1-amd64',
+                    'channel': 'beta',
+                    'revision': 4
+                },
+                {
+                    'info': 'tracking',
+                    'channel': 'edge'
+                },
+            ],
+        }
+
+        parsed_qs = urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query)
+        if 'arch' in parsed_qs:
+            arch = parsed_qs['arch'][0]
+            if arch in channel_map:
+                output = {arch: channel_map[arch]}
+            else:
+                output = {}
+        else:
+            output = channel_map
+        self.wfile.write(json.dumps(output).encode())
 
     def do_PUT(self):
         if self.server.fake_store.needs_refresh:
