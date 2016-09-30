@@ -64,7 +64,10 @@ class EnvironmentTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', project_dir)
 
         binary_output = subprocess.check_output([
-            os.path.join(project_dir, 'stage','bin', 'simple-cmake-replace')])
+            os.path.join('stage', 'bin', 'simple-cmake-replace')],
+            cwd=project_dir)
+        path = os.path.join(os.getcwd(), project_dir, 'parts',
+                            'cmake-project', 'install')
         self.assertEqual(
-            b"When I was built I was installed to PART_INSTALL\n",
-            binary_output)
+            "When I was built I was installed to {}\n".format(path),
+            binary_output.decode('utf-8'))
