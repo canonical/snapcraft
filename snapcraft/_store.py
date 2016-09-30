@@ -374,7 +374,8 @@ def history(snap_name, series, arch):
         for rev in history]
     tabulated_revisions = tabulate(
         parsed_revisions,
-        headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'])
+        headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
+        tablefmt="plain")
     print(tabulated_revisions)
 
 
@@ -390,7 +391,8 @@ def status(snap_name, series, arch):
         for channel in _format_channel_map(channel_map, arch)]
 
     tabulated_channels = tabulate(
-        parsed_channels, headers=['Arch', 'Channel', 'Version', 'Revision'])
+        parsed_channels, headers=['Arch', 'Channel', 'Version', 'Revision'],
+        tablefmt="plain")
     print(tabulated_channels)
 
 

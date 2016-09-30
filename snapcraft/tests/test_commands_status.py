@@ -157,7 +157,6 @@ class StatusCommandTestCase(tests.TestCase):
         terminal_output = fake_terminal.getvalue()
         expected_output = """
 Arch    Channel    Version    Revision
-------  ---------  ---------  ----------
 amd64   stable     1.0-amd64  2
         beta       1.1-amd64  4
         edge       ^          ^
@@ -181,7 +180,6 @@ i386    stable     -          -
         terminal_output = fake_terminal.getvalue()
         expected_output = """
 Arch    Channel    Version    Revision
-------  ---------  ---------  ----------
 i386    stable     -          -
         beta       -          -
         edge       1.0-i386   3
@@ -202,7 +200,6 @@ i386    stable     -          -
         terminal_output = fake_terminal.getvalue()
         expected_output = """
 Arch    Channel    Version    Revision
-------  ---------  ---------  ----------
 amd64   stable     1.0-amd64  2
         beta       1.1-amd64  4
         edge       ^          ^

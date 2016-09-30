@@ -64,7 +64,6 @@ class StatusTestCase(integration_tests.StoreTestCase):
         output = self.run_snapcraft(['status', 'basic'])
         expected = """
 Arch    Channel    Version    Revision
-------  ---------  ---------  ----------
 amd64   stable     1.0-amd64  2
         beta       1.1-amd64  4
         edge       ^          ^

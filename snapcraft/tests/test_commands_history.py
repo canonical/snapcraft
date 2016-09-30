@@ -138,7 +138,6 @@ class HistoryCommandTestCase(tests.TestCase):
         terminal_output = fake_terminal.getvalue()
         expected_output = """
   Rev.  Uploaded                 Arch    Version     Channels
-------  -----------------------  ------  ----------  -------------
      2  2016-09-27T19:23:40.409  i386    2.0.1       -
      1  2016-09-27T18:38:43.388  amd64   2.0.1-test  stable*, edge
 """
@@ -159,7 +158,6 @@ class HistoryCommandTestCase(tests.TestCase):
         terminal_output = fake_terminal.getvalue()
         expected_output = """
   Rev.  Uploaded                 Arch    Version     Channels
-------  -----------------------  ------  ----------  -------------
      2  2016-09-27T19:23:40.409  i386    2.0.1       -
 """
         self.assertIn(expected_output.strip(), terminal_output)
@@ -179,7 +177,6 @@ class HistoryCommandTestCase(tests.TestCase):
         terminal_output = fake_terminal.getvalue()
         expected_output = """
   Rev.  Uploaded                 Arch    Version     Channels
-------  -----------------------  ------  ----------  -------------
      2  2016-09-27T19:23:40.409  i386    2.0.1       -
      1  2016-09-27T18:38:43.388  amd64   2.0.1-test  stable*, edge
 """
