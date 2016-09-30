@@ -77,7 +77,7 @@ class BasePlugin:
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
-        """Define additional sources.list."""
+        """Define alternative sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
     def __init__(self, name, options, project=None):
