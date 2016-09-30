@@ -106,6 +106,9 @@ class Client():
     def post(self, url, **kwargs):
         return self.request('POST', url, **kwargs)
 
+    def put(self, url, **kwargs):
+        return self.request('PUT', url, **kwargs)
+
 
 class StoreClient():
     """High-level client for the V2.0 API SCA resources."""
@@ -228,6 +231,12 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
+    def push_validation(self, snap_id, assertion):
+        return self.sca.push_validation(snap_id, assertion)
+
+    def get_validations(self, snap_id):
+        return self.sca.get_validations(snap_id)
+
 
 class SSOClient(Client):
     """The Single Sign On server deals with authentication.
@@ -292,15 +301,17 @@ class SnapIndexClient(Client):
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
-    def get_package(self, snap_name, channel, arch):
+    def get_package(self, snap_name, channel, arch=None):
         headers = {
             'Accept': 'application/hal+json',
-            'X-Ubuntu-Architecture': arch,
             'X-Ubuntu-Release': constants.DEFAULT_SERIES,
         }
+        if arch:
+            headers['X-Ubuntu-Architecture'] = arch
+
         params = {
             'channel': channel,
-            'fields': 'status,download_url,download_sha512',
+            'fields': 'status,download_url,download_sha512,snap_id,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
@@ -433,6 +444,51 @@ class SCAClient(Client):
             raise errors.StoreReleaseError(data['name'], response)
 
         response_json = response.json()
+
+        return response_json
+
+    def push_validation(self, snap_id, assertion):
+        data = {
+            'assertion': assertion.decode('utf-8'),
+        }
+        auth = _macaroon_auth(self.conf)
+        response = self.put(
+            'snaps/{}/validations'.format(snap_id), data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreValidationError(snap_id, response)
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            message = ('Invalid response from the server when pushing '
+                       'validations: {} {}').format(
+                           response.status_code, response)
+            logger.debug(message)
+            raise errors.StoreValidationError(
+                snap_id, response, message='Invalid response from the server')
+
+        return response_json
+
+    def get_validations(self, snap_id):
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            'snaps/{}/validations'.format(snap_id),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreValidationError(snap_id, response)
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            message = ('Invalid response from the server when getting '
+                       'validations: {} {}').format(
+                           response.status_code, response)
+            logger.debug(message)
+            raise errors.StoreValidationError(
+                snap_id, response, message='Invalid response from the server')
 
         return response_json
 

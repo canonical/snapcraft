@@ -37,9 +37,13 @@ class StoreError(SnapcraftError):
 
 class SnapNotFoundError(StoreError):
 
-    fmt = 'The "{name}" for {arch} was not found in {channel}.'
+    fmt = 'Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel.'  # NOQA
 
-    def __init__(self, name, channel, arch):
+    def __init__(self, name, channel=None, arch=None):
+        if not arch and not channel:
+            self.fmt = 'Snap {name!r} was not found.'
+        elif not arch:
+            self.fmt = 'Snap {name!r} was not found in the {channel!r} channel.'  # NOQA
         super().__init__(name=name, channel=channel, arch=arch)
 
 
@@ -224,6 +228,21 @@ class StoreReleaseError(StoreError):
             self.fmt = '{errors}'
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
+                         **response_json)
+
+
+class StoreValidationError(StoreError):
+
+    fmt = 'Received error {status_code!r}: {text!r}'
+
+    def __init__(self, snap_id, response, message=None):
+        try:
+            response_json = response.json()
+            response_json['text'] = response.json()['error_list'][0]['message']
+        except (AttributeError, JSONDecodeError):
+            response_json = {'text': message or response}
+
+        super().__init__(status_code=response.status_code,
                          **response_json)
 
 
