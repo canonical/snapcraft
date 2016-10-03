@@ -747,6 +747,6 @@ class GetSnapHistoryTestCase(tests.TestCase):
         with self.assertRaises(storeapi.errors.StoreSnapHistoryError) as e:
             self.client.get_snap_history('basic')
         self.assertEqual(
-            'Error fetching history of snap id "my_snap_id" for any arch '
-            'in any series: 500 Server error.',
+            "Error fetching history of snap id 'my_snap_id' for 'any arch' "
+            "in 'any' series: 500 Server error.",
             str(e.exception))
