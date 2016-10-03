@@ -33,6 +33,7 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] list-keys
   snapcraft [options] keys
+  snapcraft [options] create-key [<key-name>]
   snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
   snapcraft [options] sign-build <snap-file> [--key-name=<key-name>] [--local]
@@ -91,6 +92,7 @@ The available commands are:
   logout       Clear session credentials.
   list-keys    List keys available for signing snaps.
   keys         Alias for list-keys.
+  create-key   Create a key pair for signing snaps.
   register-key Register a key for signing snaps.
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
@@ -294,8 +296,8 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'register-key', 'register', 'sign-build',
-        'upload', 'release', 'push', 'validate', 'gated',
+        'list-keys', 'keys', 'create-key', 'register-key', 'register',
+        'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
         'status')
     return any(args.get(command) for command in commands)
 
@@ -305,6 +307,8 @@ def _is_store_command(args):
 def _run_store_command(args):  # noqa: C901
     if args['list-keys'] or args['keys']:
         snapcraft.list_keys()
+    elif args['create-key']:
+        snapcraft.create_key(args['<key-name>'])
     elif args['register-key']:
         snapcraft.register_key(args['<key-name>'])
     elif args['register']:

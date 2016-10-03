@@ -1,3 +1,35 @@
+snapcraft (2.19) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * python plugin: only replace proper shebangs. (#830)
+  * yaml xpath for errors. (#828)
+  * sources: fix type when calling with depth (#829)
+  * kernel plugin: allow collecting the same mod deps (#837)
+  * pluginhandler: take the file encoding into account. (#838)
+  * python plugin: only download in pull and build in build. (#832)
+  * New upstream release 2.19 (LP: #1629472)
+
+  [ Christopher James Halse Rogers ]
+  * nodejs plugin: Add mechanism to run `npm run` commands. (#810)
+
+  [ Daniel Holbach ]
+  * Add links to IRC, mailing list and social media (#833)
+
+  [ Celso Providelo ]
+  * 'sign-build' implementation. (#831)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: build with in-snap python. (#840)
+  * catkin plugin: Support ROS Kinetic. (#842)
+
+  [ Roberto Alsina ]
+  * 'snapcraft validate' and 'snapcraft gated' implementation (#813)
+
+  [ Joe Talbott ]
+  * Replace SNAPCRAFT_PART_INSTALL in the part attributes. (#841)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 30 Sep 2016 17:56:06 -0400
+
 snapcraft (2.18.1) xenial; urgency=medium
 
   [ Carlo Lobrano ]
