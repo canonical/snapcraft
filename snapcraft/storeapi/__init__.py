@@ -201,10 +201,10 @@ class StoreClient():
             if series:
                 snap_id = account_info['snaps'][series][snap_name]['snap-id']
             else:
-                snap_id = None
                 for key, value in account_info['snaps'].items():
                     if snap_name in value:
                         snap_id = value[snap_name]['snap-id']
+                        break
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
