@@ -42,6 +42,7 @@ Usage:
   snapcraft [options] release <snap-name> <revision> <channel>
   snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
@@ -106,6 +107,7 @@ The available commands are:
   release      Release a revision of a snap to a specific channel.
   status       Show the current status of a snap per channel and architecture.
   history      List all revisions of a snap.
+  close        Close one or more channels of a snap.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -303,7 +305,7 @@ def _is_store_command(args):
     commands = (
         'list-keys', 'keys', 'create-key', 'register-key', 'register',
         'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
-        'history', 'status')
+        'history', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
@@ -344,6 +346,8 @@ def _run_store_command(args):  # noqa: C901
     elif args['history']:
         snapcraft.history(
             args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['close']:
+        snapcraft.close(args['<snap-name>'], args['<channel_names>'])
 
 
 if __name__ == '__main__':  # pragma: no cover
