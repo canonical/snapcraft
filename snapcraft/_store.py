@@ -368,7 +368,7 @@ def status(snap_name, series, arch):
 
     tabulated_channels = tabulate(
         parsed_channels, headers=['Arch', 'Channel', 'Version', 'Revision'],
-        tablefmt="plain")
+        tablefmt='plain')
     print(tabulated_channels)
 
 

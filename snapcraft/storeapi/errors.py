@@ -278,8 +278,8 @@ class StoreSnapBuildError(StoreError):
 class StoreSnapStatusError(StoreError):
 
     fmt = (
-        'Error fetching status of snap id "{snap_id}" for {arch} '
-        'in {series} series: {error}.')
+        'Error fetching status of snap id {snap_id!r} for {arch!r} '
+        'in {series!r} series: {error}.')
 
     def __init__(self, response, snap_id, series, arch):
         error = '{} {}'.format(response.status_code, response.reason)

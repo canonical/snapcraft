@@ -762,6 +762,6 @@ class GetSnapStatusTestCase(tests.TestCase):
         with self.assertRaises(storeapi.errors.StoreSnapStatusError) as e:
             self.client.get_snap_status('basic')
         self.assertEqual(
-            'Error fetching status of snap id "my_snap_id" for any arch '
-            'in any series: 500 Server error.',
+            "Error fetching status of snap id 'my_snap_id' for 'any arch' "
+            "in 'any' series: 500 Server error.",
             str(e.exception))
