@@ -35,6 +35,7 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal.project_loader import replace_attr
 
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,16 @@ def execute(step, project_options, part_names=None):
             'version': config.data['version'],
             'arch': config.data['architectures'],
             'type': config.data.get('type', '')}
+
+
+def _replace_in_part(part):
+    for key, value in part.code.options.__dict__.items():
+        value = replace_attr(value, [
+            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+        ])
+        setattr(part.code.options, key, value)
+
+    return part
 
 
 class _Executor:
@@ -181,6 +192,7 @@ class _Executor:
         common.env = self.parts_config.build_env_for_part(part)
         common.env.extend(self.config.project_env())
 
+        part = _replace_in_part(part)
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):

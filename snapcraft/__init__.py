@@ -230,6 +230,7 @@ from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
 from snapcraft._store import (                      # noqa
+    create_key,
     download,
     history,
     gated,
