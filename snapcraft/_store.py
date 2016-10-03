@@ -398,7 +398,7 @@ def gated(snap_name):
         table_data.append([v['approved-snap-name'],
                            v['approved-snap-revision']])
     tabulated = tabulate(table_data, headers=['Name', 'Approved'],
-                         tablefmt="plain")
+                         tablefmt='plain')
     print(tabulated)
 
 
