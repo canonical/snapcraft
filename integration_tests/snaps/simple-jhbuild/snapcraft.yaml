@@ -1,0 +1,22 @@
+name: glib
+version: 2.49.7
+confinement: strict
+summary: GLib library of C routines
+
+description: >
+  GLib provides the core application building blocks for libraries and
+  applications written in C. It provides the core object system used in GNOME,
+  the main loop implementation, and a large set of utility functions for
+  strings and common data structures.
+
+apps:
+  gvariant-test:
+    command: jhbuild -f $SNAP/etc/jhbuildrc run $SNAP/libexec/installed-tests/glib/gvariant
+
+parts:
+  jhbuild:
+    plugin: jhbuild
+    modules:
+      - glib
+    snap-name: glib
+    container-name: snapcraft-integration-test
