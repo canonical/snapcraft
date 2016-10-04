@@ -17,9 +17,10 @@
 import os
 import logging
 from unittest import mock
+import shutil
+import subprocess
 
 import fixtures
-import shutil
 
 from snapcraft.main import main
 from snapcraft import (
@@ -121,6 +122,155 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_sign_build_no_usable_keys(
+            self, mock_installed, mock_get_snap_data, mock_check_output,
+            mock_get_account_info):
+        mock_installed.return_value = True
+        mock_get_account_info.return_value = {
+            'account_id': 'abcd',
+            'snaps': {
+                '16': {
+                    'test-snap': {'snap-id': 'snap-id'},
+                }
+            }
+        }
+        mock_get_snap_data.return_value = {
+            'name': 'test-snap',
+            'grade': 'stable',
+        }
+        mock_check_output.side_effect = [
+            '[]',
+        ]
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['sign-build', self.snap_test.snap_path])
+
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual([
+            'You have no usable keys.',
+            'Please create at least one key with `snapcraft create-key` '
+            'for use with snap.',
+            ], self.fake_logger.output.splitlines())
+
+        snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertFalse(os.path.exists(snap_build_path))
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft._store._get_data_from_snap_file')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_sign_build_no_usable_named_key(
+            self, mock_installed, mock_get_snap_data, mock_check_output,
+            mock_get_account_info):
+        mock_installed.return_value = True
+        mock_get_account_info.return_value = {
+            'account_id': 'abcd',
+            'snaps': {
+                '16': {
+                    'test-snap': {'snap-id': 'snap-id'},
+                }
+            }
+        }
+        mock_get_snap_data.return_value = {
+            'name': 'test-snap',
+            'grade': 'stable',
+        }
+        mock_check_output.side_effect = [
+            '[{"name": "default"}]',
+        ]
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['sign-build', '--key-name', 'zoing',
+                  self.snap_test.snap_path])
+
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual([
+            'You have no usable key named "zoing".',
+            'See the keys available in your system with `snapcraft keys`.'
+        ], self.fake_logger.output.splitlines())
+
+        snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertFalse(os.path.exists(snap_build_path))
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft._store._get_data_from_snap_file')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_sign_build_unregistered_key(
+            self, mock_installed, mock_get_snap_data, mock_check_output,
+            mock_get_account_info):
+        mock_installed.return_value = True
+        mock_get_account_info.return_value = {
+            'account_id': 'abcd',
+            'account_keys': [{'public-key-sha3-384': 'another_hash'}],
+            'snaps': {
+                '16': {
+                    'test-snap': {'snap-id': 'snap-id'},
+                }
+            }
+        }
+        mock_get_snap_data.return_value = {
+            'name': 'test-snap',
+            'grade': 'stable',
+        }
+        mock_check_output.side_effect = [
+            '[{"name": "default", "sha3-384": "a_hash"}]',
+        ]
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['sign-build', self.snap_test.snap_path])
+
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual([
+            'The key "default" is not registered in the Store.',
+            'Please register it with `snapcraft register-key default` '
+            'before signing and pushing signatures to the Store.',
+        ], self.fake_logger.output.splitlines())
+        snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertFalse(os.path.exists(snap_build_path))
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft._store._get_data_from_snap_file')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    def test_sign_build_snapd_failure(
+            self, mock_installed, mock_get_snap_data, mock_check_output,
+            mock_get_account_info):
+        mock_installed.return_value = True
+        mock_get_account_info.return_value = {
+            'account_id': 'abcd',
+            'account_keys': [{'public-key-sha3-384': 'a_hash'}],
+            'snaps': {
+                '16': {
+                    'test-snap': {'snap-id': 'snap-id'},
+                }
+            }
+        }
+        mock_get_snap_data.return_value = {
+            'name': 'test-snap',
+            'grade': 'stable',
+        }
+        mock_check_output.side_effect = [
+            '[{"name": "default", "sha3-384": "a_hash"}]',
+            subprocess.CalledProcessError(1, ['a', 'b'])
+        ]
+
+        with self.assertRaises(SystemExit) as raised:
+            main(['sign-build', self.snap_test.snap_path])
+
+        self.assertEqual(1, raised.exception.code)
+        self.assertEqual([
+            'Failed to sign build assertion for {}.'.format(
+                self.snap_test.snap_path),
+            ], self.fake_logger.output.splitlines())
+
+        snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertFalse(os.path.exists(snap_build_path))
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft._store._get_data_from_snap_file')
+    @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_sign_build_locally_successfully(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -137,17 +287,21 @@ class SignBuildTestCase(tests.TestCase):
             'name': 'test-snap',
             'grade': 'stable',
         }
-        mock_check_output.return_value = b'Mocked assertion'
+        mock_check_output.side_effect = [
+            '[{"name": "default"}]',
+            b'Mocked assertion'
+        ]
 
         main(['sign-build', self.snap_test.snap_path, '--local'])
 
         snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertTrue(os.path.exists(snap_build_path))
         self.assertEqual([
             'Build assertion {} saved to disk.'.format(snap_build_path),
         ], self.fake_logger.output.splitlines())
         mock_check_output.assert_called_with([
             'snap', 'sign-build', '--developer-id=abcd', '--snap-id=snap-id',
-            '--grade=stable', self.snap_test.snap_path,
+            '--grade=stable', '-k', 'default', self.snap_test.snap_path,
         ])
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -160,6 +314,7 @@ class SignBuildTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_get_account_info.return_value = {
             'account_id': 'abcd',
+            'account_keys': [{'public-key-sha3-384': 'a_hash'}],
             'snaps': {
                 '16': {
                     'test-snap': {'snap-id': 'snap-id'},
@@ -167,17 +322,21 @@ class SignBuildTestCase(tests.TestCase):
             }
         }
         mock_get_snap_data.return_value = {'name': 'test-snap'}
-        mock_check_output.return_value = b'Mocked assertion'
+        mock_check_output.side_effect = [
+            '[{"name": "default", "sha3-384": "a_hash"}]',
+            b'Mocked assertion'
+        ]
 
         main(['sign-build', self.snap_test.snap_path, '--local'])
 
         snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertTrue(os.path.exists(snap_build_path))
         self.assertEqual([
             'Build assertion {} saved to disk.'.format(snap_build_path),
         ], self.fake_logger.output.splitlines())
         mock_check_output.assert_called_with([
             'snap', 'sign-build', '--developer-id=abcd', '--snap-id=snap-id',
-            '--grade=stable', self.snap_test.snap_path,
+            '--grade=stable', '-k', 'default', self.snap_test.snap_path,
         ])
 
     @mock.patch.object(storeapi.SCAClient, 'push_snap_build')
@@ -191,6 +350,7 @@ class SignBuildTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_get_account_info.return_value = {
             'account_id': 'abcd',
+            'account_keys': [{'public-key-sha3-384': 'a_hash'}],
             'snaps': {
                 '16': {
                     'test-snap': {'snap-id': 'snap-id'},
@@ -201,18 +361,22 @@ class SignBuildTestCase(tests.TestCase):
             'name': 'test-snap',
             'grade': 'stable',
         }
-        mock_check_output.return_value = b'Mocked assertion'
+        mock_check_output.side_effect = [
+            '[{"name": "default", "sha3-384": "a_hash"}]',
+            b'Mocked assertion'
+        ]
 
         main(['sign-build', self.snap_test.snap_path])
 
         snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertTrue(os.path.exists(snap_build_path))
         self.assertEqual([
             'Build assertion {} saved to disk.'.format(snap_build_path),
             'Build assertion {} pushed to the Store.'.format(snap_build_path),
         ], self.fake_logger.output.splitlines())
         mock_check_output.assert_called_with([
             'snap', 'sign-build', '--developer-id=abcd', '--snap-id=snap-id',
-            '--grade=stable', self.snap_test.snap_path,
+            '--grade=stable', '-k', 'default', self.snap_test.snap_path,
         ])
         mock_push_snap_build.assert_called_with('snap-id', 'Mocked assertion')
 
