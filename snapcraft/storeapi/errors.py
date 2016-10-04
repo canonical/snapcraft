@@ -41,7 +41,8 @@ class SnapNotFoundError(StoreError):
         'Snap {name!r} for {arch!r} cannot be found in the {channel!r} '
         'channel.')
     __FMT_CHANNEL = 'Snap {name!r} was not found in the {channel!r} channel.'
-    __FMT_ARCH = 'Snap {name!r} for {arch!r} was not found.'
+    __FMT_SERIES_ARCH = (
+        'Snap {name!r} for {arch!r} was not found in {series!r} series.')
     __FMT_SERIES = 'Snap {name!r} was not found in {series!r} series.'
 
     fmt = 'Snap {name!r} was not found.'
@@ -51,8 +52,8 @@ class SnapNotFoundError(StoreError):
             self.fmt = self.__FMT_ARCH_CHANNEL
         elif channel:
             self.fmt = self.__FMT_CHANNEL
-        elif arch:
-            self.fmt = self.__FMT_ARCH
+        elif series and arch:
+            self.fmt = self.__FMT_SERIES_ARCH
         elif series:
             self.fmt = self.__FMT_SERIES
 

@@ -74,7 +74,7 @@ class HistoryCommandTestCase(tests.TestCase):
             main(['history', 'snap-test'])
 
         self.assertIn(
-            "Snap 'snap-test' was not found.",
+            "Snap 'snap-test' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -85,7 +85,7 @@ class HistoryCommandTestCase(tests.TestCase):
             main(['history', 'snap-test', '--arch=arm64'])
 
         self.assertIn(
-            "Snap 'snap-test' for 'arm64' was not found.",
+            "Snap 'snap-test' for 'arm64' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -108,7 +108,7 @@ class HistoryCommandTestCase(tests.TestCase):
             main(['history', 'snap-test', '--arch=some-arch'])
 
         self.assertIn(
-            "Snap 'snap-test' for 'some-arch' was not found.",
+            "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'snap_history')
@@ -133,7 +133,7 @@ class HistoryCommandTestCase(tests.TestCase):
 
         main(['history', 'snap-test'])
 
-        mock_history.assert_called_once_with('snap-test', None, None)
+        mock_history.assert_called_once_with('snap-test', '16', None)
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
@@ -154,7 +154,7 @@ class HistoryCommandTestCase(tests.TestCase):
 
         main(['history', 'snap-test', '--arch=amd64'])
 
-        mock_history.assert_called_once_with('snap-test', None, 'amd64')
+        mock_history.assert_called_once_with('snap-test', '16', 'amd64')
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [

@@ -41,7 +41,8 @@ class HistoryTestCase(integration_tests.StoreTestCase):
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, ['history', 'mysnap'])
-        self.assertIn("Snap 'mysnap' was not found.", str(error.output))
+        self.assertIn(
+            "Snap 'mysnap' was not found in '16' series.", str(error.output))
 
     def test_history_with_login_bad_snap_with_series(self):
         self.addCleanup(self.logout)
@@ -61,7 +62,8 @@ class HistoryTestCase(integration_tests.StoreTestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, ['history', 'mysnap', '--arch=i386'])
         self.assertIn(
-            "Snap 'mysnap' for 'i386' was not found.", str(error.output))
+            "Snap 'mysnap' for 'i386' was not found in '16' series.",
+            str(error.output))
 
     @unittest.skipUnless(
         os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')

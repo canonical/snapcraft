@@ -721,7 +721,7 @@ class GetSnapHistoryTestCase(tests.TestCase):
         with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
             self.client.get_snap_history('basic', arch='somearch')
         self.assertEqual(
-            "Snap 'basic' for 'somearch' was not found.",
+            "Snap 'basic' for 'somearch' was not found in '16' series.",
             str(e.exception))
 
     def test_get_snap_history_refreshes_macaroon(self):
@@ -748,5 +748,5 @@ class GetSnapHistoryTestCase(tests.TestCase):
             self.client.get_snap_history('basic')
         self.assertEqual(
             "Error fetching history of snap id 'my_snap_id' for 'any arch' "
-            "in 'any' series: 500 Server error.",
+            "in '16' series: 500 Server error.",
             str(e.exception))
