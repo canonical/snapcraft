@@ -118,37 +118,3 @@ class FormatInColumnsTestCase(tests.TestCase):
                           common.format_output_in_columns(self.elements_list,
                                                           max_width=60,
                                                           num_col_spaces=1))
-
-
-class HumanizeListTestCases(tests.TestCase):
-
-    def test_no_items(self):
-        items = []
-        output = common.humanize_list(items, 'and')
-        self.assertEqual(output, '')
-
-    def test_one_item(self):
-        items = ['foo']
-        output = common.humanize_list(items, 'and')
-        self.assertEqual(output, "'foo'")
-
-    def test_two_items(self):
-        items = ['foo', 'bar']
-        output = common.humanize_list(items, 'and')
-        self.assertEqual(output, "'bar' and 'foo'",
-                         "Expected 'bar' before 'foo' due to sorting")
-
-    def test_three_items(self):
-        items = ['foo', 'bar', 'baz']
-        output = common.humanize_list(items, 'and')
-        self.assertEqual(output, "'bar', 'baz', and 'foo'")
-
-    def test_four_items(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = common.humanize_list(items, 'and')
-        self.assertEqual(output, "'bar', 'baz', 'foo', and 'qux'")
-
-    def test_another_conjunction(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = common.humanize_list(items, 'or')
-        self.assertEqual(output, "'bar', 'baz', 'foo', or 'qux'")

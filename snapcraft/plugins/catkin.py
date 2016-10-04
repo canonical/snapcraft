@@ -47,6 +47,7 @@ import snapcraft
 from snapcraft import (
     common,
     file_utils,
+    formatting_utils,
     repo,
 )
 
@@ -146,7 +147,8 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
                 'Unsupported rosdistro: {!r}. The supported ROS distributions '
                 'are {}'.format(
                     self.options.rosdistro,
-                    common.humanize_list(_ROS_RELEASE_MAP.keys(), 'and')))
+                    formatting_utils.humanize_list(
+                        _ROS_RELEASE_MAP.keys(), 'and')))
 
     def env(self, root):
         """Runtime environment for ROS binaries and services."""

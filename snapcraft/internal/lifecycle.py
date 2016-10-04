@@ -27,6 +27,7 @@ import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
 import snapcraft
+from snapcraft import formatting_utils
 import snapcraft.internal
 from snapcraft.internal import (
     common,
@@ -222,7 +223,8 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    humanized_parts = common.humanize_list(dependents, 'and')
+                    humanized_parts = formatting_utils.humanize_list(
+                        dependents, 'and')
 
                     raise RuntimeError(
                         'The {0!r} step for {1!r} needs to be run again, but '
@@ -370,7 +372,8 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
     if not dependents.issubset(clean_part_names):
         for part in config.all_parts:
             if part.name in dependents and not part.is_clean(step):
-                humanized_parts = common.humanize_list(dependents, 'and')
+                humanized_parts = formatting_utils.humanize_list(
+                    dependents, 'and')
 
                 raise RuntimeError(
                     'Requested clean of {!r} but {} depend{} upon it. Please '
