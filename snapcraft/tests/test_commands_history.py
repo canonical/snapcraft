@@ -45,7 +45,7 @@ class HistoryCommandTestCase(tests.TestCase):
         }, {
             'series': ['16'],
             'channels': ['stable', 'edge'],
-            'version': '2.0.1-test',
+            'version': '2.0.2',
             'timestamp': '2016-09-27T18:38:43.388',
             'current_channels': ['stable', 'candidate', 'beta'],
             'arch': 'amd64',
@@ -136,12 +136,12 @@ class HistoryCommandTestCase(tests.TestCase):
         mock_history.assert_called_once_with('snap-test', None, None)
 
         terminal_output = fake_terminal.getvalue()
-        expected_output = """
-  Rev.  Uploaded                 Arch    Version     Channels
-     2  2016-09-27T19:23:40.409  i386    2.0.1       -
-     1  2016-09-27T18:38:43.388  amd64   2.0.1-test  stable*, edge
-"""
-        self.assertIn(expected_output.strip(), terminal_output)
+        expected_output = [
+            '  Rev.  Uploaded                 Arch    Version    Channels',
+            '     2  2016-09-27T19:23:40.409  i386    2.0.1      -',
+            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+        ]
+        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_history')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -149,18 +149,19 @@ class HistoryCommandTestCase(tests.TestCase):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
 
-        mock_history.return_value = self.expected
+        mock_history.return_value = [
+            rev for rev in self.expected if rev['arch'] == 'amd64']
 
-        main(['history', 'snap-test', '--arch=i386'])
+        main(['history', 'snap-test', '--arch=amd64'])
 
-        mock_history.assert_called_once_with('snap-test', None, 'i386')
+        mock_history.assert_called_once_with('snap-test', None, 'amd64')
 
         terminal_output = fake_terminal.getvalue()
-        expected_output = """
-  Rev.  Uploaded                 Arch    Version     Channels
-     2  2016-09-27T19:23:40.409  i386    2.0.1       -
-"""
-        self.assertIn(expected_output.strip(), terminal_output)
+        expected_output = [
+            '  Rev.  Uploaded                 Arch    Version    Channels',
+            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+        ]
+        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_history')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -175,9 +176,9 @@ class HistoryCommandTestCase(tests.TestCase):
         mock_history.assert_called_once_with('snap-test', '16', None)
 
         terminal_output = fake_terminal.getvalue()
-        expected_output = """
-  Rev.  Uploaded                 Arch    Version     Channels
-     2  2016-09-27T19:23:40.409  i386    2.0.1       -
-     1  2016-09-27T18:38:43.388  amd64   2.0.1-test  stable*, edge
-"""
-        self.assertIn(expected_output.strip(), terminal_output)
+        expected_output = [
+            '  Rev.  Uploaded                 Arch    Version    Channels',
+            '     2  2016-09-27T19:23:40.409  i386    2.0.1      -',
+            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+        ]
+        self.assertEqual(expected_output, terminal_output.splitlines())

@@ -739,7 +739,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         }, {
             'series': ['16'],
             'channels': ['stable', 'edge'],
-            'version': '2.0.1-test',
+            'version': '2.0.2',
             'timestamp': '2016-09-27T18:38:43.388',
             'current_channels': ['stable', 'candidate', 'beta'],
             'arch': 'amd64',
