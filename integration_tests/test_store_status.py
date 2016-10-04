@@ -16,6 +16,8 @@
 
 import subprocess
 
+from testtools.matchers import Contains
+
 import integration_tests
 
 
@@ -64,13 +66,12 @@ class StatusTestCase(integration_tests.StoreTestCase):
         self.login()
 
         output = self.run_snapcraft(['status', 'basic'])
-        expected = """
-Arch    Channel    Version    Revision
-amd64   stable     1.0-amd64  2
-        beta       1.1-amd64  4
-        edge       ^          ^
-i386    stable     -          -
-        beta       -          -
-        edge       1.0-i386   3
-"""
-        self.assertIn(expected, output)
+        expected = '\n'.join((
+            'Arch    Channel    Version    Revision',
+            'amd64   stable     1.0-amd64  2',
+            '        beta       1.1-amd64  4',
+            '        edge       ^          ^',
+            'i386    stable     -          -',
+            '        beta       -          -',
+            '        edge       1.0-i386   3'))
+        self.assertThat(output, Contains(expected))
