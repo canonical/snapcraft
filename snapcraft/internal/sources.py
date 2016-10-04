@@ -87,22 +87,27 @@ import libarchive
 
 from snapcraft.internal import common
 from snapcraft import file_utils
-from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import download_requests_stream
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
+KEYS = [
+    'source',
+    'source-commit',
+    'source-depth',
+    'source-tag',
+    'source-type',
+    'source-branch',
+    'source-subdir',
+]
+
+
 class IncompatibleOptionsError(Exception):
 
     def __init__(self, message):
         self.message = message
-
-
-def _check_for_command(command):
-    if not shutil.which(command):
-        raise MissingCommandError([command])
 
 
 class Base:
@@ -118,9 +123,6 @@ class Base:
         self.source_depth = source_depth
 
         self.command = command
-
-        if self.command:
-            _check_for_command(self.command)
 
 
 class FileBase(Base):
@@ -412,9 +414,6 @@ class Zip(FileBase):
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a zip source')
-        elif source_commit:
-            raise IncompatibleOptionsError(
-                'can\'t specify a source-commit for a zip source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
@@ -545,55 +544,6 @@ class Local(Base):
                         copy_function=file_utils.link_or_copy, ignore=ignore)
 
 
-def get(sourcedir, builddir, options):
-    """Populate sourcedir and builddir from parameters defined in options.
-
-    :param str sourcedir: The source directory to use.
-    :param str builddir: The build directory to use.
-    :param options: source options.
-    """
-    source_type = getattr(options, 'source_type', None)
-    source_attributes = dict(
-        source_depth=getattr(options, 'source_depth', None),
-        source_tag=getattr(options, 'source_tag', None),
-        source_commit=getattr(options, 'source_commit', None),
-        source_branch=getattr(options, 'source_branch', None),
-    )
-
-    handler_class = _get_source_handler(source_type, options.source)
-    handler = handler_class(options.source, sourcedir, **source_attributes)
-    handler.pull()
-
-
-def get_required_packages(options):
-    """Return a list with required packages to handle the source.
-
-    :param source: the url for the source.
-    :param options: plugin options.
-    """
-    source = getattr(options, 'source', None)
-    if not source:
-        return []
-
-    source_type = getattr(options, 'source_type', None)
-    if not source_type:
-        source_type = _get_source_type_from_uri(source, ignore_errors=True)
-
-    packages = []
-    if source_type == 'bzr':
-        packages.append('bzr')
-    elif source_type == 'git':
-        packages.append('git')
-    elif source_type == 'tar':
-        packages.append('tar')
-    elif source_type == 'hg' or source_type == 'mercurial':
-        packages.append('mercurial')
-    elif source_type == 'subversion' or source_type == 'svn':
-        packages.append('subversion')
-
-    return packages
-
-
 _source_handler = {
     'bzr': Bazaar,
     'deb': Deb,
@@ -608,7 +558,7 @@ _source_handler = {
 }
 
 
-def _get_source_handler(source_type, source):
+def get_source_handler(source, *, source_type=''):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 

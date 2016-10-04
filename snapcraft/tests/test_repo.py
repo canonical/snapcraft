@@ -24,6 +24,7 @@ from unittest.mock import ANY, call, patch, MagicMock
 import snapcraft
 from snapcraft import repo
 from snapcraft import tests
+from snapcraft.internal import errors
 
 
 class UbuntuTestCase(tests.TestCase):
@@ -345,3 +346,13 @@ class BuildPackagesTestCase(tests.TestCase):
             "Could not find a required package in 'build-packages': "
             '"The cache has no package named \'package-does-not-exist\'"',
             str(raised.exception))
+
+
+class CommandCheckTestCase(tests.TestCase):
+
+    def test_check_for_command_not_installed(self):
+        with self.assertRaises(errors.MissingCommandError):
+            repo.check_for_command('missing-command')
+
+    def test_check_for_command_installed(self):
+        repo.check_for_command('sh')

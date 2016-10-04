@@ -26,7 +26,7 @@ from xdg import BaseDirectory
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal.errors import SnapcraftPartMissingError
-from snapcraft.internal import sources, pluginhandler
+from snapcraft.internal import pluginhandler, repo
 from snapcraft.internal import project_loader
 
 
@@ -263,8 +263,11 @@ class PartsConfig:
             part_schema=self._validator.part_schema)
 
         self.build_tools += part.code.build_packages
-        self.build_tools += sources.get_required_packages(part.code.options)
+        if part.source_handler and part.source_handler.command:
+            self.build_tools.append(
+                repo.get_packages_for_source_type(part.source_handler.command))
         self.all_parts.append(part)
+
         return part
 
     def build_env_for_part(self, part, root_part=True):

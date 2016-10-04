@@ -262,7 +262,7 @@ parts:
             ('git://github.com/ubuntu-core/snapcraft.git', 'git'),
             ('lp:ubuntu-push', 'bzr'),
             ('https://github.com/ubuntu-core/snapcraft/archive/2.0.1.tar.gz',
-             'tar'),
+             ''),
         ]
         yaml_t = """name: test
 version: "1"
@@ -282,10 +282,11 @@ parts:
                 self.make_snapcraft_yaml(yaml_t.format(s[0]))
                 c = project_loader.Config()
 
-                self.assertTrue(
-                    s[1] in c.parts.build_tools,
-                    '{} not found in {}'.format(s[1],
-                                                c.parts.build_tools))
+                if s[1]:
+                    self.assertTrue(
+                        s[1] in c.parts.build_tools,
+                        '{} not found in {}'.format(
+                            s[1], c.parts.build_tools))
 
     def test_config_adds_vcs_packages_to_build_packages_from_types(self):
         scenarios = [
@@ -293,7 +294,7 @@ parts:
             ('hg', 'mercurial'),
             ('mercurial', 'mercurial'),
             ('bzr', 'bzr'),
-            ('tar', 'tar'),
+            ('tar', ''),
             ('svn', 'subversion'),
             ('subversion', 'subversion'),
         ]
@@ -316,10 +317,11 @@ parts:
                 self.make_snapcraft_yaml(yaml_t.format(s[0]))
                 c = project_loader.Config()
 
-                self.assertTrue(
-                    s[1] in c.parts.build_tools,
-                    '{} not found in {}'.format(s[1],
-                                                c.parts.build_tools))
+                if s[1]:
+                    self.assertTrue(
+                        s[1] in c.parts.build_tools,
+                        '{} not found in {}'.format(
+                            s[1], c.parts.build_tools))
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
         with unittest.mock.patch('platform.machine') as machine_mock:
