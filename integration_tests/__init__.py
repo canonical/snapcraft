@@ -187,11 +187,11 @@ class StoreTestCase(TestCase):
                 print(line)
         return updated_project_dir
 
-    def gated(self, snap_name, expected_validations=[], expected_error=None):
+    def gated(self, snap_name, expected_validations=[], expected_output=None):
         process = pexpect.spawn(self.snapcraft_command, ['gated', snap_name])
 
-        if expected_error:
-            process.expect(expected_error)
+        if expected_output:
+            process.expect(expected_output)
         else:
             for name, revision in expected_validations:
                 process.expect('{} *{}'.format(name, revision))

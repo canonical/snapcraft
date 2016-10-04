@@ -42,8 +42,6 @@ class SnapNotFoundError(StoreError):
     def __init__(self, name, channel=None, arch=None):
         if not arch and not channel:
             self.fmt = 'Snap {name!r} was not found.'
-        elif not arch:
-            self.fmt = 'Snap {name!r} was not found in the {channel!r} channel.'  # NOQA
         super().__init__(name=name, channel=channel, arch=arch)
 
 

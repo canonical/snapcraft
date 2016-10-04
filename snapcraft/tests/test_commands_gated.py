@@ -68,6 +68,14 @@ class GatedTestCase(tests.TestCase):
             snap-2           5""")
         self.assertIn(expected_output, self.fake_terminal.getvalue())
 
+    def test_gated_no_validations(self):
+        self.client.login('dummy', 'test correct password')
+
+        main([self.command_name, 'basic'])
+
+        expected_output = "No validations for snap 'basic'\n"
+        self.assertEqual(expected_output, self.fake_terminal.getvalue())
+
     def test_no_login(self):
         with self.assertRaises(SystemExit):
             main([self.command_name, 'ubuntu-core'])
