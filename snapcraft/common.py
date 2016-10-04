@@ -20,6 +20,7 @@ from snapcraft.internal.common import get_include_paths     # noqa
 from snapcraft.internal.common import get_library_paths     # noqa
 from snapcraft.internal.common import combine_paths         # noqa
 from snapcraft.internal.common import format_path_variable  # noqa
+from snapcraft.internal.common import humanize_list         # noqa
 
 # These are now available via file_utils, but don't break API.
 from snapcraft.file_utils import link_or_copy     # noqa

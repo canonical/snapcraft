@@ -268,3 +268,26 @@ def format_path_variable(envvar, paths, prepend, separator):
     return '{envvar}="${envvar}{separator}{paths}"'.format(
         envvar=envvar, separator=separator, paths=combine_paths(
             paths, prepend, separator))
+
+
+def humanize_list(items, conjunction):
+    """Format a list into a human-readable string.
+
+    :param list items: List to humanize
+    :param str conjunction: The conjunction used to join the final element to
+                            the rest of the list (e.g. 'and').
+    """
+
+    if len(items) == 0:
+        return ''
+
+    quoted_items = ['{!r}'.format(item) for item in sorted(items)]
+    if len(items) == 1:
+        return quoted_items[0]
+
+    humanized = ', '.join(quoted_items[:-1])
+
+    if len(items) > 2:
+        humanized += ','
+
+    return '{} {} {}'.format(humanized, conjunction, quoted_items[-1])

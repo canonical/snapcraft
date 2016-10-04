@@ -140,6 +140,14 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             raise RuntimeError(
                 'source-space cannot be the root of the Catkin workspace')
 
+        # Validate selected ROS distro
+        if self.options.rosdistro not in _ROS_RELEASE_MAP:
+            raise RuntimeError(
+                'Unsupported rosdistro: {!r}. The supported ROS distributions '
+                'are {}'.format(
+                    self.options.rosdistro,
+                    common.humanize_list(_ROS_RELEASE_MAP.keys(), 'and')))
+
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
 
