@@ -195,20 +195,13 @@ class StoreClient():
             self.sca.snap_release, snap_name, revision, channels)
 
     def get_snap_status(self, snap_name, series=None, arch=None):
-        account_info = self.get_account_information()
-        snap_id = None
-        try:
-            if series:
-                snap_id = account_info['snaps'][series][snap_name]['snap-id']
-            else:
-                for key, value in account_info['snaps'].items():
-                    if snap_name in value:
-                        snap_id = value[snap_name]['snap-id']
-                        break
-        except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+        if series is None:
+            series = constants.DEFAULT_SERIES
 
-        if snap_id is None:
+        account_info = self.get_account_information()
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
         response = self._refresh_if_necessary(

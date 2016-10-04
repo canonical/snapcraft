@@ -93,7 +93,7 @@ class StatusCommandTestCase(tests.TestCase):
             main(['status', 'snap-test'])
 
         self.assertIn(
-            "Snap 'snap-test' was not found.",
+            "Snap 'snap-test' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -104,7 +104,7 @@ class StatusCommandTestCase(tests.TestCase):
             main(['status', 'snap-test', '--arch=arm64'])
 
         self.assertIn(
-            "Snap 'snap-test' for 'arm64' was not found.",
+            "Snap 'snap-test' for 'arm64' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -127,7 +127,7 @@ class StatusCommandTestCase(tests.TestCase):
             main(['status', 'snap-test', '--arch=some-arch'])
 
         self.assertIn(
-            "Snap 'snap-test' for 'some-arch' was not found.",
+            "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
@@ -152,7 +152,7 @@ class StatusCommandTestCase(tests.TestCase):
 
         main(['status', 'snap-test'])
 
-        mock_status.assert_called_once_with('snap-test', None, None)
+        mock_status.assert_called_once_with('snap-test', '16', None)
 
         terminal_output = fake_terminal.getvalue()
         expected_output = """
@@ -175,7 +175,7 @@ i386    stable     -          -
 
         main(['status', 'snap-test', '--arch=i386'])
 
-        mock_status.assert_called_once_with('snap-test', None, 'i386')
+        mock_status.assert_called_once_with('snap-test', '16', 'i386')
 
         terminal_output = fake_terminal.getvalue()
         expected_output = """

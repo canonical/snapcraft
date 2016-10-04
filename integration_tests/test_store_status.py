@@ -35,7 +35,8 @@ class StatusTestCase(integration_tests.StoreTestCase):
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, ['status', 'mysnap'])
-        self.assertIn("Snap 'mysnap' was not found.", str(error.output))
+        self.assertIn(
+            "Snap 'mysnap' was not found in '16' series.", str(error.output))
 
     def test_status_with_login_bad_snap_with_series(self):
         self.addCleanup(self.logout)
@@ -55,7 +56,8 @@ class StatusTestCase(integration_tests.StoreTestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, ['status', 'mysnap', '--arch=i386'])
         self.assertIn(
-            "Snap 'mysnap' for 'i386' was not found.", str(error.output))
+            "Snap 'mysnap' for 'i386' was not found in '16' series.",
+            str(error.output))
 
     def test_status_with_login_good_snap(self):
         self.addCleanup(self.logout)

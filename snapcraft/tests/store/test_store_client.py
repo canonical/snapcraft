@@ -739,7 +739,7 @@ class GetSnapStatusTestCase(tests.TestCase):
         with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
             self.client.get_snap_status('basic', arch='somearch')
         self.assertEqual(
-            "Snap 'basic' for 'somearch' was not found.",
+            "Snap 'basic' for 'somearch' was not found in '16' series.",
             str(e.exception))
 
     def test_get_snap_status_refreshes_macaroon(self):
@@ -763,5 +763,5 @@ class GetSnapStatusTestCase(tests.TestCase):
             self.client.get_snap_status('basic')
         self.assertEqual(
             "Error fetching status of snap id 'my_snap_id' for 'any arch' "
-            "in 'any' series: 500 Server error.",
+            "in '16' series: 500 Server error.",
             str(e.exception))

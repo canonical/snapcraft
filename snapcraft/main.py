@@ -83,6 +83,7 @@ Options specific to snapping:
 
 Options specific to store interaction:
   --release <channels>  Comma separated list of channels to release to.
+  --series <series>     Snap series [default: {DEFAULT_SERIES}].
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
@@ -147,6 +148,7 @@ from snapcraft.internal.common import (
     format_output_in_columns,
     get_terminal_width,
     get_tourdir)
+from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 
 logger = logging.getLogger(__name__)
@@ -210,7 +212,8 @@ def _get_project_options(args):
 
 
 def main(argv=None):
-    args = docopt(__doc__, version=_get_version(), argv=argv)
+    doc = __doc__.format(DEFAULT_SERIES=DEFAULT_SERIES)
+    args = docopt(doc, version=_get_version(), argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
