@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import re
 import subprocess
+import unittest
+import uuid
 
-from testtools.matchers import Contains
+from testtools.matchers import Contains, FileExists, MatchesRegex
 
 import integration_tests
 
@@ -59,7 +63,9 @@ class HistoryTestCase(integration_tests.StoreTestCase):
         self.assertIn(
             "Snap 'mysnap' for 'i386' was not found.", str(error.output))
 
-    def test_history_with_login_good_snap(self):
+    @unittest.skipUnless(
+        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
+    def test_history_fake_store(self):
         self.addCleanup(self.logout)
         self.login()
 
@@ -70,3 +76,33 @@ class HistoryTestCase(integration_tests.StoreTestCase):
             '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
         ))
         self.assertThat(output, Contains(expected))
+
+    @unittest.skipUnless(
+        os.getenv('TEST_STORE', 'fake') == 'staging', 'Skip staging store.')
+    def test_history_staging_store(self):
+        self.addCleanup(self.logout)
+        self.login()
+
+        # Build a random snap, register, push and release it.
+        project_dir = 'basic'
+        unique_id = uuid.uuid4().int
+        name = 'u1test-{}'.format(unique_id)
+        version = '1.0'
+        project_dir = self.update_name_and_version(project_dir, name, version)
+        os.chdir(project_dir)
+        self.run_snapcraft('snap', project_dir)
+        snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        self.assertThat(snap_path, FileExists())
+        self.register(name)
+        self.assertEqual(0, self.push(snap_path, release='candidate,beta'))
+
+        output = self.run_snapcraft(['history', name])
+
+        datetime_re = '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}'
+        expected = '\n'.join((
+            '.*',
+            '.*Rev.  Uploaded                 Arch         Version  Channels',
+            '     1  {datetime_re}  Arch: All          1  candidate\*, beta\*',
+            '.*',
+        )).format(datetime_re=datetime_re)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
