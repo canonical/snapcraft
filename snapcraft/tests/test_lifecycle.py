@@ -570,32 +570,3 @@ grade: stable
         self.assertEqual(
             "The 'pull' step of 'part1' is out of date. Please clean that "
             "part's 'pull' step in order to rebuild", str(raised.exception))
-
-
-class HumanizeListTestCases(tests.TestCase):
-
-    def test_no_items(self):
-        items = []
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, '')
-
-    def test_one_item(self):
-        items = ['foo']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'foo'")
-
-    def test_two_items(self):
-        items = ['foo', 'bar']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar' and 'foo'",
-                         "Expected 'bar' before 'foo' due to sorting")
-
-    def test_three_items(self):
-        items = ['foo', 'bar', 'baz']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar', 'baz', and 'foo'")
-
-    def test_four_items(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar', 'baz', 'foo', and 'qux'")
