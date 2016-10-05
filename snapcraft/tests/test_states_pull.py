@@ -37,7 +37,7 @@ class PullStateTestCase(tests.TestCase):
 
     def test_representation(self):
         expected = ('PullState(project_options: {}, properties: {}, '
-                    'property_names: {})').format(
+                    'schema_properties: {})').format(
             self.project.__dict__, self.part_properties,
             self.property_names)
         self.assertEqual(expected, repr(self.state))

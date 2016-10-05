@@ -31,7 +31,9 @@ class BuildState(State):
 
     def __init__(self, property_names, part_properties=None, project=None):
         # Save this off before calling super() since we'll need it
-        self.property_names = property_names
+        # FIXME: for 3.x the name `schema_properties` is leaking
+        #        implementation details from a higher layer.
+        self.schema_properties = property_names
 
         super().__init__(part_properties, project)
 
@@ -40,7 +42,7 @@ class BuildState(State):
         """
 
         properties = {}
-        for name in self.property_names:
+        for name in self.schema_properties:
             properties[name] = part_properties.get(name, None)
 
         return properties
