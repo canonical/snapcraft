@@ -1046,4 +1046,3 @@ parts: [main2]
         self.assertTrue(
             'One or more required packages are missing, please install'
             in fake_logger.output, 'No missing package info in output')
-
