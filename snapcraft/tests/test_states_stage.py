@@ -37,7 +37,7 @@ class StageStateTestCase(tests.TestCase):
         self.project = Project()
 
         self.state = snapcraft.internal.states.StageState(
-            self.files, self.directories, self.options, self.project)
+            self.files, self.directories, self.options.__dict__, self.project)
 
     def test_representation(self):
         expected = ('StageState(directories: {}, files: {}, '
@@ -48,18 +48,18 @@ class StageStateTestCase(tests.TestCase):
 
     def test_comparison(self):
         other = snapcraft.internal.states.StageState(
-            self.files, self.directories, self.options, self.project)
+            self.files, self.directories, self.options.__dict__, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
     def test_comparison_not_equal(self):
         others = [
-            snapcraft.internal.states.StageState(set(), self.directories,
-                                                 self.options, self.project),
-            snapcraft.internal.states.StageState(self.files, set(),
-                                                 self.options, self.project),
-            snapcraft.internal.states.StageState(self.files, self.directories,
-                                                 None, self.project),
+            snapcraft.internal.states.StageState(
+                set(), self.directories, self.options.__dict__, self.project),
+            snapcraft.internal.states.StageState(
+                self.files, set(), self.options.__dict__, self.project),
+            snapcraft.internal.states.StageState(
+                self.files, self.directories, None, self.project),
         ]
 
         for index, other in enumerate(others):

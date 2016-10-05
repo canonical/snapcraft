@@ -38,8 +38,8 @@ class PrimeStateTestCase(tests.TestCase):
         self.project = Project()
 
         self.state = snapcraft.internal.states.PrimeState(
-            self.files, self.directories, self.dependency_paths, self.options,
-            self.project)
+            self.files, self.directories, self.dependency_paths,
+            self.options.__dict__, self.project)
 
     def test_representation(self):
         expected = ('PrimeState(dependency_paths: {}, directories: {}, '
@@ -50,8 +50,8 @@ class PrimeStateTestCase(tests.TestCase):
 
     def test_comparison(self):
         other = snapcraft.internal.states.PrimeState(
-            self.files, self.directories, self.dependency_paths, self.options,
-            self.project)
+            self.files, self.directories, self.dependency_paths,
+            self.options.__dict__, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
@@ -59,13 +59,13 @@ class PrimeStateTestCase(tests.TestCase):
         others = [
             snapcraft.internal.states.PrimeState(
                 set(), self.directories, self.dependency_paths,
-                self.options, self.project),
+                self.options.__dict__, self.project),
             snapcraft.internal.states.PrimeState(
                 self.files, set(), self.dependency_paths,
-                self.options, self.project),
+                self.options.__dict__, self.project),
             snapcraft.internal.states.PrimeState(
                 self.files, self.directories, set(),
-                self.options, self.project),
+                self.options.__dict__, self.project),
             snapcraft.internal.states.PrimeState(
                 self.files, self.directories, self.dependency_paths,
                 None, self.project)

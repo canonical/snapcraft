@@ -1419,7 +1419,7 @@ class IsDirtyTestCase(tests.TestCase):
         self.handler.code.options.snap = ['foo']
         self.handler.mark_done(
             'prime', states.PrimeState(
-                set(), set(), set(), self.handler.code.options))
+                set(), set(), set(), self.handler.code.options.__dict__))
         self.assertFalse(self.handler.is_clean('prime'),
                          'Prime step was unexpectedly clean')
         self.assertFalse(self.handler.is_dirty('prime'),
@@ -1443,7 +1443,7 @@ class IsDirtyTestCase(tests.TestCase):
         self.handler.code.options.stage = ['foo']
         self.handler.mark_done(
             'stage', states.StageState(
-                set(), set(), self.handler.code.options))
+                set(), set(), self.handler.code.options.__dict__))
         self.assertFalse(self.handler.is_clean('stage'),
                          'Stage step was unexpectedly clean')
         self.assertFalse(self.handler.is_dirty('stage'),
@@ -1468,7 +1468,7 @@ class IsDirtyTestCase(tests.TestCase):
         self.handler.code.options.foo = ['bar']
         self.handler.mark_done(
             'build', states.BuildState(self.handler.build_properties,
-                                       self.handler.code.options,
+                                       self.handler.code.options.__dict__,
                                        snapcraft.ProjectOptions()))
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
@@ -1486,7 +1486,7 @@ class IsDirtyTestCase(tests.TestCase):
     def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
         self.handler.mark_done(
             'build', states.BuildState(self.handler.build_properties,
-                                       self.handler.code.options,
+                                       self.handler.code.options.__dict__,
                                        snapcraft.ProjectOptions()))
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
@@ -1515,7 +1515,7 @@ class IsDirtyTestCase(tests.TestCase):
         self.handler.code.options.foo = ['bar']
         self.handler.mark_done(
             'pull', states.PullState(self.handler.pull_properties,
-                                     self.handler.code.options,
+                                     self.handler.code.options.__dict__,
                                      snapcraft.ProjectOptions()))
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
