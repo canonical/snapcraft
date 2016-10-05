@@ -602,6 +602,14 @@ class TestLocal(tests.TestCase):
 
 class TestUri(tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+
+        patcher = unittest.mock.patch(
+            'snapcraft.internal.sources._check_for_package')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_get_tar_source_from_uri(self):
         test_sources = [
             'https://golang.tar.gz',
@@ -616,10 +624,8 @@ class TestUri(tests.TestCase):
                 self.assertEqual(
                     sources._get_source_type_from_uri(source), 'tar')
 
-    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Git.pull')
-    def test_get_git_source_from_uri(self, mock_pull, mock_check):
-        mock_check.side_effect = None
+    def test_get_git_source_from_uri(self, mock_pull):
         test_sources = [
             'git://github.com:ubuntu-core/snapcraft.git',
             'git@github.com:ubuntu-core/snapcraft.git',
@@ -637,10 +643,8 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
-    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Bazaar.pull')
-    def test_get_bzr_source_from_uri(self, mock_pull, mock_check):
-        mock_check.side_effect = None
+    def test_get_bzr_source_from_uri(self, mock_pull):
         test_sources = [
             'lp:snapcraft_test_source',
             'bzr:dummy-source'
@@ -657,10 +661,8 @@ class TestUri(tests.TestCase):
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
 
-    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
     @unittest.mock.patch('snapcraft.sources.Subversion.pull')
-    def test_get_svn_source_from_uri(self, mock_pull, mock_check):
-        mock_check.side_effect = None
+    def test_get_svn_source_from_uri(self, mock_pull):
         test_sources = [
             'svn://sylpheed.sraoss.jp/sylpheed/trunk'
         ]
@@ -675,6 +677,9 @@ class TestUri(tests.TestCase):
 
                 mock_pull.assert_called_once_with()
                 mock_pull.reset_mock()
+
+
+class PackageCheckTestCase(tests.TestCase):
 
     def test__check_for_package_not_installed(self):
         with self.assertRaises(errors.MissingPackageError):
