@@ -54,8 +54,7 @@ that, make sure you have an account on the
     source tools/staging_env.sh
 
 You will see a prompt indicating that you are going to be talking to the staging
-server. Once you are done with working with the staging servers you can run
-`deactivate`.
+server. Once you are done working with the staging servers you can run `deactivate`.
 
 ### Project Layout
 
