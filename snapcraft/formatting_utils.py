@@ -28,7 +28,7 @@ def combine_paths(paths, prepend, separator):
 
 
 def format_path_variable(envvar, paths, prepend, separator):
-    """Return an path-like environment variable definition that appends.
+    """Return a path-like environment variable definition that appends.
 
     :param str envvar: The environment variable in question.
     :param list paths: The paths to append to the environment variable.
