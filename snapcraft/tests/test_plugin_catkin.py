@@ -211,6 +211,16 @@ class CatkinPluginTestCase(tests.TestCase):
         self.assertTrue('source-space' in pull_properties)
         self.assertTrue('include-roscore' in pull_properties)
 
+    def test_invalid_rosdistro(self):
+        self.properties.rosdistro = 'invalid'
+        with self.assertRaises(RuntimeError) as raised:
+            catkin.CatkinPlugin('test-part', self.properties,
+                                self.project_options)
+
+        self.assertEqual(str(raised.exception),
+                         "Unsupported rosdistro: 'invalid'. The supported ROS "
+                         "distributions are 'indigo', 'jade', and 'kinetic'")
+
     def test_get_stage_sources_indigo(self):
         self.properties.rosdistro = 'indigo'
         plugin = catkin.CatkinPlugin('test-part', self.properties,
