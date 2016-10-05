@@ -301,6 +301,7 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Building')
         self.code.build()
+        self._organize()
         self.mark_done('build', states.BuildState(
             self.build_properties, self.code.options, self._project_options))
 
@@ -330,7 +331,6 @@ class PluginHandler:
     def stage(self, force=False):
         self.makedirs()
         self.notify_part_progress('Staging')
-        self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         def fixup_func(file_path):

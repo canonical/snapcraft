@@ -46,3 +46,7 @@ class StageTestCase(integration_tests.TestCase):
             '`snapcraft help plugins`'
         )
         self.assertThat(exception.output, Contains(expected_help))
+
+    def test_no_conflicts(self):
+        project_dir = 'no-conflicts'
+        self.run_snapcraft('stage', project_dir)
