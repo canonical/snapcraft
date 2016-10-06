@@ -347,6 +347,12 @@ def _get_text_for_channel(channel):
     return channel_text
 
 
+def _get_text_for_current_channels(channels, current_channels):
+    return ', '.join(
+        channel + ('*' if channel in current_channels else '')
+        for channel in channels) or '-'
+
+
 def release(snap_name, revision, release_channels):
     store = storeapi.StoreClient()
     with _requires_login():
@@ -376,6 +382,24 @@ def download(snap_name, channel, download_path, arch):
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
                 snap_name, download_path))
+
+
+def history(snap_name, series, arch):
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        history = store.get_snap_history(snap_name, series, arch)
+
+    parsed_revisions = [
+        (rev['revision'], rev['timestamp'], rev['arch'], rev['version'],
+         _get_text_for_current_channels(
+            rev['channels'], rev['current_channels']))
+        for rev in history]
+    tabulated_revisions = tabulate(
+        parsed_revisions,
+        headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
+        tablefmt='plain')
+    print(tabulated_revisions)
 
 
 def gated(snap_name):
