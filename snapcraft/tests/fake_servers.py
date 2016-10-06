@@ -612,7 +612,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
         self.wfile.write(data)
 
-    def do_GET(self):
+    # This function's complexity is correlated to the number of
+    # url paths, no point in checking that.
+    def do_GET(self):  # noqa: C901
         if self.server.fake_store.needs_refresh:
             self._handle_needs_refresh()
             return
@@ -645,6 +647,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_history()
+            elif parsed_path.path.endswith('/status'):
+                self._handle_snap_status()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -753,6 +757,60 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 rev for rev in revisions if rev['arch'] in parsed_qs['arch']]
         else:
             output = revisions
+        self.wfile.write(json.dumps(output).encode())
+
+    def _handle_snap_status(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        channel_map = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.0-i386',
+                    'channel': 'edge',
+                    'revision': 3
+                },
+            ],
+            'amd64': [
+                {
+                    'info': 'specific',
+                    'version': '1.0-amd64',
+                    'channel': 'stable',
+                    'revision': 2
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.1-amd64',
+                    'channel': 'beta',
+                    'revision': 4
+                },
+                {
+                    'info': 'tracking',
+                    'channel': 'edge'
+                },
+            ],
+        }
+
+        parsed_qs = urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query)
+        if 'arch' in parsed_qs:
+            arch = parsed_qs['arch'][0]
+            if arch in channel_map:
+                output = {arch: channel_map[arch]}
+            else:
+                output = {}
+        else:
+            output = channel_map
         self.wfile.write(json.dumps(output).encode())
 
     def do_PUT(self):
