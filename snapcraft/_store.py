@@ -347,6 +347,13 @@ def _get_text_for_channel(channel):
     return channel_text
 
 
+def _format_channel_map(channel_map, arch):
+    return [
+        (printable_arch,) + _get_text_for_channel(channel)
+        for printable_arch, channel in zip(
+            [arch] + [''] * len(channel_map), channel_map)]
+
+
 def _get_text_for_current_channels(channels, current_channels):
     return ', '.join(
         channel + ('*' if channel in current_channels else '')
@@ -382,6 +389,23 @@ def download(snap_name, channel, download_path, arch):
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
                 snap_name, download_path))
+
+
+def status(snap_name, series, arch):
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        status = store.get_snap_status(snap_name, series, arch)
+
+    parsed_channels = [
+        channel
+        for arch, channel_map in sorted(status.items())
+        for channel in _format_channel_map(channel_map, arch)]
+
+    tabulated_channels = tabulate(
+        parsed_channels, headers=['Arch', 'Channel', 'Version', 'Revision'],
+        tablefmt='plain')
+    print(tabulated_channels)
 
 
 def history(snap_name, series, arch):
