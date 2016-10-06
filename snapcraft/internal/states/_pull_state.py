@@ -29,23 +29,21 @@ yaml.add_constructor(u'!PullState', _pull_state_constructor)
 class PullState(State):
     yaml_tag = u'!PullState'
 
-    def __init__(self, schema_properties, options=None, project=None):
+    def __init__(self, property_names, part_properties=None, project=None):
         # Save this off before calling super() since we'll need it
-        self.schema_properties = schema_properties
+        # FIXME: for 3.x the name `schema_properties` is leaking
+        #        implementation details from a higher layer.
+        self.schema_properties = property_names
 
-        super().__init__(options, project)
+        super().__init__(part_properties, project)
 
-    def properties_of_interest(self, options):
-        """Extract the properties concerning this step from the options.
-
-        The properties of interest to the pull step vary depending on the
-        plugin, so we use self.schema_properties.
+    def properties_of_interest(self, part_properties):
+        """Extract the properties concerning this step from part_properties.
         """
 
         properties = {}
-        for schema_property in self.schema_properties:
-            properties[schema_property] = getattr(options, schema_property,
-                                                  None)
+        for name in self.schema_properties:
+            properties[name] = part_properties.get(name, None)
 
         return properties
 
