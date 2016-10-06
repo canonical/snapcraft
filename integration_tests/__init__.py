@@ -230,3 +230,15 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
+
+    def push(self, snap, release=None, expected=None):
+        actions = ['push', snap]
+        if release is not None:
+            actions += ['--release', release]
+        process = pexpect.spawn(
+            self.snapcraft_command, actions)
+        if expected is not None:
+            process.expect(expected)
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
