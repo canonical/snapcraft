@@ -18,11 +18,14 @@ import yaml
 
 
 class State(yaml.YAMLObject):
-    def __init__(self, options, project):
-        self.properties = self.properties_of_interest(options)
+    def __init__(self, part_properties, project):
+        if not part_properties:
+            part_properties = {}
+
+        self.properties = self.properties_of_interest(part_properties)
         self.project_options = self.project_options_of_interest(project)
 
-    def properties_of_interest(self, options):
+    def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from the options.
 
         Note that these options come from the YAML for a given part.
