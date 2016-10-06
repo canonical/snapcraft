@@ -25,6 +25,7 @@ import jsonschema
 import yaml
 
 import snapcraft
+from snapcraft import formatting_utils
 from snapcraft.internal import (
     common,
     libraries,
@@ -273,7 +274,7 @@ def _runtime_env(root, arch_triplet):
     # Add the default LD_LIBRARY_PATH
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
-        env.append(common.format_path_variable(
+        env.append(formatting_utils.format_path_variable(
             'LD_LIBRARY_PATH', paths, prepend='', separator=':'))
 
     # Add more specific LD_LIBRARY_PATH from staged packages if necessary
@@ -296,15 +297,15 @@ def _build_env(root, arch_triplet):
     paths = common.get_include_paths(root, arch_triplet)
     if paths:
         for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-            env.append(common.format_path_variable(
+            env.append(formatting_utils.format_path_variable(
                 envvar, paths, prepend='-I', separator=' '))
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
-        env.append(common.format_path_variable(
+        env.append(formatting_utils.format_path_variable(
             'LDFLAGS', paths, prepend='-L', separator=' '))
     paths = common.get_pkg_config_paths(root, arch_triplet)
     if paths:
-        env.append(common.format_path_variable(
+        env.append(formatting_utils.format_path_variable(
             'PKG_CONFIG_PATH', paths, prepend='', separator=':'))
 
     return env
