@@ -22,15 +22,13 @@ class PullStateTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.property_names = ['foo']
-
-        self.part_properties = {'foo': 'bar'}
-
         class Project:
             def __init__(self):
                 self.deb_arch = 'amd64'
 
         self.project = Project()
+        self.property_names = ['foo']
+        self.part_properties = {'foo': 'bar'}
 
         self.state = snapcraft.internal.states.PullState(
             self.property_names, self.part_properties, self.project)

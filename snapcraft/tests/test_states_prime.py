@@ -22,36 +22,30 @@ class PrimeStateTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.files = {'foo'}
-        self.directories = {'bar'}
-        self.dependency_paths = {'baz'}
-
-        class Options:
-            def __init__(self):
-                self.snap = ['qux']
-
-        self.options = Options()
-
         class Project:
             pass
 
         self.project = Project()
+        self.files = {'foo'}
+        self.directories = {'bar'}
+        self.dependency_paths = {'baz'}
+        self.part_properties = {'snap': ['gux']}
 
         self.state = snapcraft.internal.states.PrimeState(
             self.files, self.directories, self.dependency_paths,
-            self.options.__dict__, self.project)
+            self.part_properties, self.project)
 
     def test_representation(self):
         expected = ('PrimeState(dependency_paths: {}, directories: {}, '
                     'files: {}, project_options: {}, properties: {})').format(
             self.dependency_paths, self.directories, self.files,
-            self.project.__dict__, self.options.__dict__)
+            self.project.__dict__, self.part_properties)
         self.assertEqual(expected, repr(self.state))
 
     def test_comparison(self):
         other = snapcraft.internal.states.PrimeState(
             self.files, self.directories, self.dependency_paths,
-            self.options.__dict__, self.project)
+            self.part_properties, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
@@ -59,13 +53,13 @@ class PrimeStateTestCase(tests.TestCase):
         others = [
             snapcraft.internal.states.PrimeState(
                 set(), self.directories, self.dependency_paths,
-                self.options.__dict__, self.project),
+                self.part_properties, self.project),
             snapcraft.internal.states.PrimeState(
                 self.files, set(), self.dependency_paths,
-                self.options.__dict__, self.project),
+                self.part_properties, self.project),
             snapcraft.internal.states.PrimeState(
                 self.files, self.directories, set(),
-                self.options.__dict__, self.project),
+                self.part_properties, self.project),
             snapcraft.internal.states.PrimeState(
                 self.files, self.directories, self.dependency_paths,
                 None, self.project)
