@@ -41,6 +41,7 @@ Usage:
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
   snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
@@ -104,6 +105,7 @@ The available commands are:
                supersedes this command.
   release      Release a revision of a snap to a specific channel.
   status       Show the current status of a snap per channel and architecture.
+  history      List all revisions of a snap.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -301,7 +303,7 @@ def _is_store_command(args):
     commands = (
         'list-keys', 'keys', 'create-key', 'register-key', 'register',
         'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
-        'status')
+        'history', 'status')
     return any(args.get(command) for command in commands)
 
 
@@ -338,6 +340,9 @@ def _run_store_command(args):  # noqa: C901
         snapcraft.gated(args['<snap-name>'])
     elif args['status']:
         snapcraft.status(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['history']:
+        snapcraft.history(
             args['<snap-name>'], args['--series'], args['--arch'])
 
 

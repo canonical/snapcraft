@@ -22,44 +22,38 @@ class BuildStateTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.schema_properties = ['foo']
-
-        class Options:
-            def __init__(self):
-                self.foo = ['bar']
-
-        self.options = Options()
-
         class Project:
             def __init__(self):
                 self.deb_arch = 'amd64'
 
         self.project = Project()
+        self.property_names = ['foo']
+        self.part_properties = {'foo': 'bar'}
 
         self.state = snapcraft.internal.states.BuildState(
-            self.schema_properties, self.options, self.project)
+            self.property_names, self.part_properties, self.project)
 
     def test_representation(self):
         expected = ('BuildState(project_options: {}, properties: {}, '
                     'schema_properties: {})').format(
-            self.project.__dict__, self.options.__dict__,
-            self.schema_properties)
+            self.project.__dict__, self.part_properties,
+            self.property_names)
         self.assertEqual(expected, repr(self.state))
 
     def test_comparison(self):
         other = snapcraft.internal.states.BuildState(
-            self.schema_properties, self.options, self.project)
+            self.property_names, self.part_properties, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
     def test_comparison_not_equal(self):
         others = [
             snapcraft.internal.states.BuildState(
-                [], self.options, self.project),
+                [], self.part_properties, self.project),
             snapcraft.internal.states.BuildState(
-                self.schema_properties, None, self.project),
+                self.property_names, None, self.project),
             snapcraft.internal.states.BuildState(
-                self.schema_properties, self.options, None)
+                self.property_names, self.part_properties, None)
         ]
 
         for index, other in enumerate(others):

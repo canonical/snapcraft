@@ -194,6 +194,24 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.snap_release, snap_name, revision, channels)
 
+    def get_snap_history(self, snap_name, series=None, arch=None):
+        if series is None:
+            series = constants.DEFAULT_SERIES
+
+        account_info = self.get_account_information()
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        response = self._refresh_if_necessary(
+            self.sca.snap_history, snap_id, series, arch)
+
+        if not response:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return response
+
     def get_snap_status(self, snap_name, series=None, arch=None):
         if series is None:
             series = constants.DEFAULT_SERIES
@@ -520,6 +538,28 @@ class SCAClient(Client):
         response = self.post(url, data=data, headers=headers)
         if not response.ok:
             raise errors.StoreSnapBuildError(response)
+
+    def snap_history(self, snap_id, series, arch):
+        qs = {}
+        if series:
+            qs['series'] = series
+        if arch:
+            qs['arch'] = arch
+        url = 'snaps/' + snap_id + '/history'
+        if qs:
+            url += '?' + urllib.parse.urlencode(qs)
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreSnapHistoryError(response, snap_id, series, arch)
+
+        response_json = response.json()
+
+        return response_json
 
     def snap_status(self, snap_id, series, arch):
         qs = {}

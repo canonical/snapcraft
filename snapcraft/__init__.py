@@ -232,6 +232,7 @@ from snapcraft._help import topic_help              # noqa
 from snapcraft._store import (                      # noqa
     create_key,
     download,
+    history,
     gated,
     list_keys,
     login,

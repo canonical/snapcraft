@@ -276,10 +276,10 @@ class StoreSnapBuildError(StoreError):
         super().__init__(error=error)
 
 
-class StoreSnapStatusError(StoreError):
+class StoreSnapHistoryError(StoreError):
 
     fmt = (
-        'Error fetching status of snap id {snap_id!r} for {arch!r} '
+        'Error fetching history of snap id {snap_id!r} for {arch!r} '
         'in {series!r} series: {error}.')
 
     def __init__(self, response, snap_id, series, arch):
@@ -295,3 +295,10 @@ class StoreSnapStatusError(StoreError):
         super().__init__(
             snap_id=snap_id, arch=arch or 'any arch',
             series=series or 'any', error=error)
+
+
+class StoreSnapStatusError(StoreSnapHistoryError):
+
+    fmt = (
+        'Error fetching status of snap id {snap_id!r} for {arch!r} '
+        'in {series!r} series: {error}.')

@@ -30,8 +30,8 @@ class PrimeState(State):
     yaml_tag = u'!PrimeState'
 
     def __init__(self, files, directories, dependency_paths=None,
-                 options=None, project=None):
-        super().__init__(options, project)
+                 part_properties=None, project=None):
+        super().__init__(part_properties, project)
 
         self.files = files
         self.directories = directories
@@ -40,14 +40,14 @@ class PrimeState(State):
         if dependency_paths:
             self.dependency_paths = dependency_paths
 
-    def properties_of_interest(self, options):
-        """Extract the properties concerning this step from the options.
+    def properties_of_interest(self, part_properties):
+        """Extract the properties concerning this step from part_properties.
 
         The only property of interest to the prime step is the `snap` keyword
         used to filter out files with a white or blacklist.
         """
 
-        return {'snap': getattr(options, 'snap', ['*']) or ['*']}
+        return {'snap': part_properties.get('snap', ['*']) or ['*']}
 
     def project_options_of_interest(self, project):
         """Extract the options concerning this step from the project.
