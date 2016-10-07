@@ -37,12 +37,27 @@ class StoreError(SnapcraftError):
 
 class SnapNotFoundError(StoreError):
 
-    fmt = 'Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel.'  # NOQA
+    __FMT_ARCH_CHANNEL = (
+        'Snap {name!r} for {arch!r} cannot be found in the {channel!r} '
+        'channel.')
+    __FMT_CHANNEL = 'Snap {name!r} was not found in the {channel!r} channel.'
+    __FMT_SERIES_ARCH = (
+        'Snap {name!r} for {arch!r} was not found in {series!r} series.')
+    __FMT_SERIES = 'Snap {name!r} was not found in {series!r} series.'
 
-    def __init__(self, name, channel=None, arch=None):
-        if not arch and not channel:
-            self.fmt = 'Snap {name!r} was not found.'
-        super().__init__(name=name, channel=channel, arch=arch)
+    fmt = 'Snap {name!r} was not found.'
+
+    def __init__(self, name, channel=None, arch=None, series=None):
+        if channel and arch:
+            self.fmt = self.__FMT_ARCH_CHANNEL
+        elif channel:
+            self.fmt = self.__FMT_CHANNEL
+        elif series and arch:
+            self.fmt = self.__FMT_SERIES_ARCH
+        elif series:
+            self.fmt = self.__FMT_SERIES
+
+        super().__init__(name=name, channel=channel, arch=arch, series=series)
 
 
 class SHAMismatchError(StoreError):
@@ -259,3 +274,31 @@ class StoreSnapBuildError(StoreError):
             pass
 
         super().__init__(error=error)
+
+
+class StoreSnapHistoryError(StoreError):
+
+    fmt = (
+        'Error fetching history of snap id {snap_id!r} for {arch!r} '
+        'in {series!r} series: {error}.')
+
+    def __init__(self, response, snap_id, series, arch):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+
+        super().__init__(
+            snap_id=snap_id, arch=arch or 'any arch',
+            series=series or 'any', error=error)
+
+
+class StoreSnapStatusError(StoreSnapHistoryError):
+
+    fmt = (
+        'Error fetching status of snap id {snap_id!r} for {arch!r} '
+        'in {series!r} series: {error}.')

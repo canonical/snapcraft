@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - source-space:
       (string)
       The source space containing Catkin packages. By default this is 'src'.
+    - rosdistro:
+      (string)
+      The ROS distro required by this system. Defaults to 'indigo'.
     - include-roscore:
       (boolean)
       Whether or not to include roscore with the part. Defaults to true.
@@ -44,6 +47,7 @@ import snapcraft
 from snapcraft import (
     common,
     file_utils,
+    formatting_utils,
     repo,
 )
 
@@ -136,6 +140,15 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
                 self._ros_package_path):
             raise RuntimeError(
                 'source-space cannot be the root of the Catkin workspace')
+
+        # Validate selected ROS distro
+        if self.options.rosdistro not in _ROS_RELEASE_MAP:
+            raise RuntimeError(
+                'Unsupported rosdistro: {!r}. The supported ROS distributions '
+                'are {}'.format(
+                    self.options.rosdistro,
+                    formatting_utils.humanize_list(
+                        _ROS_RELEASE_MAP.keys(), 'and')))
 
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
