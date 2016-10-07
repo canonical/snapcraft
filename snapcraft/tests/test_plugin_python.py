@@ -187,17 +187,13 @@ class PythonPluginTestCase(tests.TestCase):
         calls = [
             mock.call(pip_wheel + ['--requirement', requirements_path],
                       env=mock.ANY),
-            mock.call(pip_install + ['--requirement', requirements_path],
-                      env=mock.ANY),
             mock.call(pip_wheel + ['test', 'packages'],
-                      env=mock.ANY),
-            mock.call(pip_install + ['test', 'packages'],
                       env=mock.ANY),
             mock.call(pip_wheel + ['.'], cwd=plugin.builddir,
                       env=mock.ANY),
-            mock.call(tests.ContainsList(pip_install + ['project.whl']),
-                      cwd=plugin.builddir,
-                      env=mock.ANY),
+            mock.call(tests.ContainsList(
+                pip_install + ['project.whl', 'project.whl', 'project.whl']),
+                cwd=plugin.builddir, env=mock.ANY),
         ]
         plugin.build()
         mock_run.assert_has_calls(calls)

@@ -199,6 +199,8 @@ class PythonPlugin(snapcraft.BasePlugin):
                    constraints=constraints,
                    dependency_links=self.options.process_dependency_links)
 
+        wheels = []
+
         if self.options.requirements:
             if isurl(self.options.requirements):
                 requirements = self.options.requirements
@@ -208,23 +210,23 @@ class PythonPlugin(snapcraft.BasePlugin):
             if download:
                 pip.download(['--requirement', requirements])
             else:
-                pip.wheel(['--requirement', requirements])
-                pip.install(['--requirement', requirements])
+                wheels.extend(pip.wheel(['--requirement', requirements]))
 
         if self.options.python_packages:
             if download:
                 pip.download(self.options.python_packages)
             else:
-                pip.wheel(self.options.python_packages)
-                pip.install(self.options.python_packages)
+                wheels.extend(pip.wheel(self.options.python_packages))
 
         if os.path.exists(setup):
             cwd = os.path.dirname(setup)
             if download:
                 pip.download(['.'], cwd=cwd)
             else:
-                wheels = pip.wheel(['.'], cwd=cwd)
-                pip.install(wheels, cwd=cwd)
+                wheels.extend(pip.wheel(['.'], cwd=cwd))
+
+        if wheels:
+            pip.install(wheels, cwd=cwd)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
