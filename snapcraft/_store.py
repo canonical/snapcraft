@@ -292,8 +292,8 @@ def sign_build(snap_filename, key_name=None, local=False):
             ]
             if not is_registered:
                 raise RuntimeError(
-                    'The key "{}" is not registered in the Store.\n'
-                    'Please register it with `snapcraft register-key {}` '
+                    'The key {!r} is not registered in the Store.\n'
+                    'Please register it with `snapcraft register-key {!r}` '
                     'before signing and pushing signatures to the '
                     'Store.'.format(key['name'], key['name']))
         snap_build_content = _generate_snap_build(

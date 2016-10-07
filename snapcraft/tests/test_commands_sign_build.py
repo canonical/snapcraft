@@ -222,8 +222,8 @@ class SignBuildTestCase(tests.TestCase):
 
         self.assertEqual(1, raised.exception.code)
         self.assertEqual([
-            'The key "default" is not registered in the Store.',
-            'Please register it with `snapcraft register-key default` '
+            'The key \'default\' is not registered in the Store.',
+            'Please register it with `snapcraft register-key \'default\'` '
             'before signing and pushing signatures to the Store.',
         ], self.fake_logger.output.splitlines())
         snap_build_path = self.snap_test.snap_path + '-build'
