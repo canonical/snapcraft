@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
+import tempfile
 from unittest import mock
 
 import snapcraft
@@ -148,6 +148,19 @@ class PythonPluginTestCase(tests.TestCase):
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
 
+        class TempDir(tempfile.TemporaryDirectory):
+
+            def __enter__(self):
+                project_whl_path = os.path.join(self.name, 'project.whl')
+                open(project_whl_path, 'w').close()
+                return super().__enter__()
+
+        patcher = mock.patch('tempfile.TemporaryDirectory',
+                             new=mock.Mock(wraps=TempDir))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        os.environ = {}
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
@@ -160,10 +173,11 @@ class PythonPluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir,
+        pip_wheel = ['pip', 'wheel',
                      '--disable-pip-version-check', '--no-index',
                      '--find-links', plugin._python_package_dir,
-                     '--constraint', constraints_path]
+                     '--constraint', constraints_path,
+                     '--wheel-dir', mock.ANY]
 
         pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check', '--no-index',
@@ -181,7 +195,8 @@ class PythonPluginTestCase(tests.TestCase):
                       env=mock.ANY),
             mock.call(pip_wheel + ['.'], cwd=plugin.builddir,
                       env=mock.ANY),
-            mock.call(pip_install + ['.'], cwd=plugin.builddir,
+            mock.call(tests.ContainsList(pip_install + ['project.whl']),
+                      cwd=plugin.builddir,
                       env=mock.ANY),
         ]
         plugin.build()

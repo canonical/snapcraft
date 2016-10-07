@@ -49,6 +49,7 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
 from contextlib import contextmanager
 from glob import glob
 from shutil import which
@@ -222,8 +223,8 @@ class PythonPlugin(snapcraft.BasePlugin):
             if download:
                 pip.download(['.'], cwd=cwd)
             else:
-                pip.wheel(['.'], cwd=cwd)
-                pip.install(['.'], cwd=cwd)
+                wheels = pip.wheel(['.'], cwd=cwd)
+                pip.install(wheels, cwd=cwd)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -279,15 +280,26 @@ class _Pip:
 
     def wheel(self, args, **kwargs):
         cmd = [
-            self._runnable, 'wheel', '--wheel-dir', self._package_dir,
+            self._runnable, 'wheel',
             '--disable-pip-version-check', '--no-index',
             '--find-links', self._package_dir,
         ]
         cmd.extend(self._extra_pip_args)
-        cmd.extend(args)
 
         os.makedirs(self._package_dir, exist_ok=True)
-        self._exec_func(cmd, env=self._env, **kwargs)
+
+        wheels = []
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd.extend(['--wheel-dir', temp_dir])
+            cmd.extend(args)
+            self._exec_func(cmd, env=self._env, **kwargs)
+            wheels = os.listdir(temp_dir)
+            for wheel in wheels:
+                file_utils.link_or_copy(
+                    os.path.join(temp_dir, wheel),
+                    os.path.join(self._package_dir, wheel))
+
+        return [os.path.join(self._package_dir, wheel) for wheel in wheels]
 
     def download(self, args, **kwargs):
         cmd = [
