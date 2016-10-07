@@ -230,6 +230,10 @@ class StoreClient():
 
         return response
 
+    def close_channels(self, snap_id, channel_names):
+        return self._refresh_if_necessary(
+            self.sca.close_channels, snap_id, channel_names)
+
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
@@ -582,6 +586,28 @@ class SCAClient(Client):
         response_json = response.json()
 
         return response_json
+
+    def close_channels(self, snap_id, channel_names):
+        url = 'snaps/{}/close'.format(snap_id)
+        data = {
+            'channels': channel_names
+        }
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+        }
+        response = self.post(url, json=data, headers=headers)
+        if not response.ok:
+            raise errors.StoreChannelClosingError(response)
+
+        try:
+            results = response.json()
+            return results['closed_channels'], results['channel_maps']
+        except (JSONDecodeError, KeyError):
+            logger.debug(
+                'Invalid response from the server on channel closing:\n'
+                '{} {}\n{}'.format(response.status_code, response.reason,
+                                   response.content))
+            raise errors.StoreChannelClosingError(response)
 
 
 class StatusTracker:
