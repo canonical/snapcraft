@@ -156,3 +156,12 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 project_dir, 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml')),
             [])
+
+    def test_pull_a_package_from_bzr(self):
+        project_dir = 'pip-bzr'
+        self.run_snapcraft('pull', project_dir)
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'pip-bzr', 'packages',
+                'curtin-*.zip'))[0],
+            FileExists())
