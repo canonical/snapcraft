@@ -379,6 +379,55 @@ def release(snap_name, revision, release_channels):
     print(tabulated_channels)
 
 
+def _tabulated_status(status):
+    """Tabulate status (architecture-specific channel-maps)."""
+    def _format_channel_map(channel_map, arch):
+        return [
+            (printable_arch,) + _get_text_for_channel(channel)
+            for printable_arch, channel in zip(
+                    [arch] + [''] * len(channel_map), channel_map)]
+
+    parsed_channels = [
+        channel
+        for arch, channel_map in sorted(status.items())
+        for channel in _format_channel_map(channel_map, arch)]
+    return tabulate(
+        parsed_channels,
+        headers=['Arch', 'Channel', 'Version', 'Revision'],
+        tablefmt='plain')
+
+
+def close(snap_name, channel_names):
+    """Close one or more channels for the specific snap."""
+    snap_series = storeapi.constants.DEFAULT_SERIES
+
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        info = store.get_account_information()
+
+    try:
+        snap_id = info['snaps'][snap_series][snap_name]['snap-id']
+    except KeyError:
+        raise RuntimeError(
+            'Your account lacks permission to close channels for this snap. '
+            'Make sure the logged in account has upload permissions on '
+            '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
+
+    closed_channels, status = store.close_channels(snap_id, channel_names)
+
+    tabulated_status = _tabulated_status(status)
+    print(tabulated_status)
+
+    print()
+    if len(closed_channels) == 1:
+        msg = 'The {} channel is now closed.'.format(closed_channels[0])
+    else:
+        msg = 'The {} and {} channels are now closed.'.format(
+            ', '.join(closed_channels[:-1]), closed_channels[-1])
+    logger.info(msg)
+
+
 def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
     store = storeapi.StoreClient()
@@ -397,15 +446,8 @@ def status(snap_name, series, arch):
     with _requires_login():
         status = store.get_snap_status(snap_name, series, arch)
 
-    parsed_channels = [
-        channel
-        for arch, channel_map in sorted(status.items())
-        for channel in _format_channel_map(channel_map, arch)]
-
-    tabulated_channels = tabulate(
-        parsed_channels, headers=['Arch', 'Channel', 'Version', 'Revision'],
-        tablefmt='plain')
-    print(tabulated_channels)
+    tabulated_status = _tabulated_status(status)
+    print(tabulated_status)
 
 
 def history(snap_name, series, arch):
