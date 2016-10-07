@@ -1,0 +1,13 @@
+name: root-data-files
+version: "0.1"
+summary: verify that root data_files work
+description: |
+    This snap verifies that root data_files entries in setup.py do
+    not break
+confinement: strict
+grade: devel
+
+parts:
+  root:
+    plugin: python
+    source: .
