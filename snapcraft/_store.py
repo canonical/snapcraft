@@ -410,7 +410,7 @@ def close(snap_name, channel_names):
         snap_id = info['snaps'][snap_series][snap_name]['snap-id']
     except KeyError:
         raise RuntimeError(
-            'Your account lacks permission to close channel for this snap. '
+            'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '
             '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
 

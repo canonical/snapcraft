@@ -47,7 +47,7 @@ class ChannelClosingTestCase(tests.TestCase):
 
         self.assertEqual(1, raised.exception.code)
         self.assertEqual([
-            'Your account lacks permission to close channel for this snap. '
+            'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '
             "'foo' in series '16'.",
         ], self.fake_logger.output.splitlines())

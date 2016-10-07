@@ -17,9 +17,7 @@
 import os
 import uuid
 
-from testtools.matchers import (
-    FileExists,
-)
+from testtools.matchers import FileExists
 
 import integration_tests
 
@@ -27,9 +25,6 @@ import integration_tests
 class ChannelClosingTestCase(integration_tests.StoreTestCase):
 
     project_dir = 'basic'
-
-    def setUp(self):
-        super().setUp()
 
     def test_missing_login(self):
         expected = 'run "snapcraft login"'
@@ -45,7 +40,7 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
         status = self.close('missing', 'beta', expected=expected)
         self.assertEqual(1, status)
 
-    def test_simple(self):
+    def test_close_channel(self):
         self.addCleanup(self.logout)
         self.login()
 
