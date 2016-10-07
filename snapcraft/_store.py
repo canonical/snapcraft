@@ -403,7 +403,7 @@ def gated(snap_name):
                              tablefmt="plain")
         print(tabulated)
     else:
-        print('No validations for snap {!r}'.format(snap_name))
+        print('There are no validations for snap {!r}'.format(snap_name))
 
 
 def validate(snap_name, validations, revoke=False, key=None):

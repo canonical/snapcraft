@@ -73,7 +73,7 @@ class GatedTestCase(tests.TestCase):
 
         main([self.command_name, 'basic'])
 
-        expected_output = "No validations for snap 'basic'\n"
+        expected_output = "There are no validations for snap 'basic'\n"
         self.assertEqual(expected_output, self.fake_terminal.getvalue())
 
     def test_no_login(self):

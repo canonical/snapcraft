@@ -47,4 +47,4 @@ class GatedTestCase(integration_tests.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
         self.assertEqual(0, self.gated(
-            'basic', expected_output="No validations for snap 'basic'"))
+            'basic', expected_output="There are no validations for snap 'basic'"))
