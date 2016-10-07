@@ -29,7 +29,7 @@ from snapcraft.tests import fixture_setup
 class ContainsList(list):
 
         def __eq__(self, other):
-            return all([i[0] in i[0] for i in zip(self, other)])
+            return all([i[0] in i[1] for i in zip(self, other)])
 
 
 class MockOptions:
