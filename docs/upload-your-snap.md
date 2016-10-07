@@ -4,6 +4,20 @@ So you've been working hard on your snap, and you finally have it to the point
 where you're ready to share it with the world? Great! You can use Snapcraft to
 upload it directly to the store.
 
+## The grade option
+
+`grade` in your `snapcraft.yaml` file can be either `stable` or `devel`. It
+essentially tags the resulting snap for life with the grade it should have.
+
+How is this useful? Imagine you are developing a snap and have your continuous
+integration setup to always push to the `edge` channel; in this case one would
+set `grade: devel`. This ensures that this snap is not accidentally published
+to the `stable` channels.
+
+A snap with `grade: devel` cannot be released to the `stable` or `candidate`
+channels.
+
+
 ## Build the snap
 
 Get into the directory containing the `snapcraft.yaml` file, and do the following:

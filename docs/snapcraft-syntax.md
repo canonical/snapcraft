@@ -21,6 +21,11 @@ contain.
   The type of confinement supported by the snap. Can be either "devmode" (i.e.
   this snap doesn't support running under confinement) or "strict" (i.e. full
   confinement supported via interfaces).
+* `grade` (string)
+  This defines the quality grade of the snap. It can be either "devel" (i.e.
+  a development version of the snap, so not to be published to the "stable" or
+  "candidate" channels) or "stable" (i.e. a stable release or release
+  candidate, which can be released to all channels).
 * `assumes` (list of strings)
   A list of features that must be supported by the core in order for this snap
   to install.
