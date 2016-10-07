@@ -96,6 +96,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         os.chdir(self.project_dir)
         self.assertThat(self.snap_path, FileExists())
 
+        self.assertEqual(0, self.register_key('default'))
         self.addCleanup(self.logout)
         self.login()
 
