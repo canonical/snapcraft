@@ -302,3 +302,18 @@ class StoreSnapStatusError(StoreSnapHistoryError):
     fmt = (
         'Error fetching status of snap id {snap_id!r} for {arch!r} '
         'in {series!r} series: {error}.')
+
+
+class StoreChannelClosingError(StoreError):
+
+    fmt = 'Could not close channel: {error}'
+
+    def __init__(self, response):
+        try:
+            e = response.json()['error_list'][0]
+            error = '{}'.format(e['message'])
+        except (JSONDecodeError, KeyError, IndexError):
+            error = '{} {}'.format(
+                response.status_code, response.reason)
+
+        super().__init__(error=error)

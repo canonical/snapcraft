@@ -330,21 +330,25 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
-        sign_build_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'snaps/snap-id/builds'.format())
+        snap_id_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/')
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
-        upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
-        release_path = urllib.parse.urljoin(self._DEV_API_PATH,
-                                            'snap-release/')
+        upload_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snap-push/')
+        release_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snap-release/')
 
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
         elif parsed_path.path == account_key_path:
             self._handle_account_key_request()
-        elif parsed_path.path == sign_build_path:
-            self._handle_sign_build_request()
+        elif parsed_path.path.startswith(snap_id_path):
+            if parsed_path.path.endswith('/builds'):
+                self._handle_sign_build_request()
+            elif parsed_path.path.endswith('/close'):
+                self._handle_close_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -385,7 +389,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_sign_build_request(self):
-        logger.debug('Handling snap-build request')
+        logger.debug('Handling sign-build request')
         string_data = self.rfile.read(
             int(self.headers['Content-Length'])).decode('utf8')
         snap_build = json.loads(string_data)['assertion']
@@ -423,6 +427,59 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'foo': 'bar',
             }
             content = json.dumps(response).encode()
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _handle_close_request(self):
+        logger.debug('Handling close request')
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        payload = json.loads(string_data)
+        channels = payload['channels']
+
+        if channels == ['invalid']:
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            error = {
+                'error_list': [
+                    {'code': 'invalid-field',
+                     'message': ('The \'channels\' field content is not '
+                                 'valid.')},
+                ],
+            }
+            content = json.dumps(error).encode()
+        elif channels == ['unexpected']:
+            self.send_response(500)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'unexpected chunk of data'
+        elif channels == ['broken-plain']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'plain data'
+        elif channels == ['broken-json']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'closed_channels': channels,
+            }
+            content = json.dumps(response).encode()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'closed_channels': channels,
+                'channel_maps': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'version': '1.1', 'revision': 42},
+                        {'channel': 'edge', 'info': 'tracking'}
+                    ]
+                },
+            }
+            content = json.dumps(response).encode()
+
         self.end_headers()
         self.wfile.write(content)
 

@@ -49,7 +49,10 @@ import os
 import re
 import stat
 import subprocess
+from contextlib import contextmanager
 from glob import glob
+from shutil import which
+from textwrap import dedent
 
 import snapcraft
 from snapcraft import file_utils
@@ -147,8 +150,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         setup = 'setup.py'
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
-
-        self._run_pip(setup, download=True)
+        with simple_env_bzr(os.path.join(self.installdir, 'bin')):
+            self._run_pip(setup, download=True)
 
     def _install_pip(self, download):
         env = os.environ.copy()
@@ -233,7 +236,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         super().build()
 
         setup_file = os.path.join(self.builddir, 'setup.py')
-        self._run_pip(setup_file)
+        with simple_env_bzr(os.path.join(self.installdir, 'bin')):
+            self._run_pip(setup_file)
 
         self._fix_permissions()
 
@@ -321,3 +325,34 @@ def _replicate_owner_mode(path):
     if file_mode & stat.S_IRUSR:
         new_mode |= stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
     os.chmod(path, new_mode)
+
+
+@contextmanager
+def simple_env_bzr(bin_dir):
+    """Create an appropriate environment to run bzr.
+
+       The python plugin sets up PYTHONUSERBASE and PYTHONHOME which
+       conflicts with bzr when using python3 as those two environment
+       variables will make bzr look for modules in the wrong location.
+       """
+    os.makedirs(bin_dir, exist_ok=True)
+    bzr_bin = os.path.join(bin_dir, 'bzr')
+    real_bzr_bin = which('bzr')
+    if real_bzr_bin:
+        exec_line = 'exec {} "$@"'.format(real_bzr_bin)
+    else:
+        exec_line = 'echo bzr needs to be in PATH; exit 1'
+    with open(bzr_bin, 'w') as f:
+        f.write(dedent(
+            """#!/bin/sh
+               unset PYTHONUSERBASE
+               unset PYTHONHOME
+               {}
+            """.format(exec_line)))
+    os.chmod(bzr_bin, 0o777)
+    try:
+        yield
+    finally:
+        os.remove(bzr_bin)
+        if not os.listdir(bin_dir):
+            os.rmdir(bin_dir)

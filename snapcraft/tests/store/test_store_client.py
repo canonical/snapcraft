@@ -638,6 +638,89 @@ class ReleaseTestCase(tests.TestCase):
             self.client.release('test-snap', '10', ['beta'])
 
 
+class CloseChannelsTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_close_requires_login(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.close_channels('snap-id', ['dummy'])
+
+    def test_close_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.client.close_channels('snap-id', ['dummy'])
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    def test_close_invalid_data(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['invalid'])
+        self.assertEqual(
+            str(raised.exception),
+            "Could not close channel: The 'channels' field content "
+            "is not valid.")
+
+    def test_close_unexpected_data(self):
+        # The endpoint in SCA would never return plain/text, however anything
+        # might happen in the internet, so we are a little defensive.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['unexpected'])
+        self.assertEqual(
+            str(raised.exception),
+            'Could not close channel: 500 Internal Server Error')
+
+    def test_close_broken_store_plain(self):
+        # If the contract is broken by the Store, users will be have additional
+        # debug information available.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['broken-plain'])
+        self.assertEqual(
+            str(raised.exception),
+            'Could not close channel: 200 OK')
+        self.assertEqual([
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'plain data\'',
+            ], self.fake_logger.output.splitlines()[-3:])
+
+    def test_close_broken_store_json(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['broken-json'])
+        self.assertEqual(
+            str(raised.exception),
+            'Could not close channel: 200 OK')
+        self.assertEqual([
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'{"closed_channels": ["broken-json"]}\'',
+            ], self.fake_logger.output.splitlines()[-3:])
+
+    def test_close_successfully(self):
+        # Successfully closing a channels returns 'closed_channels'
+        # and 'channel_maps' from the Store.
+        self.client.login('dummy', 'test correct password')
+        closed_channels, channel_maps = self.client.close_channels(
+            'snap-id', ['beta'])
+        self.assertEqual(['beta'], closed_channels)
+        self.assertEqual({
+            'amd64': [
+                {'channel': 'stable', 'info': 'none'},
+                {'channel': 'candidate', 'info': 'none'},
+                {'channel': 'beta', 'info': 'specific',
+                 'revision': 42, 'version': '1.1'},
+                {'channel': 'edge', 'info': 'tracking'}]
+        }, channel_maps)
+
+
 class MacaroonsTestCase(tests.TestCase):
 
     def test_invalid_macaroon_root_raises_exception(self):
