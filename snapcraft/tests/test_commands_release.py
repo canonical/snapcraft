@@ -61,21 +61,17 @@ class ReleaseCommandTestCase(tests.TestCase):
 
         main(['release', 'nil-snap', '19', 'beta'])
 
-        self.assertIn(
-            'The \'beta\' channel is now open.',
-            self.fake_logger.output)
-
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
-        terminal_output = fake_terminal.getvalue()
-        expected_output = """Channel    Version    Revision
----------  ---------  ----------
-stable     -          -
-candidate  -          -
-beta       0          19
-edge       ^          ^
-"""
-        self.assertIn(expected_output, terminal_output)
+        self.assertEqual([
+            "\x1b[0;32mThe 'beta' channel is now open.\x1b[0m",
+            '',
+            'Channel    Version    Revision',
+            'stable     -          -',
+            'candidate  -          -',
+            'beta       0          19',
+            'edge       ^          ^',
+        ], fake_terminal.getvalue().splitlines())
 
     def test_release_snap_opens_more_than_one_channel(self):
         fake_terminal = fixture_setup.FakeTerminal()
@@ -97,21 +93,18 @@ edge       ^          ^
 
         main(['release', 'nil-snap', '19', 'beta'])
 
-        self.assertIn(
-            'The \'stable\', \'beta\' and \'edge\' channels are now open.',
-            self.fake_logger.output)
-
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
-        terminal_output = fake_terminal.getvalue()
-        expected_output = """Channel    Version    Revision
----------  ---------  ----------
-stable     -          -
-candidate  -          -
-beta       0          19
-edge       ^          ^
-"""
-        self.assertIn(expected_output, terminal_output)
+        self.assertEqual([
+            "\x1b[0;32mThe 'stable', 'beta' and 'edge' channels "
+            "are now open.\x1b[0m",
+            '',
+            'Channel    Version    Revision',
+            'stable     -          -',
+            'candidate  -          -',
+            'beta       0          19',
+            'edge       ^          ^',
+        ], fake_terminal.getvalue().splitlines())
 
     def test_release_with_bad_channel_info(self):
         patcher = mock.patch.object(storeapi.StoreClient, 'release')
