@@ -43,6 +43,11 @@ class OptionsTestCase(tests.TestCase):
             expected_arch_triplet='aarch64-linux-gnu',
             expected_deb_arch='arm64',
             expected_kernel_arch='arm64')),
+        ('ppc', dict(
+            machine='ppc',
+            expected_arch_triplet='powerpc-linux-gnu',
+            expected_deb_arch='powerpc',
+            expected_kernel_arch='powerpc')),
         ('ppc64le', dict(
             machine='ppc64le',
             expected_arch_triplet='powerpc64le-linux-gnu',
