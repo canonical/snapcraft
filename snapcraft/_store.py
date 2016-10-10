@@ -495,27 +495,25 @@ def gated(snap_name):
     with _requires_login():
         snaps = store.get_account_information().get('snaps', {})
 
+    release = storeapi.constants.DEFAULT_SERIES
     # Resolve name to snap-id
-    snap_id = None
-    for snaps_for_series in snaps.values():
-        for name, snap in snaps_for_series.items():
-            if name == snap_name:
-                snap_id = snap['snap-id']
-                break
-        if snap_id:
-            break
-    else:
+    try:
+        snap_id = snaps[release][snap_name]['snap-id']
+    except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
     validations = store.get_validations(snap_id)
 
-    table_data = []
-    for v in validations:
-        table_data.append([v['approved-snap-name'],
-                           v['approved-snap-revision']])
-    tabulated = tabulate(table_data, headers=['Name', 'Approved'],
-                         tablefmt="plain")
-    print(tabulated)
+    if validations:
+        table_data = []
+        for v in validations:
+            table_data.append([v['approved-snap-name'],
+                               v['approved-snap-revision']])
+        tabulated = tabulate(table_data, headers=['Name', 'Approved'],
+                             tablefmt="plain")
+        print(tabulated)
+    else:
+        print('There are no validations for snap {!r}'.format(snap_name))
 
 
 def validate(snap_name, validations, revoke=False, key=None):
@@ -526,16 +524,17 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     store = storeapi.StoreClient()
 
-    # Get data for the gating snap
-    with _requires_login():
-        snap_data = store.cpi.get_package(snap_name, 'stable')
-    release = str(snap_data['release'][0])
-    snap_id = snap_data['snap_id']
-
     # Need the ID of the logged in user.
     with _requires_login():
         account_info = store.get_account_information()
     authority_id = account_info['account_id']
+
+    # Get data for the gating snap
+    release = storeapi.constants.DEFAULT_SERIES
+    try:
+        snap_id = account_info['snaps'][release][snap_name]['snap-id']
+    except KeyError:
+        raise storeapi.errors.SnapNotFoundError(snap_name)
 
     # Then, for each requested validation, generate assertion
     for validation in validations:

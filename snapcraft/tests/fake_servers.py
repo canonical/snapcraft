@@ -684,6 +684,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         snap_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snaps')
         good_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/good/validations')
+        no_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/snap-id/validations')
         bad_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/bad/validations')
         err_validations_path = urllib.parse.urljoin(
@@ -701,6 +703,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('bad')
         elif parsed_path.path.startswith(err_validations_path):
             self._handle_validation_request('err')
+        elif parsed_path.path.startswith(no_validations_path):
+            self._handle_validation_request('no')
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_history()
@@ -742,6 +746,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             status = 200
         elif code == 'bad':
             response = 'foo'.encode()
+            status = 200
+        elif code == 'no':
+            response = json.dumps([]).encode()
             status = 200
         elif code == 'err':
             status = 503
