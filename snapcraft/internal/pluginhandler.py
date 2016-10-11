@@ -301,7 +301,6 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Building')
         self.code.build()
-        self._organize()
         self.mark_done('build', states.BuildState(
             self.build_properties, self.code.options, self._project_options))
 
@@ -317,9 +316,13 @@ class PluginHandler:
         self.mark_cleaned('build')
 
     def migratable_fileset_for(self, step):
+        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
         plugin_fileset = self.code.snap_fileset()
         fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
-        fileset.extend(plugin_fileset)
+        fileset = [(x, None) for x in fileset]
+        fileset.extend([(x, None) for x in plugin_fileset])
+        fileset.extend(
+            [(key, value) for key, value in organize_fileset.items()])
 
         return _migratable_filesets(fileset, self.code.installdir)
 
@@ -450,6 +453,13 @@ class PluginHandler:
 
         # Finally, clean the files and directories that are specific to this
         # part.
+        if primed_files:
+            item = primed_files.pop()
+            primed_files.add(item)
+        else:
+            item = None
+        if not isinstance(item, tuple):
+            primed_files = [(x, None) for x in primed_files]
         _clean_migrated_files(primed_files, primed_directories,
                               shared_directory)
 
@@ -609,6 +619,8 @@ def load_plugin(part_name, plugin_name, properties=None,
 
 
 def _migratable_filesets(fileset, srcdir):
+    if not isinstance(fileset[0], tuple):
+        fileset = [(x, None) for x in fileset]
     includes, excludes = _get_file_list(fileset)
 
     include_files = _generate_include_set(srcdir, includes)
@@ -617,20 +629,26 @@ def _migratable_filesets(fileset, srcdir):
     # And chop files, including whole trees if any dirs are mentioned
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
+        e_dir = exclude_dir[1] if exclude_dir[1] else exclude_dir[0]
         snap_files = set([x for x in snap_files
-                          if not x.startswith(exclude_dir + '/')])
+                          if not x[0].startswith(e_dir + '/')])
 
     # Separate dirs from files
     snap_dirs = set([x for x in snap_files
-                     if os.path.isdir(os.path.join(srcdir, x)) and
-                     not os.path.islink(os.path.join(srcdir, x))])
-    snap_files = snap_files - snap_dirs
+                     if os.path.isdir(os.path.join(srcdir, x[0])) and
+                     not os.path.islink(os.path.join(srcdir, x[0]))])
+    only_snap_files = set()
+    for item in snap_files:
+        if item not in snap_dirs:
+            only_snap_files.add(item)
+
+    snap_files = only_snap_files
 
     # Make sure we also obtain the parent directories of files
     for snap_file in snap_files:
-        dirname = os.path.dirname(snap_file)
+        dirname = os.path.dirname(snap_file[0])
         while dirname:
-            snap_dirs.add(dirname)
+            snap_dirs.add((dirname, None))
             dirname = os.path.dirname(dirname)
 
     return snap_files, snap_dirs
@@ -639,15 +657,17 @@ def _migratable_filesets(fileset, srcdir):
 def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
                    follow_symlinks=False, fixup_func=lambda *args: None):
 
-    for directory in snap_dirs:
+    for directory, dst_directory in snap_dirs:
         src = os.path.join(srcdir, directory)
-        dst = os.path.join(dstdir, directory)
+        dst = os.path.join(
+            dstdir, dst_directory if dst_directory else directory)
 
         snapcraft.file_utils.create_similar_directory(src, dst)
 
-    for snap_file in snap_files:
-        src = os.path.join(srcdir, snap_file)
-        dst = os.path.join(dstdir, snap_file)
+    for src_snap_file, dst_snap_file in snap_files:
+        src = os.path.join(srcdir, src_snap_file)
+        dst = os.path.join(
+            dstdir, dst_snap_file if dst_snap_file else src_snap_file)
 
         snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
                                                       os.path.dirname(dst))
@@ -695,21 +715,50 @@ def _organize_filesets(fileset, base_dir):
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
-    for snap_file in snap_files:
-        os.remove(os.path.join(directory, snap_file))
+    for snap_file, dst_snap_file in snap_files:
+        try:
+            if dst_snap_file:
+                os.remove(os.path.join(directory, dst_snap_file))
+            else:
+                os.remove(os.path.join(directory, snap_file))
+        except OSError:
+            pass
 
+    if snap_dirs:
+        item = snap_dirs.pop()
+        snap_dirs.add(item)
+    else:
+        item = None
+    if not isinstance(item, tuple):
+        snap_dirs = [(x, None) for x in snap_dirs]
     # snap_dirs may not be ordered so that subdirectories come before
     # parents, and we want to be able to remove directories if possible, so
     # we'll sort them in reverse here to get subdirectories before parents.
     snap_dirs = sorted(snap_dirs, reverse=True)
 
-    for snap_dir in snap_dirs:
-        migrated_directory = os.path.join(directory, snap_dir)
+    for snap_dir, dst_snap_dir in snap_dirs:
+        if dst_snap_dir:
+            migrated_directory = os.path.join(directory, dst_snap_dir)
+        else:
+            migrated_directory = os.path.join(directory, snap_dir)
         if not os.listdir(migrated_directory):
             os.rmdir(migrated_directory)
 
 
+def _fixup_fileset(fileset):
+    item = None
+    if fileset and isinstance(fileset, set):
+        item = fileset.pop()
+        fileset.add(item)
+
+    if not isinstance(item, tuple):
+        fileset = [(x, None) for x in fileset]
+
+    return fileset
+
+
 def _find_dependencies(root, part_files):
+    part_files = _fixup_fileset(part_files)
     ms = magic.open(magic.NONE)
     if ms.load() != 0:
         raise RuntimeError('Cannot load magic header detection')
@@ -718,7 +767,8 @@ def _find_dependencies(root, part_files):
 
     fs_encoding = sys.getfilesystemencoding()
 
-    for part_file in part_files:
+    for src_part_file, dst_part_file in part_files:
+        part_file = dst_part_file if dst_part_file else src_part_file
         # Filter out object (*.o) files-- we only care about binaries.
         if part_file.endswith('.o'):
             continue
@@ -748,43 +798,51 @@ def _get_file_list(stage_set):
     includes = []
     excludes = []
 
-    for item in stage_set:
-        if item.startswith('-'):
-            excludes.append(item[1:])
-        elif item.startswith('\\'):
-            includes.append(item[1:])
+    if not isinstance(stage_set[0], tuple):
+        stage_set = [(x, None) for x in stage_set]
+
+    for src_item, dst_item in stage_set:
+        if src_item.startswith('-'):
+            excludes.append((src_item[1:], dst_item))
+        elif src_item.startswith('\\'):
+            includes.append((src_item[1:], dst_item))
         else:
-            includes.append(item)
+            includes.append((src_item, dst_item))
 
     _validate_relative_paths(includes + excludes)
 
-    includes = includes or ['*']
+    includes = includes or [('*', None)]
 
     return includes, excludes
 
 
 def _generate_include_set(directory, includes):
     include_files = set()
-    for include in includes:
+    for include, dst_include in includes:
         if '*' in include:
             pattern = os.path.join(directory, include)
             matches = iglob(pattern, recursive=True)
-            include_files |= set(matches)
+            include_files |= set(
+                [(x, dst_include) for x in set(matches)])
         else:
-            include_files |= set([os.path.join(directory, include), ])
+            include_files |= set(
+                [(os.path.join(directory, include), dst_include), ])
 
-    include_dirs = [x for x in include_files if os.path.isdir(x)]
-    include_files = set([os.path.relpath(x, directory) for x in include_files])
+    include_dirs = [x[0] for x in include_files if os.path.isdir(x[0])]
+    include_files = set(
+        [(os.path.relpath(x[0], directory), x[1]) for x in include_files])
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
             include_files |= \
-                set([os.path.relpath(os.path.join(root, d), directory)
+                set([(os.path.relpath(os.path.join(root, d), directory),
+                      dst_include)
                      for d in dirs])
             include_files |= \
-                set([os.path.relpath(os.path.join(root, f), directory)
+                set([(os.path.relpath(os.path.join(root, f), directory),
+                      dst_include)
                      for f in files])
 
     return include_files
@@ -793,21 +851,21 @@ def _generate_include_set(directory, includes):
 def _generate_exclude_set(directory, excludes):
     exclude_files = set()
 
-    for exclude in excludes:
+    for exclude, dst_exclude in excludes:
         pattern = os.path.join(directory, exclude)
         matches = iglob(pattern, recursive=True)
         exclude_files |= set(matches)
 
-    exclude_dirs = [os.path.relpath(x, directory)
+    exclude_dirs = [(os.path.relpath(x, directory), dst_exclude)
                     for x in exclude_files if os.path.isdir(x)]
-    exclude_files = set([os.path.relpath(x, directory)
+    exclude_files = set([(os.path.relpath(x, directory), dst_exclude)
                          for x in exclude_files])
 
     return exclude_files, exclude_dirs
 
 
 def _validate_relative_paths(files):
-    for d in files:
+    for d, dd in files:
         if os.path.isabs(d):
             raise PluginError('path "{}" must be relative'.format(d))
 
@@ -834,6 +892,24 @@ def _file_collides(file_this, file_other):
     return False
 
 
+def _get_conflict_files(common, part, other_part_name, parts_files):
+    conflict_files = []
+    for p, f in common:
+        p_directory = part.stagedir if p[1] else part.installdir
+        p_file = p[1] if p[1] else p[0]
+        f_file = f[1] if f[1] else f[0]
+
+        this = os.path.join(p_directory, p_file)
+        other = os.path.join(
+            parts_files[other_part_name]['installdir'], f_file)
+        if os.path.islink(this) and os.path.islink(other):
+            continue
+        if _file_collides(this, other):
+            conflict_files.append(p_file)
+
+    return conflict_files
+
+
 def check_for_collisions(parts):
     """Raises an EnvironmentError if conflicts are found between two parts."""
     parts_files = {}
@@ -843,17 +919,18 @@ def check_for_collisions(parts):
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
-            common = part_files & parts_files[other_part_name]['files']
-            conflict_files = []
-            for f in common:
-                this = os.path.join(part.installdir, f)
-                other = os.path.join(
-                    parts_files[other_part_name]['installdir'],
-                    f)
-                if os.path.islink(this) and os.path.islink(other):
-                    continue
-                if _file_collides(this, other):
-                    conflict_files.append(f)
+            common = []
+            for p in part_files:
+                p_file = p[1] if p[1] else p[0]
+
+                for f in parts_files[other_part_name]['files']:
+                    if f[1] and f[1] == p_file:
+                            common.append((p, f))
+                    elif not f[1] and f[0] == p_file:
+                            common.append((p, f))
+
+            conflict_files = _get_conflict_files(common, part,
+                                                 other_part_name, parts_files)
 
             if conflict_files:
                 raise SnapcraftPartConflictError(

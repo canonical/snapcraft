@@ -68,9 +68,9 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = pluginhandler._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin',
-                                   '-everything', r'\a'])
-        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+        self.assertEqual(include, [('opt/something', None), ('usr/bin', None),
+                                   ('-everything', None), (r'\a', None)])
+        self.assertEqual(exclude, [('etc', None), ('usr/lib/*.a', None)])
 
     @patch.object(snapcraft.plugins.nil.NilPlugin, 'snap_fileset')
     def test_migratable_fileset_for_no_options_modification(
@@ -102,7 +102,7 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = pluginhandler._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin'])
+        self.assertEqual(include, [('opt/something', None), ('usr/bin', None)])
         self.assertEqual(exclude, [])
 
     def test_fileset_only_excludes(self):
@@ -113,8 +113,8 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = pluginhandler._get_file_list(stage_set)
 
-        self.assertEqual(include, ['*'])
-        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+        self.assertEqual(include, [('*', None)])
+        self.assertEqual(exclude, [('etc', None), ('usr/lib/*.a', None)])
 
     def test_migrate_snap_files(self):
         filesets = {
@@ -596,40 +596,47 @@ class MigratableFilesetsTestCase(tests.TestCase):
 
     def test_migratable_filesets_everything(self):
         files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
-        self.assertEqual({'1', 'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertEqual({('1', None), ('foo/2', None),
+                          ('foo/bar/3', None), ('foo/bar/baz/4', None)}, files)
+        self.assertEqual({('foo', None), ('foo/bar', None),
+                          ('foo/bar/baz', None)}, dirs)
 
     def test_migratable_filesets_foo(self):
         files, dirs = pluginhandler._migratable_filesets(['foo'], 'install')
-        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertEqual({('foo/2', None), ('foo/bar/3', None),
+                          ('foo/bar/baz/4', None)}, files)
+        self.assertEqual({('foo', None), ('foo/bar', None),
+                          ('foo/bar/baz', None)}, dirs)
 
     def test_migratable_filesets_everything_in_foo(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/*'], 'install')
-        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertEqual({('foo/2', None), ('foo/bar/3', None),
+                          ('foo/bar/baz/4', None)}, files)
+        self.assertEqual({('foo', None), ('foo/bar', None),
+                          ('foo/bar/baz', None)}, dirs)
 
     def test_migratable_filesets_root_file(self):
         files, dirs = pluginhandler._migratable_filesets(['1'], 'install')
-        self.assertEqual({'1'}, files)
+        self.assertEqual({('1', None)}, files)
         self.assertEqual(set(), dirs)
 
     def test_migratable_filesets_single_nested_file(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/2'], 'install')
-        self.assertEqual({'foo/2'}, files)
-        self.assertEqual({'foo'}, dirs)
+        self.assertEqual({('foo/2', None)}, files)
+        self.assertEqual({('foo', None)}, dirs)
 
     def test_migratable_filesets_single_really_nested_file(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/bar/2'],
                                                          'install')
-        self.assertEqual({'foo/bar/2'}, files)
-        self.assertEqual({'foo', 'foo/bar'}, dirs)
+        self.assertEqual({('foo/bar/2', None)}, files)
+        self.assertEqual({('foo', None), ('foo/bar', None)}, dirs)
 
     def test_migratable_filesets_single_really_really_nested_file(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/bar/baz/3'],
                                                          'install')
-        self.assertEqual({'foo/bar/baz/3'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertEqual({('foo/bar/baz/3', None)}, files)
+        self.assertEqual({('foo', None), ('foo/bar', None),
+                          ('foo/bar/baz', None)}, dirs)
 
 
 class OrganizeTestCase(tests.TestCase):
@@ -1048,10 +1055,10 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
-        self.assertTrue('bin/1' in state.files)
-        self.assertTrue('bin/2' in state.files)
+        self.assertTrue(('bin/1', None) in state.files)
+        self.assertTrue(('bin/2', None) in state.files)
         self.assertEqual(1, len(state.directories))
-        self.assertTrue('bin' in state.directories)
+        self.assertTrue(('bin', None) in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
@@ -1079,9 +1086,9 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
-        self.assertTrue('bin/1' in state.files)
+        self.assertTrue(('bin/1', None) in state.files)
         self.assertEqual(1, len(state.directories))
-        self.assertTrue('bin' in state.directories)
+        self.assertTrue(('bin', None) in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['bin/1'])
         self.assertTrue(type(state.project_options) is OrderedDict)
@@ -1177,8 +1184,8 @@ class StateTestCase(tests.TestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
-                                                       {'bin/1', 'bin/2'})
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {('bin/1', None), ('bin/2', None)})
         self.assertFalse(mock_copy.called)
 
         state = self.handler.get_state('prime')
@@ -1189,10 +1196,10 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
-        self.assertTrue('bin/1' in state.files)
-        self.assertTrue('bin/2' in state.files)
+        self.assertTrue(('bin/1', None) in state.files)
+        self.assertTrue(('bin/2', None) in state.files)
         self.assertEqual(1, len(state.directories))
-        self.assertTrue('bin' in state.directories)
+        self.assertTrue(('bin', None) in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
@@ -1222,7 +1229,7 @@ class StateTestCase(tests.TestCase):
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
         mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
-                                                       {'bin/1'})
+                                                       {('bin/1', None)})
         self.assertFalse(mock_copy.called)
 
         state = self.handler.get_state('prime')
@@ -1233,9 +1240,9 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
-        self.assertTrue('bin/1' in state.files)
+        self.assertTrue(('bin/1', None) in state.files)
         self.assertEqual(1, len(state.directories))
-        self.assertTrue('bin' in state.directories)
+        self.assertTrue(('bin', None) in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['*'])
@@ -1265,10 +1272,10 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/1', 'bin/2'})
+            self.handler.snapdir, {('bin/1', None), ('bin/2', None)})
         mock_migrate_files.assert_has_calls([
-            call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
-                 self.handler.snapdir),
+            call({('bin/1', None), ('bin/2', None)}, {('bin', None)},
+                 self.handler.stagedir, self.handler.snapdir),
             call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
                  follow_symlinks=True),
         ])
@@ -1281,10 +1288,10 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(2, len(state.files))
-        self.assertTrue('bin/1' in state.files)
-        self.assertTrue('bin/2' in state.files)
+        self.assertTrue(('bin/1', None) in state.files)
+        self.assertTrue(('bin/2', None) in state.files)
         self.assertEqual(1, len(state.directories))
-        self.assertTrue('bin' in state.directories)
+        self.assertTrue(('bin', None) in state.directories)
         self.assertEqual(3, len(state.dependency_paths))
         self.assertTrue('foo/bar' in state.dependency_paths)
         self.assertTrue('lib1' in state.dependency_paths)
@@ -1314,7 +1321,7 @@ class StateTestCase(tests.TestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
-                                                       {'bin/1'})
+                                                       {('bin/1', None)})
         self.assertFalse(mock_copy.called)
 
         state = self.handler.get_state('prime')
@@ -1325,9 +1332,9 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(1, len(state.files))
-        self.assertTrue('bin/1' in state.files)
+        self.assertTrue(('bin/1', None) in state.files)
         self.assertEqual(1, len(state.directories))
-        self.assertTrue('bin' in state.directories)
+        self.assertTrue(('bin', None) in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
         self.assertTrue('snap' in state.properties)
         self.assertEqual(state.properties['snap'], ['bin/1'])
