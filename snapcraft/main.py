@@ -134,7 +134,7 @@ https://linuxcontainers.org/lxd/getting-started-cli
 to get started.
 
 For more help, visit the documentation:
-http://developer.ubuntu.com/snappy/snapcraft
+http://snapcraft.io/docs/build-snaps
 """  # NOQA
 
 import logging
