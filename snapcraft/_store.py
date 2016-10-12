@@ -152,7 +152,7 @@ def list_keys():
     tabulated_keys = tabulate(
         [('*' if key['sha3-384'] in enabled_keys else '-',
           key['name'], key['sha3-384'],
-          '' if key['sha3-384'] in enabled_keys else '(not enabled)')
+          '' if key['sha3-384'] in enabled_keys else '(not registered)')
          for key in keys],
         headers=["", "Name", "SHA3-384 fingerprint", ""],
         tablefmt="plain")
@@ -189,19 +189,26 @@ def create_key(name):
     subprocess.check_call(['snap', 'create-key', name])
 
 
+def _maybe_prompt_for_key(name):
+    keys = list(_get_usable_keys(name=name))
+    if not keys:
+        if name is not None:
+            raise RuntimeError(
+                'You have no usable key named "{}".\nSee the keys available '
+                'in your system with `snapcraft keys`.'.format(name))
+        else:
+            raise RuntimeError(
+                'You have no usable keys.\nPlease create at least one key '
+                'with `snapcraft create-key` for use with snap.')
+    return _select_key(keys)
+
+
 def register_key(name):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`register-key`, you must run `apt install snapd`.')
-    keys = list(_get_usable_keys(name=name))
-    if not keys:
-        if name is not None:
-            raise RuntimeError(
-                'You have no usable key named "{}".'.format(name))
-        else:
-            raise RuntimeError('You have no usable keys.')
-    key = _select_key(keys)
+    key = _maybe_prompt_for_key(name)
     store = storeapi.StoreClient()
     if not _login(store, acls=['modify_account_key'], save=False):
         raise RuntimeError('Cannot continue without logging in successfully.')
@@ -242,7 +249,7 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name,
             'Failed to sign build assertion for {}.'.format(snap_filename))
 
 
-def sign_build(snap_filename, key_name='default', local=False):
+def sign_build(snap_filename, key_name=None, local=False):
     if not repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
@@ -259,26 +266,39 @@ def sign_build(snap_filename, key_name='default', local=False):
 
     store = storeapi.StoreClient()
     with _requires_login():
-        try:
-            info = store.get_account_information()
-            authority_id = info['account_id']
-            snap_id = info['snaps'][snap_series][snap_name]['snap-id']
-        except KeyError:
-            raise RuntimeError(
-                'Your account lacks permission to assert builds for this '
-                'snap. Make sure you are logged in as the publisher of '
-                '\'{}\' for series \'{}\'.'.format(snap_name, snap_series))
+        account_info = store.get_account_information()
+
+    try:
+        authority_id = account_info['account_id']
+        snap_id = account_info['snaps'][snap_series][snap_name]['snap-id']
+    except KeyError:
+        raise RuntimeError(
+            'Your account lacks permission to assert builds for this '
+            'snap. Make sure you are logged in as the publisher of '
+            '\'{}\' for series \'{}\'.'.format(snap_name, snap_series))
 
     snap_build_path = snap_filename + '-build'
     if os.path.isfile(snap_build_path):
-        with open(snap_build_path, 'rb') as fd:
-            snap_build_content = fd.read()
         logger.info(
             'A signed build assertion for this snap already exists.')
+        with open(snap_build_path, 'rb') as fd:
+            snap_build_content = fd.read()
     else:
+        key = _maybe_prompt_for_key(key_name)
+        if not local:
+            is_registered = [
+                a for a in account_info['account_keys']
+                if a['public-key-sha3-384'] == key['sha3-384']
+            ]
+            if not is_registered:
+                raise RuntimeError(
+                    'The key {!r} is not registered in the Store.\n'
+                    'Please register it with `snapcraft register-key {!r}` '
+                    'before signing and pushing signatures to the '
+                    'Store.'.format(key['name'], key['name']))
+        snap_build_content = _generate_snap_build(
+            authority_id, snap_id, grade, key['name'], snap_filename)
         with open(snap_build_path, 'w+') as fd:
-            snap_build_content = _generate_snap_build(
-                authority_id, snap_id, grade, key_name, snap_filename)
             fd.write(snap_build_content.decode())
         logger.info(
             'Build assertion {} saved to disk.'.format(snap_build_path))
@@ -360,10 +380,61 @@ def release(snap_name, revision, release_channels):
         print()
     channel_map = channels['channel_map']
     parsed_channels = [_get_text_for_channel(c) for c in channel_map]
-    tabulated_channels = tabulate(parsed_channels,
-                                  headers=['Channel', 'Version', 'Revision'])
+    tabulated_channels = tabulate(
+        parsed_channels, numalign='left',
+        headers=['Channel', 'Version', 'Revision'],
+        tablefmt='plain')
     # This does not look good in green so we print instead
     print(tabulated_channels)
+
+
+def _tabulated_status(status):
+    """Tabulate status (architecture-specific channel-maps)."""
+    def _format_channel_map(channel_map, arch):
+        return [
+            (printable_arch,) + _get_text_for_channel(channel)
+            for printable_arch, channel in zip(
+                    [arch] + [''] * len(channel_map), channel_map)]
+
+    parsed_channels = [
+        channel
+        for arch, channel_map in sorted(status.items())
+        for channel in _format_channel_map(channel_map, arch)]
+    return tabulate(
+        parsed_channels, numalign='left',
+        headers=['Arch', 'Channel', 'Version', 'Revision'],
+        tablefmt='plain')
+
+
+def close(snap_name, channel_names):
+    """Close one or more channels for the specific snap."""
+    snap_series = storeapi.constants.DEFAULT_SERIES
+
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        info = store.get_account_information()
+
+    try:
+        snap_id = info['snaps'][snap_series][snap_name]['snap-id']
+    except KeyError:
+        raise RuntimeError(
+            'Your account lacks permission to close channels for this snap. '
+            'Make sure the logged in account has upload permissions on '
+            '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
+
+    closed_channels, status = store.close_channels(snap_id, channel_names)
+
+    tabulated_status = _tabulated_status(status)
+    print(tabulated_status)
+
+    print()
+    if len(closed_channels) == 1:
+        msg = 'The {} channel is now closed.'.format(closed_channels[0])
+    else:
+        msg = 'The {} and {} channels are now closed.'.format(
+            ', '.join(closed_channels[:-1]), closed_channels[-1])
+    logger.info(msg)
 
 
 def download(snap_name, channel, download_path, arch):
@@ -378,6 +449,40 @@ def download(snap_name, channel, download_path, arch):
                 snap_name, download_path))
 
 
+def status(snap_name, series, arch):
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        status = store.get_snap_status(snap_name, series, arch)
+
+    tabulated_status = _tabulated_status(status)
+    print(tabulated_status)
+
+
+def _get_text_for_current_channels(channels, current_channels):
+    return ', '.join(
+        channel + ('*' if channel in current_channels else '')
+        for channel in channels) or '-'
+
+
+def history(snap_name, series, arch):
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        history = store.get_snap_history(snap_name, series, arch)
+
+    parsed_revisions = [
+        (rev['revision'], rev['timestamp'], rev['arch'], rev['version'],
+         _get_text_for_current_channels(
+            rev['channels'], rev['current_channels']))
+        for rev in history]
+    tabulated_revisions = tabulate(
+        parsed_revisions, numalign='left',
+        headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
+        tablefmt='plain')
+    print(tabulated_revisions)
+
+
 def gated(snap_name):
     """Print list of snaps gated by snap_name."""
     store = storeapi.StoreClient()
@@ -385,27 +490,25 @@ def gated(snap_name):
     with _requires_login():
         snaps = store.get_account_information().get('snaps', {})
 
+    release = storeapi.constants.DEFAULT_SERIES
     # Resolve name to snap-id
-    snap_id = None
-    for snaps_for_series in snaps.values():
-        for name, snap in snaps_for_series.items():
-            if name == snap_name:
-                snap_id = snap['snap-id']
-                break
-        if snap_id:
-            break
-    else:
+    try:
+        snap_id = snaps[release][snap_name]['snap-id']
+    except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
     validations = store.get_validations(snap_id)
 
-    table_data = []
-    for v in validations:
-        table_data.append([v['approved-snap-name'],
-                           v['approved-snap-revision']])
-    tabulated = tabulate(table_data, headers=['Name', 'Approved'],
-                         tablefmt="plain")
-    print(tabulated)
+    if validations:
+        table_data = []
+        for v in validations:
+            table_data.append([v['approved-snap-name'],
+                               v['approved-snap-revision']])
+        tabulated = tabulate(table_data, headers=['Name', 'Approved'],
+                             tablefmt="plain")
+        print(tabulated)
+    else:
+        print('There are no validations for snap {!r}'.format(snap_name))
 
 
 def validate(snap_name, validations, revoke=False, key=None):
@@ -416,16 +519,17 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     store = storeapi.StoreClient()
 
-    # Get data for the gating snap
-    with _requires_login():
-        snap_data = store.cpi.get_package(snap_name, 'stable')
-    release = str(snap_data['release'][0])
-    snap_id = snap_data['snap_id']
-
     # Need the ID of the logged in user.
     with _requires_login():
         account_info = store.get_account_information()
     authority_id = account_info['account_id']
+
+    # Get data for the gating snap
+    release = storeapi.constants.DEFAULT_SERIES
+    try:
+        snap_id = account_info['snaps'][release][snap_name]['snap-id']
+    except KeyError:
+        raise storeapi.errors.SnapNotFoundError(snap_name)
 
     # Then, for each requested validation, generate assertion
     for validation in validations:

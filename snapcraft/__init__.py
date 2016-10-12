@@ -231,7 +231,9 @@ from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
 from snapcraft._store import (                      # noqa
     create_key,
+    close,
     download,
+    history,
     gated,
     list_keys,
     login,
@@ -241,6 +243,7 @@ from snapcraft._store import (                      # noqa
     register_key,
     release,
     sign_build,
+    status,
     validate,
 )
 from snapcraft import common                        # noqa

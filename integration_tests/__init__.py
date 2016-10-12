@@ -187,11 +187,11 @@ class StoreTestCase(TestCase):
                 print(line)
         return updated_project_dir
 
-    def gated(self, snap_name, expected_validations=[], expected_error=None):
+    def gated(self, snap_name, expected_validations=[], expected_output=None):
         process = pexpect.spawn(self.snapcraft_command, ['gated', snap_name])
 
-        if expected_error:
-            process.expect(expected_error)
+        if expected_output:
+            process.expect(expected_output)
         else:
             for name, revision in expected_validations:
                 process.expect('{} *{}'.format(name, revision))
@@ -227,6 +227,28 @@ class StoreTestCase(TestCase):
                 process.expect(
                     'Build assertion {}-build pushed.'.format(snap_filename))
 
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def close(self, *args, **kwargs):
+        process = pexpect.spawn(
+            self.snapcraft_command, ['close'] + list(args))
+        expected = kwargs.get('expected')
+        if expected is not None:
+            process.expect(expected)
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def push(self, snap, release=None, expected=None):
+        actions = ['push', snap]
+        if release is not None:
+            actions += ['--release', release]
+        process = pexpect.spawn(
+            self.snapcraft_command, actions)
+        if expected is not None:
+            process.expect(expected)
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus

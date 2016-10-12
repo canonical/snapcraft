@@ -40,6 +40,9 @@ Usage:
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
+  snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
@@ -82,6 +85,7 @@ Options specific to snapping:
 
 Options specific to store interaction:
   --release <channels>  Comma separated list of channels to release to.
+  --series <series>     Snap series [default: {DEFAULT_SERIES}].
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
@@ -101,6 +105,9 @@ The available commands are:
   upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
                supersedes this command.
   release      Release a revision of a snap to a specific channel.
+  status       Show the current status of a snap per channel and architecture.
+  history      List all revisions of a snap.
+  close        Close one or more channels of a snap.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -127,7 +134,7 @@ https://linuxcontainers.org/lxd/getting-started-cli
 to get started.
 
 For more help, visit the documentation:
-http://developer.ubuntu.com/snappy/snapcraft
+http://snapcraft.io/docs/build-snaps
 """  # NOQA
 
 import logging
@@ -145,6 +152,7 @@ from snapcraft.internal.common import (
     format_output_in_columns,
     get_terminal_width,
     get_tourdir)
+from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 
 logger = logging.getLogger(__name__)
@@ -208,7 +216,8 @@ def _get_project_options(args):
 
 
 def main(argv=None):
-    args = docopt(__doc__, version=_get_version(), argv=argv)
+    doc = __doc__.format(DEFAULT_SERIES=DEFAULT_SERIES)
+    args = docopt(doc, version=_get_version(), argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
@@ -295,7 +304,8 @@ def _run_clean(args, project_options):
 def _is_store_command(args):
     commands = (
         'list-keys', 'keys', 'create-key', 'register-key', 'register',
-        'sign-build', 'upload', 'release', 'push', 'validate', 'gated')
+        'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
+        'history', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
@@ -330,6 +340,14 @@ def _run_store_command(args):  # noqa: C901
                            key=args['--key-name'])
     elif args['gated']:
         snapcraft.gated(args['<snap-name>'])
+    elif args['status']:
+        snapcraft.status(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['history']:
+        snapcraft.history(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['close']:
+        snapcraft.close(args['<snap-name>'], args['<channel_names>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

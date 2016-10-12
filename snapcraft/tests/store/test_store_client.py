@@ -638,6 +638,89 @@ class ReleaseTestCase(tests.TestCase):
             self.client.release('test-snap', '10', ['beta'])
 
 
+class CloseChannelsTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_close_requires_login(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.close_channels('snap-id', ['dummy'])
+
+    def test_close_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.client.close_channels('snap-id', ['dummy'])
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    def test_close_invalid_data(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['invalid'])
+        self.assertEqual(
+            str(raised.exception),
+            "Could not close channel: The 'channels' field content "
+            "is not valid.")
+
+    def test_close_unexpected_data(self):
+        # The endpoint in SCA would never return plain/text, however anything
+        # might happen in the internet, so we are a little defensive.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['unexpected'])
+        self.assertEqual(
+            str(raised.exception),
+            'Could not close channel: 500 Internal Server Error')
+
+    def test_close_broken_store_plain(self):
+        # If the contract is broken by the Store, users will be have additional
+        # debug information available.
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['broken-plain'])
+        self.assertEqual(
+            str(raised.exception),
+            'Could not close channel: 200 OK')
+        self.assertEqual([
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'plain data\'',
+            ], self.fake_logger.output.splitlines()[-3:])
+
+    def test_close_broken_store_json(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreChannelClosingError) as raised:
+            self.client.close_channels('snap-id', ['broken-json'])
+        self.assertEqual(
+            str(raised.exception),
+            'Could not close channel: 200 OK')
+        self.assertEqual([
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'{"closed_channels": ["broken-json"]}\'',
+            ], self.fake_logger.output.splitlines()[-3:])
+
+    def test_close_successfully(self):
+        # Successfully closing a channels returns 'closed_channels'
+        # and 'channel_maps' from the Store.
+        self.client.login('dummy', 'test correct password')
+        closed_channels, channel_maps = self.client.close_channels(
+            'snap-id', ['beta'])
+        self.assertEqual(['beta'], closed_channels)
+        self.assertEqual({
+            'amd64': [
+                {'channel': 'stable', 'info': 'none'},
+                {'channel': 'candidate', 'info': 'none'},
+                {'channel': 'beta', 'info': 'specific',
+                 'revision': 42, 'version': '1.1'},
+                {'channel': 'edge', 'info': 'tracking'}]
+        }, channel_maps)
+
+
 class MacaroonsTestCase(tests.TestCase):
 
     def test_invalid_macaroon_root_raises_exception(self):
@@ -654,3 +737,210 @@ class MacaroonsTestCase(tests.TestCase):
         conf.save()
         with self.assertRaises(errors.InvalidCredentialsError):
             storeapi._macaroon_auth(conf)
+
+
+class GetSnapHistoryTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+        self.expected = [{
+            'series': ['16'],
+            'channels': [],
+            'version': '2.0.1',
+            'timestamp': '2016-09-27T19:23:40Z',
+            'current_channels': ['beta', 'edge'],
+            'arch': 'i386',
+            'revision': 2
+        }, {
+            'series': ['16'],
+            'channels': ['stable', 'edge'],
+            'version': '2.0.2',
+            'timestamp': '2016-09-27T18:38:43Z',
+            'current_channels': ['stable', 'candidate', 'beta'],
+            'arch': 'amd64',
+            'revision': 1,
+        }]
+
+    def test_get_snap_history_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.get_snap_history('basic')
+
+    def test_get_snap_history_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(self.expected, self.client.get_snap_history('basic'))
+
+    def test_get_snap_history_filter_by_series(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            self.expected,
+            self.client.get_snap_history('basic', series='16'))
+
+    def test_get_snap_history_filter_by_arch(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            [rev for rev in self.expected if rev['arch'] == 'amd64'],
+            self.client.get_snap_history('basic', arch='amd64'))
+
+    def test_get_snap_history_filter_by_series_and_filter(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            [rev for rev in self.expected
+             if '16' in rev['series'] and rev['arch'] == 'amd64'],
+            self.client.get_snap_history(
+                'basic', series='16', arch='amd64'))
+
+    def test_get_snap_history_filter_by_unknown_series(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
+            self.client.get_snap_history('basic', series='12')
+        self.assertEqual(
+            "Snap 'basic' was not found in '12' series.",
+            str(e.exception))
+
+    def test_get_snap_history_filter_by_unknown_arch(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
+            self.client.get_snap_history('basic', arch='somearch')
+        self.assertEqual(
+            "Snap 'basic' for 'somearch' was not found in '16' series.",
+            str(e.exception))
+
+    def test_get_snap_history_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.assertEqual(self.expected, self.client.get_snap_history('basic'))
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.SCAClient, 'get')
+    def test_get_snap_history_server_error(
+            self, mock_sca_get, mock_account_info):
+        mock_account_info.return_value = {
+            'snaps': {
+                '16': {
+                    'basic': {
+                        'snap-id': 'my_snap_id'}}}}
+
+        mock_sca_get.return_value = mock.Mock(
+            ok=False, status_code=500, reason='Server error', json=lambda: {})
+
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(storeapi.errors.StoreSnapHistoryError) as e:
+            self.client.get_snap_history('basic')
+        self.assertEqual(
+            "Error fetching history of snap id 'my_snap_id' for 'any arch' "
+            "in '16' series: 500 Server error.",
+            str(e.exception))
+
+
+class GetSnapStatusTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+        self.expected = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.0-i386',
+                    'channel': 'edge',
+                    'revision': 3
+                },
+            ],
+            'amd64': [
+                {
+                    'info': 'specific',
+                    'version': '1.0-amd64',
+                    'channel': 'stable',
+                    'revision': 2
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.1-amd64',
+                    'channel': 'beta',
+                    'revision': 4
+                },
+                {
+                    'info': 'tracking',
+                    'channel': 'edge'
+                },
+            ],
+        }
+
+    def test_get_snap_status_without_login_raises_exception(self):
+        with self.assertRaises(errors.InvalidCredentialsError):
+            self.client.get_snap_status('basic')
+
+    def test_get_snap_status_successfully(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(self.expected, self.client.get_snap_status('basic'))
+
+    def test_get_snap_status_filter_by_series(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            self.expected,
+            self.client.get_snap_status('basic', series='16'))
+
+    def test_get_snap_status_filter_by_arch(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            {'amd64': self.expected['amd64']},
+            self.client.get_snap_status('basic', arch='amd64'))
+
+    def test_get_snap_status_filter_by_series_and_filter(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertEqual(
+            {'amd64': self.expected['amd64']},
+            self.client.get_snap_status(
+                'basic', series='16', arch='amd64'))
+
+    def test_get_snap_status_filter_by_unknown_series(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
+            self.client.get_snap_status('basic', series='12')
+        self.assertEqual(
+            "Snap 'basic' was not found in '12' series.",
+            str(e.exception))
+
+    def test_get_snap_status_filter_by_unknown_arch(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
+            self.client.get_snap_status('basic', arch='somearch')
+        self.assertEqual(
+            "Snap 'basic' for 'somearch' was not found in '16' series.",
+            str(e.exception))
+
+    def test_get_snap_status_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        self.assertEqual(self.expected, self.client.get_snap_status('basic'))
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.SCAClient, 'get')
+    def test_get_snap_status_server_error(
+            self, mock_sca_get, mock_account_info):
+        mock_account_info.return_value = {
+            'snaps': {'16': {'basic': {'snap-id': 'my_snap_id'}}}}
+
+        mock_sca_get.return_value = mock.Mock(
+            ok=False, status_code=500, reason='Server error', json=lambda: {})
+
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(storeapi.errors.StoreSnapStatusError) as e:
+            self.client.get_snap_status('basic')
+        self.assertEqual(
+            "Error fetching status of snap id 'my_snap_id' for 'any arch' "
+            "in '16' series: 500 Server error.",
+            str(e.exception))

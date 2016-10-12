@@ -330,21 +330,25 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'account/account-key')
-        sign_build_path = urllib.parse.urljoin(
-            self._DEV_API_PATH, 'snaps/snap-id/builds'.format())
+        snap_id_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/')
         register_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'register-name/')
-        upload_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snap-push/')
-        release_path = urllib.parse.urljoin(self._DEV_API_PATH,
-                                            'snap-release/')
+        upload_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snap-push/')
+        release_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snap-release/')
 
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
             self._handle_acl_request(permission)
         elif parsed_path.path == account_key_path:
             self._handle_account_key_request()
-        elif parsed_path.path == sign_build_path:
-            self._handle_sign_build_request()
+        elif parsed_path.path.startswith(snap_id_path):
+            if parsed_path.path.endswith('/builds'):
+                self._handle_sign_build_request()
+            elif parsed_path.path.endswith('/close'):
+                self._handle_close_request()
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -385,7 +389,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_sign_build_request(self):
-        logger.debug('Handling snap-build request')
+        logger.debug('Handling sign-build request')
         string_data = self.rfile.read(
             int(self.headers['Content-Length'])).decode('utf8')
         snap_build = json.loads(string_data)['assertion']
@@ -423,6 +427,59 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'foo': 'bar',
             }
             content = json.dumps(response).encode()
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _handle_close_request(self):
+        logger.debug('Handling close request')
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        payload = json.loads(string_data)
+        channels = payload['channels']
+
+        if channels == ['invalid']:
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            error = {
+                'error_list': [
+                    {'code': 'invalid-field',
+                     'message': ('The \'channels\' field content is not '
+                                 'valid.')},
+                ],
+            }
+            content = json.dumps(error).encode()
+        elif channels == ['unexpected']:
+            self.send_response(500)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'unexpected chunk of data'
+        elif channels == ['broken-plain']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain')
+            content = b'plain data'
+        elif channels == ['broken-json']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'closed_channels': channels,
+            }
+            content = json.dumps(response).encode()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            response = {
+                'closed_channels': channels,
+                'channel_maps': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'version': '1.1', 'revision': 42},
+                        {'channel': 'edge', 'info': 'tracking'}
+                    ]
+                },
+            }
+            content = json.dumps(response).encode()
+
         self.end_headers()
         self.wfile.write(content)
 
@@ -612,7 +669,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
 
         self.wfile.write(data)
 
-    def do_GET(self):
+    # This function's complexity is correlated to the number of
+    # url paths, no point in checking that.
+    def do_GET(self):  # noqa: C901
         if self.server.fake_store.needs_refresh:
             self._handle_needs_refresh()
             return
@@ -622,8 +681,11 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         details_review = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/review-snap')
         account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
+        snap_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snaps')
         good_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/good/validations')
+        no_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/snap-id/validations')
         bad_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/bad/validations')
         err_validations_path = urllib.parse.urljoin(
@@ -641,6 +703,13 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('bad')
         elif parsed_path.path.startswith(err_validations_path):
             self._handle_validation_request('err')
+        elif parsed_path.path.startswith(no_validations_path):
+            self._handle_validation_request('no')
+        elif parsed_path.path.startswith(snap_path):
+            if parsed_path.path.endswith('/history'):
+                self._handle_snap_history()
+            elif parsed_path.path.endswith('/status'):
+                self._handle_snap_status()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -677,6 +746,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             status = 200
         elif code == 'bad':
             response = 'foo'.encode()
+            status = 200
+        elif code == 'no':
+            response = json.dumps([]).encode()
             status = 200
         elif code == 'err':
             status = 503
@@ -718,6 +790,92 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'account_keys': self.server.account_keys,
             'snaps': {'16': snaps},
         }).encode())
+
+    def _handle_snap_history(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        revisions = [{
+            'series': ['16'],
+            'channels': [],
+            'version': '2.0.1',
+            'timestamp': '2016-09-27T19:23:40Z',
+            'current_channels': ['beta', 'edge'],
+            'arch': 'i386',
+            'revision': 2
+        }, {
+            'series': ['16'],
+            'channels': ['stable', 'edge'],
+            'version': '2.0.2',
+            'timestamp': '2016-09-27T18:38:43Z',
+            'current_channels': ['stable', 'candidate', 'beta'],
+            'arch': 'amd64',
+            'revision': 1,
+        }]
+
+        parsed_qs = urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query)
+        if 'arch' in parsed_qs:
+            output = [
+                rev for rev in revisions if rev['arch'] in parsed_qs['arch']]
+        else:
+            output = revisions
+        self.wfile.write(json.dumps(output).encode())
+
+    def _handle_snap_status(self):
+        logger.debug('Handling account request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        channel_map = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.0-i386',
+                    'channel': 'edge',
+                    'revision': 3
+                },
+            ],
+            'amd64': [
+                {
+                    'info': 'specific',
+                    'version': '1.0-amd64',
+                    'channel': 'stable',
+                    'revision': 2
+                },
+                {
+                    'info': 'specific',
+                    'version': '1.1-amd64',
+                    'channel': 'beta',
+                    'revision': 4
+                },
+                {
+                    'info': 'tracking',
+                    'channel': 'edge'
+                },
+            ],
+        }
+
+        parsed_qs = urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query)
+        if 'arch' in parsed_qs:
+            arch = parsed_qs['arch'][0]
+            if arch in channel_map:
+                output = {arch: channel_map[arch]}
+            else:
+                output = {}
+        else:
+            output = channel_map
+        self.wfile.write(json.dumps(output).encode())
 
     def do_PUT(self):
         if self.server.fake_store.needs_refresh:

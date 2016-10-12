@@ -194,6 +194,46 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.snap_release, snap_name, revision, channels)
 
+    def get_snap_history(self, snap_name, series=None, arch=None):
+        if series is None:
+            series = constants.DEFAULT_SERIES
+
+        account_info = self.get_account_information()
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        response = self._refresh_if_necessary(
+            self.sca.snap_history, snap_id, series, arch)
+
+        if not response:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return response
+
+    def get_snap_status(self, snap_name, series=None, arch=None):
+        if series is None:
+            series = constants.DEFAULT_SERIES
+
+        account_info = self.get_account_information()
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        response = self._refresh_if_necessary(
+            self.sca.snap_status, snap_id, series, arch)
+
+        if not response:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return response
+
+    def close_channels(self, snap_id, channel_names):
+        return self._refresh_if_necessary(
+            self.sca.close_channels, snap_id, channel_names)
+
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
@@ -502,6 +542,72 @@ class SCAClient(Client):
         response = self.post(url, data=data, headers=headers)
         if not response.ok:
             raise errors.StoreSnapBuildError(response)
+
+    def snap_history(self, snap_id, series, arch):
+        qs = {}
+        if series:
+            qs['series'] = series
+        if arch:
+            qs['arch'] = arch
+        url = 'snaps/' + snap_id + '/history'
+        if qs:
+            url += '?' + urllib.parse.urlencode(qs)
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreSnapHistoryError(response, snap_id, series, arch)
+
+        response_json = response.json()
+
+        return response_json
+
+    def snap_status(self, snap_id, series, arch):
+        qs = {}
+        if series:
+            qs['series'] = series
+        if arch:
+            qs['arch'] = arch
+        url = 'snaps/' + snap_id + '/status'
+        if qs:
+            url += '?' + urllib.parse.urlencode(qs)
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreSnapStatusError(response, snap_id, series, arch)
+
+        response_json = response.json()
+
+        return response_json
+
+    def close_channels(self, snap_id, channel_names):
+        url = 'snaps/{}/close'.format(snap_id)
+        data = {
+            'channels': channel_names
+        }
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+        }
+        response = self.post(url, json=data, headers=headers)
+        if not response.ok:
+            raise errors.StoreChannelClosingError(response)
+
+        try:
+            results = response.json()
+            return results['closed_channels'], results['channel_maps']
+        except (JSONDecodeError, KeyError):
+            logger.debug(
+                'Invalid response from the server on channel closing:\n'
+                '{} {}\n{}'.format(response.status_code, response.reason,
+                                   response.content))
+            raise errors.StoreChannelClosingError(response)
 
 
 class StatusTracker:
