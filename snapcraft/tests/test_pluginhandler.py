@@ -51,7 +51,8 @@ class PluginTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         with self.assertRaises(pluginhandler.PluginError) as raised:
-            pluginhandler.load_plugin('fake-part', 'test_unexisting')
+            pluginhandler.load_plugin(part_name='fake-part',
+                                      plugin_name='test_unexisting')
 
         self.assertEqual(raised.exception.__str__(),
                          'unknown plugin: test_unexisting')
@@ -79,7 +80,8 @@ class PluginTestCase(tests.TestCase):
 
         mock_snap_fileset.return_value = ['baz']
 
-        handler = pluginhandler.load_plugin('test-part', 'nil')
+        handler = pluginhandler.load_plugin(part_name='test-part',
+                                            plugin_name='nil')
         handler.code.options.snap = ['foo']
         handler.code.options.stage = ['bar']
         expected_options = copy.deepcopy(handler.code.options)
@@ -394,8 +396,11 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
-            'mock', 'mock-part', {}, snapcraft.ProjectOptions(),
-            {'properties': {}})
+            plugin_name='mock',
+            part_name='mock-part',
+            part_properties={},
+            project_options=snapcraft.ProjectOptions(),
+            part_schema={'properties': {}})
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock', self.local_plugins_dir)
 
@@ -411,9 +416,11 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = OldPlugin
         local_load_mock.side_effect = ImportError()
         plugin = pluginhandler.PluginHandler(
-            'oldplugin', 'fake-part', {'source': '.'},
-            snapcraft.ProjectOptions(),
-            {'properties': {}})
+            plugin_name='oldplugin',
+            part_name='fake-part',
+            part_properties={'source': '.'},
+            project_options=snapcraft.ProjectOptions(),
+            part_schema={'properties': {}})
 
         self.assertTrue(plugin.code.project is not None)
 
@@ -434,9 +441,11 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = NonBaseOldPlugin
         local_load_mock.side_effect = ImportError()
         plugin = pluginhandler.PluginHandler(
-            'nonbaseoldplugin', 'fake-part', {'source': '.'},
-            snapcraft.ProjectOptions(),
-            {'properties': {}})
+            plugin_name='nonbaseoldplugin',
+            part_name='fake-part',
+            part_properties={'source': '.'},
+            project_options=snapcraft.ProjectOptions(),
+            part_schema={'properties': {}})
 
         self.assertTrue(plugin.code.project is not None)
 
@@ -459,9 +468,11 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = Plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
-            'plugin', 'fake-part', {'source': '.'},
-            snapcraft.ProjectOptions(),
-            {'properties': {}})
+            plugin_name='plugin',
+            part_name='fake-part',
+            part_properties={'source': '.'},
+            project_options=snapcraft.ProjectOptions(),
+            part_schema={'properties': {}})
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
@@ -482,9 +493,11 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = Plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
-            'plugin', 'fake-part', {'source': '.'},
-            snapcraft.ProjectOptions(),
-            {'properties': {}})
+            plugin_name='plugin',
+            part_name='fake-part',
+            part_properties={'source': '.'},
+            project_options=snapcraft.ProjectOptions(),
+            part_schema={'properties': {}})
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
@@ -507,9 +520,11 @@ class PluginTestCase(tests.TestCase):
         plugin_mock.return_value = Plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
-            'plugin', 'fake-part', {'source': '.'},
-            snapcraft.ProjectOptions(),
-            {'properties': {}})
+            plugin_name='plugin',
+            part_name='fake-part',
+            part_properties={'source': '.'},
+            project_options=snapcraft.ProjectOptions(),
+            part_schema={'properties': {}})
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
@@ -531,9 +546,11 @@ class PluginTestCase(tests.TestCase):
         local_load_mock.side_effect = ImportError()
         with self.assertRaises(pluginhandler.PluginError) as raised:
             pluginhandler.PluginHandler(
-                'plugin', 'fake-part', {'source': '.'},
-                snapcraft.ProjectOptions(),
-                {'properties': {}})
+                plugin_name='plugin',
+                part_name='fake-part',
+                part_properties={'source': '.'},
+                project_options=snapcraft.ProjectOptions(),
+                part_schema={'properties': {}})
 
         self.assertEqual(
             "properties failed to load for fake-part: Invalid "
@@ -560,9 +577,11 @@ class PluginTestCase(tests.TestCase):
         local_load_mock.side_effect = ImportError()
         with self.assertRaises(pluginhandler.PluginError) as raised:
             pluginhandler.PluginHandler(
-                'plugin', 'fake-part', {'source': '.'},
-                snapcraft.ProjectOptions(),
-                {'properties': {}})
+                plugin_name='plugin',
+                part_name='fake-part',
+                part_properties={'source': '.'},
+                project_options=snapcraft.ProjectOptions(),
+                part_schema={'properties': {}})
 
         self.assertEqual(
             "properties failed to load for fake-part: Invalid "
@@ -879,7 +898,7 @@ class PluginMakedirsTestCase(tests.TestCase):
             for d in dirs:
                 os.mkdir(d)
 
-        p = pluginhandler.load_plugin(part_name, 'nil')
+        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
         p.makedirs()
         for d in dirs:
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
@@ -891,14 +910,16 @@ class StateTestCase(tests.TestCase):
         super().setUp()
 
         part_name = 'test_part'
-        self.handler = pluginhandler.load_plugin(part_name, 'nil')
+        self.handler = pluginhandler.load_plugin(part_name=part_name,
+                                                 plugin_name='nil')
         self.handler.makedirs()
 
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
             shutil.rmtree(self.parts_dir)
             with self.subTest('{} step'.format(step)):
-                handler = pluginhandler.load_plugin('foo', 'nil')
+                handler = pluginhandler.load_plugin(part_name='foo',
+                                                    plugin_name='nil')
                 handler.makedirs()
 
                 for later_step in common.COMMAND_ORDER[index+1:]:
@@ -921,7 +942,8 @@ class StateTestCase(tests.TestCase):
                 with open(os.path.join(part_dir, 'state'), 'w') as f:
                     f.write(step)
 
-                handler = pluginhandler.load_plugin(part_name, 'nil')
+                handler = pluginhandler.load_plugin(part_name=part_name,
+                                                    plugin_name='nil')
                 self.assertEqual(step, handler.last_step())
 
     @patch('snapcraft.internal.repo.Ubuntu')
@@ -1412,7 +1434,9 @@ class IsDirtyTestCase(tests.TestCase):
         super().setUp()
 
         self.handler = pluginhandler.load_plugin(
-            'test-part', 'nil', project_options=snapcraft.ProjectOptions())
+            part_name='test-part',
+            plugin_name='nil',
+            project_options=snapcraft.ProjectOptions())
         self.handler.makedirs()
 
     def test_prime_is_dirty(self):
@@ -1495,9 +1519,11 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
+        project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
         self.handler = pluginhandler.load_plugin(
-            'test-part', 'nil', project_options=snapcraft.ProjectOptions(
-                target_deb_arch='armhf'))
+            part_name='test-part',
+            plugin_name='nil',
+            project_options=project_options)
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('build'),
@@ -1542,9 +1568,11 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
+        project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
         self.handler = pluginhandler.load_plugin(
-            'test-part', 'nil', project_options=snapcraft.ProjectOptions(
-                target_deb_arch='armhf'))
+            part_name='test-part',
+            plugin_name='nil',
+            project_options=project_options)
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('pull'),
@@ -1571,7 +1599,7 @@ class CleanTestCase(tests.TestCase):
         mock_is_clean.return_value = True
 
         part_name = 'test_part'
-        p = pluginhandler.load_plugin(part_name, 'nil')
+        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
         p.clean()
 
         partdir = os.path.join(
@@ -1588,7 +1616,7 @@ class CleanTestCase(tests.TestCase):
         mock_exists.return_value = False
 
         part_name = 'test_part'
-        p = pluginhandler.load_plugin(part_name, 'nil')
+        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
         p.clean()
 
         partdir = os.path.join(
@@ -1608,7 +1636,7 @@ class CleanTestCase(tests.TestCase):
         mock_is_clean.return_value = True
 
         part_name = 'test_part'
-        p = pluginhandler.load_plugin(part_name, 'nil')
+        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
         p.clean()
 
         partdir = os.path.join(
@@ -1657,8 +1685,11 @@ class CleanTestCase(tests.TestCase):
                 properties = {'snap': value['fileset']}
 
                 handler = pluginhandler.load_plugin(
-                    'test_part', 'nil', properties, snapcraft.ProjectOptions(),
-                    schema)
+                    part_name='test_part',
+                    plugin_name='nil',
+                    part_properties=properties,
+                    project_options=snapcraft.ProjectOptions(),
+                    part_schema=schema)
                 handler.makedirs()
 
                 installdir = handler.code.installdir
@@ -1687,7 +1718,8 @@ class CleanTestCase(tests.TestCase):
 
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
-        handler1 = pluginhandler.load_plugin('part1', 'nil')
+        handler1 = pluginhandler.load_plugin(part_name='part1',
+                                             plugin_name='nil')
         handler1.makedirs()
 
         bindir = os.path.join(handler1.code.installdir, 'bin')
@@ -1697,7 +1729,8 @@ class CleanTestCase(tests.TestCase):
         handler1.mark_done('build')
 
         # Now create part2 and get it through the "build" step.
-        handler2 = pluginhandler.load_plugin('part2', 'nil')
+        handler2 = pluginhandler.load_plugin(part_name='part2',
+                                             plugin_name='nil')
         handler2.makedirs()
 
         bindir = os.path.join(handler2.code.installdir, 'bin')
@@ -1737,7 +1770,7 @@ class CleanTestCase(tests.TestCase):
 
     def test_clean_prime_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
-        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
         handler.makedirs()
 
         bindir = os.path.join(handler.code.installdir, 'bin')
@@ -1771,7 +1804,7 @@ class CleanTestCase(tests.TestCase):
             'changed since it was primeped.')
 
     def test_clean_old_prime_state(self):
-        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
         handler.makedirs()
 
         open(os.path.join(self.snap_dir, '1'), 'w').close()
@@ -1785,7 +1818,7 @@ class CleanTestCase(tests.TestCase):
         self.assertFalse(os.path.exists(handler.code.partdir))
 
     def test_clean_prime_old_prime_state(self):
-        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
         handler.makedirs()
 
         primed_file = os.path.join(self.snap_dir, '1')
@@ -1833,8 +1866,11 @@ class CleanTestCase(tests.TestCase):
                 properties = {'stage': value['fileset']}
 
                 handler = pluginhandler.load_plugin(
-                    'test_part', 'nil', properties, snapcraft.ProjectOptions(),
-                    schema)
+                    part_name='test_part',
+                    plugin_name='nil',
+                    part_properties=properties,
+                    project_options=snapcraft.ProjectOptions(),
+                    part_schema=schema)
                 handler.makedirs()
 
                 installdir = handler.code.installdir
@@ -1860,7 +1896,8 @@ class CleanTestCase(tests.TestCase):
 
     def test_clean_stage_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
-        handler1 = pluginhandler.load_plugin('part1', 'nil')
+        handler1 = pluginhandler.load_plugin(part_name='part1',
+                                             plugin_name='nil')
         handler1.makedirs()
 
         bindir = os.path.join(handler1.code.installdir, 'bin')
@@ -1870,7 +1907,8 @@ class CleanTestCase(tests.TestCase):
         handler1.mark_done('build')
 
         # Now create part2 and get it through the "build" step.
-        handler2 = pluginhandler.load_plugin('part2', 'nil')
+        handler2 = pluginhandler.load_plugin(part_name='part2',
+                                             plugin_name='nil')
         handler2.makedirs()
 
         bindir = os.path.join(handler2.code.installdir, 'bin')
@@ -1906,7 +1944,8 @@ class CleanTestCase(tests.TestCase):
 
     def test_clean_stage_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
-        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler = pluginhandler.load_plugin(part_name='part1',
+                                            plugin_name='nil')
         handler.makedirs()
 
         bindir = os.path.join(handler.code.installdir, 'bin')
@@ -1939,7 +1978,8 @@ class CleanTestCase(tests.TestCase):
             'changed since it was staged.')
 
     def test_clean_old_stage_state(self):
-        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler = pluginhandler.load_plugin(part_name='part1',
+                                            plugin_name='nil')
         handler.makedirs()
 
         open(os.path.join(self.stage_dir, '1'), 'w').close()
@@ -1953,7 +1993,8 @@ class CleanTestCase(tests.TestCase):
         self.assertFalse(os.path.exists(handler.code.partdir))
 
     def test_clean_stage_old_stage_state(self):
-        handler = pluginhandler.load_plugin('part1', 'nil')
+        handler = pluginhandler.load_plugin(part_name='part1',
+                                            plugin_name='nil')
         handler.makedirs()
 
         staged_file = os.path.join(self.stage_dir, '1')
@@ -1995,9 +2036,10 @@ class PerStepCleanTestCase(tests.TestCase):
         self.manager_mock.attach_mock(patcher.start(), 'clean_prime')
         self.addCleanup(patcher.stop)
 
+        self.handler = pluginhandler.load_plugin(part_name='test_part', plugin_name='nil')
+
     def test_clean_with_hint(self):
-        handler = pluginhandler.load_plugin('test_part', 'nil')
-        handler.clean(step='pull', hint='foo')
+        self.handler.clean(step='pull', hint='foo')
 
         # Verify the step cleaning order
         self.assertEqual(4, len(self.manager_mock.mock_calls))
@@ -2009,8 +2051,7 @@ class PerStepCleanTestCase(tests.TestCase):
         ])
 
     def test_clean_pull_order(self):
-        handler = pluginhandler.load_plugin('test_part', 'nil')
-        handler.clean(step='pull')
+        self.handler.clean(step='pull')
 
         # Verify the step cleaning order
         self.assertEqual(4, len(self.manager_mock.mock_calls))
@@ -2022,8 +2063,7 @@ class PerStepCleanTestCase(tests.TestCase):
         ])
 
     def test_clean_build_order(self):
-        handler = pluginhandler.load_plugin('test_part', 'nil')
-        handler.clean(step='build')
+        self.handler.clean(step='build')
 
         # Verify the step cleaning order
         self.assertEqual(3, len(self.manager_mock.mock_calls))
@@ -2034,8 +2074,7 @@ class PerStepCleanTestCase(tests.TestCase):
         ])
 
     def test_clean_stage_order(self):
-        handler = pluginhandler.load_plugin('test_part', 'nil')
-        handler.clean(step='stage')
+        self.handler.clean(step='stage')
 
         # Verify the step cleaning order
         self.assertEqual(2, len(self.manager_mock.mock_calls))
@@ -2045,8 +2084,7 @@ class PerStepCleanTestCase(tests.TestCase):
         ])
 
     def test_clean_prime_order(self):
-        handler = pluginhandler.load_plugin('test_part', 'nil')
-        handler.clean(step='prime')
+        self.handler.clean(step='prime')
 
         # Verify the step cleaning order
         self.assertEqual(1, len(self.manager_mock.mock_calls))
@@ -2064,7 +2102,7 @@ class CollisionTestCase(tests.TestCase):
         self.addCleanup(tmpdirObject.cleanup)
         tmpdir = tmpdirObject.name
 
-        part1 = pluginhandler.load_plugin('part1', 'nil')
+        part1 = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
         part1.code.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
@@ -2072,7 +2110,7 @@ class CollisionTestCase(tests.TestCase):
             f.write('prefix={}\n'.format(part1.installdir))
             f.write('Name: File\n')
 
-        part2 = pluginhandler.load_plugin('part2', 'nil')
+        part2 = pluginhandler.load_plugin(part_name='part2', plugin_name='nil')
         part2.code.installdir = tmpdir + '/install2'
         os.makedirs(part2.installdir + '/a')
         with open(part2.installdir + '/1', mode='w') as f:
@@ -2084,7 +2122,7 @@ class CollisionTestCase(tests.TestCase):
             f.write('prefix={}\n'.format(part2.installdir))
             f.write('Name: File\n')
 
-        part3 = pluginhandler.load_plugin('part3', 'nil')
+        part3 = pluginhandler.load_plugin(part_name='part3', plugin_name='nil')
         part3.code.installdir = tmpdir + '/install3'
         os.makedirs(part3.installdir + '/a')
         os.makedirs(part3.installdir + '/b')
@@ -2094,7 +2132,7 @@ class CollisionTestCase(tests.TestCase):
             f.write('1')
         open(part3.installdir + '/a/2', mode='w').close()
 
-        part4 = pluginhandler.load_plugin('part4', 'nil')
+        part4 = pluginhandler.load_plugin(part_name='part4', plugin_name='nil')
         part4.code.installdir = tmpdir + '/install4'
         os.makedirs(part4.installdir)
         with open(part4.installdir + '/file.pc', mode='w') as f:
@@ -2152,9 +2190,11 @@ class StagePackagesTestCase(tests.TestCase):
             'plugin': {'description': 'plugin name', 'type': 'string'}
         }
 
-        part = pluginhandler.load_plugin('stage-test', 'nil',
-                                         {'stage-packages': ['non-existing']},
-                                         part_schema=part_schema)
+        part = pluginhandler.load_plugin(
+            part_name='stage-test',
+            plugin_name='nil',
+            part_properties={'stage-packages': ['non-existing']},
+            part_schema=part_schema)
 
         with self.assertRaises(RuntimeError) as raised:
             part.prepare_pull()
