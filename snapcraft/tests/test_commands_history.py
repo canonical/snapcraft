@@ -38,7 +38,7 @@ class HistoryCommandTestCase(tests.TestCase):
             'series': ['16'],
             'channels': [],
             'version': '2.0.1',
-            'timestamp': '2016-09-27T19:23:40.409',
+            'timestamp': '2016-09-27T19:23:40Z',
             'current_channels': ['beta', 'edge'],
             'arch': 'i386',
             'revision': 2
@@ -46,7 +46,7 @@ class HistoryCommandTestCase(tests.TestCase):
             'series': ['16'],
             'channels': ['stable', 'edge'],
             'version': '2.0.2',
-            'timestamp': '2016-09-27T18:38:43.388',
+            'timestamp': '2016-09-27T18:38:43Z',
             'current_channels': ['stable', 'candidate', 'beta'],
             'arch': 'amd64',
             'revision': 1,
@@ -137,9 +137,9 @@ class HistoryCommandTestCase(tests.TestCase):
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
-            '  Rev.  Uploaded                 Arch    Version    Channels',
-            '     2  2016-09-27T19:23:40.409  i386    2.0.1      -',
-            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+            'Rev.    Uploaded              Arch    Version    Channels',
+            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
+            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
 
@@ -158,8 +158,8 @@ class HistoryCommandTestCase(tests.TestCase):
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
-            '  Rev.  Uploaded                 Arch    Version    Channels',
-            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+            'Rev.    Uploaded              Arch    Version    Channels',
+            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
 
@@ -177,8 +177,8 @@ class HistoryCommandTestCase(tests.TestCase):
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
-            '  Rev.  Uploaded                 Arch    Version    Channels',
-            '     2  2016-09-27T19:23:40.409  i386    2.0.1      -',
-            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+            'Rev.    Uploaded              Arch    Version    Channels',
+            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
+            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
