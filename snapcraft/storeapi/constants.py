@@ -21,7 +21,28 @@ from __future__ import absolute_import, unicode_literals
 DEFAULT_SERIES = '16'
 SCAN_STATUS_POLL_DELAY = 5
 SCAN_STATUS_POLL_RETRIES = 5
-UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'
-UBUNTU_STORE_API_ROOT_URL = 'https://myapps.developer.ubuntu.com/dev/api/'
+# UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'
+# UBUNTU_STORE_API_ROOT_URL = 'https://myapps.developer.ubuntu.com/dev/api/'
+UBUNTU_SSO_API_ROOT_URL = 'http://10.0.3.157:8000/api/v2/'
+UBUNTU_STORE_API_ROOT_URL = 'http://10.0.3.162:8000/dev/api/'
 UBUNTU_STORE_SEARCH_ROOT_URL = 'https://search.apps.ubuntu.com/'
 UBUNTU_STORE_UPLOAD_ROOT_URL = 'https://upload.apps.ubuntu.com/'
+
+# Messages and warnings.
+MISSING_AGREEMENT = 'Developer has not signed agreement.'
+MISSING_NAMESPACE = 'Developer profile is missing short namespace.'
+AGREEMENT_ERROR = (
+    'You must agree to the developer terms and conditions to upload snaps.')
+NAMESPACE_ERROR = (
+    'You need to set a username. It will appear in the developer field '
+    'alongside the other details for your snap. Please visit {} and login '
+    'again.')
+AGREEMENT_INPUT_MSG = (
+    'Do you agree to the developer terms and conditions. ({})? [y/N]')
+AGREEMENT_SIGN_ERROR = (
+    'Unexpected error encountered during signing the developer terms and '
+    'conditions. Please visit {} and agree to the terms and conditions before '
+    'continuing.')
+TWO_FACTOR_WARNING = (
+    'We strongly recommend enabling multi-factor authentication: '
+    'https://help.ubuntu.com/community/SSO/FAQs/2FA')

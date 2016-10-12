@@ -944,3 +944,26 @@ class GetSnapStatusTestCase(tests.TestCase):
             "Error fetching status of snap id 'my_snap_id' for 'any arch' "
             "in '16' series: 500 Server error.",
             str(e.exception))
+
+
+class SignDeveloperAgreementTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_sign_dev_agreement_success(self):
+        self.client.login('dummy', 'test correct password')
+        data = {
+            "status_code": 200,
+            "content": {
+                "latest_tos_accepted": True,
+                "tos_url": "http://fake-url.com",
+                "latest_tos_date": "2000-01-01",
+                "accepted_tos_date": "2010-10-10"
+                }
+            }
+        self.assertEqual(
+            data,
+            self.client.sign_developer_agreement())

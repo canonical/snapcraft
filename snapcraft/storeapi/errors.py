@@ -87,20 +87,32 @@ class StoreMacaroonNeedsRefreshError(StoreError):
     fmt = 'Authentication macaroon needs to be refreshed.'
 
 
+class DeveloperAgreementSignError(StoreError):
+
+    fmt = 'Developer agreement sign error: {message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
 class StoreAccountInformationError(StoreError):
 
     fmt = 'Error fetching account information from store: {error}'
 
     def __init__(self, response):
         error = '{} {}'.format(response.status_code, response.reason)
+        extra = []
         try:
             response_json = response.json()
             if 'error_list' in response_json:
                 error = ' '.join(
                     error['message'] for error in response_json['error_list'])
+                extra = [
+                    error['extra'] for error in response_json[
+                        'error_list'] if 'extra' in error]
         except JSONDecodeError:
             pass
-        super().__init__(error=error)
+        super().__init__(error=error, extra=extra)
 
 
 class StoreKeyRegistrationError(StoreError):

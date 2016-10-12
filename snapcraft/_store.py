@@ -55,23 +55,54 @@ def _login(store, acls=None, save=True):
     email = input('Email: ')
     password = getpass.getpass('Password: ')
 
+    def _fail_login(msg=''):
+        logger.info(msg)
+        logger.info('Login failed.')
+        return False
+
     try:
         try:
             store.login(email, password, acls=acls, save=save)
             print()
-            logger.info(
-                'We strongly recommend enabling multi-factor authentication: '
-                'https://help.ubuntu.com/community/SSO/FAQs/2FA')
+            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
         except storeapi.errors.StoreTwoFactorAuthenticationRequired:
             one_time_password = input('Second-factor auth: ')
             store.login(
                 email, password, one_time_password=one_time_password,
                 acls=acls, save=save)
+
+        # Check account information for the `developer agreement` status.
+        try:
+            store.get_account_information()
+        except storeapi.errors.StoreAccountInformationError as e:
+            if storeapi.constants.MISSING_AGREEMENT == e.error:
+                url = e.extra[0].get('url')
+                choice = input(
+                    storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
+                if choice == 'y':
+                    try:
+                        store.sign_developer_agreement()
+                    except:
+                        return _fail_login(
+                            storeapi.constants.AGREEMENT_SIGN_ERROR.format(
+                                url))
+                else:
+                    return _fail_login(storeapi.constants.AGREEMENT_ERROR)
+
+        # Now check account information for the `namespace` status.
+        try:
+            store.get_account_information()
+        except storeapi.errors.StoreAccountInformationError as e:
+            if storeapi.constants.MISSING_NAMESPACE in e.error:
+                url = e.extra[0].get('url')
+                return _fail_login(
+                    storeapi.constants.NAMESPACE_ERROR.format(url))
+            else:
+                raise
     except (storeapi.errors.InvalidCredentialsError,
-            storeapi.errors.StoreAuthenticationError):
-        print()
-        logger.info('Login failed.')
-        return False
+            storeapi.errors.StoreAuthenticationError,
+            storeapi.errors.StoreAccountInformationError):
+        return _fail_login()
     else:
         print()
         logger.info('Login successful.')

@@ -338,6 +338,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snap-push/')
         release_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snap-release/')
+        agreement_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'agreement/')
 
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
@@ -355,6 +357,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_upload_request()
         elif parsed_path.path.startswith(release_path):
             self._handle_release_request()
+        elif parsed_path.path.startswith(agreement_path):
+            self._handle_sign_request()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -668,6 +672,22 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(data)
+
+    def _handle_sign_request(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        data = {
+            "latest_tos_accepted": True,
+            "tos_url": 'http://fake-url.com',
+            "latest_tos_date": '2000-01-01',
+            'accepted_tos_date': '2010-10-10'
+            }
+        self.end_headers()
+        response = {
+            "status_code": 200,
+            "content": data,
+        }
+        self.wfile.write(json.dumps(response).encode())
 
     # This function's complexity is correlated to the number of
     # url paths, no point in checking that.
