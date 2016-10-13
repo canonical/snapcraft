@@ -76,7 +76,10 @@ def _login(store, acls=None, save=True):
             store.get_account_information()
         except storeapi.errors.StoreAccountInformationError as e:
             if storeapi.constants.MISSING_AGREEMENT == e.error:
-                url = e.extra[0].get('url')
+                # A precaution if store does not return new style error.
+                url = storeapi.constants.UBUNTU_STORE_TOS_URL
+                if e.extra:
+                    url = e.extra[0].get('url')
                 choice = input(
                     storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
                 if choice == 'y':
@@ -94,7 +97,10 @@ def _login(store, acls=None, save=True):
             store.get_account_information()
         except storeapi.errors.StoreAccountInformationError as e:
             if storeapi.constants.MISSING_NAMESPACE in e.error:
-                url = e.extra[0].get('url')
+                # A precaution if store does not return new style error.
+                url = storeapi.constants.UBUNTU_STORE_ACCOUNT_URL
+                if e.extra:
+                    url = e.extra[0].get('url')
                 return _fail_login(
                     storeapi.constants.NAMESPACE_ERROR.format(url))
             else:

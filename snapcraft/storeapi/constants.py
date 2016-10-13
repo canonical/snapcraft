@@ -25,6 +25,8 @@ UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'
 UBUNTU_STORE_API_ROOT_URL = 'https://myapps.developer.ubuntu.com/dev/api/'
 UBUNTU_STORE_SEARCH_ROOT_URL = 'https://search.apps.ubuntu.com/'
 UBUNTU_STORE_UPLOAD_ROOT_URL = 'https://upload.apps.ubuntu.com/'
+UBUNTU_STORE_TOS_URL = 'https://myapps.developer.ubuntu.com/dev/tos/'
+UBUNTU_STORE_ACCOUNT_URL = 'https://myapps.developer.ubuntu.com/dev/account/'
 
 # Messages and warnings.
 MISSING_AGREEMENT = 'Developer has not signed agreement.'
