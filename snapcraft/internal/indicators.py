@@ -30,7 +30,11 @@ def download_requests_stream(request_stream, destination, message=None):
     if not message:
         message = 'Downloading {!r}'.format(os.path.basename(destination))
 
-    total_length = int(request_stream.headers.get('Content-Length', '0'))
+    if (request_stream.headers.get('Content-Encoding') == 'gzip'):
+        total_length = len(request_stream.content)
+    else:
+        total_length = int(request_stream.headers.get('Content-Length', '0'))
+
     if total_length:
         progress_bar = ProgressBar(
             widgets=[message,
