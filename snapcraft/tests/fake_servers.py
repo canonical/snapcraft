@@ -729,7 +729,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 "snap-id": "snap-id-gating",
                 "timestamp": "2016-09-19T21:07:27.756001Z",
                 "type": "validation",
-                "revoked": "false"
+                "revoked": "false",
+                "required": True,
             }, {
                 "approved-snap-id": "snap-id-2",
                 "approved-snap-revision": "5",
@@ -740,7 +741,20 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 "snap-id": "snap-id-gating",
                 "timestamp": "2016-09-19T21:07:27.756001Z",
                 "type": "validation",
-                "revoked": "false"
+                "revoked": "false",
+                "required": False,
+            }, {
+                "approved-snap-id": "snap-id-3",
+                "approved-snap-revision": "-",
+                "approved-snap-name": "snap-3",
+                "authority-id": "dev-1",
+                "series": "16",
+                "sign-key-sha3-384": "1234567890",
+                "snap-id": "snap-id-gating",
+                "timestamp": "2016-09-19T21:07:27.756001Z",
+                "type": "validation",
+                "revoked": "false",
+                "required": True,
             }]
             response = json.dumps(response).encode()
             status = 200
