@@ -204,7 +204,8 @@ class TestBazaar(SourceTestCase):
 
         self.mock_rmdir.assert_called_once_with('source_dir')
         self.mock_run.assert_called_once_with(
-            ['bzr', 'branch', 'lp:my-source', 'source_dir'])
+            ['bzr', 'branch', 'lp:my-source', 'source_dir'],
+            env=unittest.mock.ANY)
 
     def test_pull_tag(self):
         bzr = sources.Bazaar(
@@ -213,7 +214,8 @@ class TestBazaar(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'branch', '-r', 'tag:tag', 'lp:my-source',
-             'source_dir'])
+             'source_dir'],
+            env=unittest.mock.ANY)
 
     def test_pull_existing_with_tag(self):
         self.mock_path_exists.return_value = True
@@ -224,7 +226,8 @@ class TestBazaar(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'pull', '-r', 'tag:tag', 'lp:my-source', '-d',
-             'source_dir'])
+             'source_dir'],
+            env=unittest.mock.ANY)
 
     def test_init_with_source_branch_raises_exception(self):
         with self.assertRaises(
@@ -241,6 +244,59 @@ class TestBazaar(SourceTestCase):
         expected_message = (
             'can\'t specify source-depth for a bzr source')
         self.assertEqual(raised.exception.message, expected_message)
+
+
+class TestBazaarEnvironment(SourceTestCase):
+
+    scenarios = [
+        ('simple_http_proxy', dict(
+            environment=[('http_proxy', 'http://proxy.com')],
+            expected=[('http_proxy', 'http://proxy.com')],
+        )),
+        ('simple_https_proxy', dict(
+            environment=[('https_proxy', 'https://proxy.com')],
+            expected=[('https_proxy', 'https://proxy.com')],
+        )),
+        ('simple_http_and_https_proxy', dict(
+            environment=[
+                ('http_proxy', 'http://proxy.com'),
+                ('https_proxy', 'https://proxy.com'),
+            ],
+            expected=[
+                ('http_proxy', 'http://proxy.com'),
+                ('https_proxy', 'https://proxy.com'),
+            ],
+        )),
+        ('auth_http_proxy', dict(
+            environment=[('http_proxy', 'http://user@proxy.com')],
+            expected=[('http_proxy', '')],
+        )),
+        ('auth_https_proxy', dict(
+            environment=[('https_proxy', 'https://user@proxy.com')],
+            expected=[('https_proxy', '')],
+        )),
+        ('auth_http_and_https_proxy', dict(
+            environment=[
+                ('http_proxy', 'http://user@proxy.com'),
+                ('https_proxy', 'https://user@proxy.com'),
+            ],
+            expected=[
+                ('http_proxy', ''),
+                ('https_proxy', ''),
+            ],
+        )),
+    ]
+
+    def test_bzr_pull_env_with_proxies(self):
+        for env in self.environment:
+            self.useFixture(fixtures.EnvironmentVariable(env[0], env[1]))
+
+        bzr = sources.Bazaar('lp:my-source', 'source_dir')
+
+        env = bzr._get_environment()
+
+        for expected in self.expected:
+            self.assertEqual(env[expected[0]], expected[1])
 
 
 class TestGit(SourceTestCase):

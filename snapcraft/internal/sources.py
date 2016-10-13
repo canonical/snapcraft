@@ -85,6 +85,7 @@ from snapcraft.internal.errors import MissingPackageError
 from snapcraft.internal.indicators import download_requests_stream
 
 
+logger = logging.getLogger(__name__)
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
@@ -165,6 +166,29 @@ class Bazaar(Base):
             raise IncompatibleOptionsError(
                 'can\'t specify source-depth for a bzr source')
 
+    def _get_environment(self):
+        # A workaround for LP: #1606203
+        env = os.environ.copy()
+
+        proxies = dict(
+            http_proxy=env.get('http_proxy', ''),
+            https_proxy=env.get('https_proxy', ''),
+        )
+
+        proxies = {key: proxies[key] for key in proxies if proxies[key]}
+
+        for key in proxies:
+            if '@' in proxies[key]:
+                logger.warning(
+                    'Removing the {!r} environment variable as '
+                    'authenticated proxies and bzr will not '
+                    'work'.format(key))
+                proxies[key] = ''
+
+        env.update(proxies)
+
+        return env
+
     def pull(self):
         tag_opts = []
         if self.source_tag:
@@ -177,7 +201,7 @@ class Bazaar(Base):
             cmd = [self.command, 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd, env=self._get_environment())
 
 
 class Git(Base):
