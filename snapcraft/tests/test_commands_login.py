@@ -95,7 +95,10 @@ class LoginCommandTestCase(tests.TestCase):
 
         main(['login'])
 
-        self.assertEqual('\nLogin failed.\n', self.fake_logger.output)
+        self.assertEqual(
+            storeapi.constants.INVALID_CREDENTIALS +
+            '\nLogin failed.\n',
+            self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_store_authentication_error(self, mock_login):
@@ -104,7 +107,10 @@ class LoginCommandTestCase(tests.TestCase):
 
         main(['login'])
 
-        self.assertEqual('\nLogin failed.\n', self.fake_logger.output)
+        self.assertEqual(
+            storeapi.constants.AUTHENTICATION_ERROR +
+            '\nLogin failed.\n',
+            self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_store_account_info_error(self, mock_login):
@@ -117,7 +123,10 @@ class LoginCommandTestCase(tests.TestCase):
 
         main(['login'])
 
-        self.assertEqual('\nLogin failed.\n', self.fake_logger.output)
+        self.assertEqual(
+            storeapi.constants.ACCOUNT_INFORMATION_ERROR +
+            '\nLogin failed.\n',
+            self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')

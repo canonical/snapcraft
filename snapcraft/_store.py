@@ -99,10 +99,12 @@ def _login(store, acls=None, save=True):
                     storeapi.constants.NAMESPACE_ERROR.format(url))
             else:
                 raise
-    except (storeapi.errors.InvalidCredentialsError,
-            storeapi.errors.StoreAuthenticationError,
-            storeapi.errors.StoreAccountInformationError):
-        return _fail_login()
+    except storeapi.errors.InvalidCredentialsError:
+        return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
+    except storeapi.errors.StoreAuthenticationError:
+        return _fail_login(storeapi.constants.AUTHENTICATION_ERROR)
+    except storeapi.errors.StoreAccountInformationError:
+        return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
     else:
         print()
         logger.info('Login successful.')

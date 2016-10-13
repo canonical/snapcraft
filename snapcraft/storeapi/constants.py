@@ -21,10 +21,8 @@ from __future__ import absolute_import, unicode_literals
 DEFAULT_SERIES = '16'
 SCAN_STATUS_POLL_DELAY = 5
 SCAN_STATUS_POLL_RETRIES = 5
-# UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'
-# UBUNTU_STORE_API_ROOT_URL = 'https://myapps.developer.ubuntu.com/dev/api/'
-UBUNTU_SSO_API_ROOT_URL = 'http://10.0.3.157:8000/api/v2/'
-UBUNTU_STORE_API_ROOT_URL = 'http://10.0.3.162:8000/dev/api/'
+UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'
+UBUNTU_STORE_API_ROOT_URL = 'https://myapps.developer.ubuntu.com/dev/api/'
 UBUNTU_STORE_SEARCH_ROOT_URL = 'https://search.apps.ubuntu.com/'
 UBUNTU_STORE_UPLOAD_ROOT_URL = 'https://upload.apps.ubuntu.com/'
 
@@ -46,3 +44,8 @@ AGREEMENT_SIGN_ERROR = (
 TWO_FACTOR_WARNING = (
     'We strongly recommend enabling multi-factor authentication: '
     'https://help.ubuntu.com/community/SSO/FAQs/2FA')
+INVALID_CREDENTIALS = 'Invalid credentials supplied.'
+AUTHENTICATION_ERROR = ('Problems encountered when authenticating your '
+                        'credentials.')
+ACCOUNT_INFORMATION_ERROR = ('Unexpected error when obtaining your account '
+                             'information.')
