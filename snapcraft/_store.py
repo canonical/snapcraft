@@ -50,15 +50,16 @@ def _get_data_from_snap_file(snap_path):
     return snap_yaml
 
 
+def _fail_login(msg=''):
+    logger.info(msg)
+    logger.info('Login failed.')
+    return False
+
+
 def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
-
-    def _fail_login(msg=''):
-        logger.info(msg)
-        logger.info('Login failed.')
-        return False
 
     try:
         try:
