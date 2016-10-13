@@ -59,6 +59,13 @@ class HelpCommandTestCase(tests.TestCase):
                          mock_stdout.getvalue())
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_tar_content_never_nonexistent(self, mock_stdout):
+        main(['help', 'tar-content'])
+
+        self.assertEqual('The plugin has no documentation\n',
+                         mock_stdout.getvalue())
+
+    @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_print_module_help_for_valid_plugin(self, mock_stdout):
         main(['help', 'nil'])
 
