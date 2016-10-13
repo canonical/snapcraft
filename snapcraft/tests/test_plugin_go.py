@@ -227,7 +227,7 @@ class GoPluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ['go', 'install', './dir/...'],
+            ['go', 'install', '--ldflags=-s -w', './dir/...'],
             cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -256,7 +256,8 @@ class GoPluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ['go', 'install', plugin.options.go_packages[0]],
+            ['go', 'install', '--ldflags=-s -w',
+             plugin.options.go_packages[0]],
             cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -363,7 +364,8 @@ class GoPluginTestCase(tests.TestCase):
             mock.call(['go', 'get', '-t', '-d',
                        './github.com/snapcore/launcher/...'],
                       cwd=plugin._gopath_src, env=mock.ANY),
-            mock.call(['go', 'install', './github.com/snapcore/launcher/...'],
+            mock.call(['go', 'install', '--ldflags=-s -w',
+                       './github.com/snapcore/launcher/...'],
                       cwd=plugin._gopath_src, env=mock.ANY),
         ])
 
@@ -429,6 +431,6 @@ class GoPluginTestCase(tests.TestCase):
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ['go', 'install',
+            ['go', 'install', '--ldflags=-s -w',
              '-tags=testbuildtag1,testbuildtag2', './dir/...'],
             cwd=plugin._gopath_src, env=mock.ANY)
