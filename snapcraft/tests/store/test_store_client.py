@@ -955,8 +955,7 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
 
     def test_sign_dev_agreement_success(self):
         self.client.login('dummy', 'test correct password')
-        data = {
-            "status_code": 200,
+        response = {
             "content": {
                 "latest_tos_accepted": True,
                 "tos_url": "http://fake-url.com",
@@ -965,5 +964,10 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
                 }
             }
         self.assertEqual(
-            data,
-            self.client.sign_developer_agreement())
+            response,
+            self.client.sign_developer_agreement(latest_tos_accepted=True))
+
+    def test_sign_dev_agreement_exception(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.DeveloperAgreementSignError):
+            self.client.sign_developer_agreement(False)

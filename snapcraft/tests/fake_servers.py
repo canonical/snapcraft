@@ -674,18 +674,24 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _handle_sign_request(self):
-        self.send_response(200)
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+        if data['latest_tos_accepted'] is not True:
+            self.send_response(400)
+            content = "Failed to sign developer ToS."
+        else:
+            self.send_response(200)
+            content = {
+                "latest_tos_accepted": True,
+                "tos_url": 'http://fake-url.com',
+                "latest_tos_date": '2000-01-01',
+                "accepted_tos_date": '2010-10-10'
+                }
         self.send_header('Content-Type', 'application/json')
-        data = {
-            "latest_tos_accepted": True,
-            "tos_url": 'http://fake-url.com',
-            "latest_tos_date": '2000-01-01',
-            'accepted_tos_date': '2010-10-10'
-            }
         self.end_headers()
         response = {
-            "status_code": 200,
-            "content": data,
+            "content": content,
         }
         self.wfile.write(json.dumps(response).encode())
 

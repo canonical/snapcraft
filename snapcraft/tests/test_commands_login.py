@@ -51,7 +51,6 @@ class LoginCommandTestCase(tests.TestCase):
     def test_successful_login(
             self, mock_login, mock_get_account_information):
         self.mock_input.return_value = 'user@example.com'
-        mock_get_account_information.return_value = None
 
         # no exception raised.
         main(['login'])
@@ -72,7 +71,6 @@ class LoginCommandTestCase(tests.TestCase):
         mock_login.side_effect = [
             storeapi.errors.StoreTwoFactorAuthenticationRequired(),
             None]
-        mock_get_account_information.return_value = None
 
         # no exception raised.
         main(['login'])
@@ -132,7 +130,6 @@ class LoginCommandTestCase(tests.TestCase):
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_dev_agreement_error(
             self, mock_login, mock_acc_info):
-        mock_login.return_value = None
         response = mock.Mock()
         response.status_code = 403
         response.reason = storeapi.constants.MISSING_AGREEMENT
@@ -158,7 +155,6 @@ class LoginCommandTestCase(tests.TestCase):
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_dev_namespace_error(
             self, mock_login, mock_acc_info):
-        mock_login.return_value = None
         response = mock.Mock()
         response.status_code = 403
         response.reason = storeapi.constants.MISSING_NAMESPACE
@@ -177,5 +173,138 @@ class LoginCommandTestCase(tests.TestCase):
         self.assertEqual((
             storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.NAMESPACE_ERROR.format('http://fake-url.com') +
+            '\nLogin failed.\n'),
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_unexpected_account_error(
+            self, mock_login, mock_acc_info):
+        # Test to simulate get_account_info raising unexpected errors.
+        response = mock.Mock()
+        response.status_code = 500
+        response.reason = 'Internal Server Error'
+        content = {'error_list': [{
+            'message': "Just another error",
+            'extra': {
+                'url': 'http://fake-url.com',
+                'api': 'fake-api'}}]}
+        response.json.return_value = content
+        side_effect = storeapi.errors.StoreAccountInformationError(response)
+        mock_acc_info.side_effect = side_effect
+
+        main(['login'])
+
+        self.assertEqual(
+            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
+            storeapi.constants.ACCOUNT_INFORMATION_ERROR +
+            '\nLogin failed.\n',
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_dev_agreement_error_with_choice(
+            self, mock_login, mock_acc_info):
+        response = mock.Mock()
+        response.status_code = 403
+        response.reason = storeapi.constants.MISSING_AGREEMENT
+        content = {'error_list': [{
+            'message': storeapi.constants.MISSING_AGREEMENT,
+            'extra': {
+                'url': 'http://fake-url.com',
+                'api': 'fake-api'}}]}
+        response.json.return_value = content
+        account_info_exception = storeapi.errors.StoreAccountInformationError(
+            response)
+        mock_acc_info.side_effect = account_info_exception
+
+        main(['login'])
+        self.mock_input.assert_called_with(
+            storeapi.constants.AGREEMENT_INPUT_MSG.format(
+                'http://fake-url.com'))
+
+        self.assertEqual((
+            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
+            storeapi.constants.AGREEMENT_ERROR +
+            '\nLogin failed.\n'),
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_dev_agreement_error_with_choice_no(
+            self, mock_login, mock_acc_info):
+        response = mock.Mock()
+        response.status_code = 403
+        response.reason = storeapi.constants.MISSING_AGREEMENT
+        content = {'error_list': [{
+            'message': storeapi.constants.MISSING_AGREEMENT,
+            'extra': {
+                'url': 'http://fake-url.com',
+                'api': 'fake-api'}}]}
+        response.json.return_value = content
+        account_info_exception = storeapi.errors.StoreAccountInformationError(
+            response)
+        mock_acc_info.side_effect = account_info_exception
+
+        self.mock_input.return_value = 'n'
+        main(['login'])
+
+        self.assertEqual((
+            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
+            storeapi.constants.AGREEMENT_ERROR +
+            '\nLogin failed.\n'),
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_dev_agreement_error_with_choice_yes(
+            self, mock_login, mock_acc_info):
+        response = mock.Mock()
+        response.status_code = 403
+        response.reason = storeapi.constants.MISSING_AGREEMENT
+        content = {'error_list': [{
+            'message': storeapi.constants.MISSING_AGREEMENT,
+            'extra': {
+                'url': 'http://fake-url.com',
+                'api': 'fake-api'}}]}
+        response.json.return_value = content
+        account_info_exception = storeapi.errors.StoreAccountInformationError(
+            response)
+        mock_acc_info.side_effect = account_info_exception
+
+        self.mock_input.return_value = 'y'
+        main(['login'])
+
+        self.assertEqual((
+            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
+            storeapi.constants.AGREEMENT_SIGN_ERROR.format(
+                'http://fake-url.com') +
+            '\nLogin failed.\n'),
+            self.fake_logger.output)
+
+    @mock.patch.object(storeapi.StoreClient, 'sign_developer_agreement')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_dev_agreement_error_with_sign_success(
+            self, mock_login, mock_acc_info, mock_sign_agreement):
+        response = mock.Mock()
+        response.status_code = 403
+        response.reason = storeapi.constants.MISSING_AGREEMENT
+        content = {'error_list': [{
+            'message': storeapi.constants.MISSING_AGREEMENT,
+            'extra': {
+                'url': 'http://fake-url.com',
+                'api': 'fake-api'}}]}
+        response.json.return_value = content
+        account_info_exception = storeapi.errors.StoreAccountInformationError(
+            response)
+        mock_acc_info.side_effect = account_info_exception
+
+        self.mock_input.return_value = 'y'
+        main(['login'])
+
+        self.assertEqual((
+            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
+            storeapi.constants.ACCOUNT_INFORMATION_ERROR +
             '\nLogin failed.\n'),
             self.fake_logger.output)

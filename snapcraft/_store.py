@@ -84,7 +84,7 @@ def _login(store, acls=None, save=True):
                     storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
                 if choice == 'y':
                     try:
-                        store.sign_developer_agreement()
+                        store.sign_developer_agreement(True)
                     except:
                         return _fail_login(
                             storeapi.constants.AGREEMENT_SIGN_ERROR.format(
