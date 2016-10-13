@@ -224,6 +224,8 @@ def main(argv=None):
     if args['--debug']:
         log_level = logging.DEBUG
 
+    # Ensure the mask is friendly enough for a snap.
+    os.umask(0)
     log.configure(log_level=log_level)
     project_options = _get_project_options(args)
 
