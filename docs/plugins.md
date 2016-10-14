@@ -23,7 +23,7 @@ class CraftyPlugin(snapcraft.BasePlugin):
 
         # Add another option for our custom target.
         schema['properties']['crafty-target'] = {
-            type: 'string'
+            'type': 'string'
         }
 
         # Our custom target is required.
@@ -32,6 +32,9 @@ class CraftyPlugin(snapcraft.BasePlugin):
         return schema
 
     def build(self):
+        # Use base implementation to set up the 'build' directory.
+        super().build()
+        # Run custom build command.
         return self.run(['crafty', self.options.crafty_target])
 ```
 
