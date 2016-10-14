@@ -1,5 +1,5 @@
 ---
-title: "Publish your snap"
+title: "Release your snap"
 ---
 
 
@@ -16,7 +16,7 @@ details.
 To publish snaps to the Ubuntu Store you will need to create an account
 on [myapps.developer.ubuntu.com](https://myapps.developer.ubuntu.com/). This
 is your developer portal where you can customize how your snaps are presented,
-review your uploads, and control publishing.
+review your release, and control publishing.
 
 You'll need to choose a unique "developer namespace" as part of the account
 creation process. This name will be visible by users and associated with your
@@ -47,9 +47,7 @@ New names can be registered:
 * by visiting: [the name registration page](https://myapps.developer.ubuntu.com/dev/click-apps/register-name/)
 * or by running `snapcraft register snap-name`
 
-
 ### Example
-
 
     $ snapcraft register drone-autopilot
     Registering drone-autopilot.
@@ -68,9 +66,9 @@ name, then claim it with the
 form. If the name is already taken, the form will let you submit a name
 dispute.
 
-## 3. Upload your snap
+## 3. Push your snap
 
-Before you upload your snap, have a quick look at your `snapcraft.yaml` file
+Before you push your snap, have a quick look at your `snapcraft.yaml` file
 again. Two settings (`grade` and `confinement`) will define which
 [channels](#release-channels) you can release your snap to.
 
@@ -92,7 +90,6 @@ push it to the store.
 
 ### Example
 
-
     $ snapcraft push drone-autopilot_stableV2_amd64.snap
     Uploading drone-autopilot_stableV2_amd64.snap [====================] 100%
     Processing ...
@@ -104,13 +101,13 @@ a name you haven't registered first.
 
 ### Revisions
 
-Each time you upload a snap, the store will assigned a revision number to it,
-starting at 1. This revision number will be incremented each time you upload
+Each time you release a snap, the store will assigned a revision number to it,
+starting at 1. This revision number will be incremented each time you push
 a new version of your snap.
 
 ## 4. Release your snap
 
-Uploading a snap doesn't make it immediately available for installation. You
+Pushing a snap doesn't make it immediately available for installation. You
 have to choose the channel(s) you want to release into.
 
 ### Release channels
@@ -120,7 +117,7 @@ There are four channels available for your snap:
 *   `stable` is what most users will consume and as the name suggests, should
     be your most polished, stable and tested versions. Snaps in this channel
     appear in user searches.
-*   `candidate` is used to vet uploads that should require no further code
+*   `candidate` is used to vet releases that should require no further code
     changes before moving to stable.
 *   `beta` is used to provide preview releases of semi-stable changes. Snaps
     requiring the `devmode` flag to work are allowed in this channel.
