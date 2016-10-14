@@ -56,6 +56,53 @@ def _fail_login(msg=''):
     return False
 
 
+def _get_url_from_error(error):
+    if error.extra:
+        return error.extra[0].get('url')
+    return None
+
+
+def _check_dev_agreement_and_namespace_statuses(store):
+    """ Check the agreement and namespace statuses of the dev.
+    Fail if either of those conditions is not met.
+    Re-raise `StoreAccountInformationError` if we get an error and
+    the error is not either of these.
+    """
+    # Check account information for the `developer agreement` status.
+    try:
+        store.get_account_information()
+    except storeapi.errors.StoreAccountInformationError as e:
+        if storeapi.constants.MISSING_AGREEMENT == e.error:
+            # A precaution if store does not return new style error.
+            url = (_get_url_from_error(e) or
+                   storeapi.constants.UBUNTU_STORE_TOS_URL)
+            choice = input(
+                storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
+            if choice == 'y':
+                try:
+                    store.sign_developer_agreement(True)
+                except:
+                    return _fail_login(
+                        storeapi.constants.AGREEMENT_SIGN_ERROR.format(
+                            url))
+            else:
+                return _fail_login(storeapi.constants.AGREEMENT_ERROR)
+
+    # Now check account information for the `namespace` status.
+    try:
+        store.get_account_information()
+    except storeapi.errors.StoreAccountInformationError as e:
+        if storeapi.constants.MISSING_NAMESPACE in e.error:
+            # A precaution if store does not return new style error.
+            url = (_get_url_from_error(e) or
+                   storeapi.constants.UBUNTU_STORE_ACCOUNT_URL)
+            return _fail_login(
+                storeapi.constants.NAMESPACE_ERROR.format(url))
+        else:
+            raise
+    return True
+
+
 def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
@@ -72,40 +119,10 @@ def _login(store, acls=None, save=True):
                 email, password, one_time_password=one_time_password,
                 acls=acls, save=save)
 
-        # Check account information for the `developer agreement` status.
-        try:
-            store.get_account_information()
-        except storeapi.errors.StoreAccountInformationError as e:
-            if storeapi.constants.MISSING_AGREEMENT == e.error:
-                # A precaution if store does not return new style error.
-                url = storeapi.constants.UBUNTU_STORE_TOS_URL
-                if e.extra:
-                    url = e.extra[0].get('url')
-                choice = input(
-                    storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
-                if choice == 'y':
-                    try:
-                        store.sign_developer_agreement(True)
-                    except:
-                        return _fail_login(
-                            storeapi.constants.AGREEMENT_SIGN_ERROR.format(
-                                url))
-                else:
-                    return _fail_login(storeapi.constants.AGREEMENT_ERROR)
+        # Continue if agreement and namespace conditions are met.
+        if not _check_dev_agreement_and_namespace_statuses(store):
+            return False
 
-        # Now check account information for the `namespace` status.
-        try:
-            store.get_account_information()
-        except storeapi.errors.StoreAccountInformationError as e:
-            if storeapi.constants.MISSING_NAMESPACE in e.error:
-                # A precaution if store does not return new style error.
-                url = storeapi.constants.UBUNTU_STORE_ACCOUNT_URL
-                if e.extra:
-                    url = e.extra[0].get('url')
-                return _fail_login(
-                    storeapi.constants.NAMESPACE_ERROR.format(url))
-            else:
-                raise
     except storeapi.errors.InvalidCredentialsError:
         return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
     except storeapi.errors.StoreAuthenticationError:

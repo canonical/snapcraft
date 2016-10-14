@@ -323,9 +323,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     _DEV_API_PATH = '/dev/api/'
 
     def do_POST(self):
-        if self.server.fake_store.needs_refresh:
-            self._handle_needs_refresh()
-            return
+        self._handle_refresh()
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
@@ -364,6 +362,11 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
             raise NotImplementedError(self.path)
+
+    def _handle_refresh(self):
+        if self.server.fake_store.needs_refresh:
+            self._handle_needs_refresh()
+            return
 
     def _handle_needs_refresh(self):
         self.send_response(401)
