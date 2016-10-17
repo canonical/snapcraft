@@ -82,7 +82,7 @@ to install a snap using `confinement: devmode`. This means that they have to
 willingly accept that the snap is breaking out of confinement.
 
 ### Pushing the snap
-Snap upload to the store can be done either from the Ubuntu Store web 
+Pushing snaps to the store can be done either from the Ubuntu Store web
 interface or directly by using the command-line.
 
 Once you have a working snap, you can run `snapcraft push snap-name.snap` to
