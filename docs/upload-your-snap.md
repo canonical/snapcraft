@@ -101,7 +101,7 @@ a name you haven't registered first.
 
 ### Revisions
 
-Each time you release a snap, the store will assigned a revision number to it,
+Each time you release a snap, the store will assign a revision number to it,
 starting at 1. This revision number will be incremented each time you push
 a new version of your snap.
 
