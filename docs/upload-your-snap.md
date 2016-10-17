@@ -8,8 +8,8 @@ store. This page describes the publication process you will follow for the
 Ubuntu-hosted Store.
 
 Although, snaps are not tied to a specific type of store and you can host
-them any way you want, see the [Store](/docs/core/store) page for more
-details.
+them any way you want, see the [Store](http://snapcraft.io/docs/core/store)
+page for more details.
 
 ## 1. Create a store account
 
