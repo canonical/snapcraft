@@ -53,6 +53,7 @@ setup(
     install_requires=[
         'pyxdg',
         'requests',
+        'libarchive-c',
     ],
     test_suite='snapcraft.tests',
     license='GPL v3',
