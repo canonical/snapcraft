@@ -18,6 +18,7 @@
 from snapcraft.internal.sources import Script      # noqa
 from snapcraft.internal.sources import Bazaar      # noqa
 from snapcraft.internal.sources import Deb         # noqa
+from snapcraft.internal.sources import Rpm         # noqa
 from snapcraft.internal.sources import Git         # noqa
 from snapcraft.internal.sources import Mercurial   # noqa
 from snapcraft.internal.sources import Subversion  # noqa
