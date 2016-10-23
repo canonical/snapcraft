@@ -1,12 +1,33 @@
 _snapcraft()
 {
     local cur prev opts
+    _init_completion -s || return
+
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="help init list-plugins login logout list-keys keys create-key register-key register tour push release clean cleanbuild pull build sign-build stage prime snap update define search gated validate history status close"
 
+    case "$prev" in
+    help)
+        plugins=$(snapcraft list-plugins)
+        COMPREPLY=( $(compgen -W "$plugins" -- $cur))
+        return 0
+        ;;
+    snap | tour)
+        _filedir -d
+        return 0
+        ;;
+    gated | upload | push | sign-build | register | validate)
+        _filedir '*.snap'
+        return 0
+        ;;
+    *)
+        ;;
+    esac
+
     COMPREPLY=( $(compgen -W "$opts" -- $cur) )
     return 0
 }
 complete -F _snapcraft snapcraft
+
