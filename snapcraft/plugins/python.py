@@ -181,6 +181,25 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         return env
 
+    def _get_commands(self, setup):
+        commands = []
+        if self.options.requirements:
+            requirements = self.options.requirements
+            if not isurl(requirements):
+                requirements = os.path.join(self.sourcedir,
+                                            self.options.requirements)
+
+            commands.append(dict(args=['--requirement', requirements]))
+
+        if self.options.python_packages:
+            commands.append(dict(args=self.options.python_packages))
+
+        if os.path.exists(setup):
+            cwd = os.path.dirname(setup)
+            commands.append(dict(args=['.'], cwd=cwd))
+
+        return commands
+
     def _run_pip(self, setup, download=False):
         self._install_pip(download)
 
@@ -199,34 +218,16 @@ class PythonPlugin(snapcraft.BasePlugin):
                    constraints=constraints,
                    dependency_links=self.options.process_dependency_links)
 
-        wheels = []
+        commands = self._get_commands(setup)
 
-        if self.options.requirements:
-            if isurl(self.options.requirements):
-                requirements = self.options.requirements
-            else:
-                requirements = os.path.join(self.sourcedir,
-                                            self.options.requirements)
-            if download:
-                pip.download(['--requirement', requirements])
-            else:
-                wheels.extend(pip.wheel(['--requirement', requirements]))
-
-        if self.options.python_packages:
-            if download:
-                pip.download(self.options.python_packages)
-            else:
-                wheels.extend(pip.wheel(self.options.python_packages))
-
-        if os.path.exists(setup):
-            cwd = os.path.dirname(setup)
-            if download:
-                pip.download(['.'], cwd=cwd)
-            else:
-                wheels.extend(pip.wheel(['.'], cwd=cwd))
-
-        if wheels:
-            pip.install(wheels, cwd=cwd)
+        if download:
+            for command in commands:
+                pip.download(**command)
+        else:
+            wheels = []
+            for command in commands:
+                wheels.extend(pip.wheel(**command))
+            pip.install(wheels)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):

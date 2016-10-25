@@ -193,7 +193,7 @@ class PythonPluginTestCase(tests.TestCase):
                       env=mock.ANY),
             mock.call(tests.ContainsList(
                 pip_install + ['project.whl', 'project.whl', 'project.whl']),
-                cwd=plugin.builddir, env=mock.ANY),
+                env=mock.ANY),
         ]
         plugin.build()
         mock_run.assert_has_calls(calls)
