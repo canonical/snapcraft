@@ -233,7 +233,7 @@ class PythonPlugin(snapcraft.BasePlugin):
             # we want to avoid installing what is already provided in
             # stage-packages
             need_install = [k for k in wheel_names if k not in installed]
-            pip.install(need_install + ['--upgrade'])
+            pip.install(need_install + ['--no-deps', '--upgrade'])
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
