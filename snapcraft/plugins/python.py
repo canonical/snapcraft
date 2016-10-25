@@ -227,7 +227,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             wheels = []
             for command in commands:
                 wheels.extend(pip.wheel(**command))
-            pip.install(wheels)
+
+            installed = pip.list(self.run_output)
+            wheel_names = [os.path.basename(w).split('-')[0] for w in wheels]
+            # we want to avoid installing what is already provided in
+            # stage-packages
+            need_install = [k for k in wheel_names if k not in installed]
+            pip.install(need_install)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -280,6 +286,22 @@ class _Pip:
 
         if dependency_links:
             self._extra_pip_args.append('--process-dependency-links')
+
+    def list(self, exec_func=None):
+        """Return a dict of installed python packages with versions."""
+        if not exec_func:
+            exec_func = self._exec_func
+        cmd = [self._runnable, 'list']
+
+        output = exec_func(cmd, env=self._env)
+        package_listing = {}
+        version_regex = re.compile('\((.+)\)')
+        for line in output.splitlines():
+            line = line.split()
+            m = version_regex.search(line[1])
+            package_listing[line[0]] = m.group(1)
+
+        return package_listing
 
     def wheel(self, args, **kwargs):
         cmd = [

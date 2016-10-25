@@ -54,6 +54,10 @@ class PythonPluginTestCase(tests.TestCase):
         self.mock_call = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('subprocess.check_output')
+        self.mock_call_output = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_schema(self):
         schema = python.PythonPlugin.schema()
         expected_requirements = {'type': 'string'}
@@ -141,9 +145,10 @@ class PythonPluginTestCase(tests.TestCase):
         plugin.pull()
         mock_run.assert_has_calls(calls)
 
+    @mock.patch.object(python.PythonPlugin, 'run_output')
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(python.snapcraft.BasePlugin, 'build')
-    def test_build(self, mock_base_build, mock_run):
+    def test_build(self, mock_base_build, mock_run, mock_run_output):
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -159,6 +164,8 @@ class PythonPluginTestCase(tests.TestCase):
                              new=mock.Mock(wraps=TempDir))
         patcher.start()
         self.addCleanup(patcher.stop)
+
+        mock_run_output.return_value = 'yaml (1.2)\bextras (1.0)'
 
         os.environ = {}
         plugin = python.PythonPlugin('test-part', self.options,
