@@ -1,7 +1,4 @@
----
-title: "Release your snap"
----
-
+# Release your snap
 
 In order to share your snaps with the world, you need to publish them in a
 store. This page describes the publication process you will follow for the
