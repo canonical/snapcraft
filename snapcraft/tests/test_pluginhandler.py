@@ -1770,7 +1770,8 @@ class CleanTestCase(tests.TestCase):
 
     def test_clean_prime_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
-        handler = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
+        handler = pluginhandler.load_plugin(
+            part_name='part1', plugin_name='nil')
         handler.makedirs()
 
         bindir = os.path.join(handler.code.installdir, 'bin')
@@ -1804,7 +1805,8 @@ class CleanTestCase(tests.TestCase):
             'changed since it was primeped.')
 
     def test_clean_old_prime_state(self):
-        handler = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
+        handler = pluginhandler.load_plugin(
+            part_name='part1', plugin_name='nil')
         handler.makedirs()
 
         open(os.path.join(self.snap_dir, '1'), 'w').close()
@@ -1818,7 +1820,8 @@ class CleanTestCase(tests.TestCase):
         self.assertFalse(os.path.exists(handler.code.partdir))
 
     def test_clean_prime_old_prime_state(self):
-        handler = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
+        handler = pluginhandler.load_plugin(
+            part_name='part1', plugin_name='nil')
         handler.makedirs()
 
         primed_file = os.path.join(self.snap_dir, '1')
@@ -2036,7 +2039,8 @@ class PerStepCleanTestCase(tests.TestCase):
         self.manager_mock.attach_mock(patcher.start(), 'clean_prime')
         self.addCleanup(patcher.stop)
 
-        self.handler = pluginhandler.load_plugin(part_name='test_part', plugin_name='nil')
+        self.handler = pluginhandler.load_plugin(
+            part_name='test_part', plugin_name='nil')
 
     def test_clean_with_hint(self):
         self.handler.clean(step='pull', hint='foo')
