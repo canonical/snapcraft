@@ -26,6 +26,12 @@ from snapcraft.internal import common
 from snapcraft.tests import fixture_setup
 
 
+class ContainsList(list):
+
+        def __eq__(self, other):
+            return all([i[0] in i[1] for i in zip(self, other)])
+
+
 class MockOptions:
 
     def __init__(self, source=None, source_type=None, source_branch=None,
