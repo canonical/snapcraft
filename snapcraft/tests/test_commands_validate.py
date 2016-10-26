@@ -42,11 +42,11 @@ class ValidateTestCase(tests.TestCase):
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
         patcher = mock.patch('snapcraft._store.Popen')
-        popen_mock = patcher.start()
+        self.popen_mock = patcher.start()
         rv_mock = mock.Mock()
         rv_mock.returncode = 0
         rv_mock.communicate.return_value = [b'foo', b'']
-        popen_mock.return_value = rv_mock
+        self.popen_mock.return_value = rv_mock
         self.addCleanup(patcher.stop)
 
     def test_validate_success(self):
@@ -54,6 +54,19 @@ class ValidateTestCase(tests.TestCase):
 
         main([self.command_name, 'ubuntu-core', "ubuntu-core=3",
               "test-snap=4"])
+
+        self.assertIn('Signing validation ubuntu-core=3',
+                      self.fake_terminal.getvalue())
+        self.assertIn('Signing validation test-snap=4',
+                      self.fake_terminal.getvalue())
+
+    def test_validate_with_key(self):
+        self.client.login('dummy', 'test correct password')
+
+        main([self.command_name, 'ubuntu-core', "ubuntu-core=3",
+              "test-snap=4", "--key-name=keyname"])
+        self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
+                                           stderr=-1, stdin=-1, stdout=-1)
 
         self.assertIn('Signing validation ubuntu-core=3',
                       self.fake_terminal.getvalue())

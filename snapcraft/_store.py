@@ -367,19 +367,6 @@ def _get_text_for_channel(channel):
     return channel_text
 
 
-def _format_channel_map(channel_map, arch):
-    return [
-        (printable_arch,) + _get_text_for_channel(channel)
-        for printable_arch, channel in zip(
-            [arch] + [''] * len(channel_map), channel_map)]
-
-
-def _get_text_for_current_channels(channels, current_channels):
-    return ', '.join(
-        channel + ('*' if channel in current_channels else '')
-        for channel in channels) or '-'
-
-
 def release(snap_name, revision, release_channels):
     store = storeapi.StoreClient()
     with _requires_login():
@@ -393,8 +380,10 @@ def release(snap_name, revision, release_channels):
         print()
     channel_map = channels['channel_map']
     parsed_channels = [_get_text_for_channel(c) for c in channel_map]
-    tabulated_channels = tabulate(parsed_channels,
-                                  headers=['Channel', 'Version', 'Revision'])
+    tabulated_channels = tabulate(
+        parsed_channels, numalign='left',
+        headers=['Channel', 'Version', 'Revision'],
+        tablefmt='plain')
     # This does not look good in green so we print instead
     print(tabulated_channels)
 
@@ -412,7 +401,7 @@ def _tabulated_status(status):
         for arch, channel_map in sorted(status.items())
         for channel in _format_channel_map(channel_map, arch)]
     return tabulate(
-        parsed_channels,
+        parsed_channels, numalign='left',
         headers=['Arch', 'Channel', 'Version', 'Revision'],
         tablefmt='plain')
 
@@ -470,6 +459,12 @@ def status(snap_name, series, arch):
     print(tabulated_status)
 
 
+def _get_text_for_current_channels(channels, current_channels):
+    return ', '.join(
+        channel + ('*' if channel in current_channels else '')
+        for channel in channels) or '-'
+
+
 def history(snap_name, series, arch):
     store = storeapi.StoreClient()
 
@@ -482,7 +477,7 @@ def history(snap_name, series, arch):
             rev['channels'], rev['current_channels']))
         for rev in history]
     tabulated_revisions = tabulate(
-        parsed_revisions,
+        parsed_revisions, numalign='left',
         headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
         tablefmt='plain')
     print(tabulated_revisions)
@@ -495,27 +490,25 @@ def gated(snap_name):
     with _requires_login():
         snaps = store.get_account_information().get('snaps', {})
 
+    release = storeapi.constants.DEFAULT_SERIES
     # Resolve name to snap-id
-    snap_id = None
-    for snaps_for_series in snaps.values():
-        for name, snap in snaps_for_series.items():
-            if name == snap_name:
-                snap_id = snap['snap-id']
-                break
-        if snap_id:
-            break
-    else:
+    try:
+        snap_id = snaps[release][snap_name]['snap-id']
+    except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
     validations = store.get_validations(snap_id)
 
-    table_data = []
-    for v in validations:
-        table_data.append([v['approved-snap-name'],
-                           v['approved-snap-revision']])
-    tabulated = tabulate(table_data, headers=['Name', 'Approved'],
-                         tablefmt="plain")
-    print(tabulated)
+    if validations:
+        table_data = []
+        for v in validations:
+            table_data.append([v['approved-snap-name'],
+                               v['approved-snap-revision']])
+        tabulated = tabulate(table_data, headers=['Name', 'Approved'],
+                             tablefmt="plain")
+        print(tabulated)
+    else:
+        print('There are no validations for snap {!r}'.format(snap_name))
 
 
 def validate(snap_name, validations, revoke=False, key=None):
@@ -526,16 +519,17 @@ def validate(snap_name, validations, revoke=False, key=None):
 
     store = storeapi.StoreClient()
 
-    # Get data for the gating snap
-    with _requires_login():
-        snap_data = store.cpi.get_package(snap_name, 'stable')
-    release = str(snap_data['release'][0])
-    snap_id = snap_data['snap_id']
-
     # Need the ID of the logged in user.
     with _requires_login():
         account_info = store.get_account_information()
     authority_id = account_info['account_id']
+
+    # Get data for the gating snap
+    release = storeapi.constants.DEFAULT_SERIES
+    try:
+        snap_id = account_info['snaps'][release][snap_name]['snap-id']
+    except KeyError:
+        raise storeapi.errors.SnapNotFoundError(snap_name)
 
     # Then, for each requested validation, generate assertion
     for validation in validations:
