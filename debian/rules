@@ -6,3 +6,9 @@
 
 override_dh_compress:
 	dh_compress -Xusr/share/doc/snapcraft-examples/demos
+
+override_dh_auto_clean:
+ifneq (, $(TEST_UPSTREAM))
+	debian/extra/checkout-upstream
+endif
+	dh_auto_clean
