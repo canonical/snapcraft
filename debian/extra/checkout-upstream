@@ -32,7 +32,6 @@ else
 fi
 
 mkdir -p debian/tmp
-upstream
 (cd debian/tmp
  git clone "$UPSTREAM_REPO" upstream || (rm -rf upstream; sleep 60; git clone "$UPSTREAM_REPO" upstream)
  cd upstream
