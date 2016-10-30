@@ -502,10 +502,19 @@ def gated(snap_name):
     if validations:
         table_data = []
         for v in validations:
-            table_data.append([v['approved-snap-name'],
-                               v['approved-snap-revision']])
-        tabulated = tabulate(table_data, headers=['Name', 'Approved'],
-                             tablefmt="plain")
+            name = v['approved-snap-name']
+            revision = v['approved-snap-revision']
+            if revision == '-':
+                revision = None
+            required = str(v.get('required', True))
+            # Currently timestamps have microseconds, which look bad
+            timestamp = v['timestamp']
+            if '.' in timestamp:
+                timestamp = timestamp.split('.')[0] + 'Z'
+            table_data.append([name, revision, required, timestamp])
+        tabulated = tabulate(
+            table_data, headers=['Name', 'Revision', 'Required', 'Approved'],
+            tablefmt="plain", missingval='-')
         print(tabulated)
     else:
         print('There are no validations for snap {!r}'.format(snap_name))

@@ -54,7 +54,7 @@ parts:
         parts = []
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(part_name, 'nil')
+            handler = pluginhandler.load_plugin(part_name, plugin_name='nil')
             parts.append({
                 'part_dir': handler.code.partdir,
             })
