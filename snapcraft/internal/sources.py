@@ -445,19 +445,16 @@ class Rpm(FileBase):
             shutil.rmtree(dst)
             os.makedirs(dst)
             shutil.move(tmp_rpm, rpm_file)
-        # Check if dst has a trailing slash and ensure it doesn't
-        if dst.endswith('/'):
-            dst = dst[:-1]
+        # Ensure dst does not have trailing slash
+        dst = dst.rstrip('/')
         # Open the RPM file and extract it to destination
         with libarchive.file_reader(rpm_file) as rpm:
             for rpm_file_entry in rpm:
                 # Binary RPM archive data has paths starting with ./ to support
                 # relocation if enabled in the building of RPMs
-                if rpm_file_entry.pathname.startswith('./'):
-                    rpm_dst_pathname = dst + rpm_file_entry.pathname[1:]
-                else:
-                    rpm_dst_pathname = dst + '/' + rpm_file_entry.pathname
-                rpm_file_entry.pathname = rpm_dst_pathname
+                rpm_file_entrypath = rpm_file_entry.pathname.lstrip('./')
+                rpm_file_entrypath = rpm_file_entrypath.lstrip('/')
+                rpm_file_entry.pathname = os.path.join(dst, rpm_file_entrypath)
                 # A bug in libarchive somewhere causes it to crash when
                 # attempting to have more than one item in the list
                 libarchive.extract.extract_entries([rpm_file_entry])
