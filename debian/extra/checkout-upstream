@@ -37,7 +37,6 @@ mkdir -p debian/tmp
  cd upstream
  $FETCH
  $CO)
-UPSTREAM_VER=$(cd debian/tmp/upstream; git describe)
 
 # clean out original upstream sources
 find -mindepth 1 -maxdepth 1 -name debian -prune -o -print0 | xargs -0n1 rm -rf
@@ -48,7 +47,7 @@ rm -rf debian/tmp
 
 # craft changelog
 cat << EOF > debian/changelog.new
-snapcraft (${UPSTREAM_VER}-0) UNRELEASED; urgency=low
+snapcraft (2.devel-0) UNRELEASED; urgency=low
 
   * Automatic build from upstream $DESC
 
