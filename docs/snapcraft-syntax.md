@@ -58,8 +58,6 @@ contain.
       Requires `daemon` to be specified. It is the length of time in seconds
       that the system will wait for the service to stop before terminating it
       via `SIGTERM` (and `SIGKILL` if that doesn't work).
-* `icon` (string)
-  Path to the icon that will be used for the snap.
 * `license` (string)
   Path to a license file.
 * `license-agreement` (string)
