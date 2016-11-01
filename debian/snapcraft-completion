@@ -18,7 +18,7 @@ _snapcraft()
         _filedir -d
         return 0
         ;;
-    gated | upload | push | sign-build | register | validate)
+    upload | push | sign-build)
         _filedir '*.snap'
         return 0
         ;;
