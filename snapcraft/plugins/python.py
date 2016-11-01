@@ -234,7 +234,8 @@ class PythonPlugin(snapcraft.BasePlugin):
             for command in commands:
                 wheels = pip.wheel(**command)
                 installed = pip.list(self.run_output)
-                wheel_names = [os.path.basename(w).split('-')[0] for w in wheels]
+                wheel_names = [os.path.basename(w).split('-')[0]
+                               for w in wheels]
                 # we want to avoid installing what is already provided in
                 # stage-packages
                 need_install = [k for k in wheel_names if k not in installed]
