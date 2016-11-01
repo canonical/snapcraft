@@ -680,23 +680,37 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         string_data = self.rfile.read(
             int(self.headers['Content-Length'])).decode('utf8')
         data = json.loads(string_data)
-        if data['latest_tos_accepted'] is not True:
-            self.send_response(400)
-            content = "Failed to sign developer ToS."
+
+        if 'STORE_DOWN' in os.environ:
+            response_code = 500
+            content_type = 'text/plain'
+            response = b'Broken'
         else:
-            self.send_response(200)
-            content = {
-                "latest_tos_accepted": True,
-                "tos_url": 'http://fake-url.com',
-                "latest_tos_date": '2000-01-01',
-                "accepted_tos_date": '2010-10-10'
+            if data['latest_tos_accepted'] is not True:
+                response_code = 400
+                content_type = 'application/json'
+                content = {
+                    "error_list": [{
+                        "message": "`latest_tos_accepted` must be `true`",
+                        "code": "bad-request",
+                        "extra": {"latest_tos_accepted": "true"}}]}
+                response = json.dumps(content).encode()
+            else:
+                response_code = 200
+                content_type = 'application/json'
+                content = {"content": {
+                    "latest_tos_accepted": True,
+                    "tos_url": 'http://fake-url.com',
+                    "latest_tos_date": '2000-01-01',
+                    "accepted_tos_date": '2010-10-10'
+                    }
                 }
-        self.send_header('Content-Type', 'application/json')
+                response = json.dumps(content).encode()
+
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
         self.end_headers()
-        response = {
-            "content": content,
-        }
-        self.wfile.write(json.dumps(response).encode())
+        self.wfile.write(response)
 
     # This function's complexity is correlated to the number of
     # url paths, no point in checking that.

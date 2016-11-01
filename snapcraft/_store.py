@@ -80,13 +80,14 @@ def _check_dev_agreement_and_namespace_statuses(store):
                 storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
             if choice == 'y':
                 try:
-                    store.sign_developer_agreement(True)
+                    store.sign_developer_agreement(latest_tos_accepted=True)
                 except:
-                    return _fail_login(
-                        storeapi.constants.AGREEMENT_SIGN_ERROR.format(
-                            url))
+                    raise storeapi.errors.NeedTermsSignedError(
+                            storeapi.constants.AGREEMENT_SIGN_ERROR.format(
+                                url))
             else:
-                return _fail_login(storeapi.constants.AGREEMENT_ERROR)
+                raise storeapi.errors.NeedTermsSignedError(
+                            storeapi.constants.AGREEMENT_ERROR)
 
     # Now check account information for the `namespace` status.
     try:
@@ -96,11 +97,10 @@ def _check_dev_agreement_and_namespace_statuses(store):
             # A precaution if store does not return new style error.
             url = (_get_url_from_error(e) or
                    storeapi.constants.UBUNTU_STORE_ACCOUNT_URL)
-            return _fail_login(
-                storeapi.constants.NAMESPACE_ERROR.format(url))
+            raise storeapi.errors.NeedTermsSignedError(
+                    storeapi.constants.NAMESPACE_ERROR.format(url))
         else:
             raise
-    return True
 
 
 def _login(store, acls=None, save=True):
@@ -120,8 +120,7 @@ def _login(store, acls=None, save=True):
                 acls=acls, save=save)
 
         # Continue if agreement and namespace conditions are met.
-        if not _check_dev_agreement_and_namespace_statuses(store):
-            return False
+        _check_dev_agreement_and_namespace_statuses(store)
 
     except storeapi.errors.InvalidCredentialsError:
         return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
@@ -129,6 +128,8 @@ def _login(store, acls=None, save=True):
         return _fail_login(storeapi.constants.AUTHENTICATION_ERROR)
     except storeapi.errors.StoreAccountInformationError:
         return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
+    except storeapi.errors.NeedTermsSignedError as e:
+        return _fail_login(e.message)
     else:
         print()
         logger.info('Login successful.')

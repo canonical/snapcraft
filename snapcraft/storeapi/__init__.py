@@ -622,8 +622,7 @@ class SCAClient(Client):
                      'Accept': 'application/json'})
 
         if not response.ok:
-            raise errors.DeveloperAgreementSignError(
-                'Failed to sign developer ToS.')
+            raise errors.DeveloperAgreementSignError(response)
         return response.json()
 
 

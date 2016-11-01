@@ -969,5 +969,20 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
 
     def test_sign_dev_agreement_exception(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.DeveloperAgreementSignError):
+        with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
             self.client.sign_developer_agreement(False)
+        self.assertIn(
+            'There was an error whilst signing developer agreement.\n'
+            'Reason: \'Bad Request\'\n',
+            str(raised.exception))
+
+    def test_sign_dev_agreement_exception_store_down(self):
+        self.useFixture(fixtures.EnvironmentVariable('STORE_DOWN', '1'))
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
+            self.client.sign_developer_agreement(latest_tos_accepted=True)
+        self.assertEqual(
+            str(raised.exception),
+            'There was an error whilst signing developer agreement.\n'
+            'Reason: \'Internal Server Error\'\n'
+            'Text: \'Broken\'')

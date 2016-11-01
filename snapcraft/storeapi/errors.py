@@ -89,7 +89,20 @@ class StoreMacaroonNeedsRefreshError(StoreError):
 
 class DeveloperAgreementSignError(StoreError):
 
-    fmt = 'Developer agreement sign error: {message}'
+    fmt = (
+        'There was an error whilst signing developer agreement.\n'
+        'Reason: {reason!r}\n'
+        'Text: {text!r}')
+
+    def __init__(self, response):
+        super().__init__(reason=response.reason, text=response.text)
+
+
+class NeedTermsSignedError(StoreError):
+
+    fmt = (
+        'Developer Terms of Service agreement must be signed '
+        'before continuing: {message}')
 
     def __init__(self, message):
         super().__init__(message=message)
