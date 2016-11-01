@@ -47,6 +47,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 import re
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -153,6 +154,12 @@ class PythonPlugin(snapcraft.BasePlugin):
             setup = os.path.join(self.sourcedir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
             self._run_pip(setup, download=True)
+
+    def clean_pull(self):
+        super().clean_pull()
+
+        if os.path.isdir(self._python_package_dir):
+            shutil.rmtree(self._python_package_dir)
 
     def _install_pip(self, download):
         env = os.environ.copy()

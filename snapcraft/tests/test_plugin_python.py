@@ -145,6 +145,17 @@ class PythonPluginTestCase(tests.TestCase):
         plugin.pull()
         mock_run.assert_has_calls(calls)
 
+    @mock.patch.object(python.PythonPlugin, 'run')
+    def test_clean_pull(self, mock_run):
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+
+        # Pretend pip downloaded packages
+        os.makedirs(os.path.join(plugin.partdir, 'packages'))
+        plugin.clean_pull()
+        self.assertFalse(
+            os.path.isdir(os.path.join(plugin.partdir, 'packages')))
+
     @mock.patch.object(python.PythonPlugin, 'run_output')
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(python.snapcraft.BasePlugin, 'build')
