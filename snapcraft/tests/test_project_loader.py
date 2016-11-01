@@ -240,12 +240,20 @@ parts:
         parts.update()
         project_loader.Config(project_options)
 
-        call1 = unittest.mock.call('curl', 'autotools', {
-            'stage': [], 'snap': [], 'source': 'http://curl.org'},
-            project_options, self.part_schema)
-        call2 = unittest.mock.call('part1', 'go', {
-            'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
-            project_options, self.part_schema)
+        call1 = unittest.mock.call(
+            'curl',
+            plugin_name='autotools',
+            part_properties={
+                'stage': [], 'snap': [], 'source': 'http://curl.org'},
+            project_options=project_options,
+            part_schema=self.part_schema)
+        call2 = unittest.mock.call(
+            'part1',
+            plugin_name='go',
+            part_properties={
+                'stage': [], 'snap': [], 'stage-packages': ['fswebcam']},
+            project_options=project_options,
+            part_schema=self.part_schema)
 
         mock_load.assert_has_calls([call1, call2], any_order=True)
 

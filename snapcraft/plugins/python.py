@@ -49,6 +49,7 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
 from contextlib import contextmanager
 from glob import glob
 from shutil import which
@@ -180,6 +181,25 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         return env
 
+    def _get_commands(self, setup):
+        commands = []
+        if self.options.requirements:
+            requirements = self.options.requirements
+            if not isurl(requirements):
+                requirements = os.path.join(self.sourcedir,
+                                            self.options.requirements)
+
+            commands.append(dict(args=['--requirement', requirements]))
+
+        if self.options.python_packages:
+            commands.append(dict(args=self.options.python_packages))
+
+        if os.path.exists(setup):
+            cwd = os.path.dirname(setup)
+            commands.append(dict(args=['.'], cwd=cwd))
+
+        return commands
+
     def _run_pip(self, setup, download=False):
         self._install_pip(download)
 
@@ -198,32 +218,22 @@ class PythonPlugin(snapcraft.BasePlugin):
                    constraints=constraints,
                    dependency_links=self.options.process_dependency_links)
 
-        if self.options.requirements:
-            if isurl(self.options.requirements):
-                requirements = self.options.requirements
-            else:
-                requirements = os.path.join(self.sourcedir,
-                                            self.options.requirements)
-            if download:
-                pip.download(['--requirement', requirements])
-            else:
-                pip.wheel(['--requirement', requirements])
-                pip.install(['--requirement', requirements])
+        commands = self._get_commands(setup)
 
-        if self.options.python_packages:
-            if download:
-                pip.download(self.options.python_packages)
-            else:
-                pip.wheel(self.options.python_packages)
-                pip.install(self.options.python_packages)
+        if download:
+            for command in commands:
+                pip.download(**command)
+        else:
+            wheels = []
+            for command in commands:
+                wheels.extend(pip.wheel(**command))
 
-        if os.path.exists(setup):
-            cwd = os.path.dirname(setup)
-            if download:
-                pip.download(['.'], cwd=cwd)
-            else:
-                pip.wheel(['.'], cwd=cwd)
-                pip.install(['.'], cwd=cwd)
+            installed = pip.list(self.run_output)
+            wheel_names = [os.path.basename(w).split('-')[0] for w in wheels]
+            # we want to avoid installing what is already provided in
+            # stage-packages
+            need_install = [k for k in wheel_names if k not in installed]
+            pip.install(need_install + ['--no-deps', '--upgrade'])
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -277,17 +287,44 @@ class _Pip:
         if dependency_links:
             self._extra_pip_args.append('--process-dependency-links')
 
+    def list(self, exec_func=None):
+        """Return a dict of installed python packages with versions."""
+        if not exec_func:
+            exec_func = self._exec_func
+        cmd = [self._runnable, 'list']
+
+        output = exec_func(cmd, env=self._env)
+        package_listing = {}
+        version_regex = re.compile('\((.+)\)')
+        for line in output.splitlines():
+            line = line.split()
+            m = version_regex.search(line[1])
+            package_listing[line[0]] = m.group(1)
+
+        return package_listing
+
     def wheel(self, args, **kwargs):
         cmd = [
-            self._runnable, 'wheel', '--wheel-dir', self._package_dir,
+            self._runnable, 'wheel',
             '--disable-pip-version-check', '--no-index',
             '--find-links', self._package_dir,
         ]
         cmd.extend(self._extra_pip_args)
-        cmd.extend(args)
 
         os.makedirs(self._package_dir, exist_ok=True)
-        self._exec_func(cmd, env=self._env, **kwargs)
+
+        wheels = []
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd.extend(['--wheel-dir', temp_dir])
+            cmd.extend(args)
+            self._exec_func(cmd, env=self._env, **kwargs)
+            wheels = os.listdir(temp_dir)
+            for wheel in wheels:
+                file_utils.link_or_copy(
+                    os.path.join(temp_dir, wheel),
+                    os.path.join(self._package_dir, wheel))
+
+        return [os.path.join(self._package_dir, wheel) for wheel in wheels]
 
     def download(self, args, **kwargs):
         cmd = [

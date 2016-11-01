@@ -54,6 +54,10 @@ class BasePlugin:
                     'type': 'string',
                     'default': '',
                 },
+                'source-commit': {
+                    'type': 'string',
+                    'default': '',
+                },
                 'source-tag': {
                     'type:': 'string',
                     'default': '',
@@ -71,7 +75,8 @@ class BasePlugin:
                 'source',
             ],
             'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir'],
+                                'source-commit', 'source-tag',
+                                'source-subdir'],
             'build-properties': ['disable-parallel']
         }
 
@@ -122,6 +127,7 @@ class BasePlugin:
 
         - source
         - source-branch
+        - source-commit
         - source-tag
         - source-type
 

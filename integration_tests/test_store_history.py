@@ -73,9 +73,9 @@ class HistoryTestCase(integration_tests.StoreTestCase):
 
         output = self.run_snapcraft(['history', 'basic'])
         expected = '\n'.join((
-            '  Rev.  Uploaded                 Arch    Version    Channels',
-            '     2  2016-09-27T19:23:40.409  i386    2.0.1      -',
-            '     1  2016-09-27T18:38:43.388  amd64   2.0.2      stable*, edge'
+            'Rev.    Uploaded              Arch    Version    Channels',
+            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
+            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
         ))
         self.assertThat(output, Contains(expected))
 
@@ -100,11 +100,11 @@ class HistoryTestCase(integration_tests.StoreTestCase):
 
         output = self.run_snapcraft(['history', name])
 
-        datetime_re = '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}'
+        datetime_re = '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z'
         expected = '\n'.join((
             '.*',
-            '.*Rev.  Uploaded                 Arch         Version  Channels',
-            '     1  {datetime_re}  Arch: All          1  candidate\*, beta\*',
+            'Rev.    Uploaded              Arch       Version    Channels',
+            '1       {datetime_re}  Arch: All  1          candidate\*, beta\*'
             '.*',
         )).format(datetime_re=datetime_re)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

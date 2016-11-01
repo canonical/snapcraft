@@ -21,7 +21,7 @@ install:
   - sudo apt-get -qq update
   - sudo apt-get install -y python3-coverage
 script:
-  - docker run -e TEST_USER_EMAIL=$TEST_USER_EMAIL -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -e TEST_STORE=$TEST_STORE -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
+  - docker run -e TEST_USER_EMAIL=$TEST_USER_EMAIL -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -e TEST_STORE=$TEST_STORE -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
   - pip install coveralls
   - coveralls

@@ -250,7 +250,7 @@ mention the file, directory or match under `snap` or `stage`.
 The defined values in `snapcraft.yaml` are used to build the corresponding
 `meta` directory that holds all the package information.
 
-You can read all about the resulting [format of this metadata](https://developer.ubuntu.com/en/snappy/guides/packaging-format-apps/),
+You can read all about the resulting [format of this metadata](http://snapcraft.io/docs/build-snaps/),
 but we'll assume here that you're already familiar.
 
 The templated values when `snapcraft init` was run did not hold any `parts`

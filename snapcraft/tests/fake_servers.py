@@ -727,6 +727,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         snap_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snaps')
         good_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/good/validations')
+        no_validations_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/snap-id/validations')
         bad_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/bad/validations')
         err_validations_path = urllib.parse.urljoin(
@@ -744,6 +746,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('bad')
         elif parsed_path.path.startswith(err_validations_path):
             self._handle_validation_request('err')
+        elif parsed_path.path.startswith(no_validations_path):
+            self._handle_validation_request('no')
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_history()
@@ -768,7 +772,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 "snap-id": "snap-id-gating",
                 "timestamp": "2016-09-19T21:07:27.756001Z",
                 "type": "validation",
-                "revoked": "false"
+                "revoked": "false",
+                "required": True,
             }, {
                 "approved-snap-id": "snap-id-2",
                 "approved-snap-revision": "5",
@@ -779,12 +784,28 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 "snap-id": "snap-id-gating",
                 "timestamp": "2016-09-19T21:07:27.756001Z",
                 "type": "validation",
-                "revoked": "false"
+                "revoked": "false",
+                "required": False,
+            }, {
+                "approved-snap-id": "snap-id-3",
+                "approved-snap-revision": "-",
+                "approved-snap-name": "snap-3",
+                "authority-id": "dev-1",
+                "series": "16",
+                "sign-key-sha3-384": "1234567890",
+                "snap-id": "snap-id-gating",
+                "timestamp": "2016-09-19T21:07:27.756001Z",
+                "type": "validation",
+                "revoked": "false",
+                "required": True,
             }]
             response = json.dumps(response).encode()
             status = 200
         elif code == 'bad':
             response = 'foo'.encode()
+            status = 200
+        elif code == 'no':
+            response = json.dumps([]).encode()
             status = 200
         elif code == 'err':
             status = 503
@@ -836,7 +857,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'series': ['16'],
             'channels': [],
             'version': '2.0.1',
-            'timestamp': '2016-09-27T19:23:40.409',
+            'timestamp': '2016-09-27T19:23:40Z',
             'current_channels': ['beta', 'edge'],
             'arch': 'i386',
             'revision': 2
@@ -844,7 +865,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'series': ['16'],
             'channels': ['stable', 'edge'],
             'version': '2.0.2',
-            'timestamp': '2016-09-27T18:38:43.388',
+            'timestamp': '2016-09-27T18:38:43Z',
             'current_channels': ['stable', 'candidate', 'beta'],
             'arch': 'amd64',
             'revision': 1,

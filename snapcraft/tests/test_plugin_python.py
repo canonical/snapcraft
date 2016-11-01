@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
+import tempfile
 from unittest import mock
 
 import snapcraft
@@ -52,6 +52,10 @@ class PythonPluginTestCase(tests.TestCase):
 
         patcher = mock.patch('subprocess.check_call')
         self.mock_call = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_output')
+        self.mock_call_output = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
@@ -141,13 +145,29 @@ class PythonPluginTestCase(tests.TestCase):
         plugin.pull()
         mock_run.assert_has_calls(calls)
 
+    @mock.patch.object(python.PythonPlugin, 'run_output')
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(python.snapcraft.BasePlugin, 'build')
-    def test_build(self, mock_base_build, mock_run):
+    def test_build(self, mock_base_build, mock_run, mock_run_output):
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
 
+        class TempDir(tempfile.TemporaryDirectory):
+
+            def __enter__(self):
+                project_whl_path = os.path.join(self.name, 'project.whl')
+                open(project_whl_path, 'w').close()
+                return super().__enter__()
+
+        patcher = mock.patch('tempfile.TemporaryDirectory',
+                             new=mock.Mock(wraps=TempDir))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_run_output.return_value = 'yaml (1.2)\bextras (1.0)'
+
+        os.environ = {}
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
@@ -160,10 +180,11 @@ class PythonPluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip_wheel = ['pip', 'wheel', '--wheel-dir', plugin._python_package_dir,
+        pip_wheel = ['pip', 'wheel',
                      '--disable-pip-version-check', '--no-index',
                      '--find-links', plugin._python_package_dir,
-                     '--constraint', constraints_path]
+                     '--constraint', constraints_path,
+                     '--wheel-dir', mock.ANY]
 
         pip_install = ['pip', 'install', '--user', '--no-compile',
                        '--disable-pip-version-check', '--no-index',
@@ -173,16 +194,13 @@ class PythonPluginTestCase(tests.TestCase):
         calls = [
             mock.call(pip_wheel + ['--requirement', requirements_path],
                       env=mock.ANY),
-            mock.call(pip_install + ['--requirement', requirements_path],
-                      env=mock.ANY),
             mock.call(pip_wheel + ['test', 'packages'],
-                      env=mock.ANY),
-            mock.call(pip_install + ['test', 'packages'],
                       env=mock.ANY),
             mock.call(pip_wheel + ['.'], cwd=plugin.builddir,
                       env=mock.ANY),
-            mock.call(pip_install + ['.'], cwd=plugin.builddir,
-                      env=mock.ANY),
+            mock.call(tests.ContainsList(
+                pip_install + ['project.whl', 'project.whl', 'project.whl']),
+                env=mock.ANY),
         ]
         plugin.build()
         mock_run.assert_has_calls(calls)

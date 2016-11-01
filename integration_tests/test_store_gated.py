@@ -35,10 +35,17 @@ class GatedTestCase(integration_tests.StoreTestCase):
 
     def test_gated_no_login_failure(self):
         self.assertEqual(1, self.gated(
-            'ubuntu-core', expected_error='Have you run "snapcraft login'))
+            'ubuntu-core', expected_output='Have you run "snapcraft login'))
 
     def test_gated_unknown_snap_failure(self):
         self.addCleanup(self.logout)
         self.login()
         self.assertEqual(1, self.gated(
-            'unknown', expected_error="Snap 'unknown' was not found"))
+            'unknown', expected_output="Snap 'unknown' was not found"))
+
+    def test_gated_no_validations(self):
+        self.addCleanup(self.logout)
+        self.login()
+        self.assertEqual(0, self.gated(
+            'basic',
+            expected_output="There are no validations for snap 'basic'"))
