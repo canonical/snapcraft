@@ -86,3 +86,23 @@ class BzrSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
         revno = self._get_bzr_revno('parts/bzr/src')
         self.assertEqual('1', revno)
+
+    def test_pull_bzr_commit(self):
+        project_dir = self.copy_project_to_tmp('bzr-commit')
+        os.chdir(project_dir)
+
+        self._init_and_config_bzr()
+        subprocess.check_call(
+            ['bzr', 'commit', '-m', '"1"', '--unchanged'],
+            stderr=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['bzr', 'commit', '-m', '"2"', '--unchanged'],
+            stderr=subprocess.DEVNULL)
+        # test initial branch
+        self.run_snapcraft('pull', project_dir)
+        revno = self._get_bzr_revno('parts/bzr/src')
+        self.assertEqual('1', revno)
+        # test pull doesn't fail
+        self.run_snapcraft('pull', project_dir)
+        revno = self._get_bzr_revno('parts/bzr/src')
+        self.assertEqual('1', revno)
