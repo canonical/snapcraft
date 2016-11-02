@@ -455,8 +455,8 @@ class Rpm(FileBase):
                 rpm_file_entrypath = rpm_file_entry.pathname.lstrip('./')
                 rpm_file_entrypath = rpm_file_entrypath.lstrip('/')
                 rpm_file_entry.pathname = os.path.join(dst, rpm_file_entrypath)
-                # A bug in libarchive somewhere causes it to crash when
-                # attempting to have more than one item in the list
+                # XXX: libarchive frees the entry at the end of a loop iteration
+                # See https://github.com/Changaco/python-libarchive-c/issues/43
                 libarchive.extract.extract_entries([rpm_file_entry])
 
         if not keep_rpm:
