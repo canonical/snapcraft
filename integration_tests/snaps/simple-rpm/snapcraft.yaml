@@ -12,4 +12,3 @@ parts:
   rpm:
     plugin: dump
     source: small-0.1-1.noarch.rpm
-
