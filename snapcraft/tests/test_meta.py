@@ -23,6 +23,7 @@ import yaml
 
 from snapcraft.internal.meta import create_snap_packaging, _SnapPackaging
 from snapcraft.internal import common
+from snapcraft.internal.errors import MissingGadgetError
 from snapcraft import tests
 
 
@@ -201,6 +202,28 @@ class CreateTest(tests.TestCase):
             y = yaml.load(f)
         self.assertFalse('license' in y,
                          'license found in snap.yaml {}'.format(y))
+
+    def test_create_gadget_meta_with_gadget_yaml(self):
+        gadget_yaml = 'stub entry: stub value'
+        with open(os.path.join('gadget.yaml'), 'w') as f:
+            f.write(gadget_yaml)
+
+        self.config_data['type'] = 'gadget'
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+
+        expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
+        self.assertTrue(os.path.exists(expected_gadget))
+
+        with open(expected_gadget) as f:
+            self.assertEqual(f.read(), gadget_yaml)
+
+    def test_create_gadget_meta_with_missing_gadget_yaml_raises_error(self):
+        self.config_data['type'] = 'gadget'
+
+        with self.assertRaises(MissingGadgetError):
+            create_snap_packaging(self.config_data,
+                                  self.snap_dir,
+                                  self.parts_dir)
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
