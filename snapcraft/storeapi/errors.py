@@ -90,7 +90,7 @@ class StoreMacaroonNeedsRefreshError(StoreError):
 class DeveloperAgreementSignError(StoreError):
 
     fmt = (
-        'There was an error whilst signing developer agreement.\n'
+        'There was an error while signing developer agreement.\n'
         'Reason: {reason!r}\n'
         'Text: {text!r}')
 
