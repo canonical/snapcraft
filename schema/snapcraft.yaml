@@ -49,6 +49,7 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
+      - gadget
       - kernel
       - os
   frameworks:
