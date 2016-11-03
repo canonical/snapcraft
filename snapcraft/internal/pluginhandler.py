@@ -63,7 +63,7 @@ class PluginHandler:
 
         return self._ubuntu
 
-    def __init__(self, plugin_name, part_name, properties,
+    def __init__(self, *, plugin_name, part_name, part_properties,
                  project_options, part_schema):
         self.valid = False
         self.code = None
@@ -83,7 +83,7 @@ class PluginHandler:
         self._migrate_state_file()
 
         try:
-            self._load_code(plugin_name, properties, part_schema)
+            self._load_code(plugin_name, part_properties, part_schema)
         except jsonschema.ValidationError as e:
             raise PluginError('properties failed to load for {}: {}'.format(
                 part_name, e.message))
@@ -599,10 +599,10 @@ def _load_local(module_name, local_plugin_dir):
     return module
 
 
-def load_plugin(part_name, plugin_name, properties=None,
+def load_plugin(part_name, *, plugin_name, part_properties=None,
                 project_options=None, part_schema=None):
-    if properties is None:
-        properties = {}
+    if part_properties is None:
+        part_properties = {}
     if part_schema is None:
         part_schema = {}
     if project_options is None:
@@ -610,9 +610,12 @@ def load_plugin(part_name, plugin_name, properties=None,
     logger.debug('Setting up part {!r} with plugin {!r} and '
                  'properties {!r}.'.format(part_name,
                                            plugin_name,
-                                           properties))
-    return PluginHandler(plugin_name, part_name, properties,
-                         project_options, part_schema)
+                                           part_properties))
+    return PluginHandler(plugin_name=plugin_name,
+                         part_name=part_name,
+                         part_properties=part_properties,
+                         project_options=project_options,
+                         part_schema=part_schema)
 
 
 def _migratable_filesets(fileset, srcdir):

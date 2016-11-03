@@ -390,7 +390,8 @@ class ValidationsTestCase(tests.TestCase):
             "snap-id": "snap-id-gating",
             "timestamp": "2016-09-19T21:07:27.756001Z",
             "type": "validation",
-            "revoked": "false"
+            "revoked": "false",
+            "required": True,
         }, {
             "approved-snap-id": "snap-id-2",
             "approved-snap-revision": "5",
@@ -401,7 +402,20 @@ class ValidationsTestCase(tests.TestCase):
             "snap-id": "snap-id-gating",
             "timestamp": "2016-09-19T21:07:27.756001Z",
             "type": "validation",
-            "revoked": "false"
+            "revoked": "false",
+            "required": False,
+        }, {
+            "approved-snap-id": "snap-id-3",
+            "approved-snap-revision": "-",
+            "approved-snap-name": "snap-3",
+            "authority-id": "dev-1",
+            "series": "16",
+            "sign-key-sha3-384": "1234567890",
+            "snap-id": "snap-id-gating",
+            "timestamp": "2016-09-19T21:07:27.756001Z",
+            "type": "validation",
+            "revoked": "false",
+            "required": True,
         }]
         result = self.client.get_validations('good')
         self.assertEqual(result, expected)
@@ -749,7 +763,7 @@ class GetSnapHistoryTestCase(tests.TestCase):
             'series': ['16'],
             'channels': [],
             'version': '2.0.1',
-            'timestamp': '2016-09-27T19:23:40.409',
+            'timestamp': '2016-09-27T19:23:40Z',
             'current_channels': ['beta', 'edge'],
             'arch': 'i386',
             'revision': 2
@@ -757,7 +771,7 @@ class GetSnapHistoryTestCase(tests.TestCase):
             'series': ['16'],
             'channels': ['stable', 'edge'],
             'version': '2.0.2',
-            'timestamp': '2016-09-27T18:38:43.388',
+            'timestamp': '2016-09-27T18:38:43Z',
             'current_channels': ['stable', 'candidate', 'beta'],
             'arch': 'amd64',
             'revision': 1,

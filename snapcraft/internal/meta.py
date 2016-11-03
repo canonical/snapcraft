@@ -24,7 +24,9 @@ import tempfile
 
 import yaml
 
+from snapcraft import file_utils
 from snapcraft.internal import common
+from snapcraft.internal.errors import MissingGadgetError
 
 
 logger = logging.getLogger(__name__)
@@ -115,6 +117,12 @@ class _SnapPackaging:
             os.link(self._config_data['icon'], icon_path)
 
         self._setup_from_setup()
+
+        if self._config_data.get('type', '') == 'gadget':
+            if not os.path.exists('gadget.yaml'):
+                raise MissingGadgetError()
+            file_utils.link_or_copy(
+                'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
     def _setup_from_setup(self):
         setup_dir = 'setup'
