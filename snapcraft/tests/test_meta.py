@@ -110,24 +110,6 @@ class CreateTest(tests.TestCase):
                     'Expected "grade" property to be in snap.yaml')
                 self.assertEqual(y['grade'], grade_type)
 
-    def test_create_meta_with_declared_license(self):
-        open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
-        self.config_data['license'] = 'LICENSE'
-
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
-
-        self.assertTrue(
-            os.path.exists(os.path.join(self.meta_dir, 'license.txt')),
-            'license.txt was not setup correctly')
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-        self.assertFalse('license' in y,
-                         'license found in snap.yaml {}'.format(y))
-
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
 
@@ -157,51 +139,6 @@ class CreateTest(tests.TestCase):
             'assumes' in y,
             'Expected "assumes" property to be copied into snap.yaml')
         self.assertEqual(y['assumes'], ['feature1', 'feature2'])
-
-    def test_create_meta_with_declared_license_and_setup(self):
-        open(os.path.join(os.curdir, 'LICENSE'), 'w').close()
-        self.config_data['license'] = 'LICENSE'
-
-        os.mkdir('setup')
-        license_text = 'this is the license'
-        with open(os.path.join('setup', 'license.txt'), 'w') as f:
-            f.write(license_text)
-
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
-
-        expected_license = os.path.join(self.meta_dir, 'license.txt')
-        self.assertTrue(os.path.exists(expected_license),
-                        'license.txt was not setup correctly')
-        with open(expected_license) as f:
-            self.assertEqual(f.read(), license_text)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-        self.assertFalse('license' in y,
-                         'license found in snap.yaml {}'.format(y))
-
-    def test_create_meta_with_license_in_setup(self):
-        os.mkdir('setup')
-        license_text = 'this is the license'
-        with open(os.path.join('setup', 'license.txt'), 'w') as f:
-            f.write(license_text)
-
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
-
-        expected_license = os.path.join(self.meta_dir, 'license.txt')
-        self.assertTrue(os.path.exists(expected_license),
-                        'license.txt was not setup correctly')
-        with open(expected_license) as f:
-            self.assertEqual(f.read(), license_text)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
-        self.assertFalse('license' in y,
-                         'license found in snap.yaml {}'.format(y))
 
     def test_create_gadget_meta_with_gadget_yaml(self):
         gadget_yaml = 'stub entry: stub value'
