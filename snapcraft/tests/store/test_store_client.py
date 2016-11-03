@@ -986,7 +986,7 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
         with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
             self.client.sign_developer_agreement(False)
         self.assertIn(
-            'There was an error whilst signing developer agreement.\n'
+            'There was an error while signing developer agreement.\n'
             'Reason: \'Bad Request\'\n',
             str(raised.exception))
 
@@ -997,6 +997,6 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
             self.client.sign_developer_agreement(latest_tos_accepted=True)
         self.assertEqual(
             str(raised.exception),
-            'There was an error whilst signing developer agreement.\n'
+            'There was an error while signing developer agreement.\n'
             'Reason: \'Internal Server Error\'\n'
             'Text: \'Broken\'')
