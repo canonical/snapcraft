@@ -477,13 +477,16 @@ class Deb(FileBase):
 
 class Rpm(FileBase):
 
-    def __init__(self, source, source_dir, source_tag=None,
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag,
+        super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a rpm source')
+        elif source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-commit for a rpm source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a rpm source')
