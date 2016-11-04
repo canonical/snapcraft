@@ -82,6 +82,30 @@ class HgSourceTestCase(integration_tests.TestCase):
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
+    def test_pull_hg_commit(self):
+        project_dir = self.copy_project_to_tmp('hg-commit')
+        os.chdir(project_dir)
+
+        subprocess.check_call(['hg', 'init', '.'])
+        open('1', 'w').close()
+        subprocess.check_call(
+            ['hg', 'commit', '-m', '1', '--user', '"Example Dev"', '-A', '1'])
+        open('2', 'w').close()
+        subprocess.check_call(
+            ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
+
+        self.run_snapcraft('pull', project_dir)
+        revno = subprocess.check_output(
+            'ls -1 parts/mercurial/src/ | wc -l ',
+            shell=True, universal_newlines=True).strip()
+        self.assertEqual('1', revno)
+
+        self.run_snapcraft('pull', project_dir)
+        revno = subprocess.check_output(
+            'ls -1 parts/mercurial/src/ | wc -l ',
+            shell=True, universal_newlines=True).strip()
+        self.assertEqual('1', revno)
+
     def test_pull_hg_branch(self):
         project_dir = self.copy_project_to_tmp('hg-branch')
         os.chdir(project_dir)
