@@ -497,6 +497,7 @@ class Rpm(FileBase):
             shutil.rmtree(dst)
             os.makedirs(dst)
             shutil.move(tmp_rpm, rpm_file)
+
         # Ensure dst does not have trailing slash
         dst = dst.rstrip('/')
         # Open the RPM file and extract it to destination
@@ -507,7 +508,7 @@ class Rpm(FileBase):
                 rpm_file_entrypath = rpm_file_entry.pathname.lstrip('./')
                 rpm_file_entrypath = rpm_file_entrypath.lstrip('/')
                 rpm_file_entry.pathname = os.path.join(dst, rpm_file_entrypath)
-                # XXX: libarchive frees the entry at the end of a loop iteration
+                # XXX: libarchive frees the entry at the end of loop iterations
                 # See https://github.com/Changaco/python-libarchive-c/issues/43
                 libarchive.extract.extract_entries([rpm_file_entry])
 
