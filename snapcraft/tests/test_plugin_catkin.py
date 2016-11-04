@@ -823,18 +823,6 @@ class FindSystemDependenciesTestCase(tests.TestCase):
                          "stage-packages until you can get it into the rosdep "
                          "database.")
 
-    def test_find_system_dependencies_roscpp_includes_gplusplus(self):
-        rosdep_mock = mock.MagicMock()
-        rosdep_mock.get_dependencies.return_value = ['roscpp']
-        rosdep_mock.resolve_dependency.return_value = ['baz']
-
-        self.assertEqual(_CompareContainers(self, {'baz', 'g++'}),
-                         catkin._find_system_dependencies({'foo'},
-                                                          rosdep_mock))
-
-        rosdep_mock.get_dependencies.assert_called_once_with('foo')
-        rosdep_mock.resolve_dependency.assert_called_once_with('roscpp')
-
 
 class RosdepTestCase(tests.TestCase):
 
