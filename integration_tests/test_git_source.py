@@ -85,6 +85,23 @@ class GitSourceTestCase(integration_tests.TestCase):
         revno = self._get_git_revno('parts/git/src')
         self.assertEqual('"1"', revno)
 
+    def test_pull_git_commit(self):
+        project_dir = self.copy_project_to_tmp('git-commit')
+        os.chdir(project_dir)
+
+        self._init_and_config_git()
+        subprocess.check_call(
+            ['git', 'commit', '-m', '"1"', '--allow-empty'],
+            stdout=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['git', 'commit', '-m', '"2"', '--allow-empty'],
+            stdout=subprocess.DEVNULL)
+
+        # The test uses "HEAD^" so we can only test it once
+        self.run_snapcraft('pull', project_dir)
+        revno = self._get_git_revno('parts/git/src')
+        self.assertEqual('"1"', revno)
+
     def test_pull_git_branch(self):
         project_dir = self.copy_project_to_tmp('git-branch')
         os.chdir(project_dir)

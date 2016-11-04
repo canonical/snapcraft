@@ -1,3 +1,76 @@
+snapcraft (2.21) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * pluginhandler: parametrize call args (#868)
+  * python plugin: wheel and install in the proper order (#883)
+  * New upstream release 2.21 (LP: #1638513)
+
+  [ Stéphane Graber ]
+  * sources: Add new `source-commit` field for VCS sources (#877)
+
+  [ Kyle Fazzari ]
+  * python plugin: remove pip packages when cleaning pull. (#882)
+
+  [ Chris Wayne ]
+  * Add some further bash-completion (#872)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 02 Nov 2016 10:11:37 +0000
+
+snapcraft (2.20) xenial; urgency=medium
+
+  [ Colin Watson ]
+  * Add `snapcraft create-key` (#824)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: add `rosdistro` to help documentation. (#850)
+  * catkin plugin: nicely handle an invalid rosdistro. (#851)
+
+  [ Christian Ehrhardt ]
+  * Add Waf plugin (#716)
+
+  [ Maximiliano Bertacchini ]
+  * Add `snapcraft history`. (#844)
+  * Add `snapcraft status`. (#845)
+
+  [ Daniel Holbach ]
+  * Document the `grade` option. (#857)
+
+  [ Celso Providelo ]
+  * Implementing channel-closing. (#847)
+  * `sign-build` to prompt users for key selection (#848)
+  * history/status alignment fixes. (#863)
+
+  [ Leo Arias ]
+  * In the downloader demo test, use https (#860)
+
+  [ Stéphane Graber ]
+  * Add powerpc (32bit big-endian) support (#862)
+
+  [ Roberto Alsina ]
+  * gated and validate commands message improvements (#849)
+  * Handle 'broken' validations that don't match refresh-control (#867)
+
+  [ Domas Monkus ]
+  * go plugin: Set GOBIN in the build environment. (#859)
+
+  [ Robert Ancell ]
+  * Update documentation links to developer.ubuntu.com that now redirect to
+    snapcraft.io (#864)
+
+  [ Daniel Holbach ]
+  * Bring docs/upload-your-snap.md in line with http://snapcraft.io/docs/… (#869)
+
+  [ Sergio Schvezov ]
+  * Simplify the parser tests. (#852)
+  * Simplify the handler from uri tests. (#853)
+  * tools: script to talk to the staging servers (#855)
+  * Decouple state handling from plugin options. (#854)
+  * python plugin: allow usage of bzr (#858)
+  * python plugin: install from wheel for local setup.py (#861)
+  * New upstream release 2.20 (LP: #1636924)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 26 Oct 2016 13:58:31 -0300
+
 snapcraft (2.19) xenial; urgency=medium
 
   [ Sergio Schvezov ]
