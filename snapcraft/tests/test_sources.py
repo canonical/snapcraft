@@ -226,6 +226,26 @@ class TestBazaar(SourceTestCase):
             ['bzr', 'pull', '-r', 'tag:tag', 'lp:my-source', '-d',
              'source_dir'])
 
+    def test_pull_commit(self):
+        bzr = sources.Bazaar(
+            'lp:my-source', 'source_dir', source_commit='2')
+        bzr.pull()
+
+        self.mock_run.assert_called_once_with(
+            ['bzr', 'branch', '-r', '2', 'lp:my-source',
+             'source_dir'])
+
+    def test_pull_existing_with_commit(self):
+        self.mock_path_exists.return_value = True
+
+        bzr = sources.Bazaar(
+            'lp:my-source', 'source_dir', source_commit='2')
+        bzr.pull()
+
+        self.mock_run.assert_called_once_with(
+            ['bzr', 'pull', '-r', '2', 'lp:my-source', '-d',
+             'source_dir'])
+
     def test_init_with_source_branch_raises_exception(self):
         with self.assertRaises(
                 sources.IncompatibleOptionsError) as raised:
@@ -240,6 +260,16 @@ class TestBazaar(SourceTestCase):
 
         expected_message = (
             'can\'t specify source-depth for a bzr source')
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_tag_and_commit_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Bazaar('lp://mysource', 'source_dir', source_tag="tag",
+                           source_commit="2")
+
+        expected_message = (
+            'can\'t specify both source-tag and source-commit for '
+            'a bzr source')
         self.assertEqual(raised.exception.message, expected_message)
 
 
@@ -280,6 +310,19 @@ class TestGit(SourceTestCase):
             ['git', 'clone', '--recursive', '--branch', 'tag',
              'git://my-source', 'source_dir'])
 
+    def test_pull_commit(self):
+        git = sources.Git(
+            'git://my-source', 'source_dir',
+            source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c')
+        git.pull()
+
+        self.mock_run.assert_has_calls([
+            unittest.mock.call(['git', 'clone', '--recursive',
+                                'git://my-source', 'source_dir']),
+            unittest.mock.call(['git', '-C', 'source_dir', 'checkout',
+                                '2514f9533ec9b45d07883e10a561b248497a8e3c'])
+        ])
+
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
 
@@ -308,6 +351,22 @@ class TestGit(SourceTestCase):
                                 'update'])
         ])
 
+    def test_pull_existing_with_commit(self):
+        self.mock_path_exists.return_value = True
+
+        git = sources.Git(
+            'git://my-source', 'source_dir',
+            source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c')
+        git.pull()
+
+        self.mock_run.assert_has_calls([
+            unittest.mock.call(['git', '-C', 'source_dir', 'pull',
+                                '--recurse-submodules=yes', 'git://my-source',
+                                '2514f9533ec9b45d07883e10a561b248497a8e3c']),
+            unittest.mock.call(['git', '-C', 'source_dir', 'submodule',
+                                'update'])
+        ])
+
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
 
@@ -330,6 +389,30 @@ class TestGit(SourceTestCase):
 
         expected_message = \
             'can\'t specify both source-tag and source-branch for a git source'
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_branch_and_commit_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Git(
+                'git://mysource', 'source_dir',
+                source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
+                source_branch='branch')
+
+        expected_message = \
+            'can\'t specify both source-branch and source-commit for ' \
+            'a git source'
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_tag_and_commit_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Git(
+                'git://mysource', 'source_dir',
+                source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
+                source_tag='tag')
+
+        expected_message = \
+            'can\'t specify both source-tag and source-commit for ' \
+            'a git source'
         self.assertEqual(raised.exception.message, expected_message)
 
 
@@ -360,6 +443,15 @@ class TestMercurial(SourceTestCase):
             ['hg', 'clone', '-u', 'tag', 'hg://my-source',
              'source_dir'])
 
+    def test_pull_commit(self):
+        hg = sources.Mercurial('hg://my-source', 'source_dir',
+                               source_commit='2')
+        hg.pull()
+
+        self.mock_run.assert_called_once_with(
+            ['hg', 'clone', '-u', '2', 'hg://my-source',
+             'source_dir'])
+
     def test_pull_existing(self):
         self.mock_path_exists.return_value = True
 
@@ -378,6 +470,16 @@ class TestMercurial(SourceTestCase):
 
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', '-r', 'tag', 'hg://my-source'])
+
+    def test_pull_existing_with_commit(self):
+        self.mock_path_exists.return_value = True
+
+        hg = sources.Mercurial('hg://my-source', 'source_dir',
+                               source_commit='2')
+        hg.pull()
+
+        self.mock_run.assert_called_once_with(
+            ['hg', 'pull', '-r', '2', 'hg://my-source'])
 
     def test_pull_existing_with_branch(self):
         self.mock_path_exists.return_value = True
@@ -400,6 +502,28 @@ class TestMercurial(SourceTestCase):
             'source')
         self.assertEqual(raised.exception.message, expected_message)
 
+    def test_init_with_source_commit_and_tag_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial(
+                'hg://mysource', 'source_dir', source_commit='2',
+                source_tag='tag')
+
+        expected_message = (
+            'can\'t specify both source-tag and source-commit for a mercurial '
+            'source')
+        self.assertEqual(raised.exception.message, expected_message)
+
+    def test_init_with_source_commit_and_branch_raises_exception(self):
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            sources.Mercurial(
+                'hg://mysource', 'source_dir', source_commit='2',
+                source_branch='branch')
+
+        expected_message = (
+            'can\'t specify both source-branch and source-commit for '
+            'a mercurial source')
+        self.assertEqual(raised.exception.message, expected_message)
+
     def test_init_with_source_depth_raises_exception(self):
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
             sources.Mercurial('hg://mysource', 'source_dir', source_depth=2)
@@ -416,6 +540,13 @@ class TestSubversion(SourceTestCase):
         svn.pull()
         self.mock_run.assert_called_once_with(
             ['svn', 'checkout', 'svn://my-source', 'source_dir'])
+
+    def test_pull_remote_commit(self):
+        svn = sources.Subversion('svn://my-source', 'source_dir',
+                                 source_commit="2")
+        svn.pull()
+        self.mock_run.assert_called_once_with(
+            ['svn', 'checkout', 'svn://my-source', 'source_dir', '-r', '2'])
 
     def test_pull_local_absolute_path(self):
         svn = sources.Subversion(self.path, 'source_dir')

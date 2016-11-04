@@ -88,3 +88,12 @@ class InvalidWikiEntryError(SnapcraftError):
 
     def __init__(self, error=None):
         super().__init__(error=error)
+
+
+class MissingGadgetError(SnapcraftError):
+
+    fmt = (
+        'When creating gadget snaps you are required to provide a gadget.yaml file\n'  # noqa
+        'in the root of your snapcraft project\n\n'
+        'Read more about gadget snaps and the gadget.yaml on:\n'
+        'https://github.com/snapcore/snapd/wiki/Gadget-snap')

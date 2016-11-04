@@ -36,11 +36,12 @@ class MockOptions:
 
     def __init__(self, source=None, source_type=None, source_branch=None,
                  source_tag=None, source_subdir=None, source_depth=None,
-                 disable_parallel=False):
+                 source_commit=None, disable_parallel=False):
         self.source = source
         self.source_type = source_type
         self.source_depth = source_depth
         self.source_branch = source_branch
+        self.source_commit = source_commit
         self.source_tag = source_tag
         self.source_subdir = source_subdir
         self.disable_parallel = disable_parallel
