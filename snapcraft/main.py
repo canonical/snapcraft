@@ -33,14 +33,21 @@ Usage:
   snapcraft [options] logout
   snapcraft [options] list-keys
   snapcraft [options] keys
+  snapcraft [options] create-key [<key-name>]
   snapcraft [options] register-key [<key-name>]
   snapcraft [options] register <snap-name> [--private]
+  snapcraft [options] sign-build <snap-file> [--key-name=<key-name>] [--local]
   snapcraft [options] upload <snap-file>
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
+  snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
+  snapcraft [options] gated <snap-name>
+  snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -78,6 +85,7 @@ Options specific to snapping:
 
 Options specific to store interaction:
   --release <channels>  Comma separated list of channels to release to.
+  --series <series>     Snap series [default: {DEFAULT_SERIES}].
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
@@ -87,14 +95,19 @@ The available commands are:
   logout       Clear session credentials.
   list-keys    List keys available for signing snaps.
   keys         Alias for list-keys.
+  create-key   Create a key pair for signing snaps.
   register-key Register a key for signing snaps.
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
+  sign-build   Sign a built snap file and assert it using the developer's key.
   push         Pushes and optionally releases a snap to the Ubuntu Store.
   upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
                supersedes this command.
   release      Release a revision of a snap to a specific channel.
+  status       Show the current status of a snap per channel and architecture.
+  history      List all revisions of a snap.
+  close        Close one or more channels of a snap.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -121,8 +134,8 @@ https://linuxcontainers.org/lxd/getting-started-cli
 to get started.
 
 For more help, visit the documentation:
-http://developer.ubuntu.com/snappy/snapcraft
-"""
+http://snapcraft.io/docs/build-snaps
+"""  # NOQA
 
 import logging
 import os
@@ -139,6 +152,7 @@ from snapcraft.internal.common import (
     format_output_in_columns,
     get_terminal_width,
     get_tourdir)
+from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 
 logger = logging.getLogger(__name__)
@@ -202,7 +216,8 @@ def _get_project_options(args):
 
 
 def main(argv=None):
-    args = docopt(__doc__, version=_get_version(), argv=argv)
+    doc = __doc__.format(DEFAULT_SERIES=DEFAULT_SERIES)
+    args = docopt(doc, version=_get_version(), argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
@@ -288,18 +303,26 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'register-key',
-        'register', 'upload', 'release', 'push')
+        'list-keys', 'keys', 'create-key', 'register-key', 'register',
+        'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
+        'history', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
-def _run_store_command(args):
+# This function's complexity is correlated to the number of
+# commands, no point in checking that.
+def _run_store_command(args):  # noqa: C901
     if args['list-keys'] or args['keys']:
         snapcraft.list_keys()
+    elif args['create-key']:
+        snapcraft.create_key(args['<key-name>'])
     elif args['register-key']:
         snapcraft.register_key(args['<key-name>'])
     elif args['register']:
         snapcraft.register(args['<snap-name>'], args['--private'])
+    elif args['sign-build']:
+        snapcraft.sign_build(
+            args['<snap-file>'], args['--key-name'], args['--local'])
     elif args['upload']:
         logger.warning('DEPRECATED: Use `push` instead of `upload`')
         snapcraft.push(args['<snap-file>'])
@@ -312,6 +335,19 @@ def _run_store_command(args):
     elif args['release']:
         snapcraft.release(
             args['<snap-name>'], args['<revision>'], [args['<channel>']])
+    elif args['validate']:
+        snapcraft.validate(args['<snap-name>'], args['<validation>'],
+                           key=args['--key-name'])
+    elif args['gated']:
+        snapcraft.gated(args['<snap-name>'])
+    elif args['status']:
+        snapcraft.status(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['history']:
+        snapcraft.history(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['close']:
+        snapcraft.close(args['<snap-name>'], args['<channel_names>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

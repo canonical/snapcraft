@@ -150,7 +150,9 @@ class GetSourceWithBranches(tests.TestCase):
         }),
     ]
 
-    def test_get_source_with_branch_and_tag_must_raise_error(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_get_source_with_branch_and_tag_must_raise_error(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions('lp:source', self.source_type,
                                     self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
@@ -170,22 +172,52 @@ class GetSourceTestCase(tests.TestCase):
             'source_type': 'bzr',
             'source_branch': 'test_branch',
             'source_tag': None,
+            'source_commit': None,
             'error': 'source-branch'}),
         ('tar with source branch', {
             'source_type': 'tar',
             'source_branch': 'test_branch',
             'source_tag': None,
+            'source_commit': None,
             'error': 'source-branch'}),
         ('tar with source tag', {
             'source_type': 'tar',
             'source_branch': None,
             'source_tag': 'test_tag',
-            'error': 'source-tag'})
+            'source_commit': None,
+            'error': 'source-tag'}),
+        ('tar with source commit', {
+            'source_type': 'tar',
+            'source_branch': None,
+            'source_tag': None,
+            'source_commit': 'commit',
+            'error': 'source-commit'}),
+        ('deb with source branch', {
+            'source_type': 'deb',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'source_commit': None,
+            'error': 'source-branch'}),
+        ('deb with source tag', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': 'test_tag',
+            'source_commit': None,
+            'error': 'source-tag'}),
+        ('deb with source commit', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': None,
+            'source_commit': 'commit',
+            'error': 'source-commit'})
     ]
 
-    def test_get_source_with_branch_must_raise_error(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_get_source_with_branch_must_raise_error(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions('lp:this', self.source_type,
-                                    self.source_branch, self.source_tag)
+                                    self.source_branch, self.source_tag,
+                                    None, None, self.source_commit)
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
@@ -199,7 +231,9 @@ class GetSourceTestCase(tests.TestCase):
 
 class BuildTestCase(tests.TestCase):
 
-    def test_do_not_follow_links(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_do_not_follow_links(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions(source='.')
         plugin = snapcraft.BasePlugin('test_plugin', options)
 

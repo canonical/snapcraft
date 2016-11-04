@@ -34,7 +34,7 @@ class LoginCommandTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
 
         patcher = mock.patch('builtins.input')
-        patcher.start()
+        self.mock_input = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('builtins.print')
@@ -45,36 +45,56 @@ class LoginCommandTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_successful_login(self):
-        with mock.patch.object(storeapi.StoreClient, 'login'):
-            # no exception raised.
-            main(['login'])
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_successful_login(self, mock_login):
+        self.mock_input.return_value = 'user@example.com'
 
+        # no exception raised.
+        main(['login'])
+
+        self.mock_input.assert_called_once_with('Email: ')
+        mock_login.assert_called_once_with(
+            'user@example.com', mock.ANY, acls=None, save=True)
         self.assertEqual(
-            'Authenticating against Ubuntu One SSO.\n'
+            'We strongly recommend enabling multi-factor authentication: '
+            'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
             'Login successful.\n',
             self.fake_logger.output)
 
-    def test_failed_login_with_invalid_credentials(self):
-        with mock.patch.object(
-                storeapi.StoreClient, 'login') as mock_login:
-            mock_login.side_effect = storeapi.errors.InvalidCredentialsError(
-                'error')
-            main(['login'])
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_successful_login_with_2fa(self, mock_login):
+        self.mock_input.side_effect = ('user@example.com', '123456')
+        mock_login.side_effect = [
+            storeapi.errors.StoreTwoFactorAuthenticationRequired(), None]
 
-        self.assertEqual(
-            'Authenticating against Ubuntu One SSO.\n'
-            'Login failed.\n',
-            self.fake_logger.output)
+        # no exception raised.
+        main(['login'])
 
-    def test_failed_login_with_store_authentication_error(self):
-        with mock.patch.object(
-                storeapi.StoreClient, 'login') as mock_login:
-            mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
-                'error')
-            main(['login'])
+        self.assertEqual(2, self.mock_input.call_count)
+        self.mock_input.assert_has_calls([
+            mock.call('Email: '), mock.call('Second-factor auth: ')])
+        self.assertEqual(2, mock_login.call_count)
+        mock_login.assert_has_calls([
+            mock.call('user@example.com', mock.ANY, acls=None, save=True),
+            mock.call(
+                'user@example.com', mock.ANY, one_time_password='123456',
+                acls=None, save=True)])
+        self.assertEqual('Login successful.\n', self.fake_logger.output)
 
-        self.assertEqual(
-            'Authenticating against Ubuntu One SSO.\n'
-            'Login failed.\n',
-            self.fake_logger.output)
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_invalid_credentials(self, mock_login):
+        mock_login.side_effect = storeapi.errors.InvalidCredentialsError(
+            'error')
+
+        main(['login'])
+
+        self.assertEqual('Login failed.\n', self.fake_logger.output)
+
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_store_authentication_error(self, mock_login):
+        mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
+            'error')
+
+        main(['login'])
+
+        self.assertEqual('Login failed.\n', self.fake_logger.output)

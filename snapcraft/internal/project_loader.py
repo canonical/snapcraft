@@ -25,6 +25,7 @@ import jsonschema
 import yaml
 
 import snapcraft
+from snapcraft import formatting_utils
 from snapcraft.internal import (
     common,
     libraries,
@@ -222,20 +223,24 @@ class Config:
 
     def _process_remote_parts(self, snapcraft_yaml):
         parts = snapcraft_yaml.get('parts', {})
+        new_parts = {}
 
         for part_name in parts:
             if 'plugin' not in parts[part_name]:
                 properties = self._remote_parts.compose(part_name,
                                                         parts[part_name])
-                parts[part_name] = properties
+                new_parts[part_name] = properties
+            else:
+                new_parts[part_name] = parts[part_name].copy()
 
             after_parts = parts[part_name].get('after', [])
             after_remote_parts = [p for p in after_parts if p not in parts]
 
             for after_part in after_remote_parts:
                 properties = self._remote_parts.get_part(after_part)
-                parts[after_part] = properties
+                new_parts[after_part] = properties
 
+        snapcraft_yaml['parts'] = new_parts
         return snapcraft_yaml
 
 
@@ -269,7 +274,7 @@ def _runtime_env(root, arch_triplet):
     # Add the default LD_LIBRARY_PATH
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
-        env.append(common.format_path_variable(
+        env.append(formatting_utils.format_path_variable(
             'LD_LIBRARY_PATH', paths, prepend='', separator=':'))
 
     # Add more specific LD_LIBRARY_PATH from staged packages if necessary
@@ -292,15 +297,15 @@ def _build_env(root, arch_triplet):
     paths = common.get_include_paths(root, arch_triplet)
     if paths:
         for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-            env.append(common.format_path_variable(
+            env.append(formatting_utils.format_path_variable(
                 envvar, paths, prepend='-I', separator=' '))
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
-        env.append(common.format_path_variable(
+        env.append(formatting_utils.format_path_variable(
             'LDFLAGS', paths, prepend='-L', separator=' '))
     paths = common.get_pkg_config_paths(root, arch_triplet)
     if paths:
-        env.append(common.format_path_variable(
+        env.append(formatting_utils.format_path_variable(
             'PKG_CONFIG_PATH', paths, prepend='', separator=':'))
 
     return env
@@ -344,7 +349,7 @@ def _snapcraft_yaml_load(yaml_file):
     except yaml.scanner.ScannerError as e:
         raise SnapcraftSchemaError(
             '{} on line {} of {}'.format(
-                e.problem, e.problem_mark.line, yaml_file))
+                e.problem, e.problem_mark.line + 1, yaml_file))
 
 
 def load_config(project_options=None):

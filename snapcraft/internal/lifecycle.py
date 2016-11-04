@@ -27,6 +27,7 @@ import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
 import snapcraft
+from snapcraft import formatting_utils
 import snapcraft.internal
 from snapcraft.internal import (
     common,
@@ -35,6 +36,7 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal.project_loader import replace_attr
 
 
 logger = logging.getLogger(__name__)
@@ -104,6 +106,16 @@ def execute(step, project_options, part_names=None):
             'version': config.data['version'],
             'arch': config.data['architectures'],
             'type': config.data.get('type', '')}
+
+
+def _replace_in_part(part):
+    for key, value in part.code.options.__dict__.items():
+        value = replace_attr(value, [
+            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+        ])
+        setattr(part.code.options, key, value)
+
+    return part
 
 
 class _Executor:
@@ -181,6 +193,7 @@ class _Executor:
         common.env = self.parts_config.build_env_for_part(part)
         common.env.extend(self.config.project_env())
 
+        part = _replace_in_part(part)
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
@@ -210,7 +223,8 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    humanized_parts = _humanize_list(dependents)
+                    humanized_parts = formatting_utils.humanize_list(
+                        dependents, 'and')
 
                     raise RuntimeError(
                         'The {0!r} step for {1!r} needs to be run again, but '
@@ -276,6 +290,15 @@ def snap(project_options, directory=None, output=None):
 
     snap_name = output or common.format_snap_name(snap)
 
+    # If a .snap-build exists at this point, when we are about to override
+    # the snap blob, it is stale. We rename it so user have a chance to
+    # recover accidentally lost assertions.
+    snap_build = snap_name + '-build'
+    if os.path.isfile(snap_build):
+        _new = '{}.{}'.format(snap_build, int(time.time()))
+        logger.warning('Renaming stale build assertion to {}'.format(_new))
+        os.rename(snap_build, _new)
+
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
@@ -340,22 +363,6 @@ def _clean_part_and_all_dependents(part_name, step, config, staged_state,
     config.parts.clean_part(part_name, staged_state, primed_state, step)
 
 
-def _humanize_list(items):
-    if len(items) == 0:
-        return ''
-
-    quoted_items = ['{!r}'.format(item) for item in sorted(items)]
-    if len(items) == 1:
-        return quoted_items[0]
-
-    humanized = ', '.join(quoted_items[:-1])
-
-    if len(items) > 2:
-        humanized += ','
-
-    return '{} and {}'.format(humanized, quoted_items[-1])
-
-
 def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        config):
     # Get the name of the parts that depend upon this one
@@ -365,7 +372,8 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
     if not dependents.issubset(clean_part_names):
         for part in config.all_parts:
             if part.name in dependents and not part.is_clean(step):
-                humanized_parts = _humanize_list(dependents)
+                humanized_parts = formatting_utils.humanize_list(
+                    dependents, 'and')
 
                 raise RuntimeError(
                     'Requested clean of {!r} but {} depend{} upon it. Please '

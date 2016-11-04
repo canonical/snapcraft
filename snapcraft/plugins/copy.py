@@ -73,6 +73,9 @@ class CopyPlugin(snapcraft.BasePlugin):
                        "has been replaced by the 'dump' plugin, and it will "
                        "soon be removed.")
 
+    def enable_cross_compilation(self):
+        pass
+
     def build(self):
         super().build()
 

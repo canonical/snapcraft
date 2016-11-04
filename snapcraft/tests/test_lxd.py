@@ -50,10 +50,8 @@ class LXDTestCase(tests.TestCase):
             fake_logger.output)
 
         mock_call.assert_has_calls([
-            call(['lxc', 'remote', 'add', 'my-pet',
-                  'https://images.linuxcontainers.org:8443']),
             call(['lxc', 'launch', '-e',
-                  'my-pet:ubuntu/xenial/{}'.format(expected_arch),
+                  'ubuntu:xenial/{}'.format(expected_arch),
                   'snapcraft-my-pet']),
             call(['lxc', 'file', 'push', 'project.tar',
                   'snapcraft-my-pet//root/project.tar']),
@@ -75,7 +73,7 @@ class LXDTestCase(tests.TestCase):
                   'snapcraft-my-pet//root/snap.snap',
                   'snap.snap']),
             call(['lxc', 'stop', '-f', 'snapcraft-my-pet']),
-            call(['lxc', 'remote', 'remove', 'my-pet'])])
+        ])
 
     @patch('snapcraft.internal.lxd.check_call')
     @patch('snapcraft.internal.lxd.sleep')

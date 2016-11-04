@@ -63,7 +63,7 @@ class PluginHandler:
 
         return self._ubuntu
 
-    def __init__(self, plugin_name, part_name, properties,
+    def __init__(self, *, plugin_name, part_name, part_properties,
                  project_options, part_schema):
         self.valid = False
         self.code = None
@@ -83,7 +83,7 @@ class PluginHandler:
         self._migrate_state_file()
 
         try:
-            self._load_code(plugin_name, properties, part_schema)
+            self._load_code(plugin_name, part_properties, part_schema)
         except jsonschema.ValidationError as e:
             raise PluginError('properties failed to load for {}: {}'.format(
                 part_name, e.message))
@@ -190,7 +190,7 @@ class PluginHandler:
             # YAML (taken from self.code.options). If they've changed, then
             # this step is dirty and needs to run again.
             if state.properties != state.properties_of_interest(
-                    self.code.options):
+                    vars(self.code.options)):
                 return True
 
         with contextlib.suppress(AttributeError):
@@ -273,7 +273,9 @@ class PluginHandler:
         self.notify_part_progress('Pulling')
         self.code.pull()
         self.mark_done('pull', states.PullState(
-            self.pull_properties, self.code.options, self._project_options))
+            self.pull_properties,
+            vars(self.code.options),
+            self._project_options))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
@@ -302,7 +304,9 @@ class PluginHandler:
         self.notify_part_progress('Building')
         self.code.build()
         self.mark_done('build', states.BuildState(
-            self.build_properties, self.code.options, self._project_options))
+            self.build_properties,
+            vars(self.code.options),
+            self._project_options))
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
@@ -346,7 +350,9 @@ class PluginHandler:
         # dependencies here too
 
         self.mark_done('stage', states.StageState(
-            snap_files, snap_dirs, self.code.options, self._project_options))
+            snap_files, snap_dirs,
+            vars(self.code.options),
+            self._project_options))
 
     def clean_stage(self, project_staged_state, hint=''):
         if self.is_clean('stage'):
@@ -411,7 +417,8 @@ class PluginHandler:
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
         self.mark_done('prime', states.PrimeState(
-            snap_files, snap_dirs, dependency_paths, self.code.options,
+            snap_files, snap_dirs, dependency_paths,
+            vars(self.code.options),
             self._project_options))
 
     def clean_prime(self, project_primed_state, hint=''):
@@ -592,10 +599,10 @@ def _load_local(module_name, local_plugin_dir):
     return module
 
 
-def load_plugin(part_name, plugin_name, properties=None,
+def load_plugin(part_name, *, plugin_name, part_properties=None,
                 project_options=None, part_schema=None):
-    if properties is None:
-        properties = {}
+    if part_properties is None:
+        part_properties = {}
     if part_schema is None:
         part_schema = {}
     if project_options is None:
@@ -603,9 +610,12 @@ def load_plugin(part_name, plugin_name, properties=None,
     logger.debug('Setting up part {!r} with plugin {!r} and '
                  'properties {!r}.'.format(part_name,
                                            plugin_name,
-                                           properties))
-    return PluginHandler(plugin_name, part_name, properties,
-                         project_options, part_schema)
+                                           part_properties))
+    return PluginHandler(plugin_name=plugin_name,
+                         part_name=part_name,
+                         part_properties=part_properties,
+                         project_options=project_options,
+                         part_schema=part_schema)
 
 
 def _migratable_filesets(fileset, srcdir):
@@ -716,6 +726,8 @@ def _find_dependencies(root, part_files):
 
     elf_files = set()
 
+    fs_encoding = sys.getfilesystemencoding()
+
     for part_file in part_files:
         # Filter out object (*.o) files-- we only care about binaries.
         if part_file.endswith('.o'):
@@ -728,6 +740,7 @@ def _find_dependencies(root, part_files):
                 path))
             continue
 
+        path = path.encode(fs_encoding, errors='surrogateescape')
         # Finally, make sure this is actually an ELF before queueing it up
         # for an ldd call.
         file_m = ms.file(path)

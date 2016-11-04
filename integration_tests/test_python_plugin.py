@@ -29,7 +29,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
     def test_pull_with_pip_requirements_file(self):
         project_dir = 'pip-requirements-file'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
                 project_dir, 'parts', 'python2', 'install', 'lib',
@@ -43,7 +43,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
     def test_pull_with_pip_requirements_list(self):
         project_dir = 'pip-requirements-list'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
                 project_dir, 'parts', 'python2', 'install', 'lib',
@@ -156,3 +156,21 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 project_dir, 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml')),
             [])
+
+    def test_pull_a_package_from_bzr(self):
+        project_dir = 'pip-bzr'
+        self.run_snapcraft('pull', project_dir)
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'pip-bzr', 'packages',
+                'curtin-*.zip'))[0],
+            FileExists())
+
+    def test_build_with_data_files_with_root(self):
+        project_dir = 'pip-root-data-files'
+        self.run_snapcraft('build', project_dir)
+        self.assertThat(
+            glob(os.path.join(
+                project_dir, 'parts', 'root', 'install',
+                'lib', 'python3*', 'site-packages', 'etc', 'broken.txt'))[0],
+            FileExists())

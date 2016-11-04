@@ -26,7 +26,6 @@ import petname
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_IMAGE_SERVER = 'https://images.linuxcontainers.org:8443'
 _NETWORK_PROBE_COMMAND = \
     'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
         'http://start.ubuntu.com/connectivity-check.html')
@@ -35,14 +34,12 @@ _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 class Cleanbuilder:
 
-    def __init__(self, snap_output, tar_filename, project_options,
-                 server=_DEFAULT_IMAGE_SERVER):
+    def __init__(self, snap_output, tar_filename, project_options):
         self._snap_output = snap_output
         self._tar_filename = tar_filename
         self._project_options = project_options
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
-        self._server = server
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -58,19 +55,15 @@ class Cleanbuilder:
     @contextmanager
     def _create_container(self):
         try:
-            remote_tmp = petname.Generate(2, '-')
-            check_call(['lxc', 'remote', 'add', remote_tmp, self._server])
             check_call([
                 'lxc', 'launch', '-e',
-                '{}:ubuntu/xenial/{}'.format(
-                    remote_tmp, self._project_options.deb_arch),
+                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
                 self._container_name])
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.
             print('Stopping {}'.format(self._container_name))
             check_call(['lxc', 'stop', '-f', self._container_name])
-            check_call(['lxc', 'remote', 'remove', remote_tmp])
 
     def execute(self):
         with self._create_container():

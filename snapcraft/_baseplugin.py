@@ -46,7 +46,15 @@ class BasePlugin:
                     'type': 'string',
                     'default': '',
                 },
+                'source-depth': {
+                    'type': 'integer',
+                    'default': 0,
+                },
                 'source-branch': {
+                    'type': 'string',
+                    'default': '',
+                },
+                'source-commit': {
                     'type': 'string',
                     'default': '',
                 },
@@ -67,13 +75,14 @@ class BasePlugin:
                 'source',
             ],
             'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir'],
+                                'source-commit', 'source-tag',
+                                'source-subdir'],
             'build-properties': ['disable-parallel']
         }
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
-        """Define additional sources.list."""
+        """Define alternative sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
     def __init__(self, name, options, project=None):
@@ -118,6 +127,7 @@ class BasePlugin:
 
         - source
         - source-branch
+        - source-commit
         - source-tag
         - source-type
 

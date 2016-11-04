@@ -111,11 +111,9 @@ class StoreTestCase(TestCase):
         process.sendline(email)
         process.expect_exact('Password: ')
         process.sendline(password)
-        process.expect_exact(
-            "One-time password (just press enter if you don't use two-factor "
-            "authentication): ")
-        process.sendline('')
-        process.expect_exact('Authenticating against Ubuntu One SSO.')
+        if expect_success:
+            process.expect_exact(
+                'We strongly recommend enabling multi-factor authentication:')
         result = 'successful' if expect_success else 'failed'
         process.expect_exact('Login {}.'.format(result))
 
@@ -146,12 +144,9 @@ class StoreTestCase(TestCase):
         process.sendline(email)
         process.expect_exact('Password: ')
         process.sendline(password)
-        process.expect_exact(
-            "One-time password (just press enter if you don't use two-factor "
-            "authentication): ")
-        process.sendline('')
-        process.expect_exact('Authenticating against Ubuntu One SSO.')
         if expect_success:
+            process.expect_exact(
+                'We strongly recommend enabling multi-factor authentication:')
             process.expect_exact('Login successful.')
             process.expect(
                 r'Done\. The key "{}" .* may be used to sign your '
@@ -191,3 +186,69 @@ class StoreTestCase(TestCase):
             else:
                 print(line)
         return updated_project_dir
+
+    def gated(self, snap_name, expected_validations=[], expected_output=None):
+        process = pexpect.spawn(self.snapcraft_command, ['gated', snap_name])
+
+        if expected_output:
+            process.expect(expected_output)
+        else:
+            for name, revision in expected_validations:
+                process.expect('{} *{}'.format(name, revision))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def validate(self, snap_name, validations, expected_error=None):
+        process = pexpect.spawn(self.snapcraft_command,
+                                ['validate', snap_name] + validations)
+        if expected_error:
+            process.expect(expected_error)
+        else:
+            for v in validations:
+                process.expect('Signing validation {}'.format(v))
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def sign_build(self, snap_filename, key_name='default', local=False,
+                   expect_success=True):
+        cmd = ['sign-build', snap_filename, '--key-name', key_name]
+        if local:
+            # only sign it, no pushing
+            cmd.append('--local')
+        process = pexpect.spawn(self.snapcraft_command, cmd)
+        if expect_success:
+            if local:
+                process.expect(
+                    'Build assertion {}-build saved to disk.'.format(
+                        snap_filename))
+            else:
+                process.expect(
+                    'Build assertion {}-build pushed.'.format(snap_filename))
+
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def close(self, *args, **kwargs):
+        process = pexpect.spawn(
+            self.snapcraft_command, ['close'] + list(args))
+        expected = kwargs.get('expected')
+        if expected is not None:
+            process.expect(expected)
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus
+
+    def push(self, snap, release=None, expected=None):
+        actions = ['push', snap]
+        if release is not None:
+            actions += ['--release', release]
+        process = pexpect.spawn(
+            self.snapcraft_command, actions)
+        if expected is not None:
+            process.expect(expected)
+        process.expect(pexpect.EOF)
+        process.close()
+        return process.exitstatus

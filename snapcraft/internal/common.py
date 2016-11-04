@@ -253,18 +253,3 @@ def get_pkg_config_paths(root, arch_triplet):
     ]
 
     return [p for p in paths if os.path.exists(p)]
-
-
-def combine_paths(paths, prepend, separator):
-    paths = ['{}{}'.format(prepend, p) for p in paths]
-    return separator.join(paths)
-
-
-def format_path_variable(envvar, paths, prepend, separator):
-    if not paths:
-        raise ValueError(
-            "Failed to format '${}': no paths supplied".format(envvar))
-
-    return '{envvar}="${envvar}{separator}{paths}"'.format(
-        envvar=envvar, separator=separator, paths=combine_paths(
-            paths, prepend, separator))

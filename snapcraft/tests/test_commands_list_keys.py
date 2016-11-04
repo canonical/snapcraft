@@ -97,7 +97,7 @@ class ListKeysTestCase(tests.TestCase):
         expected_output = dedent('''\
                 Name     SHA3-384 fingerprint
             *   default  {default_sha3_384}
-            -   another  {another_sha3_384}  (not enabled)
+            -   another  {another_sha3_384}  (not registered)
             ''').format(
                 default_sha3_384=get_sample_key('default')['sha3-384'],
                 another_sha3_384=get_sample_key('another')['sha3-384'])

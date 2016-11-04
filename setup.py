@@ -53,7 +53,6 @@ setup(
     install_requires=[
         'pyxdg',
         'requests',
-        'requests-oauthlib',
     ],
     test_suite='snapcraft.tests',
     license='GPL v3',

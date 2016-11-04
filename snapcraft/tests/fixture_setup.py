@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from functools import partial
 import io
+import os
 import threading
 import urllib.parse
 from unittest import mock
@@ -172,7 +173,9 @@ class FakeStore(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        self.fake_sso_server_fixture = FakeSSOServerRunning()
+        self.needs_refresh = False
+
+        self.fake_sso_server_fixture = FakeSSOServerRunning(self)
         self.useFixture(self.fake_sso_server_fixture)
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_SSO_API_ROOT_URL',
@@ -185,7 +188,7 @@ class FakeStore(fixtures.Fixture):
             'UBUNTU_STORE_UPLOAD_ROOT_URL',
             self.fake_store_upload_server_fixture.url))
 
-        self.fake_store_api_server_fixture = FakeStoreAPIServerRunning()
+        self.fake_store_api_server_fixture = FakeStoreAPIServerRunning(self)
         self.useFixture(self.fake_store_api_server_fixture)
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
@@ -247,7 +250,9 @@ class FakePartsServerRunning(_FakeServerRunning):
 
 class FakeSSOServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeSSOServer
+    def __init__(self, fake_store):
+        super().__init__()
+        self.fake_server = partial(fake_servers.FakeSSOServer, fake_store)
 
 
 class FakeStoreUploadServerRunning(_FakeServerRunning):
@@ -257,7 +262,9 @@ class FakeStoreUploadServerRunning(_FakeServerRunning):
 
 class FakeStoreAPIServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreAPIServer
+    def __init__(self, fake_store):
+        super().__init__()
+        self.fake_server = partial(fake_servers.FakeStoreAPIServer, fake_store)
 
 
 class FakeStoreSearchServerRunning(_FakeServerRunning):

@@ -1,0 +1,13 @@
+name: test-package
+version: 0.1
+summary: one line summary
+description: a longer description
+icon: icon.png
+confinement: strict
+
+parts:
+    mercurial:
+        plugin: make
+        source: .
+        source-type: hg
+        source-commit: "0"

@@ -254,10 +254,13 @@ class PartsConfig:
                     'The part named {!r} is not defined in '
                     '{!r}'.format(part_name, self._snapcraft_yaml))
 
-    def load_plugin(self, part_name, plugin_name, properties):
+    def load_plugin(self, part_name, plugin_name, part_properties):
         part = pluginhandler.load_plugin(
-            part_name, plugin_name, properties,
-            self._project_options, self._validator.part_schema)
+            part_name,
+            plugin_name=plugin_name,
+            part_properties=part_properties,
+            project_options=self._project_options,
+            part_schema=self._validator.part_schema)
 
         self.build_tools += part.code.build_packages
         self.build_tools += sources.get_required_packages(part.code.options)
@@ -330,7 +333,7 @@ def search(part_match):
 
     print('{}  {}'.format(
         _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
-    for part_key in matches.keys():
+    for part_key in sorted(matches.keys()):
         description = matches[part_key]['description'].split('\n')[0]
         if len(description) > description_space:
             description = '{}...'.format(description[0:description_space])

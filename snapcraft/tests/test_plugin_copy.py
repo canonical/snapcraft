@@ -332,6 +332,10 @@ class TestCopyPlugin(TestCase):
                 with open(destination, 'r') as f:
                     self.assertEqual(f.read(), symlink['expected_contents'])
 
+    def test_copy_enable_cross_compilation(self):
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
+        c.enable_cross_compilation()
+
 
 class TestRecursivelyLink(TestCase):
 

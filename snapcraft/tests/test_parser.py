@@ -16,8 +16,6 @@
 
 import logging
 import os
-import shutil
-import tempfile
 from unittest import mock
 
 import requests
@@ -26,11 +24,12 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
+from snapcraft.internal.errors import MissingPackageError
+from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
     BadSnapcraftYAMLError,
-    BASE_DIR,
     PARTS_FILE,
     main,
 )
@@ -58,6 +57,11 @@ def _get_part_list_count(path=PARTS_FILE):
     return len(_get_part_list(path))
 
 
+class TestParserBaseDir(TestCase):
+    def test__get_base_dir(self):
+        self.assertEqual('/tmp', parser._get_base_dir())
+
+
 class TestParser(TestCase):
     def tearDown(self):
         try:
@@ -65,6 +69,20 @@ class TestParser(TestCase):
             os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
+
+    def setUp(self):
+        super().setUp()
+        tempdir = fixtures.TempDir()
+        self.useFixture(tempdir)
+        self.tempdir_path = tempdir.path
+        patcher = mock.patch('snapcraft.internal.parser._get_base_dir')
+        base_dir = patcher.start()
+        base_dir.return_value = tempdir.path
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.sources.get')
+        self.mock_get = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_ordereddict_yaml(self):
         from collections import OrderedDict
@@ -78,8 +96,7 @@ class TestParser(TestCase):
         self.assertTrue(isinstance(yaml.load(output), OrderedDict))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_main_nested_parts_valid(self, mock_get, mock_get_origin_data):
+    def test_main_nested_parts_valid(self, mock_get_origin_data):
         """Ensure that we fail if there are dependent parts that
         are not included in the wiki's 'parts' section."""
 
@@ -115,8 +132,7 @@ parts: [main, part1, part2]
         self.assertEqual(3, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_main_nested_parts_invalid(self, mock_get, mock_get_origin_data):
+    def test_main_nested_parts_invalid(self, mock_get_origin_data):
         """Ensure that we fail if there are dependent parts that
         are not included in the wiki's 'parts' section."""
 
@@ -152,8 +168,7 @@ parts: [main, part1]
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_code_tags(self, mock_get, mock_get_origin_data):
+    def test_wiki_code_tags(self, mock_get_origin_data):
         _create_example_output("""
 {{{
 ---
@@ -176,9 +191,7 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_main_valid_variable_substition(self, mock_get,
-                                            mock_get_origin_data):
+    def test_main_valid_variable_substition(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com
@@ -207,8 +220,7 @@ parts: [main]
         self.assertEqual(0, retval)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_main_valid(self, mock_get, mock_get_origin_data):
+    def test_main_valid(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com
@@ -230,8 +242,7 @@ parts: [main]
         self.assertEqual(0, retval)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_main_slash_warning(self, mock_get, mock_get_origin_data):
+    def test_main_slash_warning(self, mock_get_origin_data):
         fake_logger = fixtures.FakeLogger(level=logging.WARN)
         self.useFixture(fake_logger)
 
@@ -264,10 +275,7 @@ parts: [main/a]
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_main_invalid(self,
-                          mock_get,
-                          mock_get_origin_data):
+    def test_main_invalid(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com
@@ -289,10 +297,7 @@ parts: [main, part1]
         self.assertEqual(0, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_single_part_origin(self,
-                                mock_get,
-                                mock_get_origin_data):
+    def test_single_part_origin(self, mock_get_origin_data):
         """Test a wiki entry with a single origin part."""
         _create_example_output("""
 ---
@@ -315,10 +320,7 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_multiple_part_origin(self,
-                                  mock_get,
-                                  mock_get_origin_data):
+    def test_multiple_part_origin(self, mock_get_origin_data):
         """Test a wiki entry with multiple origin parts."""
         _create_example_output("""
 ---
@@ -347,10 +349,7 @@ parts: ['main', 'subpart']
         self.assertEqual(2, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_output_parameter(self,
-                              mock_get,
-                              mock_get_origin_data):
+    def test_output_parameter(self, mock_get_origin_data):
         """Test a wiki entry with multiple origin parts."""
         _create_example_output("""
 ---
@@ -377,10 +376,7 @@ parts: [main]
         self.assertTrue(os.path.exists(filename))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_source_with_local_part_origin(self,
-                                           mock_get,
-                                           mock_get_origin_data):
+    def test_source_with_local_part_origin(self, mock_get_origin_data):
         """Test a wiki entry with a source with a local part."""
         _create_example_output("""
 ---
@@ -406,10 +402,7 @@ parts: [main]
         self.assertEqual(5, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_source_with_local_subdir_part_origin(self,
-                                                  mock_get,
-                                                  mock_get_origin_data):
+    def test_source_with_local_subdir_part_origin(self, mock_get_origin_data):
         """Test a wiki entry with a source with a local part."""
         _create_example_output("""
 ---
@@ -436,9 +429,8 @@ parts: [main]
         self.assertEqual(6, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
     def test_source_with_local_source_subdir_part_origin(
-            self, mock_get, mock_get_origin_data):
+            self, mock_get_origin_data):
         """Test a wiki entry with a source with a local source-subdir part."""
         _create_example_output("""
 ---
@@ -466,9 +458,7 @@ parts: [main]
         self.assertEqual(6, len(part.keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_n_documents(
-            self, mock_get, mock_get_origin_data):
+    def test_n_documents(self, mock_get_origin_data):
         """Test 2 wiki entries."""
         _create_example_output("""
 ---
@@ -501,9 +491,7 @@ parts: [main2]
         self.assertEqual(2, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_maintaner_is_included(
-            self, mock_get, mock_get_origin_data):
+    def test_maintaner_is_included(self, mock_get_origin_data):
         """Test maintainer is included in parsed parts."""
         _create_example_output("""
 ---
@@ -542,9 +530,7 @@ parts: [main2]
         self.assertEqual(2, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_description_is_included(
-            self, mock_get, mock_get_origin_data):
+    def test_description_is_included(self, mock_get_origin_data):
         """Test description is included in parsed parts."""
         _create_example_output("""
 ---
@@ -583,8 +569,7 @@ parts: [main2]
         self.assertEqual(2, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_origin_part_without_source(self, mock_get, mock_get_origin_data):
+    def test_origin_part_without_source(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com
@@ -605,8 +590,7 @@ parts: [main]
         self.assertEqual(4, len(_get_part('main').keys()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_missing_fields(self, mock_get, mock_get_origin_data):
+    def test_missing_fields(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com
@@ -632,10 +616,7 @@ parts: [main]
         self.assertEqual(2, retval)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_partial_processing_for_malformed_yaml(self,
-                                                   mock_get,
-                                                   mock_get_origin_data):
+    def test_partial_processing_for_malformed_yaml(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com>
@@ -674,10 +655,7 @@ parts: [main2]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_descriptions_get_block_quotes(self,
-                                           mock_get,
-                                           mock_get_origin_data):
+    def test_descriptions_get_block_quotes(self, mock_get_origin_data):
         output = """
 ---
 maintainer: John Doe <john.doe@example.com>
@@ -707,10 +685,7 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_interactions_with_fake(self,
-                                         mock_get,
-                                         mock_get_origin_data):
+    def test_wiki_interactions_with_fake(self, mock_get_origin_data):
 
         fixture = fixture_setup.FakePartsWiki()
         self.useFixture(fixture)
@@ -728,10 +703,8 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_interactions_with_fake_with_slashes(self,
-                                                      mock_get,
-                                                      mock_get_origin_data):
+    def test_wiki_interactions_with_fake_with_slashes(
+            self, mock_get_origin_data):
 
         fixture = fixture_setup.FakePartsWikiWithSlashes()
         self.useFixture(fixture)
@@ -760,8 +733,7 @@ parts: [main]
         part2 = _get_part('curl-a')
         self.assertTrue(part2)
 
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_missing_snapcraft_yaml(self, mock_get):
+    def test_missing_snapcraft_yaml(self):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -785,8 +757,7 @@ parts: [somepart]
             'Invalid wiki entry'
             in fake_logger.output, 'Missing invalid wiki entry info in output')
 
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_missing_snapcraft_yaml_without_debug(self, mock_get):
+    def test_missing_snapcraft_yaml_without_debug(self):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -803,8 +774,7 @@ parts: [somepart]
         main(['--index', TEST_OUTPUT_PATH])
         self.assertEqual(0, _get_part_list_count())
 
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self, mock_get):
+    def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -821,7 +791,8 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        origin_dir = os.path.join(parser._get_base_dir(),
+                                  _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
@@ -836,8 +807,7 @@ parts: [somepart]
             'Invalid wiki entry'
             in fake_logger.output, 'Missing invalid wiki entry info in output')
 
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_wiki_with_fake_origin(self, mock_get):
+    def test_wiki_with_fake_origin(self):
 
         fixture = fixture_setup.FakePartsWikiOrigin()
         self.useFixture(fixture)
@@ -851,7 +821,8 @@ description: example
 parts: [somepart]
 """.format(origin_url=origin_url))
 
-        origin_dir = os.path.join(BASE_DIR, _encode_origin(origin_url))
+        origin_dir = os.path.join(parser._get_base_dir(),
+                                  _encode_origin(origin_url))
         os.makedirs(origin_dir, exist_ok=True)
 
         # Create a fake snapcraft.yaml for _get_origin_data() to parse
@@ -866,8 +837,7 @@ parts: [somepart]
         self.assertTrue(part)
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_carriage_returns(self, mock_get, mock_get_origin_data):
+    def test_carriage_returns(self, mock_get_origin_data):
         """Test carriage returns in the wiki."""
 
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -902,8 +872,7 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_duplicate_entries(self, mock_get, mock_get_origin_data):
+    def test_duplicate_entries(self, mock_get_origin_data):
         """Test duplicate parts are ignored."""
 
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -942,9 +911,7 @@ parts: [main]
             in fake_logger.output, 'Missing duplicate part info in output')
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    @mock.patch('snapcraft.internal.sources.get')
-    def test_parsed_output_matches_wiki_order(
-            self, mock_get, mock_get_origin_data):
+    def test_parsed_output_matches_wiki_order(self, mock_get_origin_data):
         _create_example_output("""
 ---
 maintainer: John Doe <john.doe@example.com>
@@ -998,30 +965,29 @@ parts: [app1]
                          _get_part_list())
 
     def test__get_origin_data_both(self):
-        tempdir = tempfile.mkdtemp()
-        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  '.snapcraft.yaml'), 'w') as fp:
             fp.write("")
-        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data, tempdir)
-        shutil.rmtree(tempdir)
+        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data,
+                          self.tempdir_path)
 
     def test__get_origin_data_hidden_only(self):
-        tempdir = tempfile.mkdtemp()
-        with open(os.path.join(tempdir, '.snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  '.snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        _get_origin_data(tempdir)
-        shutil.rmtree(tempdir)
+        _get_origin_data(self.tempdir_path)
 
     def test__get_origin_data_normal_only(self):
-        tempdir = tempfile.mkdtemp()
-        with open(os.path.join(tempdir, 'snapcraft.yaml'), 'w') as fp:
+        with open(os.path.join(self.tempdir_path,
+                  'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        _get_origin_data(tempdir)
-        shutil.rmtree(tempdir)
+        _get_origin_data(self.tempdir_path)
 
     def test__encode_origin_git(self):
         origin = 'git@github.com:testuser/testproject.git'
@@ -1034,3 +1000,49 @@ parts: [app1]
         origin_dir = _encode_origin(origin)
 
         self.assertEqual('lptestusertestprojecttestbranch', origin_dir)
+
+
+class MissingAssetsTestCase(TestCase):
+
+    @mock.patch('snapcraft.internal.sources.Local.pull')
+    @mock.patch('snapcraft.internal.sources._get_source_type_from_uri')
+    def test_filenotfound_for_non_repos(self, mock_type, mock_pull):
+        mock_pull.side_effect = FileNotFoundError()
+        mock_type.return_value = None
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+parts: [main]
+""")
+        with self.assertRaises(FileNotFoundError):
+            main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+    @mock.patch('snapcraft.internal.sources.Bazaar.__init__')
+    def test_missing_packages(self, mock_init):
+        mock_init.side_effect = MissingPackageError('bzr')
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+parts: [main]
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:not-a-real-snapcraft-parser-example
+description: example main
+parts: [main2]
+""")
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(2, retval)
+
+        self.assertTrue(
+            'One or more required packages are missing, please install'
+            in fake_logger.output, 'No missing package info in output')

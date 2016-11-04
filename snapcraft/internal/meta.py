@@ -24,7 +24,9 @@ import tempfile
 
 import yaml
 
+from snapcraft import file_utils
 from snapcraft.internal import common
+from snapcraft.internal.errors import MissingGadgetError
 
 
 logger = logging.getLogger(__name__)
@@ -41,8 +43,6 @@ _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
     'assumes',
     'type',
-    'license-agreement',
-    'license-version',
     'plugs',
     'slots',
     'confinement',
@@ -94,11 +94,6 @@ class _SnapPackaging:
         return snap_yaml
 
     def setup_assets(self):
-        if 'license' in self._config_data:
-            logger.warning("DEPRECATED: 'license' defined in snapcraft.yaml")
-            license_path = os.path.join(self.meta_dir, 'license.txt')
-            os.link(self._config_data['license'], license_path)
-
         if 'icon' in self._config_data:
             # TODO: use developer.ubuntu.com once it has updated documentation.
             logger.warning(
@@ -116,6 +111,12 @@ class _SnapPackaging:
 
         self._setup_from_setup()
 
+        if self._config_data.get('type', '') == 'gadget':
+            if not os.path.exists('gadget.yaml'):
+                raise MissingGadgetError()
+            file_utils.link_or_copy(
+                'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
+
     def _setup_from_setup(self):
         setup_dir = 'setup'
         if not os.path.exists(setup_dir):
@@ -127,13 +128,6 @@ class _SnapPackaging:
             shutil.rmtree(gui_dst)
         if os.path.exists(gui_src):
             shutil.copytree(gui_src, gui_dst)
-
-        license_src = os.path.join(setup_dir, 'license.txt')
-        license_dst = os.path.join(self.meta_dir, 'license.txt')
-        if os.path.exists(license_dst) and os.path.exists(license_src):
-            os.unlink(license_dst)
-        if os.path.exists(license_src):
-            os.link(license_src, license_dst)
 
     def _compose_snap_yaml(self):
         """Create a new dictionary from config_data to obtain snap.yaml.

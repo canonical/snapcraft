@@ -22,7 +22,11 @@ from unittest import mock
 
 import fixtures
 import testtools
-from testtools.matchers import FileExists
+from testtools.matchers import (
+    FileContains,
+    FileExists,
+    Not,
+)
 
 from snapcraft.main import main
 from snapcraft import tests
@@ -291,3 +295,36 @@ type: os
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
+
+    @mock.patch('time.time')
+    def test_snap_renames_stale_snap_build(self, mocked_time):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.make_snapcraft_yaml()
+
+        mocked_time.return_value = 1234
+
+        snap_build = 'snap-test_1.0_amd64.snap-build'
+        with open(snap_build, 'w') as fd:
+            fd.write('signed assertion?')
+
+        main(['snap'])
+
+        snap_build_renamed = snap_build + '.1234'
+        self.assertEqual([
+            'Preparing to pull part1 ',
+            'Pulling part1 ',
+            'Preparing to build part1 ',
+            'Building part1 ',
+            'Staging part1 ',
+            'Priming part1 ',
+            'Renaming stale build assertion to {}'.format(snap_build_renamed),
+            'Snapping \'snap-test\' ...',
+            'Snapped snap-test_1.0_amd64.snap',
+            ], fake_logger.output.splitlines())
+
+        self.assertThat('snap-test_1.0_amd64.snap', FileExists())
+        self.assertThat(snap_build, Not(FileExists()))
+        self.assertThat(snap_build_renamed, FileExists())
+        self.assertThat(
+            snap_build_renamed, FileContains('signed assertion?'))

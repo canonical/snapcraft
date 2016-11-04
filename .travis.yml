@@ -15,13 +15,13 @@ env:
   matrix:
   - TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
   - TEST_SUITE=unit DEPENDENCIES="apt install -y libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
-  - TEST_SUITE=integration DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion squashfs-tools sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
+  - TEST_SUITE=integration TEST_STORE=fake DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion squashfs-tools sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
 
 install:
   - sudo apt-get -qq update
   - sudo apt-get install -y python3-coverage
 script:
-  - docker run -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
+  - docker run -e TEST_USER_EMAIL=$TEST_USER_EMAIL -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -e TEST_STORE=$TEST_STORE -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "export LC_ALL=en_US.UTF-8 && locale-gen en_US.UTF-8 && sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list && apt update && cd $(pwd) && $DEPENDENCIES && ./runtests.sh $TEST_SUITE"
 after_success:
   - pip install coveralls
   - coveralls

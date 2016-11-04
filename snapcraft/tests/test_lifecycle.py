@@ -50,6 +50,25 @@ grade: stable
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
 
+    def test__replace_in_parts(self):
+        class Options:
+            def __init__(self):
+                self.source = '$SNAPCRAFT_PART_INSTALL'
+
+        class Code:
+            def __init__(self):
+                self.options = Options()
+                self.installdir = '/tmp'
+
+        class Part:
+            def __init__(self):
+                self.code = Code()
+
+        part = Part()
+        new_part = lifecycle._replace_in_part(part)
+
+        self.assertEqual(part.code.installdir, new_part.code.options.source)
+
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""parts:
   part1:
@@ -551,32 +570,3 @@ grade: stable
         self.assertEqual(
             "The 'pull' step of 'part1' is out of date. Please clean that "
             "part's 'pull' step in order to rebuild", str(raised.exception))
-
-
-class HumanizeListTestCases(tests.TestCase):
-
-    def test_no_items(self):
-        items = []
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, '')
-
-    def test_one_item(self):
-        items = ['foo']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'foo'")
-
-    def test_two_items(self):
-        items = ['foo', 'bar']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar' and 'foo'",
-                         "Expected 'bar' before 'foo' due to sorting")
-
-    def test_three_items(self):
-        items = ['foo', 'bar', 'baz']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar', 'baz', and 'foo'")
-
-    def test_four_items(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar', 'baz', 'foo', and 'qux'")

@@ -194,3 +194,7 @@ class DumpPluginTestCase(TestCase):
             str(raised.exception),
             '{!r} is a broken symlink pointing outside the snap'.format(
                 os.path.join(plugin.builddir, 'bad_relative')))
+
+    def test_dump_enable_cross_compilation(self):
+        plugin = DumpPlugin('dump', self.options, self.project_options)
+        plugin.enable_cross_compilation()
