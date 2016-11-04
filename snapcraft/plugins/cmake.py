@@ -78,7 +78,7 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
                  self.options.configflags, env=env)
 
         self.run(['make', '-j{}'.format(
-            self.project.parallel_build_count)], env=env)
+            self.parallel_build_count)], env=env)
 
         self.run(['make', 'install', 'DESTDIR=' + self.installdir], env=env)
 
@@ -89,10 +89,10 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         env['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
              '{0}/usr/include/{1}']).format(
-                self.project.stage_dir, self.project.arch_triplet)
+                 self.project.stage_dir, self.project.arch_triplet)
         env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
              '{0}/usr/lib/{1}']).format(
-                self.project.stage_dir, self.project.arch_triplet)
+                 self.project.stage_dir, self.project.arch_triplet)
 
         return env

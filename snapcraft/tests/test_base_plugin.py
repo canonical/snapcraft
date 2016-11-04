@@ -38,6 +38,20 @@ class TestBasePlugin(tests.TestCase):
         self.assertEqual(raised.exception.__str__(),
                          'no handler to manage source')
 
+    def test_parallel_build_count_returns_1_when_disabled(self):
+        options = tests.MockOptions(disable_parallel=True)
+        plugin = snapcraft.BasePlugin('test_plugin', options,
+                                      self.project_options)
+        self.assertEqual(plugin.parallel_build_count, 1)
+
+    def test_parallel_build_count_returns_build_count_from_project(self):
+        options = tests.MockOptions(disable_parallel=False)
+        plugin = snapcraft.BasePlugin('test_plugin', options,
+                                      self.project_options)
+        unittest.mock.patch.object(
+            self.project_options, 'parallel_build_count', 2)
+        self.assertEqual(plugin.parallel_build_count, 2)
+
     @unittest.mock.patch('os.path.isdir')
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
         options = tests.MockOptions('file')
@@ -85,6 +99,41 @@ class TestBasePlugin(tests.TestCase):
         self.assertTrue(
             os.path.exists(os.path.join(plugin.build_basedir, 'file')))
 
+    def test_part_name_with_forward_slash_is_one_directory(self):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+
+        os.makedirs(plugin.sourcedir)
+
+        self.assertIn('test\N{BIG SOLIDUS}part', os.listdir('parts'))
+
+    @unittest.mock.patch('snapcraft.internal.common.run')
+    def test_run_without_specifying_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run(['ls'])
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.builddir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run')
+    def test_run_specifying_a_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run(['ls'], cwd=plugin.sourcedir)
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.sourcedir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run_output')
+    def test_run_output_without_specifying_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run_output(['ls'])
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.builddir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run_output')
+    def test_run_output_specifying_a_cwd(self, mock_run):
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        plugin.run_output(['ls'], cwd=plugin.sourcedir)
+
+        mock_run.assert_called_once_with(['ls'], cwd=plugin.sourcedir)
+
 
 class GetSourceWithBranches(tests.TestCase):
 
@@ -101,7 +150,9 @@ class GetSourceWithBranches(tests.TestCase):
         }),
     ]
 
-    def test_get_source_with_branch_and_tag_must_raise_error(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_get_source_with_branch_and_tag_must_raise_error(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions('lp:source', self.source_type,
                                     self.source_branch, self.source_tag)
         plugin = snapcraft.BasePlugin('test_plugin', options)
@@ -121,22 +172,52 @@ class GetSourceTestCase(tests.TestCase):
             'source_type': 'bzr',
             'source_branch': 'test_branch',
             'source_tag': None,
+            'source_commit': None,
             'error': 'source-branch'}),
         ('tar with source branch', {
             'source_type': 'tar',
             'source_branch': 'test_branch',
             'source_tag': None,
+            'source_commit': None,
             'error': 'source-branch'}),
         ('tar with source tag', {
             'source_type': 'tar',
             'source_branch': None,
             'source_tag': 'test_tag',
-            'error': 'source-tag'})
+            'source_commit': None,
+            'error': 'source-tag'}),
+        ('tar with source commit', {
+            'source_type': 'tar',
+            'source_branch': None,
+            'source_tag': None,
+            'source_commit': 'commit',
+            'error': 'source-commit'}),
+        ('deb with source branch', {
+            'source_type': 'deb',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'source_commit': None,
+            'error': 'source-branch'}),
+        ('deb with source tag', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': 'test_tag',
+            'source_commit': None,
+            'error': 'source-tag'}),
+        ('deb with source commit', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': None,
+            'source_commit': 'commit',
+            'error': 'source-commit'})
     ]
 
-    def test_get_source_with_branch_must_raise_error(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_get_source_with_branch_must_raise_error(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions('lp:this', self.source_type,
-                                    self.source_branch, self.source_tag)
+                                    self.source_branch, self.source_tag,
+                                    None, None, self.source_commit)
         plugin = snapcraft.BasePlugin('test_plugin', options)
 
         with self.assertRaises(sources.IncompatibleOptionsError) as raised:
@@ -150,7 +231,9 @@ class GetSourceTestCase(tests.TestCase):
 
 class BuildTestCase(tests.TestCase):
 
-    def test_do_not_follow_links(self):
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    def test_do_not_follow_links(self, mock_check):
+        mock_check.side_effect = None
         options = tests.MockOptions(source='.')
         plugin = snapcraft.BasePlugin('test_plugin', options)
 

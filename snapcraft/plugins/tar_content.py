@@ -58,7 +58,7 @@ class TarContentPlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
 
         logger.warning("DEPRECATED: The 'tar-content' plugin's functionality "
-                       "has been replaced by the 'copy' plugin, and it will "
+                       "has been replaced by the 'dump' plugin, and it will "
                        "soon be removed.")
 
         if (self.options.destination and

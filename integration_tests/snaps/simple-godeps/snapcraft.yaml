@@ -1,0 +1,12 @@
+name: test-package
+version: 0.1
+summary: A simple godeps project.
+description: |
+  Proves that it is possible to build a snap using godeps.
+confinement: strict
+
+parts:
+  simple-godeps:
+    plugin: godeps
+    go-importpath: bcrypt
+    source: .

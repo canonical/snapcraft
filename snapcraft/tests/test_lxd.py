@@ -50,10 +50,8 @@ class LXDTestCase(tests.TestCase):
             fake_logger.output)
 
         mock_call.assert_has_calls([
-            call(['lxc', 'remote', 'add', 'my-pet',
-                  'https://images.linuxcontainers.org:8443']),
             call(['lxc', 'launch', '-e',
-                  'my-pet:ubuntu/xenial/{}'.format(expected_arch),
+                  'ubuntu:xenial/{}'.format(expected_arch),
                   'snapcraft-my-pet']),
             call(['lxc', 'file', 'push', 'project.tar',
                   'snapcraft-my-pet//root/project.tar']),
@@ -74,8 +72,8 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'file', 'pull',
                   'snapcraft-my-pet//root/snap.snap',
                   'snap.snap']),
-            call(['lxc', 'stop', 'snapcraft-my-pet']),
-            call(['lxc', 'remote', 'remove', 'my-pet'])])
+            call(['lxc', 'stop', '-f', 'snapcraft-my-pet']),
+        ])
 
     @patch('snapcraft.internal.lxd.check_call')
     @patch('snapcraft.internal.lxd.sleep')
@@ -90,3 +88,41 @@ class LXDTestCase(tests.TestCase):
         self.assertEqual(
             str(raised.exception),
             "Command '['my-cmd']' returned non-zero exit status -1")
+
+    @patch('snapcraft.internal.lxd.check_call')
+    @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
+    @patch('snapcraft.internal.lxd.sleep')
+    def test_failed_build_with_debug(self, mock_sleep, mock_run, mock_call):
+        call_list = []
+
+        def run_effect(*args, **kwargs):
+            call_list.append(args[0])
+            if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+
+        mock_run.side_effect = run_effect
+
+        project_options = ProjectOptions(debug=True)
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+
+        self.assertIn(['bash', '-i'], call_list)
+
+    @patch('snapcraft.internal.lxd.check_call')
+    @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
+    @patch('snapcraft.internal.lxd.sleep')
+    def test_failed_build_without_debug(self, mock_sleep, mock_run, mock_call):
+        call_list = []
+
+        def run_effect(*args, **kwargs):
+            call_list.append(args[0])
+            if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+
+        mock_run.side_effect = run_effect
+
+        project_options = ProjectOptions(debug=False)
+        with self.assertRaises(CalledProcessError):
+            lxd.Cleanbuilder('snap.snap', 'project.tar',
+                             project_options).execute()
+
+        self.assertNotIn(['bash', '-i'], call_list)

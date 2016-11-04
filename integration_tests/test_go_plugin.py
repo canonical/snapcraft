@@ -30,3 +30,7 @@ class GoPluginTestCase(integration_tests.TestCase):
             os.path.join('stage', 'bin', project_dir),
             universal_newlines=True, cwd=project_dir)
         self.assertEqual('Hello snapcrafter\n', binary_output)
+
+    def test_building_multiple_main_packages(self):
+        project_dir = 'multiple-main-go-packages'
+        self.run_snapcraft('stage', project_dir)

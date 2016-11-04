@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+from snapcraft.internal.sources import Script      # noqa
 from snapcraft.internal.sources import Bazaar      # noqa
+from snapcraft.internal.sources import Deb         # noqa
 from snapcraft.internal.sources import Git         # noqa
 from snapcraft.internal.sources import Mercurial   # noqa
 from snapcraft.internal.sources import Subversion  # noqa

@@ -18,13 +18,18 @@ parts:
     source: https://github.com/wisnij/gopaste.git
     source-type: git
   assets:
-    plugin: copy
+    plugin: dump
     source: https://github.com/wisnij/gopaste.git
     source-type: git
-    files:
-      static: .
-      web.template: .
+    snap:
+      - static
+      - web.template
   glue:
-    plugin: copy
-    files:
+    plugin: dump
+    source: .
+    organize:
       gopaste: bin/
+    filesets:
+      bin: [bin/gopaste]
+    stage: [$bin]
+    snap: [$bin]

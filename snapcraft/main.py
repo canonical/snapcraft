@@ -31,12 +31,23 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
-  snapcraft [options] register <snap-name>
+  snapcraft [options] list-keys
+  snapcraft [options] keys
+  snapcraft [options] create-key [<key-name>]
+  snapcraft [options] register-key [<key-name>]
+  snapcraft [options] register <snap-name> [--private]
+  snapcraft [options] sign-build <snap-file> [--key-name=<key-name>] [--local]
   snapcraft [options] upload <snap-file>
+  snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
+  snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
+  snapcraft [options] gated <snap-name>
+  snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
@@ -47,7 +58,9 @@ Options:
   -h --help                             show this help message and exit
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
-                                        (including backtraces)
+                                        (including backtraces). When used with
+                                        cleanbuild, it opens a shell in case
+                                        of failure.
   --target-arch ARCH                    EXPERIMENTAL: sets the target
                                         architecture. Very few plugins support
                                         this.
@@ -64,11 +77,15 @@ Options specific to building:
 Options specific to cleaning:
   -s <step>, --step <step>              only clean the specified step and those
                                         that depend upon it. <step> can be one
-                                        of: pull, build, stage or strip.
+                                        of: pull, build, stage or prime.
 
 Options specific to snapping:
   -o <snap-file>, --output <snap-file>  used in case you want to rename the
                                         snap.
+
+Options specific to store interaction:
+  --release <channels>  Comma separated list of channels to release to.
+  --series <series>     Snap series [default: {DEFAULT_SERIES}].
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
@@ -76,11 +93,21 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  list-keys    List keys available for signing snaps.
+  keys         Alias for list-keys.
+  create-key   Create a key pair for signing snaps.
+  register-key Register a key for signing snaps.
   register     Register the package name in the store.
   tour         Setup the snapcraft examples tour in the specified directory,
                or ./snapcraft-tour/.
-  upload       Upload a snap to the Ubuntu Store.
+  sign-build   Sign a built snap file and assert it using the developer's key.
+  push         Pushes and optionally releases a snap to the Ubuntu Store.
+  upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
+               supersedes this command.
   release      Release a revision of a snap to a specific channel.
+  status       Show the current status of a snap per channel and architecture.
+  history      List all revisions of a snap.
+  close        Close one or more channels of a snap.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -93,10 +120,10 @@ The available lifecycle commands are:
   prime        Final copy and preparation for the snap.
   snap         Create a snap.
 
-Parts ecosystem commands
+Parts ecosystem commands:
   update       Updates the parts listing from the cloud.
   define       Shows the definition for the cloud part.
-  search       Searches the remotes part cache for matching parts.
+  search       Searches the remote parts cache for matching parts.
 
 Calling snapcraft without a COMMAND will default to 'snap'
 
@@ -107,8 +134,8 @@ https://linuxcontainers.org/lxd/getting-started-cli
 to get started.
 
 For more help, visit the documentation:
-http://developer.ubuntu.com/snappy/snapcraft
-"""
+http://snapcraft.io/docs/build-snaps
+"""  # NOQA
 
 import logging
 import os
@@ -125,6 +152,7 @@ from snapcraft.internal.common import (
     format_output_in_columns,
     get_terminal_width,
     get_tourdir)
+from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 
 logger = logging.getLogger(__name__)
@@ -162,7 +190,7 @@ def _scaffold_examples(directory):
 
     print("Snapcraft tour initialized in {}\n"
           "Instructions are in the README, or "
-          "https://snapcraft.io/create/#begin".format(directory))
+          "http://snapcraft.io/create/#tour".format(directory))
 
 
 def _list_plugins():
@@ -182,12 +210,14 @@ def _get_project_options(args):
     options['use_geoip'] = args['--enable-geoip']
     options['parallel_builds'] = not args['--no-parallel-build']
     options['target_deb_arch'] = args['--target-arch']
+    options['debug'] = args['--debug']
 
     return snapcraft.ProjectOptions(**options)
 
 
 def main(argv=None):
-    args = docopt(__doc__, version=_get_version(), argv=argv)
+    doc = __doc__.format(DEFAULT_SERIES=DEFAULT_SERIES)
+    args = docopt(doc, version=_get_version(), argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
@@ -272,18 +302,52 @@ def _run_clean(args, project_options):
 
 
 def _is_store_command(args):
-    commands = ('register', 'upload', 'release')
+    commands = (
+        'list-keys', 'keys', 'create-key', 'register-key', 'register',
+        'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
+        'history', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
-def _run_store_command(args):
-    if args['register']:
-        snapcraft.register(args['<snap-name>'])
+# This function's complexity is correlated to the number of
+# commands, no point in checking that.
+def _run_store_command(args):  # noqa: C901
+    if args['list-keys'] or args['keys']:
+        snapcraft.list_keys()
+    elif args['create-key']:
+        snapcraft.create_key(args['<key-name>'])
+    elif args['register-key']:
+        snapcraft.register_key(args['<key-name>'])
+    elif args['register']:
+        snapcraft.register(args['<snap-name>'], args['--private'])
+    elif args['sign-build']:
+        snapcraft.sign_build(
+            args['<snap-file>'], args['--key-name'], args['--local'])
     elif args['upload']:
-        snapcraft.upload(args['<snap-file>'])
+        logger.warning('DEPRECATED: Use `push` instead of `upload`')
+        snapcraft.push(args['<snap-file>'])
+    elif args['push']:
+        if args['--release']:
+            release_channels = args['--release'].split(',')
+        else:
+            release_channels = []
+        snapcraft.push(args['<snap-file>'], release_channels)
     elif args['release']:
         snapcraft.release(
-            args['<snap-name>'], args['<revision>'], args['<channel>'])
+            args['<snap-name>'], args['<revision>'], [args['<channel>']])
+    elif args['validate']:
+        snapcraft.validate(args['<snap-name>'], args['<validation>'],
+                           key=args['--key-name'])
+    elif args['gated']:
+        snapcraft.gated(args['<snap-name>'])
+    elif args['status']:
+        snapcraft.status(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['history']:
+        snapcraft.history(
+            args['<snap-name>'], args['--series'], args['--arch'])
+    elif args['close']:
+        snapcraft.close(args['<snap-name>'], args['<channel_names>'])
 
 
 if __name__ == '__main__':  # pragma: no cover

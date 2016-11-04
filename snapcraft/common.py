@@ -16,9 +16,13 @@
 
 from snapcraft.internal.common import get_python2_path      # noqa
 from snapcraft.internal.common import isurl                 # noqa
-from snapcraft.internal.common import link_or_copy          # noqa
-from snapcraft.internal.common import replace_in_file       # noqa
 from snapcraft.internal.common import get_include_paths     # noqa
 from snapcraft.internal.common import get_library_paths     # noqa
-from snapcraft.internal.common import combine_paths         # noqa
-from snapcraft.internal.common import format_path_variable  # noqa
+
+# These are now available via file_utils, but don't break API.
+from snapcraft.file_utils import link_or_copy     # noqa
+from snapcraft.file_utils import replace_in_file  # noqa
+
+# These are now available via formatting_utils, but don't break API.
+from snapcraft.formatting_utils import combine_paths         # noqa
+from snapcraft.formatting_utils import format_path_variable  # noqa

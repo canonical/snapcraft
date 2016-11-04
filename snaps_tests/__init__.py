@@ -204,7 +204,8 @@ class SnapsTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', snap_path_in_testbed])
-            cmd = ['sudo', 'snap', 'install', snap_path_in_testbed]
+            cmd = ['sudo', 'snap', 'install', '--force-dangerous',
+                   snap_path_in_testbed]
             if devmode:
                 cmd.append('--devmode')
             try:
@@ -225,21 +226,22 @@ class SnapsTestCase(testtools.TestCase):
             self.assertThat(
                 list_output, MatchesRegex(expected, flags=re.DOTALL))
 
-    def assert_command_in_snappy_testbed(self, command, expected_output):
+    def assert_command_in_snappy_testbed(
+            self, command, expected_output, cwd=None):
         if not config.get('skip-install', False):
-            output = self.run_command_in_snappy_testbed(command)
+            output = self.run_command_in_snappy_testbed(command, cwd)
             self.assertEqual(expected_output, output)
 
     def assert_command_in_snappy_testbed_with_regex(
-            self, command, expected_regex, flags=0):
+            self, command, expected_regex, flags=0, cwd=None):
         if not config.get('skip-install', False):
-            output = self.run_command_in_snappy_testbed(command)
+            output = self.run_command_in_snappy_testbed(command, cwd)
             self.assertThat(output, MatchesRegex(expected_regex, flags=flags))
 
-    def run_command_in_snappy_testbed(self, command):
+    def run_command_in_snappy_testbed(self, command, cwd=None):
         if not config.get('skip-install', False):
             try:
-                return self.snappy_testbed.run_command(command)
+                return self.snappy_testbed.run_command(command, cwd)
             except subprocess.CalledProcessError as e:
                 self._add_output_detail(e.output)
                 raise

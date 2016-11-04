@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2016 Harald Sitter <sitter@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,7 +27,7 @@ This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
-In additon, this plugin uses the following plugin-specific keywords:
+In addition, this plugin uses the following plugin-specific keywords:
 
     - configflags:
       (list of strings)
@@ -91,17 +92,22 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         if not os.path.exists(os.path.join(self.builddir, "configure")):
-            autogen_path = os.path.join(self.builddir, "autogen.sh")
-            if os.path.exists(autogen_path):
+            generated = False
+            scripts = ["autogen.sh", "bootstrap"]
+            for script in scripts:
+                path = os.path.join(self.builddir, script)
+                if not os.path.exists(path) or os.path.isdir(path):
+                    continue
                 # Make sure it's executable
-                if not os.access(autogen_path, os.X_OK):
-                    os.chmod(autogen_path,
+                if not os.access(path, os.X_OK):
+                    os.chmod(path,
                              stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
                              stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
                              stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
-
-                self.run(['env', 'NOCONFIGURE=1', './autogen.sh'])
-            else:
+                self.run(['env', 'NOCONFIGURE=1', './{}'.format(script)])
+                generated = True
+                break
+            if not generated:
                 self.run(['autoreconf', '-i'])
 
         configure_command = ['./configure']
@@ -115,5 +121,11 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             configure_command.append('--prefix=' + self.installdir)
 
         self.run(configure_command + self.options.configflags)
-        self.run(['make', '-j{}'.format(self.project.parallel_build_count)])
+        self.run(['make', '-j{}'.format(self.parallel_build_count)])
         self.run(make_install_command)
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        # Remove .la files which don't work when they are moved around
+        fileset.append('-**/*.la')
+        return fileset

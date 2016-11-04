@@ -9,18 +9,17 @@ parts:
   make-project:
     plugin: make
     filesets:
-      files:
-        - share/file1
-        - share/file2
+      share:
+        - share/share1
+        - share/share2
     stage:
-      - $files
-      - new/dir1
-      - new/dir2
+      - $share
+      - bin
     snap:
-      - -new/dir1
+      - bin
     organize:
-      file1: share/file1
-      file2: share/file2
-      dir1: new/dir1
-      dir2: new/dir2
+      to-share: share
+      share2: share/share2
+      to-bin1: bin
+      to-bin2: bin
     source: .

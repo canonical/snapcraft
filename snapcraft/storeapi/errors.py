@@ -14,32 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import re
-
 from simplejson.scanner import JSONDecodeError
 
-
-# TODO move to snapcraft.errors --elopio - 2016-06-20
-class SnapcraftError(Exception):
-    """Base class for all storeapi exceptions.
-
-    :cvar fmt: A format string that daughter classes override
-
-    """
-    fmt = 'Daughter classes should redefine this'
-
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __str__(self):
-        return self.fmt.format([], **self.__dict__)
+from snapcraft.internal.errors import SnapcraftError
 
 
 class InvalidCredentialsError(SnapcraftError):
 
-    fmt = 'Invalid credentials: {}.'
+    fmt = 'Invalid credentials: {message}.'
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -55,10 +37,27 @@ class StoreError(SnapcraftError):
 
 class SnapNotFoundError(StoreError):
 
-    fmt = 'The "{name}" for {arch} was not found in {channel}.'
+    __FMT_ARCH_CHANNEL = (
+        'Snap {name!r} for {arch!r} cannot be found in the {channel!r} '
+        'channel.')
+    __FMT_CHANNEL = 'Snap {name!r} was not found in the {channel!r} channel.'
+    __FMT_SERIES_ARCH = (
+        'Snap {name!r} for {arch!r} was not found in {series!r} series.')
+    __FMT_SERIES = 'Snap {name!r} was not found in {series!r} series.'
 
-    def __init__(self, name, channel, arch):
-        super().__init__(name=name, channel=channel, arch=arch)
+    fmt = 'Snap {name!r} was not found.'
+
+    def __init__(self, name, channel=None, arch=None, series=None):
+        if channel and arch:
+            self.fmt = self.__FMT_ARCH_CHANNEL
+        elif channel:
+            self.fmt = self.__FMT_CHANNEL
+        elif series and arch:
+            self.fmt = self.__FMT_SERIES_ARCH
+        elif series:
+            self.fmt = self.__FMT_SERIES
+
+        super().__init__(name=name, channel=channel, arch=arch, series=series)
 
 
 class SHAMismatchError(StoreError):
@@ -77,18 +76,61 @@ class StoreAuthenticationError(StoreError):
         super().__init__(message=message)
 
 
+class StoreTwoFactorAuthenticationRequired(StoreAuthenticationError):
+
+    def __init__(self):
+        super().__init__("Two-factor authentication required.")
+
+
+class StoreMacaroonNeedsRefreshError(StoreError):
+
+    fmt = 'Authentication macaroon needs to be refreshed.'
+
+
+class StoreAccountInformationError(StoreError):
+
+    fmt = 'Error fetching account information from store: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
+
+
+class StoreKeyRegistrationError(StoreError):
+
+    fmt = 'Key registration failed: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+        super().__init__(error=error)
+
+
 class StoreRegistrationError(StoreError):
 
     __FMT_ALREADY_REGISTERED = (
         'The name {snap_name!r} is already taken.\n\n'
         'We can if needed rename snaps to ensure they match the expectations '
         'of most users. If you are the publisher most users expect for '
-        '{snap_name!r} then claim the name at {register_claim_url!r}')
+        '{snap_name!r} then claim the name at {register_name_url!r}')
 
     __FMT_RESERVED = (
         'The name {snap_name!r} is reserved.\n\n'
         'If you are the publisher most users expect for '
-        '{snap_name!r} then please claim the name at {register_claim_url!r}')
+        '{snap_name!r} then please claim the name at {register_name_url!r}')
 
     __FMT_RETRY_WAIT = (
         'You must wait {retry_after} seconds before trying to register '
@@ -102,15 +144,11 @@ class StoreRegistrationError(StoreError):
         'register_window': __FMT_RETRY_WAIT,
     }
 
-    def __init__(self, snap_name, response=None):
+    def __init__(self, snap_name, response):
         try:
             response_json = response.json()
-        except AttributeError:
+        except JSONDecodeError:
             response_json = {}
-
-        if response_json.get('status') == 409:
-            response_json['register_claim_url'] = self.__get_claim_url(
-                response_json.get('register_name_url', ''))
 
         error_code = response_json.get('code')
         if error_code:
@@ -119,10 +157,16 @@ class StoreRegistrationError(StoreError):
 
         super().__init__(snap_name=snap_name, **response_json)
 
-    def __get_claim_url(self, url):
-        # TODO use the store provided claim url once it is there
-        # LP: #1598905
-        return re.sub('register-name', 'register-name-dispute', url, count=0)
+
+class StoreUploadError(StoreError):
+
+    fmt = (
+        'There was an error uploading the package.\n'
+        'Reason: {reason!r}\n'
+        'Text: {text!r}')
+
+    def __init__(self, response):
+        super().__init__(reason=response.reason, text=response.text)
 
 
 class StorePushError(StoreError):
@@ -198,3 +242,78 @@ class StoreReleaseError(StoreError):
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)
+
+
+class StoreValidationError(StoreError):
+
+    fmt = 'Received error {status_code!r}: {text!r}'
+
+    def __init__(self, snap_id, response, message=None):
+        try:
+            response_json = response.json()
+            response_json['text'] = response.json()['error_list'][0]['message']
+        except (AttributeError, JSONDecodeError):
+            response_json = {'text': message or response}
+
+        super().__init__(status_code=response.status_code,
+                         **response_json)
+
+
+class StoreSnapBuildError(StoreError):
+
+    fmt = 'Could not assert build: {error}'
+
+    def __init__(self, response):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+
+        super().__init__(error=error)
+
+
+class StoreSnapHistoryError(StoreError):
+
+    fmt = (
+        'Error fetching history of snap id {snap_id!r} for {arch!r} '
+        'in {series!r} series: {error}.')
+
+    def __init__(self, response, snap_id, series, arch):
+        error = '{} {}'.format(response.status_code, response.reason)
+        try:
+            response_json = response.json()
+            if 'error_list' in response_json:
+                error = ' '.join(
+                    error['message'] for error in response_json['error_list'])
+        except JSONDecodeError:
+            pass
+
+        super().__init__(
+            snap_id=snap_id, arch=arch or 'any arch',
+            series=series or 'any', error=error)
+
+
+class StoreSnapStatusError(StoreSnapHistoryError):
+
+    fmt = (
+        'Error fetching status of snap id {snap_id!r} for {arch!r} '
+        'in {series!r} series: {error}.')
+
+
+class StoreChannelClosingError(StoreError):
+
+    fmt = 'Could not close channel: {error}'
+
+    def __init__(self, response):
+        try:
+            e = response.json()['error_list'][0]
+            error = '{}'.format(e['message'])
+        except (JSONDecodeError, KeyError, IndexError):
+            error = '{} {}'.format(
+                response.status_code, response.reason)
+
+        super().__init__(error=error)

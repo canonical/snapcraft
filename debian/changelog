@@ -1,3 +1,425 @@
+snapcraft (2.21) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * pluginhandler: parametrize call args (#868)
+  * python plugin: wheel and install in the proper order (#883)
+  * New upstream release 2.21 (LP: #1638513)
+
+  [ Stéphane Graber ]
+  * sources: Add new `source-commit` field for VCS sources (#877)
+
+  [ Kyle Fazzari ]
+  * python plugin: remove pip packages when cleaning pull. (#882)
+
+  [ Chris Wayne ]
+  * Add some further bash-completion (#872)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 02 Nov 2016 10:11:37 +0000
+
+snapcraft (2.20) xenial; urgency=medium
+
+  [ Colin Watson ]
+  * Add `snapcraft create-key` (#824)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: add `rosdistro` to help documentation. (#850)
+  * catkin plugin: nicely handle an invalid rosdistro. (#851)
+
+  [ Christian Ehrhardt ]
+  * Add Waf plugin (#716)
+
+  [ Maximiliano Bertacchini ]
+  * Add `snapcraft history`. (#844)
+  * Add `snapcraft status`. (#845)
+
+  [ Daniel Holbach ]
+  * Document the `grade` option. (#857)
+
+  [ Celso Providelo ]
+  * Implementing channel-closing. (#847)
+  * `sign-build` to prompt users for key selection (#848)
+  * history/status alignment fixes. (#863)
+
+  [ Leo Arias ]
+  * In the downloader demo test, use https (#860)
+
+  [ Stéphane Graber ]
+  * Add powerpc (32bit big-endian) support (#862)
+
+  [ Roberto Alsina ]
+  * gated and validate commands message improvements (#849)
+  * Handle 'broken' validations that don't match refresh-control (#867)
+
+  [ Domas Monkus ]
+  * go plugin: Set GOBIN in the build environment. (#859)
+
+  [ Robert Ancell ]
+  * Update documentation links to developer.ubuntu.com that now redirect to
+    snapcraft.io (#864)
+
+  [ Daniel Holbach ]
+  * Bring docs/upload-your-snap.md in line with http://snapcraft.io/docs/… (#869)
+
+  [ Sergio Schvezov ]
+  * Simplify the parser tests. (#852)
+  * Simplify the handler from uri tests. (#853)
+  * tools: script to talk to the staging servers (#855)
+  * Decouple state handling from plugin options. (#854)
+  * python plugin: allow usage of bzr (#858)
+  * python plugin: install from wheel for local setup.py (#861)
+  * New upstream release 2.20 (LP: #1636924)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 26 Oct 2016 13:58:31 -0300
+
+snapcraft (2.19) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * python plugin: only replace proper shebangs. (#830)
+  * yaml xpath for errors. (#828)
+  * sources: fix type when calling with depth (#829)
+  * kernel plugin: allow collecting the same mod deps (#837)
+  * pluginhandler: take the file encoding into account. (#838)
+  * python plugin: only download in pull and build in build. (#832)
+  * New upstream release 2.19 (LP: #1629472)
+
+  [ Christopher James Halse Rogers ]
+  * nodejs plugin: Add mechanism to run `npm run` commands. (#810)
+
+  [ Daniel Holbach ]
+  * Add links to IRC, mailing list and social media (#833)
+
+  [ Celso Providelo ]
+  * 'sign-build' implementation. (#831)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: build with in-snap python. (#840)
+  * catkin plugin: Support ROS Kinetic. (#842)
+
+  [ Roberto Alsina ]
+  * 'snapcraft validate' and 'snapcraft gated' implementation (#813)
+
+  [ Joe Talbott ]
+  * Replace SNAPCRAFT_PART_INSTALL in the part attributes. (#841)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 30 Sep 2016 17:56:06 -0400
+
+snapcraft (2.18.1) xenial; urgency=medium
+
+  [ Carlo Lobrano ]
+  * snapcraft search: return ordered results (#820)
+
+  [ Sam Yaple ]
+  * python plugin: Don't filter .pth files (#822)
+
+  [ Sergio Schvezov ]
+  * Make copies of remote parts to avoid ordering issues (#821)
+  * plainbox-provider plugin: rewrite python shebangs (#823)
+  * New upstream release 2.18.1 (LP: #1626224)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 23 Sep 2016 13:50:26 -0300
+
+snapcraft (2.18) xenial; urgency=medium
+
+  [ Sam Yaple ]
+  * Check if option is url for pip (#785)
+  * Unify python plugin test (#793)
+
+  [ Sergio Schvezov ]
+  * Improve lifecycle execution of steps (#794)
+  * Load project information in one location (#799)
+  * Replace uses of copy with dump (#798)
+  * Report the proper line number on bad yaml errors (#816)
+  * Support deb files as sources (#811)
+  * lxd: use built-in image streams. (#817)
+  * Make source-depth a parameter and opt-in (#814)
+  * New upstream release 2.18 (LP: #1626224)
+
+  [ Kyle Fazzari ]
+  * Only discover dependencies once per file. (#796)
+
+  [ Leo Arias ]
+  * In the busybox test, use the last installed data dir (#801)
+  * Add the TEST_STORE environment variable to the travis script (#802)
+
+  [ Evan ]
+  * autotools plugin: Do not run the bootstrap directory as a script. (#803)
+
+  [ Jonathon Love ]
+  * nodejs plugin: fix to install of dev-deps in package.json (#800)
+
+  [ Colin Watson ]
+  * Fix parts integration tests (#807)
+  * Remove snapcraft.storeapi.common (#806)
+  * Adjust login to conform to UX specification (#804)
+  * Refresh discharge macaroon if necessary (#805)
+
+  [ Joe Talbott ]
+  * Don't litter /tmp with test artifacts. (#808)
+  * Handle missing source type packages in the parser (#742)
+
+  [ James Lucas ]
+  * make plugin: allow copying artifact dirs (#809)
+
+  [ Enrique Hernández Bello ]
+  * Enable crosscompilation for dump and copy plugins (#791)
+
+  [ Celso Providelo ]
+  * Replacing deprecated API for searching snaps. (#815)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 21 Sep 2016 15:55:08 +0000
+
+snapcraft (2.17) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Python plugin improvements (#771)
+  * Organize without removing files on target (#780)
+  * Support globbing for organize (#784)
+  * New upstream release 2.17 (LP: #1621985)
+
+  [ Leo Arias ]
+  * Use --force-dangerous when testing the installation of snaps (#778)
+  * Updated the contents of the snapcraft init template (#776)
+  * Add an integration test for autotools (#783)
+
+  [ Colin Watson ]
+  * Implement basic form of `snapcraft register-key` (#726)
+  * Add `snapcraft list-keys` (#786)
+
+  [ Joe Talbott ]
+  * parser - Handle project name and version variables (#773)
+
+  [ Sam Yaple ]
+  * python plugin: do not compile pyc files when installing with pip (#779)
+
+  [ Alexandre Abreu ]
+  * gulp plugin: fix the npm install prefix (#782)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 09 Sep 2016 19:25:24 +0000
+
+snapcraft (2.16) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Allow registering private packages (#749)
+  * Allow debugging cleanbuild runs. (#740)
+  * storeapi: remove dependency on the 'success' attr (#750)
+  * Export important project variables (#757)
+  * Use a recursive iglob for filesets (#765)
+  * HACKING.md: list dependencies to install with pip (#770)
+  * Minor fixes for typos in --help (#769)
+  * Better file conflict message (#766)
+  * Update kernel meta to the latest spec. (#768)
+  * New upstream release 2.16 (LP: #1619776)
+
+  [ Joe Talbott ]
+  * parser - Remove namespacing and subparts. (#705)
+  * Use block style for multiline YAML values. (#756)
+
+  [ Leo Arias ]
+  * Enable the static checks for the integration tests (#755)
+  * Add the arm64 architecture to the nodejs plugin (#753)
+  * go plugins: remove the useless call to os.path.join (#759)
+  * Removed statements not used by the tests (#760)
+  * Make a copy of the snapcraft files common list before using it. (#767)
+
+  [ Caio Begotti ]
+  * Implementing 'grade' support in snapcraft.yaml (#764)
+
+  [ Scott Moser ]
+  * node plugin: run build in pull phase to download dependencies. (#762)
+
+  [ Paolo Pisati ]
+  * kernel plugin: vmlinuz -> kernel.img hard link (#748)
+
+  [ Loïc Minier ]
+  * Include /sbin and usr/sbin in wrappers (#763)
+
+  [ Evan Dandrea ]
+  * ant plugin: add properties and build target options (#752)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 02 Sep 2016 19:32:40 +0000
+
+snapcraft (2.15.1) xenial; urgency=medium
+
+  [ Robert Ancell ]
+  * Remove .la files generated by autotools (#670)
+
+  [ Joe Talbott ]
+  * Only show chown warnings with --debug. (#739)
+  * Actually return a non-zero error code on errors. (#745)
+
+  [ Sergio Schvezov ]
+  * make plugin: fix artifact collecting (#743)
+  * testing: only run the ros demo on xenial (#744)
+  * New upstream release 2.15.1 (LP: #1614322)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 19 Aug 2016 13:43:42 -0300
+
+snapcraft (2.15) xenial; urgency=medium
+
+  [ Harald Sitter ]
+  * add multiple generator script options to autotools (#679)
+
+  [ Sam Yaple ]
+  * python2 plugin: Add support for constraints (#657)
+
+  [ Blake Rouse ]
+  * Add option disable-parallel for all plugins. (#698)
+  * python3 plugin: allow setup.py to work on some projects. (#718)
+
+  [ Christian Ehrhardt ]
+  * fix checker errors to let runtests.sh pass again (#717)
+
+  [ Dan Watkins ]
+  * python plugins: add process-dependency-links option (#734)
+
+  [ Leo Arias ]
+  * Start the fake parts server only in the tests that need it. (#720)
+    (LP: #1611828)
+  * In travis, install the static checkers with pip. (#724)
+  * go plugin: add a go-buildtags property to the plugin (#733)
+
+  [ Joe Talbott ]
+  * Set owner/group for directories in stage and prime (#723)
+  * parser - Return non-zero code for wiki errors. (#658)
+  * Factor parts config into snapcraft/internal/parts.py (#731)
+
+  [ Kyle Fazzari ]
+  * Use link_or_copy instead of just hard-links for deb cache. (#728)
+  * Support having the snapcraft.yaml in a subdir. (#725)
+  * Dump plugin: Don't remove install directory. (#729)
+
+  [ Jason Hobbs ]
+  * Add artifacts option to make plugin. (#715)
+
+  [ Michael McCracken ]
+  * Clarification of make plugin help text (#730)
+
+  [ Sergio Schvezov ]
+  * Globally cache stage-packages (#677)
+  * Remove store dispute logic (#732)
+  * New upstream release 2.15 (LP: #1614322)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 17 Aug 2016 17:47:44 -0300
+
+snapcraft (2.14) xenial; urgency=medium
+
+  [ Joe Talbott ]
+  * Add python package dependencies to setup.py (#550)
+  * parser - Support .snapcraft.yaml files. (#618)
+  * Preserve file ownership for 'os' snaps. (#690)
+
+  [ Marius Gripsgard ]
+  * Add new plugin: rust (#579)
+
+  [ Sam Yaple ]
+  * Fix python2 compile cache removal (#660)
+  * Improve python2 test coverage (#663)
+
+  [ Stéphane Graber ]
+  * Implement "oneshot" daemon type (#693)
+
+  [ Bogdana Vereha ]
+  * Replace 'strip' with 'prime' on intro page and step options. (#696)
+
+  [ Kyle Fazzari ]
+  * Rewrite shebangs generated by the python plugins. (#680)
+  * Add godeps plugin. (#691)
+  * Catkin plugin: Enforce C.UTF-8 locale. (#497)
+
+  [ Blake Rouse ]
+  * Pass --root to the python3 plugin on build (#694)
+  * Add make-install-var field to the make plugin. (#711)
+
+  [ Sebastian Bacher ]
+  * Use the new snapcraft.io mailing list as contact information (#702)
+  * Update the completion list of commands (#703)
+  * Slightly tweak the "no jar files" errors (#704)
+
+  [ Liu XiaoGuo ]
+  * Added "camera" plug into the example (#706)
+
+  [ Simon Quigley ]
+  * Update the debian/control file (#662)
+  * Add detection for an existing `.snapcraft.yaml` file before running
+    `snapcraft init` (#669)
+
+  [ Michael Hall ]
+  * Strip common path prefixes from linkname as well as name when extracting
+    a tarfile. (#688)
+
+  [ Leo Arias ]
+  * Use requirements files in travis tests (#656)
+  * Enable integration tests to run in the production store (#687)
+
+  [ Daniel Watkins ]
+  * Make formatting of daemon options consistent (#710)
+
+  [ Sergio Schvezov ]
+  * Run tests from /tmp (#684)
+  * Use the proper requirements.txt path (#707)
+  * Improve the go plugins usability (#709)
+  * kernel plugin: kernel targets depending on debarch (#689)
+  * New plugin: dump (#712)
+  * rust plugin: mock downloads in unit tests (#713)
+  * New upstream release 2.14 (LP: #1611009)
+
+ -- Sergio Schvezov <sergiusens@gmail.com>  Mon, 08 Aug 2016 14:58:39 +0000
+
+snapcraft (2.13.1) xenial; urgency=medium
+
+  [ Joe Talbott ]
+  * parser - Add handling for carriage returns in wiki (#681)
+
+  [ Sergio Schvezov ]
+  * New upstream release 2.13.1 (LP: #1605107)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 25 Jul 2016 13:27:29 +0200
+
+snapcraft (2.13) xenial; urgency=medium
+
+  [ Colin Watson ]
+  * Make maven plugin honour https_proxy and proxy authentication (#642)
+
+  [ Dustin Kirkland ]
+  * add a link for filing bugs/issues (#647)
+
+  [ Joe Talbott ]
+  * parser - Handle malformed wiki entries. (#636)
+  * Use '/usr/bin/env python3' (#649)
+  * parser - Don't allow duplicate wiki entries. (#613)
+  * Preserve the ordering of the wiki entries (#596)
+
+  [ Leo Arias ]
+  * Add the test for the downloader snap (#589)
+  * Do not clean before running the snaps tests (#637)
+
+  [ Jonathan Cave ]
+  * Create Plainbox Provider plugin (#609)
+
+  [ Matthew Aguirre ]
+  * ant plugin: use python std libraries and add tests (#644)
+  * new plugin: gradle (#651)
+  * maven plugin: support maven targets (#650)
+  * Put options before jar task in command. (#655)
+
+  [ Kyle Fazzari ]
+  * Support "never" as a daemon restart condition. (#659)
+
+  [ Simon Quigley ]
+  * Fix four typos in `snapcraft help` (#667)
+
+  [ Robin Winslow ]
+  * Fix broken links to https://snapcraft.io (#665)
+
+  * Implemented `snapcraft release` (#648)
+  * Implement `snapcraft push` (#653)
+  * Allow / in parts (#666)
+  * Capture the correct exception when not being able to decode json (#672)
+  * Special handling for pc files for conflicts (#676)
+  * New upstream release 2.13 (LP: #1605107)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 21 Jul 2016 08:12:25 +0000
+
 snapcraft (2.12.1) xenial; urgency=medium
 
   * New upstream release 2.12.1 (LP: #1600090)

@@ -18,7 +18,7 @@ parts:
         source: https://github.com/lool/snappy-mvn-demo.git
         source-type: git
     tomcat:
-        plugin: tar-content
+        plugin: dump
         source: https://archive.apache.org/dist/tomcat/tomcat-8/v8.0.29/bin/apache-tomcat-8.0.29.tar.gz
     local-files:
         plugin: make

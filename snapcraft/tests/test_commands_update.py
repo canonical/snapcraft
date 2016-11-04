@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from collections import OrderedDict
 import logging
 import os
 
@@ -25,7 +26,7 @@ from xdg import BaseDirectory
 from snapcraft import main, tests
 
 
-class UpdateCommandTestCase(tests.TestCase):
+class UpdateCommandTestCase(tests.TestWithFakeRemoteParts):
 
     def setUp(self):
         super().setUp()
@@ -39,26 +40,31 @@ class UpdateCommandTestCase(tests.TestCase):
         self.assertTrue(os.path.exists(self.parts_yaml))
         self.assertTrue(os.path.exists(self.headers_yaml))
 
-        expected_parts = {
-            'curl': {
-                'source': 'http://curl.org',
-                'plugin': 'autotools',
-                'description': 'test entry for curl',
-                'maintainer': 'none',
-            },
-            'part1': {
-                'plugin': 'go',
-                'source': 'http://source.tar.gz',
-                'description': 'test entry for part1',
-                'maintainer': 'none',
-            },
-            'long-described-part': {
-                'plugin': 'go',
-                'source': 'http://source.tar.gz',
-                'description': 'this is a repetitive description ' * 3,
-                'maintainer': 'none',
-            },
-        }
+        expected_parts = OrderedDict()
+        expected_parts['curl'] = p = OrderedDict()
+        p['plugin'] = 'autotools'
+        p['source'] = 'http://curl.org'
+        p['description'] = 'test entry for curl'
+        p['maintainer'] = 'none'
+
+        expected_parts['part1'] = p = OrderedDict()
+        p['plugin'] = 'go'
+        p['source'] = 'http://source.tar.gz'
+        p['description'] = 'test entry for part1'
+        p['maintainer'] = 'none'
+
+        expected_parts['long-described-part'] = p = OrderedDict()
+        p['plugin'] = 'go'
+        p['source'] = 'http://source.tar.gz'
+        p['description'] = 'this is a repetitive description ' * 3
+        p['maintainer'] = 'none'
+
+        expected_parts['multiline-part'] = p = OrderedDict()
+        p['plugin'] = 'go'
+        p['source'] = 'http://source.tar.gz'
+        p['description'] = 'this is a multiline description\n' * 3
+        p['maintainer'] = 'none'
+
         expected_headers = {
             'If-Modified-Since': 'Thu, 07 Jul 2016 10:00:20 GMT',
         }

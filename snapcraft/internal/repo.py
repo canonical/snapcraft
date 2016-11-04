@@ -16,6 +16,7 @@
 
 import fileinput
 import glob
+import hashlib
 import itertools
 import logging
 import os
@@ -25,13 +26,18 @@ import shutil
 import stat
 import string
 import subprocess
+import sys
 import urllib
 import urllib.request
+from distutils.dir_util import copy_tree
+from contextlib import contextmanager
 
 import apt
 from xml.etree import ElementTree
+from xdg import BaseDirectory
 
 import snapcraft
+from snapcraft import file_utils
 from snapcraft.internal import common
 
 
@@ -115,6 +121,107 @@ class UnpackError(Exception):
         self.package_name = package_name
 
 
+class _AptCache:
+
+    def __init__(self, cache_dir, deb_arch, *,
+                 sources_list=None, use_geoip=False):
+        self._cache_dir = cache_dir
+        self._deb_arch = deb_arch
+        self._sources_list = sources_list
+        self._use_geoip = use_geoip
+
+    def _setup_apt(self, download_dir):
+        # Create the 'partial' subdir too (LP: #1578007).
+        os.makedirs(os.path.join(download_dir, 'partial'), exist_ok=True)
+
+        apt.apt_pkg.config.set("Dir::Cache::Archives", download_dir)
+
+        # Do not install recommends
+        apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
+
+        # Make sure we always use the system GPG configuration, even with
+        # apt.Cache(rootdir).
+        for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
+            apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
+
+        # Clear up apt's Post-Invoke-Success as we are not running
+        # on the system.
+        apt.apt_pkg.config.clear('APT::Update::Post-Invoke-Success')
+
+        self.progress = apt.progress.text.AcquireProgress()
+        if not os.isatty(1):
+            # Make output more suitable for logging.
+            self.progress.pulse = lambda owner: True
+            self.progress._width = 0
+
+    def _setup_apt_cache(self, rootdir):
+        if self._use_geoip or self._sources_list:
+            release = platform.linux_distribution()[2]
+            sources_list = _format_sources_list(
+                self._sources_list, deb_arch=self._deb_arch,
+                use_geoip=self._use_geoip, release=release)
+        else:
+            sources_list = _get_local_sources_list()
+
+        sources_list_digest = hashlib.sha384(
+            sources_list.encode(sys.getfilesystemencoding())).hexdigest()
+
+        cache_dir = os.path.join(self._cache_dir, 'apt', sources_list_digest)
+        apt_cache_dir = os.path.join(cache_dir, 'apt')
+        package_cache_dir = os.path.join(cache_dir, 'packages')
+
+        sources_list_file = os.path.join(
+            apt_cache_dir, 'etc', 'apt', 'sources.list')
+
+        os.makedirs(os.path.dirname(sources_list_file), exist_ok=True)
+        with open(sources_list_file, 'w') as f:
+            f.write(sources_list)
+
+        apt_cache = apt.Cache(rootdir=apt_cache_dir, memonly=True)
+        apt_cache.update(fetch_progress=self.progress,
+                         sources_list=sources_list_file)
+
+        copy_tree(apt_cache_dir, rootdir, update=True)
+
+        return package_cache_dir
+
+    def _restore_cached_packages(self, apt_changes,
+                                 package_cache_dir, download_dir):
+        for pkg in apt_changes:
+            src = os.path.join(package_cache_dir, pkg.name)
+            dst = os.path.join(download_dir, pkg.name)
+            if os.path.exists(src):
+                file_utils.link_or_copy(src, dst)
+
+    def _store_cached_packages(self, package_cache_dir, download_dir):
+        os.makedirs(package_cache_dir, exist_ok=True)
+        for pkg in os.listdir(download_dir):
+            if not pkg.endswith('.deb'):
+                continue
+            src = os.path.join(download_dir, pkg)
+            dst = os.path.join(package_cache_dir, pkg)
+            # The dst may be an incomplete or broken so let's update
+            # just in case.
+            if os.path.exists(dst):
+                os.unlink(dst)
+            file_utils.link_or_copy(src, dst)
+
+    @contextmanager
+    def archive(self, rootdir, download_dir):
+        try:
+            self._setup_apt(download_dir)
+            package_cache_dir = self._setup_apt_cache(rootdir)
+            apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+            apt_cache.open()
+            self._restore_cached_packages(apt_cache.get_changes(),
+                                          package_cache_dir, download_dir)
+            yield apt_cache
+            self._store_cached_packages(package_cache_dir, download_dir)
+        except Exception as e:
+            logger.debug('Exception occured: {!r}'.format(e))
+            raise e
+
+
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False,
@@ -122,21 +229,27 @@ class Ubuntu:
         self.downloaddir = os.path.join(rootdir, 'download')
         self.rootdir = rootdir
         self.recommends = recommends
+        cache_dir = os.path.join(
+            BaseDirectory.xdg_cache_home, 'snapcraft')
 
         if not project_options:
             project_options = snapcraft.ProjectOptions()
-        self.apt_cache, self.apt_progress = _setup_apt_cache(
-            rootdir, sources, project_options)
+
+        self.apt = _AptCache(cache_dir, project_options.deb_arch,
+                             sources_list=sources,
+                             use_geoip=project_options.use_geoip)
 
     def get(self, package_names):
-        # Create the 'partial' subdir too (LP: #1578007).
-        os.makedirs(os.path.join(self.downloaddir, 'partial'), exist_ok=True)
+        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+            self._get(apt_cache, package_names)
 
-        manifest_dep_names = self._manifest_dep_names()
+    def _get(self, apt_cache, package_names):
+        manifest_dep_names = self._manifest_dep_names(apt_cache)
 
         for name in package_names:
             try:
-                self.apt_cache[name].mark_install()
+                logger.debug('Marking {!r} as to install'.format(name))
+                apt_cache[name].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
 
@@ -145,10 +258,10 @@ class Ubuntu:
 
         # unmark some base packages here
         # note that this will break the consistency check inside apt_cache
-        # (self.apt_cache.broken_count will be > 0)
+        # (apt_cache.broken_count will be > 0)
         # but that is ok as it was consistent before we excluded
         # these base package
-        for pkg in self.apt_cache:
+        for pkg in apt_cache:
             # those should be already on each system, it also prevents
             # diving into downloading libc6
             if (pkg.candidate.priority in 'essential' and
@@ -163,14 +276,13 @@ class Ubuntu:
                 continue
 
         if skipped_essential:
-            print('Skipping priority essential packages:', skipped_essential)
+            logger.debug('Skipping priority essential packages: '
+                         '{!r}'.format(skipped_essential))
         if skipped_blacklisted:
-            print('Skipping blacklisted from manifest packages:',
-                  skipped_blacklisted)
+            logger.debug('Skipping blacklisted from manifest packages: '
+                         '{!r}'.format(skipped_blacklisted))
 
-        # download the remaining ones with proper progress
-        apt.apt_pkg.config.set("Dir::Cache::Archives", self.downloaddir)
-        self.apt_cache.fetch_archives(progress=self.apt_progress)
+        apt_cache.fetch_archives(progress=self.apt.progress)
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
@@ -185,14 +297,14 @@ class Ubuntu:
         _fix_xml_tools(rootdir)
         _fix_shebangs(rootdir)
 
-    def _manifest_dep_names(self):
+    def _manifest_dep_names(self, apt_cache):
         manifest_dep_names = set()
 
         with open(os.path.abspath(os.path.join(__file__, '..',
                                                'manifest.txt'))) as f:
             for line in f:
                 pkg = line.strip()
-                if pkg in self.apt_cache:
+                if pkg in apt_cache:
                     manifest_dep_names.add(pkg)
 
         return manifest_dep_names
@@ -224,12 +336,13 @@ def _get_geoip_country_code_prefix():
     return ''
 
 
-def _format_sources_list(sources, project_options, release='xenial'):
-    if not sources:
-        sources = _DEFAULT_SOURCES
+def _format_sources_list(sources_list, *,
+                         deb_arch, use_geoip=False, release='xenial'):
+    if not sources_list:
+        sources_list = _DEFAULT_SOURCES
 
-    if project_options.deb_arch in ('amd64', 'i386'):
-        if project_options.use_geoip:
+    if deb_arch in ('amd64', 'i386'):
+        if use_geoip:
             geoip_prefix = _get_geoip_country_code_prefix()
             prefix = '{}.archive'.format(geoip_prefix)
         else:
@@ -241,48 +354,12 @@ def _format_sources_list(sources, project_options, release='xenial'):
         suffix = 'ubuntu-ports'
         security = 'ports'
 
-    return string.Template(sources).substitute({
+    return string.Template(sources_list).substitute({
         'prefix': prefix,
         'release': release,
         'suffix': suffix,
         'security': security,
     })
-
-
-def _setup_apt_cache(rootdir, sources, project_options):
-    os.makedirs(os.path.join(rootdir, 'etc', 'apt'), exist_ok=True)
-    srcfile = os.path.join(rootdir, 'etc', 'apt', 'sources.list')
-
-    if project_options.use_geoip or sources:
-        release = platform.linux_distribution()[2]
-        sources = _format_sources_list(
-            sources, project_options, release)
-    else:
-        sources = _get_local_sources_list()
-
-    with open(srcfile, 'w') as f:
-        f.write(sources)
-
-    # Do not install recommends
-    apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
-
-    # Make sure we always use the system GPG configuration, even with
-    # apt.Cache(rootdir).
-    for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
-        apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
-
-    progress = apt.progress.text.AcquireProgress()
-    if not os.isatty(1):
-        # Make output more suitable for logging.
-        progress.pulse = lambda owner: True
-        progress._width = 0
-
-    apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
-    apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
-    apt_cache.update(fetch_progress=progress, sources_list=srcfile)
-    apt_cache.open()
-
-    return apt_cache, progress
 
 
 def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
@@ -365,9 +442,9 @@ def _fix_shebangs(path):
     """Changes hard coded shebangs for files in _BIN_PATHS to use env."""
     paths = [p for p in _BIN_PATHS if os.path.exists(os.path.join(path, p))]
     for p in [os.path.join(path, p) for p in paths]:
-        common.replace_in_file(p, re.compile(r''),
-                               re.compile(r'#!.*python\n'),
-                               r'#!/usr/bin/env python\n')
+        file_utils.replace_in_file(p, re.compile(r''),
+                                   re.compile(r'#!.*python\n'),
+                                   r'#!/usr/bin/env python\n')
 
 
 _skip_list = None

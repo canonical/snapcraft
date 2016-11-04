@@ -49,6 +49,7 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
+      - gadget
       - kernel
       - os
   frameworks:
@@ -57,16 +58,6 @@ properties:
     uniqueItems: true
     items:
       - type: string
-  license:
-    type: string
-    description: path to a license file.
-  license-agreement:
-    type: string
-    description: action to take on licensing.
-    enum:
-      - explicit
-  license-version:
-    description: license version (used to re-trigger an agreement action).
   confinement:
     type: string
     description: the type of confinement supported by the snap
@@ -74,6 +65,13 @@ properties:
     enum:
       - devmode
       - strict
+  grade:
+    type: string
+    description: the quality grade of the snap
+    default: stable
+    enum:
+      - stable
+      - devel
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
@@ -103,6 +101,7 @@ properties:
             enum:
               - simple
               - forking
+              - oneshot
           restart-condition:
               type: string
               enum:
@@ -111,6 +110,7 @@ properties:
                 - on-abnormal
                 - on-abort
                 - always
+                - never
           slots:
             type: array
             minitems: 1
@@ -128,7 +128,7 @@ properties:
     minProperties: 1
     additionalProperties: false
     patternProperties:
-      ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
+      ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
         type: object
         minProperties: 1
         properties:

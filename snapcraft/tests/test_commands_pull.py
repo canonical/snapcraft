@@ -26,13 +26,6 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
-class FakeUbuntuRepo:
-
-    def __init__(self, rootdir, recommends=False,
-                 sources=None, use_geoip=True):
-        self.use_geoip = use_geoip
-
-
 class PullCommandTestCase(tests.TestCase):
 
     yaml_template = """name: pull-test
@@ -40,6 +33,7 @@ version: 1.0
 summary: test pull
 description: if the pull is succesful the state file will be updated
 confinement: strict
+grade: stable
 
 parts:
 {parts}"""
@@ -109,11 +103,9 @@ parts:
             self.assertFalse(os.path.exists(parts[i]['state_dir']),
                              'Expected for only to be a state file for pull1')
 
-    @mock.patch('snapcraft.repo._setup_apt_cache')
     @mock.patch('snapcraft.repo.Ubuntu.get')
     @mock.patch('snapcraft.repo.Ubuntu.unpack')
-    def test_pull_stage_packages_without_geoip(self, mock_get, mock_ubpack,
-                                               mock_setup_apt_cache):
+    def test_pull_stage_packages_without_geoip(self, mock_get, mock_unpack):
         yaml_part = """  pull{:d}:
         plugin: nil
         stage-packages: ['mir']"""
@@ -121,39 +113,20 @@ parts:
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
 
         project_options = mock.Mock(spec=snapcraft.ProjectOptions)
-        mock_apt_cache = mock.Mock()
-        mock_apt_progress = mock.Mock()
-        mock_setup_apt_cache.return_value = (mock_apt_cache, mock_apt_progress)
 
         project_options = main(['pull', 'pull1'])
 
         self.assertFalse(project_options.use_geoip)
-        mock_setup_apt_cache.assert_called_once_with(
-            os.path.join(self.parts_dir, 'pull1', 'ubuntu'),
-            [],                # no sources
-            project_options,   # use_geoip is False
-        )
 
-    @mock.patch('snapcraft.repo._setup_apt_cache')
     @mock.patch('snapcraft.repo.Ubuntu.get')
     @mock.patch('snapcraft.repo.Ubuntu.unpack')
-    def test_pull_stage_packages_with_geoip(self, mock_get, mock_ubpack,
-                                            mock_setup_apt_cache):
+    def test_pull_stage_packages_with_geoip(self, mock_get, mock_unpack):
         yaml_part = """  pull{:d}:
         plugin: nil
         stage-packages: ['mir']"""
 
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
 
-        mock_apt_cache = mock.Mock()
-        mock_apt_progress = mock.Mock()
-        mock_setup_apt_cache.return_value = (mock_apt_cache, mock_apt_progress)
-
         project_options = main(['pull', 'pull1', '--enable-geoip'])
 
         self.assertTrue(project_options.use_geoip)
-        mock_setup_apt_cache.assert_called_once_with(
-            os.path.join(self.parts_dir, 'pull1', 'ubuntu'),
-            [],                # no sources
-            project_options,   # use_geoip is False
-        )

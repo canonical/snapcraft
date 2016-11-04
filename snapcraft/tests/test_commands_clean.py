@@ -38,6 +38,7 @@ summary: test clean
 description: if the clean is succesful the state file will be updated
 icon: icon.png
 confinement: strict
+grade: stable
 
 parts:
 {parts}"""
@@ -53,7 +54,7 @@ parts:
         parts = []
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(part_name, 'nil')
+            handler = pluginhandler.load_plugin(part_name, plugin_name='nil')
             parts.append({
                 'part_dir': handler.code.partdir,
             })
@@ -209,6 +210,7 @@ version: 1.0
 summary: test clean
 description: test clean
 confinement: strict
+grade: stable
 
 parts:
   main:
@@ -232,19 +234,11 @@ parts:
         os.makedirs(self.stage_dir)
         os.makedirs(self.snap_dir)
 
-    def assert_clean(self, parts, common=False):
+    def assert_clean(self, parts):
         for part in parts:
             self.assertFalse(
                 os.path.exists(self.part_dirs[part]),
                 'Expected part directory for {!r} to be cleaned'.format(part))
-
-        if common:
-            self.assertFalse(os.path.exists(self.parts_dir),
-                             'Expected parts/ directory to be removed')
-            self.assertFalse(os.path.exists(self.stage_dir),
-                             'Expected stage/ directory to be removed')
-            self.assertFalse(os.path.exists(self.snap_dir),
-                             'Expected snap/ directory to be removed')
 
     def test_clean_dependent_parts(self):
         main(['clean', 'dependent', 'nested-dependent'])

@@ -49,13 +49,12 @@ Snapcraft has the ability to upload snaps for publication in the Snappy Store.
 If you're working on a feature that requires you to interact with the store, you
 might want to use the staging server instead of the production store. To do
 that, make sure you have an account on the
-[staging server](https://login.staging.ubuntu.com), then set the following
-environment variables:
+[staging server](https://login.staging.ubuntu.com), then run:
 
-    UBUNTU_STORE_API_ROOT_URL='https://myapps.developer.staging.ubuntu.com/dev/api/'
-    UBUNTU_STORE_UPLOAD_ROOT_URL='https://upload.apps.staging.ubuntu.com/'
-    UBUNTU_SSO_API_ROOT_URL='https://login.staging.ubuntu.com/api/v2/'
+    source tools/staging_env.sh
 
+You will see a prompt indicating that you are going to be talking to the staging
+server. Once you are done working with the staging servers you can run `deactivate`.
 
 ### Project Layout
 
@@ -79,3 +78,18 @@ snap run:
 e.g.; to update the list for 16.04,
 
     ./libraries/generate_lib_list.py libraries/16.04
+
+### Installing using pip
+
+Install the needed dependencies.
+
+    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev
+
+If installing to `PYTHONHOME` run:
+
+    pip install --user -r requirements.txt -r requirements-devel.txt
+
+If your prefer installing in a virtualenv, then in an activated environment run:
+
+    pip install -r requirements.txt -r requirements-devel.txt
+

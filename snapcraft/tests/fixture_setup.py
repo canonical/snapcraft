@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from functools import partial
 import io
+import os
 import threading
 import urllib.parse
 from unittest import mock
@@ -129,6 +130,18 @@ class FakePartsWiki(fixtures.Fixture):
             'no_proxy', 'localhost,127.0.0.1'))
 
 
+class FakePartsWikiWithSlashes(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_parts_wiki_with_slashes_fixture = (
+            FakePartsWikiWithSlashesRunning())
+        self.useFixture(self.fake_parts_wiki_with_slashes_fixture)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+
+
 class FakePartsWikiOrigin(fixtures.Fixture):
 
     def setUp(self):
@@ -160,7 +173,9 @@ class FakeStore(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        self.fake_sso_server_fixture = FakeSSOServerRunning()
+        self.needs_refresh = False
+
+        self.fake_sso_server_fixture = FakeSSOServerRunning(self)
         self.useFixture(self.fake_sso_server_fixture)
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_SSO_API_ROOT_URL',
@@ -173,7 +188,7 @@ class FakeStore(fixtures.Fixture):
             'UBUNTU_STORE_UPLOAD_ROOT_URL',
             self.fake_store_upload_server_fixture.url))
 
-        self.fake_store_api_server_fixture = FakeStoreAPIServerRunning()
+        self.fake_store_api_server_fixture = FakeStoreAPIServerRunning(self)
         self.useFixture(self.fake_store_api_server_fixture)
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
@@ -223,6 +238,11 @@ class FakePartsWikiRunning(_FakeServerRunning):
     fake_server = fake_servers.FakePartsWikiServer
 
 
+class FakePartsWikiWithSlashesRunning(_FakeServerRunning):
+
+    fake_server = fake_servers.FakePartsWikiWithSlashesServer
+
+
 class FakePartsServerRunning(_FakeServerRunning):
 
     fake_server = fake_servers.FakePartsServer
@@ -230,7 +250,9 @@ class FakePartsServerRunning(_FakeServerRunning):
 
 class FakeSSOServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeSSOServer
+    def __init__(self, fake_store):
+        super().__init__()
+        self.fake_server = partial(fake_servers.FakeSSOServer, fake_store)
 
 
 class FakeStoreUploadServerRunning(_FakeServerRunning):
@@ -240,7 +262,9 @@ class FakeStoreUploadServerRunning(_FakeServerRunning):
 
 class FakeStoreAPIServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreAPIServer
+    def __init__(self, fake_store):
+        super().__init__()
+        self.fake_server = partial(fake_servers.FakeStoreAPIServer, fake_store)
 
 
 class FakeStoreSearchServerRunning(_FakeServerRunning):
@@ -264,3 +288,32 @@ class StagingStore(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             'https://search.apps.staging.ubuntu.com/'))
+
+
+class TestStore(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+        test_store = os.getenv('TEST_STORE', 'fake')
+        if test_store == 'fake':
+            self.useFixture(FakeStore())
+            self.register_delay = 0
+            self.reserved_snap_name = 'test-reserved-snap-name'
+        elif test_store == 'staging':
+            self.useFixture(StagingStore())
+            self.register_delay = 10
+            self.reserved_snap_name = 'bash'
+        elif test_store == 'production':
+            # Use the default server URLs
+            self.register_delay = 180
+            self.reserved_snap_name = 'bash'
+        else:
+            raise ValueError(
+                'Unknown test store option: {}'.format(test_store))
+
+        self.user_email = os.getenv(
+            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        if test_store == 'fake':
+            self.user_password = 'test correct password'
+        else:
+            self.user_password = os.getenv('TEST_USER_PASSWORD')

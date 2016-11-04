@@ -16,6 +16,8 @@
 
 """The copy plugin is useful for assets or other sources with no build system.
 
+This plugin is DEPRECATED in favor of the `dump` plugin.
+
 This plugin uses the common plugin keywords as well as those for 'sources'
 (though the 'source' keyword is optional). For more information check the
 'plugins' topic for the former and the 'sources' topic for the latter.
@@ -35,7 +37,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import glob
-import shutil
 
 import snapcraft
 
@@ -64,6 +65,16 @@ class CopyPlugin(snapcraft.BasePlugin):
         schema['properties']['source']['default'] = '.'
 
         return schema
+
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
+
+        logger.warning("DEPRECATED: The 'copy' plugin's functionality "
+                       "has been replaced by the 'dump' plugin, and it will "
+                       "soon be removed.")
+
+    def enable_cross_compilation(self):
+        pass
 
     def build(self):
         super().build()
@@ -114,31 +125,8 @@ def _recursively_link(source, destination, boundary):
             raise NotADirectoryError(
                 'Cannot overwrite non-directory {!r} with directory '
                 '{!r}'.format(destination, source))
-        _linktree(source, destination, boundary)
+        snapcraft.file_utils.link_or_copy_tree(
+            source, destination,
+            copy_function=lambda src, dst: _link_or_copy(src, dst, boundary))
     else:
         _link_or_copy(source, destination, boundary)
-
-
-def _create_similar_directory(source, destination):
-    os.makedirs(destination, exist_ok=True)
-    shutil.copystat(source, destination, follow_symlinks=False)
-
-
-def _linktree(source_tree, destination_tree, boundary):
-    if not os.path.isdir(destination_tree):
-        _create_similar_directory(source_tree, destination_tree)
-
-    for root, directories, files in os.walk(source_tree):
-        for directory in directories:
-            source = os.path.join(root, directory)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
-
-            _create_similar_directory(source, destination)
-
-        for file_name in files:
-            source = os.path.join(root, file_name)
-            destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
-
-            _link_or_copy(source, destination, boundary)

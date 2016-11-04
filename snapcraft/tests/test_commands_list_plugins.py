@@ -23,12 +23,14 @@ class ListPluginsCommandTestCase(tests.TestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-        'ant        catkin  copy  gradle  jdk     kernel  maven  '
-        'nodejs             python2  qmake  tar-content\n'
-        'autotools  cmake   go    gulp    kbuild  make    nil    '
-        'plainbox-provider  python3  scons\n')
+        'ant        catkin  copy  go      gradle  jdk     kernel  maven  '
+        'nodejs             python   python3  rust   tar-content\n'
+        'autotools  cmake   dump  godeps  gulp    kbuild  make    '
+        'nil    plainbox-provider  python2  qmake    scons  waf        \n'
+    )
 
     def test_list_plugins_non_tty(self):
+        self.maxDiff = None
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
         self.useFixture(fake_terminal)
 
@@ -36,6 +38,7 @@ class ListPluginsCommandTestCase(tests.TestCase):
         self.assertEqual(fake_terminal.getvalue(), self.default_plugin_output)
 
     def test_list_plugins_large_terminal(self):
+        self.maxDiff = None
         fake_terminal = fixture_setup.FakeTerminal(columns=999)
         self.useFixture(fake_terminal)
 
@@ -43,15 +46,18 @@ class ListPluginsCommandTestCase(tests.TestCase):
         self.assertEqual(fake_terminal.getvalue(), self.default_plugin_output)
 
     def test_list_plugins_small_terminal(self):
+        self.maxDiff = None
         fake_terminal = fixture_setup.FakeTerminal(columns=60)
         self.useFixture(fake_terminal)
 
         expected_output = (
-            'ant        go      kernel  plainbox-provider  tar-content\n'
-            'autotools  gradle  make    python2          \n'
-            'catkin     gulp    maven   python3          \n'
-            'cmake      jdk     nil     qmake            \n'
-            'copy       kbuild  nodejs  scons            \n')
+            'ant        go      kernel             python   tar-content\n'
+            'autotools  godeps  make               python2  waf        \n'
+            'catkin     gradle  maven              python3\n'
+            'cmake      gulp    nil                qmake  \n'
+            'copy       jdk     nodejs             rust   \n'
+            'dump       kbuild  plainbox-provider  scons  \n'
+        )
 
         main(['list-plugins'])
         self.assertEqual(fake_terminal.getvalue(), expected_output)

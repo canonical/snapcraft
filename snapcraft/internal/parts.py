@@ -25,6 +25,9 @@ from xdg import BaseDirectory
 
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
+from snapcraft.internal.errors import SnapcraftPartMissingError
+from snapcraft.internal import sources, pluginhandler
+from snapcraft.internal import project_loader
 
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
@@ -92,7 +95,10 @@ class _RemoteParts(_Base):
             self._parts = yaml.load(parts_file)
 
     def get_part(self, part_name, full=False):
-        remote_part = self._parts[part_name].copy()
+        try:
+            remote_part = self._parts[part_name].copy()
+        except KeyError:
+            raise SnapcraftPartMissingError(part_name=part_name)
         if not full:
             for key in ['description', 'maintainer']:
                 remote_part.pop(key)
@@ -129,6 +135,168 @@ class _RemoteParts(_Base):
         return remote_part
 
 
+class SnapcraftLogicError(Exception):
+
+    @property
+    def message(self):
+        return self._message
+
+    def __init__(self, message):
+        self._message = message
+
+
+class PartsConfig:
+
+    def __init__(self, parts_data, project_options, validator, build_tools,
+                 snapcraft_yaml):
+
+        self._parts_data = parts_data
+        self._project_options = project_options
+        self._validator = validator
+        self.build_tools = build_tools
+        self._snapcraft_yaml = snapcraft_yaml
+
+        self.all_parts = []
+        self._part_names = []
+        self.after_requests = {}
+
+        self._process_parts()
+
+    @property
+    def part_names(self):
+        return self._part_names
+
+    def _process_parts(self):
+        for part_name in self._parts_data:
+            if '/' in part_name:
+                logger.warning('DEPRECATED: Found a "/" '
+                               'in the name of the {!r} part'.format(
+                                part_name))
+            self._part_names.append(part_name)
+            properties = self._parts_data[part_name] or {}
+
+            plugin_name = properties.pop('plugin', None)
+
+            if 'after' in properties:
+                self.after_requests[part_name] = properties.pop('after')
+
+            if 'filesets' in properties:
+                del properties['filesets']
+
+            self.load_plugin(part_name, plugin_name, properties)
+
+        self._compute_dependencies()
+        self.all_parts = self._sort_parts()
+
+    def _compute_dependencies(self):
+        '''Gather the lists of dependencies and adds to all_parts.'''
+
+        for part in self.all_parts:
+            dep_names = self.after_requests.get(part.name, [])
+            for dep in dep_names:
+                for i in range(len(self.all_parts)):
+                    if dep == self.all_parts[i].name:
+                        part.deps.append(self.all_parts[i])
+                        break
+
+    def _sort_parts(self):
+        '''Performs an inneficient but easy to follow sorting of parts.'''
+        sorted_parts = []
+
+        while self.all_parts:
+            top_part = None
+            for part in self.all_parts:
+                mentioned = False
+                for other in self.all_parts:
+                    if part in other.deps:
+                        mentioned = True
+                        break
+                if not mentioned:
+                    top_part = part
+                    break
+            if not top_part:
+                raise SnapcraftLogicError(
+                    'circular dependency chain found in parts definition')
+            sorted_parts = [top_part] + sorted_parts
+            self.all_parts.remove(top_part)
+
+        return sorted_parts
+
+    def get_prereqs(self, part_name):
+        """Returns a set with all of part_names' prerequisites."""
+        return set(self.after_requests.get(part_name, []))
+
+    def get_dependents(self, part_name):
+        """Returns a set of all the parts that depend upon part_name."""
+
+        dependents = set()
+        for part, prerequisites in self.after_requests.items():
+            if part_name in prerequisites:
+                dependents.add(part)
+
+        return dependents
+
+    def get_part(self, part_name):
+        for part in self.all_parts:
+            if part.name == part_name:
+                return part
+
+        return None
+
+    def clean_part(self, part_name, staged_state, primed_state, step):
+        part = self.get_part(part_name)
+        part.clean(staged_state, primed_state, step)
+
+    def validate(self, part_names):
+        for part_name in part_names:
+            if part_name not in self._part_names:
+                raise EnvironmentError(
+                    'The part named {!r} is not defined in '
+                    '{!r}'.format(part_name, self._snapcraft_yaml))
+
+    def load_plugin(self, part_name, plugin_name, part_properties):
+        part = pluginhandler.load_plugin(
+            part_name,
+            plugin_name=plugin_name,
+            part_properties=part_properties,
+            project_options=self._project_options,
+            part_schema=self._validator.part_schema)
+
+        self.build_tools += part.code.build_packages
+        self.build_tools += sources.get_required_packages(part.code.options)
+        self.all_parts.append(part)
+        return part
+
+    def build_env_for_part(self, part, root_part=True):
+        """Return a build env of all the part's dependencies."""
+
+        env = []
+        stagedir = self._project_options.stage_dir
+
+        if root_part:
+            # this has to come before any {}/usr/bin
+            env += part.env(part.installdir)
+            env += project_loader._runtime_env(
+                part.installdir, self._project_options.arch_triplet)
+            env += project_loader._runtime_env(
+                stagedir, self._project_options.arch_triplet)
+            env += project_loader._build_env(
+                part.installdir, self._project_options.arch_triplet)
+            env += project_loader._build_env_for_stage(
+                stagedir, self._project_options.arch_triplet)
+            env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
+        else:
+            env += part.env(stagedir)
+            env += project_loader._runtime_env(
+                stagedir, self._project_options.arch_triplet)
+
+        for dep_part in part.deps:
+            env += dep_part.env(stagedir)
+            env += self.build_env_for_part(dep_part, root_part=False)
+
+        return env
+
+
 def update():
     _Update().execute()
 
@@ -136,13 +304,13 @@ def update():
 def define(part_name):
     try:
         remote_part = _RemoteParts().get_part(part_name, full=True)
-    except KeyError as e:
+    except SnapcraftPartMissingError as e:
         raise RuntimeError(
             'Cannot find the part name {!r} in the cache. Please '
             'consider going to https://wiki.ubuntu.com/snapcraft/parts '
             'to add it.') from e
     print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
-    print('Description: {!r}'.format(remote_part.pop('description')))
+    print('Description: {}'.format(remote_part.pop('description')))
     print('')
     yaml.dump({part_name: remote_part},
               default_flow_style=False, stream=sys.stdout)
@@ -165,8 +333,8 @@ def search(part_match):
 
     print('{}  {}'.format(
         _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
-    for part_key in matches.keys():
-        description = matches[part_key]['description']
+    for part_key in sorted(matches.keys()):
+        description = matches[part_key]['description'].split('\n')[0]
         if len(description) > description_space:
             description = '{}...'.format(description[0:description_space])
         print('{}  {}'.format(

@@ -1,0 +1,10 @@
+name: wiki-filesets
+version: 0
+summary: Get part from wiki with filesets
+description: Get part from wiki with filesets
+confinement: strict
+
+parts:
+    my-part:
+        plugin: nil
+        after: [simple-make-filesets]

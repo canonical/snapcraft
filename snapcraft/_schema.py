@@ -51,7 +51,7 @@ class Validator:
         """Return part-specific schema properties."""
 
         sub = self.schema['parts']['patternProperties']
-        properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-]*$']['properties']
+        properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$']['properties']
         return properties
 
     def _load_schema(self):
@@ -71,9 +71,12 @@ class Validator:
                 self._snapcraft, self._schema, format_checker=format_check)
         except jsonschema.ValidationError as e:
             messages = [e.message]
-            if e.path:
+            path = []
+            while e.absolute_path:
+                path.append(e.absolute_path.popleft())
+            if path:
                 messages.insert(0, "The '{}' property does not match the "
-                                   "required schema:".format(e.path.pop()))
+                                   "required schema:".format('/'.join(path)))
             if e.cause:
                 messages.append('({})'.format(e.cause))
 

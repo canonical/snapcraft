@@ -34,7 +34,8 @@ class TestMain(TestCase):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main([])
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, target_deb_arch=None, use_geoip=False)
+                debug=False, parallel_builds=True, target_deb_arch=None,
+                use_geoip=False)
             self.assertTrue(mock_cmd.called, mock_cmd.called)
 
     @mock.patch('snapcraft.internal.lifecycle.snap')
@@ -43,7 +44,8 @@ class TestMain(TestCase):
             snapcraft.main.main(['--enable-geoip'])
             self.assertTrue(mock_cmd.called, mock_cmd.called)
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, target_deb_arch=None, use_geoip=True)
+                debug=False, parallel_builds=True, target_deb_arch=None,
+                use_geoip=True)
 
     def test_command_error(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -73,25 +75,36 @@ class TestMain(TestCase):
             log_level=logging.DEBUG)
 
     @mock.patch('snapcraft.internal.lifecycle.snap')
+    def test_command_with_debug(self, mock_cmd):
+        with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
+            snapcraft.main.main(['--debug'])
+            mock_project_options.assert_called_once_with(
+                debug=True, parallel_builds=True, target_deb_arch=None,
+                use_geoip=False)
+
+    @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_with_parallel_builds(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main([])
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, target_deb_arch=None, use_geoip=False)
+                debug=False, parallel_builds=True, target_deb_arch=None,
+                use_geoip=False)
 
     @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_disable_parallel_build(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main(['--no-parallel-build'])
             mock_project_options.assert_called_once_with(
-                parallel_builds=False, target_deb_arch=None, use_geoip=False)
+                debug=False, parallel_builds=False, target_deb_arch=None,
+                use_geoip=False)
 
     @mock.patch('snapcraft.internal.lifecycle.snap')
     def test_command_with_target_deb_arch(self, mock_cmd):
         with mock.patch('snapcraft.ProjectOptions') as mock_project_options:
             snapcraft.main.main(['--target-arch', 'arm64'])
             mock_project_options.assert_called_once_with(
-                parallel_builds=True, target_deb_arch='arm64', use_geoip=False)
+                debug=False, parallel_builds=True, target_deb_arch='arm64',
+                use_geoip=False)
 
     @mock.patch('pkg_resources.require')
     @mock.patch('sys.stdout', new_callable=io.StringIO)

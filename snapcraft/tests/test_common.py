@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 
 from snapcraft.internal import common
 from snapcraft import tests
@@ -48,41 +47,6 @@ class CommonTestCase(tests.TestCase):
         self.assertFalse(common.isurl('/foo'))
         self.assertFalse(common.isurl('/fo:o'))
 
-    def test_replace_in_file(self):
-        os.makedirs('bin')
-
-        # Place a few files with bad shebangs, and some files that shouldn't be
-        # changed.
-        files = [
-            {
-                'path': os.path.join('bin', '2to3'),
-                'contents': '#!/foo/bar/baz/python',
-                'expected': '#!/usr/bin/env python',
-            },
-            {
-                'path': os.path.join('bin', 'snapcraft'),
-                'contents': '#!/foo/baz/python',
-                'expected': '#!/usr/bin/env python',
-            },
-            {
-                'path': os.path.join('bin', 'foo'),
-                'contents': 'foo',
-                'expected': 'foo',
-            }
-        ]
-
-        for file_info in files:
-            with self.subTest(key=file_info['path']):
-                with open(file_info['path'], 'w') as f:
-                    f.write(file_info['contents'])
-
-                common.replace_in_file('bin', re.compile(r''),
-                                       re.compile(r'#!.*python'),
-                                       r'#!/usr/bin/env python')
-
-                with open(file_info['path'], 'r') as f:
-                    self.assertEqual(f.read(), file_info['expected'])
-
 
 class CommonMigratedTestCase(tests.TestCase):
 
@@ -93,7 +57,7 @@ class CommonMigratedTestCase(tests.TestCase):
         self.assertEqual(
             str(raised.exception),
             "This plugin is outdated, use "
-            "'project.parallel_build_count'")
+            "'parallel_build_count'")
 
     def test_deb_arch_migration_message(self):
         with self.assertRaises(EnvironmentError) as raised:

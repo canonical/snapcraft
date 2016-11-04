@@ -26,15 +26,25 @@ from snapcraft.internal import common
 from snapcraft.tests import fixture_setup
 
 
+class ContainsList(list):
+
+        def __eq__(self, other):
+            return all([i[0] in i[1] for i in zip(self, other)])
+
+
 class MockOptions:
 
     def __init__(self, source=None, source_type=None, source_branch=None,
-                 source_tag=None, source_subdir=None):
+                 source_tag=None, source_subdir=None, source_depth=None,
+                 source_commit=None, disable_parallel=False):
         self.source = source
         self.source_type = source_type
+        self.source_depth = source_depth
         self.source_branch = source_branch
+        self.source_commit = source_commit
         self.source_tag = source_tag
         self.source_subdir = source_subdir
+        self.disable_parallel = disable_parallel
 
 
 class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
@@ -56,8 +66,6 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
         self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
-
-        self.useFixture(fixture_setup.FakeParts())
 
         patcher = mock.patch('multiprocessing.cpu_count')
         self.cpu_count = patcher.start()
@@ -90,6 +98,13 @@ class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
             self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
                             'Expected {!r} to be run for {}'.format(
                                 step, part_name))
+
+
+class TestWithFakeRemoteParts(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixture_setup.FakeParts())
 
 
 class SilentProgressBar(progressbar.ProgressBar):

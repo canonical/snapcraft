@@ -41,15 +41,21 @@ class LocalTestbed:
     def wait(self):
         pass
 
-    def run_command(self, command):
+    def run_command(self, command, cwd=None):
         if isinstance(command, list):
             command = ' '.join(command)
+        if not cwd:
+            logger.warning('Running from /tmp')
+            cwd = '/tmp'
         return subprocess.check_output(
-            command, shell=True,
+            command, shell=True, cwd=cwd,
             stderr=subprocess.STDOUT).decode('utf-8')
 
-    def run_command_in_background(self, command):
-        return subprocess.Popen(command)
+    def run_command_in_background(self, command, cwd=None):
+        if not cwd:
+            logger.warning('Running from /tmp')
+            cwd = '/tmp'
+        return subprocess.Popen(command, cwd=cwd)
 
     def copy_file(self, src, dst):
         shutil.copy(src, dst)
@@ -79,7 +85,7 @@ class SshTestbed:
                     time.sleep(sleep)
                     timeout -= sleep
 
-    def run_command(self, command):
+    def run_command(self, command, cwd=None):
         ssh_command = self._prepare_ssh_command(command)
         return subprocess.check_output(
             ssh_command, stderr=subprocess.STDOUT).decode('utf-8')
@@ -96,7 +102,7 @@ class SshTestbed:
         ssh_command.extend(command)
         return ssh_command
 
-    def run_command_in_background(self, command):
+    def run_command_in_background(self, command, cwd=None):
         ssh_command = self._prepare_ssh_command(command)
         return subprocess.Popen(ssh_command)
 

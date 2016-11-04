@@ -30,6 +30,11 @@ parts:
         after: [plainbox-local]
     # A wrapper script
     launchers:
-        plugin: copy
-        files:
+        plugin: dump
+        source: .
+        organize:
             launchers/plainbox-wrapper: bin/plainbox-wrapper
+        filesets:
+            wrapper: [bin/plainbox-wrapper]
+        stage: [$wrapper]
+        snap: [$wrapper]

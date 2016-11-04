@@ -16,6 +16,7 @@
 
 import os
 
+from testtools.matchers import StartsWith
 import yaml
 
 import integration_tests
@@ -41,24 +42,78 @@ class PartsTestCase(integration_tests.TestCase):
         self.run_snapcraft('update')
         output = self.run_snapcraft(['define', 'curl'])
 
-        expected = """Maintainer: 'Sergio Schvezov <sergio.schvezov@ubuntu.com>'
-Description: 'A tool and a library (usable from many languages) for client side URL transfers, supporting FTP, FTPS, HTTP, HTTPS, TELNET, DICT, FILE and LDAP.'
+        expected_prefix = (
+            "Maintainer: 'Sergio Schvezov <sergio.schvezov@ubuntu.com>'\n"
+            "Description: A tool and a library (usable from many languages) "
+            "for client side URL transfers, supporting FTP, FTPS, HTTP, "
+            "HTTPS, TELNET, DICT, FILE and LDAP.\n\n")
+        self.assertThat(output, StartsWith(expected_prefix))
 
-curl:
-  configflags:
-  - --enable-static
-  - --enable-shared
-  - --disable-manual
-  plugin: autotools
-  snap:
-  - -bin
-  - -lib/*.a
-  - -lib/pkgconfig
-  - -lib/*.la
-  - -include
-  - -share
-  source: http://curl.haxx.se/download/curl-7.44.0.tar.bz2
-  source-type: tar
-"""
+        part = yaml.safe_load(output[len(expected_prefix):])
+        expected_part = {
+            "curl": {
+                "plugin": "autotools",
+                "source": "http://curl.haxx.se/download/curl-7.44.0.tar.bz2",
+                "source-type": "tar",
+                "configflags": [
+                    "--enable-static",
+                    "--enable-shared",
+                    "--disable-manual",
+                ],
+                "snap": [
+                    "-bin",
+                    "-lib/*.a",
+                    "-lib/pkgconfig",
+                    "-lib/*.la",
+                    "-include",
+                    "-share",
+                ],
+            },
+        }
+        self.assertEqual(expected_part, part)
 
-        self.assertEqual(expected, output)
+
+class PartsWithFilesetsTestCase(integration_tests.TestCase):
+
+    def test_part_with_fileset(self):
+        self.run_snapcraft('update')
+
+        output = self.run_snapcraft(['define', 'simple-make-filesets'])
+
+        expected_prefix = (
+            "Maintainer: 'Jonathan Cave <jonathan.cave@canonical.com>'\n"
+            "Description: The filesets test from the integration test suite."
+            "\n\n")
+        self.assertThat(output, StartsWith(expected_prefix))
+
+        part = yaml.safe_load(output[len(expected_prefix):])
+        expected_part = {
+            "simple-make-filesets": {
+                "plugin": "make",
+                "filesets": {
+                    "files": [
+                        "share/file1",
+                        "share/file2",
+                    ],
+                },
+                "stage": [
+                    "$files",
+                    "new/dir1",
+                    "new/dir2",
+                ],
+                "snap": [
+                    "-new/dir1",
+                ],
+                "organize": {
+                    "file1": "share/file1",
+                    "file2": "share/file2",
+                    "dir1": "new/dir1",
+                    "dir2": "new/dir2",
+                },
+                "source": "https://github.com/jocave/simple-make-filesets.git",
+            },
+        }
+        self.assertEqual(expected_part, part)
+
+        project_dir = 'wiki-filesets'
+        self.run_snapcraft('snap', project_dir)

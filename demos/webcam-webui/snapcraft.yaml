@@ -8,7 +8,7 @@ apps:
   webcam-webui:
     command: bin/webcam-webui
     daemon: simple
-    plugs: [network-bind]
+    plugs: [camera,network-bind]
 
 parts:
   cam:
@@ -32,6 +32,7 @@ parts:
       - $go-server
       - -usr/share/doc
   glue:
-    plugin: copy
-    files:
+    plugin: dump
+    source: .
+    organize:
       webcam-webui: bin/webcam-webui

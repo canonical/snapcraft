@@ -20,32 +20,24 @@ import subprocess
 import uuid
 
 from testtools.matchers import (
-    Equals,
     FileExists,
     MatchesRegex,
 )
 
 import integration_tests
 
-from snapcraft.tests import fixture_setup
 
-
-class ReleaseTestCase(integration_tests.TestCase):
+class ReleaseTestCase(integration_tests.StoreTestCase):
 
     def test_release_without_login(self):
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 
+            self.run_snapcraft,
             ['release', 'test-snap', '19', 'beta'])
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', str(error.output))
 
     def test_release_with_login(self):
-        if not os.getenv('TEST_USER_PASSWORD', None):
-            self.useFixture(fixture_setup.FakeStore())
-        else:
-            self.useFixture(fixture_setup.StagingStore())
-
         self.addCleanup(self.logout)
         self.login()
 

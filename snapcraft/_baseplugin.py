@@ -46,7 +46,15 @@ class BasePlugin:
                     'type': 'string',
                     'default': '',
                 },
+                'source-depth': {
+                    'type': 'integer',
+                    'default': 0,
+                },
                 'source-branch': {
+                    'type': 'string',
+                    'default': '',
+                },
+                'source-commit': {
                     'type': 'string',
                     'default': '',
                 },
@@ -57,19 +65,24 @@ class BasePlugin:
                 'source-subdir': {
                     'type': 'string',
                     'default': None,
-                }
+                },
+                'disable-parallel': {
+                    'type': 'boolean',
+                    'default': False,
+                },
             },
             'required': [
                 'source',
             ],
             'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir'],
-            'build-properties': []
+                                'source-commit', 'source-tag',
+                                'source-subdir'],
+            'build-properties': ['disable-parallel']
         }
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
-        """Define additional sources.list."""
+        """Define alternative sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
     def __init__(self, name, options, project=None):
@@ -78,17 +91,22 @@ class BasePlugin:
         self.stage_packages = []
 
         with contextlib.suppress(AttributeError):
-            self.stage_packages = options.stage_packages
+            self.stage_packages = options.stage_packages.copy()
         with contextlib.suppress(AttributeError):
-            self.build_packages = options.build_packages
+            self.build_packages = options.build_packages.copy()
 
         self.project = project
         self.options = options
 
+        # The remote parts can have a '/' in them to separate the main project
+        # part with the subparts. This is rather unfortunate as it affects the
+        # the layout of parts inside the parts directory causing collisions
+        # between the main project part and its subparts.
+        part_dir = name.replace('/', '\N{BIG SOLIDUS}')
         if project:
-            self.partdir = os.path.join(project.parts_dir, self.name)
+            self.partdir = os.path.join(project.parts_dir, part_dir)
         else:
-            self.partdir = os.path.join(os.getcwd(), 'parts', self.name)
+            self.partdir = os.path.join(os.getcwd(), 'parts', part_dir)
 
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
@@ -109,6 +127,7 @@ class BasePlugin:
 
         - source
         - source-branch
+        - source-commit
         - source-tag
         - source-type
 
@@ -214,19 +233,28 @@ class BasePlugin:
             'a plugin specific implementation in the '
             '{!r} plugin'.format(self.name))
 
+    @property
+    def parallel_build_count(self):
+        """Number of CPU's to use for building.
+
+        Number comes from `project.parallel_build_count` unless the part
+        has defined `disable-parallel` as `True`.
+        """
+        if getattr(self.options, 'disable_parallel', False):
+            return 1
+        else:
+            return self.project.parallel_build_count
+
     # Helpers
     def run(self, cmd, cwd=None, **kwargs):
-        if cwd is None:
+        if not cwd:
             cwd = self.builddir
-        if True:
-            print(' '.join(cmd))
+        print(' '.join(cmd))
         os.makedirs(cwd, exist_ok=True)
         return common.run(cmd, cwd=cwd, **kwargs)
 
     def run_output(self, cmd, cwd=None, **kwargs):
-        if cwd is None:
+        if not cwd:
             cwd = self.builddir
-        if True:
-            print(' '.join(cmd))
         os.makedirs(cwd, exist_ok=True)
         return common.run_output(cmd, cwd=cwd, **kwargs)

@@ -1,7 +1,7 @@
 Source: snapcraft
 Section: utils
 Priority: extra
-Maintainer: Snapcraft Team <snappy-devel@lists.ubuntu.com>
+Maintainer: Snapcraft Team <snapcraft@lists.snapcraft.io>
 Build-Depends: bash-completion,
                debhelper (>= 9),
                dh-python,
@@ -18,7 +18,6 @@ Build-Depends: bash-completion,
                python3-progressbar,
                python3-pymacaroons,
                python3-requests,
-               python3-requests-oauthlib,
                python3-requests-toolbelt,
                python3-responses,
                python3-simplejson,
@@ -30,8 +29,9 @@ Build-Depends: bash-completion,
                python3-yaml,
                squashfs-tools,
 Homepage: https://github.com/snapcore/snapcraft
-Vcs-Git: https://github.com/snapcore/snapcraft
-Standards-Version: 3.9.7
+Vcs-Git: https://github.com/snapcore/snapcraft.git
+Vcs-Browser: https://github.com/snapcore/snapcraft
+Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
@@ -45,7 +45,6 @@ Depends: python3-apt,
          python3-progressbar,
          python3-pymacaroons,
          python3-requests,
-         python3-requests-oauthlib,
          python3-requests-toolbelt,
          python3-simplejson,
          python3-tabulate,
@@ -55,7 +54,7 @@ Depends: python3-apt,
          sudo,
          ${misc:Depends},
          ${python3:Depends}
-Suggests: lxd
+Suggests: lxd, snapd (>= 2.15~)
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the

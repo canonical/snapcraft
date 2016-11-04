@@ -122,7 +122,7 @@ def get_arch():
 
 def get_parallel_build_count():
     raise EnvironmentError(
-        "This plugin is outdated, use 'project.parallel_build_count'")
+        "This plugin is outdated, use 'parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):
@@ -161,63 +161,6 @@ def isurl(url):
 def reset_env():
     global env
     env = []
-
-
-def link_or_copy(source, destination, follow_symlinks=False):
-    """Hard-link source and destination files. Copy if it fails to link.
-
-    Hard-linking may fail (e.g. a cross-device link, or permission denied), so
-    as a backup plan we just copy it.
-
-    :param str source: The source to which destination will be linked.
-    :param str destination: The destination to be linked to source.
-    :param bool follow_symlinks: Whether or not symlinks should be followed.
-    """
-
-    try:
-        # Note that follow_symlinks doesn't seem to work for os.link, so we'll
-        # implement this logic ourselves using realpath.
-        source_path = source
-        if follow_symlinks:
-            source_path = os.path.realpath(source)
-
-        # Setting follow_symlinks=False in case this bug is ever fixed
-        # upstream-- we want this function to continue supporting NOT following
-        # symlinks.
-        os.link(source_path, destination, follow_symlinks=False)
-    except OSError:
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
-
-
-def replace_in_file(directory, file_pattern, search_pattern, replacement):
-    """Searches and replaces patterns that match a file pattern.
-    :param str directory: The directory to look for files.
-    :param str file_pattern: The file pattern to match inside directory.
-    :param search_pattern: A re.compile'd pattern to search for within
-                           matching files.
-    :param str replacement: The string to replace the matching search_pattern
-                            with.
-    """
-    for root, directories, files in os.walk(directory):
-        for file_name in files:
-            if file_pattern.match(file_name):
-                _search_and_replace_contents(os.path.join(root, file_name),
-                                             search_pattern, replacement)
-
-
-def _search_and_replace_contents(file_path, search_pattern, replacement):
-    with open(file_path, 'r+') as f:
-        try:
-            original = f.read()
-        except UnicodeDecodeError:
-            # This was probably a binary file. Skip it.
-            return
-
-        replaced = search_pattern.sub(replacement, original)
-        if replaced != original:
-            f.seek(0)
-            f.truncate()
-            f.write(replaced)
 
 
 def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
@@ -310,18 +253,3 @@ def get_pkg_config_paths(root, arch_triplet):
     ]
 
     return [p for p in paths if os.path.exists(p)]
-
-
-def combine_paths(paths, prepend, separator):
-    paths = ['{}{}'.format(prepend, p) for p in paths]
-    return separator.join(paths)
-
-
-def format_path_variable(envvar, paths, prepend, separator):
-    if not paths:
-        raise ValueError(
-            "Failed to format '${}': no paths supplied".format(envvar))
-
-    return '{envvar}="${envvar}{separator}{paths}"'.format(
-        envvar=envvar, separator=separator, paths=combine_paths(
-            paths, prepend, separator))

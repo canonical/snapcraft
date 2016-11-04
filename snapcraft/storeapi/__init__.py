@@ -24,13 +24,14 @@ from time import sleep
 from threading import Thread
 from queue import Queue
 
-import pymacaroons
-import requests
 from progressbar import (
     AnimatedMarker,
     ProgressBar,
     UnknownLength,
 )
+import pymacaroons
+import requests
+from simplejson.scanner import JSONDecodeError
 
 import snapcraft
 from snapcraft import config
@@ -105,6 +106,9 @@ class Client():
     def post(self, url, **kwargs):
         return self.request('POST', url, **kwargs)
 
+    def put(self, url, **kwargs):
+        return self.request('PUT', url, **kwargs)
+
 
 class StoreClient():
     """High-level client for the V2.0 API SCA resources."""
@@ -117,19 +121,22 @@ class StoreClient():
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, one_time_password=None):
+    def login(self, email, password, one_time_password=None, acls=None,
+              save=True):
         """Log in via the Ubuntu One SSO API."""
-        # Ask the store for the needed capabalities to be associated with the
+        if acls is None:
+            acls = ['package_upload', 'package_access']
+        # Ask the store for the needed capabilities to be associated with the
         # macaroon.
-        macaroon = self.sca.get_macaroon(
-            ['package_upload', 'package_access'])
+        macaroon = self.sca.get_macaroon(acls)
         caveat_id = self._extract_caveat_id(macaroon)
         unbound_discharge = self.sso.get_unbound_discharge(
             email, password, one_time_password, caveat_id)
         # The macaroon has been discharged, save it in the config
         self.conf.set('macaroon', macaroon)
         self.conf.set('unbound_discharge', unbound_discharge)
-        self.conf.save()
+        if save:
+            self.conf.save()
 
     def _extract_caveat_id(self, root_macaroon):
         macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)
@@ -145,8 +152,31 @@ class StoreClient():
         self.conf.clear()
         self.conf.save()
 
-    def register(self, snap_name):
-        self.sca.register(snap_name, constants.DEFAULT_SERIES)
+    def _refresh_if_necessary(self, func, *args, **kwargs):
+        """Make a request, refreshing macaroons if necessary."""
+        try:
+            return func(*args, **kwargs)
+        except errors.StoreMacaroonNeedsRefreshError:
+            unbound_discharge = self.sso.refresh_unbound_discharge(
+                self.conf.get('unbound_discharge'))
+            self.conf.set('unbound_discharge', unbound_discharge)
+            self.conf.save()
+            return func(*args, **kwargs)
+
+    def get_account_information(self):
+        return self._refresh_if_necessary(self.sca.get_account_information)
+
+    def register_key(self, account_key_request):
+        return self._refresh_if_necessary(
+            self.sca.register_key, account_key_request)
+
+    def register(self, snap_name, is_private=False):
+        return self._refresh_if_necessary(
+            self.sca.register, snap_name, is_private, constants.DEFAULT_SERIES)
+
+    def push_snap_build(self, snap_id, snap_build):
+        return self._refresh_if_necessary(
+            self.sca.push_snap_build, snap_id, snap_build)
 
     def upload(self, snap_name, snap_filename):
         # FIXME This should be raised by the function that uses the
@@ -156,22 +186,59 @@ class StoreClient():
                 'Unbound discharge not in the config file')
 
         updown_data = _upload.upload_files(snap_filename, self.updown)
-        success = updown_data.get('success', False)
-        if not success:
-            return updown_data
 
-        return self.sca.snap_push_metadata(snap_name, updown_data)
+        return self._refresh_if_necessary(
+            self.sca.snap_push_metadata, snap_name, updown_data)
 
     def release(self, snap_name, revision, channels):
-        return self.sca.snap_release(snap_name, revision, channels)
+        return self._refresh_if_necessary(
+            self.sca.snap_release, snap_name, revision, channels)
+
+    def get_snap_history(self, snap_name, series=None, arch=None):
+        if series is None:
+            series = constants.DEFAULT_SERIES
+
+        account_info = self.get_account_information()
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        response = self._refresh_if_necessary(
+            self.sca.snap_history, snap_id, series, arch)
+
+        if not response:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return response
+
+    def get_snap_status(self, snap_name, series=None, arch=None):
+        if series is None:
+            series = constants.DEFAULT_SERIES
+
+        account_info = self.get_account_information()
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        response = self._refresh_if_necessary(
+            self.sca.snap_status, snap_id, series, arch)
+
+        if not response:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return response
+
+    def close_channels(self, snap_id, channel_names):
+        return self._refresh_if_necessary(
+            self.sca.close_channels, snap_id, channel_names)
 
     def download(self, snap_name, channel, download_path, arch=None):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
-        package = self.cpi.search_package(snap_name, channel, arch)
-        if package is None:
-            raise errors.SnapNotFoundError(snap_name, channel, arch)
+        package = self.cpi.get_package(snap_name, channel, arch)
         self._download_snap(
             snap_name, channel, arch, download_path,
             package['download_url'], package['download_sha512'])
@@ -204,9 +271,15 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
+    def push_validation(self, snap_id, assertion):
+        return self.sca.push_validation(snap_id, assertion)
+
+    def get_validations(self, snap_id):
+        return self.sca.get_validations(snap_id)
+
 
 class SSOClient(Client):
-    """The Single Sign On server deals with authentification.
+    """The Single Sign On server deals with authentication.
 
     It is used directly or indirectly by other servers.
 
@@ -226,11 +299,34 @@ class SSOClient(Client):
             'tokens/discharge', data=json.dumps(data),
             headers={'Content-Type': 'application/json',
                      'Accept': 'application/json'})
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            response_json = {}
+        if response.ok:
+            return response_json['discharge_macaroon']
+        else:
+            if (response.status_code == requests.codes.unauthorized and
+                any(error.get('code') == 'twofactor-required'
+                    for error in response_json.get('error_list', []))):
+                raise errors.StoreTwoFactorAuthenticationRequired()
+            else:
+                raise errors.StoreAuthenticationError(
+                    'Failed to get unbound discharge: {}'.format(
+                        response.text))
+
+    def refresh_unbound_discharge(self, unbound_discharge):
+        data = {'discharge_macaroon': unbound_discharge}
+        response = self.post(
+            'tokens/refresh', data=json.dumps(data),
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
         if response.ok:
             return response.json()['discharge_macaroon']
         else:
             raise errors.StoreAuthenticationError(
-                'Failed to get unbound discharge: '.format(response.text))
+                'Failed to refresh unbound discharge: {}'.format(
+                    response.text))
 
 
 class SnapIndexClient(Client):
@@ -245,25 +341,24 @@ class SnapIndexClient(Client):
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
-    def search_package(self, snap_name, channel, arch):
+    def get_package(self, snap_name, channel, arch=None):
         headers = {
             'Accept': 'application/hal+json',
-            'X-Ubuntu-Architecture': arch,
             'X-Ubuntu-Release': constants.DEFAULT_SERIES,
-            'X-Ubuntu-Device-Channel': channel,
         }
+        if arch:
+            headers['X-Ubuntu-Architecture'] = arch
+
         params = {
-            'q': 'package_name:"{}"'.format(snap_name),
-            'fields': 'status,download_url,download_sha512',
-            'size': 1,
+            'channel': channel,
+            'fields': 'status,download_url,download_sha512,snap_id,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
-        resp = self.get('api/v1/search', headers=headers, params=params)
-        embedded = resp.json().get('_embedded', None)
-        if embedded is None:
-            return None
-        else:
-            return embedded['clickindex:package'][0]
+        url = 'api/v1/snaps/details/{}'.format(snap_name)
+        resp = self.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            raise errors.SnapNotFoundError(snap_name, channel, arch)
+        return resp.json()
 
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
@@ -308,16 +403,51 @@ class SCAClient(Client):
         else:
             raise errors.StoreAuthenticationError('Failed to get macaroon')
 
-    def register(self, snap_name, series):
+    @staticmethod
+    def _is_needs_refresh_response(response):
+        return (
+            response.status_code == requests.codes.unauthorized and
+            response.headers.get('WWW-Authenticate') == (
+                'Macaroon needs_refresh=1'))
+
+    def request(self, *args, **kwargs):
+        response = super().request(*args, **kwargs)
+        if self._is_needs_refresh_response(response):
+            raise errors.StoreMacaroonNeedsRefreshError()
+        return response
+
+    def get_account_information(self):
         auth = _macaroon_auth(self.conf)
-        data = dict(snap_name=snap_name, series=series)
+        response = self.get(
+            'account',
+            headers={'Authorization': auth,
+                     'Accept': 'application/json'})
+        if response.ok:
+            return response.json()
+        else:
+            raise errors.StoreAccountInformationError(response)
+
+    def register_key(self, account_key_request):
+        data = {'account_key_request': account_key_request}
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'account/account-key', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreKeyRegistrationError(response)
+
+    def register(self, snap_name, is_private, series):
+        auth = _macaroon_auth(self.conf)
+        data = dict(snap_name=snap_name, is_private=is_private,
+                    series=series)
         response = self.post(
             'register-name/', data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json'})
         if not response.ok:
             raise errors.StoreRegistrationError(snap_name, response)
-        # TODO handle macaroon refresh
 
     def snap_push_metadata(self, snap_name, updown_data):
         data = {
@@ -354,11 +484,130 @@ class SCAClient(Client):
             raise errors.StoreReleaseError(data['name'], response)
 
         response_json = response.json()
-        success = response_json.pop('success')
-        if not success:
-            raise errors.StoreReleaseError(data['name'], response)
 
         return response_json
+
+    def push_validation(self, snap_id, assertion):
+        data = {
+            'assertion': assertion.decode('utf-8'),
+        }
+        auth = _macaroon_auth(self.conf)
+        response = self.put(
+            'snaps/{}/validations'.format(snap_id), data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreValidationError(snap_id, response)
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            message = ('Invalid response from the server when pushing '
+                       'validations: {} {}').format(
+                           response.status_code, response)
+            logger.debug(message)
+            raise errors.StoreValidationError(
+                snap_id, response, message='Invalid response from the server')
+
+        return response_json
+
+    def get_validations(self, snap_id):
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            'snaps/{}/validations'.format(snap_id),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreValidationError(snap_id, response)
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            message = ('Invalid response from the server when getting '
+                       'validations: {} {}').format(
+                           response.status_code, response)
+            logger.debug(message)
+            raise errors.StoreValidationError(
+                snap_id, response, message='Invalid response from the server')
+
+        return response_json
+
+    def push_snap_build(self, snap_id, snap_build):
+        url = 'snaps/{}/builds'.format(snap_id)
+        data = json.dumps({"assertion": snap_build})
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+            'Content-Type': 'application/json'
+        }
+        response = self.post(url, data=data, headers=headers)
+        if not response.ok:
+            raise errors.StoreSnapBuildError(response)
+
+    def snap_history(self, snap_id, series, arch):
+        qs = {}
+        if series:
+            qs['series'] = series
+        if arch:
+            qs['arch'] = arch
+        url = 'snaps/' + snap_id + '/history'
+        if qs:
+            url += '?' + urllib.parse.urlencode(qs)
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreSnapHistoryError(response, snap_id, series, arch)
+
+        response_json = response.json()
+
+        return response_json
+
+    def snap_status(self, snap_id, series, arch):
+        qs = {}
+        if series:
+            qs['series'] = series
+        if arch:
+            qs['arch'] = arch
+        url = 'snaps/' + snap_id + '/status'
+        if qs:
+            url += '?' + urllib.parse.urlencode(qs)
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StoreSnapStatusError(response, snap_id, series, arch)
+
+        response_json = response.json()
+
+        return response_json
+
+    def close_channels(self, snap_id, channel_names):
+        url = 'snaps/{}/close'.format(snap_id)
+        data = {
+            'channels': channel_names
+        }
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+        }
+        response = self.post(url, json=data, headers=headers)
+        if not response.ok:
+            raise errors.StoreChannelClosingError(response)
+
+        try:
+            results = response.json()
+            return results['closed_channels'], results['channel_maps']
+        except (JSONDecodeError, KeyError):
+            logger.debug(
+                'Invalid response from the server on channel closing:\n'
+                '{} {}\n{}'.format(response.status_code, response.reason,
+                                   response.content))
+            raise errors.StoreChannelClosingError(response)
 
 
 class StatusTracker:

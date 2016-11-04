@@ -23,13 +23,18 @@ WARNING: this plugin's API is unstable. The cross compiling support is
 The following kernel specific options are provided by this plugin:
 
     - kernel-image-target:
-      (string; default: bzImage)
-      the kernel image make target to build; maps to make target.
+      (yaml object or string; default: bzImage)
+      the default target is bzImage and can be set to any specific
+      target.
+      For more complex cases where one would want to use
+      the same snapcraft.yaml to target multiple architectures a
+      yaml object can be used. This yaml object would be a map of
+      debian architecture and kernel image build targets.
 
     - kernel-initrd-modules:
       (array of string)
       list of modules to include in initrd; note that kernel snaps do not
-      provide the core bootlogic which comes from snappy Ubuntu Core
+      provide the core boot logic which comes from snappy Ubuntu Core
       OS snap. Include all modules you need for mounting rootfs here.
 
     - kernel-with-firmware:
@@ -77,7 +82,10 @@ class KernelPlugin(kbuild.KBuildPlugin):
         schema = super().schema()
 
         schema['properties']['kernel-image-target'] = {
-            'type': 'string',
+            'oneOf': [
+                {'type': 'string'},
+                {'type': 'object'},
+            ],
             'default': 'bzImage',
         }
 
@@ -138,14 +146,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self.make_targets = [self.options.kernel_image_target, 'modules']
-        self.dtbs = ['{}.dtb'.format(i)
-                     for i in self.options.kernel_device_trees]
-        if self.dtbs:
-            self.make_targets.extend(self.dtbs)
-        self.make_install_targets = [
-            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
-        self.make_install_targets.extend(self._get_fw_install_targets())
+        self._set_kernel_targets()
 
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
         self.kernel_release = ''
@@ -157,6 +158,26 @@ class KernelPlugin(kbuild.KBuildPlugin):
             self.project.kernel_arch))
         self.make_cmd.append('CROSS_COMPILE={}'.format(
             self.project.cross_compiler_prefix))
+        # by enabling cross compilation, the kernel_arch and deb_arch
+        # from the project options have effectively changed so we reset
+        # kernel targets.
+        self._set_kernel_targets()
+
+    def _set_kernel_targets(self):
+        if isinstance(self.options.kernel_image_target, str):
+            self.kernel_image_target = self.options.kernel_image_target
+        elif self.project.deb_arch in self.options.kernel_image_target:
+            self.kernel_image_target = \
+                self.options.kernel_image_target[self.project.deb_arch]
+
+        self.make_targets = [self.kernel_image_target, 'modules']
+        self.dtbs = ['{}.dtb'.format(i)
+                     for i in self.options.kernel_device_trees]
+        if self.dtbs:
+            self.make_targets.extend(self.dtbs)
+        self.make_install_targets = [
+            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
+        self.make_install_targets.extend(self._get_fw_install_targets())
 
     def _get_fw_install_targets(self):
         if not self.options.kernel_with_firmware:
@@ -228,7 +249,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             modprobe_outs.extend(modprobe_out.split(os.linesep))
 
         modules_path = os.path.join('lib', 'modules', self.kernel_release)
-        for src in modprobe_outs:
+        for src in set(modprobe_outs):
             src = src.split()[-1:][0]
             dst = os.path.join(initrd_unpacked_path,
                                os.path.relpath(src, self.installdir))
@@ -279,17 +300,16 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _copy_vmlinuz(self):
         kernel = '{}-{}'.format(
-            self.options.kernel_image_target, self.kernel_release)
+            self.kernel_image_target, self.kernel_release)
         src = os.path.join(self._get_build_arch_dir(),
-                           self.options.kernel_image_target)
+                           self.kernel_image_target)
         dst = os.path.join(self.installdir, kernel)
         if not os.path.exists(src):
             raise ValueError(
                 'kernel build did not output a vmlinux binary in top level '
                 'dir, expected {!r}'.format(src))
         os.link(src, dst)
-        # why oh why?
-        os.link(src, os.path.join(self.installdir, 'vmlinuz'))
+        os.link(src, os.path.join(self.installdir, 'kernel.img'))
 
     def _copy_system_map(self):
         src = os.path.join(self.builddir, 'System.map')

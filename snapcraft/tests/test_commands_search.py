@@ -22,7 +22,7 @@ from snapcraft import main, tests
 from snapcraft.tests import fixture_setup
 
 
-class SearchCommandTestCase(tests.TestCase):
+class SearchCommandTestCase(tests.TestWithFakeRemoteParts):
 
     def test_searching_for_a_part_that_exists(self):
         fake_terminal = fixture_setup.FakeTerminal()
@@ -62,6 +62,17 @@ curl       test entry for curl
             'repetitive de...\n')
         self.assertEqual(fake_terminal.getvalue(), expected_output)
 
+    def test_search_only_first_line_of_description(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        main.main(['search', 'mulitline-part'])
+
+        expected_output = (
+            'PART NAME       DESCRIPTION\n'
+            'multiline-part  this is a multiline description\n')
+        self.assertEqual(fake_terminal.getvalue(), expected_output)
+
     def test_searching_for_a_part_that_doesnt_exist_helps_out(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
@@ -85,3 +96,19 @@ curl       test entry for curl
 curl       test entry for curl
 """
         self.assertEqual(fake_terminal.getvalue(), expected_output)
+
+    def test_search_output_alphabetical_order(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        main.main(['search'])
+        output = fake_terminal.getvalue()
+        expected_output = (
+            'PART NAME            DESCRIPTION\n'
+            'curl                 test entry for curl\n'
+            'long-described-part  this is a repetitive description this is a '
+            'repetitive de...\n'
+            'multiline-part       this is a multiline description\n'
+            'part1                test entry for part1\n')
+
+        self.assertEqual(output, expected_output)

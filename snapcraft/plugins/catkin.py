@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - source-space:
       (string)
       The source space containing Catkin packages. By default this is 'src'.
+    - rosdistro:
+      (string)
+      The ROS distro required by this system. Defaults to 'indigo'.
     - include-roscore:
       (boolean)
       Whether or not to include roscore with the part. Defaults to true.
@@ -43,21 +46,22 @@ import subprocess
 import snapcraft
 from snapcraft import (
     common,
+    file_utils,
+    formatting_utils,
     repo,
 )
 
 logger = logging.getLogger(__name__)
 
+# Map ROS releases to Ubuntu releases
+_ROS_RELEASE_MAP = {
+    'indigo': 'trusty',
+    'jade': 'trusty',
+    'kinetic': 'xenial'
+}
+
 
 class CatkinPlugin(snapcraft.BasePlugin):
-
-    _PLUGIN_STAGE_SOURCES = '''
-deb http://packages.ros.org/ros/ubuntu/ trusty main
-deb http://${prefix}.ubuntu.com/${suffix}/ trusty main universe
-deb http://${prefix}.ubuntu.com/${suffix}/ trusty-updates main universe
-deb http://${prefix}.ubuntu.com/${suffix}/ trusty-security main universe
-deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
-'''
 
     @classmethod
     def schema(cls):
@@ -99,8 +103,21 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
 
         return schema
 
+    @property
+    def PLUGIN_STAGE_SOURCES(self):
+        return """
+deb http://packages.ros.org/ros/${{suffix}}/ {0} main
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0} main universe
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-updates main universe
+deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-security main universe
+deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
+""".format(_ROS_RELEASE_MAP[self.options.rosdistro])
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self.build_packages.extend(['gcc', 'libc6-dev', 'make'])
+
+        self.stage_packages.extend(['gcc', 'g++'])
 
         # Get a unique set of packages
         self.catkin_packages = set(options.catkin_packages)
@@ -126,6 +143,15 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             raise RuntimeError(
                 'source-space cannot be the root of the Catkin workspace')
 
+        # Validate selected ROS distro
+        if self.options.rosdistro not in _ROS_RELEASE_MAP:
+            raise RuntimeError(
+                'Unsupported rosdistro: {!r}. The supported ROS distributions '
+                'are {}'.format(
+                    self.options.rosdistro,
+                    formatting_utils.humanize_list(
+                        _ROS_RELEASE_MAP.keys(), 'and')))
+
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
 
@@ -139,18 +165,16 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             # and use $ROS_HOME to determine where to put them.
             'ROS_HOME=$SNAP_USER_DATA/ros',
 
+            # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll
+            # temporarily work around that bug by forcing the locale to
+            # C.UTF-8.
+            'LC_ALL=C.UTF-8',
+
             # This environment variable points to where the setup.sh and
             # _setup_util.py files are located. This is required at both build-
             # and run-time.
             '_CATKIN_SETUP_DIR={}'.format(os.path.join(
                 root, 'opt', 'ros', self.options.rosdistro)),
-
-            # FIXME: Nasty hack to source ROS's setup.sh (since each of these
-            # lines is prepended with "export"). There's got to be a better way
-            # to do this.
-            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
-                os.path.join(
-                    root, 'opt', 'ros', self.options.rosdistro, 'setup.sh'))
         ]
 
         # There's a chicken and egg problem here, everything run get's an
@@ -164,6 +188,18 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 common.get_python2_path(root)))
         except EnvironmentError as e:
             logger.debug(e)
+
+        # The setup.sh we source below requires the in-snap python. Here we
+        # make sure it's in the PATH before it's run.
+        env.append('PATH=$PATH:{}/usr/bin'.format(root))
+
+        # FIXME: Nasty hack to source ROS's setup.sh (since each of these
+        # lines is prepended with "export"). There's got to be a better way
+        # to do this.
+        env.append(
+            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
+                os.path.join(
+                    root, 'opt', 'ros', self.options.rosdistro, 'setup.sh')))
 
         return env
 
@@ -272,6 +308,8 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
         self._finish_build()
 
     def _prepare_build(self):
+        self._use_in_snap_python()
+
         # Each Catkin package distributes .cmake files so they can be found via
         # find_package(). However, the Ubuntu packages pulled down as
         # dependencies contain .cmake files pointing to system paths (e.g.
@@ -289,15 +327,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
             return '"' + ';'.join(paths) + '"'
 
         # Looking for any path-like string
-        common.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
-                               re.compile(r'"(.*?/.*?)"'),
-                               rewrite_paths)
+        file_utils.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
+                                   re.compile(r'"(.*?/.*?)"'),
+                                   rewrite_paths)
 
     def _finish_build(self):
-        # Fix all shebangs to use the in-snap python.
-        common.replace_in_file(self.rosdir, re.compile(r''),
-                               re.compile(r'#!.*python'),
-                               r'#!/usr/bin/env python')
+        self._use_in_snap_python()
 
         # Replace the CMAKE_PREFIX_PATH in _setup_util.sh
         setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
@@ -309,6 +344,12 @@ deb http://${security}.ubuntu.com/${suffix} trusty-security main universe
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
+
+    def _use_in_snap_python(self):
+        # Fix all shebangs to use the in-snap python.
+        file_utils.replace_in_file(self.rosdir, re.compile(r''),
+                                   re.compile(r'^#!.*python'),
+                                   r'#!/usr/bin/env python')
 
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         ros10_file = os.path.join(self.rosdir,
@@ -406,12 +447,6 @@ def _find_system_dependencies(catkin_packages, rosdep):
 
             system_dependencies[dependency] = these_dependencies
 
-            # TODO: Not sure why this isn't pulled in by roscpp. Can it
-            # be compiled by clang, etc.? If so, perhaps this should be
-            # left up to the developer.
-            if dependency == 'roscpp':
-                system_dependencies['g++'] = ['g++']
-
     # Finally, return a list of all system dependencies
     return set(item for sublist in system_dependencies.values()
                for item in sublist)
@@ -490,12 +525,14 @@ class _Rosdep:
             #
             # 1) The dependency we're trying to lookup.
             # 2) The rosdistro being used.
-            # 3) The version of Ubuntu being used. We're currently using only
-            #    the Trusty ROS sources, so we're telling rosdep to resolve
-            #    dependencies using Trusty (even if we're running on something
-            #    else).
+            # 3) The version of Ubuntu being used. We're telling rosdep to
+            #    resolve dependencies using the version of Ubuntu that
+            #    corresponds to the ROS release (even if we're running on
+            #    something else).
             output = self._run(['resolve', dependency_name, '--rosdistro',
-                                self._ros_distro, '--os', 'ubuntu:trusty'])
+                                self._ros_distro, '--os',
+                                'ubuntu:{}'.format(
+                                    _ROS_RELEASE_MAP[self._ros_distro])])
         except subprocess.CalledProcessError:
             raise SystemDependencyNotFound(
                 '{!r} does not resolve to a system dependency'.format(

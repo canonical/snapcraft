@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,8 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import os
 
 from unittest import mock
 
@@ -29,38 +27,20 @@ class Python2PluginTestCase(tests.TestCase):
         super().setUp()
 
         class Options:
+            source = '.'
             requirements = ''
+            constraints = ''
             python_packages = []
+            process_dependency_links = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
 
-    @mock.patch.object(python2.Python2Plugin, 'run')
-    @mock.patch.object(python2.Python2Plugin, 'run_output',
-                       return_value='python2.7')
-    def test_pip_relative_site_packages_symlink(self, run_output_mock,
-                                                run_mock):
+        patcher = mock.patch('subprocess.check_call')
+        self.mock_call = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_check_version(self):
         plugin = python2.Python2Plugin('test-part', self.options,
                                        self.project_options)
-        os.makedirs(plugin.sourcedir)
-        os.makedirs(os.path.join(
-            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages'))
-        os.makedirs(os.path.join(
-            plugin.installdir, 'usr', 'include', 'python2.7'))
-
-        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
-
-        plugin._pip()
-
-        link = os.readlink(os.path.join(plugin.installdir, 'usr', 'lib',
-                                        'python2.7', 'site-packages'))
-        self.assertEqual(link, 'dist-packages',
-                         'Expected site-packages to be a relative link to '
-                         '"dist-packages", but it was a link to "{}"'
-                         .format(link))
-
-    def test_get_python2_include_missing_raises_exception(self):
-        with self.assertRaises(EnvironmentError) as raised:
-            python2._get_python2_include('/foo')
-        self.assertEqual(str(raised.exception),
-                         'python development headers not installed')
+        self.assertEqual(plugin.options.python_version, 'python2')

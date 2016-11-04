@@ -45,13 +45,15 @@ parseargs(){
     fi
 }
 
+python3 -m coverage && coverage="true"
+
 run_static_tests(){
-    SRC_PATHS="bin snapcraft snapcraft/tests snaps_tests"
+    SRC_PATHS="bin snapcraft integration_tests snaps_tests"
     python3 -m flake8 --max-complexity=10 $SRC_PATHS
 }
 
 run_unit_tests(){
-    if which python3-coverage >/dev/null 2>&1; then
+    if [ ! -z "$coverage" ]; then
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s snapcraft -t .
     else
@@ -103,7 +105,7 @@ if [ ! -z "$RUN_SNAPS" ]; then
 fi
 
 if [ ! -z "$RUN_UNIT" ]; then
-    if which python3-coverage >/dev/null 2>&1; then
+    if [ ! -z "$coverage" ]; then
         python3 -m coverage report
 
         echo

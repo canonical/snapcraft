@@ -43,6 +43,7 @@ summary: test
 description: test
 icon: my-icon.png
 confinement: strict
+grade: stable
 
 parts:
   part1:
@@ -53,6 +54,6 @@ parts:
             snapcraft.internal.load_config()
 
         self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
-        self.assertEqual(
+        self.assertIn(
             'Issue while loading plugin: unknown plugin: does-not-exist\n',
             fake_logger.output)

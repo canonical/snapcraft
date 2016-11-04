@@ -84,9 +84,13 @@ class GulpPluginTestCase(tests.TestCase):
         path = '{}:/bin'.format(os.path.join(plugin._npm_dir, 'bin'))
         self.run_mock.assert_has_calls([
             mock.call(['npm', 'install', '-g', 'gulp-cli'],
-                      cwd=plugin.builddir, env={'PATH': path}),
+                      cwd=plugin.builddir,
+                      env={'PATH': path,
+                           'NPM_CONFIG_PREFIX': plugin._npm_dir}),
             mock.call(['npm', 'install', '--only-development'],
-                      cwd=plugin.builddir, env={'PATH': path}),
+                      cwd=plugin.builddir,
+                      env={'PATH': path,
+                           'NPM_CONFIG_PREFIX': plugin._npm_dir}),
         ])
 
         self.tar_mock.assert_has_calls([
@@ -125,12 +129,16 @@ class GulpPluginTestCase(tests.TestCase):
                 'node-engine': {'default': '4.4.4', 'type': 'string'},
                 'source': {'type': 'string'},
                 'source-branch': {'default': '', 'type': 'string'},
+                'source-commit': {'default': '', 'type': 'string'},
                 'source-subdir': {'default': None, 'type': 'string'},
                 'source-tag': {'default': '', 'type:': 'string'},
-                'source-type': {'default': '', 'type': 'string'}},
+                'source-type': {'default': '', 'type': 'string'},
+                'source-depth': {'default': 0, 'type': 'integer'},
+                'disable-parallel': {'default': False, 'type': 'boolean'}},
             'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-tag', 'source-subdir', 'node-engine'],
-            'build-properties': ['gulp-tasks'],
+                                'source-commit', 'source-tag', 'source-subdir',
+                                'node-engine'],
+            'build-properties': ['disable-parallel', 'gulp-tasks'],
             'required': ['source', 'gulp-tasks'],
             'type': 'object'}
 

@@ -19,11 +19,20 @@
 Make based projects are projects that have a Makefile that drives the
 build.
 
+This plugin always runs 'make' followed by 'make install', except when
+the 'artifacts' keyword is used.
+
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
-Additionally, this plugin uses the following plugin-specific keyword:
+Additionally, this plugin uses the following plugin-specific keywords:
+
+    - artifacts:
+      (list)
+      Link/copy the given files from the make output to the snap
+      installation directory. If specified, the 'make install'
+      step will be skipped.
 
     - makefile:
       (string)
@@ -32,8 +41,13 @@ Additionally, this plugin uses the following plugin-specific keyword:
     - make-parameters:
       (list of strings)
       Pass the given parameters to the make command.
+
+    - make-install-var:
+      (string; default: DESTDIR)
+      Use this variable to redirect the installation into the snap.
 """
 
+import os
 import snapcraft
 import snapcraft.common
 
@@ -55,10 +69,24 @@ class MakePlugin(snapcraft.BasePlugin):
             },
             'default': [],
         }
+        schema['properties']['make-install-var'] = {
+            'type': 'string',
+            'default': 'DESTDIR',
+        }
+        schema['properties']['artifacts'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend(['makefile', 'make-parameters'])
+        schema['build-properties'].extend(
+            ['makefile', 'make-parameters', 'make-install-var'])
 
         return schema
 
@@ -77,5 +105,18 @@ class MakePlugin(snapcraft.BasePlugin):
         if self.options.make_parameters:
             command.extend(self.options.make_parameters)
 
-        self.run(command + ['-j{}'.format(self.project.parallel_build_count)])
-        self.run(command + ['install', 'DESTDIR=' + self.installdir])
+        self.run(command + ['-j{}'.format(self.parallel_build_count)])
+        if self.options.artifacts:
+            for artifact in self.options.artifacts:
+                source_path = os.path.join(self.builddir, artifact)
+                destination_path = os.path.join(self.installdir, artifact)
+                if os.path.isdir(source_path):
+                    snapcraft.file_utils.link_or_copy_tree(
+                        source_path, destination_path)
+                else:
+                    snapcraft.file_utils.link_or_copy(
+                        source_path, destination_path)
+        else:
+            install_param = self.options.make_install_var + '=' + \
+                self.installdir
+            self.run(command + ['install', install_param])

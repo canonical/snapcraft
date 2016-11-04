@@ -50,6 +50,13 @@ _ARCH_TRANSLATIONS = {
         'cross-build-packages': ['gcc-powerpc64le-linux-gnu'],
         'triplet': 'powerpc64le-linux-gnu',
     },
+    'ppc': {
+        'kernel': 'powerpc',
+        'deb': 'powerpc',
+        'cross-compiler-prefix': 'powerpc-linux-gnu-',
+        'cross-build-packages': ['gcc-powerpc-linux-gnu'],
+        'triplet': 'powerpc-linux-gnu',
+    },
     'x86_64': {
         'kernel': 'x86',
         'deb': 'amd64',
@@ -136,14 +143,19 @@ class ProjectOptions:
     def snap_dir(self):
         return os.path.join(self.__project_dir, 'prime')
 
+    @property
+    def debug(self):
+        return self.__debug
+
     def __init__(self, use_geoip=False, parallel_builds=True,
-                 target_deb_arch=None):
+                 target_deb_arch=None, debug=False):
         # TODO: allow setting a different project dir and check for
         #       snapcraft.yaml
         self.__project_dir = os.getcwd()
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)
+        self.__debug = debug
 
     def _set_machine(self, target_deb_arch):
         self.__host_machine = platform.machine()

@@ -1,0 +1,24 @@
+name: python-entry-point
+version: 0
+summary: summary
+description: description
+confinement: strict
+
+parts:
+  python2-test:
+    plugin: python2
+    source: python2/
+
+  python3-test:
+    plugin: python3
+    source: python3/
+
+  python-test:
+    plugin: python
+    source: python3/
+    organize:
+        bin/python3_test: bin/python_test
+    stage:
+        - -lib/python3.5/site-packages/pip*
+        - -lib/python3.5/site-packages/setuptools*
+        - -lib/python3.5/site-packages/wheel*

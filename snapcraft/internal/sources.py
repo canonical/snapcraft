@@ -27,16 +27,26 @@ code for that part, and how to unpack it if necessary.
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: git, bzr, hg, svn, tar, or zip
+  - source-type: git, bzr, hg, svn, tar, deb or zip
 
     In some cases the source string is not enough to identify the version
-    control system or compression algorithim. The source-type key can tell
+    control system or compression algorithm. The source-type key can tell
     snapcraft exactly how to treat that content.
+
+  - source-depth: <integer>
+
+    By default clones or branches with full history, specifying a depth
+    will truncate the history to the specified number of commits.
 
   - source-branch: <branch-name>
 
     Snapcraft will checkout a specific branch from the source tree. This
     only works on multi-branch repositories from git and hg (mercurial).
+
+  - source-commit: <commit>
+
+    Snapcraft will checkout the specific commit from the source tree revision
+    control system.
 
   - source-tag: <tag>
 
@@ -58,20 +68,25 @@ cases you want to refer to the help text for the specific plugin.
 
 """
 
-
+import copy
+import glob
 import logging
 import os
 import os.path
+import stat
+import re
 import requests
 import shutil
-import tarfile
-import re
 import subprocess
 import tempfile
+import tarfile
 import zipfile
-import glob
+
+import apt_inst
 
 from snapcraft.internal import common
+from snapcraft import file_utils
+from snapcraft.internal.errors import MissingPackageError
 from snapcraft.internal.indicators import download_requests_stream
 
 
@@ -84,14 +99,31 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
+def _check_for_package(command):
+    try:
+        subprocess.check_call(['which', command],
+                              stderr=subprocess.DEVNULL,
+                              stdout=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        raise MissingPackageError([command])
+
+
 class Base:
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None,
+                 command=None):
         self.source = source
         self.source_dir = source_dir
         self.source_tag = source_tag
+        self.source_commit = source_commit
         self.source_branch = source_branch
+        self.source_depth = source_depth
+
+        self.command = command
+
+        if self.command:
+            _check_for_package(self.command)
 
 
 class FileBase(Base):
@@ -108,30 +140,53 @@ class FileBase(Base):
         request = requests.get(self.source, stream=True, allow_redirects=True)
         request.raise_for_status()
 
-        file_path = os.path.join(
+        self.file = os.path.join(
             self.source_dir, os.path.basename(self.source))
-        download_requests_stream(request, file_path)
+        download_requests_stream(request, self.file)
+
+
+class Script(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth)
+
+    def download(self):
+        super().download()
+        st = os.stat(self.file)
+        os.chmod(self.file, st.st_mode | stat.S_IEXEC)
 
 
 class Bazaar(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth, 'bzr')
         if source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-depth for a bzr source')
+        if source_tag and source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-tag and source-commit for '
+                'a bzr source')
 
     def pull(self):
         tag_opts = []
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
+        if self.source_commit:
+            tag_opts = ['-r', self.source_commit]
         if os.path.exists(os.path.join(self.source_dir, '.bzr')):
-            cmd = ['bzr', 'pull'] + tag_opts + \
+            cmd = [self.command, 'pull'] + tag_opts + \
                   [self.source, '-d', self.source_dir]
         else:
             os.rmdir(self.source_dir)
-            cmd = ['bzr', 'branch'] + tag_opts + \
+            cmd = [self.command, 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
         subprocess.check_call(cmd)
@@ -139,12 +194,21 @@ class Bazaar(Base):
 
 class Git(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth, 'git')
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
+                'a git source')
+        if source_tag and source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-tag and source-commit for '
+                'a git source')
+        if source_branch and source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-branch and source-commit for '
                 'a git source')
 
     def pull(self):
@@ -154,57 +218,80 @@ class Git(Base):
                 refspec = 'refs/heads/' + self.source_branch
             elif self.source_tag:
                 refspec = 'refs/tags/' + self.source_tag
+            elif self.source_commit:
+                refspec = self.source_commit
 
             # Pull changes to this repository and any submodules.
-            subprocess.check_call(['git', '-C', self.source_dir, 'pull',
-                                   '--recurse-submodules=yes', self.source,
-                                   refspec])
+            subprocess.check_call([self.command, '-C', self.source_dir,
+                                   'pull', '--recurse-submodules=yes',
+                                   self.source, refspec])
 
             # Merge any updates for the submodules (if any).
-            subprocess.check_call(['git', '-C', self.source_dir, 'submodule',
-                                   'update'])
+            subprocess.check_call([self.command, '-C', self.source_dir,
+                                   'submodule', 'update'])
         else:
-            branch_opts = []
+            command = [self.command, 'clone', '--recursive']
             if self.source_tag or self.source_branch:
-                branch_opts = ['--branch',
-                               self.source_tag or self.source_branch]
-            subprocess.check_call(['git', 'clone', '--depth', '1',
-                                  '--recursive'] + branch_opts +
-                                  [self.source, self.source_dir])
+                command.extend([
+                    '--branch', self.source_tag or self.source_branch])
+            if self.source_depth:
+                command.extend(['--depth', str(self.source_depth)])
+            subprocess.check_call(command + [self.source, self.source_dir])
+
+            if self.source_commit:
+                subprocess.check_call([self.command, '-C', self.source_dir,
+                                       'checkout', self.source_commit])
 
 
 class Mercurial(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth, 'hg')
         if source_tag and source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
                 'mercurial source')
+        if source_tag and source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-tag and source-commit for a '
+                'mercurial source')
+        if source_branch and source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify both source-branch and source-commit for a '
+                'mercurial source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-depth for a mercurial source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):
             ref = []
             if self.source_tag:
                 ref = ['-r', self.source_tag]
+            elif self.source_commit:
+                ref = ['-r', self.source_commit]
             elif self.source_branch:
                 ref = ['-b', self.source_branch]
-            cmd = ['hg', 'pull'] + ref + [self.source, ]
+            cmd = [self.command, 'pull'] + ref + [self.source, ]
         else:
             ref = []
-            if self.source_tag or self.source_branch:
-                ref = ['-u', self.source_tag or self.source_branch]
-            cmd = ['hg', 'clone'] + ref + [self.source, self.source_dir]
+            if self.source_tag or self.source_branch or self.source_commit:
+                ref = ['-u', self.source_tag or self.source_branch or
+                       self.source_commit]
+            cmd = [self.command, 'clone'] + ref + [self.source,
+                                                   self.source_dir]
 
         subprocess.check_call(cmd)
 
 
 class Subversion(Base):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth, 'svn')
         if source_tag:
             if source_branch:
                 raise IncompatibleOptionsError(
@@ -216,33 +303,49 @@ class Subversion(Base):
         elif source_branch:
             raise IncompatibleOptionsError(
                 "Can't specify source-branch for a Subversion source")
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify source-depth for a Subversion source')
 
     def pull(self):
+        opts = []
+
+        if self.source_commit:
+            opts = ["-r", self.source_commit]
+
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
-                ['svn', 'update'], cwd=self.source_dir)
+                [self.command, 'update'] + opts, cwd=self.source_dir)
         else:
             if os.path.isdir(self.source):
                 subprocess.check_call(
-                    ['svn', 'checkout',
+                    [self.command, 'checkout',
                      'file://{}'.format(os.path.abspath(self.source)),
-                     self.source_dir])
+                     self.source_dir] + opts)
             else:
                 subprocess.check_call(
-                    ['svn', 'checkout', self.source, self.source_dir])
+                    [self.command, 'checkout', self.source, self.source_dir] +
+                    opts)
 
 
 class Tar(FileBase):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a tar source')
+        elif source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-commit for a tar source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-depth for a tar source')
 
     def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
@@ -283,10 +386,7 @@ class Tar(FileBase):
                 for m in members:
                     if m.name == common:
                         continue
-                    if m.name.startswith(common + '/'):
-                        m.name = m.name[len(common + '/'):]
-                    # strip leading '/', './' or '../' as many times as needed
-                    m.name = re.sub(r'^(\.{0,2}/)*', r'', m.name)
+                    self._strip_prefix(common, m)
                     # We mask all files to be writable to be able to easily
                     # extract on top.
                     m.mode = m.mode | 0o200
@@ -294,18 +394,36 @@ class Tar(FileBase):
 
             tar.extractall(members=filter_members(tar), path=dst)
 
+    def _strip_prefix(self, common, member):
+        if member.name.startswith(common + '/'):
+            member.name = member.name[len(common + '/'):]
+        # strip leading '/', './' or '../' as many times as needed
+        member.name = re.sub(r'^(\.{0,2}/)*', r'', member.name)
+        # do the same for linkname if this is a hardlink
+        if member.islnk() and not member.issym():
+            if member.linkname.startswith(common + '/'):
+                member.linkname = member.linkname[len(common + '/'):]
+            member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
+
 
 class Zip(FileBase):
 
-    def __init__(self, source, source_dir, source_tag=None,
-                 source_branch=None):
-        super().__init__(source, source_dir, source_tag, source_branch)
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth)
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a zip source')
+        elif source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-commit for a zip source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
+        if source_depth:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-depth for a zip source')
 
     def provision(self, dst, clean_target=True, keep_zip=False):
         zip = os.path.join(self.source_dir, os.path.basename(self.source))
@@ -323,6 +441,39 @@ class Zip(FileBase):
             os.remove(zip)
 
 
+class Deb(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth)
+        if source_tag:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-tag for a deb source')
+        elif source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-commit for a deb source')
+        elif source_branch:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a deb source')
+
+    def provision(self, dst, clean_target=True, keep_deb=False):
+        deb_file = os.path.join(self.source_dir, os.path.basename(self.source))
+
+        if clean_target:
+            tmp_deb = tempfile.NamedTemporaryFile().name
+            shutil.move(deb_file, tmp_deb)
+            shutil.rmtree(dst)
+            os.makedirs(dst)
+            shutil.move(tmp_deb, deb_file)
+
+        deb = apt_inst.DebFile(deb_file)
+        deb.data.extractall(dst)
+
+        if not keep_deb:
+            os.remove(deb_file)
+
+
 class Local(Base):
 
     def pull(self):
@@ -335,17 +486,22 @@ class Local(Base):
 
         def ignore(directory, files):
             if directory is source_abspath:
+                ignored = copy.copy(common.SNAPCRAFT_FILES)
+                relative_cwd = os.path.basename(os.getcwd())
+                if os.path.join(directory, relative_cwd) == os.getcwd():
+                    # Source is a parent of the working directory.
+                    # Do not recursively copy it into itself.
+                    ignored.append(relative_cwd)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
-                    return common.SNAPCRAFT_FILES + snaps
-                else:
-                    return common.SNAPCRAFT_FILES
+                    ignored += snaps
+                return ignored
             else:
                 return []
 
         shutil.copytree(source_abspath, self.source_dir,
-                        copy_function=common.link_or_copy, ignore=ignore)
+                        copy_function=file_utils.link_or_copy, ignore=ignore)
 
 
 def get(sourcedir, builddir, options):
@@ -356,12 +512,15 @@ def get(sourcedir, builddir, options):
     :param options: source options.
     """
     source_type = getattr(options, 'source_type', None)
-    source_tag = getattr(options, 'source_tag', None)
-    source_branch = getattr(options, 'source_branch', None)
+    source_attributes = dict(
+        source_depth=getattr(options, 'source_depth', None),
+        source_tag=getattr(options, 'source_tag', None),
+        source_commit=getattr(options, 'source_commit', None),
+        source_branch=getattr(options, 'source_branch', None),
+    )
 
     handler_class = _get_source_handler(source_type, options.source)
-    handler = handler_class(options.source, sourcedir, source_tag,
-                            source_branch)
+    handler = handler_class(options.source, sourcedir, **source_attributes)
     handler.pull()
 
 
@@ -396,11 +555,12 @@ def get_required_packages(options):
 
 _source_handler = {
     'bzr': Bazaar,
+    'deb': Deb,
     'git': Git,
     'hg': Mercurial,
     'mercurial': Mercurial,
-    'svn': Subversion,
     'subversion': Subversion,
+    'svn': Subversion,
     'tar': Tar,
     'zip': Zip,
 }
@@ -429,6 +589,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
         source_type = 'tar'
     elif source.endswith('.zip'):
         source_type = 'zip'
+    elif source.endswith('deb'):
+        source_type = 'deb'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
     elif not os.path.isdir(source) and not ignore_errors:

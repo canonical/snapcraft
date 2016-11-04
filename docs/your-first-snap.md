@@ -151,7 +151,7 @@ into your snap. If you look at `./stage`, you'll see a lot more files now:
     $ ls stage
     bin  etc  lib  usr  var
 
-### A copy Part
+### A part using the dump plugin
 
 OK, so we have the two programs in our staging area. But how do we make them
 work together?
@@ -184,13 +184,14 @@ parts:
     stage-packages:
       - fswebcam
   glue:
-    plugin: copy
-    files:
+    plugin: dump
+    source: .
+    organize:
       webcam-webui: bin/webcam-webui
 ```
 
-The `copy` plugin takes a list of files to just directly copy without
-building or downloading anything. In this case, we just want to put our glue
+The `dump` plugin just literally dumps the specified source into the target.
+We will take advantage of the built-in `organize` keyword to put our glue
 script in the `bin/` directory.
 
 If we run Snapcraft again, we won't be surprised:
@@ -230,8 +231,9 @@ parts:
       - $fswebcam
       - $go-server
   glue:
-    plugin: copy
-    files:
+    plugin: dump
+    source: .
+    organize:
       webcam-webui: bin/webcam-webui
 ```
 
@@ -248,7 +250,7 @@ mention the file, directory or match under `snap` or `stage`.
 The defined values in `snapcraft.yaml` are used to build the corresponding
 `meta` directory that holds all the package information.
 
-You can read all about the resulting [format of this metadata](https://developer.ubuntu.com/en/snappy/guides/packaging-format-apps/),
+You can read all about the resulting [format of this metadata](http://snapcraft.io/docs/build-snaps/),
 but we'll assume here that you're already familiar.
 
 The templated values when `snapcraft init` was run did not hold any `parts`
@@ -277,8 +279,9 @@ parts:
     stage-packages:
      - fswebcam
   glue:
-    plugin: copy
-    files:
+    plugin: dump
+    source: .
+    organize:
       webcam-webui: bin/webcam-webui
 ```
 

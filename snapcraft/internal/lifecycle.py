@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,6 +27,7 @@ import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
 import snapcraft
+from snapcraft import formatting_utils
 import snapcraft.internal
 from snapcraft.internal import (
     common,
@@ -35,27 +36,29 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal.project_loader import replace_attr
 
 
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = """name: my-snap  # the name of the snap
-version: 0  # the version of the snap
-summary: This is my-snap's summary  # 79 char long summary
-description: This is my-snap's description  # a longer description for the snap
-confinement: devmode  # use "strict" to enforce system access only via \
-declared interfaces
+_TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
+version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+description: |
+  This is my-snap's description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  we live in tweetspace and your description wants to look good in the snap
+  store.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
 
 parts:
-    my-part:  # Replace with a part name of your liking
-        # Get more information about plugins by running
-        # snapcraft help plugins
-        # and more information about the available plugins
-        # by running
-        # snapcraft list-plugins
-        plugin: nil
-"""
+  my-part:
+    # See 'snapcraft plugins'
+    plugin: nil
+"""  # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
@@ -65,6 +68,8 @@ def init():
 
     if os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
+    elif os.path.exists('.snapcraft.yaml'):
+        raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
     with open('snapcraft.yaml', mode='w+') as f:
         f.write(yaml)
@@ -103,65 +108,92 @@ def execute(step, project_options, part_names=None):
             'type': config.data.get('type', '')}
 
 
+def _replace_in_part(part):
+    for key, value in part.code.options.__dict__.items():
+        value = replace_attr(value, [
+            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+        ])
+        setattr(part.code.options, key, value)
+
+    return part
+
+
 class _Executor:
 
     def __init__(self, config, project_options):
         self.config = config
         self.project_options = project_options
+        self.parts_config = config.parts
+        self._steps_run = self._init_run_states()
 
-    def run(self, step, part_names=None, recursed=False):
+    def _init_run_states(self):
+        steps_run = {}
+
+        for part in self.config.all_parts:
+            steps_run[part.name] = set()
+            for step in common.COMMAND_ORDER:
+                if part.is_dirty(step):
+                    self._handle_dirty(part, step)
+                elif not (part.should_step_run(step)):
+                    steps_run[part.name].add(step)
+                    part.notify_part_progress('Skipping {}'.format(step),
+                                              '(already ran)')
+
+        return steps_run
+
+    def run(self, step, part_names=None):
         if part_names:
-            self.config.validate_parts(part_names)
-            parts = {p for p in self.config.all_parts if p.name in part_names}
+            self.parts_config.validate(part_names)
+            # self.config.all_parts is already ordered, let's not lose that
+            # and keep using a list.
+            parts = [p for p in self.config.all_parts if p.name in part_names]
         else:
             parts = self.config.all_parts
             part_names = self.config.part_names
 
-        dirty = {p.name for p in parts if p.should_step_run('stage')}
         step_index = common.COMMAND_ORDER.index(step) + 1
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
-                self._run_step(step, part, part_names, dirty, recursed)
+                if step not in self._steps_run[part.name]:
+                    self._run_step(step, part, part_names)
+                    self._steps_run[part.name].add(step)
 
         self._create_meta(step, part_names)
 
-    def _run_step(self, step, part, part_names, dirty, recursed):
+    def _run_step(self, step, part, part_names):
         common.reset_env()
-        prereqs = self.config.part_prereqs(part.name)
-        if recursed:
-            prereqs = prereqs & dirty
-        if prereqs and not prereqs.issubset(part_names):
-            for prereq in self.config.all_parts:
-                if prereq.name in prereqs and prereq.should_step_run('stage'):
-                    raise RuntimeError(
-                        'Requested {!r} of {!r} but there are unsatisfied '
-                        'prerequisites: {!r}'.format(
-                            step, part.name, ' '.join(prereqs)))
-        elif prereqs:
+        prereqs = self.parts_config.get_prereqs(part.name)
+        unstaged_prereqs = {p for p in prereqs
+                            if 'stage' not in self._steps_run[p]}
+
+        if unstaged_prereqs and not unstaged_prereqs.issubset(part_names):
+            missing_parts = [part_name for part_name in self.config.part_names
+                             if part_name in unstaged_prereqs]
+            if missing_parts:
+                raise RuntimeError(
+                    'Requested {!r} of {!r} but there are unsatisfied '
+                    'prerequisites: {!r}'.format(
+                        step, part.name, ' '.join(missing_parts)))
+        elif unstaged_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
             logger.info(
                 '{!r} has prerequisites that need to be staged: '
-                '{}'.format(part.name, ' '.join(prereqs)))
-            self.run('stage', prereqs, recursed=True)
-
-        if part.is_dirty(step):
-            self._handle_dirty(part, step)
-
-        if not part.should_step_run(step):
-            part.notify_part_progress('Skipping {}'.format(step),
-                                      '(already ran)')
-            return
+                '{}'.format(part.name, ' '.join(unstaged_prereqs)))
+            self.run('stage', unstaged_prereqs)
 
         # Run the preparation function for this step (if implemented)
         with contextlib.suppress(AttributeError):
             getattr(part, 'prepare_{}'.format(step))()
 
-        common.env = self.config.build_env_for_part(part)
+        common.env = self.parts_config.build_env_for_part(part)
+        common.env.extend(self.config.project_env())
+
+        part = _replace_in_part(part)
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
@@ -185,13 +217,14 @@ class _Executor:
         # step and it has dependents that have been built, we need to ask for
         # them to first be cleaned (at least back to the build step).
         index = common.COMMAND_ORDER.index(step)
-        dependents = self.config.part_dependents(part.name)
+        dependents = self.parts_config.get_dependents(part.name)
         if (index <= common.COMMAND_ORDER.index('stage') and
                 not part.is_clean('stage') and dependents):
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    humanized_parts = _humanize_list(dependents)
+                    humanized_parts = formatting_utils.humanize_list(
+                        dependents, 'and')
 
                     raise RuntimeError(
                         'The {0!r} step for {1!r} needs to be run again, but '
@@ -257,6 +290,15 @@ def snap(project_options, directory=None, output=None):
 
     snap_name = output or common.format_snap_name(snap)
 
+    # If a .snap-build exists at this point, when we are about to override
+    # the snap blob, it is stale. We rename it so user have a chance to
+    # recover accidentally lost assertions.
+    snap_build = snap_name + '-build'
+    if os.path.isfile(snap_build):
+        _new = '{}.{}'.format(snap_build, int(time.time()))
+        logger.warning('Renaming stale build assertion to {}'.format(_new))
+        os.rename(snap_build, _new)
+
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
@@ -268,7 +310,7 @@ def snap(project_options, directory=None, output=None):
         ret = None
         if os.isatty(sys.stdout.fileno()):
             message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
-                    snap['name'])
+                snap['name'])
             progress_indicator = ProgressBar(
                 widgets=[message, AnimatedMarker()], maxval=7)
             progress_indicator.start()
@@ -298,7 +340,7 @@ def snap(project_options, directory=None, output=None):
 
 
 def _reverse_dependency_tree(config, part_name):
-    dependents = config.part_dependents(part_name)
+    dependents = config.parts.get_dependents(part_name)
     for dependent in dependents.copy():
         # No need to worry about infinite recursion due to circular
         # dependencies since the YAML validation won't allow it.
@@ -318,35 +360,20 @@ def _clean_part_and_all_dependents(part_name, step, config, staged_state,
         dependent_part.clean(staged_state, primed_state, step)
 
     # Finally, clean the part in question
-    config.get_part(part_name).clean(staged_state, primed_state, step)
-
-
-def _humanize_list(items):
-    if len(items) == 0:
-        return ''
-
-    quoted_items = ['{!r}'.format(item) for item in sorted(items)]
-    if len(items) == 1:
-        return quoted_items[0]
-
-    humanized = ', '.join(quoted_items[:-1])
-
-    if len(items) > 2:
-        humanized += ','
-
-    return '{} and {}'.format(humanized, quoted_items[-1])
+    config.parts.clean_part(part_name, staged_state, primed_state, step)
 
 
 def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        config):
     # Get the name of the parts that depend upon this one
-    dependents = config.part_dependents(part_name)
+    dependents = config.parts.get_dependents(part_name)
 
     # Verify that they're either already clean, or that they will be cleaned.
     if not dependents.issubset(clean_part_names):
         for part in config.all_parts:
             if part.name in dependents and not part.is_clean(step):
-                humanized_parts = _humanize_list(dependents)
+                humanized_parts = formatting_utils.humanize_list(
+                    dependents, 'and')
 
                 raise RuntimeError(
                     'Requested clean of {!r} but {} depend{} upon it. Please '
@@ -415,7 +442,7 @@ def clean(project_options, parts, step=None):
     config = snapcraft.internal.load_config()
 
     if parts:
-        config.validate_parts(parts)
+        config.parts.validate(parts)
     else:
         parts = [part.name for part in config.all_parts]
 

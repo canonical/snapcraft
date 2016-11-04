@@ -19,7 +19,7 @@ import logging
 import os
 import stat
 import tempfile
-import unittest.mock
+from unittest.mock import ANY, call, patch
 
 import snapcraft
 from snapcraft import repo
@@ -36,13 +36,43 @@ class UbuntuTestCase(tests.TestCase):
         self.addCleanup(tempdirObj.cleanup)
         self.tempdir = tempdirObj.name
 
-    @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo.apt')
+    def test_get_package(self, mock_apt):
+        project_options = snapcraft.ProjectOptions(
+            use_geoip=False)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu.get(['fake-package'])
+
+        mock_apt.assert_has_calls([
+            call.apt_pkg.config.set('Dir::Cache::Archives',
+                                    os.path.join(self.tempdir, 'download')),
+            call.apt_pkg.config.set('Apt::Install-Recommends', 'False'),
+            call.apt_pkg.config.find_file('Dir::Etc::Trusted'),
+            call.apt_pkg.config.set('Dir::Etc::Trusted', ANY),
+            call.apt_pkg.config.find_file('Dir::Etc::TrustedParts'),
+            call.apt_pkg.config.set('Dir::Etc::TrustedParts', ANY),
+            call.apt_pkg.config.clear('APT::Update::Post-Invoke-Success'),
+            call.progress.text.AcquireProgress(),
+            call.Cache(memonly=True, rootdir=ANY),
+            call.Cache().update(fetch_progress=ANY, sources_list=ANY),
+            call.Cache(memonly=True, rootdir=self.tempdir),
+            call.Cache().open(),
+        ])
+        mock_apt.assert_has_calls([
+            call.Cache().fetch_archives(progress=ANY),
+        ])
+
+        # __getitem__ is tricky
+        self.assertIn(
+            call('fake-package'), mock_apt.Cache().__getitem__.call_args_list)
+
+    @patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):
-        project_options = snapcraft.ProjectOptions(use_geoip=True)
         mock_cc.return_value = 'ar'
 
         self.maxDiff = None
-        sources_list = repo._format_sources_list('', project_options)
+        sources_list = repo._format_sources_list(
+            '', use_geoip=True, deb_arch='amd64')
 
         expected_sources_list = \
             '''deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -59,7 +89,7 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 
     def test_no_geoip_uses_default_archive(self):
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, snapcraft.ProjectOptions())
+            repo._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
 
         expected_sources_list = \
             '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -75,14 +105,14 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 
         self.assertEqual(sources_list, expected_sources_list)
 
-    @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
-        project_options = snapcraft.ProjectOptions(use_geoip=True)
         self.maxDiff = None
         mock_cc.return_value = 'ar'
 
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, project_options, 'vivid')
+            repo._DEFAULT_SOURCES, deb_arch='amd64',
+            use_geoip=True, release='vivid')
 
         expected_sources_list = \
             '''deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
@@ -97,12 +127,10 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
         self.assertEqual(sources_list, expected_sources_list)
 
-    @unittest.mock.patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
-        project_options = snapcraft.ProjectOptions(
-            use_geoip=True, target_deb_arch='armhf')
         sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, project_options, 'trusty')
+            repo._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted

@@ -3,15 +3,15 @@ Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,
          git,
+         curl,
          mercurial,
          subversion,
          lxd,
+         snapd (>= 2.15~),
          python3-pep8,
          pyflakes,
          python-flake8,
          python3-fixtures,
-         python3-flake8,
-         python3-mccabe,
          python3-pexpect,
          python3-testscenarios
 
@@ -19,7 +19,8 @@ Tests: snapstests
 Restrictions: allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          git,
+         curl,
          python3-fixtures,
          python3-pexpect,
          python3-testscenarios,
-         snapd
+         snapd (>= 2.15~)

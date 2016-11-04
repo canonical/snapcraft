@@ -29,20 +29,20 @@ yaml.add_constructor(u'!StageState', _stage_state_constructor)
 class StageState(State):
     yaml_tag = u'!StageState'
 
-    def __init__(self, files, directories, options=None, project=None):
-        super().__init__(options, project)
+    def __init__(self, files, directories, part_properties=None, project=None):
+        super().__init__(part_properties, project)
 
         self.files = files
         self.directories = directories
 
-    def properties_of_interest(self, options):
-        """Extract the properties concerning this step from the options.
+    def properties_of_interest(self, part_properties):
+        """Extract the properties concerning this step from part_properties.
 
         The only property of interest to the stage step is the `stage` keyword
         used to filter out files with a white or blacklist.
         """
 
-        return {'stage': getattr(options, 'stage', ['*']) or ['*']}
+        return {'stage': part_properties.get('stage', ['*']) or ['*']}
 
     def project_options_of_interest(self, project):
         """Extract the options concerning this step from the project.

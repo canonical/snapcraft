@@ -100,7 +100,8 @@ class KernelPluginTestCase(tests.TestCase):
             self.assertTrue(properties[prop]['uniqueItems'])
 
         self.assertEqual(
-            properties['kernel-image-target']['type'], 'string')
+            properties['kernel-image-target']['oneOf'],
+            [{'type': 'string'}, {'type': 'object'}])
         self.assertEqual(
             properties['kernel-image-target']['default'], 'bzImage')
 
@@ -117,7 +118,8 @@ class KernelPluginTestCase(tests.TestCase):
             properties['kernel-initrd-compression']['enum'], ['gz'])
 
         build_properties = schema['build-properties']
-        self.assertEqual(9, len(build_properties))
+        self.assertEqual(10, len(build_properties))
+        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('kdefconfig' in build_properties)
         self.assertTrue('kconfigfile' in build_properties)
         self.assertTrue('kconfigs' in build_properties)
@@ -148,7 +150,7 @@ class KernelPluginTestCase(tests.TestCase):
         ])
 
     def _assert_common_assets(self, installdir):
-        for asset in ['initrd-4.4.2.img', 'initrd.img', 'vmlinuz',
+        for asset in ['initrd-4.4.2.img', 'initrd.img', 'kernel.img',
                       'bzImage-4.4.2', 'System.map-4.4.2']:
             self.assertTrue(os.path.exists(os.path.join(installdir, asset)),
                             'Missing {}'.format(asset))
@@ -292,6 +294,41 @@ class KernelPluginTestCase(tests.TestCase):
         open(os.path.join(modules_path, 'modules.dep.bin'), 'w').close()
         os.makedirs(initrd_modules_staging_path)
         open(os.path.join(plugin.installdir, 'initrd-4.4.img'), 'w').close()
+
+        with mock.patch.object(plugin, '_unpack_generic_initrd') as m_unpack:
+            m_unpack.return_value = 'staging'
+            plugin._make_initrd()
+
+        modprobe_cmd = ['modprobe', '-n', '--show-depends', '-d',
+                        plugin.installdir, '-S', '4.4', ]
+        self.run_output_mock.assert_has_calls([
+            mock.call(modprobe_cmd + ['squashfs'])])
+        self.run_output_mock.assert_has_calls([
+            mock.call(modprobe_cmd + ['vfat'])])
+
+    def test_pack_initrd_modules_return_same_deps(self):
+        self.options.kernel_initrd_modules = [
+            'squashfs',
+            'vfat'
+        ]
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        # Fake some assets
+        plugin.kernel_release = '4.4'
+        modules_path = os.path.join(plugin.installdir, 'lib', 'modules', '4.4')
+        initrd_modules_staging_path = os.path.join(
+            'staging', 'lib', 'modules', '4.4')
+        os.makedirs(modules_path)
+        open(os.path.join(modules_path, 'modules.dep'), 'w').close()
+        open(os.path.join(modules_path, 'modules.dep.bin'), 'w').close()
+        os.makedirs(initrd_modules_staging_path)
+        open(os.path.join(plugin.installdir, 'initrd-4.4.img'), 'w').close()
+        open(os.path.join(plugin.installdir, 'serport.ko'), 'w').close()
+
+        self.run_output_mock.return_value = 'insmod {}/serport.ko'.format(
+            plugin.installdir)
 
         with mock.patch.object(plugin, '_unpack_generic_initrd') as m_unpack:
             m_unpack.return_value = 'staging'
@@ -819,6 +856,39 @@ ACCEPT=n
         self.assertEqual(
             plugin.make_cmd,
             ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
+
+    def test_kernel_image_target_as_map(self):
+        self.options.kernel_image_target = {'arm64': 'Image'}
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+
+        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+
+    def test_kernel_image_target_as_string(self):
+        self.options.kernel_image_target = 'Image'
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+
+        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+
+    def test_kernel_image_target_non_existent(self):
+        class Options:
+            build_parameters = []
+            kconfigfile = None
+            kdefconfig = []
+            kconfigs = []
+            kernel_with_firmware = True
+            kernel_initrd_modules = []
+            kernel_initrd_firmware = []
+            kernel_device_trees = []
+            kernel_initrd_compression = 'gz'
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+
+        self.assertEqual(plugin.make_targets, ['bzImage', 'modules'])
 
     @mock.patch.object(storeapi.StoreClient, 'download')
     def test_pull(self, download_mock):

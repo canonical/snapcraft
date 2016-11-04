@@ -35,5 +35,6 @@ class PlainboxTestCase(snaps_tests.SnapsTestCase):
             '/snap/bin/plainbox-test-tool.plainbox dev special -j',
             expected)
         # check can run the tests in the example provider
-        self.run_command_in_snappy_testbed(
-          '/snap/bin/plainbox-test-tool.plainbox run -i 2016.com.example::.*')
+        self.run_command_in_snappy_testbed('/snap/bin/plainbox-test-tool.'
+                                           'plainbox run '
+                                           '-i 2016.com.example::.*')

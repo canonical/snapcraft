@@ -68,7 +68,7 @@ Note the install step - we might actually want to use built artifacts from
 one part in the build process of another, so the `parts/<part-name>/install`
 directory is useful as a 'working fresh install' of the part.
 
-Between the plugin, the part defintion YAML, and the build system of the
+Between the plugin, the part definition YAML, and the build system of the
 part, it is expected that the part can be built and installed in the right
 place.
 
@@ -213,7 +213,7 @@ of the choice of plugin.
         - -usr/lib/libtest.so   # Excludng libtest.so
         - $manpages             # Including the 'manpages' fileset
 
-  - prime: YAML file and fileset list
+  - snap: YAML file and fileset list
 
     A list of files from a part install directory to copy into `prime/`.
     This section takes exactly the same form as the 'stage' section  but the
@@ -223,18 +223,57 @@ of the choice of plugin.
 
 """
 
+from collections import OrderedDict                 # noqa
+import yaml                                         # noqa
+
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
 from snapcraft._store import (                      # noqa
+    create_key,
+    close,
     download,
+    history,
+    gated,
+    list_keys,
     login,
     logout,
+    push,
     register,
-    upload,
+    register_key,
     release,
+    sign_build,
+    status,
+    validate,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
+from snapcraft import file_utils                    # noqa
 from snapcraft.internal import repo                 # noqa
+
+
+# Setup yaml module globally
+# yaml OrderedDict loading and dumping
+# from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
+_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+
+
+def dict_representer(dumper, data):
+    return dumper.represent_dict(data.items())
+
+
+def dict_constructor(loader, node):
+    return OrderedDict(loader.construct_pairs(node))
+
+
+def str_presenter(dumper, data):
+    if len(data.splitlines()) > 1:  # check for multiline string
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data,
+                                       style='|')
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+
+
+yaml.add_representer(str, str_presenter)
+yaml.add_representer(OrderedDict, dict_representer)
+yaml.add_constructor(_mapping_tag, dict_constructor)

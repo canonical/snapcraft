@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import snapcraft
 from snapcraft.plugins.copy import (
@@ -99,7 +99,7 @@ class TestCopyPlugin(TestCase):
         }
         open('src', 'w').close()
 
-        c = CopyPlugin('copy', self.mock_options)
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'src')))
@@ -332,6 +332,10 @@ class TestCopyPlugin(TestCase):
                 with open(destination, 'r') as f:
                     self.assertEqual(f.read(), symlink['expected_contents'])
 
+    def test_copy_enable_cross_compilation(self):
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
+        c.enable_cross_compilation()
+
 
 class TestRecursivelyLink(TestCase):
 
@@ -352,6 +356,16 @@ class TestRecursivelyLink(TestCase):
         os.mkdir('qux')
         _recursively_link('1', 'qux', os.getcwd())
         self.assertTrue(os.path.isfile(os.path.join('qux', '1')))
+
+    @patch('os.chown')
+    def test_recursively_link_file_into_dir_chown_permissions(self,
+                                                              chown_mock):
+        chown_mock.side_effect = PermissionError('Nope')
+        os.mkdir('qux')
+        _recursively_link('1', 'qux', os.getcwd())
+        self.assertTrue(os.path.isfile(os.path.join('qux', '1')))
+
+        self.assertTrue(chown_mock.called)
 
     def test_recursively_link_directory_to_directory(self):
         _recursively_link('foo', 'qux', os.getcwd())

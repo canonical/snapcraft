@@ -1,0 +1,12 @@
+name: test-environment
+version: "0.1"
+summary: test the SNAPCRAFT_PROJECT_.* variables in key values
+description: |
+  Tests the snapcraft exported variables in values for key arguments
+  This will fail to pull if the resulting values are not replaced.
+confinement: strict
+
+parts:
+  env:
+    plugin: dump
+    source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION

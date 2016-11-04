@@ -42,12 +42,32 @@ version: 0
 summary: test
 description: test
 confinement: strict
+grade: stable
 {type}
 
 {parts}
 """
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
+
+    def test__replace_in_parts(self):
+        class Options:
+            def __init__(self):
+                self.source = '$SNAPCRAFT_PART_INSTALL'
+
+        class Code:
+            def __init__(self):
+                self.options = Options()
+                self.installdir = '/tmp'
+
+        class Part:
+            def __init__(self):
+                self.code = Code()
+
+        part = Part()
+        new_part = lifecycle._replace_in_part(part)
+
+        self.assertEqual(part.code.installdir, new_part.code.options.source)
 
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""parts:
@@ -88,6 +108,10 @@ confinement: strict
                               part_names=['part2'])
 
         self.assertEqual(
+            'Skipping pull part1 (already ran)\n'
+            'Skipping build part1 (already ran)\n'
+            'Skipping stage part1 (already ran)\n'
+            'Skipping prime part1 (already ran)\n'
             'Preparing to pull part2 \n'
             'Pulling part2 \n',
             self.fake_logger.output)
@@ -100,6 +124,10 @@ confinement: strict
     plugin: nil
     after:
       - part1
+  part3:
+    plugin: nil
+    after:
+      - part2
 """)
 
         snap_info = lifecycle.execute('pull', self.project_options)
@@ -116,12 +144,17 @@ confinement: strict
             'Preparing to pull part1 \n'
             'Pulling part1 \n'
             '\'part2\' has prerequisites that need to be staged: part1\n'
-            'Skipping pull part1 (already ran)\n'
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Preparing to pull part2 \n'
-            'Pulling part2 \n',
+            'Pulling part2 \n'
+            '\'part3\' has prerequisites that need to be staged: part2\n'
+            'Preparing to build part2 \n'
+            'Building part2 \n'
+            'Staging part2 \n'
+            'Preparing to pull part3 \n'
+            'Pulling part3 \n',
             self.fake_logger.output)
 
     def test_os_type_returned_by_lifecycle(self):
@@ -411,6 +444,10 @@ confinement: strict
             'Skipping cleaning priming area for part1 (out of date) '
             '(already clean)\n'
             'Cleaning staging area for part1 (out of date)\n'
+            'Skipping cleaning priming area for part2 (out of date) '
+            '(already clean)\n'
+            'Skipping cleaning staging area for part2 (out of date) '
+            '(already clean)\n'
             'Staging part1 \n',
             self.fake_logger.output)
 
@@ -533,32 +570,3 @@ confinement: strict
         self.assertEqual(
             "The 'pull' step of 'part1' is out of date. Please clean that "
             "part's 'pull' step in order to rebuild", str(raised.exception))
-
-
-class HumanizeListTestCases(tests.TestCase):
-
-    def test_no_items(self):
-        items = []
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, '')
-
-    def test_one_item(self):
-        items = ['foo']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'foo'")
-
-    def test_two_items(self):
-        items = ['foo', 'bar']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar' and 'foo'",
-                         "Expected 'bar' before 'foo' due to sorting")
-
-    def test_three_items(self):
-        items = ['foo', 'bar', 'baz']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar', 'baz', and 'foo'")
-
-    def test_four_items(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = lifecycle._humanize_list(items)
-        self.assertEqual(output, "'bar', 'baz', 'foo', and 'qux'")

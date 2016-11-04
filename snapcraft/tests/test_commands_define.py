@@ -21,14 +21,14 @@ from snapcraft import main, tests
 from snapcraft.internal import parts
 
 
-class DefineCommandTestCase(tests.TestCase):
+class DefineCommandTestCase(tests.TestWithFakeRemoteParts):
 
     @mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_defining_a_part_that_exists(self, mock_stdout):
         main.main(['define', 'curl'])
 
         expected_output = """Maintainer: 'none'
-Description: 'test entry for curl'
+Description: test entry for curl
 
 curl:
   plugin: autotools
@@ -44,3 +44,19 @@ curl:
             str(raised.exception),
             'Cannot find the part name {!r} in the cache. Please consider '
             'going to https://wiki.ubuntu.com/snapcraft/parts to add it.')
+
+    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_defining_a_part_with_multiline_description(self, mock_stdout):
+        main.main(['define', 'multiline-part'])
+
+        expected_output = """Maintainer: 'none'
+Description: this is a multiline description
+this is a multiline description
+this is a multiline description
+
+
+multiline-part:
+  plugin: go
+  source: http://source.tar.gz
+"""
+        self.assertEqual(mock_stdout.getvalue(), expected_output)

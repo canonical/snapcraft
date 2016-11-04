@@ -17,11 +17,6 @@
 import os
 import subprocess
 
-from testtools.matchers import (
-    DirExists,
-    Not
-)
-
 import integration_tests
 
 
