@@ -166,7 +166,7 @@ class _AptCache:
         sources_list_digest = hashlib.sha384(
             sources_list.encode(sys.getfilesystemencoding())).hexdigest()
 
-        cache_dir = os.path.join(self._cache_dir, sources_list_digest)
+        cache_dir = os.path.join(self._cache_dir, 'apt', sources_list_digest)
         apt_cache_dir = os.path.join(cache_dir, 'apt')
         package_cache_dir = os.path.join(cache_dir, 'packages')
 
