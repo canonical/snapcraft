@@ -1,8 +1,0 @@
-#!/usr/bin/make -f
-# -*- Mode:Makefile; indent-tabs-mode:t; tab-width:4 -*-
-
-%:
-	dh $@ --with python3 --buildsystem=pybuild --with bash-completion
-
-override_dh_compress:
-	dh_compress -Xusr/share/doc/snapcraft-examples/demos
