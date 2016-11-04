@@ -329,12 +329,11 @@ class PluginHandler:
     def _organize(self):
         fileset = getattr(self.code.options, 'organize', {}) or {}
 
-        _organize_filesets(fileset.copy(), self.code.installdir)
+        _organize_filesets(fileset.copy(), self.stagedir)
 
     def stage(self, force=False):
         self.makedirs()
         self.notify_part_progress('Staging')
-        self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         def fixup_func(file_path):
@@ -346,6 +345,7 @@ class PluginHandler:
 
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir, fixup_func=fixup_func)
+        self._organize()
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
@@ -851,15 +851,34 @@ def check_for_collisions(parts):
         # Gather our own files up
         part_files, _ = part.migratable_fileset_for('stage')
 
+        # map old names to new names
+        fileset = getattr(part.code.options, 'organize', {}) or {}
+        rev_fileset = {value: key for key, value in fileset.items()}
+
+        print("JOE: fileset: {}".format(fileset))
+        print("JOE: rev_fileset: {}".format(rev_fileset))
+        new_part_files = set()
+        for part_file in part_files:
+            if part_file in fileset:
+                new_part_files.add(fileset[part_file])
+            else:
+                new_part_files.add(part_file)
+
+        # map new names to old names
+        filemap = {}
+        for part_file in new_part_files:
+            filemap[part_file] = rev_fileset.get(part_file, part_file)
+
         # Scan previous parts for collisions
         for other_part_name in parts_files:
-            common = part_files & parts_files[other_part_name]['files']
+            other_part = parts_files[other_part_name]
+            common = new_part_files & other_part['files']
             conflict_files = []
             for f in common:
-                this = os.path.join(part.installdir, f)
+                this = os.path.join(part.installdir, rev_fileset.get(f, f))
                 other = os.path.join(
                     parts_files[other_part_name]['installdir'],
-                    f)
+                    other_part['filemap'].get(f, f))
                 if os.path.islink(this) and os.path.islink(other):
                     continue
                 if _file_collides(this, other):
@@ -872,5 +891,6 @@ def check_for_collisions(parts):
                     conflict_files=conflict_files)
 
         # And add our files to the list
-        parts_files[part.name] = {'files': part_files,
+        parts_files[part.name] = {'files': new_part_files,
+                                  'filemap': filemap,
                                   'installdir': part.installdir}
