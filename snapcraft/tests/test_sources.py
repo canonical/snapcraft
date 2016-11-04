@@ -203,7 +203,6 @@ class TestRpm(tests.TestCase):
 
         rpm_source = sources.Rpm(rpm_file_path, dest_dir)
         rpm_source.provision(dst=dest_dir, keep_rpm=True)
-        rpm_source.pull()
 
         self.assertEqual(os.listdir(dest_dir), ['test.txt'])
         self.assertEqual(rpm_source.source_dir, [rpm_file_name])
