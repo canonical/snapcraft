@@ -58,16 +58,6 @@ properties:
     uniqueItems: true
     items:
       - type: string
-  license:
-    type: string
-    description: path to a license file.
-  license-agreement:
-    type: string
-    description: action to take on licensing.
-    enum:
-      - explicit
-  license-version:
-    description: license version (used to re-trigger an agreement action).
   confinement:
     type: string
     description: the type of confinement supported by the snap
