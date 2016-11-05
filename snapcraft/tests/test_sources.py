@@ -17,6 +17,7 @@
 import copy
 import os
 import http.server
+import shutil
 import threading
 import unittest.mock
 
@@ -202,10 +203,12 @@ class TestRpm(tests.TestCase):
             rpm.add_files('test.txt')
 
         rpm_source = sources.Rpm(rpm_file_path, dest_dir)
+        # This is the first step done by pull. We don't call pull to call the
+        # second step with a different keep_rpm value.
+        shutil.copy2(rpm_source.source, rpm_source.source_dir)
         rpm_source.provision(dst=dest_dir, keep_rpm=True)
 
-        self.assertEqual(os.listdir(dest_dir), ['test.txt'])
-        self.assertEqual(rpm_source.source_dir, [rpm_file_name])
+        self.assertEqual(os.listdir(dest_dir), ['test.txt', rpm_file_name])
 
 
 class SourceTestCase(tests.TestCase):
