@@ -56,6 +56,11 @@ class TempXDG(fixtures.Fixture):
             new=os.path.join(self.path, '.local'))
         patcher.start()
         self.addCleanup(patcher.stop)
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(self.path, '.cache'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
         patcher_dirs = mock.patch(
             'xdg.BaseDirectory.xdg_config_dirs',
@@ -317,3 +322,11 @@ class TestStore(fixtures.Fixture):
             self.user_password = 'test correct password'
         else:
             self.user_password = os.getenv('TEST_USER_PASSWORD')
+
+
+class DeltaUploads(fixtures.Fixture):
+    """Enable the Delta Uploads Experimental flag."""
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable(
+            'DELTA_UPLOADS_EXPERIMENTAL', 'True'))
