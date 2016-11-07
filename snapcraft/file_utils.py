@@ -123,17 +123,22 @@ def create_similar_directory(source, destination, follow_symlinks=False):
                            information will be copied.
     :param bool follow_symlinks: Whether or not symlinks should be followed.
     """
+    real_source = os.path.exists(source)
 
-    stat = os.stat(source, follow_symlinks=follow_symlinks)
-    uid = stat.st_uid
-    gid = stat.st_gid
+    if real_source:
+        stat = os.stat(source, follow_symlinks=follow_symlinks)
+        uid = stat.st_uid
+        gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
-    try:
-        os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
-    except PermissionError as exception:
-        logger.debug('Unable to chown {}: {}'.format(destination, exception))
 
-    shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    if real_source:
+        try:
+            os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
+        except PermissionError as exception:
+            logger.debug('Unable to chown {}: {}'.format(
+                destination, exception))
+
+        shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
 
 
 def _search_and_replace_contents(file_path, search_pattern, replacement):
