@@ -117,6 +117,8 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         super().__init__(name, options, project)
         self.build_packages.extend(['gcc', 'libc6-dev', 'make'])
 
+        self.stage_packages.extend(['gcc', 'g++'])
+
         # Get a unique set of packages
         self.catkin_packages = set(options.catkin_packages)
         self._rosdep_path = os.path.join(self.partdir, 'rosdep')
@@ -444,12 +446,6 @@ def _find_system_dependencies(catkin_packages, rosdep):
                     "rosdep database.".format(dependency))
 
             system_dependencies[dependency] = these_dependencies
-
-            # TODO: Not sure why this isn't pulled in by roscpp. Can it
-            # be compiled by clang, etc.? If so, perhaps this should be
-            # left up to the developer.
-            if dependency == 'roscpp':
-                system_dependencies['g++'] = ['g++']
 
     # Finally, return a list of all system dependencies
     return set(item for sublist in system_dependencies.values()
