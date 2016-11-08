@@ -208,7 +208,8 @@ class TestRpm(tests.TestCase):
         shutil.copy2(rpm_source.source, rpm_source.source_dir)
         rpm_source.provision(dst=dest_dir, keep_rpm=True)
 
-        self.assertEqual(os.listdir(dest_dir), ['test.txt', rpm_file_name])
+        test_output_files = ['test.txt', rpm_file_name]
+        self.assertCountEqual(os.listdir(dest_dir), test_output_files)
 
 
 class SourceTestCase(tests.TestCase):
