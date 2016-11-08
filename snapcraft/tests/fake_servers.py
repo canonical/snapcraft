@@ -561,6 +561,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         logger.debug(
             'Handling registration request with content {}'.format(data))
         snap_name = data['snap_name']
+        is_private = data['is_private']
 
         if data['snap_name'] == 'test-already-registered-snap-name':
             self._handle_register_409('already_registered')
@@ -573,10 +574,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif data['snap_name'] == 'snap-name-no-clear-error':
             self._handle_unclear_registration_error()
         else:
-            self._handle_successful_registration(snap_name)
+            self._handle_successful_registration(snap_name, is_private)
 
-    def _handle_successful_registration(self, name):
-        self.server.registered_names.append(name)
+    def _handle_successful_registration(self, name, is_private):
+        self.server.registered_names.append((name, is_private))
         self.send_response(201)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -849,12 +850,15 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         snaps = {
-            'basic': {'snap-id': 'snap-id'},
-            'ubuntu-core': {'snap-id': 'good'},
+            'basic': {'snap-id': 'snap-id', 'status': 'Approved',
+                      'private': False},
+            'ubuntu-core': {'snap-id': 'good', 'status': 'Approved',
+                            'private': False},
             }
         snaps.update({
-            n: {'snap-id': 'fake-snap-id'}
-            for n in self.server.registered_names})
+            name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
+                   'private': private}
+            for name, private in self.server.registered_names})
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,

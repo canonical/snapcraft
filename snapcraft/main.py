@@ -31,6 +31,8 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] list-snaps
+  snapcraft [options] snaps
   snapcraft [options] list-keys
   snapcraft [options] keys
   snapcraft [options] create-key [<key-name>]
@@ -94,6 +96,8 @@ The available commands are:
   list-plugins List the available plugins that handle different types of part.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  list-snaps   List snap names registered or shared with you.
+  snaps        Alias for list-snaps.
   list-keys    List keys available for signing snaps.
   keys         Alias for list-keys.
   create-key   Create a key pair for signing snaps.
@@ -301,16 +305,18 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'create-key', 'register-key', 'register',
-        'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
-        'history', 'status', 'close')
+        'list-snaps', 'snaps', 'list-keys', 'keys', 'create-key',
+        'register-key', 'register', 'sign-build', 'upload', 'release',
+        'push', 'validate', 'gated', 'history', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
 # This function's complexity is correlated to the number of
 # commands, no point in checking that.
 def _run_store_command(args):  # noqa: C901
-    if args['list-keys'] or args['keys']:
+    if args['list-snaps'] or args['snaps']:
+        snapcraft.list_snaps()
+    elif args['list-keys'] or args['keys']:
         snapcraft.list_keys()
     elif args['create-key']:
         snapcraft.create_key(args['<key-name>'])

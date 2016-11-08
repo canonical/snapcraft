@@ -19,6 +19,7 @@ import datetime
 import getpass
 import json
 import logging
+import operator
 import os
 import re
 import subprocess
@@ -161,6 +162,22 @@ def _requires_login():
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
+
+
+def list_snaps():
+    snap_series = storeapi.constants.DEFAULT_SERIES
+    store = storeapi.StoreClient()
+    with _requires_login():
+        account_info = store.get_account_information()
+    snaps = [
+        (name, info['status'], info['snap-id'],
+         'True' if info['private'] else 'False')
+        for name, info in account_info['snaps'][snap_series].items()]
+    tabulated_snaps = tabulate(
+        sorted(snaps, key=operator.itemgetter(0)),
+        headers=["Name", "Status", "Snap-Id", "Private"],
+        tablefmt="plain")
+    print(tabulated_snaps)
 
 
 def _get_usable_keys(name=None):
