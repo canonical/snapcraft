@@ -104,6 +104,14 @@ def install_build_packages(packages):
 
         subprocess.check_call(apt_command + new_packages, env=env)
 
+        try:
+                subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                      new_packages, env=env)
+        except subprocess.CalledProcessError as e:
+                logger.warning(
+                    "Impossible to mark packages as auto-installed: {}"
+                    .format(str(e)))
+
 
 class PackageNotFoundError(Exception):
 
