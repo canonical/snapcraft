@@ -224,6 +224,7 @@ of the choice of plugin.
 """
 
 from collections import OrderedDict                 # noqa
+import pkg_resources                                # noqa
 import yaml                                         # noqa
 
 from snapcraft._baseplugin import BasePlugin        # noqa
@@ -251,6 +252,16 @@ from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
 from snapcraft.internal import repo                 # noqa
+
+
+def _get_version():
+    try:
+        return pkg_resources.require('snapcraft')[0].version
+    except pkg_resources.DistributionNotFound:
+        return 'devel'
+
+
+__version__ = _get_version()
 
 
 # Setup yaml module globally
