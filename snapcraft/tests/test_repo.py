@@ -279,7 +279,7 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        repo.install_build_packages(test_pkgs.keys())
+        repo.install_build_packages(sorted(test_pkgs.keys()))
 
     @patch('subprocess.check_call')
     def test_install_buid_package(self, mock_check_call):
@@ -289,7 +289,7 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_check_call.assert_has_calls([
             call("sudo apt-get -o Dpkg::Progress-Fancy=1 "
                  "--no-install-recommends -y install".split() +
-                 [p for p in test_pkgs.keys() if not test_pkgs[p].installed],
+                 sorted([p for p in test_pkgs if not test_pkgs[p].installed]),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
@@ -301,7 +301,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
         mock_check_call.assert_has_calls([
             call("sudo apt-mark auto".split() +
-                 [p for p in test_pkgs.keys() if not test_pkgs[p].installed],
+                 sorted([p for p in test_pkgs if not test_pkgs[p].installed]),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
