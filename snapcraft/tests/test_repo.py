@@ -283,25 +283,25 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('subprocess.check_call')
     def test_install_buid_package(self, mock_check_call):
-        test_packages = self.test_packages
-        self.install_test_packages(test_packages)
+        test_pkgs = self.test_packages
+        self.install_test_packages(test_pkgs)
 
         mock_check_call.assert_has_calls([
             call("sudo apt-get -o Dpkg::Progress-Fancy=1 "
                  "--no-install-recommends -y install".split() +
-                 [p for p in test_packages if not test_packages[p].installed],
+                 [p for p in test_pkgs.keys() if not test_pkgs[p].installed],
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
     @patch('subprocess.check_call')
     def test_install_buid_package_marks_auto_installed(self, mock_check_call):
-        test_packages = self.test_packages
-        self.install_test_packages(test_packages)
+        test_pkgs = self.test_packages
+        self.install_test_packages(test_pkgs)
 
         mock_check_call.assert_has_calls([
             call("sudo apt-mark auto".split() +
-                 [p for p in test_packages if not test_packages[p].installed],
+                 [p for p in test_pkgs.keys() if not test_pkgs[p].installed],
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
