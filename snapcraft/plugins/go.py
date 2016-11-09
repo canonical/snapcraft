@@ -143,12 +143,13 @@ class GoPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
+        tags = []
+        if self.options.go_buildtags:
+            tags = ['-tags={}'.format(','.join(self.options.go_buildtags))]
+
         for go_package in self.options.go_packages:
-            self._run(['go', 'install', go_package])
+            self._run(['go', 'install'] + tags + [go_package])
         if not self.options.go_packages:
-            tags = []
-            if self.options.go_buildtags:
-                tags = ['-tags={}'.format(','.join(self.options.go_buildtags))]
             self._run(['go', 'install'] + tags +
                       ['./{}/...'.format(self._get_local_go_package())])
 
