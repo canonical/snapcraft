@@ -2,6 +2,7 @@ configparser==3.5.0
 docopt==0.6.2
 file-magic==0.3.0
 jsonschema==2.5.1
+libarchive-c==2.5
 progressbar33==2.4
 PyYAML==3.11
 pyxdg==0.25

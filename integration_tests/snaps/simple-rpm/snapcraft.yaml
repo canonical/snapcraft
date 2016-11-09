@@ -1,0 +1,14 @@
+name: simple-rpm
+version: '0.1'
+summary: Use RPMs as sources
+description: |
+  This integration test verifies that RPM files can be used as source
+  entries for a part.
+
+grade: devel
+confinement: devmode
+
+parts:
+  rpm:
+    plugin: dump
+    source: small-0.1-1.noarch.rpm
