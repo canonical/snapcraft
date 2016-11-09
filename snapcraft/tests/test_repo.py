@@ -307,9 +307,8 @@ class BuildPackagesTestCase(tests.TestCase):
     @patch('subprocess.check_call')
     def test_install_buid_package_marks_auto_installed_error_is_not_fatal(self, mock_check_call):
         error = snapcraft.repo.subprocess.CalledProcessError(101, "bad-cmd")
-        mock_check_call.side_effect = [None, error]
+        mock_check_call.side_effect = lambda c, env: error if "apt-mark" in c else None
         self.install_test_packages(self.test_packages)
-        self.assertEqual(2, mock_check_call.call_count)
 
     def test_invalid_package_requested(self):
         with self.assertRaises(EnvironmentError) as raised:
