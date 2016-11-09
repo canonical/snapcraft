@@ -68,12 +68,23 @@ class TestCase(testtools.TestCase):
             cwd = os.path.join(self.path, yaml_dir)
 
         try:
-            return subprocess.check_output(
+            ret_val = subprocess.check_output(
                 [self.snapcraft_command, '-d'] + command, cwd=cwd,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
             raise
+
+        deb_env = os.environ.copy()
+        deb_env.update({
+            'DEBIAN_FRONTEND': 'noninteractive',
+            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+        })
+        self.addCleanup(
+            subprocess.check_call, ['sudo', 'apt-get', 'autoremove', '-qq'],
+            stderr=subprocess.STDOUT, env=deb_env)
+
+        return ret_val
 
     def copy_project_to_tmp(self, project_dir):
         tmp_project_dir = os.path.join(self.path, project_dir)
