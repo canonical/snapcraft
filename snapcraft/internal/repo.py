@@ -88,6 +88,7 @@ def install_build_packages(packages):
                     "Could not find a required package in "
                     "'build-packages': {}".format(str(e)))
     if new_packages:
+        new_packages.sort()
         logger.info(
             'Installing build dependencies: %s', ' '.join(new_packages))
         env = os.environ.copy()
