@@ -267,14 +267,13 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 
 class BuildPackagesTestCase(tests.TestCase):
 
-    @patch('os.environ')
-    @patch('subprocess.check_call')
-    @patch('snapcraft.repo.apt')
-    def test_install_buid_package(self, mock_apt, mock_ceck_call, mock_env):
-        test_packages = {'package-not-installed': MagicMock(installed=False),
-                         'package-installed': MagicMock(installed=True),
-                         'another-uninstalled': MagicMock(installed=False)}
+    test_packages = {'package-not-installed': MagicMock(installed=False),
+                     'package-installed': MagicMock(installed=True),
+                     'another-uninstalled': MagicMock(installed=False)}
 
+    @patch('os.environ')
+    @patch('snapcraft.repo.apt')
+    def install_test_packages(self, test_packages, mock_apt, mock_env):
         mock_env.copy.return_value = {}
         mock_apt_cache = mock_apt.Cache.return_value
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
@@ -282,14 +281,35 @@ class BuildPackagesTestCase(tests.TestCase):
 
         repo.install_build_packages(test_packages.keys())
 
-        mock_ceck_call.assert_has_calls([
+    @patch('subprocess.check_call')
+    def test_install_buid_package(self, mock_check_call):
+        self.install_test_packages(self.test_packages)
+
+        mock_check_call.assert_has_calls([
             call("sudo apt-get -o Dpkg::Progress-Fancy=1 "
                  "--no-install-recommends -y install".split() +
-                 [p for p in test_packages if not test_packages[p].installed],
+                 [p for p in self.test_packages if not self.test_packages[p].installed],
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
+    @patch('subprocess.check_call')
+    def test_install_buid_package_marks_auto_installed(self, mock_check_call):
+        self.install_test_packages(self.test_packages)
+
+        mock_check_call.assert_has_calls([
+            call("sudo apt-mark auto".split() +
+                 [p for p in self.test_packages if not self.test_packages[p].installed],
+                 env={'DEBIAN_FRONTEND': 'noninteractive',
+                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('subprocess.check_call')
+    def test_install_buid_package_marks_auto_installed_error_is_not_fatal(self, mock_check_call):
+        error = snapcraft.repo.subprocess.CalledProcessError(101, "bad-cmd")
+        mock_check_call.side_effect = [None, error]
+        self.install_test_packages(self.test_packages)
+        self.assertEqual(2, mock_check_call.call_count)
 
     def test_invalid_package_requested(self):
         with self.assertRaises(EnvironmentError) as raised:

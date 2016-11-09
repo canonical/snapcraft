@@ -110,7 +110,7 @@ def install_build_packages(packages):
         except subprocess.CalledProcessError as e:
                 logger.warning(
                     "Impossible to mark packages as auto-installed: {}"
-                    .format(str(e)))
+                    .format(e))
 
 
 class PackageNotFoundError(Exception):
