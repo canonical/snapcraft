@@ -105,14 +105,3 @@ class TestMain(TestCase):
             mock_project_options.assert_called_once_with(
                 debug=False, parallel_builds=True, target_deb_arch='arm64',
                 use_geoip=False)
-
-    @mock.patch('pkg_resources.require')
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_devel_version(self, mock_stdout, mock_resources):
-        mock_resources.side_effect = pkg_resources.DistributionNotFound()
-        sys.argv = ['/usr/bin/snapcraft', '--version']
-
-        with self.assertRaises(SystemExit):
-            snapcraft.main.main()
-
-        self.assertEqual(mock_stdout.getvalue(), 'devel\n')
