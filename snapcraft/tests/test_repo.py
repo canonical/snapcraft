@@ -273,41 +273,44 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('os.environ')
     @patch('snapcraft.repo.apt')
-    def install_test_packages(self, test_packages, mock_apt, mock_env):
+    def install_test_packages(self, test_pkgs, mock_apt, mock_env):
         mock_env.copy.return_value = {}
         mock_apt_cache = mock_apt.Cache.return_value
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
-        mock_apt_cache_with.__getitem__.side_effect = lambda p: test_packages[p]
+        mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        repo.install_build_packages(test_packages.keys())
+        repo.install_build_packages(test_pkgs.keys())
 
     @patch('subprocess.check_call')
     def test_install_buid_package(self, mock_check_call):
-        self.install_test_packages(self.test_packages)
+        test_packages = self.test_packages
+        self.install_test_packages(test_packages)
 
         mock_check_call.assert_has_calls([
             call("sudo apt-get -o Dpkg::Progress-Fancy=1 "
                  "--no-install-recommends -y install".split() +
-                 [p for p in self.test_packages if not self.test_packages[p].installed],
+                 [p for p in test_packages if not test_packages[p].installed],
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
     @patch('subprocess.check_call')
     def test_install_buid_package_marks_auto_installed(self, mock_check_call):
-        self.install_test_packages(self.test_packages)
+        test_packages = self.test_packages
+        self.install_test_packages(test_packages)
 
         mock_check_call.assert_has_calls([
             call("sudo apt-mark auto".split() +
-                 [p for p in self.test_packages if not self.test_packages[p].installed],
+                 [p for p in test_packages if not test_packages[p].installed],
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
     @patch('subprocess.check_call')
-    def test_install_buid_package_marks_auto_installed_error_is_not_fatal(self, mock_check_call):
+    def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
         error = snapcraft.repo.subprocess.CalledProcessError(101, "bad-cmd")
-        mock_check_call.side_effect = lambda c, env: error if "apt-mark" in c else None
+        mock_check_call.side_effect = \
+            lambda c, env: error if "apt-mark" in c else None
         self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
