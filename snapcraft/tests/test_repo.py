@@ -269,7 +269,13 @@ class BuildPackagesTestCase(tests.TestCase):
 
     test_packages = {'package-not-installed': MagicMock(installed=False),
                      'package-installed': MagicMock(installed=True),
-                     'another-uninstalled': MagicMock(installed=False)}
+                     'another-uninstalled': MagicMock(installed=False),
+                     'another-installed': MagicMock(installed=True),
+                     'repeated-package': MagicMock(installed=False),
+                     'repeated-package': MagicMock(installed=False)}
+
+    def get_installable_packages(self, pkgs):
+        return [p for p in pkgs if not pkgs[p].installed]
 
     @patch('os.environ')
     @patch('snapcraft.repo.apt')
@@ -279,29 +285,29 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        repo.install_build_packages(sorted(test_pkgs.keys()))
+        repo.install_build_packages(test_pkgs.keys())
 
     @patch('subprocess.check_call')
     def test_install_buid_package(self, mock_check_call):
-        test_pkgs = self.test_packages
-        self.install_test_packages(test_pkgs)
+        self.install_test_packages(self.test_packages)
 
+        installable = self.get_installable_packages(self.test_packages)
         mock_check_call.assert_has_calls([
             call("sudo apt-get -o Dpkg::Progress-Fancy=1 "
                  "--no-install-recommends -y install".split() +
-                 sorted([p for p in test_pkgs if not test_pkgs[p].installed]),
+                 sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
     @patch('subprocess.check_call')
     def test_install_buid_package_marks_auto_installed(self, mock_check_call):
-        test_pkgs = self.test_packages
-        self.install_test_packages(test_pkgs)
+        self.install_test_packages(self.test_packages)
 
+        installable = self.get_installable_packages(self.test_packages)
         mock_check_call.assert_has_calls([
             call("sudo apt-mark auto".split() +
-                 sorted([p for p in test_pkgs if not test_pkgs[p].installed]),
+                 sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
