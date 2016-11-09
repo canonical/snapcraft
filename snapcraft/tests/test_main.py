@@ -14,10 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import io
 import logging
-import pkg_resources
-import sys
 from unittest import mock
 
 import fixtures
