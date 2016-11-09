@@ -139,7 +139,6 @@ http://snapcraft.io/docs/build-snaps
 
 import logging
 import os
-import pkg_resources
 import pkgutil
 import shutil
 import sys
@@ -157,13 +156,6 @@ from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 logger = logging.getLogger(__name__)
 _SNAPCRAFT_TOUR_DIR = "./snapcraft-tour/"
-
-
-def _get_version():
-    try:
-        return pkg_resources.require('snapcraft')[0].version
-    except pkg_resources.DistributionNotFound:
-        return 'devel'
 
 
 def _scaffold_examples(directory):
@@ -217,7 +209,7 @@ def _get_project_options(args):
 
 def main(argv=None):
     doc = __doc__.format(DEFAULT_SERIES=DEFAULT_SERIES)
-    args = docopt(doc, version=_get_version(), argv=argv)
+    args = docopt(doc, version=snapcraft.__version__, argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
