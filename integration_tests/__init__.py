@@ -75,14 +75,15 @@ class TestCase(testtools.TestCase):
             self.addDetail('output', content.text_content(e.output))
             raise
 
-        deb_env = os.environ.copy()
-        deb_env.update({
-            'DEBIAN_FRONTEND': 'noninteractive',
-            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
-        })
-        self.addCleanup(
-            subprocess.check_call, ['sudo', 'apt-get', 'autoremove', '-qq'],
-            stderr=subprocess.STDOUT, env=deb_env)
+        if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
+            deb_env = os.environ.copy()
+            deb_env.update({
+                'DEBIAN_FRONTEND': 'noninteractive',
+                'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+            })
+            self.addCleanup(
+                subprocess.check_call, 'sudo apt-get autoremove -qq'.split(),
+                stderr=subprocess.STDOUT, env=deb_env)
 
         return ret_val
 
