@@ -1,0 +1,14 @@
+name: compressed-content-encoding
+version: '0.93.1'
+summary: Test downloading files with Content-Encoding gzip
+description: |
+  Make sure files served with Content-Encoding do not blow up.
+  LP: #1611776
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  shutter:
+    plugin: dump
+    source: http://shutter-project.org/wp-content/uploads/releases/tars/shutter-$SNAPCRAFT_PROJECT_VERSION.tar.gz
