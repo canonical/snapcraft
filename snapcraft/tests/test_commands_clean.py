@@ -159,15 +159,15 @@ parts:
         main(['clean', '--step=foo'])
 
         expected_staged_state = {
-            'clean0': states.StageState({'clean0'}, set()),
-            'clean1': states.StageState({'clean1'}, set()),
-            'clean2': states.StageState({'clean2'}, set()),
+            'clean0': states.StageState({('clean0', None)}, set()),
+            'clean1': states.StageState({('clean1', None)}, set()),
+            'clean2': states.StageState({('clean2', None)}, set()),
         }
 
         expected_primed_state = {
-            'clean0': states.PrimeState({'clean0'}, set()),
-            'clean1': states.PrimeState({'clean1'}, set()),
-            'clean2': states.PrimeState({'clean2'}, set()),
+            'clean0': states.PrimeState({('clean0', None)}, set()),
+            'clean1': states.PrimeState({('clean1', None)}, set()),
+            'clean2': states.PrimeState({('clean2', None)}, set()),
         }
 
         mock_clean.assert_called_with(
@@ -183,15 +183,15 @@ parts:
         main(['clean', '--step=strip'])
 
         expected_staged_state = {
-            'clean0': states.StageState({'clean0'}, set()),
-            'clean1': states.StageState({'clean1'}, set()),
-            'clean2': states.StageState({'clean2'}, set()),
+            'clean0': states.StageState({('clean0', None)}, set()),
+            'clean1': states.StageState({('clean1', None)}, set()),
+            'clean2': states.StageState({('clean2', None)}, set()),
         }
 
         expected_primed_state = {
-            'clean0': states.PrimeState({'clean0'}, set()),
-            'clean1': states.PrimeState({'clean1'}, set()),
-            'clean2': states.PrimeState({'clean2'}, set()),
+            'clean0': states.PrimeState({('clean0', None)}, set()),
+            'clean1': states.PrimeState({('clean1', None)}, set()),
+            'clean2': states.PrimeState({('clean2', None)}, set()),
         }
 
         self.assertEqual('DEPRECATED: Use `prime` instead of `strip` as '
