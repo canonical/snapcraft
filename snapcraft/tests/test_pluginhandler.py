@@ -2359,3 +2359,23 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertEqual(
             raised.exception.__str__(), 'Cannot load magic header detection')
+
+    def test__organize_fileset(self):
+        fileset = set(['bin/app', 'share/app1', 'bin/app2'])
+        organize_fileset = {'tmp/bin': 'bin', 'tmp/share': 'share', 'tmp': 'new_tmp'}
+
+        expected_fileset = set(
+            [('tmp/bin/app', 'bin/app'), ('tmp/share/app1', 'share/app1'),
+             ('tmp/bin/app2', 'bin/app2')])
+        obtained_fileset, obtained_dirs = pluginhandler._organize_fileset(
+            fileset, organize_fileset)
+        expected_dirs = set()
+
+        self.assertEqual(expected_fileset, obtained_fileset)
+        self.assertEqual(expected_dirs, obtained_dirs)
+
+    def test__get_path_prefixes(self):
+        path = '/one/two/three'
+
+        self.assertEqual(['/one/two', '/one'],
+                         pluginhandler._get_path_prefixes(path))

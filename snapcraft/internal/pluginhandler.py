@@ -324,7 +324,12 @@ class PluginHandler:
         fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
         fileset.extend(plugin_fileset)
 
-        return _migratable_filesets(fileset, self.code.installdir)
+        if step == 'stage':
+            srcdir = self.code.installdir
+        else:
+            srcdir = self.stagedir
+
+        return _migratable_filesets(fileset, srcdir)
 
     def _organize(self):
         fileset = getattr(self.code.options, 'organize', {}) or {}
@@ -335,6 +340,13 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Staging')
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
+        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
+
+        snap_files, new_snap_dirs = _organize_fileset(snap_files, organize_fileset)
+
+        snap_dirs, extra_snap_dirs = _organize_fileset(snap_dirs, organize_fileset)
+
+        snap_dirs |= new_snap_dirs | extra_snap_dirs
 
         def fixup_func(file_path):
             if os.path.islink(file_path):
@@ -345,7 +357,6 @@ class PluginHandler:
 
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.stagedir, fixup_func=fixup_func)
-        self._organize()
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
@@ -650,17 +661,31 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
                    follow_symlinks=False, fixup_func=lambda *args: None):
 
     for directory in snap_dirs:
-        src = os.path.join(srcdir, directory)
-        dst = os.path.join(dstdir, directory)
+        if type(directory) == tuple:
+            src = os.path.join(srcdir, directory[0])
+            dst = os.path.join(dstdir, directory[1])
+        else:
+            src = os.path.join(srcdir, directory)
+            dst = os.path.join(dstdir, directory)
 
         snapcraft.file_utils.create_similar_directory(src, dst)
 
     for snap_file in snap_files:
-        src = os.path.join(srcdir, snap_file)
-        dst = os.path.join(dstdir, snap_file)
+        if type(snap_file) == tuple:
+            src = os.path.join(srcdir, snap_file[0])
+            dst = os.path.join(dstdir, snap_file[1])
+        else:
+            src = os.path.join(srcdir, snap_file)
+            dst = os.path.join(dstdir, snap_file)
 
         snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
                                                       os.path.dirname(dst))
+
+        if os.path.isdir(src):
+            snapcraft.file_utils.create_similar_directory(
+                src, dst
+            )
+            continue
 
         if missing_ok and not os.path.exists(src):
             continue
@@ -706,7 +731,16 @@ def _organize_filesets(fileset, base_dir):
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:
-        os.remove(os.path.join(directory, snap_file))
+        if type(snap_file) == tuple:
+            path = snap_file[1]
+        else:
+            path = snap_file
+
+        # XXX: hack to remove directories should be fixed elsewhere
+        if os.path.isdir(path):
+            snap_dirs.append(snap_file)
+        else:
+            os.remove(os.path.join(directory, path))
 
     # snap_dirs may not be ordered so that subdirectories come before
     # parents, and we want to be able to remove directories if possible, so
@@ -855,8 +889,6 @@ def check_for_collisions(parts):
         fileset = getattr(part.code.options, 'organize', {}) or {}
         rev_fileset = {value: key for key, value in fileset.items()}
 
-        print("JOE: fileset: {}".format(fileset))
-        print("JOE: rev_fileset: {}".format(rev_fileset))
         new_part_files = set()
         for part_file in part_files:
             if part_file in fileset:
@@ -894,3 +926,63 @@ def check_for_collisions(parts):
         parts_files[part.name] = {'files': new_part_files,
                                   'filemap': filemap,
                                   'installdir': part.installdir}
+
+
+def _get_path_prefixes(filepath):
+    dirname = os.path.dirname(filepath)
+    result = []
+
+    while dirname != '/' and dirname != '':
+        result.append(dirname)
+        dirname = os.path.dirname(dirname)
+
+    return result
+
+
+def _organize_fileset(fileset_orig, organize_fileset):
+    fileset = set()
+    dirs = set()
+
+    rev_organize_fileset = {}
+    for key, value in organize_fileset.items():
+        if value not in rev_organize_fileset:
+            rev_organize_fileset[value] = []
+        rev_organize_fileset[value].append(key)
+
+    for filepath in fileset_orig.copy():
+        # match a file path
+        if filepath in rev_organize_fileset:
+            for rev in rev_organize_fileset[filepath]:
+                new_filepath = (rev, filepath)
+                if os.path.isdir(new_filepath[0]):
+                    dirs.add(new_filepath)
+                else:
+                    fileset.add(new_filepath)
+            continue
+
+        path_prefixes = _get_path_prefixes(filepath)
+        matched = False
+        for prefix in path_prefixes:
+            if prefix in rev_organize_fileset and filepath.startswith(prefix):
+                for rev in rev_organize_fileset[prefix]:
+                    new_filepath = ("{}{}".format(rev,
+                                filepath[len(prefix):]),
+                                filepath)
+                matched = True
+                break
+
+        if matched:
+            if type(filepath) == tuple:
+                if os.path.isdir(filepath[0]):
+                    dirs.add(filepath)
+                else:
+                    fileset.add(filepath)
+            else:
+                if os.path.isdir(filepath):
+                    dirs.add(filepath)
+                else:
+                    fileset.add(filepath)
+        else:
+            fileset.add(filepath)
+
+    return fileset, dirs
