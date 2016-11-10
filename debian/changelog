@@ -1,3 +1,27 @@
+snapcraft (2.22) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * Support for gadget snaps (#886)
+  * Remove license concepts (#880)
+  * store: send snapcraft version in a header (#894)
+  * New upstream release 2.22 (LP: #1640585)
+
+  [ Bayard Randel ]
+  * repo: cache apt related files (config, packages) in 'apt' parent
+    directory. (#887)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: python nodes require gcc/g++ too. (#881)
+
+  [ Neal Gompa ]
+  * sources: Add RPM source (#870)
+
+  [ Stéphane Graber ]
+  * Always respect go-buildtags (#888)
+  * Allow for architecture-specific packages (#876)  
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 09 Nov 2016 19:50:29 +0000
+
 snapcraft (2.21) xenial; urgency=medium
 
   [ Sergio Schvezov ]
