@@ -1,10 +1,17 @@
+snapcraft (2.22.1) xenial; urgency=medium
+
+  * Revert "Allow for architecture-specific packages (#876)" (#898)
+  * New upstream release 2.22.1 (LP: #1640585)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 11 Nov 2016 19:28:41 +0000
+
 snapcraft (2.22) xenial; urgency=medium
 
   [ Sergio Schvezov ]
   * Support for gadget snaps (#886)
   * Remove license concepts (#880)
   * store: send snapcraft version in a header (#894)
-  * New upstream release 2.22 (LP: #1640585)
+  
 
   [ Bayard Randel ]
   * repo: cache apt related files (config, packages) in 'apt' parent
