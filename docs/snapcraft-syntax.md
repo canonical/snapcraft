@@ -79,11 +79,9 @@ contain.
       be staged before the dependent part starts its lifecycle.*
     * `stage-packages` (list of strings)
       A list of Ubuntu packages to use that would support the part creation.
-      To restrict to a specific architecture, use `pkg:arch`.
     * `build-packages` (list of strings)
       A list of Ubuntu packages to be installed on the host to aid in building
       the part. These packages will not go into the final snap.
-      To restrict to a specific architecture, use `pkg:arch`.
     * `filesets` (yaml subsection)
       A dictionary with filesets, the key being a recognizable user defined
       string and its value a list of strings of files to be included or

@@ -41,8 +41,7 @@ class UbuntuTestCase(tests.TestCase):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
-        ubuntu.get(['fake-package', 'fake-package-arch1:test',
-                    'fake-package-arch2:%s' % project_options.deb_arch])
+        ubuntu.get(['fake-package'])
 
         mock_apt.assert_has_calls([
             call.apt_pkg.config.set('Dir::Cache::Archives',
@@ -65,14 +64,7 @@ class UbuntuTestCase(tests.TestCase):
 
         # __getitem__ is tricky
         self.assertIn(
-            call('fake-package'),
-            mock_apt.Cache().__getitem__.call_args_list)
-        self.assertNotIn(
-            call('fake-package-arch1'),
-            mock_apt.Cache().__getitem__.call_args_list)
-        self.assertIn(
-            call('fake-package-arch2'),
-            mock_apt.Cache().__getitem__.call_args_list)
+            call('fake-package'), mock_apt.Cache().__getitem__.call_args_list)
 
     @patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):
