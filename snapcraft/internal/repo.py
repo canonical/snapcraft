@@ -245,18 +245,8 @@ class Ubuntu:
 
     def _get(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
-        deb_arch = snapcraft.ProjectOptions().deb_arch
 
         for name in package_names:
-            fields = name.split(":", 2)
-            name = fields[0]
-
-            # Skip if the architecture doesn't match deb_arch
-            if len(fields) == 2 and fields[1] != deb_arch:
-                logger.debug('Skipping {!r} based on architecture filter'
-                             .format(name))
-                continue
-
             try:
                 logger.debug('Marking {!r} as to install'.format(name))
                 apt_cache[name].mark_install()
