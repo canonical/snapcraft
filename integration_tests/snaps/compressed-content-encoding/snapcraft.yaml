@@ -5,8 +5,8 @@ description: |
   Make sure files served with Content-Encoding do not blow up.
   LP: #1611776
 
-grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+grade: devel
+confinement: devmode
 
 parts:
   shutter:
