@@ -71,7 +71,8 @@ class TestFileBase(tests.TestCase):
 
     @unittest.mock.patch('snapcraft.internal.sources.requests')
     @unittest.mock.patch('snapcraft.internal.sources.download_requests_stream')
-    def test_download_file_destination(self, drs, req):
+    @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
+    def test_download_file_destination(self, dus, drs, req):
         file_src = self.get_mock_file_base(
             'http://snapcraft.io/snapcraft.yaml', 'dir')
         self.assertFalse(hasattr(file_src, "file"))
@@ -96,6 +97,16 @@ class TestFileBase(tests.TestCase):
             file_src.source, stream=True, allow_redirects=True)
         mock_request.raise_for_status.assert_called_once_with()
         mock_download.assert_called_once_with(mock_request, file_src.file)
+
+    @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
+    @unittest.mock.patch('snapcraft.internal.sources.requests')
+    def test_download_ftp(self, mock_requests, mock_download):
+        file_src = self.get_mock_file_base(
+            'ftp://snapcraft.io/snapcraft.yaml', 'dir')
+
+        file_src.pull()
+
+        mock_download.assert_called_once_with(file_src.source, file_src.file)
 
 
 class TestTar(tests.TestCase):

@@ -17,6 +17,7 @@
 import os
 import sys
 
+from urllib.request import FancyURLopener
 from progressbar import (
     AnimatedMarker,
     Bar,
@@ -26,10 +27,32 @@ from progressbar import (
 )
 
 
-def download_requests_stream(request_stream, destination, message=None):
-    """This is a facility to download a request with nice progress bars."""
+def _init_progress_bar(total_length, destination, message=None):
     if not message:
         message = 'Downloading {!r}'.format(os.path.basename(destination))
+
+    valid_length = total_length and total_length > 0
+
+    if valid_length and is_dumb_terminal():
+        widgets = [message, ' ', Percentage()]
+        maxval = total_length
+    elif valid_length and not is_dumb_terminal():
+        widgets = [message,
+                   Bar(marker='=', left='[', right=']'),
+                   ' ', Percentage()]
+        maxval = total_length
+    elif not valid_length and is_dumb_terminal():
+        widgets = [message]
+        maxval = UnknownLength
+    else:
+        widgets = [message, AnimatedMarker()]
+        maxval = UnknownLength
+
+    return ProgressBar(widgets=widgets, maxval=maxval)
+
+
+def download_requests_stream(request_stream, destination, message=None):
+    """This is a facility to download a request with nice progress bars."""
 
     # Doing len(request_stream.content) may defeat the purpose of a
     # progress bar
@@ -37,24 +60,8 @@ def download_requests_stream(request_stream, destination, message=None):
     if not request_stream.headers.get('Content-Encoding', ''):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
 
-    if total_length and is_dumb_terminal():
-        widgets = [message, ' ', Percentage()]
-        maxval = total_length
-    elif total_length and not is_dumb_terminal():
-        widgets = [message,
-                   Bar(marker='=', left='[', right=']'),
-                   ' ', Percentage()]
-        maxval = total_length
-    elif not total_length and is_dumb_terminal():
-        widgets = [message]
-        maxval = UnknownLength
-    else:
-        widgets = [message, AnimatedMarker()]
-        maxval = UnknownLength
-
-    progress_bar = ProgressBar(widgets=widgets, maxval=maxval)
-
     total_read = 0
+    progress_bar = _init_progress_bar(total_length, destination, message)
     progress_bar.start()
     with open(destination, 'wb') as destination_file:
         for buf in request_stream.iter_content(1024):
@@ -62,6 +69,23 @@ def download_requests_stream(request_stream, destination, message=None):
             total_read += len(buf)
             progress_bar.update(total_read)
     progress_bar.finish()
+
+
+def download_urllib_source(uri, destination, message=None):
+    """This is a facility to download an uri with nice progress bars."""
+
+    def reporthook(block_num, block_size, total_length):
+        if not hasattr(reporthook, "progress_bar"):
+            reporthook.progress_bar = _init_progress_bar(
+                total_length, destination, message)
+            reporthook.progress_bar.start()
+
+        total_read = block_num * block_size
+        reporthook.progress_bar.update(
+            total_length if total_read > total_length else total_read)
+
+    FancyURLopener().retrieve(uri, destination, reporthook)
+    reporthook.progress_bar.finish()
 
 
 def is_dumb_terminal():
