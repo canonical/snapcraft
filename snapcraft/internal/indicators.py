@@ -85,7 +85,8 @@ def download_urllib_source(uri, destination, message=None):
             total_length if total_read > total_length else total_read)
 
     FancyURLopener().retrieve(uri, destination, reporthook)
-    reporthook.progress_bar.finish()
+    if hasattr(reporthook, "progress_bar"):
+        reporthook.progress_bar.finish()
 
 
 def is_dumb_terminal():

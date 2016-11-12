@@ -99,14 +99,26 @@ class TestFileBase(tests.TestCase):
         mock_download.assert_called_once_with(mock_request, file_src.file)
 
     @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
-    @unittest.mock.patch('snapcraft.internal.sources.requests')
-    def test_download_ftp(self, mock_requests, mock_download):
+    def test_download_ftp(self, mock_download):
         file_src = self.get_mock_file_base(
             'ftp://snapcraft.io/snapcraft.yaml', 'dir')
 
         file_src.pull()
 
         mock_download.assert_called_once_with(file_src.source, file_src.file)
+
+    @unittest.mock.patch('snapcraft.internal.indicators.FancyURLopener')
+    def test_download_ftp(self, mock_url_opener):
+        file_src = self.get_mock_file_base(
+            'ftp://snapcraft.io/snapcraft.yaml', 'dir')
+
+        file_src.pull()
+
+        self.assertEqual(mock_url_opener().retrieve.call_count, 1)
+        self.assertEqual(mock_url_opener().retrieve.call_args[0][0],
+            file_src.source)
+        self.assertEqual(mock_url_opener().retrieve.call_args[0][1],
+            file_src.file)
 
 
 class TestTar(tests.TestCase):
