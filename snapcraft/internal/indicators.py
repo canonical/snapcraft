@@ -82,7 +82,7 @@ def download_urllib_source(uri, destination, message=None):
 
         total_read = block_num * block_size
         reporthook.progress_bar.update(
-            total_length if total_read > total_length else total_read)
+            min(total_read, total_length) if total_length > 0 else total_read)
 
     FancyURLopener().retrieve(uri, destination, reporthook)
     if hasattr(reporthook, "progress_bar"):
