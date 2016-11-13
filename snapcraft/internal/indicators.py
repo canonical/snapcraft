@@ -17,7 +17,7 @@
 import os
 import sys
 
-from urllib.request import FancyURLopener
+from urllib.request import urlretrieve
 from progressbar import (
     AnimatedMarker,
     Bar,
@@ -85,7 +85,7 @@ def download_urllib_source(uri, destination, message=None):
             min(total_read, total_length) if total_length > 0 else total_read)
 
     progress_bar = None
-    FancyURLopener().retrieve(
+    urlretrieve(
         uri, destination, lambda n, s, l: progress_cb(progress_bar, n, s, l))
 
     if progress_bar:
