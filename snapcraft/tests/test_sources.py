@@ -29,21 +29,6 @@ from snapcraft.internal import common, sources
 from snapcraft import tests
 
 
-class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
-
-    def do_GET(self):
-        data = 'Test fake compressed file'
-        self.send_response(200)
-        self.send_header('Content-Length', len(data))
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
-        self.wfile.write(data.encode())
-
-    def log_message(self, *args):
-        # Overwritten so the test does not write to stderr.
-        pass
-
-
 class TestFileBase(tests.TestCase):
 
     def get_mock_file_base(self, source, dir):
@@ -121,32 +106,41 @@ class TestFileBase(tests.TestCase):
             mock_url_opener().retrieve.call_args[0][1], file_src.file)
 
 
-class TestTar(tests.TestCase):
+class FakeFileHttpServerBasedTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+        self.server = http.server.HTTPServer(
+            ('127.0.0.1', 0), tests.fake_servers.FakeFileHTTPRequestHandler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+        server_thread.start()
+
+
+class TestTar(FakeFileHttpServerBasedTestCase):
 
     scenarios = [
         ('TERM=dumb', dict(term='dumb')),
         ('TERM=vt100', dict(term='vt100')),
     ]
 
+    def setUp(self):
+        self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
+        super().setUp()
+
     @unittest.mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
-        self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(server.server_close)
-        self.addCleanup(server.shutdown)
-        server_thread.start()
-
         plugin_name = 'test_plugin'
         dest_dir = os.path.join('parts', plugin_name, 'src')
         os.makedirs(dest_dir)
         tar_file_name = 'test.tar'
         source = 'http://{}:{}/{file_name}'.format(
-            *server.server_address, file_name=tar_file_name)
+            *self.server.server_address, file_name=tar_file_name)
         tar_source = sources.Tar(source, dest_dir)
 
         tar_source.pull()
@@ -233,19 +227,7 @@ class TestTar(tests.TestCase):
         self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
 
 
-class TestZip(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=self.server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(self.server.server_close)
-        self.addCleanup(self.server.shutdown)
-        server_thread.start()
+class TestZip(FakeFileHttpServerBasedTestCase):
 
     @unittest.mock.patch('zipfile.ZipFile')
     def test_pull_zipfile_must_download_and_extract(self, mock_zip):
@@ -279,19 +261,10 @@ class TestZip(tests.TestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
 
-class TestDeb(tests.TestCase):
+class TestDeb(FakeFileHttpServerBasedTestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=self.server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(self.server.server_close)
-        self.addCleanup(self.server.shutdown)
-        server_thread.start()
 
         patcher = unittest.mock.patch('apt_inst.DebFile')
         self.mock_deb = patcher.start()

@@ -97,4 +97,3 @@ def is_dumb_terminal():
     is_stdout_tty = os.isatty(sys.stdout.fileno())
     is_term_dumb = os.environ.get('TERM', '') == 'dumb'
     return not is_stdout_tty or is_term_dumb
-
