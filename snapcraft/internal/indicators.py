@@ -71,25 +71,34 @@ def download_requests_stream(request_stream, destination, message=None):
     progress_bar.finish()
 
 
-def download_urllib_source(uri, destination, message=None):
+class UrllibDownloader(object):
     """This is a facility to download an uri with nice progress bars."""
 
-    def progress_cb(progress_bar, block_num, block_size, total_length):
-        if not progress_bar:
-            progress_bar = _init_progress_bar(
-                total_length, destination, message)
-            progress_bar.start()
+    def __init__(self, uri, destination, message=None):
+        self.uri = uri
+        self.destination = destination
+        self.message = message
+        self.progress_bar = None
+
+    def download(self):
+        urlretrieve(self.uri, self.destination, self._progress_callback)
+
+        if self.progress_bar:
+            self.progress_bar.finish()
+
+    def _progress_callback(self, block_num, block_size, total_length):
+        if not self.progress_bar:
+            self.progress_bar = _init_progress_bar(
+                total_length, self.destination, self.message)
+            self.progress_bar.start()
 
         total_read = block_num * block_size
-        progress_bar.update(
+        self.progress_bar.update(
             min(total_read, total_length) if total_length > 0 else total_read)
 
-    progress_bar = None
-    urlretrieve(
-        uri, destination, lambda n, s, l: progress_cb(progress_bar, n, s, l))
 
-    if progress_bar:
-        progress_bar.finish()
+def download_urllib_source(uri, destination, message=None):
+    UrllibDownloader(uri, destination, message).download()
 
 
 def is_dumb_terminal():
