@@ -74,19 +74,22 @@ def download_requests_stream(request_stream, destination, message=None):
 def download_urllib_source(uri, destination, message=None):
     """This is a facility to download an uri with nice progress bars."""
 
-    def reporthook(block_num, block_size, total_length):
-        if not hasattr(reporthook, "progress_bar"):
-            reporthook.progress_bar = _init_progress_bar(
+    def progress_cb(progress_bar, block_num, block_size, total_length):
+        if not progress_bar:
+            progress_bar = _init_progress_bar(
                 total_length, destination, message)
-            reporthook.progress_bar.start()
+            progress_bar.start()
 
         total_read = block_num * block_size
-        reporthook.progress_bar.update(
+        progress_bar.update(
             min(total_read, total_length) if total_length > 0 else total_read)
 
-    FancyURLopener().retrieve(uri, destination, reporthook)
-    if hasattr(reporthook, "progress_bar"):
-        reporthook.progress_bar.finish()
+    progress_bar = None
+    FancyURLopener().retrieve(
+        uri, destination, lambda n, s, l: progress_cb(progress_bar, n, s, l))
+
+    if progress_bar:
+        progress_bar.finish()
 
 
 def is_dumb_terminal():
@@ -94,3 +97,4 @@ def is_dumb_terminal():
     is_stdout_tty = os.isatty(sys.stdout.fileno())
     is_term_dumb = os.environ.get('TERM', '') == 'dumb'
     return not is_stdout_tty or is_term_dumb
+
