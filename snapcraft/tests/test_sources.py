@@ -16,10 +16,8 @@
 
 import copy
 import os
-import http.server
 import shutil
 import tarfile
-import threading
 import unittest.mock
 
 import fixtures
@@ -106,23 +104,7 @@ class TestFileBase(tests.TestCase):
             mock_url_opener().retrieve.call_args[0][1], file_src.file)
 
 
-class FakeFileHttpServerBasedTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), tests.fake_servers.FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=self.server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(self.server.server_close)
-        self.addCleanup(self.server.shutdown)
-        server_thread.start()
-
-
-class TestTar(FakeFileHttpServerBasedTestCase):
+class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
     scenarios = [
         ('TERM=dumb', dict(term='dumb')),
@@ -227,7 +209,7 @@ class TestTar(FakeFileHttpServerBasedTestCase):
         self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
 
 
-class TestZip(FakeFileHttpServerBasedTestCase):
+class TestZip(tests.FakeFileHTTPServerBasedTestCase):
 
     @unittest.mock.patch('zipfile.ZipFile')
     def test_pull_zipfile_must_download_and_extract(self, mock_zip):
@@ -261,7 +243,7 @@ class TestZip(FakeFileHttpServerBasedTestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
 
-class TestDeb(FakeFileHttpServerBasedTestCase):
+class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
 
     def setUp(self):
         super().setUp()
