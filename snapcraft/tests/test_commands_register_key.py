@@ -216,6 +216,7 @@ class RegisterKeyTestCase(tests.TestCase):
             'Cannot continue without logging in successfully.\n',
             self.fake_logger.output)
 
+    @mock.patch('snapcraft._store._login')
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -227,9 +228,11 @@ class RegisterKeyTestCase(tests.TestCase):
                                               mock_getpass, mock_check_output,
                                               mock_login,
                                               mock_get_account_information,
-                                              mock_register_key):
+                                              mock_register_key,
+                                              mock__login):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
+        mock__login.return_value = True
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         response.status_code = 500

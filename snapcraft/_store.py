@@ -50,6 +50,59 @@ def _get_data_from_snap_file(snap_path):
     return snap_yaml
 
 
+def _fail_login(msg=''):
+    logger.info(msg)
+    logger.info('Login failed.')
+    return False
+
+
+def _get_url_from_error(error):
+    if error.extra:
+        return error.extra[0].get('url')
+    return None
+
+
+def _check_dev_agreement_and_namespace_statuses(store):
+    """ Check the agreement and namespace statuses of the dev.
+    Fail if either of those conditions is not met.
+    Re-raise `StoreAccountInformationError` if we get an error and
+    the error is not either of these.
+    """
+    # Check account information for the `developer agreement` status.
+    try:
+        store.get_account_information()
+    except storeapi.errors.StoreAccountInformationError as e:
+        if storeapi.constants.MISSING_AGREEMENT == e.error:
+            # A precaution if store does not return new style error.
+            url = (_get_url_from_error(e) or
+                   storeapi.constants.UBUNTU_STORE_TOS_URL)
+            choice = input(
+                storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
+            if choice == 'y':
+                try:
+                    store.sign_developer_agreement(latest_tos_accepted=True)
+                except:
+                    raise storeapi.errors.NeedTermsSignedError(
+                            storeapi.constants.AGREEMENT_SIGN_ERROR.format(
+                                url))
+            else:
+                raise storeapi.errors.NeedTermsSignedError(
+                            storeapi.constants.AGREEMENT_ERROR)
+
+    # Now check account information for the `namespace` status.
+    try:
+        store.get_account_information()
+    except storeapi.errors.StoreAccountInformationError as e:
+        if storeapi.constants.MISSING_NAMESPACE in e.error:
+            # A precaution if store does not return new style error.
+            url = (_get_url_from_error(e) or
+                   storeapi.constants.UBUNTU_STORE_ACCOUNT_URL)
+            raise storeapi.errors.NeedTermsSignedError(
+                    storeapi.constants.NAMESPACE_ERROR.format(url))
+        else:
+            raise
+
+
 def _login(store, acls=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
@@ -59,19 +112,24 @@ def _login(store, acls=None, save=True):
         try:
             store.login(email, password, acls=acls, save=save)
             print()
-            logger.info(
-                'We strongly recommend enabling multi-factor authentication: '
-                'https://help.ubuntu.com/community/SSO/FAQs/2FA')
+            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
         except storeapi.errors.StoreTwoFactorAuthenticationRequired:
             one_time_password = input('Second-factor auth: ')
             store.login(
                 email, password, one_time_password=one_time_password,
                 acls=acls, save=save)
-    except (storeapi.errors.InvalidCredentialsError,
-            storeapi.errors.StoreAuthenticationError):
-        print()
-        logger.info('Login failed.')
-        return False
+
+        # Continue if agreement and namespace conditions are met.
+        _check_dev_agreement_and_namespace_statuses(store)
+
+    except storeapi.errors.InvalidCredentialsError:
+        return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
+    except storeapi.errors.StoreAuthenticationError:
+        return _fail_login(storeapi.constants.AUTHENTICATION_ERROR)
+    except storeapi.errors.StoreAccountInformationError:
+        return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
+    except storeapi.errors.NeedTermsSignedError as e:
+        return _fail_login(e.message)
     else:
         print()
         logger.info('Login successful.')
