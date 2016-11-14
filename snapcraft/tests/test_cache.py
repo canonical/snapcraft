@@ -66,3 +66,61 @@ parts:
 
         self.assertEqual('my-snap-name_0.1_amd64_10.snap', expected_snap)
         self.assertTrue(os.path.isfile(cached_snap_path))
+
+    def test_get_revision_from_snap_filename(self):
+        revision = 10
+        valid_snap_file = 'my-snap_0.1_amd64_{}.snap'.format(revision)
+
+        self.assertEqual(
+            revision,
+            cache.get_revision_from_snap_filename(valid_snap_file))
+
+        invalid_snap_file1 = 'cached-snap-without-revision_1.0_arm64.snap'
+        self.assertEqual(
+            None,
+            cache.get_revision_from_snap_filename(invalid_snap_file1))
+
+        invalid_snap_file2 = 'another-cached-snap-without-version_arm64.snap'
+        self.assertEqual(
+            None,
+            cache.get_revision_from_snap_filename(invalid_snap_file2))
+
+    def test_prune_snap_cache(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+        snap_cache = cache.SnapCache()
+
+        snap_revision = 9
+        snap_file = 'my-snap-name_0.1_amd64_{}.snap'.format(snap_revision)
+
+        # create dummy snap
+        open(os.path.join(self.path, snap_file), 'a').close()
+
+        # cache snap
+        snap_cache.cache(snap_file, snap_revision)
+
+        # create other cached snap revisions
+        cached_snaps = ['a-cached-snap_0.3_amd64_8.snap',
+                        'another-cached-snap_1.0_arm64_6.snap']
+
+        for cached_snap in cached_snaps:
+            open(os.path.join(snap_cache.snap_cache_dir, cached_snap),
+                 'a').close()
+
+        real_cached_snap = cache.rewrite_snap_filename_with_revision(
+            snap_file,
+            snap_revision
+        )
+
+        # confirm expected snap cached
+        self.assertTrue(
+            os.path.isfile(os.path.join(snap_cache.snap_cache_dir,
+                                        real_cached_snap)))
+        self.assertEqual(3, len(os.listdir(snap_cache.snap_cache_dir)))
+
+        # prune cached snaps
+        snap_cache.prune(snap_revision)
+
+        # confirm other snaps are purged
+        for snap in cached_snaps:
+            self.assertFalse(
+                os.path.isfile(os.path.join(snap_cache.snap_cache_dir, snap)))
