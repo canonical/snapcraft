@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016 Neal Gompa
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,24 +16,20 @@
 
 import os
 
-from testtools.matchers import (
-    DirExists,
-    FileContains,
-    FileExists,
-)
+from testtools.matchers import FileExists
 
 import integration_tests
 
 
-class LicenseTestCase(integration_tests.TestCase):
+class RpmSourceTestCase(integration_tests.TestCase):
 
-    def test_license(self):
-        project_dir = 'license'
-        self.run_snapcraft('prime', project_dir)
+    def test_stage_rpm(self):
+        project_dir = self.copy_project_to_tmp('simple-rpm')
+        self.run_snapcraft('stage', project_dir)
 
-        meta_dir = os.path.join(project_dir, 'prime', 'meta')
-        self.assertThat(meta_dir, DirExists())
-        license_asset = os.path.join(meta_dir, 'license.txt')
-        self.assertThat(license_asset, FileExists())
-        self.assertThat(license_asset, FileContains(
-            'This is a license.\n'))
+        self.assertThat(
+            os.path.join(project_dir, 'stage', 'bin', 'hello'),
+            FileExists())
+        self.assertThat(
+            os.path.join(project_dir, 'stage', 'usr', 'bin', 'world'),
+            FileExists())

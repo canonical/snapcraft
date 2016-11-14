@@ -89,11 +89,20 @@ class Client():
         self.conf = conf
         self.root_url = root_url
         self.session = requests.Session()
+        self._snapcraft_headers = {
+            'X-SNAPCRAFT-VERSION': snapcraft.__version__
+        }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
         """Overriding base class to handle the root url."""
         # Note that url may be absolute in which case 'root_url' is ignored by
         # urljoin.
+
+        if headers:
+            headers.update(self._snapcraft_headers)
+        else:
+            headers = self._snapcraft_headers
+
         final_url = urllib.parse.urljoin(self.root_url, url)
         response = self.session.request(
             method, final_url, headers=headers,
