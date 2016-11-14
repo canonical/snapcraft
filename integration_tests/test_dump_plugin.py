@@ -63,3 +63,8 @@ class DumpPluginTestCase(integration_tests.TestCase):
         """Download a file with Content-Encoding: gzip LP: #1611776"""
         project_dir = 'compressed-content-encoding'
         self.run_snapcraft('pull', project_dir)
+
+    def test_download_file_from_ftp_source(self):
+        """Download a file from a FTP source, LP: #1602323"""
+        project_dir = 'ftp-source'
+        self.run_snapcraft('pull', project_dir)
