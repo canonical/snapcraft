@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import hashlib
 import itertools
 import json
@@ -373,7 +374,8 @@ class SnapIndexClient(Client):
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
             headers = {}
-        headers.update({'Authorization': _macaroon_auth(self.conf)})
+        with contextlib.suppress(errors.InvalidCredentialsError):
+            headers.update({'Authorization': _macaroon_auth(self.conf)})
         response = self.request('GET', url, stream=stream,
                                 headers=headers, params=params)
         return response
