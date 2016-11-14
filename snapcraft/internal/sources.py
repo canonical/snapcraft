@@ -27,7 +27,7 @@ code for that part, and how to unpack it if necessary.
     directory tree or a tarball or a revision control repository
     ('git:...').
 
-  - source-type: git, bzr, hg, svn, tar, deb or zip
+  - source-type: git, bzr, hg, svn, tar, deb, rpm, or zip
 
     In some cases the source string is not enough to identify the version
     control system or compression algorithm. The source-type key can tell
@@ -83,6 +83,7 @@ import tarfile
 import zipfile
 
 import apt_inst
+import libarchive
 
 from snapcraft.internal import common
 from snapcraft import file_utils
@@ -474,6 +475,50 @@ class Deb(FileBase):
             os.remove(deb_file)
 
 
+class Rpm(FileBase):
+
+    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
+                 source_branch=None, source_depth=None):
+        super().__init__(source, source_dir, source_tag, source_commit,
+                         source_branch, source_depth)
+        if source_tag:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-tag for a rpm source')
+        elif source_commit:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-commit for a rpm source')
+        elif source_branch:
+            raise IncompatibleOptionsError(
+                'can\'t specify a source-branch for a rpm source')
+
+    def provision(self, dst, clean_target=True, keep_rpm=False):
+        rpm_file = os.path.join(self.source_dir, os.path.basename(self.source))
+
+        if clean_target:
+            tmp_rpm = tempfile.NamedTemporaryFile().name
+            shutil.move(rpm_file, tmp_rpm)
+            shutil.rmtree(dst)
+            os.makedirs(dst)
+            shutil.move(tmp_rpm, rpm_file)
+
+        # Ensure dst does not have trailing slash
+        dst = dst.rstrip('/')
+        # Open the RPM file and extract it to destination
+        with libarchive.file_reader(rpm_file) as rpm:
+            for rpm_file_entry in rpm:
+                # Binary RPM archive data has paths starting with ./ to support
+                # relocation if enabled in the building of RPMs
+                rpm_file_entrypath = rpm_file_entry.pathname.lstrip('./')
+                rpm_file_entrypath = rpm_file_entrypath.lstrip('/')
+                rpm_file_entry.pathname = os.path.join(dst, rpm_file_entrypath)
+                # XXX: libarchive frees the entry at the end of loop iterations
+                # See https://github.com/Changaco/python-libarchive-c/issues/43
+                libarchive.extract.extract_entries([rpm_file_entry])
+
+        if not keep_rpm:
+            os.remove(rpm_file)
+
+
 class Local(Base):
 
     def pull(self):
@@ -556,6 +601,7 @@ def get_required_packages(options):
 _source_handler = {
     'bzr': Bazaar,
     'deb': Deb,
+    'rpm': Rpm,
     'git': Git,
     'hg': Mercurial,
     'mercurial': Mercurial,
@@ -591,6 +637,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
         source_type = 'zip'
     elif source.endswith('deb'):
         source_type = 'deb'
+    elif source.endswith('rpm'):
+        source_type = 'rpm'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source')
     elif not os.path.isdir(source) and not ignore_errors:
