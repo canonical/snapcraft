@@ -293,8 +293,8 @@ class BuildPackagesTestCase(tests.TestCase):
 
         installable = self.get_installable_packages(self.test_packages)
         mock_check_call.assert_has_calls([
-            call("sudo apt-get -o Dpkg::Progress-Fancy=1 "
-                 "--no-install-recommends -y install".split() +
+            call('sudo apt-get -o Dpkg::Progress-Fancy=1 '
+                 '--no-install-recommends -y install'.split() +
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
@@ -306,7 +306,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
         installable = self.get_installable_packages(self.test_packages)
         mock_check_call.assert_has_calls([
-            call("sudo apt-mark auto".split() +
+            call('sudo apt-mark auto'.split() +
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
@@ -314,9 +314,9 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('subprocess.check_call')
     def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
-        error = snapcraft.repo.subprocess.CalledProcessError(101, "bad-cmd")
+        error = snapcraft.repo.subprocess.CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
-            lambda c, env: error if "apt-mark" in c else None
+            lambda c, env: error if 'apt-mark' in c else None
         self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
