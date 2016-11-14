@@ -277,7 +277,7 @@ class StoreClient():
     def get_validations(self, snap_id):
         return self.sca.get_validations(snap_id)
 
-    def sign_developer_agreement(self, latest_tos_accepted=True):
+    def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
 
 
@@ -612,7 +612,7 @@ class SCAClient(Client):
                                    response.content))
             raise errors.StoreChannelClosingError(response)
 
-    def sign_developer_agreement(self, latest_tos_accepted=True):
+    def sign_developer_agreement(self, latest_tos_accepted=False):
         auth = _macaroon_auth(self.conf)
         data = {'latest_tos_accepted': latest_tos_accepted}
         response = self.post(
