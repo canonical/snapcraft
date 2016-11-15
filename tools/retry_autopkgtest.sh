@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Retry the autopkgtest run in a pull request.
 # Arguments:
-#   release:      The name of the Ubuntu release to test.
-#   architecture: The architecture to test.
-#   pr_id:        The identifier of the pull request to test.
+#   pr: The identifier of the pull request to test.
+#   [release[:architecture] ...]: A list of the name of the Ubuntu release and
+#     architecture to test. By default, it will launch the tests in xenial:amd64. If only the release name is passed as an argument, amd64 will be used as the architecture.
+#
 # Environment variables:
 #   SNAPCRAFT_AUTOPKGTEST_SECRET: The secret to authenticate the test execution.
 
@@ -13,14 +14,14 @@ if [ -z "${SNAPCRAFT_AUTOPKGTEST_SECRET}" ]; then
     exit 1
 fi
 
-if [ "$#" != 3 ]; then
-    echo "Usage: "$0" release architecture pr_id"
+if [ "$#" -lt 1 ]; then
+    echo "Usage: "$0" <PR> [release[:architecture] ...]"
     exit 1
 fi
 
-release="$1"
-architecture="$2"
-pr_id="$3"
+pr="$1"
+shift
+testbeds=( "$@" )
 
 temp_dir="$(mktemp -d)"
 trap "rm -rf ${temp_dir}" EXIT
@@ -32,4 +33,13 @@ chmod +x "${temp_dir}/retry-github-test"
 # Save the secret to a file.
 echo "${SNAPCRAFT_AUTOPKGTEST_SECRET}" > "${temp_dir}/sec.txt"
 
-"${temp_dir}/retry-github-test" "https://api.github.com/repos/snapcore/snapcraft/pulls/${pr_id}" "https://autopkgtest.ubuntu.com/request.cgi?release=${release}&arch=${architecture}&package=snapcraft&ppa=snappy-dev%2Fsnapcraft-daily" "${temp_dir}/sec.txt"
+for testbed in "${testbeds[@]}"; do
+    IFS=':' read -r release architecture <<< "$testbed"
+    if [ "${architecture}" == "" ]; then
+        architecture='amd64'
+    fi
+    echo "Launching tests for the ${release} release in the ${architecture} architecture..."
+    "${temp_dir}/retry-github-test" "https://api.github.com/repos/snapcore/snapcraft/pulls/${pr}" "https://autopkgtest.ubuntu.com/request.cgi?release=${release}&arch=${architecture}&package=snapcraft&ppa=snappy-dev%2Fsnapcraft-daily" "${temp_dir}/sec.txt"
+done
+
+#
