@@ -33,6 +33,7 @@ fi
 pr="$1"
 shift
 testbeds=( "$@" )
+[ ${#testbeds[@]} -eq 0 ] && testbeds='xenial:amd64'
 
 temp_dir="$(mktemp -d)"
 trap "rm -rf ${temp_dir}" EXIT
@@ -50,5 +51,3 @@ for testbed in "${testbeds[@]}"; do
     echo "Launching tests for the ${release} release in the ${architecture} architecture..."
     "${temp_dir}/retry-github-test" "https://api.github.com/repos/snapcore/snapcraft/pulls/${pr}" "https://autopkgtest.ubuntu.com/request.cgi?release=${release}&arch=${architecture}&package=snapcraft&ppa=snappy-dev%2Fsnapcraft-daily" "${temp_dir}/sec.txt"
 done
-
-#
