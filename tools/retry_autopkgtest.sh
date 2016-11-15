@@ -9,7 +9,7 @@
 #   SNAPCRAFT_AUTOPKGTEST_SECRET: The secret to authenticate the test execution.
 
 if [ -z "${SNAPCRAFT_AUTOPKGTEST_SECRET}" ]; then
-    echo 'Set the secret to the environment variable $SNAPCRAFT_AUTOPKGTEST_SECRET.'
+    echo 'Set the secret to the environment variable SNAPCRAFT_AUTOPKGTEST_SECRET.'
     exit 1
 fi
 
