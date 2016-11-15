@@ -17,11 +17,17 @@
 
 import logging
 import os
+import sys
 from contextlib import contextmanager
 from subprocess import check_call, CalledProcessError
 from time import sleep
+import pylxd
 
 import petname
+from snapcraft.internal import (
+    common,
+    repo,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -41,31 +47,73 @@ class Cleanbuilder:
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
 
+    def _has_snap(self, snapname):
+        try:
+            common.run(['snap', 'list', snapname])
+            return True
+        except:
+            return False
+
+    def _find_lxd(self):
+        # FIXME: lp#1583259 Do this in snapcraft.yaml
+        if 'SNAP_NAME' in os.environ or self._has_snap('lxd'):
+            os.environ['LXD_DIR'] = '/var/snap/lxd/common/lxd'
+        elif repo.is_package_installed('lxd'):
+            pass
+        else:
+            raise EnvironmentError(
+                'The lxd package is not installed, in order to use `cleanbuild` '
+                'you must install lxd onto your system. Refer to the '
+                '"Ubuntu Desktop and Ubuntu Server" section on '
+                'https://linuxcontainers.org/lxd/getting-started-cli/'
+                '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
+
     def _push_file(self, src, dst):
-        check_call(['lxc', 'file', 'push',
-                    src, '{}/{}'.format(self._container_name, dst)])
+        client = pylxd.Client()
+        container = client.containers.get(self._container_name)
+        print('Pushed {} to {}'.format(src, dst))
+        with open(src, 'rb') as source_file:
+            data = source_file.read()
+            container.files.put(dst, data)
 
     def _pull_file(self, src, dst):
-        check_call(['lxc', 'file', 'pull',
-                    '{}/{}'.format(self._container_name, src), dst])
+        client = pylxd.Client()
+        container = client.containers.get(self._container_name)
+        print('Pulled {} from {}'.format(dst, src))
+        with open(dst, 'wb') as destination_file:
+            data = container.files.get(src)
+            destination_file.write(data)
 
     def _container_run(self, cmd):
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        client = pylxd.Client()
+        container = client.containers.get(self._container_name)
+        print('Executing {}'.format(cmd))
+        container.execute(cmd)
 
     @contextmanager
     def _create_container(self):
+        client = pylxd.Client()
         try:
-            check_call([
-                'lxc', 'launch', '-e',
-                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
-                self._container_name])
+            # ubuntu:xenial x86-64
+            container = client.containers.create(
+                { 'name': self._container_name,
+                  'ephemeral': True,
+                # 'architecture': self._project_options.deb_arch,
+                    'source': {
+                        'type': 'image',
+                        'fingerprint': '315bedd32580',
+                    }
+                }, wait=True)
+            container.start()
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.
             print('Stopping {}'.format(self._container_name))
-            check_call(['lxc', 'stop', '-f', self._container_name])
+            container = client.containers.get(self._container_name)
+            container.stop(force=True, wait=True)
 
     def execute(self):
+        self._find_lxd()
         with self._create_container():
             self._setup_project()
             self._wait_for_network()
