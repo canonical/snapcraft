@@ -20,6 +20,8 @@ import io
 import os
 import sys
 
+from snapcraft.internal.indicators import is_dumb_terminal
+
 
 class _StdoutFilter(logging.Filter):
 
@@ -56,7 +58,7 @@ def configure(logger_name=None, log_level=None):
     if not log_level:
         log_level = logging.INFO
 
-    if not os.isatty(1) and not sys.stdout.line_buffering:
+    if is_dumb_terminal() and not sys.stdout.line_buffering:
         # Line buffering makes logs easier to handle.
         sys.stdout.flush()
         try:

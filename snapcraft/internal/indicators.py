@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 
 from progressbar import (
     AnimatedMarker,
@@ -65,4 +66,6 @@ def download_requests_stream(request_stream, destination, message=None):
 
 def is_dumb_terminal():
     """Return True if on a dumb terminal."""
-    return not os.isatty(1) or os.environ.get('TERM', '') == 'dumb'
+    is_stdout_tty = os.isatty(sys.stdout.fileno())
+    is_term_dumb = os.environ.get('TERM', '') == 'dumb'
+    return not is_stdout_tty or is_term_dumb

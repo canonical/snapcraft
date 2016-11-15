@@ -39,6 +39,7 @@ from xdg import BaseDirectory
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import common
+from snapcraft.internal.indicators import is_dumb_terminal
 
 
 _BIN_PATHS = (
@@ -149,7 +150,7 @@ class _AptCache:
         apt.apt_pkg.config.clear('APT::Update::Post-Invoke-Success')
 
         self.progress = apt.progress.text.AcquireProgress()
-        if not os.isatty(1) or os.environ.get('TERM', '') == 'dumb':
+        if is_dumb_terminal():
             # Make output more suitable for logging.
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
