@@ -1034,7 +1034,7 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
         else:
             return None
         response = {
-            'download_url': urllib.parse.urljoin(
+            'anon_download_url': urllib.parse.urljoin(
                 'http://localhost:{}'.format(self.server.server_port),
                 'download-snap/test-snap.snap'),
             'download_sha512': sha512,

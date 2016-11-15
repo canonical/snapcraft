@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import hashlib
 import itertools
 import json
@@ -250,7 +251,7 @@ class StoreClient():
         package = self.cpi.get_package(snap_name, channel, arch)
         self._download_snap(
             snap_name, channel, arch, download_path,
-            package['download_url'], package['download_sha512'])
+            package['anon_download_url'], package['download_sha512'])
 
     def _download_snap(self, name, channel, arch, download_path,
                        download_url, expected_sha512):
@@ -363,7 +364,8 @@ class SnapIndexClient(Client):
 
         params = {
             'channel': channel,
-            'fields': 'status,download_url,download_sha512,snap_id,release',
+            'fields': 'status,anon_download_url,download_url,'
+                      'download_sha512,snap_id,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
@@ -375,7 +377,8 @@ class SnapIndexClient(Client):
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
             headers = {}
-        headers.update({'Authorization': _macaroon_auth(self.conf)})
+        with contextlib.suppress(errors.InvalidCredentialsError):
+            headers.update({'Authorization': _macaroon_auth(self.conf)})
         response = self.request('GET', url, stream=stream,
                                 headers=headers, params=params)
         return response

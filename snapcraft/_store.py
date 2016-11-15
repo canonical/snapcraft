@@ -499,7 +499,6 @@ def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
     store = storeapi.StoreClient()
     try:
-        with _requires_login():
             store.download(snap_name, channel, download_path, arch)
     except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
