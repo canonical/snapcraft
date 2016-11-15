@@ -97,10 +97,6 @@ class DownloadTestCase(tests.TestCase):
         self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
 
-    def test_download_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.download('dummy', 'dummy', 'dummy')
-
     def test_download_unexisting_snap_raises_exception(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.SnapNotFoundError) as e:
@@ -156,15 +152,6 @@ class DownloadTestCase(tests.TestCase):
         with self.assertRaises(errors.SHAMismatchError):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
-
-    def test_download_with_invalid_credentials_raises_exception(self):
-        conf = config.Config()
-        conf.set('macaroon', 'inval"id')
-        conf.save()
-        download_path = os.path.join(self.path, 'test-snap.snap')
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.download(
-                'test-snap', 'test-channel', download_path)
 
 
 class PushSnapBuildTestCase(tests.TestCase):
