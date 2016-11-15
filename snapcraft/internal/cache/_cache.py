@@ -41,5 +41,6 @@ class SnapcraftProjectCache(SnapcraftCache):
     """Project specific cache"""
     def __init__(self):
         super().__init__()
+        self.config = snapcraft.internal.load_config()
         self.project_cache_root = os.path.join(
             self.cache_root, snapcraft.internal.load_config().data['name'])

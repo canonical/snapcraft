@@ -400,6 +400,7 @@ def push(snap_filename, release_channels=None):
     if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
         snap_cache = cache.SnapCache()
         snap_cache.cache(snap_filename, result['revision'])
+        snap_cache.prune(result['revision'])
 
     if release_channels:
         release(snap_name, result['revision'], release_channels)
@@ -546,6 +547,14 @@ def history(snap_name, series, arch):
         headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
         tablefmt='plain')
     print(tabulated_revisions)
+
+
+def latest_rev(snap_name, series=None, arch=None):
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        history = store.get_snap_history(snap_name, series, arch)
+    return history[-1]
 
 
 def gated(snap_name):
