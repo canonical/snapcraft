@@ -46,9 +46,7 @@ echo "${SNAPCRAFT_AUTOPKGTEST_SECRET}" > "${temp_dir}/sec.txt"
 
 for testbed in "${testbeds[@]}"; do
     IFS=':' read -r release architecture <<< "$testbed"
-    if [ "${architecture}" == "" ]; then
-        architecture='amd64'
-    fi
+    [ -z "$architecture" ] && architecture='amd64'
     echo "Launching tests for the ${release} release in the ${architecture} architecture..."
     "${temp_dir}/retry-github-test" "https://api.github.com/repos/snapcore/snapcraft/pulls/${pr}" "https://autopkgtest.ubuntu.com/request.cgi?release=${release}&arch=${architecture}&package=snapcraft&ppa=snappy-dev%2Fsnapcraft-daily" "${temp_dir}/sec.txt"
 done
