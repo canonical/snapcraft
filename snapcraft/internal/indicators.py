@@ -36,16 +36,22 @@ def download_requests_stream(request_stream, destination, message=None):
     if not request_stream.headers.get('Content-Encoding', ''):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
 
-    if total_length:
-        progress_bar = ProgressBar(
-            widgets=[message,
-                     Bar(marker='=', left='[', right=']'),
-                     ' ', Percentage()],
-            maxval=total_length)
+    if total_length and is_dumb_terminal():
+        widgets = [message]
+        maxval = total_length
+    elif total_length and not is_dumb_terminal():
+        widgets = [message,
+                   Bar(marker='=', left='[', right=']'),
+                   ' ', Percentage()]
+        maxval = total_length
+    elif not total_length and is_dumb_terminal():
+        widgets = [message]
+        maxval = UnknownLength
     else:
-        progress_bar = ProgressBar(
-            widgets=[message, AnimatedMarker()],
-            maxval=UnknownLength)
+        widgets = [message, AnimatedMarker()]
+        maxval = UnknownLength
+
+    progress_bar = ProgressBar(widgets=widgets, maxval=maxval)
 
     total_read = 0
     progress_bar.start()
@@ -55,3 +61,8 @@ def download_requests_stream(request_stream, destination, message=None):
             total_read += len(buf)
             progress_bar.update(total_read)
     progress_bar.finish()
+
+
+def is_dumb_terminal():
+    """Return True if on a dumb terminal."""
+    return not os.isatty(1) or os.environ.get('TERM', '') == 'dumb'

@@ -149,7 +149,7 @@ class _AptCache:
         apt.apt_pkg.config.clear('APT::Update::Post-Invoke-Success')
 
         self.progress = apt.progress.text.AcquireProgress()
-        if not os.isatty(1):
+        if not os.isatty(1) or os.environ.get('TERM', '') == 'dumb':
             # Make output more suitable for logging.
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
