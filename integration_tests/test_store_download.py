@@ -28,7 +28,6 @@ class DownloadTestCase(integration_tests.StoreTestCase):
             # TODO add the snap to the staging server.
             self.skipTest('There is no ubuntu-core snap in the staging server')
         super().setUp()
-        self.login()
 
     def test_download_os_snap(self):
         project_dir = 'kernel-download'

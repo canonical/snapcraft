@@ -58,3 +58,8 @@ class DumpPluginTestCase(integration_tests.TestCase):
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728
         self.run_snapcraft('pull', project_dir)
+
+    def test_download_file_with_content_encoding_set(self):
+        """Download a file with Content-Encoding: gzip LP: #1611776"""
+        project_dir = 'compressed-content-encoding'
+        self.run_snapcraft('pull', project_dir)
