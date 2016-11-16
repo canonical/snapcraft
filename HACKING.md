@@ -1,3 +1,4 @@
+
 # Snapcraft
 
 ## Running
@@ -83,7 +84,7 @@ e.g.; to update the list for 16.04,
 
 Install the needed dependencies.
 
-    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev
+    sudo apt install libarchive13 python3-pip build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev squashfs-tools
 
 If installing to `PYTHONHOME` run:
 
