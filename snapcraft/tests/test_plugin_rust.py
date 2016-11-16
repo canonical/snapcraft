@@ -86,7 +86,7 @@ class RustPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        self.assertEqual(1, run_mock.call_count)
+        self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(["%s" % plugin._rustup,
                        "--prefix=%s" % plugin._rustpath,
