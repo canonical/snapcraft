@@ -95,10 +95,14 @@ def install_build_packages(packages):
             'DEBIAN_FRONTEND': 'noninteractive',
             'DEBCONF_NONINTERACTIVE_SEEN': 'true',
         })
-        subprocess.check_call(['sudo', 'apt-get', '-o',
-                               'Dpkg::Progress-Fancy=1',
-                               '--no-install-recommends', '-y',
-                               'install'] + new_packages, env=env)
+
+        apt_command = ['sudo', 'apt-get',
+                       '--no-install-recommends', '-y']
+        if not is_dumb_terminal:
+            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+        apt_command.append('install')
+
+        subprocess.check_call(apt_command + new_packages, env=env)
 
 
 class PackageNotFoundError(Exception):
