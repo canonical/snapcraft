@@ -400,6 +400,7 @@ def push(snap_filename, release_channels=None):
     if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
         snap_cache = cache.SnapCache()
         snap_cache.cache(snap_filename, result['revision'])
+        snap_cache.prune(keep_revision=result['revision'])
 
     if release_channels:
         release(snap_name, result['revision'], release_channels)
