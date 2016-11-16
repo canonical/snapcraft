@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import hashlib
 import itertools
 import json
@@ -89,11 +90,20 @@ class Client():
         self.conf = conf
         self.root_url = root_url
         self.session = requests.Session()
+        self._snapcraft_headers = {
+            'X-SNAPCRAFT-VERSION': snapcraft.__version__
+        }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
         """Overriding base class to handle the root url."""
         # Note that url may be absolute in which case 'root_url' is ignored by
         # urljoin.
+
+        if headers:
+            headers.update(self._snapcraft_headers)
+        else:
+            headers = self._snapcraft_headers
+
         final_url = urllib.parse.urljoin(self.root_url, url)
         response = self.session.request(
             method, final_url, headers=headers,
@@ -241,7 +251,7 @@ class StoreClient():
         package = self.cpi.get_package(snap_name, channel, arch)
         self._download_snap(
             snap_name, channel, arch, download_path,
-            package['download_url'], package['download_sha512'])
+            package['anon_download_url'], package['download_sha512'])
 
     def _download_snap(self, name, channel, arch, download_path,
                        download_url, expected_sha512):
@@ -276,6 +286,9 @@ class StoreClient():
 
     def get_validations(self, snap_id):
         return self.sca.get_validations(snap_id)
+
+    def sign_developer_agreement(self, latest_tos_accepted=False):
+        return self.sca.sign_developer_agreement(latest_tos_accepted)
 
 
 class SSOClient(Client):
@@ -351,7 +364,8 @@ class SnapIndexClient(Client):
 
         params = {
             'channel': channel,
-            'fields': 'status,download_url,download_sha512,snap_id,release',
+            'fields': 'status,anon_download_url,download_url,'
+                      'download_sha512,snap_id,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
@@ -363,7 +377,8 @@ class SnapIndexClient(Client):
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
             headers = {}
-        headers.update({'Authorization': _macaroon_auth(self.conf)})
+        with contextlib.suppress(errors.InvalidCredentialsError):
+            headers.update({'Authorization': _macaroon_auth(self.conf)})
         response = self.request('GET', url, stream=stream,
                                 headers=headers, params=params)
         return response
@@ -608,6 +623,19 @@ class SCAClient(Client):
                 '{} {}\n{}'.format(response.status_code, response.reason,
                                    response.content))
             raise errors.StoreChannelClosingError(response)
+
+    def sign_developer_agreement(self, latest_tos_accepted=False):
+        auth = _macaroon_auth(self.conf)
+        data = {'latest_tos_accepted': latest_tos_accepted}
+        response = self.post(
+            'agreement/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+
+        if not response.ok:
+            raise errors.DeveloperAgreementSignError(response)
+        return response.json()
 
 
 class StatusTracker:

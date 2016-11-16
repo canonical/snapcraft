@@ -14,17 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import io
 import logging
-from unittest import mock
 
 from snapcraft.internal import log
 from snapcraft import tests
 
+from snapcraft.tests import fixture_setup
 
-@mock.patch('os.isatty', return_value=True)
-@mock.patch('sys.stdout', new_callable=io.StringIO)
-@mock.patch('sys.stderr', new_callable=io.StringIO)
+
 class LogTestCase(tests.TestCase):
 
     def setUp(self):
@@ -35,8 +32,7 @@ class LogTestCase(tests.TestCase):
         self.error_color = log._ColoredFormatter.LEVEL_COLORS['ERROR']
         self.critical_color = log._ColoredFormatter.LEVEL_COLORS['CRITICAL']
 
-    def test_configure_must_send_messages_to_stdout(
-            self, mock_stderr, mock_stdout, mock_isatty):
+    def test_configure_must_send_messages_to_stdout(self):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
@@ -51,11 +47,12 @@ class LogTestCase(tests.TestCase):
                         '{}Test info\033[0m\n'
                         '{}Test warning\033[0m\n').format(
             self.info_color, self.warning_color)
-        self.assertEqual(expected_out, mock_stdout.getvalue())
-        self.assertEqual('', mock_stderr.getvalue())
 
-    def test_configure_must_send_errors_to_stderr(
-            self, mock_stderr, mock_stdout, mock_isatty):
+        self.assertEqual(expected_out,
+                         self.fake_terminal.getvalue())
+        self.assertEqual('', self.fake_terminal.getvalue(stderr=True))
+
+    def test_configure_must_send_errors_to_stderr(self):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
@@ -68,11 +65,12 @@ class LogTestCase(tests.TestCase):
         expected_err = ('{}Test error\033[0m\n'
                         '{}Test critical\033[0m\n').format(
             self.error_color, self.critical_color)
-        self.assertEqual(expected_err, mock_stderr.getvalue())
-        self.assertEqual('', mock_stdout.getvalue())
 
-    def test_configure_must_log_info_and_higher(
-            self, mock_stderr, mock_stdout, mock_isatty):
+        self.assertEqual(expected_err,
+                         self.fake_terminal.getvalue(stderr=True))
+        self.assertEqual('', self.fake_terminal.getvalue())
+
+    def test_configure_must_log_info_and_higher(self):
         logger_name = self.id()
         log.configure(logger_name)
         logger = logging.getLogger(logger_name)
@@ -89,11 +87,12 @@ class LogTestCase(tests.TestCase):
         expected_err = ('{}Test error\033[0m\n'
                         '{}Test critical\033[0m\n').format(
             self.error_color, self.critical_color)
-        self.assertEqual(expected_out, mock_stdout.getvalue())
-        self.assertEqual(expected_err, mock_stderr.getvalue())
 
-    def test_configure_must_support_debug(
-            self, mock_stderr, mock_stdout, mock_isatty):
+        self.assertEqual(expected_out, self.fake_terminal.getvalue())
+        self.assertEqual(expected_err,
+                         self.fake_terminal.getvalue(stderr=True))
+
+    def test_configure_must_support_debug(self):
         logger_name = self.id()
         log.configure(logger_name, log_level=logging.DEBUG)
         logger = logging.getLogger(logger_name)
@@ -111,12 +110,14 @@ class LogTestCase(tests.TestCase):
         expected_err = ('{}Test error\033[0m\n'
                         '{}Test critical\033[0m\n').format(
             self.error_color, self.critical_color)
-        self.assertEqual(expected_out, mock_stdout.getvalue())
-        self.assertEqual(expected_err, mock_stderr.getvalue())
 
-    def test_configure_must_support_no_tty(
-            self, mock_stderr, mock_stdout, mock_isatty):
-        mock_isatty.return_value = False
+        self.assertEqual(expected_out, self.fake_terminal.getvalue())
+        self.assertEqual(expected_err,
+                         self.fake_terminal.getvalue(stderr=True))
+
+    def test_configure_must_support_no_tty(self):
+        self.fake_terminal = fixture_setup.FakeTerminal(isatty=False)
+        self.useFixture(self.fake_terminal)
         logger_name = self.id()
         log.configure(logger_name, log_level=logging.DEBUG)
         logger = logging.getLogger(logger_name)
@@ -129,10 +130,10 @@ class LogTestCase(tests.TestCase):
 
         expected_out = ('Test debug\n'
                         'Test info\n'
-                        'Test warning\n').format(
-            self.info_color, self.warning_color)
+                        'Test warning\n')
         expected_err = ('Test error\n'
-                        'Test critical\n').format(
-            self.error_color, self.critical_color)
-        self.assertEqual(expected_out, mock_stdout.getvalue())
-        self.assertEqual(expected_err, mock_stderr.getvalue())
+                        'Test critical\n')
+
+        self.assertEqual(expected_out, self.fake_terminal.getvalue())
+        self.assertEqual(expected_err,
+                         self.fake_terminal.getvalue(stderr=True))

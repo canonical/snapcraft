@@ -97,10 +97,6 @@ class DownloadTestCase(tests.TestCase):
         self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
 
-    def test_download_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.download('dummy', 'dummy', 'dummy')
-
     def test_download_unexisting_snap_raises_exception(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.SnapNotFoundError) as e:
@@ -156,15 +152,6 @@ class DownloadTestCase(tests.TestCase):
         with self.assertRaises(errors.SHAMismatchError):
             self.client.download(
                 'test-snap-with-wrong-sha', 'test-channel', download_path)
-
-    def test_download_with_invalid_credentials_raises_exception(self):
-        conf = config.Config()
-        conf.set('macaroon', 'inval"id')
-        conf.save()
-        download_path = os.path.join(self.path, 'test-snap.snap')
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.download(
-                'test-snap', 'test-channel', download_path)
 
 
 class PushSnapBuildTestCase(tests.TestCase):
@@ -958,3 +945,45 @@ class GetSnapStatusTestCase(tests.TestCase):
             "Error fetching status of snap id 'my_snap_id' for 'any arch' "
             "in '16' series: 500 Server error.",
             str(e.exception))
+
+
+class SignDeveloperAgreementTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
+        self.client = storeapi.StoreClient()
+
+    def test_sign_dev_agreement_success(self):
+        self.client.login('dummy', 'test correct password')
+        response = {
+            "content": {
+                "latest_tos_accepted": True,
+                "tos_url": "http://fake-url.com",
+                "latest_tos_date": "2000-01-01",
+                "accepted_tos_date": "2010-10-10"
+                }
+            }
+        self.assertEqual(
+            response,
+            self.client.sign_developer_agreement(latest_tos_accepted=True))
+
+    def test_sign_dev_agreement_exception(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
+            self.client.sign_developer_agreement(False)
+        self.assertIn(
+            'There was an error while signing developer agreement.\n'
+            'Reason: \'Bad Request\'\n',
+            str(raised.exception))
+
+    def test_sign_dev_agreement_exception_store_down(self):
+        self.useFixture(fixtures.EnvironmentVariable('STORE_DOWN', '1'))
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
+            self.client.sign_developer_agreement(latest_tos_accepted=True)
+        self.assertEqual(
+            str(raised.exception),
+            'There was an error while signing developer agreement.\n'
+            'Reason: \'Internal Server Error\'\n'
+            'Text: \'Broken\'')

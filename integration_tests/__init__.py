@@ -51,6 +51,7 @@ class TestCase(testtools.TestCase):
             'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
         self.useFixture(fixtures.EnvironmentVariable(
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
+        self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
     def run_snapcraft(self, command, project_dir=None, yaml_dir=None):
         if isinstance(command, str):

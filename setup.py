@@ -39,6 +39,7 @@ setup(
     url='https://github.com/snapcore/snapcraft',
     packages=['snapcraft',
               'snapcraft.internal',
+              'snapcraft.internal.cache',
               'snapcraft.internal.states',
               'snapcraft.plugins',
               'snapcraft.storeapi'],
@@ -53,6 +54,7 @@ setup(
     install_requires=[
         'pyxdg',
         'requests',
+        'libarchive-c',
     ],
     test_suite='snapcraft.tests',
     license='GPL v3',

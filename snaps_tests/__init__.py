@@ -119,6 +119,8 @@ class SnapsTestCase(testtools.TestCase):
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')
 
+        self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
+
         temp_dir = fixtures.TempDir()
         self.useFixture(temp_dir)
         self.path = temp_dir.path

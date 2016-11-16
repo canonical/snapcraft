@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016 Neal Gompa
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,6 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal import cache             # noqa
-from snapcraft.internal import states            # noqa
-from snapcraft.internal.project_loader import load_config  # noqa
+import os
+
+from testtools.matchers import FileExists
+
+import integration_tests
+
+
+class RpmSourceTestCase(integration_tests.TestCase):
+
+    def test_stage_rpm(self):
+        project_dir = self.copy_project_to_tmp('simple-rpm')
+        self.run_snapcraft('stage', project_dir)
+
+        self.assertThat(
+            os.path.join(project_dir, 'stage', 'bin', 'hello'),
+            FileExists())
+        self.assertThat(
+            os.path.join(project_dir, 'stage', 'usr', 'bin', 'world'),
+            FileExists())

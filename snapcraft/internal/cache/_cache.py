@@ -16,22 +16,30 @@
 
 import os
 
-from testtools.matchers import FileExists
+from xdg import BaseDirectory
 
-import integration_tests
+import snapcraft
 
 
-class DownloadTestCase(integration_tests.StoreTestCase):
+class SnapcraftCache:
+    """Generic cache base class.
 
-    def setUp(self):
-        if os.getenv('TEST_STORE') == 'staging':
-            # TODO add the snap to the staging server.
-            self.skipTest('There is no ubuntu-core snap in the staging server')
-        super().setUp()
+    This class is responsible for cache location, notification and pruning.
+    """
+    def __init__(self):
+        self.cache_root = os.path.join(
+            BaseDirectory.xdg_cache_home, 'snapcraft')
 
-    def test_download_os_snap(self):
-        project_dir = 'kernel-download'
-        self.run_snapcraft('pull', project_dir)
-        self.assertThat(
-            os.path.join(project_dir, 'parts', 'kernel', 'src', 'os.snap'),
-            FileExists())
+    def cache(self):
+        raise NotImplementedError
+
+    def prune(self):
+        raise NotImplementedError
+
+
+class SnapcraftProjectCache(SnapcraftCache):
+    """Project specific cache"""
+    def __init__(self):
+        super().__init__()
+        self.project_cache_root = os.path.join(
+            self.cache_root, snapcraft.internal.load_config().data['name'])
