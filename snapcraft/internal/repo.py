@@ -85,8 +85,8 @@ def install_build_packages(packages):
                     new_packages.append(pkg)
             except KeyError as e:
                 raise EnvironmentError(
-                    "Could not find a required package in "
-                    "'build-packages': {}".format(str(e)))
+                    'Could not find a required package in '
+                    '\'build-packages\': {}'.format(str(e)))
     if new_packages:
         new_packages.sort()
         logger.info(
@@ -106,12 +106,12 @@ def install_build_packages(packages):
         subprocess.check_call(apt_command + new_packages, env=env)
 
         try:
-                subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                      new_packages, env=env)
+            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                  new_packages, env=env)
         except subprocess.CalledProcessError as e:
-                logger.warning(
-                    "Impossible to mark packages as auto-installed: {}"
-                    .format(e))
+            logger.warning(
+                'Impossible to mark packages as auto-installed: {}'
+                .format(e))
 
 
 class PackageNotFoundError(Exception):
