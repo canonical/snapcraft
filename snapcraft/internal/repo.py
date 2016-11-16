@@ -39,6 +39,7 @@ from xdg import BaseDirectory
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import common
+from snapcraft.internal.indicators import is_dumb_terminal
 
 
 _BIN_PATHS = (
@@ -94,10 +95,14 @@ def install_build_packages(packages):
             'DEBIAN_FRONTEND': 'noninteractive',
             'DEBCONF_NONINTERACTIVE_SEEN': 'true',
         })
-        subprocess.check_call(['sudo', 'apt-get', '-o',
-                               'Dpkg::Progress-Fancy=1',
-                               '--no-install-recommends', '-y',
-                               'install'] + new_packages, env=env)
+
+        apt_command = ['sudo', 'apt-get',
+                       '--no-install-recommends', '-y']
+        if not is_dumb_terminal:
+            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+        apt_command.append('install')
+
+        subprocess.check_call(apt_command + new_packages, env=env)
 
 
 class PackageNotFoundError(Exception):
@@ -149,7 +154,7 @@ class _AptCache:
         apt.apt_pkg.config.clear('APT::Update::Post-Invoke-Success')
 
         self.progress = apt.progress.text.AcquireProgress()
-        if not os.isatty(1):
+        if is_dumb_terminal():
             # Make output more suitable for logging.
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
