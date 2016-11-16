@@ -17,7 +17,6 @@
 
 import logging
 import io
-import os
 import sys
 
 from snapcraft.internal.indicators import is_dumb_terminal
