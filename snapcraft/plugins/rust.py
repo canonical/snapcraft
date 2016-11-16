@@ -54,6 +54,12 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self.build_packages.extend([
+            'build-essential',
+            'git',
+            'curl',
+            'file',
+        ])
         self._rustpath = os.path.join(self.partdir, "rust")
         self._rustc = os.path.join(self._rustpath, "bin", "rustc")
         self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
@@ -78,6 +84,7 @@ class RustPlugin(snapcraft.BasePlugin):
     def pull(self):
         super().pull()
         self._fetch_rust()
+        self._fetch_deps()
 
     def clean_pull(self):
         super().clean_pull()
@@ -104,3 +111,6 @@ class RustPlugin(snapcraft.BasePlugin):
         self.run(["%s" % self._rustup,
                   "--prefix=%s" % self._rustpath,
                   "--disable-sudo", "--save"])
+
+    def _fetch_deps(self):
+        self.run([self._cargo, "fetch"])
