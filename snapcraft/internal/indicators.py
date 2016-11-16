@@ -38,7 +38,7 @@ def download_requests_stream(request_stream, destination, message=None):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
 
     if total_length and is_dumb_terminal():
-        widgets = [message]
+        widgets = [message, ' ', Percentage()]
         maxval = total_length
     elif total_length and not is_dumb_terminal():
         widgets = [message,
