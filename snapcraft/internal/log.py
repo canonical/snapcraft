@@ -58,7 +58,7 @@ def configure(logger_name=None, log_level=None):
     if not log_level:
         log_level = logging.INFO
 
-    if is_dumb_terminal() and not sys.stdout.line_buffering:
+    if not is_dumb_terminal() and not sys.stdout.line_buffering:
         # Line buffering makes logs easier to handle.
         sys.stdout.flush()
         try:
@@ -75,10 +75,10 @@ def configure(logger_name=None, log_level=None):
     stderr_handler.addFilter(_StderrFilter())
     handlers = [stdout_handler, stderr_handler]
 
-    if os.isatty(1):
-        formatter = _ColoredFormatter(style='{')
-    else:
+    if is_dumb_terminal():
         formatter = logging.Formatter(style='{')
+    else:
+        formatter = _ColoredFormatter(style='{')
     logger = logging.getLogger(logger_name)
     for handler in handlers:
         handler.setFormatter(formatter)
