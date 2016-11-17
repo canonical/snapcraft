@@ -85,9 +85,10 @@ def install_build_packages(packages):
                     new_packages.append(pkg)
             except KeyError as e:
                 raise EnvironmentError(
-                    "Could not find a required package in "
-                    "'build-packages': {}".format(str(e)))
+                    'Could not find a required package in '
+                    '\'build-packages\': {}'.format(str(e)))
     if new_packages:
+        new_packages.sort()
         logger.info(
             'Installing build dependencies: %s', ' '.join(new_packages))
         env = os.environ.copy()
@@ -98,11 +99,19 @@ def install_build_packages(packages):
 
         apt_command = ['sudo', 'apt-get',
                        '--no-install-recommends', '-y']
-        if not is_dumb_terminal:
+        if not is_dumb_terminal():
             apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
         apt_command.append('install')
 
         subprocess.check_call(apt_command + new_packages, env=env)
+
+        try:
+            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                  new_packages, env=env)
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                'Impossible to mark packages as auto-installed: {}'
+                .format(e))
 
 
 class PackageNotFoundError(Exception):

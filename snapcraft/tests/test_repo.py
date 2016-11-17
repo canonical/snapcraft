@@ -19,7 +19,7 @@ import logging
 import os
 import stat
 import tempfile
-from unittest.mock import ANY, call, patch
+from unittest.mock import ANY, call, patch, MagicMock
 
 import snapcraft
 from snapcraft import repo
@@ -266,6 +266,76 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 
 
 class BuildPackagesTestCase(tests.TestCase):
+
+    test_packages = {'package-not-installed': MagicMock(installed=False),
+                     'package-installed': MagicMock(installed=True),
+                     'another-uninstalled': MagicMock(installed=False),
+                     'another-installed': MagicMock(installed=True),
+                     'repeated-package': MagicMock(installed=False),
+                     'repeated-package': MagicMock(installed=False)}
+
+    def get_installable_packages(self, pkgs):
+        return [p for p in pkgs if not pkgs[p].installed]
+
+    @patch('os.environ')
+    @patch('snapcraft.repo.apt')
+    def install_test_packages(self, test_pkgs, mock_apt, mock_env):
+        mock_env.copy.return_value = {}
+        mock_apt_cache = mock_apt.Cache.return_value
+        mock_apt_cache_with = mock_apt_cache.__enter__.return_value
+        mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
+
+        repo.install_build_packages(test_pkgs.keys())
+
+    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('subprocess.check_call')
+    def test_install_buid_package(
+            self, mock_check_call, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        self.install_test_packages(self.test_packages)
+
+        installable = self.get_installable_packages(self.test_packages)
+        mock_check_call.assert_has_calls([
+            call('sudo apt-get --no-install-recommends -y '
+                 '-o Dpkg::Progress-Fancy=1 install'.split() +
+                 sorted(set(installable)),
+                 env={'DEBIAN_FRONTEND': 'noninteractive',
+                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('subprocess.check_call')
+    def test_install_buid_package_in_dumb_terminal(
+            self, mock_check_call, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = True
+        self.install_test_packages(self.test_packages)
+
+        installable = self.get_installable_packages(self.test_packages)
+        mock_check_call.assert_has_calls([
+            call('sudo apt-get --no-install-recommends -y install'.split() +
+                 sorted(set(installable)),
+                 env={'DEBIAN_FRONTEND': 'noninteractive',
+                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('subprocess.check_call')
+    def test_install_buid_package_marks_auto_installed(self, mock_check_call):
+        self.install_test_packages(self.test_packages)
+
+        installable = self.get_installable_packages(self.test_packages)
+        mock_check_call.assert_has_calls([
+            call('sudo apt-mark auto'.split() +
+                 sorted(set(installable)),
+                 env={'DEBIAN_FRONTEND': 'noninteractive',
+                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('subprocess.check_call')
+    def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
+        error = snapcraft.repo.subprocess.CalledProcessError(101, 'bad-cmd')
+        mock_check_call.side_effect = \
+            lambda c, env: error if 'apt-mark' in c else None
+        self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
         with self.assertRaises(EnvironmentError) as raised:

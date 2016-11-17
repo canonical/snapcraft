@@ -68,12 +68,41 @@ class TestCase(testtools.TestCase):
             cwd = os.path.join(self.path, yaml_dir)
 
         try:
-            return subprocess.check_output(
+            snapcraft_output = subprocess.check_output(
                 [self.snapcraft_command, '-d'] + command, cwd=cwd,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
             raise
+
+        if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
+            self.addCleanup(self.run_apt_autoremove)
+
+        return snapcraft_output
+
+    def run_apt_autoremove(self):
+        deb_env = os.environ.copy()
+        deb_env.update({
+            'DEBIAN_FRONTEND': 'noninteractive',
+            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+        })
+
+        try:
+            autoremove_output = subprocess.check_output(
+                'sudo apt-get autoremove -y'.split(),
+                stderr=subprocess.STDOUT, env=deb_env)
+            self.addDetail(
+                'apt-get autoremove output',
+                content.text_content(autoremove_output.decode('utf-8')))
+        except subprocess.CalledProcessError as e:
+            self.addDetail(
+                'apt-get autoremove error', content.text_content(str(e)))
+            self.addDetail(
+                'apt-get autoremove output',
+                content.text_content(e.output.decode('utf-8')))
+
+            if os.getenv('SNAPCRAFT_APT_AUTOREMOVE_CHECK_FAIL', False):
+                raise
 
     def copy_project_to_tmp(self, project_dir):
         tmp_project_dir = os.path.join(self.path, project_dir)
