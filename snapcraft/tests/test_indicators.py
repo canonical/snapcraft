@@ -51,34 +51,32 @@ class DumbTerminalTests(tests.TestCase):
 class ProgressBarInitializationTests(tests.TestCase):
 
     scenarios = [
-        ('Terminal', dict(dumb=True)),
-        ('Dumb Terminal', dict(dumb=False)),
+        ('Terminal', {'dumb': True}),
+        ('Dumb Terminal', {'dumb': False}),
     ]
 
     @patch('snapcraft.internal.indicators.is_dumb_terminal')
-    def setUp(self, mock_is_dumb_terminal):
-        super().setUp()
+    def test_init_progress_bar_with_length(self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = self.dumb
-
-    def test_init_progress_bar_with_length(self):
         pb = indicators._init_progress_bar(10, "destination", "message")
         self.assertEqual(pb.maxval, 10)
         self.assertTrue("message" in pb.widgets)
         pb_widgets_types = [type(w) for w in pb.widgets]
-        self.assertTrue(type(progressbar.Bar()) in pb_widgets_types)
+        self.assertTrue(type(progressbar.Percentage()) in pb_widgets_types)
+        self.assertEqual(
+            type(progressbar.Bar()) in pb_widgets_types, not self.dumb)
 
-        if not self.dumb:
-            self.assertTrue(type(progressbar.Percentage()) in pb_widgets_types)
-
-    def test_init_progress_bar_with_unknown_length(self):
+    @patch('snapcraft.internal.indicators.is_dumb_terminal')
+    def test_init_progress_bar_with_unknown_length(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = self.dumb
         pb = indicators._init_progress_bar(0, "destination", "message")
         self.assertEqual(pb.maxval, progressbar.UnknownLength)
         self.assertTrue("message" in pb.widgets)
         pb_widgets_types = [type(w) for w in pb.widgets]
-
-        if not self.dumb:
-            self.assertTrue(
-                type(progressbar.AnimatedMarker()) in pb_widgets_types)
+        self.assertEqual(
+            type(progressbar.AnimatedMarker()) in pb_widgets_types,
+            not self.dumb)
 
 
 class IndicatorsDownloadTests(tests.FakeFileHTTPServerBasedTestCase):
