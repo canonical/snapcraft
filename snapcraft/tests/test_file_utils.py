@@ -48,7 +48,7 @@ class ReplaceInFileTestCase(tests.TestCase):
                 'path': os.path.join('bin', 'readonly'),
                 'contents': '#!/foo/bar/baz/python',
                 'expected': '#!/foo/bar/baz/python',
-                'readonly': True, # LP-1640305
+                'readonly': True,  # LP-1640305
             }
         ]
 
