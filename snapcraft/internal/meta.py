@@ -94,12 +94,12 @@ class _SnapPackaging:
         return snap_yaml
 
     def setup_assets(self):
+        # We do _setup_from_setup first since it is legacy and let the
+        # declarative items take over.
+        self._setup_from_setup()
+
         if 'icon' in self._config_data:
             # TODO: use developer.ubuntu.com once it has updated documentation.
-            logger.warning(
-                "DEPRECATED: 'icon' defined in snapcraft.yaml. Look at "
-                "https://github.com/snapcore/snapcraft/blob/master/docs/"
-                "metadata.md#snap-icon for more information")
             icon_ext = self._config_data['icon'].split(os.path.extsep)[1]
             icon_dir = os.path.join(self.meta_dir, 'gui')
             icon_path = os.path.join(icon_dir, 'icon.{}'.format(icon_ext))
@@ -108,8 +108,6 @@ class _SnapPackaging:
             if os.path.exists(icon_path):
                 os.unlink(icon_path)
             os.link(self._config_data['icon'], icon_path)
-
-        self._setup_from_setup()
 
         if self._config_data.get('type', '') == 'gadget':
             if not os.path.exists('gadget.yaml'):
