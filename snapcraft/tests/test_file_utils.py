@@ -43,12 +43,6 @@ class ReplaceInFileTestCase(tests.TestCase):
                 'path': os.path.join('bin', 'foo'),
                 'contents': 'foo',
                 'expected': 'foo',
-            },
-            {
-                'path': os.path.join('bin', 'readonly'),
-                'contents': '#!/foo/bar/baz/python',
-                'expected': '#!/foo/bar/baz/python',
-                'readonly': True,  # LP-1640305
             }
         ]
 
@@ -56,8 +50,6 @@ class ReplaceInFileTestCase(tests.TestCase):
             with self.subTest(key=file_info['path']):
                 with open(file_info['path'], 'w') as f:
                     f.write(file_info['contents'])
-                if 'readonly' in file_info:
-                    os.chmod(file_info['path'], 0o444)
 
                 file_utils.replace_in_file('bin', re.compile(r''),
                                            re.compile(r'#!.*python'),
