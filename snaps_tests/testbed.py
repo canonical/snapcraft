@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os
 import platform
 import shutil
 import subprocess
@@ -23,17 +22,6 @@ import time
 
 
 logger = logging.getLogger(__name__)
-
-
-def create_snappy_image(output_directory):
-    logger.info('Creating a snappy image to run the tests.')
-
-    image_path = os.path.join(output_directory, 'snappy.img')
-    subprocess.check_call(
-        ['sudo', 'ubuntu-device-flash', '--verbose',
-         'core', '15.04', '--channel', 'stable',
-         '--output', image_path, '--developer-mode'])
-    return image_path
 
 
 class LocalTestbed:
