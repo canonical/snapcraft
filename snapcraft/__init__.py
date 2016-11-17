@@ -145,7 +145,9 @@ of the choice of plugin.
   - stage-packages: [deb, deb, deb...]
 
     A list of Ubuntu packages must be unpacked in the `stage/` directory.
-    XXX before build? Before stage?
+    These packages will go into the final snap, but they will not be
+    available during building unless they are also explicitly described in
+    build-packages.
 
   - organize: YAML
 
