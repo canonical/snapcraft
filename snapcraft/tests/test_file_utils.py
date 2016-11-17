@@ -16,6 +16,7 @@
 
 import os
 import re
+import unittest.mock
 
 from snapcraft import file_utils
 from snapcraft import tests
@@ -57,6 +58,25 @@ class ReplaceInFileTestCase(tests.TestCase):
 
                 with open(file_info['path'], 'r') as f:
                     self.assertEqual(f.read(), file_info['expected'])
+
+    def test_replace_in_file_with_permission_error(self):
+        os.makedirs('bin')
+        file_info = {
+            'path': os.path.join('bin', 'readonly'),
+            'contents': '#!/foo/bar/baz/python',
+            'expected': '#!/foo/bar/baz/python',
+        }
+        with open(file_info['path'], 'w') as f:
+            f.write(file_info['contents'])
+
+        with unittest.mock.patch('snapcraft.file_utils.open') as mock_open:
+            mock_open.side_effect = PermissionError("")
+            file_utils.replace_in_file('bin', re.compile(r''),
+                                       re.compile(r'#!.*python'),
+                                       r'#!/usr/bin/env python')
+
+        with open(file_info['path'], 'r') as f:
+            self.assertEqual(f.read(), file_info['expected'])
 
 
 class TestLinkOrCopyTree(tests.TestCase):
