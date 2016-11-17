@@ -39,6 +39,7 @@ setup(
     url='https://github.com/snapcore/snapcraft',
     packages=['snapcraft',
               'snapcraft.internal',
+              'snapcraft.internal.cache',
               'snapcraft.internal.states',
               'snapcraft.plugins',
               'snapcraft.storeapi'],
