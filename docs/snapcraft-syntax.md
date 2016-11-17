@@ -60,17 +60,6 @@ contain.
       via `SIGTERM` (and `SIGKILL` if that doesn't work).
 * `icon` (string)
   Path to the icon that will be used for the snap.
-* `license` (string)
-  Path to a license file.
-* `license-agreement` (string)
-  Requires `license` to be set. The only valid value for this entry is
-  `explicit` which requires the license to be accepted for the snap to
-  install.
-  A good example for this one is the Sun JRE/JDK being bundled in a snap.
-* `license-version` (string)
-  Requires `license` to be set. The version for the license.
-  A change in version when `license-accept` is set to `explicit` requires
-  a license to be reaccepted.
 * `parts` (yaml subsection)
   A map of part names to their own part configuration. Order in the file is
   not relevant (to aid copy-and-pasting). Check out the

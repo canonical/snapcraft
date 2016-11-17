@@ -47,6 +47,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import os
 import re
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -154,6 +155,12 @@ class PythonPlugin(snapcraft.BasePlugin):
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
             self._run_pip(setup, download=True)
 
+    def clean_pull(self):
+        super().clean_pull()
+
+        if os.path.isdir(self._python_package_dir):
+            shutil.rmtree(self._python_package_dir)
+
     def _install_pip(self, download):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
@@ -224,16 +231,15 @@ class PythonPlugin(snapcraft.BasePlugin):
             for command in commands:
                 pip.download(**command)
         else:
-            wheels = []
             for command in commands:
-                wheels.extend(pip.wheel(**command))
-
-            installed = pip.list(self.run_output)
-            wheel_names = [os.path.basename(w).split('-')[0] for w in wheels]
-            # we want to avoid installing what is already provided in
-            # stage-packages
-            need_install = [k for k in wheel_names if k not in installed]
-            pip.install(need_install + ['--no-deps', '--upgrade'])
+                wheels = pip.wheel(**command)
+                installed = pip.list(self.run_output)
+                wheel_names = [os.path.basename(w).split('-')[0]
+                               for w in wheels]
+                # we want to avoid installing what is already provided in
+                # stage-packages
+                need_install = [k for k in wheel_names if k not in installed]
+                pip.install(need_install + ['--no-deps', '--upgrade'])
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):

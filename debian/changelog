@@ -1,3 +1,21 @@
+snapcraft (2.21) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * pluginhandler: parametrize call args (#868)
+  * python plugin: wheel and install in the proper order (#883)
+  * New upstream release 2.21 (LP: #1638513)
+
+  [ Stéphane Graber ]
+  * sources: Add new `source-commit` field for VCS sources (#877)
+
+  [ Kyle Fazzari ]
+  * python plugin: remove pip packages when cleaning pull. (#882)
+
+  [ Chris Wayne ]
+  * Add some further bash-completion (#872)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 02 Nov 2016 10:11:37 +0000
+
 snapcraft (2.20) xenial; urgency=medium
 
   [ Colin Watson ]
