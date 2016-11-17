@@ -14,13 +14,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fixtures
 import os
 import progressbar
 import requests
-from unittest.mock import patch
 
 from snapcraft import tests
 from snapcraft.internal import indicators
+from unittest.mock import patch
+
+
+class DumbTerminalTests(tests.TestCase):
+
+    @patch('os.isatty')
+    def setUp(self, mock_os_isatty):
+        super().setUp()
+        self.mock_os_isatty = mock_os_isatty
+        self.mock_os_isatty.return_value = True
+
+    def test_tty_terminal(self):
+        self.assertTrue(indicators.is_dumb_terminal())
+
+    def test_not_a_tty_terminal(self):
+        self.mock_os_isatty.return_value = False
+        self.assertFalse(indicators.is_dumb_terminal())
+
+    def test_dumb_terminal_environment(self):
+        self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
+        self.assertTrue(indicators.is_dumb_terminal())
+
+    def test_vt100_terminal_environmment(self):
+        self.useFixture(fixtures.EnvironmentVariable('TERM', 'vt100'))
+        self.assertFalse(indicators.is_dumb_terminal())
 
 
 class ProgressBarInitializationTests(tests.TestCase):
