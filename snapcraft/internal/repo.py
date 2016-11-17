@@ -99,7 +99,7 @@ def install_build_packages(packages):
 
         apt_command = ['sudo', 'apt-get',
                        '--no-install-recommends', '-y']
-        if not is_dumb_terminal:
+        if not is_dumb_terminal():
             apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
         apt_command.append('install')
 
