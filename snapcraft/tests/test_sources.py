@@ -49,8 +49,14 @@ class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 class TestTar(tests.TestCase):
 
+    scenarios = [
+        ('TERM=dumb', dict(term='dumb')),
+        ('TERM=vt100', dict(term='vt100')),
+    ]
+
     @unittest.mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
+        self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         server = http.server.HTTPServer(

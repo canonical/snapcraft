@@ -93,6 +93,13 @@ class _FakeStdout(io.StringIO):
         return 1
 
 
+class _FakeStderr(io.StringIO):
+    """A fake stderr using StringIO implementing the missing fileno attrib."""
+
+    def fileno(self):
+        return 2
+
+
 class _FakeTerminalSize:
 
     def __init__(self, columns=80):
@@ -115,13 +122,20 @@ class FakeTerminal(fixtures.Fixture):
         self.mock_stdout = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('sys.stderr', new_callable=_FakeStderr)
+        self.mock_stderr = patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('os.isatty')
         mock_isatty = patcher.start()
         mock_isatty.return_value = self.isatty
         self.addCleanup(patcher.stop)
 
-    def getvalue(self):
-        return self.mock_stdout.getvalue()
+    def getvalue(self, stderr=False):
+        if stderr:
+            return self.mock_stderr.getvalue()
+        else:
+            return self.mock_stdout.getvalue()
 
 
 class FakePartsWiki(fixtures.Fixture):
