@@ -18,8 +18,27 @@
 from snapcraft.internal.errors import SnapcraftError
 
 
-class DeltaGenerationError(Exception):
+class DeltaGenerationError(SnapcraftError):
     """A delta failed to generate."""
+
+    fmt = (
+        'Could not generate {delta_format} delta.\n'
+        'stdout log: {stdout_path}\n'
+        'stdout: \n{stdout}\n'
+        '---------'
+        'stderr log: {stderr_path}\n'
+        'stderr: \n{stderr}\n'
+        '---------'
+        'returncode: {returncode}'
+    )
+
+
+class DeltaGenerationTooBigError(SnapcraftError):
+    """The generated delta was too large."""
+
+    fmt = (
+        'delta generated was too large.'
+    )
 
 
 class DeltaFormatError(SnapcraftError):

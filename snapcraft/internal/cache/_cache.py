@@ -31,6 +31,9 @@ class SnapcraftCache:
     def cache(self):
         raise NotImplementedError
 
+    def get(self):
+        raise NotImplementedError
+
     def prune(self, *args, **kwargs):
         raise NotImplementedError
 

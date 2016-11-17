@@ -16,15 +16,15 @@
 
 import logging
 import os
+import time
 
 import fixtures
 
-from snapcraft import tests
-from snapcraft.internal import cache
-from snapcraft.internal.cache._snap import (
-    _rewrite_snap_filename_with_revision,
-    _get_revision_from_snap_filename
+from snapcraft import (
+    file_utils,
+    tests,
 )
+from snapcraft.internal import cache
 from snapcraft.tests import fixture_setup
 
 
@@ -48,55 +48,82 @@ class SnapCacheTestCase(tests.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-    def test_rewrite_snap_filename(self):
-        revision = 10
-        snap_file = 'my-snap-name_0.1_amd64.snap'
-
-        self.assertEqual(
-            'my-snap-name_0.1_amd64_10.snap',
-            _rewrite_snap_filename_with_revision(snap_file, revision))
-
     def test_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
         snap_cache = cache.SnapCache(project_name='my-snap-name')
         snap_file = 'my-snap-name_0.1_amd64.snap'
 
         # create dummy snap
-        open(os.path.join(self.path, snap_file), 'a').close()
+        snap_path = os.path.join(self.path, snap_file)
+        open(snap_path, 'a').close()
 
         # cache snap
-        cached_snap_path = snap_cache.cache(snap_file, 10)
+        cached_snap_path = snap_cache.cache(snap_file)
 
-        _, expected_snap = os.path.split(cached_snap_path)
-
-        self.assertEqual('my-snap-name_0.1_amd64_10.snap', expected_snap)
-        self.assertTrue(os.path.isfile(cached_snap_path))
-
-    def test_get_revision_from_snap_filename(self):
-        revision = 10
-        valid_snap_file = 'my-snap_0.1_amd64_{}.snap'.format(revision)
+        expected_snap_path = os.path.join(
+            snap_cache.snap_cache_root,
+            file_utils.calculate_sha3_384(snap_path)
+        )
 
         self.assertEqual(
-            revision,
-            _get_revision_from_snap_filename(valid_snap_file))
+            expected_snap_path,
+            cached_snap_path
+        )
+        self.assertTrue(os.path.isfile(cached_snap_path))
 
-        invalid_snap_list = [
-            'cached-snap-without-revision_1.0_arm64.snap',
-            'another-cached-snap-without-version_arm64.snap',
-            'a-snap-with-no-number-revision_1.0_arm64_xx.snap'
+    def test_snap_cache_get_latest(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+
+        snap_files = [
+            'my-snap-name_0.1_amd64.snap',
+            'my-snap-name_0.2_amd64.snap'
         ]
-        for invalid_snap_file in invalid_snap_list:
-            self.assertEqual(
-                None,
-                _get_revision_from_snap_filename(invalid_snap_file))
+
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
+
+        # create dummy cached snaps
+        for snap in snap_files:
+            snap_path = os.path.join(self.path, snap)
+            with open(snap_path, 'wb') as f:
+                time.sleep(0.01)
+                f.write(bytes(os.urandom(1024)))
+
+            last_cached = snap_cache.cache(snap_path)
+
+        latest_snap = snap_cache.get()
+
+        self.assertEqual(last_cached, latest_snap)
+
+    def test_snap_cache_get_by_hash(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+
+        snap_files = [
+            'my-snap-name_0.1_amd64.snap',
+            'my-snap-name_0.2_amd64.snap'
+        ]
+
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
+
+        # create dummy cached snaps
+        for snap in snap_files:
+            snap_path = os.path.join(self.path, snap)
+            with open(snap_path, 'wb') as f:
+                f.write(bytes(os.urandom(1024)))
+            snap_cache.cache(snap_path)
+
+        # get hash of snap
+        snap_hash = file_utils.calculate_sha3_384(snap_files[1])
+
+        # get snap by hash
+        snap = snap_cache.get(snap_hash=snap_hash)
+
+        self.assertEqual(
+            os.path.join(snap_cache.snap_cache_root, snap_hash),
+            snap
+        )
 
 
-class SnapCachedFilePruneTestCase(tests.TestCase):
-
-    scenarios = [
-        ('valid revision for prune', dict(valid_revision=True)),
-        ('invalid revision for prune', dict(valid_revision=False)),
-    ]
+class SnapCachePruneTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -108,53 +135,41 @@ class SnapCachedFilePruneTestCase(tests.TestCase):
         self.useFixture(fixture_setup.FakeTerminal())
         snap_cache = cache.SnapCache(project_name='my-snap-name')
 
-        snap_revision = 9
-        snap_file = 'my-snap-name_0.1_amd64.snap'
+        snap_files = {
+            'my-snap-name_0.1_amd64.snap': '',
+            'my-snap-name-0.2_amd64.snap': '',
+            'my-snap-name-0.3_amd64.snap': ''
+        }
 
-        # create dummy snap
-        open(os.path.join(self.path, snap_file), 'a').close()
-
-        # cache snap
-        snap_cache.cache(snap_file, snap_revision)
-
-        # create other cached snap revisions
-        to_be_deleted_files = []
-        cached_snaps = ['a-cached-snap_0.3_amd64_8.snap',
-                        'another-cached-snap_1.0_arm64_6.snap']
-
-        for cached_snap in cached_snaps:
-            cached_snap_path = os.path.join(snap_cache.snap_cache_dir,
-                                            cached_snap)
-            to_be_deleted_files.append(cached_snap_path)
-            open(cached_snap_path, 'a').close()
-
-        real_cached_snap = _rewrite_snap_filename_with_revision(snap_file,
-                                                                snap_revision)
+        # create dummy cached snaps and calculate hashes
+        for snap in snap_files:
+            snap_path = os.path.join(self.path, snap)
+            with open(snap_path, 'wb') as f:
+                time.sleep(0.01)
+                f.write(bytes(os.urandom(1024)))
+            snap_files[snap] = file_utils.calculate_sha3_384(snap_path)
+            snap_cache.cache(snap_path)
 
         # confirm expected snap cached
-        self.assertEqual(3, len(os.listdir(snap_cache.snap_cache_dir)))
-        self.assertTrue(
-            os.path.isfile(os.path.join(snap_cache.snap_cache_dir,
-                                        real_cached_snap)))
-
-        if not self.valid_revision:
-            self.assertRaises(
-                ValueError,
-                snap_cache.prune, keep_revision='invalid-revision')
-            self.assertRaises(
-                TypeError,
-                snap_cache.prune, keep_revision=None)
-        else:
-            # prune cached snaps
-            purned_file_list = snap_cache.prune(keep_revision=snap_revision)
-
-            # confirm other snaps are purged
-            self.assertEqual(set(purned_file_list), set(to_be_deleted_files))
-            for snap in purned_file_list:
-                self.assertFalse(os.path.isfile(snap))
-
-            # confirm the expected cached file still exist
-            self.assertEqual(1, len(os.listdir(snap_cache.snap_cache_dir)))
+        self.assertEqual(3, len(os.listdir(snap_cache.snap_cache_root)))
+        for _, snap_hash in snap_files.items():
             self.assertTrue(
-                os.path.isfile(os.path.join(snap_cache.snap_cache_dir,
-                                            real_cached_snap)))
+                os.path.isfile(os.path.join(snap_cache.snap_cache_root,
+                                            snap_hash)))
+
+        # prune
+        keep_hash = snap_files['my-snap-name-0.3_amd64.snap']
+        pruned_files = snap_cache.prune(keep_hash=keep_hash)
+
+        self.assertEqual(2, len(pruned_files))
+        self.assertIn(
+            os.path.join(
+                snap_cache.snap_cache_root,
+                snap_files['my-snap-name_0.1_amd64.snap']
+            ),
+            pruned_files
+        )
+        self.assertNotIn(
+            os.path.join(snap_cache.snap_cache_root, keep_hash),
+            pruned_files
+        )

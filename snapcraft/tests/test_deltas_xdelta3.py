@@ -68,11 +68,11 @@ class XDelta3TestCase(TestCase):
         snap_size = int(random.normalvariate(mean_size, size_stddev))
 
         scratchdir = self.useFixture(fixtures.TempDir()).path
-        self.source_path = os.path.join(scratchdir, 'source-snap')
-        self.target_path = os.path.join(scratchdir, 'target-snap')
+        self.source_file = os.path.join(scratchdir, 'source-snap')
+        self.target_file = os.path.join(scratchdir, 'target-snap')
         # source snap is completely random:
-        with open(self.source_path, 'wb') as source, \
-                open(self.target_path, 'wb') as target:
+        with open(self.source_file, 'wb') as source, \
+                open(self.target_file, 'wb') as target:
             for i in range(0, snap_size, 1024):
                 block = os.urandom(1024)
                 source.write(block)
@@ -161,8 +161,8 @@ class XDelta3TestCase(TestCase):
 
         self.assertThat(
             self.fake_logger.output,
-            m.Contains('Generating xdelta3 delta for {}->{}.'.format(
-                base_delta.source_path, base_delta.target_path)))
+            m.Contains('Generating xdelta3 delta for {}'.format(
+                os.path.basename(base_delta.target_path))))
         self.assertThat(
             self.fake_logger.output,
             m.Contains('xdelta3 delta diff generation'))
@@ -180,6 +180,7 @@ class XDelta3TestCase(TestCase):
         self.generate_snap_pair()
         base_delta = deltas.XDelta3Generator(
             source_path=self.source_file, target_path=self.target_file)
+
         self.assertThat(
             lambda: base_delta.make_delta(is_for_test=True),
             m.raises(deltas.errors.DeltaGenerationError)
