@@ -17,6 +17,9 @@ contain.
 * `description` (string)
   The description for the snap, this can and is expected to be a longer
   explanation for the snap.
+* `icon` (string)
+  Relative path in the snap to an icon to represent the package. It should
+  be a 512x512 PNG or SVG file.
 * `confinement` (string)
   The type of confinement supported by the snap. Can be either "devmode" (i.e.
   this snap doesn't support running under confinement) or "strict" (i.e. full
