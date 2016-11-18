@@ -65,6 +65,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self.build_packages.append('ca-certificates-java')
 
     def build(self):
         super().build()
