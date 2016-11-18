@@ -18,8 +18,6 @@ import os
 
 from xdg import BaseDirectory
 
-import snapcraft
-
 
 class SnapcraftCache:
     """Generic cache base class.
@@ -39,8 +37,7 @@ class SnapcraftCache:
 
 class SnapcraftProjectCache(SnapcraftCache):
     """Project specific cache"""
-    def __init__(self):
+    def __init__(self, *, project_name):
         super().__init__()
-        self.config = snapcraft.internal.load_config()
         self.project_cache_root = os.path.join(
-            self.cache_root, self.config.data['name'])
+            self.cache_root, project_name)
