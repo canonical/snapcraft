@@ -150,7 +150,7 @@ class GetSourceWithBranches(tests.TestCase):
         }),
     ]
 
-    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_command')
     def test_get_source_with_branch_and_tag_must_raise_error(self, mock_check):
         mock_check.side_effect = None
         options = tests.MockOptions('lp:source', self.source_type,
@@ -212,7 +212,7 @@ class GetSourceTestCase(tests.TestCase):
             'error': 'source-commit'})
     ]
 
-    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_command')
     def test_get_source_with_branch_must_raise_error(self, mock_check):
         mock_check.side_effect = None
         options = tests.MockOptions('lp:this', self.source_type,
@@ -231,7 +231,7 @@ class GetSourceTestCase(tests.TestCase):
 
 class BuildTestCase(tests.TestCase):
 
-    @unittest.mock.patch('snapcraft.internal.sources._check_for_package')
+    @unittest.mock.patch('snapcraft.internal.sources._check_for_command')
     def test_do_not_follow_links(self, mock_check):
         mock_check.side_effect = None
         options = tests.MockOptions(source='.')
