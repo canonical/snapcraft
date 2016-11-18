@@ -322,6 +322,13 @@ class PluginHandler:
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
         fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
+        # If we're priming and we don't have an explicit set of files to prime
+        # include the files from the stage step
+        if (step == 'prime' or step == 'snap') and fileset == ['*']:
+            stage_fileset = (
+                getattr(self.code.options, 'stage', ['*']) or ['*']).copy()
+            fileset = _combine_filesets(fileset, stage_fileset)
+
         fileset.extend(plugin_fileset)
 
         if step == 'stage':
@@ -986,3 +993,21 @@ def _organize_fileset(fileset_orig, organize_fileset):
             fileset.add(filepath)
 
     return fileset, dirs
+def _combine_filesets(fileset_1, fileset_2):
+    """Combine filesets if the first is an explicit or implicit wildcard."""
+
+    to_combine = False
+    # combine if fileset_1 has a wildcard
+    # XXX: should this only be a single wildcard and possibly excludes?
+    if '*' in fileset_1:
+        to_combine = True
+        fileset_1.remove('*')
+
+    # combine if fileset_1 is only excludes
+    if set([x[0] for x in fileset_1]) == set('-'):
+        to_combine = True
+
+    if to_combine:
+        return list(set(fileset_1 + fileset_2))
+    else:
+        return fileset_1
