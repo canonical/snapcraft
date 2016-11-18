@@ -82,7 +82,7 @@ daemons.
 
 Providing an icon for your snap is important, even for command-line
 applications, if for nothing else than discoverability from management
-interfaces such as store fronts like webdm.
+interfaces such as store fronts like snapweb.
 
 To use an icon to represent the snap, just declare a PNG or SVG in
 `snapcraft.yaml` through an `icon` entry with a path relative
