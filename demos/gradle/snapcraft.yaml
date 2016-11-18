@@ -1,0 +1,16 @@
+name: java-hello-gradle
+version: 0
+summary: A java example
+description: this is not much more than an example
+confinement: strict
+
+apps:
+ hello:
+   command: java -jar $SNAP/jar/snapcraft-gradle-demo-1.0.0.jar
+
+parts:
+    local:
+        plugin: gradle
+        source: .
+        gradle-options: [--debug]
+
