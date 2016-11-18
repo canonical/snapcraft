@@ -18,6 +18,7 @@ from collections import OrderedDict
 import copy
 import logging
 import os
+import platform
 import shutil
 import stat
 import sys
@@ -68,6 +69,13 @@ class TestPlugin(snapcraft.BasePlugin):
     @classmethod
     def get_build_properties(cls):
         return ['test-property']
+
+
+def get_other_arch():
+    if platform.machine() == 'armhf':
+        return 'amd64'
+    else:
+        return 'armhf'
 
 
 class PluginTestCase(tests.TestCase):
@@ -1615,7 +1623,8 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
+        project_options = snapcraft.ProjectOptions(
+            target_deb_arch=get_other_arch())
         self.handler = pluginhandler.load_plugin(
             part_name='test-part',
             plugin_name='nil',
@@ -1669,7 +1678,8 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
+        project_options = snapcraft.ProjectOptions(
+            target_deb_arch=get_other_arch())
         self.handler = pluginhandler.load_plugin(
             part_name='test-part',
             plugin_name='nil',
