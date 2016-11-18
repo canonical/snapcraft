@@ -97,7 +97,7 @@ your `snapcraft.yaml`.
 
 ### Desktop file
 
-The desktop file is the entry point to your snap for folks using GUI
+The desktop file is the entry point to your snap for end users in GUI
 environments.
 
     setup/gui/<app-name>.desktop
