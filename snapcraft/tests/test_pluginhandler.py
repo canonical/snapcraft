@@ -2359,3 +2359,30 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertEqual(
             raised.exception.__str__(), 'Cannot load magic header detection')
+
+    def test__combine_filesets_explicit_wildcard(self):
+        fileset_1 = ['*']
+        fileset_2 = ['a', 'b']
+
+        expected_fileset = ['a', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_implicit_wildcard(self):
+        fileset_1 = ['-a']
+        fileset_2 = ['a', 'b']
+
+        expected_fileset = ['a', '-a', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_no_wildcard(self):
+        fileset_1 = ['a']
+        fileset_2 = ['a', 'b']
+
+        expected_fileset = ['a']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
