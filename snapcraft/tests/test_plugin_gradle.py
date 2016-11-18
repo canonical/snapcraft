@@ -132,17 +132,17 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
     scenarios = [
         ('http proxy url', dict(
             env_var=('http_proxy', 'http://test_proxy'),
-            expected_args=['-Dhttp.proxyHost=http://test_proxy'])),
+            expected_args=['-Dhttp.proxyHost=test_proxy'])),
         ('http proxy url and port', dict(
             env_var=('http_proxy', 'http://test_proxy:3000'),
-            expected_args=['-Dhttp.proxyHost=http://test_proxy',
+            expected_args=['-Dhttp.proxyHost=test_proxy',
                            '-Dhttp.proxyPort=3000'])),
         ('https proxy url', dict(
             env_var=('https_proxy', 'https://test_proxy'),
-            expected_args=['-Dhttps.proxyHost=https://test_proxy'])),
+            expected_args=['-Dhttps.proxyHost=test_proxy'])),
         ('https proxy url and port', dict(
             env_var=('https_proxy', 'https://test_proxy:3000'),
-            expected_args=['-Dhttps.proxyHost=https://test_proxy',
+            expected_args=['-Dhttps.proxyHost=test_proxy',
                            '-Dhttps.proxyPort=3000'])),
     ]
 

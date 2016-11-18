@@ -101,8 +101,8 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             proxy = os.environ.get('{}_proxy'.format(var), False)
             if proxy:
                 parsed_url = urllib.parse.urlparse(proxy)
-                proxy_options.append('-D{}.proxyHost={}://{}'.format(
-                    var, parsed_url.scheme, parsed_url.hostname))
+                proxy_options.append('-D{}.proxyHost={}'.format(
+                    var, parsed_url.hostname))
                 if parsed_url.port:
                     proxy_options.append(
                         '-D{}.proxyPort={}'.format(var, parsed_url.port))
