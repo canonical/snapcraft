@@ -911,6 +911,128 @@ parts:
                     "followed by an optional asterisk\)")
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_hooks(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+
+hooks:
+  foo:
+    command: run-foo
+    plugs: [plug]
+  bar:
+    command: run-bar
+
+parts:
+  part1:
+    plugin: nil
+""")
+
+        c = project_loader.Config()
+
+        self.assertTrue(
+            'hooks' in c.data, "Expected parsed YAML to contain 'hooks'")
+        for hook in {'foo', 'bar'}:
+            self.assertTrue(
+                hook in c.data['hooks'],
+                'Expected parsed hooks to contain {!r}'.format(hook))
+
+            parsed_hook = c.data['hooks'][hook]
+            self.assertTrue(
+                'command' in parsed_hook,
+                "Expected parsed {!r} hook to contain 'command'".format(hook))
+            self.assertEqual(parsed_hook['command'], 'run-{}'.format(hook))
+
+        self.assertTrue(
+            'plugs' in c.data['hooks']['foo'],
+            "Expected parsed 'foo' hook to contain 'plugs'".format(hook))
+        self.assertEqual(len(c.data['hooks']['foo']['plugs']), 1)
+        self.assertEqual(c.data['hooks']['foo']['plugs'][0], 'plug')
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_yaml_hook_requires_command(self, mock_loadPlugin):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+
+hooks:
+  foo:
+    plugs: [plug]
+
+parts:
+  part1:
+    plugin: nil
+""")
+
+        with self.assertRaises(SnapcraftSchemaError) as raised:
+            project_loader.Config()
+
+        self.assertRegex(
+            raised.exception.message, "'command' is a required property")
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_valid_hook_names(self, mock_loadPlugin):
+        valid_hook_names = [
+            '1', 'a', 'aa', 'aaa', 'aaaa', 'Aa', 'aA', '1a', 'a1', '1-a',
+            'a-1', 'a-a', 'aa-a', 'a-aa', 'a-b-c', '0a-a', 'a-0a',
+        ]
+
+        for hook_name in valid_hook_names:
+            with self.subTest(key=hook_name):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: stable
+
+hooks:
+  {!r}:
+    command: foo
+
+parts:
+  part1:
+    plugin: nil
+""".format(hook_name))
+                c = project_loader.Config()
+                self.assertTrue(hook_name in c.data['hooks'])
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_yaml_invalid_hook_names(self, mock_loadPlugin):
+        invalid_hooks_names = [
+            '', '-', '--', 'a--a', 'a-', 'a ', ' a', 'a a', '日本語', '한글',
+            'ру́сский язы́к', 'ໄຂ່​ອີ​ສ​ເຕີ້', ':a', 'a:', 'a:a', '_a', 'a_',
+            'a_a',
+        ]
+
+        for hook_name in invalid_hooks_names:
+            with self.subTest(key=hook_name):
+                self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: stable
+
+hooks:
+  {!r}:
+    command: foo
+
+parts:
+  part1:
+    plugin: nil
+""".format(hook_name))
+                with self.assertRaises(SnapcraftSchemaError) as raised:
+                    project_loader.Config()
+
+                self.assertRegex(
+                    raised.exception.message,
+                    "The 'hooks' property does not match the required "
+                    "schema.*")
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
         self.make_snapcraft_yaml("""name: test
 version: "1"

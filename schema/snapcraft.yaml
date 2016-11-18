@@ -123,6 +123,25 @@ properties:
             uniqueItems: true
             items:
               type: string
+  hooks:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
+        type: object
+        required:
+          - command
+        additionalProperties: false
+        properties:
+          command:
+            type: string
+            description: command executed to run the hook
+          plugs:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
   parts:
     type: object
     minProperties: 1

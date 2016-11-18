@@ -1,0 +1,14 @@
+name: hooks
+version: 1.0
+summary: summary
+description: description
+confinement: strict
+
+hooks:
+  configure:
+    command: configure.sh
+
+parts:
+  copy-hooks:
+    plugin: dump
+    source: .
