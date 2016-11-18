@@ -72,10 +72,10 @@ class TestPlugin(snapcraft.BasePlugin):
 
 
 def get_other_arch():
-    if platform.machine() == 'armhf':
-        return 'amd64'
-    else:
+    if platform.machine() == 'x86_64':
         return 'armhf'
+    else:
+        return 'amd64'
 
 
 class PluginTestCase(tests.TestCase):
