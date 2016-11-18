@@ -16,11 +16,17 @@
 
 """Snapcraft integration for Travis (CI).
 
-This command currently depends on working `travis` CLI environment.
+This command currently depends on working `travis` CLI environment and
+a previously initialised Travis project (`.travis.yml`).
 
-It will acquire properly attenuated Store credentials and encrypt it for
-use in your testbed ('.travis_snapcraft.cfg'), only Travis has the private
-key to decrypt it.
+Make sure your Travis project is also configured to "Build pushes", this
+way every new push to `master` will result in a new snap revision on the
+Store.
+
+This operation will acquire properly attenuated Store credentials and
+encrypt it for use in your testbed (`.travis_snapcraft.cfg`), only Travis
+has the private key to decrypt it and will be only available to branches
+of the same repository, not forks.
 
 Then it will adjust Travis configuration ('.travis.yml') with the commands
 to decrypt credentials and install and run `snapcraft` to release your snap
@@ -33,9 +39,11 @@ See the example below::
     after_success:
     - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>
       -in .travis_snapcraft.cfg -out .snapcraft.cfg -d
-    - docker run -v $(pwd):$(pwd) -t ubuntu:xenial
+    - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      docker run -v $(pwd):$(pwd) -t ubuntu:xenial
       sh -c "apt update -qq && apt install snapcraft -y && cd $(pwd) &&
-      snapcraft && snapcraft push *.snap --release edge"
+      snapcraft && snapcraft push *.snap --release edge";
+      fi
 """
 import logging
 import subprocess
@@ -141,9 +149,11 @@ def enable():
             services.append('docker')
         # Append a docker-run command to build and release the snap.
         travis_conf['after_success'].append(
+            'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then '
             'docker run -v $(pwd):$(pwd) -t ubuntu:xenial '
             'sh -c "apt-update -qq && apt install snapcraft -y && '
-            'cd $(pwd) && snapcraft && snapcraft push *.snap --release edge"')
+            'cd $(pwd) && snapcraft && snapcraft push *.snap --release edge"; '
+            'fi')
         fd.seek(0)
         yaml.dump(travis_conf, fd, default_flow_style=False)
 

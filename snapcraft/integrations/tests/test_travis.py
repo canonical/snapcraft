@@ -164,9 +164,11 @@ class TravisTestCase(tests.TestCase):
             self.assertEqual(['docker'], travis_conf['services'])
             self.assertEqual([
                 '<travis-cli-decrypt>',
+                'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then '
                 'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
                 '"apt-update -qq && apt install snapcraft -y && cd $(pwd) && '
-                'snapcraft && snapcraft push *.snap --release edge"'
+                'snapcraft && snapcraft push *.snap --release edge"; '
+                'fi'
             ], travis_conf['after_success'])
 
         # Descriptive logging ...
