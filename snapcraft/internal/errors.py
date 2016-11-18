@@ -71,15 +71,15 @@ class SnapcraftPartConflictError(SnapcraftError):
                          file_paths='\n'.join(sorted(spaced_conflict_files)))
 
 
-class MissingPackageError(SnapcraftError):
+class MissingCommandError(SnapcraftError):
 
     fmt = (
-        'One or more required packages are missing, please install:'
-        ' {required_packages!r}'
+        'One or more required commands are missing, please install:'
+        ' {required_commands!r}'
     )
 
-    def __init__(self, required_packages):
-        super().__init__(required_packages=required_packages)
+    def __init__(self, required_commands):
+        super().__init__(required_commands=required_commands)
 
 
 class InvalidWikiEntryError(SnapcraftError):
