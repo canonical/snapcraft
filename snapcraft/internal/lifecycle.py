@@ -18,7 +18,6 @@ import contextlib
 import logging
 import os
 import shutil
-import sys
 import tarfile
 import time
 from subprocess import Popen, PIPE, STDOUT
@@ -36,6 +35,7 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
 
 
@@ -308,7 +308,10 @@ def snap(project_options, directory=None, output=None):
     with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
-        if os.isatty(sys.stdout.fileno()):
+        if is_dumb_terminal():
+            logger.info('Snapping {!r} ...'.format(snap['name']))
+            ret = proc.wait()
+        else:
             message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
                 snap['name'])
             progress_indicator = ProgressBar(
@@ -326,9 +329,6 @@ def snap(project_options, directory=None, output=None):
                 count += 1
                 time.sleep(.2)
                 ret = proc.poll()
-        else:
-            logger.info('Snapping {!r} ...'.format(snap['name']))
-            ret = proc.wait()
         print('')
         if ret != 0:
             logger.error(proc.stdout.read().decode('utf-8'))

@@ -323,9 +323,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     _DEV_API_PATH = '/dev/api/'
 
     def do_POST(self):
-        if self.server.fake_store.needs_refresh:
-            self._handle_needs_refresh()
-            return
+        self._handle_refresh()
         parsed_path = urllib.parse.urlparse(self.path)
         acl_path = urllib.parse.urljoin(self._DEV_API_PATH, 'acl/')
         account_key_path = urllib.parse.urljoin(
@@ -338,6 +336,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snap-push/')
         release_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snap-release/')
+        agreement_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'agreement/')
 
         if parsed_path.path.startswith(acl_path):
             permission = parsed_path.path[len(acl_path):].strip('/')
@@ -355,11 +355,18 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_upload_request()
         elif parsed_path.path.startswith(release_path):
             self._handle_release_request()
+        elif parsed_path.path.startswith(agreement_path):
+            self._handle_sign_request()
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
                     self.path))
             raise NotImplementedError(self.path)
+
+    def _handle_refresh(self):
+        if self.server.fake_store.needs_refresh:
+            self._handle_needs_refresh()
+            return
 
     def _handle_needs_refresh(self):
         self.send_response(401)
@@ -668,6 +675,42 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(data)
+
+    def _handle_sign_request(self):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length'])).decode('utf8')
+        data = json.loads(string_data)
+
+        if 'STORE_DOWN' in os.environ:
+            response_code = 500
+            content_type = 'text/plain'
+            response = b'Broken'
+        else:
+            if data['latest_tos_accepted'] is not True:
+                response_code = 400
+                content_type = 'application/json'
+                content = {
+                    "error_list": [{
+                        "message": "`latest_tos_accepted` must be `true`",
+                        "code": "bad-request",
+                        "extra": {"latest_tos_accepted": "true"}}]}
+                response = json.dumps(content).encode()
+            else:
+                response_code = 200
+                content_type = 'application/json'
+                content = {"content": {
+                    "latest_tos_accepted": True,
+                    "tos_url": 'http://fake-url.com',
+                    "latest_tos_date": '2000-01-01',
+                    "accepted_tos_date": '2010-10-10'
+                    }
+                }
+                response = json.dumps(content).encode()
+
+        self.send_response(response_code)
+        self.send_header('Content-Type', content_type)
+        self.end_headers()
+        self.wfile.write(response)
 
     # This function's complexity is correlated to the number of
     # url paths, no point in checking that.
@@ -991,7 +1034,7 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
         else:
             return None
         response = {
-            'download_url': urllib.parse.urljoin(
+            'anon_download_url': urllib.parse.urljoin(
                 'http://localhost:{}'.format(self.server.server_port),
                 'download-snap/test-snap.snap'),
             'download_sha512': sha512,

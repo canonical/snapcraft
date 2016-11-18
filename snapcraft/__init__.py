@@ -139,13 +139,17 @@ of the choice of plugin.
   - build-packages: [deb, deb, deb...]
 
     A list of Ubuntu packages to install on the build host before building
-    the part. The files from these packages will not go into the final snap
-    unless they are also explicitly described in stage-packages.
+    the part. The files from these packages typically will not go into the
+    final snap unless they contain libraries that are direct dependencies of
+    binaries within the snap (in which case they'll be discovered via `ldd`),
+    or they are explicitly described in stage-packages.
 
   - stage-packages: [deb, deb, deb...]
 
-    A list of Ubuntu packages must be unpacked in the `stage/` directory.
-    XXX before build? Before stage?
+    A list of Ubuntu packages to be downloaded and unpacked to join the part
+    before it's built. Note that these packages are not installed on the host.
+    Like the rest of the part, all files from these packages will make it into
+    the final snap unless filtered out via the `snap` keyword.
 
   - organize: YAML
 
@@ -224,6 +228,7 @@ of the choice of plugin.
 """
 
 from collections import OrderedDict                 # noqa
+import pkg_resources                                # noqa
 import yaml                                         # noqa
 
 from snapcraft._baseplugin import BasePlugin        # noqa
@@ -251,6 +256,16 @@ from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
 from snapcraft.internal import repo                 # noqa
+
+
+def _get_version():
+    try:
+        return pkg_resources.require('snapcraft')[0].version
+    except pkg_resources.DistributionNotFound:
+        return 'devel'
+
+
+__version__ = _get_version()
 
 
 # Setup yaml module globally

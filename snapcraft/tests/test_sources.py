@@ -17,10 +17,12 @@
 import copy
 import os
 import http.server
+import shutil
 import threading
 import unittest.mock
 
 import fixtures
+import libarchive
 
 from snapcraft.internal import (
     common,
@@ -47,8 +49,14 @@ class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 class TestTar(tests.TestCase):
 
+    scenarios = [
+        ('TERM=dumb', dict(term='dumb')),
+        ('TERM=vt100', dict(term='vt100')),
+    ]
+
     @unittest.mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
+        self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
         self.useFixture(fixtures.EnvironmentVariable(
             'no_proxy', 'localhost,127.0.0.1'))
         server = http.server.HTTPServer(
@@ -169,6 +177,47 @@ class TestDeb(tests.TestCase):
             self.assertEqual('Test fake compressed file', deb_file.read())
 
 
+class TestRpm(tests.TestCase):
+
+    def test_pull_rpm_file_must_extract(self):
+        rpm_file_name = 'test.rpm'
+        dest_dir = 'src'
+        os.makedirs(dest_dir)
+
+        test_file_path = os.path.join(self.path, 'test.txt')
+        open(test_file_path, 'w').close()
+        rpm_file_path = os.path.join(self.path, rpm_file_name)
+        os.chdir(self.path)
+        with libarchive.file_writer(rpm_file_path, 'cpio', 'gzip') as rpm:
+            rpm.add_files('test.txt')
+
+        rpm_source = sources.Rpm(rpm_file_path, dest_dir)
+        rpm_source.pull()
+
+        self.assertEqual(os.listdir(dest_dir), ['test.txt'])
+
+    def test_extract_and_keep_rpmfile(self):
+        rpm_file_name = 'test.rpm'
+        dest_dir = 'src'
+        os.makedirs(dest_dir)
+
+        test_file_path = os.path.join(self.path, 'test.txt')
+        open(test_file_path, 'w').close()
+        rpm_file_path = os.path.join(self.path, rpm_file_name)
+        os.chdir(self.path)
+        with libarchive.file_writer(rpm_file_path, 'cpio', 'gzip') as rpm:
+            rpm.add_files('test.txt')
+
+        rpm_source = sources.Rpm(rpm_file_path, dest_dir)
+        # This is the first step done by pull. We don't call pull to call the
+        # second step with a different keep_rpm value.
+        shutil.copy2(rpm_source.source, rpm_source.source_dir)
+        rpm_source.provision(dst=dest_dir, keep_rpm=True)
+
+        test_output_files = ['test.txt', rpm_file_name]
+        self.assertCountEqual(os.listdir(dest_dir), test_output_files)
+
+
 class SourceTestCase(tests.TestCase):
 
     def setUp(self):
@@ -180,7 +229,7 @@ class SourceTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
         patcher = unittest.mock.patch(
-            'snapcraft.internal.sources._check_for_package')
+            'snapcraft.internal.sources._check_for_command')
         self.mock_check = patcher.start()
         self.mock_check.side_effect = None
         self.addCleanup(patcher.stop)
@@ -737,7 +786,7 @@ class TestUri(tests.TestCase):
         super().setUp()
 
         patcher = unittest.mock.patch(
-            'snapcraft.internal.sources._check_for_package')
+            'snapcraft.internal.sources._check_for_command')
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -810,11 +859,11 @@ class TestUri(tests.TestCase):
                 mock_pull.reset_mock()
 
 
-class PackageCheckTestCase(tests.TestCase):
+class CommandCheckTestCase(tests.TestCase):
 
-    def test__check_for_package_not_installed(self):
-        with self.assertRaises(errors.MissingPackageError):
-            sources._check_for_package('not-a-package')
+    def test__check_for_command_not_installed(self):
+        with self.assertRaises(errors.MissingCommandError):
+            sources._check_for_command('missing-command')
 
-    def test__check_for_package_installed(self):
-        sources._check_for_package('sh')
+    def test__check_for_command_installed(self):
+        sources._check_for_command('sh')

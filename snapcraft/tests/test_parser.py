@@ -24,7 +24,7 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
-from snapcraft.internal.errors import MissingPackageError
+from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
@@ -1024,7 +1024,7 @@ parts: [main]
 
     @mock.patch('snapcraft.internal.sources.Bazaar.__init__')
     def test_missing_packages(self, mock_init):
-        mock_init.side_effect = MissingPackageError('bzr')
+        mock_init.side_effect = MissingCommandError('bzr')
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -1044,5 +1044,5 @@ parts: [main2]
         self.assertEqual(2, retval)
 
         self.assertTrue(
-            'One or more required packages are missing, please install'
+            'One or more required commands are missing, please install'
             in fake_logger.output, 'No missing package info in output')

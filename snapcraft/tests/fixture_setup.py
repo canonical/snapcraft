@@ -56,6 +56,11 @@ class TempXDG(fixtures.Fixture):
             new=os.path.join(self.path, '.local'))
         patcher.start()
         self.addCleanup(patcher.stop)
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(self.path, '.cache'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
         patcher_dirs = mock.patch(
             'xdg.BaseDirectory.xdg_config_dirs',
@@ -88,6 +93,13 @@ class _FakeStdout(io.StringIO):
         return 1
 
 
+class _FakeStderr(io.StringIO):
+    """A fake stderr using StringIO implementing the missing fileno attrib."""
+
+    def fileno(self):
+        return 2
+
+
 class _FakeTerminalSize:
 
     def __init__(self, columns=80):
@@ -110,13 +122,20 @@ class FakeTerminal(fixtures.Fixture):
         self.mock_stdout = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('sys.stderr', new_callable=_FakeStderr)
+        self.mock_stderr = patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('os.isatty')
         mock_isatty = patcher.start()
         mock_isatty.return_value = self.isatty
         self.addCleanup(patcher.stop)
 
-    def getvalue(self):
-        return self.mock_stdout.getvalue()
+    def getvalue(self, stderr=False):
+        if stderr:
+            return self.mock_stderr.getvalue()
+        else:
+            return self.mock_stdout.getvalue()
 
 
 class FakePartsWiki(fixtures.Fixture):
@@ -317,3 +336,11 @@ class TestStore(fixtures.Fixture):
             self.user_password = 'test correct password'
         else:
             self.user_password = os.getenv('TEST_USER_PASSWORD')
+
+
+class DeltaUploads(fixtures.Fixture):
+    """Enable the Delta Uploads Experimental flag."""
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable(
+            'DELTA_UPLOADS_EXPERIMENTAL', 'True'))
