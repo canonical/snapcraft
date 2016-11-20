@@ -47,7 +47,10 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    snaps_tests.config['skip-install'] = arguments['--skip-install']
+    if os.environ.get('container') == 'lxc':
+        snaps_tests.config['skip-install'] = True
+    else:
+        snaps_tests.config['skip-install'] = arguments['--skip-install']
     snaps_tests.config['ip'] = arguments['--ip']
     snaps_tests.config['port'] = arguments['--port']
     snaps_tests.config['filter'] = arguments['--filter']
