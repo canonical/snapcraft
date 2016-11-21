@@ -89,7 +89,7 @@ class RustPluginTestCase(tests.TestCase):
         self.assertEqual(2, run_mock.call_count)
 
         rustdir = os.path.join(plugin.partdir, 'rust')
-        run_mock.assert_has_calls([
+        run_mock.assert_has_calls([mock.call([
             os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
-            '--disable-sudo', '--save'],
-            [plugin._cargo, "fetch"])
+            '--disable-sudo', '--save']),
+            mock.call([plugin._cargo, "fetch"])])
