@@ -18,6 +18,16 @@ _snapcraft()
         _filedir -d
         return 0
         ;;
+    stage | pull | build | clean | prime)
+        if [ -d 'parts' ]; then
+            cd parts
+            _filedir -d
+            cd ..
+            return 0
+        fi
+        _filedir -d
+        return 0
+        ;;
     upload | push | sign-build)
         _filedir '*.snap'
         return 0

@@ -1283,6 +1283,12 @@ class StateTestCase(tests.TestCase):
 
         self.handler.mark_done('build')
         self.handler.stage()
+
+        bindir = os.path.join(self.handler.stagedir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
@@ -1290,7 +1296,7 @@ class StateTestCase(tests.TestCase):
             self.handler.snapdir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
-                 self.handler.snapdir),
+                 self.handler.snapdir, step='prime'),
             call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
                  follow_symlinks=True),
         ])
@@ -1747,26 +1753,26 @@ class CleanTestCase(tests.TestCase):
         handler1.prime()
         handler2.prime()
 
-        # Verify that part1's file has been primeped
+        # Verify that part1's file has been primed
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
 
-        # Verify that part2's file has been primeped
+        # Verify that part2's file has been primed
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
 
         # Now clean the prime step for part1
         handler1.clean_prime({})
 
-        # Verify that part1's file is no longer primeped
+        # Verify that part1's file is no longer primed
         self.assertFalse(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
-            "Expected part1's primeped files to be cleaned")
+            "Expected part1's primed files to be cleaned")
 
         # Verify that part2's file is still there
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
-            "Expected part2's primeped files to be untouched")
+            "Expected part2's primed files to be untouched")
 
     def test_clean_prime_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
@@ -1783,7 +1789,7 @@ class CleanTestCase(tests.TestCase):
         handler.stage()
         handler.prime()
 
-        # Verify that both files have been primeped
+        # Verify that both files have been primed
         self.assertTrue(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
         self.assertTrue(
@@ -1795,14 +1801,14 @@ class CleanTestCase(tests.TestCase):
         # Now clean the prime step for part1
         handler.clean_prime({})
 
-        # Verify that part1's file is no longer primeped
+        # Verify that part1's file is no longer primed
         self.assertFalse(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
             os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
-            'changed since it was primeped.')
+            'changed since it was primed.')
 
     def test_clean_old_prime_state(self):
         handler = pluginhandler.load_plugin(
@@ -2368,7 +2374,7 @@ class FindDependenciesTestCase(tests.TestCase):
             [('tmp/bin/app', 'bin/app'), ('tmp/share/app1', 'share/app1'),
              ('tmp/bin/app2', 'bin/app2')])
         obtained_fileset, obtained_dirs = pluginhandler._organize_fileset(
-            fileset, organize_fileset)
+            fileset, organize_fileset, '/install')
         expected_dirs = set()
 
         self.assertEqual(expected_fileset, obtained_fileset)

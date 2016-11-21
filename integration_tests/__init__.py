@@ -67,6 +67,8 @@ class TestCase(testtools.TestCase):
         if yaml_dir:
             cwd = os.path.join(self.path, yaml_dir)
 
+        print("JOE: cwd: {}".format(cwd))
+
         try:
             snapcraft_output = subprocess.check_output(
                 [self.snapcraft_command, '-d'] + command, cwd=cwd,

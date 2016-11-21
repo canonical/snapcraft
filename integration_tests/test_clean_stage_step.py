@@ -100,6 +100,7 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
 
         self.run_snapcraft(['clean', 'part1', '--step=stage'],
                            self.project_dir)
+        #raise Exception("JOE: 5")
         self.assertThat(os.path.join(self.stage_bindir, 'file1'),
                         Not(FileExists()))
         self.assertThat(os.path.join(self.stage_bindir, 'file2'), FileExists())
