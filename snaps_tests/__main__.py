@@ -35,6 +35,7 @@ Options:
 
 import logging
 import os
+import platform
 import sys
 
 import docopt
@@ -47,7 +48,7 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    if os.environ.get('container') == 'lxc':
+    if platform.machine() == 'armv7l':
         snaps_tests.config['skip-install'] = True
     else:
         snaps_tests.config['skip-install'] = arguments['--skip-install']
