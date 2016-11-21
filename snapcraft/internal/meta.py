@@ -208,17 +208,8 @@ class _SnapPackaging:
         if os.path.exists(wrappath):
             os.remove(wrappath)
 
-        wrapexec = '$SNAP/{}'.format(execparts[0])
-        if not os.path.exists(exepath) and '/' not in execparts[0]:
-            _find_bin(execparts[0], self._snap_dir)
-            wrapexec = execparts[0]
-        else:
-            with open(exepath, 'rb') as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b'#!':
-                    shebang = exefile.readline().strip().decode('utf-8')
+        wrapexec, shebang = _extract_binary_and_shebang(
+            execparts[0], self._snap_dir)
 
         self._write_wrap_exe(wrapexec, wrappath,
                              shebang=shebang, args=execparts[1:])
@@ -254,22 +245,28 @@ class _SnapPackaging:
 
         command_parts = shlex.split(command)
 
-        shebang = None
-        hook_exec = '$SNAP/{}'.format(command_parts[0])
-        exepath = os.path.join(self._snap_dir, command_parts[0])
-        if not os.path.exists(exepath) and '/' not in command_parts[0]:
-            _find_bin(command_parts[0], self._snap_dir)
-            hook_exec = command_parts[0]
-        else:
-            with open(exepath, 'rb') as f:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if f.read(2) == b'#!':
-                    shebang = f.readline().strip().decode('utf-8')
+        hook_exec, shebang = _extract_binary_and_shebang(
+            command_parts[0], self._snap_dir)
 
         self._write_wrap_exe(hook_exec, hook_path,
                              shebang=shebang, args=command_parts[1:])
+
+
+def _extract_binary_and_shebang(binary, basedir):
+    shebang = None
+    exepath = os.path.join(basedir, binary)
+    if not os.path.exists(exepath) and '/' not in binary:
+        _find_bin(binary, basedir)
+    else:
+        binary = '$SNAP/{}'.format(binary)
+        with open(exepath, 'rb') as f:
+            # If the file has a she-bang, the path might be pointing to
+            # the local 'parts' dir. Extract it so that _write_wrap_exe
+            # will have a chance to rewrite it.
+            if f.read(2) == b'#!':
+                shebang = f.readline().strip().decode('utf-8')
+
+    return (binary, shebang)
 
 
 def _find_bin(binary, basedir):
