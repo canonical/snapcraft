@@ -182,6 +182,20 @@ class _SnapPackaging:
 
         os.chmod(wrappath, 0o755)
 
+    def _wrap_apps(self, apps):
+        for app in apps:
+            cmds = (k for k in ('command', 'stop-command') if k in apps[app])
+            for k in cmds:
+                try:
+                    apps[app][k] = self._wrap_exe(
+                        apps[app][k], '{}-{}'.format(k, app))
+                except CommandError as e:
+                    raise EnvironmentError(
+                        'The specified command {!r} defined in the app {!r} '
+                        'does not exist or is not executable'.format(
+                            str(e), app))
+        return apps
+
     def _wrap_exe(self, command, basename=None):
         execparts = shlex.split(command)
         exepath = os.path.join(self._snap_dir, execparts[0])
@@ -211,6 +225,25 @@ class _SnapPackaging:
 
         return os.path.relpath(wrappath, self._snap_dir)
 
+    def _wrap_hooks(self, hooks):
+        for hook in hooks:
+            try:
+                command = hooks[hook]['command']
+
+                # The 'command' is for snapcraft only, not snapd. Remove it,
+                # and if that makes the dict empty, set it to None instead.
+                del hooks[hook]['command']
+                if len(hooks[hook]) == 0:
+                    hooks[hook] = None
+
+                self._generate_hook(hook, command)
+            except CommandError as e:
+                raise EnvironmentError(
+                    'The specified command {!r} defined in the hook {!r} '
+                    'does not exist or is not executable'.format(
+                        str(e), hook))
+        return hooks
+
     def _generate_hook(self, hook, command):
         hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
         os.makedirs(hooks_dir, exist_ok=True)
@@ -237,39 +270,6 @@ class _SnapPackaging:
 
         self._write_wrap_exe(hook_exec, hook_path,
                              shebang=shebang, args=command_parts[1:])
-
-    def _wrap_apps(self, apps):
-        for app in apps:
-            cmds = (k for k in ('command', 'stop-command') if k in apps[app])
-            for k in cmds:
-                try:
-                    apps[app][k] = self._wrap_exe(
-                        apps[app][k], '{}-{}'.format(k, app))
-                except CommandError as e:
-                    raise EnvironmentError(
-                        'The specified command {!r} defined in the app {!r} '
-                        'does not exist or is not executable'.format(
-                            str(e), app))
-        return apps
-
-    def _wrap_hooks(self, hooks):
-        for hook in hooks:
-            try:
-                command = hooks[hook]['command']
-
-                # The 'command' is for snapcraft only, not snapd. Remove it,
-                # and if that makes the dict empty, set it to None instead.
-                del hooks[hook]['command']
-                if len(hooks[hook]) == 0:
-                    hooks[hook] = None
-
-                self._generate_hook(hook, command)
-            except CommandError as e:
-                raise EnvironmentError(
-                    'The specified command {!r} defined in the hook {!r} '
-                    'does not exist or is not executable'.format(
-                        str(e), hook))
-        return hooks
 
 
 def _find_bin(binary, basedir):
