@@ -32,18 +32,14 @@ class ParserTestCase(integration_tests.TestCase):
 
     def call_parser(self, wiki_path, expect_valid, expect_output=True):
         part_file = os.path.join(self.path, 'parts.yaml')
-        args = [self.snapcraft_parser_command, '--index', wiki_path,
-                '--debug',
-                '--output', part_file]
+        args = ['--index', wiki_path, '--output', part_file]
 
         if expect_valid:
-            subprocess.check_call(args, stderr=subprocess.DEVNULL,
-                                  stdout=subprocess.DEVNULL)
+            self.run_snapcraft_parser(args)
         else:
             self.assertRaises(
                 subprocess.CalledProcessError,
-                subprocess.check_call, args, stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL)
+                self.run_snapcraft_parser, args)
 
         self.assertEqual(os.path.exists(part_file), expect_output)
 
