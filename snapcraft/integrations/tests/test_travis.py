@@ -26,7 +26,11 @@ from snapcraft import (
     tests,
 )
 from snapcraft.integrations import travis
-
+from snapcraft.internal.errors import (
+    RequiredCommandFailure,
+    RequiredCommandNotFound,
+    RequiredPathDoesNotExist,
+)
 
 test_snapcraft_yaml = """
 name: foo
@@ -58,13 +62,15 @@ class TravisTestCase(tests.TestCase):
     def test_enable_missing_travis_cli(self, mock_check_call):
         mock_check_call.side_effect = [FileNotFoundError()]
 
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(RequiredCommandNotFound) as raised:
             travis.enable()
 
         self.assertEqual([
             'Travis CLI (`travis`) is not available.',
-            'Please install it (e.g. `sudo gem install travis`) before '
-            'trying this command again.',
+            'Please install it before trying this command again:',
+            '',
+            '    $ sudo apt install ruby-dev ruby-ffi libffi-dev',
+            '    $ sudo gem install travis'
         ], str(raised.exception).splitlines())
 
     @mock.patch('subprocess.check_call')
@@ -72,7 +78,7 @@ class TravisTestCase(tests.TestCase):
         mock_check_call.side_effect = [
             subprocess.CalledProcessError(1, 'test')]
 
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(RequiredCommandFailure) as raised:
             travis.enable()
 
         self.assertEqual([
@@ -85,14 +91,15 @@ class TravisTestCase(tests.TestCase):
     def test_enable_missing_git(self, mock_check_call):
         mock_check_call.side_effect = [None, FileNotFoundError()]
 
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(RequiredCommandNotFound) as raised:
             travis.enable()
 
         self.assertEqual([
             'Git (`git`) is not available, this tool cannot verify its '
             'prerequisites.',
-            'Please install it (e.g. `sudo apt install git`) before '
-            'trying this command again.',
+            'Please install it before trying this command again:',
+            '',
+            '    $ sudo apt install git',
         ], str(raised.exception).splitlines())
 
     @mock.patch('subprocess.check_call')
@@ -100,7 +107,7 @@ class TravisTestCase(tests.TestCase):
         mock_check_call.side_effect = [
             None, subprocess.CalledProcessError(1, 'test')]
 
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(RequiredCommandFailure) as raised:
             travis.enable()
 
         self.assertEqual([
@@ -113,12 +120,12 @@ class TravisTestCase(tests.TestCase):
     def test_enable_missing_travis_setup(self, mock_check_call):
         mock_check_call.side_effect = [None, None]
 
-        with self.assertRaises(EnvironmentError) as raised:
+        with self.assertRaises(RequiredPathDoesNotExist) as raised:
             travis.enable()
 
         self.assertEqual([
-            'Travis project is not initialised for the current directory.',
-            'Please initialise Travis project (e.g. `travis init`) with '
+            'Travis project is not initialized for the current directory.',
+            'Please initialize Travis project (e.g. `travis init`) with '
             'appropriate parameters.',
         ], str(raised.exception).splitlines())
 
@@ -164,7 +171,7 @@ class TravisTestCase(tests.TestCase):
             self.assertEqual(['docker'], travis_conf['services'])
             self.assertEqual([
                 '<travis-cli-decrypt>',
-                'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then '
+                'if [ "$TRAVIS_BRANCH" = "master" ]; then '
                 'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
                 '"apt-update -qq && apt install snapcraft -y && cd $(pwd) && '
                 'snapcraft && snapcraft push *.snap --release edge"; '

@@ -24,7 +24,7 @@ _snapcraft()
         ;;
     enable-ci)
         COMREPLY=( travis )
-	return 0
+        return 0
         ;;
     *)
         ;;

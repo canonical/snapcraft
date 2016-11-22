@@ -62,19 +62,19 @@ class EnableCITestCase(tests.TestCase):
         self.assertEqual([
             'Snapcraft integration for Travis (CI).',
             '',
-            'This command currently depends on working `travis` CLI '
+            'This command currently depends on a working `travis` CLI '
             'environment and',
-            'a previously initialised Travis project (`.travis.yml`).',
+            'a previously initialized Travis project (`.travis.yml`).',
             '',
             'Make sure your Travis project is also configured to '
             '"Build pushes", this',
             'way every new push to `master` will result in a new snap '
-            'revision on the',
+            'revision in the',
             'Store.',
             '',
             'This operation will acquire properly attenuated Store '
             'credentials and',
-            'encrypt it for use in your testbed (`.travis_snapcraft.cfg`), '
+            'encrypt them for use in your testbed (`.travis_snapcraft.cfg`), '
             'only Travis',
             'has the private key to decrypt it and will be only available '
             'to branches',
@@ -82,7 +82,7 @@ class EnableCITestCase(tests.TestCase):
             '',
             "Then it will adjust Travis configuration ('.travis.yml') with "
             'the commands',
-            'to decrypt credentials and install and run `snapcraft` to '
+            'to decrypt credentials, install and run `snapcraft` to '
             'release your snap',
             '(inside a ubuntu:xenial docker container) during the '
             "'after_success' phase.",
@@ -94,7 +94,7 @@ class EnableCITestCase(tests.TestCase):
             '    after_success:',
             '    - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>',
             '      -in .travis_snapcraft.cfg -out .snapcraft.cfg -d',
-            '    - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then',
+            '    - if [ "$TRAVIS_BRANCH" = "master" ]; then',
             '      docker run -v $(pwd):$(pwd) -t ubuntu:xenial',
             '      sh -c "apt update -qq && apt install snapcraft -y && '
             'cd $(pwd) &&',

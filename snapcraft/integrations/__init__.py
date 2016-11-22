@@ -19,10 +19,7 @@
 Defines 'enable-ci' command infrastructure to support multiple integrations
 systems in an isolated form.
 """
-from contextlib import contextmanager
 import importlib
-import os
-import subprocess
 
 
 SUPPORTED_CI_SYSTEMS = (
@@ -50,34 +47,5 @@ def enable_ci(ci_system):
 
     print(module.__doc__)
 
-    if input('Continue (y/N):') == 'y':
+    if input('Continue (y/N): ') == 'y':
         module.enable()
-
-
-@contextmanager
-def requires_command_success(command, not_found_err=None, failure_err=None):
-    if isinstance(command, str):
-        cmd_list = command.split()
-    else:
-        raise TypeError('command must be a string.')
-    not_found_err = not_found_err or EnvironmentError(
-        '`{}` not found.'.format(cmd_list[0]))
-    failure_err = failure_err or EnvironmentError(
-        '`{}` failed.'.format(command))
-    try:
-        subprocess.check_call(
-            cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except FileNotFoundError as err:
-        raise not_found_err
-    except subprocess.CalledProcessError as err:
-        raise failure_err
-    yield
-
-
-@contextmanager
-def requires_path_exists(path, error_message=None):
-    if error_message is None:
-        error_message = 'Required path does not exist: {}'.format(path)
-    if not os.path.exists(path):
-        raise EnvironmentError(error_message)
-    yield

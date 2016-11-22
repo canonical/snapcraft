@@ -16,20 +16,20 @@
 
 """Snapcraft integration for Travis (CI).
 
-This command currently depends on working `travis` CLI environment and
-a previously initialised Travis project (`.travis.yml`).
+This command currently depends on a working `travis` CLI environment and
+a previously initialized Travis project (`.travis.yml`).
 
 Make sure your Travis project is also configured to "Build pushes", this
-way every new push to `master` will result in a new snap revision on the
+way every new push to `master` will result in a new snap revision in the
 Store.
 
 This operation will acquire properly attenuated Store credentials and
-encrypt it for use in your testbed (`.travis_snapcraft.cfg`), only Travis
+encrypt them for use in your testbed (`.travis_snapcraft.cfg`), only Travis
 has the private key to decrypt it and will be only available to branches
 of the same repository, not forks.
 
 Then it will adjust Travis configuration ('.travis.yml') with the commands
-to decrypt credentials and install and run `snapcraft` to release your snap
+to decrypt credentials, install and run `snapcraft` to release your snap
 (inside a ubuntu:xenial docker container) during the 'after_success' phase.
 See the example below::
 
@@ -39,7 +39,7 @@ See the example below::
     after_success:
     - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>
       -in .travis_snapcraft.cfg -out .snapcraft.cfg -d
-    - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+    - if [ "$TRAVIS_BRANCH" = "master" ]; then
       docker run -v $(pwd):$(pwd) -t ubuntu:xenial
       sh -c "apt update -qq && apt install snapcraft -y && cd $(pwd) &&
       snapcraft && snapcraft push *.snap --release edge";
@@ -51,7 +51,7 @@ import tempfile
 import yaml
 
 from snapcraft import storeapi
-from snapcraft.integrations import (
+from snapcraft.file_utils import (
     requires_command_success,
     requires_path_exists,
 )
@@ -84,30 +84,32 @@ def _encrypt_config(config_path):
 
 @requires_command_success(
     'travis version',
-    EnvironmentError(
-        'Travis CLI (`travis`) is not available.\n'
-        'Please install it (e.g. `sudo gem install travis`) '
-        'before trying this command again.'),
-    EnvironmentError(
-        'Travis CLI (`travis version`) is not functional.\n'
+    not_found_fmt=(
+        'Travis CLI (`{cmd_list[0]}`) is not available.\n'
+        'Please install it before trying this command again:\n\n'
+        '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
+        '    $ sudo gem install travis\n'),
+    failure_fmt=(
+        'Travis CLI (`{command}`) is not functional.\n'
         'Make sure it works correctly in your system '
         'before trying this command again.'))
 @requires_command_success(
     'git status',
-    EnvironmentError(
-        'Git (`git`) is not available, this tool cannot verify '
+    not_found_fmt=(
+        'Git (`{cmd_list[0]}`) is not available, this tool cannot verify '
         'its prerequisites.\n'
-        'Please install it (e.g. `sudo apt install git`) '
-        'before trying this command again.'),
-    EnvironmentError(
+        'Please install it before trying this command again:\n\n'
+        '    $ sudo apt install git\n'),
+    failure_fmt=(
         'The current directory is not a Git repository.\n'
         'Please switch to the desired project repository where '
         'Travis should be enabled.'))
 @requires_path_exists(
     TRAVIS_CONFIG_FILENAME,
-    'Travis project is not initialised for the current directory.\n'
-    'Please initialise Travis project (e.g. `travis init`) with '
-    'appropriate parameters.')
+    error_fmt=(
+        'Travis project is not initialized for the current directory.\n'
+        'Please initialize Travis project (e.g. `travis init`) with '
+        'appropriate parameters.'))
 def enable():
     series = storeapi.constants.DEFAULT_SERIES
     project_config = load_config()
@@ -149,7 +151,7 @@ def enable():
             services.append('docker')
         # Append a docker-run command to build and release the snap.
         travis_conf['after_success'].append(
-            'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then '
+            'if [ "$TRAVIS_BRANCH" = "master" ]; then '
             'docker run -v $(pwd):$(pwd) -t ubuntu:xenial '
             'sh -c "apt-update -qq && apt install snapcraft -y && '
             'cd $(pwd) && snapcraft && snapcraft push *.snap --release edge"; '
