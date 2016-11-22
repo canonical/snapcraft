@@ -29,50 +29,38 @@ class TestParser(integration_tests.TestCase):
         fixture = fixture_setup.FakePartsWiki()
         self.useFixture(fixture)
 
-        args = [self.snapcraft_parser_command, '--index',
+        args = ['--index',
                 fixture.fake_parts_wiki_fixture.url,
-                '--debug', '--output', 'parts.yaml']
-        subprocess.check_call(args, stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
+                '--output', 'parts.yaml']
+        self.run_snapcraft_parser(args)
 
         self.assertTrue(os.path.exists('parts.yaml'))
 
     def test_hidden_snapcraft_yaml(self):
         """Test hidden .snapcraft.yaml file."""
-
-        args = [self.snapcraft_parser_command, '--index',
+        args = ['--index',
                 os.path.join(os.path.dirname(__file__), 'hidden_parts_wiki'),
-                '--debug',
                 '--output', 'parts.yaml']
-        subprocess.check_call(args, stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
+        self.run_snapcraft_parser(args)
 
         self.assertTrue(os.path.exists('parts.yaml'))
 
     def test_both_snapcraft_yaml(self):
         """Test hidden .snapcraft.yaml file."""
-
-        args = [self.snapcraft_parser_command, '--index',
+        args = ['--index',
                 os.path.join(os.path.dirname(__file__), 'both_parts_wiki'),
-                '--debug',
                 '--output', 'parts.yaml']
         self.assertRaises(
-            subprocess.CalledProcessError,
-            subprocess.check_call, args, stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL)
+            subprocess.CalledProcessError, self.run_snapcraft_parser, args)
 
         self.assertTrue(os.path.exists('parts.yaml'))
 
     def test_missing_snapcraft_yaml(self):
         """Test missing .snapcraft.yaml file."""
-
-        args = [self.snapcraft_parser_command, '--index',
+        args = ['--index',
                 os.path.join(os.path.dirname(__file__), 'missing_parts_wiki'),
-                '--debug',
                 '--output', 'parts.yaml']
         self.assertRaises(
-            subprocess.CalledProcessError,
-            subprocess.check_call, args, stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL)
+            subprocess.CalledProcessError, self.run_snapcraft_parser,  args)
 
         self.assertTrue(os.path.exists('parts.yaml'))
