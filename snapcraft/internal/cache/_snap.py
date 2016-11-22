@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 class SnapCache(SnapcraftProjectCache):
     """Cache for snap revisions."""
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, project_name):
+        super().__init__(project_name=project_name)
         self.snap_cache_dir = self._setup_snap_cache()
 
     def _setup_snap_cache(self):

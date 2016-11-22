@@ -17,12 +17,14 @@
 import os
 from unittest import mock
 
+import fixtures
+
 import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import gradle
 
 
-class GradlePluginTestCase(tests.TestCase):
+class BaseGradlePluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -36,6 +38,13 @@ class GradlePluginTestCase(tests.TestCase):
         patcher = mock.patch('snapcraft.repo.Ubuntu')
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
+
+        # unset http and https proxies.
+        self.useFixture(fixtures.EnvironmentVariable('http_proxy', None))
+        self.useFixture(fixtures.EnvironmentVariable('https_proxy', None))
+
+
+class GradlePluginTestCase(BaseGradlePluginTestCase):
 
     def test_schema(self):
         schema = gradle.GradlePlugin.schema()
@@ -119,4 +128,46 @@ class GradlePluginTestCase(tests.TestCase):
 
         run_mock.assert_has_calls([
             mock.call(['./gradlew', 'jar']),
+        ])
+
+
+class GradleProxyTestCase(BaseGradlePluginTestCase):
+
+    scenarios = [
+        ('http proxy url', dict(
+            env_var=('http_proxy', 'http://test_proxy'),
+            expected_args=['-Dhttp.proxyHost=test_proxy'])),
+        ('http proxy url and port', dict(
+            env_var=('http_proxy', 'http://test_proxy:3000'),
+            expected_args=['-Dhttp.proxyHost=test_proxy',
+                           '-Dhttp.proxyPort=3000'])),
+        ('https proxy url', dict(
+            env_var=('https_proxy', 'https://test_proxy'),
+            expected_args=['-Dhttps.proxyHost=test_proxy'])),
+        ('https proxy url and port', dict(
+            env_var=('https_proxy', 'https://test_proxy:3000'),
+            expected_args=['-Dhttps.proxyHost=test_proxy',
+                           '-Dhttps.proxyPort=3000'])),
+    ]
+
+    @mock.patch.object(gradle.GradlePlugin, 'run')
+    def test_build_with_http_proxy(self, run_mock):
+        var, value = self.env_var
+        self.useFixture(fixtures.EnvironmentVariable(var, value))
+        plugin = gradle.GradlePlugin('test-part', self.options,
+                                     self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir,
+                        'build', 'libs'))
+            open(os.path.join(plugin.builddir,
+                 'build', 'libs', 'dummy.war'), 'w').close()
+
+        run_mock.side_effect = side
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['./gradlew'] + self.expected_args + ['jar'])
         ])

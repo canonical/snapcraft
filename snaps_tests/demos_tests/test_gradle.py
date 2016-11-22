@@ -14,30 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-
-from xdg import BaseDirectory
+import snaps_tests
 
 
-class SnapcraftCache:
-    """Generic cache base class.
+class GradleTestCase(snaps_tests.SnapsTestCase):
 
-    This class is responsible for cache location, notification and pruning.
-    """
-    def __init__(self):
-        self.cache_root = os.path.join(
-            BaseDirectory.xdg_cache_home, 'snapcraft')
+    snap_content_dir = 'gradle'
 
-    def cache(self):
-        raise NotImplementedError
-
-    def prune(self, *args, **kwargs):
-        raise NotImplementedError
-
-
-class SnapcraftProjectCache(SnapcraftCache):
-    """Project specific cache"""
-    def __init__(self, *, project_name):
-        super().__init__()
-        self.project_cache_root = os.path.join(
-            self.cache_root, project_name)
+    def test_java_hello_world(self):
+        snap_path = self.build_snap(self.snap_content_dir)
+        self.install_snap(snap_path, 'java-hello-gradle', '0')
+        self.assert_command_in_snappy_testbed(
+            '/snap/bin/java-hello-gradle.hello', 'Hello Gradle\n')

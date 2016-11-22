@@ -58,7 +58,7 @@ class SnapCacheTestCase(tests.TestCase):
 
     def test_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        snap_cache = cache.SnapCache()
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
         snap_file = 'my-snap-name_0.1_amd64.snap'
 
         # create dummy snap
@@ -106,7 +106,7 @@ class SnapCachedFilePruneTestCase(tests.TestCase):
 
     def test_prune_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        snap_cache = cache.SnapCache()
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
 
         snap_revision = 9
         snap_file = 'my-snap-name_0.1_amd64.snap'

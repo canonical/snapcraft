@@ -87,7 +87,7 @@ import libarchive
 
 from snapcraft.internal import common
 from snapcraft import file_utils
-from snapcraft.internal.errors import MissingPackageError
+from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import download_requests_stream
 
 
@@ -100,13 +100,9 @@ class IncompatibleOptionsError(Exception):
         self.message = message
 
 
-def _check_for_package(command):
-    try:
-        subprocess.check_call(['which', command],
-                              stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        raise MissingPackageError([command])
+def _check_for_command(command):
+    if not shutil.which(command):
+        raise MissingCommandError([command])
 
 
 class Base:
@@ -124,7 +120,7 @@ class Base:
         self.command = command
 
         if self.command:
-            _check_for_package(self.command)
+            _check_for_command(self.command)
 
 
 class FileBase(Base):

@@ -400,7 +400,7 @@ def push(snap_filename, release_channels=None):
     tracker.raise_for_code()
 
     if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
-        snap_cache = cache.SnapCache()
+        snap_cache = cache.SnapCache(project_name=snap_name)
         snap_cache.cache(snap_filename, result['revision'])
         snap_cache.prune(keep_revision=result['revision'])
 
