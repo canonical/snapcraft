@@ -39,6 +39,10 @@ class BaseGradlePluginTestCase(tests.TestCase):
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        # unset http and https proxies.
+        self.useFixture(fixtures.EnvironmentVariable('http_proxy', None))
+        self.useFixture(fixtures.EnvironmentVariable('https_proxy', None))
+
 
 class GradlePluginTestCase(BaseGradlePluginTestCase):
 
