@@ -55,7 +55,9 @@ class RustPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend([
-            'build-essential',
+            'gcc',
+            'binutils',
+            'libc6-dev',
             'git',
             'curl',
             'file',
