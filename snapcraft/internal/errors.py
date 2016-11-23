@@ -97,3 +97,18 @@ class MissingGadgetError(SnapcraftError):
         'in the root of your snapcraft project\n\n'
         'Read more about gadget snaps and the gadget.yaml on:\n'
         'https://github.com/snapcore/snapd/wiki/Gadget-snap')
+
+
+class RequiredCommandFailure(SnapcraftError):
+
+    fmt = '{command!r} failed.'
+
+
+class RequiredCommandNotFound(SnapcraftError):
+
+    fmt = '{cmd_list[0]!r} not found.'
+
+
+class RequiredPathDoesNotExist(SnapcraftError):
+
+    fmt = 'Required path does not exist: {path!r}'
