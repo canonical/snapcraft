@@ -26,8 +26,6 @@ class DownloaderWithWikiPartsTestCase(snaps_tests.SnapsTestCase):
     def test_downloader_with_wiki_parts(self):
         snap_path = self.build_snap(self.snap_content_dir)
         self.install_snap(snap_path, 'downloader', '1.0')
-        expected = (
-            '.*<title>The leading OS for PC, tablet, phone and cloud '
-            '| Ubuntu</title>.*')
+        expected = '.*Lorem Ipsum.*'
         self.assert_command_in_snappy_testbed_with_regex(
             '/snap/bin/downloader.test', expected, flags=re.DOTALL)
