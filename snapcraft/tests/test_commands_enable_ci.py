@@ -82,10 +82,12 @@ class EnableCITestCase(tests.TestCase):
             '',
             "Then it will adjust Travis configuration ('.travis.yml') with "
             'the commands',
-            'to decrypt credentials, install and run `snapcraft` to '
-            'release your snap',
-            '(inside a ubuntu:xenial docker container) during the '
-            "'after_success' phase.",
+            "to decrypt credentials during 'after_success' phase and install "
+            'latest',
+            '`snapcraft` to build and release your snap (inside a '
+            'ubuntu:xenial docker',
+            "container) during the 'deploy' phase.",
+            '',
             'See the example below::',
             '',
             '    sudo: required',
@@ -94,12 +96,14 @@ class EnableCITestCase(tests.TestCase):
             '    after_success:',
             '    - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>',
             '      -in .travis_snapcraft.cfg -out .snapcraft.cfg -d',
-            '    - if [ "$TRAVIS_PULL_REQUEST" = "false" ] &&',
-            '      [ "$TRAVIS_BRANCH" = "master" ]; then',
-            '      docker run -v $(pwd):$(pwd) -t ubuntu:xenial',
-            '      sh -c "apt update -qq && apt install snapcraft -y && '
+            '    deploy:',
+            '      skip_cleanup: true',
+            '      provider: script',
+            '      script: docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c',
+            '        "apt update -qq && apt install snapcraft -y && '
             'cd $(pwd) &&',
-            '      snapcraft && snapcraft push *.snap --release edge";',
-            '      fi',
+            '        snapcraft && snapcraft push *.snap --release edge"',
+            '      on:',
+            '        branch: master',
             ''
         ], self.fake_terminal.getvalue().splitlines())

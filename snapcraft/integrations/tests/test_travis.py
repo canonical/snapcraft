@@ -171,13 +171,19 @@ class TravisTestCase(tests.TestCase):
             self.assertEqual(['docker'], travis_conf['services'])
             self.assertEqual([
                 '<travis-cli-decrypt>',
-                'if [ "$TRAVIS_PULL_REQUEST" = "false" ] && '
-                '[ "$TRAVIS_BRANCH" = "master" ]; then '
-                'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
-                '"apt-update -qq && apt install snapcraft -y && cd $(pwd) && '
-                'snapcraft && snapcraft push *.snap --release edge"; '
-                'fi'
             ], travis_conf['after_success'])
+            self.assertEqual({
+                'skip_cleanup': True,
+                'provider': 'script',
+                'script': (
+                    'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
+                    '"apt update -qq && apt install snapcraft -y && '
+                    'cd $(pwd) && '
+                    'snapcraft && snapcraft push *.snap --release edge"'),
+                'on': {
+                    'branch': 'master',
+                },
+            }, travis_conf['deploy'])
 
         # Descriptive logging ...
         self.assertEqual([
@@ -187,6 +193,8 @@ class TravisTestCase(tests.TestCase):
             'Login successful.',
             'Encrypting authorization for Travis and adjusting project '
             'to automatically decrypt and use it during "after_success".',
+            'Configuring "deploy" phase to build and release the snap in '
+            'the Store.',
             'Done. Now you just have to review and commit changes in your '
             'Travis project (`.travis.yml`).',
             'Also make sure you add the new `.travis_snapcraft.cfg` file.'

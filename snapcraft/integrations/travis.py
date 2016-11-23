@@ -29,8 +29,10 @@ has the private key to decrypt it and will be only available to branches
 of the same repository, not forks.
 
 Then it will adjust Travis configuration ('.travis.yml') with the commands
-to decrypt credentials, install and run `snapcraft` to release your snap
-(inside a ubuntu:xenial docker container) during the 'after_success' phase.
+to decrypt credentials during 'after_success' phase and install latest
+`snapcraft` to build and release your snap (inside a ubuntu:xenial docker
+container) during the 'deploy' phase.
+
 See the example below::
 
     sudo: required
@@ -39,12 +41,14 @@ See the example below::
     after_success:
     - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>
       -in .travis_snapcraft.cfg -out .snapcraft.cfg -d
-    - if [ "$TRAVIS_PULL_REQUEST" = "false" ] &&
-      [ "$TRAVIS_BRANCH" = "master" ]; then
-      docker run -v $(pwd):$(pwd) -t ubuntu:xenial
-      sh -c "apt update -qq && apt install snapcraft -y && cd $(pwd) &&
-      snapcraft && snapcraft push *.snap --release edge";
-      fi
+    deploy:
+      skip_cleanup: true
+      provider: script
+      script: docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c
+        "apt update -qq && apt install snapcraft -y && cd $(pwd) &&
+        snapcraft && snapcraft push *.snap --release edge"
+      on:
+        branch: master
 """
 import logging
 import subprocess
@@ -143,6 +147,9 @@ def enable():
         fd.flush()
         _encrypt_config(fd.name)
 
+    logger.info(
+        'Configuring "deploy" phase to build and release the snap in the '
+        'Store.')
     with open(TRAVIS_CONFIG_FILENAME, 'r+') as fd:
         travis_conf = yaml.load(fd)
         # Enable 'sudo' capability and 'docker' service.
@@ -150,14 +157,19 @@ def enable():
         services = travis_conf.setdefault('services', [])
         if 'docker' not in services:
             services.append('docker')
-        # Append a docker-run command to build and release the snap.
-        travis_conf['after_success'].append(
-            'if [ "$TRAVIS_PULL_REQUEST" = "false" ] && '
-            '[ "$TRAVIS_BRANCH" = "master" ]; then '
-            'docker run -v $(pwd):$(pwd) -t ubuntu:xenial '
-            'sh -c "apt-update -qq && apt install snapcraft -y && '
-            'cd $(pwd) && snapcraft && snapcraft push *.snap --release edge"; '
-            'fi')
+        # Add a 'deploy' section with 'script' provider for building and
+        # release the snap within a xenial docker container.
+        travis_conf['deploy'] = {
+            'skip_cleanup': True,
+            'provider': 'script',
+            'script': (
+                'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
+                '"apt update -qq && apt install snapcraft -y && cd $(pwd) && '
+                'snapcraft && snapcraft push *.snap --release edge"'),
+            'on': {
+                'branch': 'master',
+            },
+        }
         fd.seek(0)
         yaml.dump(travis_conf, fd, default_flow_style=False)
 
