@@ -22,6 +22,10 @@ from contextlib import contextmanager
 from subprocess import check_call, CalledProcessError
 from time import sleep
 import pylxd
+import six
+from six.moves.urllib import parse
+from ws4py.client import WebSocketBaseClient
+from ws4py.manager import WebSocketManager
 
 import petname
 from snapcraft.internal import (
@@ -38,6 +42,33 @@ _NETWORK_PROBE_COMMAND = \
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 
+class _CommandWebsocketclient(WebSocketBaseClient):
+    def __init__(self, manager, io, *args, **kwargs):
+        self._manager = manager
+        self._io = io
+        super(_CommandWebsocketclient, self).__init__(*args, **kwargs)
+
+    def handshake_ok(self):
+        if self._io == sys.stdin:
+            self.close()
+            return
+
+        self._manager.add(self)
+
+    def received_message(self, message):
+        if self._io == sys.stdin:
+            return
+
+        if len(message.data) == 0:
+            self.close()
+            self._manager.remove(self)
+        if message.encoding:
+            msg = message.data.decode(message.encoding)
+        else:
+            msg = message.data.decode('utf-8')
+        self._io.write(msg)
+
+
 class Cleanbuilder:
 
     def __init__(self, snap_output, tar_filename, project_options):
@@ -47,70 +78,95 @@ class Cleanbuilder:
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
 
-    def _has_snap(self, snapname):
-        try:
-            common.run(['snap', 'list', snapname])
-            return True
-        except:
-            return False
-
     def _find_lxd(self):
-        # FIXME: lp#1583259 Do this in snapcraft.yaml
-        if 'SNAP_NAME' in os.environ or self._has_snap('lxd'):
-            os.environ['LXD_DIR'] = '/var/snap/lxd/common/lxd'
-        elif repo.is_package_installed('lxd'):
-            pass
-        else:
-            raise EnvironmentError(
-                'The lxd package is not installed, in order to use `cleanbuild` '
-                'you must install lxd onto your system. Refer to the '
-                '"Ubuntu Desktop and Ubuntu Server" section on '
-                'https://linuxcontainers.org/lxd/getting-started-cli/'
-                '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
+        try:
+            self._client = pylxd.Client()
+        except:
+            try:
+                os.environ['LXD_DIR'] = '/var/snap/lxd/common/lxd'
+                self._client = pylxd.Client()
+            except:
+                raise EnvironmentError(
+                    'The lxd package is not installed, in order to use '
+                    '`cleanbuild` you must install lxd onto your system. '
+                    'Refer to the "Ubuntu Desktop and Ubuntu Server" section '
+                    'on https://linuxcontainers.org/lxd/getting-started-cli/'
+                    '#ubuntu-desktop-and-ubuntu-server to enable a proper '
+                    'setup.')
 
     def _push_file(self, src, dst):
-        client = pylxd.Client()
-        container = client.containers.get(self._container_name)
-        print('Pushed {} to {}'.format(src, dst))
+        logger.info('Pushing {} to {}'.format(src, dst))
         with open(src, 'rb') as source_file:
             data = source_file.read()
-            container.files.put(dst, data)
+            self._container.files.put(dst, data)
 
     def _pull_file(self, src, dst):
-        client = pylxd.Client()
-        container = client.containers.get(self._container_name)
-        print('Pulled {} from {}'.format(dst, src))
+        logger.info('Pulling {} from {}'.format(dst, src))
         with open(dst, 'wb') as destination_file:
-            data = container.files.get(src)
+            data = self._container.files.get(src)
             destination_file.write(data)
 
     def _container_run(self, cmd):
-        client = pylxd.Client()
-        container = client.containers.get(self._container_name)
         print('Executing {}'.format(cmd))
-        container.execute(cmd)
+        # API call because self._container.execute doesn't expose IO streams
+        response = self._container.api.exec.post(json={
+            'command': cmd,
+            # Make debconf stop asking for user input
+            'environment': {
+                'DEBIAN_FRONTEND': 'noninteractive',
+            },
+            'wait-for-websocket': True,
+            'interactive': False,
+        })
+        self._fds = response.json()['metadata']['metadata']['fds']
+        operation_id = response.json()['operation'].split('/')[-1]
+        self._parsed = parse.urlparse(
+            self._client.api.operations[operation_id].websocket._api_endpoint)
+        self._manager = WebSocketManager()
+        self._pipe(sys.stdin), self._pipe(sys.stdout), self._pipe(sys.stderr)
+        self._manager.start()
+        while len(self._manager) > 0:
+            sleep(.1)
+
+    def _pipe(self, io):
+        pipe = _CommandWebsocketclient(
+            self._manager, io, self._client.websocket_url)
+        pipe.resource = '{}?secret={}'.format(
+            self._parsed.path, self._fds[str(io.fileno())])
+        pipe.connect()
+        return pipe
+
+    def _get_fingerprint_by_name(self, name):
+        for url in self._client.api.images.get().json()['metadata']:
+            fingerprint = url.split('/')[-1]
+            response = self._client.api.images[fingerprint].get()
+            props = response.json()['metadata']['properties']
+            image_name = '{}:{}/{}'.format(
+                props['os'], props['release'], props['architecture'])
+            if name == image_name:
+                return fingerprint
 
     @contextmanager
     def _create_container(self):
-        client = pylxd.Client()
         try:
-            # ubuntu:xenial x86-64
-            container = client.containers.create(
-                { 'name': self._container_name,
-                  'ephemeral': True,
-                # 'architecture': self._project_options.deb_arch,
-                    'source': {
-                        'type': 'image',
-                        'fingerprint': '315bedd32580',
-                    }
-                }, wait=True)
-            container.start()
+            fingerprint = self._get_fingerprint_by_name(
+                'ubuntu:xenial/{}'.format(self._project_options.deb_arch))
+            logger.info('Creating container {} with fingerprint {}'.format(
+                self._container_name, fingerprint))
+            self._container = self._client.containers.create({
+                'name': self._container_name,
+                'ephemeral': True,
+                'source': {
+                    'type': 'image',
+                    'fingerprint': fingerprint,
+                }
+            }, wait=True)
+            self._container.start()
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.
             print('Stopping {}'.format(self._container_name))
-            container = client.containers.get(self._container_name)
-            container.stop(force=True, wait=True)
+            self._container.stop(force=True, wait=True)
 
     def execute(self):
         self._find_lxd()
