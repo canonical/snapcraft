@@ -109,7 +109,8 @@ The available commands are:
   status       Show the current status of a snap per channel and architecture.
   history      List all revisions of a snap.
   close        Close one or more channels of a snap.
-
+  enable-ci    EXPERIMENTAL enable continuous-integration systems to build and
+               release snaps to the Ubuntu Store.
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
   cleanbuild   Create a snap using a clean environment managed by lxd.

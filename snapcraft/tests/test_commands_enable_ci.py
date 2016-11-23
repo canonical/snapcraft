@@ -62,6 +62,10 @@ class EnableCITestCase(tests.TestCase):
         self.assertEqual([
             'Snapcraft integration for Travis (CI).',
             '',
+            'This is an *EXPERIMENTAL* feature and subject to incompatible '
+            'changes in',
+            'the future, please use with caution.',
+            '',
             'This command currently depends on a working `travis` CLI '
             'environment and',
             'a previously initialized Travis project (`.travis.yml`).',
