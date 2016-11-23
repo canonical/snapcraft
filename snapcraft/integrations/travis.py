@@ -27,9 +27,9 @@ way every new push to `master` will result in a new snap revision in the
 Store.
 
 This operation will acquire properly attenuated Store credentials and
-encrypt them for use in your testbed (`.travis_snapcraft.cfg`), only Travis
-has the private key to decrypt it and will be only available to branches
-of the same repository, not forks.
+encrypt them for use in your testbed (`.snapcraft/travis_snapcraft.cfg`),
+only Travis has the private key to decrypt it and will be only available
+to branches of the same repository, not forks.
 
 Then it will adjust Travis configuration ('.travis.yml') with the commands
 to decrypt credentials during 'after_success' phase and install latest
@@ -43,7 +43,8 @@ See the example below::
     - docker
     after_success:
     - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>
-      -in .travis_snapcraft.cfg -out .snapcraft.cfg -d
+      -in .snapcraft/travis_snapcraft.cfg
+      -out .snapcraft/snapcraft.cfg -d
     deploy:
       skip_cleanup: true
       provider: script
@@ -54,6 +55,7 @@ See the example below::
         branch: master
 """
 import logging
+import os
 import subprocess
 import tempfile
 import yaml
@@ -65,12 +67,12 @@ from snapcraft.file_utils import (
 )
 from snapcraft.internal import load_config
 from snapcraft._store import _login
-
+from snapcraft.config import LOCAL_CONFIG_FILENAME
 
 logger = logging.getLogger(__name__)
 
 TRAVIS_CONFIG_FILENAME = '.travis.yml'
-ENCRYPTED_CONFIG_FILENAME = '.travis_snapcraft.cfg'
+ENCRYPTED_CONFIG_FILENAME = '.snapcraft/travis_snapcraft.cfg'
 
 
 def _encrypt_config(config_path):
@@ -79,7 +81,7 @@ def _encrypt_config(config_path):
         'travis', 'encrypt-file',
         '--force',
         '--add', 'after_success',
-        '--decrypt-to', '.snapcraft.cfg',
+        '--decrypt-to', LOCAL_CONFIG_FILENAME,
         config_path, ENCRYPTED_CONFIG_FILENAME,
     ]
     try:
@@ -145,6 +147,7 @@ def enable():
         'Encrypting authorization for Travis and adjusting project to '
         'automatically decrypt and use it during "after_success".')
 
+    os.makedirs(os.path.dirname(LOCAL_CONFIG_FILENAME), exist_ok=True)
     with tempfile.NamedTemporaryFile(mode='w') as fd:
         store.conf.parser.write(fd)
         fd.flush()

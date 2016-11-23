@@ -78,11 +78,11 @@ class EnableCITestCase(tests.TestCase):
             '',
             'This operation will acquire properly attenuated Store '
             'credentials and',
-            'encrypt them for use in your testbed (`.travis_snapcraft.cfg`), '
-            'only Travis',
-            'has the private key to decrypt it and will be only available '
-            'to branches',
-            'of the same repository, not forks.',
+            'encrypt them for use in your testbed '
+            '(`.snapcraft/travis_snapcraft.cfg`),',
+            'only Travis has the private key to decrypt it and will '
+            'be only available',
+            'to branches of the same repository, not forks.',
             '',
             "Then it will adjust Travis configuration ('.travis.yml') with "
             'the commands',
@@ -99,7 +99,8 @@ class EnableCITestCase(tests.TestCase):
             '    - docker',
             '    after_success:',
             '    - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>',
-            '      -in .travis_snapcraft.cfg -out .snapcraft.cfg -d',
+            '      -in .snapcraft/travis_snapcraft.cfg',
+            '      -out .snapcraft/snapcraft.cfg -d',
             '    deploy:',
             '      skip_cleanup: true',
             '      provider: script',

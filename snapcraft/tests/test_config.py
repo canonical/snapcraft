@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
+import os
 
 from snapcraft import (
     config,
@@ -91,7 +92,8 @@ class TestOptions(tests.TestCase):
 
 
 def create_local_config_from_string(content):
-    with open('.snapcraft.cfg', 'w') as f:
+    os.makedirs(os.path.dirname(config.LOCAL_CONFIG_FILENAME), exist_ok=True)
+    with open(config.LOCAL_CONFIG_FILENAME, 'w') as f:
         f.write(content)
 
 

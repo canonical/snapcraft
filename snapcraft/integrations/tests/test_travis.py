@@ -160,7 +160,8 @@ class TravisTestCase(tests.TestCase):
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(
             ['travis', 'encrypt-file', '--force',
-             '--add', 'after_success', '--decrypt-to', '.snapcraft.cfg',
+             '--add', 'after_success', '--decrypt-to',
+             travis.LOCAL_CONFIG_FILENAME,
              mock.ANY, travis.ENCRYPTED_CONFIG_FILENAME],
             stderr=subprocess.PIPE)
 
@@ -197,5 +198,6 @@ class TravisTestCase(tests.TestCase):
             'the Store.',
             'Done. Now you just have to review and commit changes in your '
             'Travis project (`.travis.yml`).',
-            'Also make sure you add the new `.travis_snapcraft.cfg` file.'
+            'Also make sure you add the new '
+            '`.snapcraft/travis_snapcraft.cfg` file.',
         ], self.fake_logger.output.splitlines()[1:])

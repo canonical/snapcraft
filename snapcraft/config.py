@@ -23,6 +23,7 @@ from xdg import BaseDirectory
 
 from snapcraft.storeapi import constants
 
+LOCAL_CONFIG_FILENAME = '.snapcraft/snapcraft.cfg'
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +75,11 @@ class Config(object):
         # That's why it's only checked for 'loading' and never written to.
         # Essentially, all authentication-related changes, like login/logout
         # or macaroon-refresh, will not be persisted for the next runs.
-        local_config = '.snapcraft.cfg'
-        if os.path.exists(local_config):
-            self.parser.read(local_config)
+        if os.path.exists(LOCAL_CONFIG_FILENAME):
+            self.parser.read(LOCAL_CONFIG_FILENAME)
             logger.warn(
-                'Using local configuration (`.snapcraft.cfg`), changes will '
-                'not be persisted.')
+                'Using local configuration (`{}`), changes will '
+                'not be persisted.'.format(LOCAL_CONFIG_FILENAME))
             return
 
         self.filename = BaseDirectory.load_first_config(
