@@ -68,7 +68,6 @@ cases you want to refer to the help text for the specific plugin.
 
 """
 
-import copy
 import glob
 import logging
 import os
@@ -527,9 +526,11 @@ class Local(Base):
             shutil.rmtree(self.source_dir)
 
         source_abspath = os.path.abspath(self.source)
+        current_parent_folder = os.path.dirname(os.getcwd())
 
         def ignore(directory, files):
-            if directory is source_abspath:
+            if directory is source_abspath or \
+               directory == current_parent_folder:
                 ignored = copy.copy(common.SNAPCRAFT_FILES)
                 relative_cwd = os.path.basename(os.getcwd())
                 if os.path.join(directory, relative_cwd) == os.getcwd():
