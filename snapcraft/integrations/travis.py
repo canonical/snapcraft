@@ -39,7 +39,8 @@ See the example below::
     after_success:
     - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>
       -in .travis_snapcraft.cfg -out .snapcraft.cfg -d
-    - if [ "$TRAVIS_BRANCH" = "master" ]; then
+    - if [ "$TRAVIS_PULL_REQUEST" = "false" ] &&
+      [ "$TRAVIS_BRANCH" = "master" ]; then
       docker run -v $(pwd):$(pwd) -t ubuntu:xenial
       sh -c "apt update -qq && apt install snapcraft -y && cd $(pwd) &&
       snapcraft && snapcraft push *.snap --release edge";
@@ -151,7 +152,8 @@ def enable():
             services.append('docker')
         # Append a docker-run command to build and release the snap.
         travis_conf['after_success'].append(
-            'if [ "$TRAVIS_BRANCH" = "master" ]; then '
+            'if [ "$TRAVIS_PULL_REQUEST" = "false" ] && '
+            '[ "$TRAVIS_BRANCH" = "master" ]; then '
             'docker run -v $(pwd):$(pwd) -t ubuntu:xenial '
             'sh -c "apt-update -qq && apt install snapcraft -y && '
             'cd $(pwd) && snapcraft && snapcraft push *.snap --release edge"; '

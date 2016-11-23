@@ -94,7 +94,8 @@ class EnableCITestCase(tests.TestCase):
             '    after_success:',
             '    - openssl aes-256-cbc -K <travis-key> -iv <travis-iv>',
             '      -in .travis_snapcraft.cfg -out .snapcraft.cfg -d',
-            '    - if [ "$TRAVIS_BRANCH" = "master" ]; then',
+            '    - if [ "$TRAVIS_PULL_REQUEST" = "false" ] &&',
+            '      [ "$TRAVIS_BRANCH" = "master" ]; then',
             '      docker run -v $(pwd):$(pwd) -t ubuntu:xenial',
             '      sh -c "apt update -qq && apt install snapcraft -y && '
             'cd $(pwd) &&',
