@@ -38,6 +38,7 @@ setup(
     author_email='snapcraft@lists.snapcraft.io',
     url='https://github.com/snapcore/snapcraft',
     packages=['snapcraft',
+              'snapcraft.integrations',
               'snapcraft.internal',
               'snapcraft.internal.cache',
               'snapcraft.internal.states',

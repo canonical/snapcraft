@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
+import os
 
 from snapcraft import (
     config,
@@ -88,3 +89,37 @@ class TestOptions(tests.TestCase):
     def test_string(self):
         conf = self.create_config(foo='bar')
         self.assertEqual('bar', conf.get('foo'))
+
+
+def create_local_config_from_string(content):
+    os.makedirs(os.path.dirname(config.LOCAL_CONFIG_FILENAME), exist_ok=True)
+    with open(config.LOCAL_CONFIG_FILENAME, 'w') as f:
+        f.write(content)
+
+
+class TestLocalConfig(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        override_sso = fixtures.EnvironmentVariable(
+            'UBUNTU_SSO_API_ROOT_URL', 'http://example.com/api/v2')
+        self.useFixture(override_sso)
+
+    def test_local_config_is_considered(self):
+        create_local_config_from_string('''[example.com]\nfoo=bar''')
+        conf = config.Config()
+        self.assertEqual('bar', conf.get('foo'))
+
+    def test_local_config_is_preferred(self):
+        create_config_from_string('''[example.com]\nfoo=baz''')
+        create_local_config_from_string('''[example.com]\nfoo=bar''')
+        conf = config.Config()
+        self.assertEqual('bar', conf.get('foo'))
+
+    def test_local_config_is_static(self):
+        create_local_config_from_string('''[example.com]\nfoo=bar''')
+        conf = config.Config()
+        conf.set('foo', 'baz')
+        conf.save()
+        new_conf = config.Config()
+        self.assertEqual('bar', new_conf.get('foo'))

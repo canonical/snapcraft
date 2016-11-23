@@ -57,7 +57,8 @@ class LoginCommandTestCase(tests.TestCase):
 
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
-            'user@example.com', mock.ANY, acls=None, save=True)
+            'user@example.com', mock.ANY, acls=None, packages=None,
+            channels=None, save=True)
         self.assertEqual(
             storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             'Login successful.\n',
@@ -80,10 +81,12 @@ class LoginCommandTestCase(tests.TestCase):
             mock.call('Email: '), mock.call('Second-factor auth: ')])
         self.assertEqual(2, mock_login.call_count)
         mock_login.assert_has_calls([
-            mock.call('user@example.com', mock.ANY, acls=None, save=True),
+            mock.call(
+                'user@example.com', mock.ANY, acls=None, packages=None,
+                channels=None, save=True),
             mock.call(
                 'user@example.com', mock.ANY, one_time_password='123456',
-                acls=None, save=True)])
+                acls=None, packages=None, channels=None, save=True)])
         self.assertEqual('Login successful.\n', self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'login')
