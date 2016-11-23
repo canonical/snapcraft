@@ -529,21 +529,22 @@ class Local(Base):
         current_parent_folder = os.path.dirname(os.getcwd())
 
         def ignore(directory, files):
+            ignored = []
             if directory is source_abspath or \
                directory == current_parent_folder:
-                ignored = copy.copy(common.SNAPCRAFT_FILES)
                 relative_cwd = os.path.basename(os.getcwd())
                 if os.path.join(directory, relative_cwd) == os.getcwd():
                     # Source is a parent of the working directory.
                     # Do not recursively copy it into itself.
                     ignored.append(relative_cwd)
+
+            if directory is source_abspath:
+                ignored.extend(common.SNAPCRAFT_FILES)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
                     ignored += snaps
-                return ignored
-            else:
-                return []
+            return ignored
 
         shutil.copytree(source_abspath, self.source_dir,
                         copy_function=file_utils.link_or_copy, ignore=ignore)
