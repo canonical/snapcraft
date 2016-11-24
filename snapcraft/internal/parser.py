@@ -238,7 +238,8 @@ def _process_wiki_entry(entry, master_parts_list):
 
     parts_list, after_parts = _process_entry(data)
 
-    if is_valid_parts_list(parts_list, after_parts):
+    known_parts = list(parts_list.keys()) + list(master_parts_list.keys())
+    if is_valid_parts_list(after_parts, known_parts):
         master_parts_list.update(parts_list)
 
 
@@ -308,9 +309,9 @@ def run(args):
     return wiki_errors
 
 
-def is_valid_parts_list(parts_list, parts):
+def is_valid_parts_list(parts, known_parts):
     for partname in parts:
-        if partname not in parts_list.keys():
+        if partname not in known_parts:
             logging.error('Part {!r} is missing from the parts entry'.format(
                 partname))
             return False
