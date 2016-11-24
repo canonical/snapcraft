@@ -725,26 +725,50 @@ class TestSubversion(SourceTestCase):
 
 class TestLocal(tests.TestCase):
 
-    def test_pull_with_source_a_parent_of_current_dir(self):
+    def test_pull_with_source_the_parent_of_current_dir(self):
         snapcraft_files_before_pull = copy.copy(common.SNAPCRAFT_FILES)
 
         # Verify that the snapcraft root dir does not get copied into itself.
         os.makedirs('subdir')
 
-        cwd = os.getcwd()
-        os.chdir('subdir')
-        local = sources.Local('..', 'foo')
-        local.pull()
-        os.chdir(cwd)
-
-        self.assertTrue(
-            'subdir' not in os.listdir(os.path.join('subdir', 'foo')))
+        for snap_dir in [f for f in common.SNAPCRAFT_FILES if '.' not in f]:
+            cwd = os.getcwd()
+            os.chdir('subdir')
+            source_dir = os.path.join(snap_dir, 'foo')
+            local = sources.Local('..', source_dir)
+            local.pull()
+            os.chdir(cwd)
+            self.assertFalse(
+                os.path.exists(os.path.join(
+                    'subdir', source_dir, 'subdir', snap_dir)))
+            self.assertTrue(
+                'subdir' not in os.listdir(os.path.join('subdir', source_dir)))
 
         # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1614913
         # Verify that SNAPCRAFT_FILES was not modified by the pull when there
         # are files to ignore.
         self.assertEqual(
             snapcraft_files_before_pull, common.SNAPCRAFT_FILES)
+
+    def test_pull_with_source_a_parent_of_current_dir(self):
+        # Verify that the snapcraft root dir does not get copied into itself.
+        subdir = os.path.join('subdir', 'subsubdir', 'subsubsubdir')
+        os.makedirs(subdir)
+
+        for snap_dir in [f for f in common.SNAPCRAFT_FILES if '.' not in f]:
+            cwd = os.getcwd()
+            os.chdir(subdir)
+            source = '../' * (subdir.count(os.sep)+1)
+            source_dir = os.path.join(snap_dir, 'foo')
+            local = sources.Local(source, source_dir)
+            local.pull()
+            os.chdir(cwd)
+            self.assertFalse(
+                os.path.exists(os.path.join(
+                    subdir, source_dir, subdir, snap_dir)))
+            self.assertTrue(
+                os.path.basename(subdir) not in os.listdir(
+                    os.path.join(subdir, source_dir, os.path.dirname(subdir))))
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
