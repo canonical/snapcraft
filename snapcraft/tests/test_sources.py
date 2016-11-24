@@ -742,7 +742,7 @@ class TestLocal(tests.TestCase):
                 os.path.exists(os.path.join(
                     'subdir', source_dir, 'subdir', snap_dir)))
             self.assertTrue(
-                'subdir' not in os.listdir(os.path.join('subdir', source_dir)))
+                'subdir' in os.listdir(os.path.join('subdir', source_dir)))
 
         # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1614913
         # Verify that SNAPCRAFT_FILES was not modified by the pull when there
@@ -767,7 +767,7 @@ class TestLocal(tests.TestCase):
                 os.path.exists(os.path.join(
                     subdir, source_dir, subdir, snap_dir)))
             self.assertTrue(
-                os.path.basename(subdir) not in os.listdir(
+                os.path.basename(subdir) in os.listdir(
                     os.path.join(subdir, source_dir, os.path.dirname(subdir))))
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
