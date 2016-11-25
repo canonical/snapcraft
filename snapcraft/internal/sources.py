@@ -559,7 +559,7 @@ def get(sourcedir, builddir, options):
         source_branch=getattr(options, 'source_branch', None),
     )
 
-    handler_class = get_source_handler(source_type, options.source)
+    handler_class = get_source_handler(options.source, source_type=source_type)
     handler = handler_class(options.source, sourcedir, **source_attributes)
     handler.pull()
 

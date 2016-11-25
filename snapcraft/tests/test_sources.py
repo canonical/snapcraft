@@ -965,3 +965,15 @@ class SourceWithBranchAndTagTestCase(tests.TestCase):
             str(raised.exception),
             'can\'t specify both source-tag and source-branch for a {} '
             'source'.format(self.source_type))
+
+
+class GetSourceTestClass(tests.TestCase):
+
+    def test_get(self):
+
+        class Options:
+            source = '.'
+
+        sources.get('src', 'useless-arg', Options())
+
+        self.assertTrue(os.path.isdir('src'))
