@@ -28,10 +28,6 @@ from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
 
 import petname
-from snapcraft.internal import (
-    common,
-    repo,
-)
 
 
 logger = logging.getLogger(__name__)
