@@ -1,0 +1,44 @@
+name: snapcraft
+version: '2.22.1'
+summary: easily craft snaps
+description: Snapcraft aims to make upstream developers' lives easier and as such is not
+ a single toolset, but instead is a collection of tools that enable the
+ natural workflow of an upstream to be extended with a simple release step
+ into Snappy.
+grade: devel
+confinement: strict
+
+apps:
+    snapcraft:
+        command: snapcraft
+        plugs: [network, lxd, home]
+
+parts:
+    snapcraft:
+        source: .
+        plugin: python
+        stage-packages:
+          - python3
+          - python3-apt
+          - python3-docopt
+          - python3-fixtures
+          - python3-jsonschema
+          - python3-libarchive-c
+          - python3-lxml
+          - libmagic1
+          - python3-magic
+          - python3-petname
+          - python3-pkg-resources
+          - python3-progressbar
+          - python3-pylxd
+          - python3-pymacaroons
+          - python3-requests
+          - python3-requests-toolbelt
+          - python3-responses
+          - python3-simplejson
+          - python3-tabulate
+          - python3-testscenarios
+          - python3-testtools
+          - python3-xdg
+          - python3-yaml
+          - squashfs-tools

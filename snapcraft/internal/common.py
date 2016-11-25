@@ -31,13 +31,14 @@ import urllib
 SNAPCRAFT_FILES = ['snapcraft.yaml', '.snapcraft.yaml', 'parts', 'stage',
                    'prime', 'snap']
 COMMAND_ORDER = ['pull', 'build', 'stage', 'prime']
-_DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
+_prefix = os.getenv('SNAP_DATA', '/usr')
+_DEFAULT_PLUGINDIR = _prefix + '/share/snapcraft/plugins'
 _plugindir = _DEFAULT_PLUGINDIR
-_DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
+_DEFAULT_SCHEMADIR = _prefix + '/share/snapcraft/schema'
 _schemadir = _DEFAULT_SCHEMADIR
-_DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
+_DEFAULT_LIBRARIESDIR = _prefix + '/share/snapcraft/libraries'
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_TOURDIR = '/usr/share/snapcraft/tour'
+_DEFAULT_TOURDIR = _prefix + '/share/snapcraft/tour'
 _tourdir = _DEFAULT_TOURDIR
 
 MAX_CHARACTERS_WRAP = 120
