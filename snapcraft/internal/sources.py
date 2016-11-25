@@ -544,6 +544,26 @@ class Local(Base):
                         copy_function=file_utils.link_or_copy, ignore=ignore)
 
 
+def get(sourcedir, builddir, options):
+    """Populate sourcedir and builddir from parameters defined in options.
+
+    :param str sourcedir: The source directory to use.
+    :param str builddir: The build directory to use.
+    :param options: source options.
+    """
+    source_type = getattr(options, 'source_type', None)
+    source_attributes = dict(
+        source_depth=getattr(options, 'source_depth', None),
+        source_tag=getattr(options, 'source_tag', None),
+        source_commit=getattr(options, 'source_commit', None),
+        source_branch=getattr(options, 'source_branch', None),
+    )
+
+    handler_class = get_source_handler(source_type, options.source)
+    handler = handler_class(options.source, sourcedir, **source_attributes)
+    handler.pull()
+
+
 _source_handler = {
     'bzr': Bazaar,
     'deb': Deb,

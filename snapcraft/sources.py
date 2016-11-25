@@ -25,3 +25,4 @@ from snapcraft.internal.sources import Subversion  # noqa
 from snapcraft.internal.sources import Tar         # noqa
 from snapcraft.internal.sources import Local       # noqa
 from snapcraft.internal.sources import Zip         # noqa
+from snapcraft.internal.sources import get         # noqa
