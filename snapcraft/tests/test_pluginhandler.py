@@ -483,11 +483,7 @@ class PluginTestCase(tests.TestCase):
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock', self.local_plugins_dir)
 
-    @patch('importlib.import_module')
-    @patch('snapcraft.internal.pluginhandler._load_local')
-    @patch('snapcraft.internal.pluginhandler._get_plugin')
-    def test_plugin_without_project(self, plugin_mock,
-                                    local_load_mock, import_mock):
+    def test_plugin_without_project(self):
         class OldPlugin(snapcraft.BasePlugin):
 
             @classmethod
@@ -501,8 +497,7 @@ class PluginTestCase(tests.TestCase):
             def __init__(self, name, options):
                 super().__init__(name, options)
 
-        plugin_mock.return_value = OldPlugin
-        local_load_mock.side_effect = ImportError()
+        self.useFixture(fixture_setup.FakePlugin('oldplugin', OldPlugin))
         plugin = pluginhandler.PluginHandler(
             plugin_name='oldplugin',
             part_name='fake-part',
@@ -537,11 +532,7 @@ class PluginTestCase(tests.TestCase):
 
         self.assertTrue(plugin.code.project is not None)
 
-    @patch('importlib.import_module')
-    @patch('snapcraft.internal.pluginhandler._load_local')
-    @patch('snapcraft.internal.pluginhandler._get_plugin')
-    def test_plugin_schema_step_hint_pull(self, plugin_mock,
-                                          local_load_mock, import_mock):
+    def test_plugin_schema_step_hint_pull(self):
         class Plugin(snapcraft.BasePlugin):
             @classmethod
             def schema(cls):
@@ -553,8 +544,7 @@ class PluginTestCase(tests.TestCase):
 
                 return schema
 
-        plugin_mock.return_value = Plugin
-        local_load_mock.side_effect = ImportError()
+        self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
         pluginhandler.PluginHandler(
             plugin_name='plugin',
             part_name='fake-part',
@@ -562,11 +552,7 @@ class PluginTestCase(tests.TestCase):
             project_options=snapcraft.ProjectOptions(),
             part_schema={'properties': {}})
 
-    @patch('importlib.import_module')
-    @patch('snapcraft.internal.pluginhandler._load_local')
-    @patch('snapcraft.internal.pluginhandler._get_plugin')
-    def test_plugin_schema_step_hint_build(self, plugin_mock,
-                                           local_load_mock, import_mock):
+    def test_plugin_schema_step_hint_build(self):
         class Plugin(snapcraft.BasePlugin):
             @classmethod
             def schema(cls):
@@ -578,8 +564,7 @@ class PluginTestCase(tests.TestCase):
 
                 return schema
 
-        plugin_mock.return_value = Plugin
-        local_load_mock.side_effect = ImportError()
+        self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
         pluginhandler.PluginHandler(
             plugin_name='plugin',
             part_name='fake-part',
@@ -587,12 +572,7 @@ class PluginTestCase(tests.TestCase):
             project_options=snapcraft.ProjectOptions(),
             part_schema={'properties': {}})
 
-    @patch('importlib.import_module')
-    @patch('snapcraft.internal.pluginhandler._load_local')
-    @patch('snapcraft.internal.pluginhandler._get_plugin')
-    def test_plugin_schema_step_hint_pull_and_build(self, plugin_mock,
-                                                    local_load_mock,
-                                                    import_mock):
+    def test_plugin_schema_step_hint_pull_and_build(self):
         class Plugin(snapcraft.BasePlugin):
             @classmethod
             def schema(cls):
@@ -605,8 +585,7 @@ class PluginTestCase(tests.TestCase):
 
                 return schema
 
-        plugin_mock.return_value = Plugin
-        local_load_mock.side_effect = ImportError()
+        self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
         pluginhandler.PluginHandler(
             plugin_name='plugin',
             part_name='fake-part',
