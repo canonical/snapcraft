@@ -36,6 +36,10 @@ class TarContentPlugin(snapcraft.BasePlugin):
             },
         }
 
+    @classmethod
+    def get_build_properties(cls):
+        return ['destination']
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
@@ -47,9 +51,6 @@ class TarContentPlugin(snapcraft.BasePlugin):
                 os.path.isabs(self.options.destination)):
             raise ValueError('path {!r} must be relative'.format(
                 self.options.destination))
-
-    def get_build_properties(self):
-        return ['destination']
 
     def enable_cross_compilation(self):
         pass

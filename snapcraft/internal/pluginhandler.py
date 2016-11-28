@@ -122,6 +122,7 @@ class PluginHandler:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
+        _validate_pull_and_build_properties(plugin_name, plugin, part_schema)
         options = _make_options(part_schema, properties, plugin.schema())
         # For backwards compatibility we add the project to the plugin
         try:
@@ -619,16 +620,55 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
+def _merged_part_and_plugin_schemas(part_schema, plugin_schema):
+    plugin_schema = plugin_schema.copy()
+    if 'properties' not in plugin_schema:
+        plugin_schema['properties'] = {}
+
+    # The part schema takes precedence over the plugin's schema.
+    plugin_schema['properties'].update(part_schema)
+    return plugin_schema
+
+
+def _validate_pull_and_build_properties(plugin_name, plugin, part_schema):
+    merged_schema = _merged_part_and_plugin_schemas(
+        part_schema, plugin.schema())
+    merged_properties = merged_schema['properties']
+
+    # First, validate pull properties
+    invalid_properties = _validate_step_properties(
+        plugin.get_pull_properties(), merged_properties)
+
+    if invalid_properties:
+        raise ValueError(
+            "Invalid pull properties specified by {!r} plugin: {}".format(
+                plugin_name, list(invalid_properties)))
+
+    # Now, validate build properties
+    invalid_properties = _validate_step_properties(
+        plugin.get_build_properties(), merged_properties)
+
+    if invalid_properties:
+        raise ValueError(
+            "Invalid build properties specified by {!r} plugin: {}".format(
+                plugin_name, list(invalid_properties)))
+
+
+def _validate_step_properties(step_properties, schema_properties):
+    invalid_properties = set()
+    for step_property in step_properties:
+        if step_property not in schema_properties:
+            invalid_properties.add(step_property)
+
+    return invalid_properties
+
+
 def _make_options(part_schema, properties, plugin_schema):
     # Make copies as these dictionaries are tampered with
     part_schema = part_schema.copy()
     properties = properties.copy()
-    plugin_schema = plugin_schema.copy()
 
-    if 'properties' not in plugin_schema:
-        plugin_schema['properties'] = {}
-    # The base part_schema takes precedense over the plugin.
-    plugin_schema['properties'].update(part_schema)
+    plugin_schema = _merged_part_and_plugin_schemas(part_schema, plugin_schema)
 
     # This is for backwards compatibility for when most of the
     # schema was overridable by the plugins.

@@ -61,10 +61,12 @@ class TestPlugin(snapcraft.BasePlugin):
             },
         }
 
-    def get_pull_properties(self):
+    @classmethod
+    def get_pull_properties(cls):
         return ['test-property']
 
-    def get_build_properties(self):
+    @classmethod
+    def get_build_properties(cls):
         return ['test-property']
 
 
@@ -472,6 +474,8 @@ class PluginTestCase(tests.TestCase):
                                local_load_mock, import_mock):
         mock_plugin = Mock()
         mock_plugin.schema.return_value = {}
+        mock_plugin.get_pull_properties.return_value = []
+        mock_plugin.get_build_properties.return_value = []
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
         pluginhandler.PluginHandler(
@@ -517,6 +521,14 @@ class PluginTestCase(tests.TestCase):
             @classmethod
             def schema(cls):
                 return {}
+
+            @classmethod
+            def get_pull_properties(cls):
+                return []
+
+            @classmethod
+            def get_build_properties(cls):
+                return []
 
             def __init__(self, name, options):
                 pass
@@ -606,17 +618,16 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        handler = pluginhandler.PluginHandler(
-            plugin_name='plugin',
-            part_name='fake-part',
-            part_properties={'source': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
         with self.assertRaises(ValueError) as raised:
-            handler.code.get_pull_properties()
+            pluginhandler.PluginHandler(
+                plugin_name='plugin',
+                part_name='fake-part',
+                part_properties={'source': '.'},
+                project_options=snapcraft.ProjectOptions(),
+                part_schema={'properties': {}})
 
         self.assertEqual(
-            "Invalid pull-properties specified in plugin's schema: ['bar']",
+            "Invalid pull properties specified by 'plugin' plugin: ['bar']",
             str(raised.exception))
 
     def test_plugin_schema_invalid_build_hint(self):
@@ -632,17 +643,16 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        handler = pluginhandler.PluginHandler(
-            plugin_name='plugin',
-            part_name='fake-part',
-            part_properties={'source': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
         with self.assertRaises(ValueError) as raised:
-            handler.code.get_build_properties()
+            pluginhandler.PluginHandler(
+                plugin_name='plugin',
+                part_name='fake-part',
+                part_properties={'source': '.'},
+                project_options=snapcraft.ProjectOptions(),
+                part_schema={'properties': {}})
 
         self.assertEqual(
-            "Invalid build-properties specified in plugin's schema: ['bar']",
+            "Invalid build properties specified by 'plugin' plugin: ['bar']",
             str(raised.exception))
 
     def test_filesets_includes_without_relative_paths(self):

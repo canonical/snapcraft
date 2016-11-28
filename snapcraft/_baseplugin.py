@@ -46,15 +46,10 @@ class BasePlugin:
             'required': [],
         }
 
-    @property
-    def PLUGIN_STAGE_SOURCES(self):
-        """Define alternative sources.list."""
-        return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
-
-    def get_pull_properties(self):
-        schema_pull_properties = self.schema().get('pull-properties', [])
+    @classmethod
+    def get_pull_properties(cls):
+        schema_pull_properties = cls.schema().get('pull-properties', [])
         if schema_pull_properties:
-            _validate_step_properties('pull', self.schema())
             logger.warning(
                 'Use of pull-properties in the schema is deprecated.\n'
                 'Plugins should now implement get_pull_properties')
@@ -62,16 +57,21 @@ class BasePlugin:
 
         return []
 
-    def get_build_properties(self):
-        schema_build_properties = self.schema().get('build-properties', [])
+    @classmethod
+    def get_build_properties(cls):
+        schema_build_properties = cls.schema().get('build-properties', [])
         if schema_build_properties:
-            _validate_step_properties('build', self.schema())
             logger.warning(
                 'Use of build-properties in the schema is deprecated.\n'
                 'Plugins should now implement get_build_properties')
             return schema_build_properties
 
         return []
+
+    @property
+    def PLUGIN_STAGE_SOURCES(self):
+        """Define alternative sources.list."""
+        return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
     def __init__(self, name, options, project=None):
         self.name = name
@@ -187,19 +187,3 @@ class BasePlugin:
             cwd = self.builddir
         os.makedirs(cwd, exist_ok=True)
         return common.run_output(cmd, cwd=cwd, **kwargs)
-
-
-def _validate_step_properties(step, plugin_schema):
-    step_properties_key = '{}-properties'.format(step)
-    properties = plugin_schema.get('properties', {})
-    step_properties = plugin_schema.get(step_properties_key, [])
-
-    invalid_properties = set()
-    for step_property in step_properties:
-        if step_property not in properties:
-            invalid_properties.add(step_property)
-
-    if invalid_properties:
-        raise ValueError(
-            "Invalid {} specified in plugin's schema: {}".format(
-                step_properties_key, list(invalid_properties)))
