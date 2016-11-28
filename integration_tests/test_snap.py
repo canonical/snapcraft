@@ -144,8 +144,7 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join(project_dir, 'stage', 'usr', 'bin', 'nmcli'),
             FileExists())
 
-        output = self.run_snapcraft('snap', project_dir)
-        print("JOE: output: {}".format(output))
+        self.run_snapcraft('snap', project_dir)
         self.assertThat(
             os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmcli'),
             FileExists())

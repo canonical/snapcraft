@@ -2368,7 +2368,8 @@ class FindDependenciesTestCase(tests.TestCase):
 
     def test__organize_fileset(self):
         fileset = set(['bin/app', 'share/app1', 'bin/app2'])
-        organize_fileset = {'tmp/bin': 'bin', 'tmp/share': 'share', 'tmp': 'new_tmp'}
+        organize_fileset = {
+            'tmp/bin': 'bin', 'tmp/share': 'share', 'tmp': 'new_tmp'}
 
         expected_fileset = set(
             [('tmp/bin/app', 'bin/app'), ('tmp/share/app1', 'share/app1'),

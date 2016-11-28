@@ -322,8 +322,6 @@ class PluginHandler:
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
         fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
-        print("JOE: _migratable_fileset: plugin_fileset: {}".format(plugin_fileset))
-        print("JOE: _migratable_fileset: fileset: {}".format(fileset))
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
         if (step == 'prime' or step == 'snap') and fileset == ['*']:
@@ -333,15 +331,7 @@ class PluginHandler:
 
         fileset.extend(plugin_fileset)
 
-        print("JOE: migratable_fileset_for: fileset: {}".format(fileset))
-
-        if step == 'stage':
-            srcdir = self.code.installdir
-        else:
-            srcdir = self.stagedir
-
         return _migratable_filesets(fileset, self.code.installdir)
-
 
     def _organize(self):
         fileset = getattr(self.code.options, 'organize', {}) or {}
@@ -349,33 +339,23 @@ class PluginHandler:
         _organize_filesets(fileset.copy(), self.stagedir)
 
     def stage(self, force=False):
-        print("JOE: stage()")
         self.makedirs()
         self.notify_part_progress('Staging')
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
-        print("JOE: stage: snap_files: pre {}".format(snap_files))
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
-        print("JOE: stage: organize_fileset: {}".format(organize_fileset))
 
-        snap_files, new_snap_dirs = _organize_fileset(snap_files, organize_fileset, self.code.installdir)
-        snap_dirs, extra_snap_dirs = _organize_fileset(snap_dirs, organize_fileset, self.code.installdir)
+        snap_files, new_snap_dirs = _organize_fileset(
+            snap_files, organize_fileset, self.code.installdir)
+        snap_dirs, extra_snap_dirs = _organize_fileset(
+            snap_dirs, organize_fileset, self.code.installdir)
 
         snap_dirs |= new_snap_dirs | extra_snap_dirs
-
-        import pprint
-        print("JOE: stage: snap_files: {}".format(pprint.pprint(snap_files)))
-        print("JOE: stage: snap_dirs: {}".format(snap_dirs))
-        if 'bin/python_test' in snap_files:
-            print("JOE: IT'S HERE!")
-        else:
-            print("JOE: IT'S NOT HERE!")
 
         def fixup_func(file_path):
             if os.path.islink(file_path):
                 return
             if not file_path.endswith('.pc'):
                 return
-            print("JOE: fixing pkg config for {}".format(file_path))
             repo.fix_pkg_config(self.stagedir, file_path, self.code.installdir)
 
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
@@ -411,11 +391,7 @@ class PluginHandler:
 
     def _get_staged_files(self):
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
-        print("JOE: prime: snap_files: pre-pre: {}".format(snap_files))
-        print("JOE: prime: snap_dirs: pre-pre: {}".format(snap_dirs))
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
-
-        print("JOE: prime: organize_fileset: {}".format(organize_fileset))
 
         snap_files, new_snap_dirs = _organize_fileset(
             snap_files, organize_fileset, self.code.installdir)
@@ -423,21 +399,14 @@ class PluginHandler:
             snap_dirs, organize_fileset, self.code.installdir)
 
         snap_dirs |= new_snap_dirs | extra_snap_dirs
-        print("JOE: prime: snap_files: pre: {}".format(snap_files))
-        print("JOE: prime: snap_dirs: pre: {}".format(snap_dirs))
 
         return snap_files, snap_dirs
 
     def prime(self, force=False):
-        print("JOE: prime()")
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('snap')
-        print("JOE: prime: snap_files: pre-pre: {}".format(snap_files))
-        print("JOE: prime: snap_dirs: pre-pre: {}".format(snap_dirs))
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
-
-        print("JOE: prime: organize_fileset: {}".format(organize_fileset))
 
         snap_files, new_snap_dirs = _organize_fileset(
             snap_files, organize_fileset, self.code.installdir)
@@ -445,8 +414,6 @@ class PluginHandler:
             snap_dirs, organize_fileset, self.code.installdir)
 
         snap_dirs |= new_snap_dirs | extra_snap_dirs
-        print("JOE: prime: snap_files: pre: {}".format(snap_files))
-        print("JOE: prime: snap_dirs: pre: {}".format(snap_dirs))
 
         # replace organize tuples with new file names
         # new_snap_files = set()
@@ -463,9 +430,6 @@ class PluginHandler:
         #     new_snap_dirs.add((snap_dir, snap_dir))
         # snap_dirs = new_snap_dirs
 
-        print("JOE: prime: snap_files: post: {}".format(snap_files))
-        print("JOE: prime: snap_dirs: post: {}".format(snap_dirs))
-
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir,
                        step='prime')
 
@@ -475,8 +439,6 @@ class PluginHandler:
                 snap_file = snap_file[1]
             new_snap_files.add(snap_file)
         snap_files = new_snap_files
-        print("JOE: prime: snap_files: post-post: {}".format(snap_files))
-        print("JOE: prime: snap_dirs: post-post: {}".format(snap_dirs))
 
         dependencies = _find_dependencies(self.snapdir, snap_files)
 
@@ -722,11 +684,6 @@ def _migratable_filesets(fileset, srcdir):
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
-    print("JOE: _migratable_filesets: includes: {}".format(includes))
-    print("JOE: _migratable_filesets: excludes: {}".format(excludes))
-    print("JOE: _migratable_filesets: include_files: {}".format(include_files))
-    print("JOE: _migratable_filesets: exclude_files: {}".format(exclude_files))
-
     # And chop files, including whole trees if any dirs are mentioned
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
@@ -738,8 +695,6 @@ def _migratable_filesets(fileset, srcdir):
                      if os.path.isdir(os.path.join(srcdir, x)) and
                      not os.path.islink(os.path.join(srcdir, x))])
     snap_files = snap_files - snap_dirs
-    print("JOE: _migratable_filesets: snap_files: {}".format(snap_files))
-    print("JOE: _migratable_filesets: srcdir: {}".format(srcdir))
 
     # Make sure we also obtain the parent directories of files
     for snap_file in snap_files:
@@ -767,12 +722,8 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
             src = os.path.join(srcdir, directory)
             dst = os.path.join(dstdir, directory)
 
-        print("JOE: _migrate_files: src: {}".format(src))
-        print("JOE: _migrate_files: dst: {}".format(dst))
-        print("JOE: creating directory: {}".format(dst))
         snapcraft.file_utils.create_similar_directory(src, dst)
         if copy_tree:
-            print("JOE: copying directory: {} -> {}".format(src, dst))
             file_utils.link_or_copy_tree(src, dst)
 
     for snap_file in snap_files:
@@ -785,7 +736,6 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
             src = os.path.join(srcdir, snap_file)
             dst = os.path.join(dstdir, snap_file)
 
-        print("JOE: creating directory (file dir): {}".format(os.path.dirname(dst)))
         snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
                                                       os.path.dirname(dst))
 
@@ -793,16 +743,13 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
             snapcraft.file_utils.create_similar_directory(
                 src, dst
             )
-            print("JOE: creating directory (file): {}".format(dst))
             continue
 
         if missing_ok and not os.path.exists(src):
-            print("JOE: didn't find {}".format(src))
             continue
 
         # If the file is already here and it's a symlink, leave it alone.
         if os.path.islink(dst):
-            print("JOE: ignoring {}".format(dst))
             continue
 
         # Otherwise, remove and re-link it.
@@ -812,7 +759,6 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
         if src.endswith('.pc'):
             shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
         else:
-            print("JOE: creating file: {}".format(dst))
             file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
         fixup_func(dst)
@@ -842,15 +788,12 @@ def _organize_filesets(fileset, base_dir):
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
-    print("JOE: snap_files: {}".format(snap_files))
     for snap_file in snap_files:
         if type(snap_file) == tuple:
             path = snap_file[1]
         else:
             path = snap_file
 
-        print("JOE: _clean_migrated_files: path: {}".format(path))
-        print("JOE: _clean_migrated_files: directory: {}".format(directory))
         # XXX: hack to remove directories should be fixed elsewhere
         if os.path.isdir(os.path.join(directory, path)):
             snap_dirs.add(snap_file)
@@ -938,9 +881,6 @@ def _generate_include_set(directory, includes):
             pattern = os.path.join(directory, include)
             matches = iglob(pattern, recursive=True)
             include_files |= set(matches)
-            print("JOE: _generate_include_set: include_files: {}".format(include_files))
-            print("JOE: _generate_include_set: pattern: {}".format(pattern))
-            print("JOE: _generate_include_set: matches: {}".format(matches))
         else:
             include_files |= set([os.path.join(directory, include), ])
 
@@ -1066,18 +1006,23 @@ def _get_path_prefixes(filepath):
     return result
 
 
+def _add_filepath_to_fileset(filepath, srcdir, fileset, dirset):
+    if type(filepath) == tuple:
+        path = filepath[0]
+    else:
+        path = filepath
+
+    if os.path.isdir(os.path.join(srcdir, path)):
+        dirset.add(filepath)
+    else:
+        fileset.add(filepath)
+
+    return fileset, dirset
+
+
 def _organize_fileset(fileset_orig, organize_fileset, srcdir):
     fileset = set()
     dirs = set()
-
-    if '*' in fileset_orig:
-        print("JOE: got a wildcard")
-    else:
-        print("JOE: didn't get a wildcard")
-
-    print("JOE: _organize_fileset: fileset_orig: {}".format(fileset_orig))
-    print("JOE: _organize_fileset: organize_fileset: {}".format(organize_fileset))
-    print("JOE: _organize_fileset: srcdir: {}".format(srcdir))
 
     rev_organize_fileset = {}
     for key, value in organize_fileset.items():
@@ -1085,60 +1030,52 @@ def _organize_fileset(fileset_orig, organize_fileset, srcdir):
             rev_organize_fileset[value] = []
         rev_organize_fileset[value].append(key)
 
-    print("JOE: _rev_organize_fileset: rev_organize_fileset: {}".format(rev_organize_fileset))
     for filepath in fileset_orig.copy():
-        print("JOE: filepath: {}".format(filepath))
         # match a file path
         if filepath in rev_organize_fileset:
-            print("JOE: adding filepath: {}".format(filepath))
             for rev in rev_organize_fileset[filepath]:
                 new_filepath = (rev, filepath)
-                if os.path.isdir(os.path.join(srcdir, new_filepath[0])):
-                    dirs.add(new_filepath)
-                else:
-                    fileset.add(new_filepath)
-            print("JOE: _organize_fileset: continuing")
+                fileset, dirs = _add_filepath_to_fileset(
+                    new_filepath, srcdir, fileset, dirs)
             continue
-        if filepath in organize_fileset:
-            print("JOE: adding pre-organize filepath: {}".format(filepath))
+        elif filepath in organize_fileset:
             new_filepath = (filepath, organize_fileset[filepath])
             fileset.add(new_filepath)
             continue
 
         path_prefixes = _get_path_prefixes(filepath)
-        print("JOE: path_prefixes: {}".format(path_prefixes))
         matched = False
         for prefix in path_prefixes:
             if prefix in rev_organize_fileset and filepath.startswith(prefix):
                 for rev in rev_organize_fileset[prefix]:
                     new_filepath = ("{}{}".format(rev,
-                                filepath[len(prefix):]),
-                                filepath)
-                    print("JOE: adding file_path {}".format(new_filepath))
-                    if os.path.isdir(os.path.join(srcdir, new_filepath[0])):
-                        dirs.add(new_filepath)
-                    else:
-                        fileset.add(new_filepath)
+                                    filepath[len(prefix):]),
+                                    filepath)
+                    fileset, dirs = _add_filepath_to_fileset(
+                        new_filepath, srcdir, fileset, dirs)
+                matched = True
+                # XXX: This seems weird it's the last prefix path that matched.
+                filepath = new_filepath
+                break
+            elif prefix in organize_fileset and filepath.startswith(prefix):
+                new_filepath = (
+                    filepath,
+                    "{}{}".format(organize_fileset[prefix],
+                                  filepath[len(prefix):]))
+                fileset, dirs = _add_filepath_to_fileset(
+                    new_filepath, srcdir, fileset, dirs)
                 matched = True
                 filepath = new_filepath
                 break
 
         if matched:
-            print("JOE: matched {}".format(filepath))
-            if type(filepath) == tuple:
-                if os.path.isdir(os.path.join(srcdir, filepath[0])):
-                    dirs.add(filepath)
-                else:
-                    fileset.add(filepath)
-            else:
-                if os.path.isdir(os.path.join(srcdir, filepath)):
-                    dirs.add(filepath)
-                else:
-                    fileset.add(filepath)
+            fileset, dirs = _add_filepath_to_fileset(
+                filepath, srcdir, fileset, dirs)
         else:
             fileset.add(filepath)
 
     return fileset, dirs
+
 
 def _combine_filesets(fileset_1, fileset_2):
     """Combine filesets if the first is an explicit or implicit wildcard."""
@@ -1148,7 +1085,7 @@ def _combine_filesets(fileset_1, fileset_2):
     # XXX: should this only be a single wildcard and possibly excludes?
     if '*' in fileset_1:
         to_combine = True
-        #fileset_1.remove('*')
+        fileset_1.remove('*')
 
     # combine if fileset_1 is only excludes
     if set([x[0] for x in fileset_1]) == set('-'):
