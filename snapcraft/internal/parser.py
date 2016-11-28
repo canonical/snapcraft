@@ -216,7 +216,9 @@ def _process_entry(data):
     return parts_list, after_parts
 
 
-def _process_wiki_entry(entry, master_parts_list):
+def _process_wiki_entry(
+        entry, master_parts_list, master_missing_parts,
+        pending_validation_entries):
     """Add valid wiki entries to the master parts list"""
     # return the number of errors encountered
     try:
@@ -239,14 +241,25 @@ def _process_wiki_entry(entry, master_parts_list):
     parts_list, after_parts = _process_entry(data)
 
     known_parts = list(parts_list.keys()) + list(master_parts_list.keys())
-    if is_valid_parts_list(after_parts, known_parts):
+    missing_parts = missing_parts_set(after_parts, known_parts)
+
+    if not len(missing_parts):
         master_parts_list.update(parts_list)
+        master_missing_parts -= set(parts_list.keys())
+    else:
+        pending_validation_entries.append(entry)
+        master_missing_parts.update(missing_parts)
+        logging.debug('Parts {!r} are missing'.format(
+            ",".join(missing_parts)))
 
 
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
+    pending_validation_entries = []
+    missing_parts = set()
+
     wiki_errors = 0
 
     output = output.replace(b'{{{', b'').replace(b'}}}', b'')
@@ -259,7 +272,9 @@ def _process_index(output):
         if line == '---':
             if entry:
                 try:
-                    _process_wiki_entry(entry, master_parts_list)
+                    _process_wiki_entry(
+                        entry, master_parts_list, missing_parts,
+                        pending_validation_entries)
                 except SnapcraftError as e:
                     logger.warning(e)
                     wiki_errors += 1
@@ -270,10 +285,23 @@ def _process_index(output):
 
     if entry:
         try:
-            _process_wiki_entry(entry, master_parts_list)
+            _process_wiki_entry(
+                        entry, master_parts_list,  missing_parts,
+                        pending_validation_entries)
         except SnapcraftError as e:
             logger.warning(e)
             wiki_errors += 1
+
+    for entry in pending_validation_entries:
+        try:
+            _process_wiki_entry(entry, master_parts_list, missing_parts, [])
+        except SnapcraftError as e:
+            logger.warning(e)
+            wiki_errors += 1
+
+    if len(missing_parts):
+        logging.warning('Parts {!r} are not defined in the parts entry'.format(
+                ",".join(missing_parts)))
 
     return {'master_parts_list': master_parts_list,
             'wiki_errors': wiki_errors}
@@ -309,14 +337,13 @@ def run(args):
     return wiki_errors
 
 
-def is_valid_parts_list(parts, known_parts):
+def missing_parts_set(parts, known_parts):
+    missing_parts = set()
     for partname in parts:
         if partname not in known_parts:
-            logging.error('Part {!r} is missing from the parts entry'.format(
-                partname))
-            return False
+            missing_parts.add(partname)
 
-    return True
+    return missing_parts
 
 
 def _write_parts_list(path, master_parts_list):
