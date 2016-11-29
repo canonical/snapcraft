@@ -78,7 +78,7 @@ class ReplaceInFileTestCase(tests.TestCase):
         with open(file_info['path'], 'w') as f:
             f.write(file_info['contents'])
 
-        with unittest.mock.patch('snapcraft.file_utils.open') as mock_open:
+        with mock.patch('snapcraft.file_utils.open') as mock_open:
             mock_open.side_effect = PermissionError("")
             file_utils.replace_in_file('bin', re.compile(r''),
                                        re.compile(r'#!.*python'),
