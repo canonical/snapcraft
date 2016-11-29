@@ -25,33 +25,29 @@ from snapcraft.internal.deltas import BaseDeltasGenerator
 logger = logging.getLogger(__name__)
 
 
-class XDeltaGenerator(BaseDeltasGenerator):
+class XDelta3Generator(BaseDeltasGenerator):
 
     def __init__(self, *, source_path, target_path):
-        delta_format = 'xdelta'
+        delta_format = 'xdelta3'
         delta_tool_path = shutil.which(delta_format)
         super().__init__(source_path=source_path,
                          target_path=target_path,
-                         delta_file_extname='xdelta',
+                         delta_file_extname='xdelta3',
                          delta_format=delta_format,
                          delta_tool_path=delta_tool_path)
 
     def get_delta_cmd(self, source_path, target_path, delta_file):
         return [
             self.delta_tool_path,
-            'delta',
+            '-s',
             source_path,
             target_path,
             delta_file
         ]
 
-    def is_returncode_unexpected(self, proc):
-        # Success is exiting with 0 or 1. Yes, really. I know.
-        # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=212189
-        return proc.returncode not in (0, 1)
-
     def log_delta_file(self, delta_file):
         xdelta_output = subprocess.check_output(
-            [self.delta_tool_path, 'info', delta_file],
+            [self.delta_tool_path, 'printhdr', delta_file],
             universal_newlines=True)
-        logger.debug('xdelta delta diff generation:\n{}'.format(xdelta_output))
+        logger.debug('xdelta3 delta diff generation:\n{}'.format(
+            xdelta_output))
