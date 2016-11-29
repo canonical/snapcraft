@@ -41,6 +41,7 @@ setup(
               'snapcraft.integrations',
               'snapcraft.internal',
               'snapcraft.internal.cache',
+              'snapcraft.internal.deltas',
               'snapcraft.internal.states',
               'snapcraft.plugins',
               'snapcraft.storeapi'],

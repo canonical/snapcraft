@@ -14,8 +14,8 @@ env:
   - secure: "gqtqTji8cie0Q2O+sRhE4MbTXGI0qTq8yPgRGFd9XlT/lB/EttFQKu72qycr/jyrvt809wjWM13QVqa5/71SoJd+Xzrmr1/leevx9Z/Wnv+IYkRAuGHW7iIDQb7MhQvpq3tw8hbGJzGxw03cUmjKJ89AAlGbwaURMat47lPsRXus8R7pl9S6r5owhBbmrQNaP9io0oPQDOAUf4pmJma1FTHAjXg0EdUwdXFUWToj15c7UJtB/MQNNTfjlwGA+/sPDqgthUEAzXmvUfXAZWnjQFZmq4ebvBIJEOQEPdLCXWGYdN2DAL7zp7WthrwFfgFFZb579rOBh0ETIMebUgBLoVSiPcn/bfzdYHcYKGf7lTJpoug5QENl+kZcuVyK7GUjf8O9tamhkYeMtUOy5Ubrcnv+Lfy9NsDPhKY05n+7tzzUVB1dePTrMHPuRZLl4OKku1AUN/S3A2xMrLO8vsWPVxcfxeb+4Y5ikYiHHpOozJHHDdPmj5raRIf3IH87W2PX0nJhg+gEgNHV1v3HBoyeqOPl4hl6/Fb9sCS/JAbbfcixkC54MHHI+opNSgZRvY0RORGHmuhHRGvfMxnwHmeOD51oV+SRGJS6A7qUq6GlBIy3/YlAY3LqqkWrHwm4EYttd4yM1FZ5s9pVnoSSJkgQ5vYK7A8a9AgZJlCcZnbzXtA="
   matrix:
   - TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-  - TEST_SUITE=unit DEPENDENCIES="apt install -y libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
-  - TEST_SUITE=integration TEST_STORE=fake DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
+  - TEST_SUITE=unit DEPENDENCIES="apt install -y libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
+  - TEST_SUITE=integration TEST_STORE=fake DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
 
 install:
   - sudo apt-get -qq update
