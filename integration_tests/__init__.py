@@ -212,8 +212,8 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
-    def list_snaps(self, expected_snaps):
-        process = pexpect.spawn(self.snapcraft_command, ['list-snaps'])
+    def list_registered(self, expected_snaps):
+        process = pexpect.spawn(self.snapcraft_command, ['list-registered'])
 
         for name, status, private in expected_snaps:
             # Ignores 'snap-id' to avoid confusion on fake and actual stores.

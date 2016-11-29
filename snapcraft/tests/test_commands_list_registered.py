@@ -27,11 +27,11 @@ from snapcraft import (
 )
 
 
-class ListSnapsTestCase(tests.TestCase):
+class ListRegisteredTestCase(tests.TestCase):
 
     scenarios = [
-        ('list-snaps', {'command_name': 'list-snaps'}),
-        ('snaps alias', {'command_name': 'snaps'}),
+        ('list-registered', {'command_name': 'list-registered'}),
+        ('registered alias', {'command_name': 'registered'}),
     ]
 
     def setUp(self):
@@ -41,7 +41,7 @@ class ListSnapsTestCase(tests.TestCase):
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
 
-    def test_list_snaps_without_login(self):
+    def test_list_registered_without_login(self):
         with self.assertRaises(SystemExit) as raised:
             main([self.command_name])
 
@@ -51,7 +51,19 @@ class ListSnapsTestCase(tests.TestCase):
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    def test_list_snaps_successfully(self, mock_get_account_information):
+    def test_list_registered_empty(self, mock_get_account_information):
+        mock_get_account_information.return_value = {
+            'snaps': {},
+        }
+
+        main([self.command_name])
+
+        self.assertIn(
+            "There are no registered snaps for series '16'.",
+            self.fake_terminal.getvalue())
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    def test_list_registered_successfully(self, mock_get_account_information):
         mock_get_account_information.return_value = {
             'snaps': {
                 '16': {
@@ -72,8 +84,8 @@ class ListSnapsTestCase(tests.TestCase):
         main([self.command_name])
 
         expected_output = dedent('''\
-        Name    Status         Snap-Id          Private
-        bar     ReviewPending  another_snap_id  True
-        foo     Approved       a_snap_id        False
+        Name    Status         Snap-Id          Visibility
+        bar     ReviewPending  another_snap_id  private
+        foo     Approved       a_snap_id        public
         ''')
         self.assertIn(expected_output, self.fake_terminal.getvalue())

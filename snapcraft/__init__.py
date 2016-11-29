@@ -241,7 +241,7 @@ from snapcraft._store import (                      # noqa
     history,
     gated,
     list_keys,
-    list_snaps,
+    list_registered,
     login,
     logout,
     push,

@@ -164,18 +164,24 @@ def _requires_login():
         raise
 
 
-def list_snaps():
-    snap_series = storeapi.constants.DEFAULT_SERIES
+def list_registered():
+    series = storeapi.constants.DEFAULT_SERIES
+
     store = storeapi.StoreClient()
     with _requires_login():
         account_info = store.get_account_information()
     snaps = [
         (name, info['status'], info['snap-id'],
-         'True' if info['private'] else 'False')
-        for name, info in account_info['snaps'][snap_series].items()]
+         'private' if info['private'] else 'public')
+        for name, info in account_info['snaps'].get(series, {}).items()]
+
+    if not snaps:
+        print('There are no registered snaps for series {!r}.'.format(series))
+        return
+
     tabulated_snaps = tabulate(
         sorted(snaps, key=operator.itemgetter(0)),
-        headers=["Name", "Status", "Snap-Id", "Private"],
+        headers=["Name", "Status", "Snap-Id", "Visibility"],
         tablefmt="plain")
     print(tabulated_snaps)
 

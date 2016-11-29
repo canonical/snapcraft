@@ -19,9 +19,9 @@ import uuid
 import integration_tests
 
 
-class SnapsTestCase(integration_tests.StoreTestCase):
+class RegisteredTestCase(integration_tests.StoreTestCase):
 
-    def test_snaps_status_and_privacy(self):
+    def test_registered_status_and_privacy(self):
         self.login()
 
         # Make sure 'snap_public' is listed before 'snap_private',
@@ -32,7 +32,7 @@ class SnapsTestCase(integration_tests.StoreTestCase):
         self.register(snap_private, private=True)
 
         expected_snaps = [
-            (snap_public, 'Approved', 'False'),
-            (snap_private, 'Approved', 'True'),
+            (snap_public, 'Approved', 'public'),
+            (snap_private, 'Approved', 'private'),
         ]
-        self.list_snaps(expected_snaps)
+        self.list_registered(expected_snaps)
