@@ -45,7 +45,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import shutil
-from glob import glob
+from glob import iglob
 
 import snapcraft
 from snapcraft import common
@@ -112,7 +112,7 @@ class GoPlugin(snapcraft.BasePlugin):
         super().pull()
         os.makedirs(self._gopath_src, exist_ok=True)
 
-        if glob('{}/**/*.go'.format(self.sourcedir), recursive=True):
+        if any(iglob('{}/**/*.go'.format(self.sourcedir), recursive=True)):
             go_package = self._get_local_go_package()
             go_package_path = os.path.join(self._gopath_src, go_package)
             if os.path.islink(go_package_path):
