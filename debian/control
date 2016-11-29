@@ -29,6 +29,7 @@ Build-Depends: bash-completion,
                python3-xdg,
                python3-yaml,
                squashfs-tools,
+               xdelta,
 Homepage: https://github.com/snapcore/snapcraft
 Vcs-Git: https://github.com/snapcore/snapcraft.git
 Vcs-Browser: https://github.com/snapcore/snapcraft
@@ -54,6 +55,7 @@ Depends: python3-apt,
          python3-yaml,
          squashfs-tools,
          sudo,
+         xdelta,
          ${misc:Depends},
          ${python3:Depends}
 Suggests: lxd, snapd (>= 2.15~)

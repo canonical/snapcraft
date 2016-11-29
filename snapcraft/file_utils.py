@@ -164,6 +164,11 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
             f.write(replaced)
 
 
+def executable_exists(path):
+    """Return True if 'path' exists and is readable and executable."""
+    return os.path.exists(path) and os.access(path, os.R_OK | os.X_OK)
+
+
 @contextmanager
 def requires_command_success(command, not_found_fmt=None, failure_fmt=None):
     if isinstance(command, str):
