@@ -19,7 +19,7 @@ import logging
 import os
 import sys
 from contextlib import contextmanager
-from subprocess import check_call, CalledProcessError
+from subprocess import CalledProcessError
 from time import sleep
 import pylxd
 import six
@@ -73,6 +73,8 @@ class Cleanbuilder:
         self._project_options = project_options
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
+        self._find_lxd()
+        self._container = None
 
     def _find_lxd(self):
         try:
@@ -103,6 +105,8 @@ class Cleanbuilder:
             destination_file.write(data)
 
     def _container_run(self, cmd):
+        if not self._container:
+            raise CalledProcessError(-1, cmd)
         print('Executing {}'.format(cmd))
         # API call because self._container.execute doesn't expose IO streams
         response = self._container.api.exec.post(json={
@@ -123,6 +127,10 @@ class Cleanbuilder:
         self._manager.start()
         while len(self._manager) > 0:
             sleep(.1)
+        response = self._client.api.operations[operation_id].get()
+        exit_status = response.json()['metadata']['metadata']['return']
+        if exit_status is not 0:
+            raise CalledProcessError(exit_status, cmd)
 
     def _pipe(self, io):
         pipe = _CommandWebsocketclient(
@@ -148,7 +156,7 @@ class Cleanbuilder:
             fingerprint = self._get_fingerprint_by_name(
                 'ubuntu:xenial/{}'.format(self._project_options.deb_arch))
             logger.info('Creating container {} with fingerprint {}'.format(
-                self._container_name, fingerprint))
+                self._container_name, fingerprint[:12]))
             self._container = self._client.containers.create({
                 'name': self._container_name,
                 'ephemeral': True,
@@ -165,7 +173,6 @@ class Cleanbuilder:
             self._container.stop(force=True, wait=True)
 
     def execute(self):
-        self._find_lxd()
         with self._create_container():
             self._setup_project()
             self._wait_for_network()
