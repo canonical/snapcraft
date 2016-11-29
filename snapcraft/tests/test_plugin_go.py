@@ -298,9 +298,6 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
-        open(os.path.join(plugin.options.source, 'main.go'), 'w').close()
-
         plugin.pull()
 
         os.makedirs(plugin._gopath_bin)
