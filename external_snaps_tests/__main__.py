@@ -20,9 +20,15 @@ This will clone the external repository, search for snapcraft.yaml files and
 snap the packages.
 
 Usage:
-  external_snaps_tests REPO_URL [--cleanbuild] [--keep-dir]
+  external_snaps_tests REPO_URL [--repo-branch BRANCH]
+                                [--cleanbuild] [--keep-dir]
+
+Arguments:
+  REPO_URL      The URL of the repository to build.
 
 Options:
+  --repo-branch The name of the branch to build. The default value build the
+                default branch of the repository.
   --cleanbuild  Build the snaps in a clean LXC container.
   --keep-dir    Do not remove the temporary directory where the repository was
                 cloned and snapped.
@@ -41,11 +47,12 @@ import docopt
 def main():
     arguments = docopt.docopt(__doc__)
     repo = arguments['REPO_URL']
+    repo_branch = arguments['--repo-branch']
     cleanbuild = arguments['--cleanbuild']
     keep_dir = arguments['--keep-dir']
     if _is_git(repo):
         if shutil.which('git'):
-            path = _git_clone(repo)
+            path = _git_clone(repo, repo_branch)
             _build_snaps(path, cleanbuild, keep_dir)
         else:
             sys.exit('Please install git.')
@@ -59,11 +66,13 @@ def _is_git(repo):
             repo.startswith('https://git.launchpad.net/'))
 
 
-def _git_clone(url):
+def _git_clone(url, repo_branch=None):
     temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
     command = ['git', 'clone', url, temp_dir]
     print(' '.join(command))
     subprocess.check_call(command)
+    if repo_branch:
+        subprocess.check_call(['git', 'checkout', repo_branch], cwd=temp_dir)
     return temp_dir
 
 
