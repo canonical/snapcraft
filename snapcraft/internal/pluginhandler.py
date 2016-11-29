@@ -706,10 +706,7 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
-                   missing_ok=False, follow_symlinks=False,
-                   fixup_func=lambda *args: None):
-
+def _migrate_dirs(snap_dirs, srcdir, dstdir, step='stage'):
     for directory in snap_dirs:
         copy_tree = False
         if type(directory) == tuple:
@@ -726,6 +723,30 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
         if copy_tree:
             file_utils.link_or_copy_tree(src, dst)
 
+
+def _can_skip(src, dst, missing_ok=False):
+    if os.path.isdir(src):
+        snapcraft.file_utils.create_similar_directory(
+            src, dst
+        )
+        return True
+
+    if missing_ok and not os.path.exists(src):
+        return True
+
+    # If the file is already here and it's a symlink, leave it alone.
+    if os.path.islink(dst):
+        return True
+
+    return False
+
+
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
+                   missing_ok=False, follow_symlinks=False,
+                   fixup_func=lambda *args: None):
+
+    _migrate_dirs(snap_dirs, srcdir, dstdir, step)
+
     for snap_file in snap_files:
         if type(snap_file) == tuple:
             src = os.path.join(srcdir, snap_file[0])
@@ -738,18 +759,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
 
         snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
                                                       os.path.dirname(dst))
-
-        if os.path.isdir(src):
-            snapcraft.file_utils.create_similar_directory(
-                src, dst
-            )
-            continue
-
-        if missing_ok and not os.path.exists(src):
-            continue
-
-        # If the file is already here and it's a symlink, leave it alone.
-        if os.path.islink(dst):
+        if _can_skip(src, dst, missing_ok):
             continue
 
         # Otherwise, remove and re-link it.
@@ -787,12 +797,21 @@ def _organize_filesets(fileset, base_dir):
                 shutil.move(src, dst)
 
 
+def _sort_snap_dirs(snap_dirs):
+    new_snap_dirs = set()
+    for snap_dir in snap_dirs:
+        if type(snap_dir) == tuple:
+            snap_dir = snap_dir[1]
+        new_snap_dirs.add(snap_dir)
+
+    return sorted(new_snap_dirs, reverse=True)
+
+
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:
+        path = snap_file
         if type(snap_file) == tuple:
             path = snap_file[1]
-        else:
-            path = snap_file
 
         # XXX: hack to remove directories should be fixed elsewhere
         if os.path.isdir(os.path.join(directory, path)):
@@ -803,13 +822,7 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
     # snap_dirs may not be ordered so that subdirectories come before
     # parents, and we want to be able to remove directories if possible, so
     # we'll sort them in reverse here to get subdirectories before parents.
-    new_snap_dirs = set()
-    for snap_dir in snap_dirs:
-        if type(snap_dir) == tuple:
-            snap_dir = snap_dir[1]
-        new_snap_dirs.add(snap_dir)
-
-    snap_dirs = sorted(new_snap_dirs, reverse=True)
+    snap_dirs = _sort_snap_dirs(snap_dirs)
 
     for snap_dir in snap_dirs:
         if type(snap_dir) == tuple:
@@ -945,6 +958,30 @@ def _file_collides(file_this, file_other):
     return False
 
 
+def _check_previous_parts_for_collisions(parts_files, new_part_files,
+                                         part, rev_fileset):
+        # Scan previous parts for collisions
+        for other_part_name in parts_files:
+            other_part = parts_files[other_part_name]
+            common = new_part_files & other_part['files']
+            conflict_files = []
+            for f in common:
+                this = os.path.join(part.installdir, rev_fileset.get(f, f))
+                other = os.path.join(
+                    parts_files[other_part_name]['installdir'],
+                    other_part['filemap'].get(f, f))
+                if os.path.islink(this) and os.path.islink(other):
+                    continue
+                if _file_collides(this, other):
+                    conflict_files.append(f)
+
+            if conflict_files:
+                raise SnapcraftPartConflictError(
+                    other_part_name=other_part_name,
+                    part_name=part.name,
+                    conflict_files=conflict_files)
+
+
 def check_for_collisions(parts):
     """Raises an EnvironmentError if conflicts are found between two parts."""
     parts_files = {}
@@ -968,26 +1005,8 @@ def check_for_collisions(parts):
         for part_file in new_part_files:
             filemap[part_file] = rev_fileset.get(part_file, part_file)
 
-        # Scan previous parts for collisions
-        for other_part_name in parts_files:
-            other_part = parts_files[other_part_name]
-            common = new_part_files & other_part['files']
-            conflict_files = []
-            for f in common:
-                this = os.path.join(part.installdir, rev_fileset.get(f, f))
-                other = os.path.join(
-                    parts_files[other_part_name]['installdir'],
-                    other_part['filemap'].get(f, f))
-                if os.path.islink(this) and os.path.islink(other):
-                    continue
-                if _file_collides(this, other):
-                    conflict_files.append(f)
-
-            if conflict_files:
-                raise SnapcraftPartConflictError(
-                    other_part_name=other_part_name,
-                    part_name=part.name,
-                    conflict_files=conflict_files)
+            _check_previous_parts_for_collisions(
+                parts_files, new_part_files, part, rev_fileset)
 
         # And add our files to the list
         parts_files[part.name] = {'files': new_part_files,
@@ -1020,6 +1039,43 @@ def _add_filepath_to_fileset(filepath, srcdir, fileset, dirset):
     return fileset, dirset
 
 
+def _organize_filepath_prefixes(filepath, rev_organize_fileset,
+                                organize_fileset, srcdir, fileset, dirs):
+
+    path_prefixes = _get_path_prefixes(filepath)
+    matched = False
+    for prefix in path_prefixes:
+        if prefix in rev_organize_fileset and filepath.startswith(prefix):
+            for rev in rev_organize_fileset[prefix]:
+                new_filepath = ("{}{}".format(rev,
+                                filepath[len(prefix):]),
+                                filepath)
+                fileset, dirs = _add_filepath_to_fileset(
+                    new_filepath, srcdir, fileset, dirs)
+            matched = True
+            # XXX: This seems weird it's the last prefix path that matched.
+            filepath = new_filepath
+            break
+        elif prefix in organize_fileset and filepath.startswith(prefix):
+            new_filepath = (
+                filepath,
+                "{}{}".format(organize_fileset[prefix],
+                              filepath[len(prefix):]))
+            fileset, dirs = _add_filepath_to_fileset(
+                new_filepath, srcdir, fileset, dirs)
+            matched = True
+            filepath = new_filepath
+            break
+
+    if matched:
+        fileset, dirs = _add_filepath_to_fileset(
+            filepath, srcdir, fileset, dirs)
+    else:
+        fileset.add(filepath)
+
+    return fileset, dirs
+
+
 def _organize_fileset(fileset_orig, organize_fileset, srcdir):
     fileset = set()
     dirs = set()
@@ -1043,36 +1099,9 @@ def _organize_fileset(fileset_orig, organize_fileset, srcdir):
             fileset.add(new_filepath)
             continue
 
-        path_prefixes = _get_path_prefixes(filepath)
-        matched = False
-        for prefix in path_prefixes:
-            if prefix in rev_organize_fileset and filepath.startswith(prefix):
-                for rev in rev_organize_fileset[prefix]:
-                    new_filepath = ("{}{}".format(rev,
-                                    filepath[len(prefix):]),
-                                    filepath)
-                    fileset, dirs = _add_filepath_to_fileset(
-                        new_filepath, srcdir, fileset, dirs)
-                matched = True
-                # XXX: This seems weird it's the last prefix path that matched.
-                filepath = new_filepath
-                break
-            elif prefix in organize_fileset and filepath.startswith(prefix):
-                new_filepath = (
-                    filepath,
-                    "{}{}".format(organize_fileset[prefix],
-                                  filepath[len(prefix):]))
-                fileset, dirs = _add_filepath_to_fileset(
-                    new_filepath, srcdir, fileset, dirs)
-                matched = True
-                filepath = new_filepath
-                break
-
-        if matched:
-            fileset, dirs = _add_filepath_to_fileset(
-                filepath, srcdir, fileset, dirs)
-        else:
-            fileset.add(filepath)
+        fileset, dirs = _organize_filepath_prefixes(
+            filepath, rev_organize_fileset, organize_fileset,
+            srcdir, fileset, dirs)
 
     return fileset, dirs
 
