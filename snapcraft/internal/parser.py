@@ -253,6 +253,22 @@ def _process_wiki_entry(
             ",".join(missing_parts)))
 
 
+def _try_process_entry(
+        entry, master_parts_list, missing_parts,
+        pending_validation_entries):
+    wiki_errors = 0
+
+    try:
+        _process_wiki_entry(
+            entry, master_parts_list, missing_parts,
+            pending_validation_entries)
+    except SnapcraftError as e:
+        logger.warning(e)
+        wiki_errors += 1
+
+    return wiki_errors
+
+
 def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
@@ -271,33 +287,21 @@ def _process_index(output):
     for line in output.decode().splitlines():
         if line == '---':
             if entry:
-                try:
-                    _process_wiki_entry(
-                        entry, master_parts_list, missing_parts,
-                        pending_validation_entries)
-                except SnapcraftError as e:
-                    logger.warning(e)
-                    wiki_errors += 1
-
+                wiki_errors += _try_process_entry(
+                    entry, master_parts_list, missing_parts,
+                    pending_validation_entries)
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
 
     if entry:
-        try:
-            _process_wiki_entry(
-                        entry, master_parts_list,  missing_parts,
-                        pending_validation_entries)
-        except SnapcraftError as e:
-            logger.warning(e)
-            wiki_errors += 1
+        wiki_errors += _try_process_entry(
+            entry, master_parts_list,  missing_parts,
+            pending_validation_entries)
 
     for entry in pending_validation_entries:
-        try:
-            _process_wiki_entry(entry, master_parts_list, missing_parts, [])
-        except SnapcraftError as e:
-            logger.warning(e)
-            wiki_errors += 1
+        wiki_errors += _try_process_entry(
+            entry, master_parts_list, missing_parts, [])
 
     if len(missing_parts):
         logging.warning('Parts {!r} are not defined in the parts entry'.format(
