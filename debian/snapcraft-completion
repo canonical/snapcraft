@@ -6,7 +6,7 @@ _snapcraft()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="help init list-plugins login logout list-keys keys create-key register-key register tour push release clean cleanbuild pull build sign-build stage prime snap update define search gated validate history status close"
+    opts="help init list-plugins login logout list-keys keys create-key register-key register tour push release clean cleanbuild pull build sign-build stage prime snap update define search gated validate history status close enable-ci"
 
     case "$prev" in
     help)
@@ -20,6 +20,10 @@ _snapcraft()
         ;;
     upload | push | sign-build)
         _filedir '*.snap'
+        return 0
+        ;;
+    enable-ci)
+        COMREPLY=( travis )
         return 0
         ;;
     *)

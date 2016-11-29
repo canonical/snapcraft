@@ -106,21 +106,23 @@ def _check_dev_agreement_and_namespace_statuses(store):
             raise
 
 
-def _login(store, acls=None, save=True):
+def _login(store, packages=None, acls=None, channels=None, save=True):
     print('Enter your Ubuntu One SSO credentials.')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
 
     try:
         try:
-            store.login(email, password, acls=acls, save=save)
+            store.login(email, password, packages=packages, acls=acls,
+                        channels=channels, save=save)
             print()
             logger.info(storeapi.constants.TWO_FACTOR_WARNING)
         except storeapi.errors.StoreTwoFactorAuthenticationRequired:
             one_time_password = input('Second-factor auth: ')
             store.login(
                 email, password, one_time_password=one_time_password,
-                acls=acls, save=save)
+                acls=acls, packages=packages, channels=channels,
+                save=save)
 
         # Continue if agreement and namespace conditions are met.
         _check_dev_agreement_and_namespace_statuses(store)
@@ -398,8 +400,9 @@ def push(snap_filename, release_channels=None):
     tracker.raise_for_code()
 
     if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
-        snap_cache = cache.SnapCache()
+        snap_cache = cache.SnapCache(project_name=snap_name)
         snap_cache.cache(snap_filename, result['revision'])
+        snap_cache.prune(keep_revision=result['revision'])
 
     if release_channels:
         release(snap_name, result['revision'], release_channels)
