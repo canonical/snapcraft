@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal import cache             # noqa
-from snapcraft.internal import deltas            # noqa
-from snapcraft.internal import states            # noqa
-from snapcraft.internal.project_loader import load_config  # noqa
+
+
+from . import errors # noqa
+from ._deltas import BaseDeltasGenerator # noqa
+from ._xdelta import XDeltaGenerator # noqa

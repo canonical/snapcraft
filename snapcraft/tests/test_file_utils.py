@@ -19,6 +19,8 @@ import re
 import subprocess
 from unittest import mock
 
+import fixtures
+
 from snapcraft import file_utils
 from snapcraft import tests
 from snapcraft.internal.errors import (
@@ -126,6 +128,43 @@ class TestLinkOrCopy(tests.TestCase):
     def test_copy_nested_file(self):
         file_utils.link_or_copy('foo/bar/baz/4', 'foo2/bar/baz/4')
         self.assertTrue(os.path.isfile('foo2/bar/baz/4'))
+
+
+class ExecutableExistsTestCase(tests.TestCase):
+
+    def test_file_does_not_exist(self):
+        workdir = self.useFixture(fixtures.TempDir()).path
+        self.assertFalse(
+            file_utils.executable_exists(
+                os.path.join(workdir, 'doesnotexist'))
+        )
+
+    def test_file_exists_but_not_readable(self):
+        workdir = self.useFixture(fixtures.TempDir()).path
+        path = os.path.join(workdir, 'notreadable')
+        with open(path, 'wb'):
+            pass
+        os.chmod(path, 0)
+
+        self.assertFalse(file_utils.executable_exists(path))
+
+    def test_file_exists_but_not_executable(self):
+        workdir = self.useFixture(fixtures.TempDir()).path
+        path = os.path.join(workdir, 'notexecutable')
+        with open(path, 'wb'):
+            pass
+        os.chmod(path, 0o444)
+
+        self.assertFalse(file_utils.executable_exists(path))
+
+    def test_executable_exists_and_executable(self):
+        workdir = self.useFixture(fixtures.TempDir()).path
+        path = os.path.join(workdir, 'notexecutable')
+        with open(path, 'wb'):
+            pass
+        os.chmod(path, 0o555)
+
+        self.assertTrue(file_utils.executable_exists(path))
 
 
 class RequiresCommandSuccessTestCase(tests.TestCase):
