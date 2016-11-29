@@ -93,15 +93,19 @@ from snapcraft.internal.indicators import download_requests_stream
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
-KEYS = [
-    'source',
-    'source-commit',
-    'source-depth',
-    'source-tag',
-    'source-type',
-    'source-branch',
-    'source-subdir',
-]
+__SOURCE_DEFAULTS = {
+    'source': '.',
+    'source-commit': None,
+    'source-depth': None,
+    'source-tag': None,
+    'source-type': None,
+    'source-branch': None,
+    'source-subdir': None,
+}
+
+
+def get_source_defaults():
+    return __SOURCE_DEFAULTS.copy()
 
 
 class IncompatibleOptionsError(Exception):

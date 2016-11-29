@@ -66,7 +66,7 @@ class PluginHandler:
 
     def __init__(self, *, plugin_name, part_name,
                  part_properties, project_options, part_schema):
-        self._part_properties = part_properties.copy()
+        self._part_properties = self._setup_source(part_properties.copy())
         self.valid = False
         self.code = None
         self.config = {}
@@ -88,7 +88,6 @@ class PluginHandler:
         self.statedir = os.path.join(parts_dir, part_name, 'state')
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
 
-        self._setup_source(self._part_properties)
         self.source_handler = self._get_source_handler(self._part_properties)
 
         self._migrate_state_file()
@@ -149,14 +148,13 @@ class PluginHandler:
                     self._project_options.deb_arch, plugin_name))
             self.code.enable_cross_compilation()
 
-    def _setup_source(self, properties):
-        """Setup the source properties."""
-        properties['source'] = properties.get('source', '.')
-        properties['source-type'] = properties.get('source-type', None)
-        properties['source-branch'] = properties.get('source-branch', None)
-        properties['source-tag'] = properties.get('source-tag', None)
-        properties['source-depth'] = properties.get('source-depth', None)
-        properties['source-commit'] = properties.get('source-commit', None)
+    def _setup_source(self, original_properties):
+        """Returns properties with sources included."""
+        properties = sources.get_source_defaults()
+        # Update with full length of properties
+        properties.update(original_properties)
+
+        return properties
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -318,7 +316,7 @@ class PluginHandler:
 
     def mark_pull_done(self):
         pull_properties = self.code.get_pull_properties()
-        pull_properties.extend(sources.KEYS)
+        pull_properties.extend(sources.get_source_defaults().keys())
 
         self.mark_done('pull', states.PullState(
             pull_properties, self._part_properties,
@@ -678,7 +676,8 @@ def _make_options(part_schema, properties, plugin_schema):
     # the source entry before validation. To those concerned, it has
     # already been validated.
     validated_properties = properties.copy()
-    remove_set = [k for k in sources.KEYS if k in validated_properties]
+    remove_set = [k for k in sources.get_source_defaults().keys()
+                  if k in validated_properties]
     for key in remove_set:
         del validated_properties[key]
 
