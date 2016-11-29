@@ -415,23 +415,8 @@ class PluginHandler:
 
         snap_dirs |= new_snap_dirs | extra_snap_dirs
 
-        # replace organize tuples with new file names
-        # new_snap_files = set()
-        # for snap_file in snap_files:
-        #     if type(snap_file) == tuple:
-        #         snap_file = snap_file[1]
-        #     new_snap_files.add((snap_file, snap_file))
-        # snap_files = new_snap_files
-
-        # new_snap_dirs = set()
-        # for snap_dir in snap_dirs:
-        #     if type(snap_dir) == tuple:
-        #         snap_dir = snap_dir[1]
-        #     new_snap_dirs.add((snap_dir, snap_dir))
-        # snap_dirs = new_snap_dirs
-
-        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir,
-                       step='prime')
+        _migrate_files(snap_files, snap_dirs, self.code.installdir,
+                       self.snapdir, step='prime')
 
         new_snap_files = set()
         for snap_file in snap_files:
@@ -711,8 +696,6 @@ def _migrate_dirs(snap_dirs, srcdir, dstdir, step='stage'):
         copy_tree = False
         if type(directory) == tuple:
             src = os.path.join(srcdir, directory[0])
-            if step == 'prime':
-                src = os.path.join(srcdir, directory[1])
             dst = os.path.join(dstdir, directory[1])
             copy_tree = True
         else:
@@ -750,8 +733,6 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
     for snap_file in snap_files:
         if type(snap_file) == tuple:
             src = os.path.join(srcdir, snap_file[0])
-            if step == 'prime':
-                src = os.path.join(srcdir, snap_file[1])
             dst = os.path.join(dstdir, snap_file[1])
         else:
             src = os.path.join(srcdir, snap_file)

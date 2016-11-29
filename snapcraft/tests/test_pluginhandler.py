@@ -1295,7 +1295,7 @@ class StateTestCase(tests.TestCase):
         mock_find_dependencies.assert_called_once_with(
             self.handler.snapdir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
-            call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
+            call({'bin/1', 'bin/2'}, {'bin'}, self.handler.code.installdir,
                  self.handler.snapdir, step='prime'),
             call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
                  follow_symlinks=True),
