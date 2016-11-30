@@ -14,3 +14,5 @@ parts:
         - run-command-one
         - run-command-two
         - run-command-three
+        # LP: #1633298
+        - run-command-from-npm-install
