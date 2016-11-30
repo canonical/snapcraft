@@ -321,20 +321,28 @@ class PluginHandler:
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
+        if step == 'prime':
+            step = 'snap'
+        fileset = self._get_fileset(step).copy()
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if (step == 'prime' or step == 'snap') and fileset == ['*']:
-            stage_fileset = (
-                getattr(self.code.options, 'stage', ['*']) or ['*']).copy()
+        if step == 'prime' and fileset == ['*']:
+            stage_fileset = self._get_fileset('stage').copy()
             fileset = _combine_filesets(fileset, stage_fileset)
 
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
 
+    def _get_fileset(self, option, default=None):
+        if default is None:
+            default = ['*']
+
+        fileset = getattr(self.code.options, option, default)
+        return fileset if fileset else default
+
     def _organize(self):
-        fileset = getattr(self.code.options, 'organize', {}) or {}
+        fileset = self._get_fileset('organize', {})
 
         _organize_filesets(fileset.copy(), self.code.installdir)
 
@@ -385,7 +393,7 @@ class PluginHandler:
     def prime(self, force=False):
         self.makedirs()
         self.notify_part_progress('Priming')
-        snap_files, snap_dirs = self.migratable_fileset_for('snap')
+        snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
         dependencies = _find_dependencies(self.snapdir, snap_files)
 
