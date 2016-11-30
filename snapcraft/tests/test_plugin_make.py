@@ -111,7 +111,8 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=expected_env),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=expected_env)
+                       'DESTDIR={}'.format(plugin.installdir)],
+                      env=expected_env)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -128,7 +129,8 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['make', '-j1'], env=expected_env),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=expected_env)
+                       'DESTDIR={}'.format(plugin.installdir)],
+                      env=expected_env)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -143,9 +145,11 @@ class MakePluginTestCase(tests.TestCase):
         self.assertEqual(2, run_mock.call_count)
         expected_env = os.environ.copy()
         run_mock.assert_has_calls([
-            mock.call(['make', '-f', 'makefile.linux', '-j2'], env=expected_env),
+            mock.call(['make', '-f', 'makefile.linux', '-j2'],
+                      env=expected_env),
             mock.call(['make', '-f', 'makefile.linux', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=expected_env)
+                       'DESTDIR={}'.format(plugin.installdir)],
+                      env=expected_env)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -162,7 +166,8 @@ class MakePluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=expected_env),
             mock.call(['make', 'install',
-                       'PREFIX={}'.format(plugin.installdir)], env=expected_env)
+                       'PREFIX={}'.format(plugin.installdir)],
+                      env=expected_env)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
