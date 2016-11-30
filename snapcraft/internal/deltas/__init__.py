@@ -18,4 +18,4 @@
 
 from . import errors # noqa
 from ._deltas import BaseDeltasGenerator # noqa
-from ._xdelta import XDeltaGenerator # noqa
+from ._xdelta3 import XDelta3Generator # noqa
