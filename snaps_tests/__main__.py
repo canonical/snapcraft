@@ -24,8 +24,8 @@ Usage:
 Options:
   --skip-install       skip the tests that install the snaps into a
                        snapp test bed.
-  --ip IP_OR_HOSTNAME  IP of the testbed. If no IP is passed, a virtual
-                       machine will be created for the test.
+  --ip IP_OR_HOSTNAME  IP of the testbed. If no IP is passed, localhost will
+                       be used.
   --port PORT_NUMBER   SSH port of the testbed. Defaults to use port 22.
   --filter REGEXP      a regular expression to filter the snaps to test.
   --subunit            generate subunit results.
