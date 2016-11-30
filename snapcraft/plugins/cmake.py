@@ -77,7 +77,7 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
                  self.options.configflags, env=env)
 
-        super()._build(env=env)
+        self.make(env=env)
 
     def _build_environment(self):
         env = os.environ.copy()
