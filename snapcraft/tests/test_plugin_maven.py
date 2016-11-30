@@ -16,6 +16,7 @@
 
 import io
 import os
+import copy
 from unittest import mock
 from xml.etree import ElementTree
 
@@ -32,6 +33,8 @@ class MavenPluginTestCase(tests.TestCase):
         super().setUp()
 
         class Options:
+            maven_properties = {}
+            maven_build_targets = []
             maven_options = []
             maven_targets = ['']
 
@@ -120,7 +123,8 @@ class MavenPluginTestCase(tests.TestCase):
 
         build_properties = schema['build-properties']
         self.assertEqual(
-            ['disable-parallel', 'maven-options', 'maven-targets'],
+            ['disable-parallel', 'maven-properties', 'maven-build-targets',
+            'maven-options', 'maven-targets'],
             build_properties)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
@@ -227,6 +231,34 @@ class MavenPluginTestCase(tests.TestCase):
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package']),
+        ])
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    def test_build_with_properties(self, run_mock):
+        opts = copy.deepcopy(self.options)
+        opts.maven_properties['prop'] = 'val'
+        opts.maven_targets = []
+        plugin = maven.MavenPlugin('test-part', opts,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'package', '-Dprop=val']),
+        ])
+
+    @mock.patch.object(maven.MavenPlugin, 'run')
+    def test_build_with_build_targets(self, run_mock):
+        opts = copy.deepcopy(self.options)
+        opts.maven_build_targets = ['clean', 'artifacts']
+        opts.maven_targets = []
+        plugin = maven.MavenPlugin('test-part', opts,
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['mvn', 'clean', 'artifacts']),
         ])
 
     @mock.patch.object(maven.MavenPlugin, 'run')

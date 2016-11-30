@@ -25,9 +25,22 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - maven-options:
+    - maven-properties:
+      (object)
+      A dictionary of key-value pairs. Set the following properties when
+      running maven.
+
+    - maven-build-targets:
       (list of strings)
-      flags to pass to the build using the maven semantics for parameters.
+      Run the given maven targets.
+
+    - maven-options:
+      (deprecated; list of strings)
+      Flags to pass to the build using the maven semantics for parameters.
+
+    - maven-targets:
+      (deprecated; list of strings)
+      Locations to look for the target/ subdirectory.
 """
 
 import glob
@@ -49,6 +62,20 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
+        schema['properties']['maven-properties'] = {
+            'type': 'object',
+            'default': {},
+        }
+
+        schema['properties']['maven-build-targets'] = {
+            'type': 'array',
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
         schema['properties']['maven-options'] = {
             'type': 'array',
             'minitems': 1,
@@ -71,6 +98,8 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
+        schema['build-properties'].append('maven-properties')
+        schema['build-properties'].append('maven-build-targets')
         schema['build-properties'].append('maven-options')
         schema['build-properties'].append('maven-targets')
 
@@ -86,35 +115,43 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
     def build(self):
         super().build()
 
-        mvn_cmd = ['mvn', 'package']
+        if self.options.maven_build_targets:
+            mvn_cmd = ['mvn'] + self.options.maven_build_targets
+        else:
+            mvn_cmd = ['mvn', 'package']
+
         if self._use_proxy():
             settings_path = os.path.join(self.partdir, 'm2', 'settings.xml')
             _create_settings(settings_path)
             mvn_cmd += ['-s', settings_path]
 
+        for prop, value in self.options.maven_properties.items():
+            mvn_cmd.extend(['-D{}={}'.format(prop, value)])
+
         self.run(mvn_cmd + self.options.maven_options)
 
-        for f in self.options.maven_targets:
-            src = os.path.join(self.builddir, f, 'target')
-            jarfiles = glob.glob(os.path.join(src, '*.jar'))
-            warfiles = glob.glob(os.path.join(src, '*.war'))
-            arfiles = glob.glob(os.path.join(src, '*.[jw]ar'))
+        if not self.options.maven_build_targets:
+            for f in self.options.maven_targets:
+                src = os.path.join(self.builddir, f, 'target')
+                jarfiles = glob.glob(os.path.join(src, '*.jar'))
+                warfiles = glob.glob(os.path.join(src, '*.war'))
+                arfiles = glob.glob(os.path.join(src, '*.[jw]ar'))
 
-            if len(arfiles) == 0:
-                raise RuntimeError("Could not find any "
-                                   "built jar files for part")
-            if len(jarfiles) > 0 and len(f) == 0:
-                basedir = 'jar'
-            elif len(warfiles) > 0 and len(f) == 0:
-                basedir = 'war'
-            else:
-                basedir = f
+                if len(arfiles) == 0:
+                    raise RuntimeError("Could not find any "
+                                       "built jar files for part")
+                if len(jarfiles) > 0 and len(f) == 0:
+                    basedir = 'jar'
+                elif len(warfiles) > 0 and len(f) == 0:
+                    basedir = 'war'
+                else:
+                    basedir = f
 
-            targetdir = os.path.join(self.installdir, basedir)
-            os.makedirs(targetdir, exist_ok=True)
-            for f in arfiles:
-                base = os.path.basename(f)
-                os.link(f, os.path.join(targetdir, base))
+                targetdir = os.path.join(self.installdir, basedir)
+                os.makedirs(targetdir, exist_ok=True)
+                for f in arfiles:
+                    base = os.path.basename(f)
+                    os.link(f, os.path.join(targetdir, base))
 
 
 def _create_settings(settings_path):
