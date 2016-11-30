@@ -94,7 +94,7 @@ class MakePlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self.build_packages.append('make')
 
-    def make(self, env):
+    def make(self, env=None):
         command = ['make']
 
         if self.options.makefile:
@@ -121,4 +121,4 @@ class MakePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self.make(env=os.environ.copy())
+        self.make()
