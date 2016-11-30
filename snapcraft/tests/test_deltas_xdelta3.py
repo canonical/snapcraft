@@ -30,7 +30,7 @@ from snapcraft.internal import deltas # noqa
 from snapcraft.tests import fixture_setup
 
 
-class XDeltaTestCase(TestCase):
+class XDelta3TestCase(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -40,7 +40,7 @@ class XDeltaTestCase(TestCase):
 
         # patch the ProgressBar to avoid mess up the test output
         patcher = mock.patch(
-            'snapcraft.tests.test_deltas_xdelta.ProgressBar',
+            'snapcraft.tests.test_deltas_xdelta3.ProgressBar',
             new=tests.SilentProgressBar)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -58,8 +58,8 @@ class XDeltaTestCase(TestCase):
         """Generate more realistic snap data.
 
         Most tests don't need realistic data, and can use the default dummy
-        data that's created by setUp. However, tests that actually run xdelta
-        or bsdiff could use more accurate data. This file generates larger
+        data that's created by setUp. However, tests that actually run xdelta3
+        could use more accurate data. This file generates larger
         binary files. The files will be similar with roughly 0.1 variance along
         1KB block boundaries.
         """
@@ -81,25 +81,25 @@ class XDeltaTestCase(TestCase):
                 else:
                     target.write(block)
 
-    def test_raises_DeltaToolError_when_xdelta_not_installed(self):
+    def test_raises_DeltaToolError_when_xdelta3_not_installed(self):
         self.patch(file_utils, 'executable_exists', lambda a: False)
         self.patch(shutil, 'which', lambda a: None)
 
         self.assertThat(
-            lambda: deltas.XDeltaGenerator(
+            lambda: deltas.XDelta3Generator(
                 source_path=self.source_file, target_path=self.target_file),
             m.raises(deltas.errors.DeltaToolError)
         )
         exception = self.assertRaises(deltas.errors.DeltaToolError,
-                                      deltas.XDeltaGenerator,
+                                      deltas.XDelta3Generator,
                                       source_path=self.source_file,
                                       target_path=self.target_file)
         expected = 'delta_tool_path must be set in subclass!'
         self.assertEqual(str(exception), expected)
 
-    def test_xdelta(self):
+    def test_xdelta3(self):
         self.generate_snap_pair()
-        base_delta = deltas.XDeltaGenerator(
+        base_delta = deltas.XDelta3Generator(
             source_path=self.source_file, target_path=self.target_file)
         path = base_delta.make_delta(is_for_test=True)
 
@@ -108,9 +108,9 @@ class XDeltaTestCase(TestCase):
                                      base_delta.delta_file_extname)
         self.assertEqual(expect_path, path)
 
-    def test_xdelta_with_progress_indicator(self):
+    def test_xdelta3_with_progress_indicator(self):
         self.generate_snap_pair()
-        base_delta = deltas.XDeltaGenerator(
+        base_delta = deltas.XDelta3Generator(
             source_path=self.source_file, target_path=self.target_file)
 
         message = 'creating delta file from {!r}...'.format(
@@ -130,9 +130,9 @@ class XDeltaTestCase(TestCase):
                                      base_delta.delta_file_extname)
         self.assertEqual(expect_path, path)
 
-    def test_xdelta_with_custom_output_dir(self):
+    def test_xdelta3_with_custom_output_dir(self):
         self.generate_snap_pair()
-        base_delta = deltas.XDeltaGenerator(
+        base_delta = deltas.XDelta3Generator(
             source_path=self.source_file, target_path=self.target_file)
         delta_filename = '{}.{}'.format(
             os.path.split(base_delta.target_path)[1],
@@ -153,22 +153,22 @@ class XDeltaTestCase(TestCase):
         self.assertThat(path, m.FileExists())
         self.assertEqual(expect_path, path)
 
-    def test_xdelta_logs(self):
+    def test_xdelta3_logs(self):
         self.generate_snap_pair()
-        base_delta = deltas.XDeltaGenerator(
+        base_delta = deltas.XDelta3Generator(
             source_path=self.source_file, target_path=self.target_file)
         base_delta.make_delta(is_for_test=True)
 
         self.assertThat(
             self.fake_logger.output,
-            m.Contains('Generating xdelta delta for {}->{}.'.format(
+            m.Contains('Generating xdelta3 delta for {}->{}.'.format(
                 base_delta.source_path, base_delta.target_path)))
         self.assertThat(
             self.fake_logger.output,
-            m.Contains('xdelta delta diff generation'))
+            m.Contains('xdelta3 delta diff generation'))
 
     @mock.patch('subprocess.Popen')
-    def test_xdelta_return_invalid_code(self, mock_subproc_popen):
+    def test_xdelta3_return_invalid_code(self, mock_subproc_popen):
         # mock the subprocess.Popen with a unexpected returncode
         process_mock = mock.Mock()
         attrs = {
@@ -178,7 +178,7 @@ class XDeltaTestCase(TestCase):
         mock_subproc_popen.return_value = process_mock
 
         self.generate_snap_pair()
-        base_delta = deltas.XDeltaGenerator(
+        base_delta = deltas.XDelta3Generator(
             source_path=self.source_file, target_path=self.target_file)
         self.assertThat(
             lambda: base_delta.make_delta(is_for_test=True),
