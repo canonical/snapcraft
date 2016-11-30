@@ -92,8 +92,7 @@ class MakePluginTestCase(tests.TestCase):
             'was "{}"'.format(make_install_var_default))
 
         build_properties = schema['build-properties']
-        self.assertEqual(4, len(build_properties))
-        self.assertTrue('disable-parallel' in build_properties)
+        self.assertEqual(3, len(build_properties))
         self.assertTrue('makefile' in build_properties)
         self.assertTrue('make-parameters' in build_properties)
         self.assertTrue('make-install-var' in build_properties)
@@ -179,7 +178,7 @@ class MakePluginTestCase(tests.TestCase):
         plugin = make.MakePlugin('test-part', self.options,
                                  self.project_options)
 
-        os.makedirs(os.path.join(plugin.sourcedir, 'dir_artifact'))
+        os.makedirs(os.path.join(plugin.builddir, 'dir_artifact'))
 
         plugin.build()
 

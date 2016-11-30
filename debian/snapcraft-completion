@@ -19,7 +19,7 @@ _snapcraft()
         return 0
         ;;
     upload | push | sign-build)
-        _filedir '*.snap'
+        _filedir 'snap'
         return 0
         ;;
     enable-ci)

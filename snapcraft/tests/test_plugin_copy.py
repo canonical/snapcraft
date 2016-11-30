@@ -75,32 +75,45 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src': 'dst',
         }
-        open('src', 'w').close()
 
         c = CopyPlugin('copy', self.mock_options, self.project_options)
-        c.pull()
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        open(os.path.join(c.builddir, 'src'), 'w').close()
+
         c.build()
+
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'dst')))
 
     def test_copy_plugin_handles_leading_slash(self):
         self.mock_options.files = {
             'src': '/dst',
         }
-        open('src', 'w').close()
-
         c = CopyPlugin('copy', self.mock_options, self.project_options)
-        c.pull()
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        open(os.path.join(c.builddir, 'src'), 'w').close()
+
         c.build()
+
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'dst')))
 
     def test_copy_plugin_handles_dot(self):
         self.mock_options.files = {
             'src': '.',
         }
-        open('src', 'w').close()
 
         c = CopyPlugin('copy', self.mock_options, self.project_options)
-        c.pull()
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        open(os.path.join(c.builddir, 'src'), 'w').close()
+
         c.build()
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix, 'src')))
 
@@ -108,11 +121,16 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'src': 'dir/dst',
         }
-        open('src', 'w').close()
 
         c = CopyPlugin('copy', self.mock_options, self.project_options)
-        c.pull()
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        open(os.path.join(c.builddir, 'src'), 'w').close()
+
         c.build()
+
         self.assertTrue(os.path.exists(os.path.join(self.dst_prefix,
                                                     'dir/dst')))
 
@@ -120,11 +138,16 @@ class TestCopyPlugin(TestCase):
         self.mock_options.files = {
             'dirs1': 'dir/dst',
         }
-        os.mkdir('dirs1')
-        file = os.path.join('dirs1', 'f')
-        open(file, 'w').close()
 
         c = CopyPlugin('copy', self.mock_options, self.project_options)
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        os.mkdir(os.path.join(c.builddir, 'dirs1'))
+        open(os.path.join(c.builddir, 'dirs1', 'f'), 'w').close()
+        os.makedirs(os.path.join(c.builddir, 'foo', 'bar'))
+
         c.pull()
         c.build()
         self.assertTrue(
@@ -135,12 +158,15 @@ class TestCopyPlugin(TestCase):
             '*.txt': '.',
         }
 
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
         for filename in ('file-a.txt', 'file-b.txt', 'file-c.notxt'):
-            with open(filename, 'w') as datafile:
+            with open(os.path.join(c.builddir, filename), 'w') as datafile:
                 datafile.write(filename)
 
-        c = CopyPlugin('copy', self.mock_options, self.project_options)
-        c.pull()
         c.build()
 
         self.assertTrue(os.path.exists(
@@ -155,12 +181,16 @@ class TestCopyPlugin(TestCase):
             'foo/*': '.',
         }
 
-        os.makedirs(os.path.join('foo', 'directory'))
-        open(os.path.join('foo', 'file1'), 'w').close()
-        open(os.path.join('foo', 'directory', 'file2'), 'w').close()
-
         c = CopyPlugin('copy', self.mock_options, self.project_options)
-        c.pull()
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        os.makedirs(os.path.join(c.builddir, 'foo', 'directory'))
+        open(os.path.join(c.builddir, 'foo', 'file1'), 'w').close()
+        open(os.path.join(
+            c.builddir, 'foo', 'directory', 'file2'), 'w').close()
+
         c.build()
 
         self.assertTrue(os.path.isfile(os.path.join(c.installdir, 'file1')))
@@ -168,66 +198,16 @@ class TestCopyPlugin(TestCase):
         self.assertTrue(os.path.isfile(
             os.path.join(c.installdir, 'directory', 'file2')))
 
-    def test_copy_with_source(self):
-        self.mock_options.source = 'src'
-        self.mock_options.files = {'foo/bar': 'baz/qux'}
-
-        c = CopyPlugin('copy', self.mock_options, self.project_options)
-        os.makedirs(os.path.join('src', 'foo'))
-        open(os.path.join('src', 'foo', 'bar'), 'w').close()
-
-        c.pull()
-        self.assertTrue(
-            os.path.isfile(os.path.join(c.sourcedir, 'foo', 'bar')))
-
-        c.build()
-        self.assertTrue(os.path.isfile(os.path.join(c.builddir, 'foo', 'bar')))
-        self.assertTrue(
-            os.path.isfile(os.path.join(c.installdir, 'baz', 'qux')))
-
-    def test_copy_with_source_and_glob(self):
-        self.mock_options.source = 'src'
-        self.mock_options.files = {'foo/*': 'baz/'}
-
-        c = CopyPlugin('copy', self.mock_options, self.project_options)
-        os.makedirs(os.path.join('src', 'foo'))
-        open(os.path.join('src', 'foo', 'bar'), 'w').close()
-
-        c.pull()
-        self.assertTrue(
-            os.path.isfile(os.path.join(c.sourcedir, 'foo', 'bar')))
-
-        c.build()
-        self.assertTrue(os.path.isfile(os.path.join(c.builddir, 'foo', 'bar')))
-        self.assertTrue(
-            os.path.isfile(os.path.join(c.installdir, 'baz', 'bar')))
-
-    def test_copy_with_source_doesnt_use_cwd(self):
-        self.mock_options.source = 'src'
-        self.mock_options.files = {'foo/bar': 'baz/qux'}
-
-        c = CopyPlugin('copy', self.mock_options, self.project_options)
-        os.mkdir('src')
-        os.mkdir('foo')
-        open(os.path.join('foo', 'bar'), 'w').close()
-
-        c.pull()
-
-        with self.assertRaises(EnvironmentError) as raised:
-            c.build()
-
-        self.assertEqual(
-            str(raised.exception),
-            "[Errno 2] No such file or directory: '{}/foo/bar'".format(
-                c.builddir))
-
     def test_copy_symlinks(self):
         self.mock_options.files = {'foo/*': 'baz/'}
 
         c = CopyPlugin('copy', self.mock_options, self.project_options)
 
-        os.makedirs('foo/bar')
-        with open('foo/file', 'w') as f:
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        os.makedirs(os.path.join(c.builddir, 'foo', 'bar'))
+        with open(os.path.join(c.builddir, 'foo', 'file'), 'w') as f:
             f.write('foo')
 
         destination = os.path.join(c.installdir, 'baz')
@@ -235,21 +215,23 @@ class TestCopyPlugin(TestCase):
         symlinks = [
             {
                 'source': 'file',
-                'link_name': 'foo/relative1',
+                'link_name': os.path.join(c.builddir, 'foo', 'relative1'),
                 'destination': os.path.join(destination, 'relative1'),
                 'expected_realpath': os.path.join(destination, 'file'),
                 'expected_contents': 'foo',
             },
             {
                 'source': '../file',
-                'link_name': 'foo/bar/relative2',
+                'link_name': os.path.join(
+                    c.builddir, 'foo', 'bar', 'relative2'),
                 'destination': os.path.join(destination, 'bar', 'relative2'),
                 'expected_realpath': os.path.join(destination, 'file'),
                 'expected_contents': 'foo',
             },
             {
                 'source': '../../baz/file',
-                'link_name': 'foo/bar/relative3',
+                'link_name': os.path.join(
+                    c.builddir, 'foo', 'bar', 'relative3'),
                 'destination': os.path.join(destination, 'bar', 'relative3'),
                 'expected_realpath': os.path.join(destination, 'file'),
                 'expected_contents': 'foo',
@@ -288,8 +270,11 @@ class TestCopyPlugin(TestCase):
 
         c = CopyPlugin('copy', self.mock_options, self.project_options)
 
-        os.makedirs('foo/bar')
-        with open('foo/file', 'w') as f:
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        os.makedirs(os.path.join(c.builddir, 'foo', 'bar'))
+        with open(os.path.join(c.builddir, 'foo', 'file'), 'w') as f:
             f.write('foo')
 
         with open('unsnapped', 'w') as f:
@@ -298,16 +283,16 @@ class TestCopyPlugin(TestCase):
         symlinks = [
             # Links with an absolute path should be followed
             {
-                'source': os.path.abspath('foo/file'),
-                'link_name': 'foo/absolute',
+                'source': os.path.join(c.builddir, 'foo', 'file'),
+                'link_name': os.path.join(c.builddir, 'foo', 'absolute'),
                 'destination': os.path.join(c.installdir, 'absolute'),
                 'expected_contents': 'foo',
             },
             # Links with a relative path that points outside of the snap
             # should also be followed
             {
-                'source': '../unsnapped',
-                'link_name': 'foo/bad_relative',
+                'source': '../../../../unsnapped',
+                'link_name': os.path.join(c.builddir, 'foo', 'bad_relative'),
                 'destination': os.path.join(c.installdir, 'bad_relative'),
                 'expected_contents': 'bar',
             },
@@ -316,7 +301,6 @@ class TestCopyPlugin(TestCase):
         for symlink in symlinks:
             os.symlink(symlink['source'], symlink['link_name'])
 
-        c.pull()
         c.build()
 
         with open(os.path.join(c.installdir, 'file'), 'r') as f:

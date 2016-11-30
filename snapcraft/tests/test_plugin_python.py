@@ -31,7 +31,7 @@ def setup_directories(plugin, python_version):
         plugin.installdir, 'usr', 'lib', 'python' + version, 'dist-packages'))
     os.makedirs(os.path.join(
         plugin.installdir, 'usr', 'include', 'python' + version))
-    open('setup.py', 'w').close()
+    open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
 
 
 class PythonPluginTestCase(tests.TestCase):
