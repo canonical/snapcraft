@@ -18,17 +18,14 @@ import copy
 import os
 import http.server
 import shutil
+import tarfile
 import threading
 import unittest.mock
 
 import fixtures
 import libarchive
 
-from snapcraft.internal import (
-    common,
-    errors,
-    sources
-)
+from snapcraft.internal import common, sources
 from snapcraft import tests
 
 
@@ -80,6 +77,83 @@ class TestTar(tests.TestCase):
         mock_prov.assert_called_once_with(dest_dir)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake compressed file', tar_file.read())
+
+    def test_strip_common_prefix(self):
+        # Create tar file for testing
+        os.makedirs(os.path.join('src', 'test_prefix'))
+        file_to_tar = os.path.join('src', 'test_prefix', 'test.txt')
+        open(file_to_tar, 'w').close()
+        tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
+        tar.add(file_to_tar)
+        tar.close()
+
+        tar_source = sources.Tar(os.path.join('src', 'test.tar'), 'dst')
+        os.mkdir('dst')
+        tar_source.pull()
+
+        # The 'test_prefix' part of the path should have been removed
+        self.assertTrue(os.path.exists(os.path.join('dst', 'test.txt')))
+
+    def test_strip_common_prefix_symlink(self):
+        # Create tar file for testing
+        os.makedirs(os.path.join('src', 'test_prefix'))
+        file_to_tar = os.path.join('src', 'test_prefix', 'test.txt')
+        open(file_to_tar, 'w').close()
+
+        file_to_link = os.path.join('src', 'test_prefix', 'link.txt')
+        os.symlink("./test.txt", file_to_link)
+        self.assertTrue(os.path.islink(file_to_link))
+
+        def check_for_symlink(tarinfo):
+            self.assertTrue(tarinfo.issym())
+            self.assertEqual(file_to_link, tarinfo.name)
+            self.assertEqual(file_to_tar, os.path.normpath(
+                os.path.join(
+                    os.path.dirname(file_to_tar), tarinfo.linkname)))
+            return tarinfo
+
+        tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
+        tar.add(file_to_tar)
+        tar.add(file_to_link, filter=check_for_symlink)
+        tar.close()
+
+        tar_source = sources.Tar(os.path.join('src', 'test.tar'), 'dst')
+        os.mkdir('dst')
+        tar_source.pull()
+
+        # The 'test_prefix' part of the path should have been removed
+        self.assertTrue(os.path.exists(os.path.join('dst', 'test.txt')))
+        self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
+
+    def test_strip_common_prefix_hardlink(self):
+        # Create tar file for testing
+        os.makedirs(os.path.join('src', 'test_prefix'))
+        file_to_tar = os.path.join('src', 'test_prefix', 'test.txt')
+        open(file_to_tar, 'w').close()
+
+        file_to_link = os.path.join('src', 'test_prefix', 'link.txt')
+        os.link(file_to_tar, file_to_link)
+        self.assertTrue(os.path.exists(file_to_link))
+
+        def check_for_hardlink(tarinfo):
+            self.assertTrue(tarinfo.islnk())
+            self.assertFalse(tarinfo.issym())
+            self.assertEqual(file_to_link, tarinfo.name)
+            self.assertEqual(file_to_tar, tarinfo.linkname)
+            return tarinfo
+
+        tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
+        tar.add(file_to_tar)
+        tar.add(file_to_link, filter=check_for_hardlink)
+        tar.close()
+
+        tar_source = sources.Tar(os.path.join('src', 'test.tar'), 'dst')
+        os.mkdir('dst')
+        tar_source.pull()
+
+        # The 'test_prefix' part of the path should have been removed
+        self.assertTrue(os.path.exists(os.path.join('dst', 'test.txt')))
+        self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
 
 
 class TestZip(tests.TestCase):
@@ -226,12 +300,6 @@ class SourceTestCase(tests.TestCase):
         patcher = unittest.mock.patch('subprocess.check_call')
         self.mock_run = patcher.start()
         self.mock_run.return_value = True
-        self.addCleanup(patcher.stop)
-
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.sources._check_for_command')
-        self.mock_check = patcher.start()
-        self.mock_check.side_effect = None
         self.addCleanup(patcher.stop)
 
         patcher = unittest.mock.patch('os.rmdir')
@@ -782,88 +850,130 @@ class TestLocal(tests.TestCase):
 
 class TestUri(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
+    scenarios = [
+        ('tar.gz', dict(result='tar', source='https://golang.tar.gz')),
+        ('tar.gz', dict(result='tar', source='https://golang.tar.xz')),
+        ('tar.bz2', dict(result='tar', source='https://golang.tar.bz2')),
+        ('tgz', dict(result='tar', source='https://golang.tgz')),
+        ('tar', dict(result='tar', source='https://golang.tar')),
+        ('git:', dict(result='git',
+                      source='git://github.com:snapcore/snapcraft.git')),
+        ('git@', dict(result='git',
+                      source='git@github.com:snapcore/snapcraft.git')),
+        ('.git', dict(result='git',
+                      source='https://github.com:snapcore/snapcraft.git')),
+        ('lp:', dict(result='bzr', source='lp:snapcraft_test_source')),
+        ('bzr:', dict(result='bzr', source='bzr:dummy_source')),
+        ('svn:', dict(result='subversion',
+                      source='svn://sylpheed.jp/sylpheed/trunk')),
 
-        patcher = unittest.mock.patch(
-            'snapcraft.internal.sources._check_for_command')
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    ]
 
-    def test_get_tar_source_from_uri(self):
-        test_sources = [
-            'https://golang.tar.gz',
-            'https://golang.tar.xz',
-            'https://golang.tar.bz2',
-            'https://golang.tar.tgz',
-            'https://golang.tar',
-        ]
-
-        for source in test_sources:
-            with self.subTest(key=source):
-                self.assertEqual(
-                    sources._get_source_type_from_uri(source), 'tar')
-
-    @unittest.mock.patch('snapcraft.sources.Git.pull')
-    def test_get_git_source_from_uri(self, mock_pull):
-        test_sources = [
-            'git://github.com:ubuntu-core/snapcraft.git',
-            'git@github.com:ubuntu-core/snapcraft.git',
-            'https://github.com:ubuntu-core/snapcraft.git',
-        ]
-
-        for source in test_sources:
-            with self.subTest(key=source):
-                options = tests.MockOptions(source=source)
-                sources.get(
-                    sourcedir='dummy',
-                    builddir='dummy',
-                    options=options)
-
-                mock_pull.assert_called_once_with()
-                mock_pull.reset_mock()
-
-    @unittest.mock.patch('snapcraft.sources.Bazaar.pull')
-    def test_get_bzr_source_from_uri(self, mock_pull):
-        test_sources = [
-            'lp:snapcraft_test_source',
-            'bzr:dummy-source'
-        ]
-
-        for source in test_sources:
-            with self.subTest(key=source):
-                options = tests.MockOptions(source=source)
-                sources.get(
-                    sourcedir='dummy',
-                    builddir='dummy',
-                    options=options)
-
-                mock_pull.assert_called_once_with()
-                mock_pull.reset_mock()
-
-    @unittest.mock.patch('snapcraft.sources.Subversion.pull')
-    def test_get_svn_source_from_uri(self, mock_pull):
-        test_sources = [
-            'svn://sylpheed.sraoss.jp/sylpheed/trunk'
-        ]
-
-        for source in test_sources:
-            with self.subTest(key=source):
-                options = tests.MockOptions(source=source)
-                sources.get(
-                    sourcedir='dummy',
-                    builddir='dummy',
-                    options=options)
-
-                mock_pull.assert_called_once_with()
-                mock_pull.reset_mock()
+    def test_get_source_typefrom_uri(self):
+        self.assertEqual(sources._get_source_type_from_uri(self.source),
+                         self.result)
 
 
-class CommandCheckTestCase(tests.TestCase):
+class SourceWithBranchTestCase(tests.TestCase):
 
-    def test__check_for_command_not_installed(self):
-        with self.assertRaises(errors.MissingCommandError):
-            sources._check_for_command('missing-command')
+    scenarios = [
+        ('bzr with source branch', {
+            'source_type': 'bzr',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'source_commit': None,
+            'error': 'source-branch'}),
+        ('tar with source branch', {
+            'source_type': 'tar',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'source_commit': None,
+            'error': 'source-branch'}),
+        ('tar with source tag', {
+            'source_type': 'tar',
+            'source_branch': None,
+            'source_tag': 'test_tag',
+            'source_commit': None,
+            'error': 'source-tag'}),
+        ('tar with source commit', {
+            'source_type': 'tar',
+            'source_branch': None,
+            'source_tag': None,
+            'source_commit': 'commit',
+            'error': 'source-commit'}),
+        ('deb with source branch', {
+            'source_type': 'deb',
+            'source_branch': 'test_branch',
+            'source_tag': None,
+            'source_commit': None,
+            'error': 'source-branch'}),
+        ('deb with source tag', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': 'test_tag',
+            'source_commit': None,
+            'error': 'source-tag'}),
+        ('deb with source commit', {
+            'source_type': 'deb',
+            'source_branch': None,
+            'source_tag': None,
+            'source_commit': 'commit',
+            'error': 'source-commit'})
+    ]
 
-    def test__check_for_command_installed(self):
-        sources._check_for_command('sh')
+    def test_get_source_with_branch_must_raise_error(self):
+        handler = sources.get_source_handler('https://source.com',
+                                             source_type=self.source_type)
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            handler('https://source.com',
+                    source_dir='.',
+                    source_branch=self.source_branch,
+                    source_tag=self.source_tag,
+                    source_commit=self.source_commit)
+
+        self.assertEqual(
+            str(raised.exception),
+            'can\'t specify a {} for a {} source'.format(
+                self.error, self.source_type))
+
+
+class SourceWithBranchAndTagTestCase(tests.TestCase):
+
+    scenarios = [
+        ('git with source branch and tag', {
+            'source_type': 'git',
+            'source_branch': 'test_branch',
+            'source_tag': 'tag',
+        }),
+        ('hg with source branch and tag', {
+            'source_type': 'mercurial',
+            'source_branch': 'test_branch',
+            'source_tag': 'tag',
+        }),
+    ]
+
+    def test_get_source_with_branch_and_tag_must_raise_error(self):
+        handler = sources.get_source_handler('https://source.com',
+                                             source_type=self.source_type)
+        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
+            handler('https://source.com',
+                    source_dir='.',
+                    source_branch=self.source_branch,
+                    source_tag=self.source_tag)
+
+        self.assertEqual(
+            str(raised.exception),
+            'can\'t specify both source-tag and source-branch for a {} '
+            'source'.format(self.source_type))
+
+
+class GetSourceTestClass(tests.TestCase):
+
+    def test_get(self):
+
+        class Options:
+            source = '.'
+
+        sources.get('src', 'useless-arg', Options())
+
+        self.assertTrue(os.path.isdir('src'))

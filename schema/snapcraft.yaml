@@ -135,6 +135,21 @@ properties:
           plugin:
             type: string
             description: plugin name
+          source:
+            type: string
+          source-type:
+            type: string
+          source-branch:
+            type: string
+          source-tag:
+            type: string
+          source-commit:
+            type: string
+          source-subdir:
+            type: string
+          disable-parallel:
+              type: boolean
+              default: false
           stage-packages:
             type: array
             description: Ubuntu packages used to support the part.
