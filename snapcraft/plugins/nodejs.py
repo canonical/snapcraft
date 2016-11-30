@@ -110,7 +110,7 @@ class NodePlugin(snapcraft.BasePlugin):
         os.makedirs(self._npm_dir, exist_ok=True)
         self._nodejs_tar.download()
         # do the install in the pull phase to download all dependencies.
-        self._npm_install()
+        self._npm_install(rootdir=self.sourcedir)
 
     def clean_pull(self):
         super().clean_pull()
@@ -121,19 +121,19 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self._npm_install()
+        self._npm_install(rootdir=self.builddir)
 
-    def _npm_install(self):
+    def _npm_install(self, rootdir):
         self._nodejs_tar.provision(
             self.installdir, clean_target=False, keep_tarball=True)
         npm_install = ['npm', '--cache-min=Infinity', 'install']
         for pkg in self.options.node_packages:
-            self.run(npm_install + ['--global'] + [pkg])
-        if os.path.exists(os.path.join(self.builddir, 'package.json')):
+            self.run(npm_install + ['--global'] + [pkg], cwd=rootdir)
+        if os.path.exists(os.path.join(rootdir, 'package.json')):
             self.run(npm_install)
-            self.run(npm_install + ['--global'])
+            self.run(npm_install + ['--global'], cwd=rootdir)
         for target in self.options.npm_run:
-            self.run(['npm', 'run', target])
+            self.run(['npm', 'run', target], cwd=rootdir)
 
 
 def _get_nodejs_base(node_engine):
