@@ -26,6 +26,15 @@ def _build_state_constructor(loader, node):
 yaml.add_constructor(u'!BuildState', _build_state_constructor)
 
 
+def _schema_properties():
+    return {
+        'after',
+        'build-packages',
+        'disable-parallel',
+        'organize'
+    }
+
+
 class BuildState(State):
     yaml_tag = u'!BuildState'
 
@@ -38,12 +47,14 @@ class BuildState(State):
         super().__init__(part_properties, project)
 
     def properties_of_interest(self, part_properties):
-        """Extract the properties concerning this step from part_properties.
-        """
+        '''Extract the properties concerning this step from part_properties.'''
 
         properties = {}
         for name in self.schema_properties:
-            properties[name] = part_properties.get(name, None)
+            properties[name] = part_properties.get(name)
+
+        for name in _schema_properties():
+            properties[name] = part_properties.get(name)
 
         return properties
 

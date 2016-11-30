@@ -66,11 +66,13 @@ class PluginHandler:
 
     def __init__(self, *, plugin_name, part_name,
                  part_properties, project_options, part_schema):
-        self._part_properties = self._setup_source(part_properties.copy())
         self.valid = False
         self.code = None
         self.config = {}
         self._name = part_name
+        self._part_properties = _expand_part_properties(
+            part_properties, part_schema)
+
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
         # the layout of parts inside the parts directory causing collisions
@@ -147,14 +149,6 @@ class PluginHandler:
                 'Setting {!r} as the compilation target for {!r}'.format(
                     self._project_options.deb_arch, plugin_name))
             self.code.enable_cross_compilation()
-
-    def _setup_source(self, original_properties):
-        """Returns properties with sources included."""
-        properties = sources.get_source_defaults()
-        # Update with full length of properties
-        properties.update(original_properties)
-
-        return properties
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -316,7 +310,6 @@ class PluginHandler:
 
     def mark_pull_done(self):
         pull_properties = self.code.get_pull_properties()
-        pull_properties.extend(sources.get_source_defaults().keys())
 
         self.mark_done('pull', states.PullState(
             pull_properties, self._part_properties,
@@ -380,8 +373,6 @@ class PluginHandler:
 
     def mark_build_done(self):
         build_properties = self.code.get_build_properties()
-        # TODO figure out
-        # build_properties.extend(['disable-parallel'])
 
         self.mark_done('build', states.BuildState(
             build_properties, self._part_properties,
@@ -616,6 +607,26 @@ class PluginHandler:
 
         if not index or index <= common.COMMAND_ORDER.index('pull'):
             self.clean_pull(hint)
+
+
+def _expand_part_properties(part_properties, part_schema):
+    """Returns properties with all part schema properties included.
+
+    Any schema properties not set will contain their default value as defined
+    in the schema itself.
+    """
+
+    # Come up with a dictionary of part schema properties and their default
+    # values as defined in the schema.
+    properties = {}
+    for schema_property, subschema in part_schema.items():
+        properties[schema_property] = subschema.get('default')
+
+    # Now expand (overwriting if necessary) the default schema properties with
+    # the ones from the actual part.
+    properties.update(part_properties)
+
+    return properties
 
 
 def _merged_part_and_plugin_schemas(part_schema, plugin_schema):

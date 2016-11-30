@@ -26,15 +26,15 @@ class State(yaml.YAMLObject):
         self.project_options = self.project_options_of_interest(project)
 
     def properties_of_interest(self, part_properties):
-        """Extract the properties concerning this step from the options.
+        '''Extract the properties concerning this step from the options.
 
         Note that these options come from the YAML for a given part.
-        """
+        '''
 
         raise NotImplementedError
 
     def project_options_of_interest(self, project):
-        """Extract the options concerning this step from the project."""
+        '''Extract the options concerning this step from the project.'''
 
         raise NotImplementedError
 

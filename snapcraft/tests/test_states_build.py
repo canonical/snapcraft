@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import yaml
+
 import snapcraft.internal
 from snapcraft import tests
 
@@ -33,12 +35,9 @@ class BuildStateTestCase(tests.TestCase):
         self.state = snapcraft.internal.states.BuildState(
             self.property_names, self.part_properties, self.project)
 
-    def test_representation(self):
-        expected = ('BuildState(project_options: {}, properties: {}, '
-                    'schema_properties: {})').format(
-            self.project.__dict__, self.part_properties,
-            self.property_names)
-        self.assertEqual(expected, repr(self.state))
+    def test_yaml_conversion(self):
+        state_from_yaml = yaml.load(yaml.dump(self.state))
+        self.assertEqual(self.state, state_from_yaml)
 
     def test_comparison(self):
         other = snapcraft.internal.states.BuildState(
@@ -60,3 +59,26 @@ class BuildStateTestCase(tests.TestCase):
             with self.subTest('other #{}'.format(index+1)):
                 self.assertFalse(self.state == other,
                                  'Expected states to be different')
+
+    def test_properties_of_interest(self):
+        self.part_properties.update({
+            'after': 'test-after',
+            'build-packages': 'test-build-packages',
+            'disable-parallel': 'test-disable-parallel',
+            'organize': {'baz': 'qux'}
+        })
+
+        properties = self.state.properties_of_interest(self.part_properties)
+        self.assertEqual(5, len(properties))
+        self.assertEqual('bar', properties['foo'])
+        self.assertEqual('test-after', properties['after'])
+        self.assertEqual('test-build-packages', properties['build-packages'])
+        self.assertEqual('test-disable-parallel',
+                         properties['disable-parallel'])
+        self.assertEqual({'baz': 'qux'}, properties['organize'])
+
+    def test_project_options_of_interest(self):
+        options = self.state.project_options_of_interest(self.project)
+
+        self.assertEqual(1, len(options))
+        self.assertEqual('amd64', options['deb_arch'])

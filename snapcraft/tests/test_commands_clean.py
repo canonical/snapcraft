@@ -25,9 +25,30 @@ import fixtures
 from snapcraft.main import main
 from snapcraft.internal import (
     pluginhandler,
+    project_loader,
     states,
 )
 from snapcraft import tests
+
+
+class _CompareExpectedStates():
+    def __init__(self, test, expected_states):
+        self.test = test
+        self.expected_states = expected_states
+
+    def __eq__(self, actual_states):
+        self.test.assertEqual(
+            len(self.expected_states), len(actual_states))
+
+        for state_name in self.expected_states:
+            expected_state = self.expected_states[state_name]
+            actual_state = actual_states[state_name]
+            self.test.assertEqual(
+                expected_state.files, actual_state.files)
+            self.test.assertEqual(
+                expected_state.directories, actual_state.directories)
+
+        return True
 
 
 class CleanCommandTestCase(tests.TestCase):
@@ -54,7 +75,10 @@ parts:
         parts = []
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(part_name, plugin_name='nil')
+            handler = pluginhandler.load_plugin(
+                part_name, plugin_name='nil',
+                part_properties={'plugin': 'nil'},
+                part_schema=project_loader.Validator().part_schema)
             parts.append({
                 'part_dir': handler.code.partdir,
             })
@@ -171,7 +195,8 @@ parts:
         }
 
         mock_clean.assert_called_with(
-            expected_staged_state, expected_primed_state, 'foo')
+            _CompareExpectedStates(self, expected_staged_state),
+            _CompareExpectedStates(self, expected_primed_state), 'foo')
 
     @mock.patch.object(pluginhandler.PluginHandler, 'clean')
     def test_cleaning_with_strip_does_prime_and_warns(self, mock_clean):
@@ -197,7 +222,8 @@ parts:
         self.assertEqual('DEPRECATED: Use `prime` instead of `strip` as '
                          'the step to clean\n', fake_logger.output)
         mock_clean.assert_called_with(
-            expected_staged_state, expected_primed_state, 'prime')
+            _CompareExpectedStates(self, expected_staged_state),
+            _CompareExpectedStates(self, expected_primed_state), 'prime')
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):
