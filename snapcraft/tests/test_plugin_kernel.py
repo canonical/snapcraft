@@ -118,8 +118,7 @@ class KernelPluginTestCase(tests.TestCase):
             properties['kernel-initrd-compression']['enum'], ['gz'])
 
         build_properties = schema['build-properties']
-        self.assertEqual(10, len(build_properties))
-        self.assertTrue('disable-parallel' in build_properties)
+        self.assertEqual(9, len(build_properties))
         self.assertTrue('kdefconfig' in build_properties)
         self.assertTrue('kconfigfile' in build_properties)
         self.assertTrue('kconfigs' in build_properties)

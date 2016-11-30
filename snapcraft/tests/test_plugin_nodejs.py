@@ -74,8 +74,8 @@ class NodePluginTestCase(tests.TestCase):
         plugin = nodejs.NodePlugin('test-part', Options(),
                                    self.project_options)
 
-        os.makedirs(plugin.sourcedir)
-        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, 'package.json'), 'w').close()
 
         plugin.build()
 
@@ -171,20 +171,9 @@ class NodePluginTestCase(tests.TestCase):
                             'items': {'type': 'string'},
                             'minitems': 1,
                             'type': 'array',
-                            'uniqueItems': False},
-                'source': {'type': 'string'},
-                'source-branch': {'default': '', 'type': 'string'},
-                'source-commit': {'default': '', 'type': 'string'},
-                'source-subdir': {'default': None, 'type': 'string'},
-                'source-tag': {'default': '', 'type:': 'string'},
-                'source-type': {'default': '', 'type': 'string'},
-                'source-depth': {'default': 0, 'type': 'integer'},
-                'disable-parallel': {'default': False, 'type': 'boolean'}},
-            'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-commit', 'source-tag', 'source-subdir',
-                                'node-engine'],
-            'build-properties': ['disable-parallel', 'node-packages',
-                                 'npm-run'],
+                            'uniqueItems': False}},
+            'pull-properties': ['node-engine'],
+            'build-properties': ['node-packages', 'npm-run'],
             'type': 'object'}
 
         self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)

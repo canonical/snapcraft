@@ -17,7 +17,9 @@
 from functools import partial
 import io
 import os
+import sys
 import threading
+from types import ModuleType
 import urllib.parse
 from unittest import mock
 
@@ -344,3 +346,22 @@ class DeltaUploads(fixtures.Fixture):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
             'DELTA_UPLOADS_EXPERIMENTAL', 'True'))
+
+
+class FakePlugin(fixtures.Fixture):
+    '''Dynamically generate a new module containing the provided plugin'''
+
+    def __init__(self, plugin_name, plugin_class):
+        super().__init__()
+        self._import_name = 'snapcraft.plugins.{}'.format(
+            plugin_name.replace('-', '_'))
+        self._plugin_class = plugin_class
+
+    def _setUp(self):
+        plugin_module = ModuleType(self._import_name)
+        setattr(plugin_module, self._plugin_class.__name__, self._plugin_class)
+        sys.modules[self._import_name] = plugin_module
+        self.addCleanup(self._remove_module)
+
+    def _remove_module(self):
+        del sys.modules[self._import_name]

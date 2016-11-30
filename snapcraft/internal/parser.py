@@ -41,7 +41,7 @@ from yaml.scanner import ScannerError
 from docopt import docopt
 from collections import OrderedDict
 
-from snapcraft.internal import log, sources
+from snapcraft.internal import log, repo, sources
 from snapcraft.internal.errors import SnapcraftError, InvalidWikiEntryError
 from snapcraft.internal.project_loader import replace_attr
 
@@ -191,12 +191,11 @@ def _process_entry(data):
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
-    class Options:
-        source = origin
-        source_type = origin_type
-
-    options = Options()
-    sources.get(origin_dir, None, options)
+    source_handler = sources.get_source_handler(origin,
+                                                source_type=origin_type)
+    handler = source_handler(origin, source_dir=origin_dir)
+    repo.check_for_command(handler.command)
+    handler.pull()
 
     try:
         origin_data = _get_origin_data(origin_dir)
