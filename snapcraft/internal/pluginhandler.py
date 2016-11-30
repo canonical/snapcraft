@@ -71,7 +71,7 @@ class PluginHandler:
         self.code = None
         self.config = {}
         self._name = part_name
-        # The remote parts can have a '/' in them to separate the main project
+        # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
         # the layout of parts inside the parts directory causing collisions
         # between the main project part and its subparts.
