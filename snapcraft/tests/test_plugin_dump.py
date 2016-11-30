@@ -124,7 +124,7 @@ class DumpPluginTestCase(TestCase):
         with open(os.path.join(plugin.builddir, 'src', 'file'), 'w') as f:
             f.write('foo')
 
-        with open(os.path.join('unsnapped'), 'w') as f:
+        with open('unsnapped', 'w') as f:
             f.write('bar')
 
         symlinks = [
