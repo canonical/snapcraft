@@ -79,7 +79,8 @@ class TravisPreconditionsTestCase(tests.TestCase):
             self.run_command(self.entry_point)
 
         self.assertEqual([
-            'Travis CLI (`travis version`) is not functional.',
+            'Travis CLI (`travis settings`) is not functional or you are '
+            'not allowed to access this repository settings.',
             'Make sure it works correctly in your system before trying this '
             'command again.',
         ], str(raised.exception).splitlines())

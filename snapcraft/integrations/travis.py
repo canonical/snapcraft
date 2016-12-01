@@ -85,6 +85,14 @@ TRAVIS_CONFIG_FILENAME = '.travis.yml'
 ENCRYPTED_CONFIG_FILENAME = '.snapcraft/travis_snapcraft.cfg'
 
 
+class TravisRuntimeError(Exception):
+    """Local runtime error to not confuse importlib.
+
+    Raising `RuntimeError` from a module imported in runtime
+    results in python hanging instead of just exiting.
+    """
+
+
 def _acquire_and_encrypt_credentials(packages, channels):
     """Acquire and encrypt Store credentials for Travis jobs."""
     # XXX cprov 20161116: Needs caveat syntax for restricting origins
@@ -94,7 +102,7 @@ def _acquire_and_encrypt_credentials(packages, channels):
     logger.info('Acquiring specific authorization information ...')
     store = storeapi.StoreClient()
     if not _login(store, packages=packages, channels=channels, save=False):
-        raise RuntimeError(
+        raise TravisRuntimeError(
             'Cannot continue without logging in successfully.')
 
     logger.info(
@@ -115,7 +123,7 @@ def _acquire_and_encrypt_credentials(packages, channels):
         try:
             subprocess.check_output(cmd, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as err:
-            raise RuntimeError(
+            raise TravisRuntimeError(
                 '`travis encrypt-file` failed: {}\n{}'.format(
                     err.returncode, err.stderr.decode()))
 
@@ -125,16 +133,17 @@ def requires_travis_preconditions():
     """Verify all Travis CI integration preconditions."""
     required = (
         requires_command_success(
-            'travis version',
+            'travis settings',
             not_found_fmt=(
                 'Travis CLI (`{cmd_list[0]}`) is not available.\n'
                 'Please install it before trying this command again:\n\n'
                 '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
                 '    $ sudo gem install travis\n'),
             failure_fmt=(
-                'Travis CLI (`{command}`) is not functional.\n'
-                'Make sure it works correctly in your system '
-                'before trying this command again.')
+                'Travis CLI (`{command}`) is not functional or you are not '
+                'allowed to access this repository settings.\n'
+                'Make sure it works correctly in your system before trying '
+                'this command again.')
         ),
         requires_command_success(
             'git status',
