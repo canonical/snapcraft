@@ -71,13 +71,6 @@ class TestPlugin(snapcraft.BasePlugin):
         return ['test-property']
 
 
-def get_other_arch():
-    if platform.machine() == 'x86_64':
-        return 'armhf'
-    else:
-        return 'amd64'
-
-
 class PluginTestCase(tests.TestCase):
 
     def test_build_with_subdir_copies_sourcedir(self):
@@ -1623,8 +1616,7 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(
-            target_deb_arch=get_other_arch())
+        project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
         self.handler = pluginhandler.load_plugin(
             part_name='test-part',
             plugin_name='nil',
@@ -1678,8 +1670,7 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(
-            target_deb_arch=get_other_arch())
+        project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
         self.handler = pluginhandler.load_plugin(
             part_name='test-part',
             plugin_name='nil',
