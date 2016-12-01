@@ -1,7 +1,9 @@
 name: test-package
 version: 0.1
 summary: one line summary
-description: a longer description
+description: |
+ A snap using a local plugin that specifies build properties using the
+ deprecated schema method.
 confinement: strict
 
 parts:

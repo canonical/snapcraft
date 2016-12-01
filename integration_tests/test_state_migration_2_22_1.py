@@ -22,7 +22,7 @@ class StateMigrationTestCase(integration_tests.TestCase):
     def test_all_steps_not_dirty(self):
         project_dir = '2.22.1-prime-state'
         output = self.run_snapcraft('pull', project_dir)
-        self.assertRegex(output, "Skipping pull part-name")
-        self.assertRegex(output, "Skipping build part-name")
-        self.assertRegex(output, "Skipping stage part-name")
-        self.assertRegex(output, "Skipping prime part-name")
+        self.assertRegex(output, 'Skipping pull part-name')
+        self.assertRegex(output, 'Skipping build part-name')
+        self.assertRegex(output, 'Skipping stage part-name')
+        self.assertRegex(output, 'Skipping prime part-name')

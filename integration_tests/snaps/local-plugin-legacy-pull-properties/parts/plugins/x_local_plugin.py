@@ -29,4 +29,3 @@ class LocalPlugin(BasePlugin):
         schema['pull-properties'] = ['foo', 'stage-packages']
 
         return schema
-
