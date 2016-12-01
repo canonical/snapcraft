@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: make this a temporary directory that get's removed when finished
-BASE_DIR = "/tmp"
+BASE_DIR = os.getenv('TMPDIR', '/tmp')
 PARTS_FILE = "snap-parts.yaml"
 
 
