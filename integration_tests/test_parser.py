@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import fixtures
 import subprocess
 
 import integration_tests
@@ -24,6 +25,13 @@ from snapcraft.tests import fixture_setup
 
 class ParserTestCase(integration_tests.TestCase):
     """Test bin/snapcraft-parser"""
+
+    def setUp(self):
+        super().setUp()
+
+        tempdir = fixtures.TempDir()
+        self.useFixture(tempdir)
+        self.useFixture(fixtures.EnvironmentVariable('TMPDIR', tempdir.path))
 
     def call_parser(self, wiki_path, expect_valid):
         args = [self.snapcraft_parser_command, '--index', wiki_path,
