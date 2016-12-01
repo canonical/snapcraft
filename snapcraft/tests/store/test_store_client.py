@@ -373,6 +373,14 @@ class RegisterTestCase(tests.TestCase):
             "'test-reserved-snap-name' then please claim the "
             "name at 'https://myapps.com/register-name/'")
 
+    def test_register_already_owned_name(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-already-owned-snap-name')
+        self.assertEqual(
+            str(raised.exception),
+            "You already own the name 'test-already-owned-snap-name'.")
+
     def test_registering_too_fast_in_a_row(self):
         self.client.login('dummy', 'test correct password')
         with self.assertRaises(errors.StoreRegistrationError) as raised:

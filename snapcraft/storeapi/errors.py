@@ -152,6 +152,8 @@ class StoreRegistrationError(StoreError):
         'of most users. If you are the publisher most users expect for '
         '{snap_name!r} then claim the name at {register_name_url!r}')
 
+    __FMT_ALREADY_OWNED = 'You already own the name {snap_name!r}.'
+
     __FMT_RESERVED = (
         'The name {snap_name!r} is reserved.\n\n'
         'If you are the publisher most users expect for '
@@ -165,6 +167,7 @@ class StoreRegistrationError(StoreError):
 
     __error_messages = {
         'already_registered': __FMT_ALREADY_REGISTERED,
+        'already_owned': __FMT_ALREADY_OWNED,
         'reserved_name': __FMT_RESERVED,
         'register_window': __FMT_RETRY_WAIT,
     }
