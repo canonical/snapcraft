@@ -4,35 +4,6 @@
 
 To see all the commands and options, run `snapcraft --help`.
 
-## Testing
-
-### Test Dependencies
-
-- You'll need to add the following dependencies to run the tests.
-
-    sudo apt install python3-flake8 python3-fixtures python3-testscenarios python3-mock python3-responses
-
-Simply run the top level testing script:
-
-    ./runtests.sh
-
-- If you want to get a test coverage report, install python3-coverage before running the tests:
-
-    sudo apt install python3-coverage
-
-
-- If you don't want to run the plainbox integration tests, you can skip them by setting SNAPCRAFT_TESTS_SKIP_PLAINBOX=1 in your environment.
-
-- If you are on 15.04 or earlier, you will need to run:
-
-    sudo add-apt-repository ppa:hardware-certification/public
-
-### PPA
-
-You can install the daily build PPA by running:
-
-    sudo add-apt-repository ppa:snappy-dev/snapcraft-daily
-
 ## Hacking
 
 We'd love the help!
@@ -81,15 +52,28 @@ e.g.; to update the list for 16.04,
 
 ### Installing using pip
 
+If you don't have python3 installed, you can use the one from the archives:
+
+    sudo apt install python3-pip python3-setuptools python3-pkg-resources
+
 Install the needed dependencies.
 
-    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev
+    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev libarchive13 squashfs-tools xdelta3
 
 If installing to `PYTHONHOME` run:
 
-    pip install --user -r requirements.txt -r requirements-devel.txt
+    pip3 install --user -r requirements.txt -r requirements-devel.txt
 
 If your prefer installing in a virtualenv, then in an activated environment run:
 
-    pip install -r requirements.txt -r requirements-devel.txt
+    pip3 install -r requirements.txt -r requirements-devel.txt
 
+### Testing
+
+We assume you have run through the installation instructions, to run all the tests execute:
+
+    ./runtests.sh
+
+You can selectively run a selective group of tests like:
+
+    ./runtests.sh [static|unit|integration|snaps]

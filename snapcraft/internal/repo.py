@@ -39,6 +39,8 @@ from xdg import BaseDirectory
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import common
+from snapcraft.internal.errors import MissingCommandError
+from snapcraft.internal.indicators import is_dumb_terminal
 
 
 _BIN_PATHS = (
@@ -84,9 +86,10 @@ def install_build_packages(packages):
                     new_packages.append(pkg)
             except KeyError as e:
                 raise EnvironmentError(
-                    "Could not find a required package in "
-                    "'build-packages': {}".format(str(e)))
+                    'Could not find a required package in '
+                    '\'build-packages\': {}'.format(str(e)))
     if new_packages:
+        new_packages.sort()
         logger.info(
             'Installing build dependencies: %s', ' '.join(new_packages))
         env = os.environ.copy()
@@ -94,10 +97,43 @@ def install_build_packages(packages):
             'DEBIAN_FRONTEND': 'noninteractive',
             'DEBCONF_NONINTERACTIVE_SEEN': 'true',
         })
-        subprocess.check_call(['sudo', 'apt-get', '-o',
-                               'Dpkg::Progress-Fancy=1',
-                               '--no-install-recommends', '-y',
-                               'install'] + new_packages, env=env)
+
+        apt_command = ['sudo', 'apt-get',
+                       '--no-install-recommends', '-y']
+        if not is_dumb_terminal():
+            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+        apt_command.append('install')
+
+        subprocess.check_call(apt_command + new_packages, env=env)
+
+        try:
+            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                  new_packages, env=env)
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                'Impossible to mark packages as auto-installed: {}'
+                .format(e))
+
+
+def get_packages_for_source_type(source_type):
+    """Return a list with required packages to handle the source_type.
+
+    :param source: the snapcraft source type
+    """
+    if source_type == 'bzr':
+        packages = 'bzr'
+    elif source_type == 'git':
+        packages = 'git'
+    elif source_type == 'tar':
+        packages = 'tar'
+    elif source_type == 'hg' or source_type == 'mercurial':
+        packages = 'mercurial'
+    elif source_type == 'subversion' or source_type == 'svn':
+        packages = 'subversion'
+    else:
+        packages = []
+
+    return packages
 
 
 class PackageNotFoundError(Exception):
@@ -149,7 +185,7 @@ class _AptCache:
         apt.apt_pkg.config.clear('APT::Update::Post-Invoke-Success')
 
         self.progress = apt.progress.text.AcquireProgress()
-        if not os.isatty(1):
+        if is_dumb_terminal():
             # Make output more suitable for logging.
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
@@ -471,3 +507,8 @@ def _try_copy_local(path, target):
         logger.warning(
             '{} will be a dangling symlink'.format(path))
         return False
+
+
+def check_for_command(command):
+    if not shutil.which(command):
+        raise MissingCommandError([command])

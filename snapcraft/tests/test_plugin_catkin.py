@@ -367,13 +367,9 @@ class CatkinPluginTestCase(tests.TestCase):
         self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
 
         plugin.pull()
-
-        self.assertTrue(os.path.exists(plugin._ros_package_path))
         os.makedirs(plugin._rosdep_path)
 
         plugin.clean_pull()
-
-        self.assertFalse(os.path.exists(plugin._ros_package_path))
         self.assertFalse(os.path.exists(plugin._rosdep_path))
 
     def test_valid_catkin_workspace_src(self):
@@ -526,46 +522,6 @@ class CatkinPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['/bin/bash', mock.ANY], cwd=mock.ANY)
         ])
-
-    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
-    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
-    def test_build_encompasses_source_space(self, finish_mock, prepare_mock):
-        self.properties.catkin_packages = []
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-
-        plugin.build()
-
-        self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'src')))
-
-    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
-    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
-    def test_build_encompasses_remapped_source_space(self, finish_mock,
-                                                     prepare_mock):
-        self.properties.catkin_packages = []
-        self.properties.source_space = 'foo'
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'foo'))
-
-        plugin.build()
-
-        self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
-
-    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
-    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
-    def test_build_accounts_for_source_subdir(self, finish_mock, prepare_mock):
-        self.properties.catkin_packages = []
-        self.properties.source_subdir = 'workspace'
-        self.properties.source_space = 'foo'
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'workspace', 'foo'))
-
-        plugin.build()
-
-        self.assertTrue(os.path.isdir(os.path.join(plugin.builddir, 'foo')))
 
     def test_use_in_snap_python_rewrites_shebangs(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties,

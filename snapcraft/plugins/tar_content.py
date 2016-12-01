@@ -30,29 +30,15 @@ class TarContentPlugin(snapcraft.BasePlugin):
     def schema(cls):
         return {
             'properties': {
-                'source': {
-                    'type': 'string',
-                },
                 'destination': {
                     'type': 'string',
                 },
             },
-            'required': [
-                'source',
-            ],
-            # Inform Snapcraft of the properties associated with pulling. If
-            # these change in the YAML Snapcraft will consider the pull step
-            # dirty.
-            'pull-properties': [
-                'source'
-            ],
-            # Inform Snapcraft of the properties associated with building. If
-            # these change in the YAML Snapcraft will consider the build step
-            # dirty.
-            'build-properties': [
-                'destination'
-            ]
         }
+
+    @classmethod
+    def get_build_properties(cls):
+        return ['destination']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -68,9 +54,6 @@ class TarContentPlugin(snapcraft.BasePlugin):
 
     def enable_cross_compilation(self):
         pass
-
-    def pull(self):
-        snapcraft.sources.Tar(self.options.source, self.sourcedir).pull()
 
     def build(self):
         super().build()

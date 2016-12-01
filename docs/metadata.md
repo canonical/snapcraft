@@ -78,6 +78,15 @@ complete and all communication channels are set up. The child continues to
 run as the main daemon process. This is the behavior of traditional UNIX
 daemons.
 
+## Package icon
+
+Providing an icon for your snap is important, even for command-line
+applications, if for nothing else than discoverability from management
+interfaces such as store fronts like snapweb.
+
+To use an icon to represent the snap, just declare a PNG or SVG in
+`snapcraft.yaml` through an `icon` entry with a path relative
+to the icon inside the snap.
 
 ## Fixed assets
 
@@ -86,24 +95,42 @@ icons and desktop files among others. For these fixed files to make it into
 your final snap they need to be in a `setup` directory at the same level of
 your `snapcraft.yaml`.
 
-### Snap icon
+### Desktop file
 
-Providing an icon for your snap is important, even for command-line
-applications, if for nothing else than discoverability from management
-interfaces such as store fronts like webdm.
+The desktop file is the entry point to your snap for end users in GUI
+environments.
 
-To use an icon to represent the snap, just drop a PNG or SVG in `setup/gui`
-named `icon.png` for the former or `icon.svg` for the latter such that the
-(reduced) project tree would look like:
-
-    setup/gui/icon.png
+    setup/gui/<app-name>.desktop
     snapcraft.yaml
 
-or
+Where `<app-name>` is the entry corresponding to `apps` in `snapcraft.yaml`.
 
-    setup/gui/icon.svg
-    snapcraft.yaml
+As an example, consider the reduced `snapcraft.yaml`:
 
+```yaml
+name: my-snap
+
+apps:
+    my-app:
+        command: my-app.sh
+```
+
+Given this `snapcraft.yaml` the desktop file path should be
+`setup/gui/my-app.desktop` and the contents should be:
+
+```ini
+[Desktop Entry]
+Name=My App
+Comment=Comment for My App
+GenericName=My App
+Exec=my-snap.my-app %U
+Icon=${SNAP}/meta/gui/icon.png
+Type=Application
+StartupNotify=true
+StartupWMClass=MyApp
+Categories=<category>;
+MimeType=x-scheme-handler/my-app;
+```
 
 [sec]: https://developer.ubuntu.com/snappy/guides/security-policy/
 [syntax]: snapcraft-syntax.md

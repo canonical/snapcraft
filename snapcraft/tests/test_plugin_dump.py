@@ -34,19 +34,20 @@ class DumpPluginTestCase(TestCase):
 
     def test_dumping_nothing(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
-        plugin.pull()
+        os.makedirs(plugin.builddir)
         plugin.build()
 
         self.assertEqual(os.listdir(plugin.installdir), [])
 
     def test_dumping_with_contents(self):
-        open('file1', 'w').close()
-        open('file2', 'w').close()
-        os.mkdir('dir1')
-        open(os.path.join('dir1', 'subfile1'), 'w').close()
-
         plugin = DumpPlugin('dump', self.options, self.project_options)
-        plugin.pull()
+
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, 'file1'), 'w').close()
+        open(os.path.join(plugin.builddir, 'file2'), 'w').close()
+        os.mkdir(os.path.join(plugin.builddir, 'dir1'))
+        open(os.path.join(plugin.builddir, 'dir1', 'subfile1'), 'w').close()
+
         plugin.build()
 
         contents = os.listdir(plugin.installdir)
@@ -58,21 +59,23 @@ class DumpPluginTestCase(TestCase):
     def test_dump_symlinks(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
 
-        os.makedirs('subdir')
-        with open('file', 'w') as f:
+        os.makedirs(plugin.builddir)
+        os.makedirs(os.path.join(plugin.builddir, 'subdir'))
+        with open(os.path.join(plugin.builddir, 'file'), 'w') as f:
             f.write('foo')
 
         symlinks = [
             {
                 'source': 'file',
-                'link_name': 'relative1',
+                'link_name': os.path.join(plugin.builddir, 'relative1'),
                 'destination': os.path.join(plugin.installdir, 'relative1'),
                 'expected_realpath': os.path.join(plugin.installdir, 'file'),
                 'expected_contents': 'foo',
             },
             {
                 'source': os.path.join('..', 'file'),
-                'link_name': os.path.join('subdir', 'relative2'),
+                'link_name': os.path.join(
+                    plugin.builddir, 'subdir', 'relative2'),
                 'destination': os.path.join(
                     plugin.installdir, 'subdir', 'relative2'),
                 'expected_realpath': os.path.join(plugin.installdir, 'file'),
@@ -80,7 +83,8 @@ class DumpPluginTestCase(TestCase):
             },
             {
                 'source': os.path.join('..', '..', 'install', 'file'),
-                'link_name': os.path.join('subdir', 'relative3'),
+                'link_name': os.path.join(
+                    plugin.builddir, 'subdir', 'relative3'),
                 'destination': os.path.join(
                     plugin.installdir, 'subdir', 'relative3'),
                 'expected_realpath': os.path.join(plugin.installdir, 'file'),
@@ -91,7 +95,6 @@ class DumpPluginTestCase(TestCase):
         for symlink in symlinks:
             os.symlink(symlink['source'], symlink['link_name'])
 
-        plugin.pull()
         plugin.build()
 
         with open(os.path.join(plugin.installdir, 'file'), 'r') as f:
@@ -114,11 +117,11 @@ class DumpPluginTestCase(TestCase):
                     self.assertEqual(f.read(), symlink['expected_contents'])
 
     def test_dump_symlinks_that_should_be_followed(self):
-        self.options.source = 'src'
+        # TODO: Move to an integration test
         plugin = DumpPlugin('dump', self.options, self.project_options)
 
-        os.makedirs('src')
-        with open(os.path.join('src', 'file'), 'w') as f:
+        os.makedirs(os.path.join(plugin.builddir, 'src'))
+        with open(os.path.join(plugin.builddir, 'src', 'file'), 'w') as f:
             f.write('foo')
 
         with open('unsnapped', 'w') as f:
@@ -127,17 +130,21 @@ class DumpPluginTestCase(TestCase):
         symlinks = [
             # Links with an absolute path should be followed
             {
-                'source': os.path.abspath(os.path.join('src', 'file')),
-                'link_name': os.path.join('src', 'absolute'),
-                'destination': os.path.join(plugin.installdir, 'absolute'),
+                'source': os.path.abspath(
+                    os.path.join(plugin.builddir, 'src', 'file')),
+                'link_name': os.path.join(plugin.builddir, 'src', 'absolute'),
+                'destination': os.path.join(
+                    plugin.installdir, 'src', 'absolute'),
                 'expected_contents': 'foo',
             },
             # Links with a relative path that points outside of the snap
             # should also be followed
             {
-                'source': '../../../unsnapped',
-                'link_name': os.path.join('src', 'bad_relative'),
-                'destination': os.path.join(plugin.installdir, 'bad_relative'),
+                'source': '../../../../unsnapped',
+                'link_name': os.path.join(
+                    plugin.builddir, 'src', 'bad_relative'),
+                'destination': os.path.join(
+                    plugin.installdir, 'src', 'bad_relative'),
                 'expected_contents': 'bar',
             },
         ]
@@ -145,10 +152,9 @@ class DumpPluginTestCase(TestCase):
         for symlink in symlinks:
             os.symlink(symlink['source'], symlink['link_name'])
 
-        plugin.pull()
         plugin.build()
 
-        with open(os.path.join(plugin.installdir, 'file'), 'r') as f:
+        with open(os.path.join(plugin.installdir, 'src', 'file'), 'r') as f:
             self.assertEqual(f.read(), 'foo')
 
         for symlink in symlinks:
@@ -165,8 +171,8 @@ class DumpPluginTestCase(TestCase):
         self.options.source = 'src'
         plugin = DumpPlugin('dump', self.options, self.project_options)
 
-        os.makedirs('src')
-        with open(os.path.join('src', 'file'), 'w') as f:
+        os.makedirs(os.path.join(plugin.builddir, 'src'))
+        with open(os.path.join(plugin.builddir, 'src', 'file'), 'w') as f:
             f.write('foo')
 
         with open('unsnapped', 'w') as f:
@@ -175,9 +181,11 @@ class DumpPluginTestCase(TestCase):
         symlinks = [
             # This symlink is valid in source, but broken when snapped.
             {
-                'source': '../unsnapped',
-                'link_name': os.path.join('src', 'bad_relative'),
-                'destination': os.path.join(plugin.installdir, 'bad_relative'),
+                'source': '../../../unsnapped',
+                'link_name': os.path.join(
+                    plugin.builddir, 'src', 'bad_relative'),
+                'destination': os.path.join(
+                    plugin.installdir, 'src', 'bad_relative'),
                 'expected_contents': 'bar',
             },
         ]
@@ -193,7 +201,7 @@ class DumpPluginTestCase(TestCase):
         self.assertEqual(
             str(raised.exception),
             '{!r} is a broken symlink pointing outside the snap'.format(
-                os.path.join(plugin.builddir, 'bad_relative')))
+                os.path.join(plugin.builddir, 'src', 'bad_relative')))
 
     def test_dump_enable_cross_compilation(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)

@@ -295,3 +295,70 @@ class PushCommandDeltasTestCase(tests.TestCase):
 
         self.assertEqual(self.enable_deltas, os.path.isfile(
             os.path.join(revision_cache, cached_snap)))
+
+
+class PushCommandDeltasWithPruneTestCase(tests.TestCase):
+
+    scenarios = [
+        ('delete other cache files with valid name', {
+            'cached_snaps': [
+                'a-cached-snap_0.3_amd64_8.snap',
+                'another-cached-snap_1.0_arm64_6.snap']
+        }),
+        ('delete other cache files with invalid name', {
+            'cached_snaps': [
+                'a-cached-snap_0.3_amd64.snap',
+                'cached-snap-without-revision_1.0_arm64.snap',
+                'another-cached-snap-without-version_arm64.snap']
+        })
+    ]
+
+    def test_push_revision_prune_snap_cache(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+        self.useFixture(fixture_setup.DeltaUploads())
+
+        snap_revision = 9
+
+        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker.track.return_value = {
+            'code': 'ready_to_release',
+            'processed': True,
+            'can_release': True,
+            'url': '/fake/url',
+            'revision': snap_revision,
+        }
+
+        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
+        mock_upload = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_upload.return_value = mock_tracker
+
+        revision_cache = os.path.join(
+            BaseDirectory.xdg_cache_home,
+            'snapcraft', 'my-snap-name', 'revisions')
+
+        os.makedirs(revision_cache)
+
+        for cached_snap in self.cached_snaps:
+            open(os.path.join(revision_cache, cached_snap), 'a').close()
+
+        # Create a snap
+        main(['init'])
+        main(['snap'])
+        snap_file = glob.glob('*.snap')[0]
+
+        # Upload
+        with mock.patch('snapcraft.storeapi.StatusTracker'):
+            main(['push', snap_file])
+
+        real_cached_snap = _rewrite_snap_filename_with_revision(
+            snap_file,
+            snap_revision
+        )
+        self.assertTrue(
+            os.path.isfile(os.path.join(revision_cache, real_cached_snap)))
+
+        for snap in self.cached_snaps:
+            self.assertFalse(
+                os.path.isfile(os.path.join(revision_cache, snap)))
+        self.assertEqual(1, len(os.listdir(revision_cache)))

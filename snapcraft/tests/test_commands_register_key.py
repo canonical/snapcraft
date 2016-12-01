@@ -130,7 +130,7 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
-            save=False)
+            packages=None, channels=None, save=False)
         self.assertEqual(1, mock_register_key.call_count)
         expected_assertion = dedent('''\
             type: account-key-request

@@ -14,13 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import atexit
 import glob
 import inspect
 import logging
 import os
 import re
-import tempfile
 import shutil
 import subprocess
 import sys
@@ -119,6 +117,8 @@ class SnapsTestCase(testtools.TestCase):
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')
 
+        self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
+
         temp_dir = fixtures.TempDir()
         self.useFixture(temp_dir)
         self.path = temp_dir.path
@@ -126,9 +126,7 @@ class SnapsTestCase(testtools.TestCase):
         self.snappy_testbed = None
         if not config.get('skip-install', False):
             ip = config.get('ip', None)
-            if not ip:
-                self.snappy_testbed = self._set_up_qemu_testbed()
-            elif ip in ('localhost', '127.0.0.1'):
+            if not ip or ip in ('localhost', '127.0.0.1'):
                 self.snappy_testbed = testbed.LocalTestbed()
             else:
                 port = config.get('port', None) or '22'
@@ -136,23 +134,6 @@ class SnapsTestCase(testtools.TestCase):
                 self.snappy_testbed = testbed.SshTestbed(
                     ip, port, 'ubuntu', proxy)
             self.snappy_testbed.wait()
-
-    def _set_up_qemu_testbed(self):
-        private_key = _get_latest_ssh_private_key()
-        snappy_image = config.get('snappy_image', None)
-        if not snappy_image:
-            temp_dir = tempfile.mkdtemp()
-            snappy_image = testbed.create_snappy_image(temp_dir)
-            # Store the image path in the config so it's only create once
-            # per execution.
-            config['snappy_image'] = snappy_image
-            # Delete the image when the execution exits.
-            atexit.register(shutil.rmtree, temp_dir)
-        snappy_testbed = testbed.QemuTestbed(
-            snappy_image, '8022', 'ubuntu', private_key, _KVM_REDIRECT_PORTS)
-        snappy_testbed.create()
-        self.addCleanup(snappy_testbed.delete)
-        return snappy_testbed
 
     def build_snap(self, snap_content_dir):
         project_dir = os.path.join(self.src_dir, snap_content_dir)

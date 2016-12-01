@@ -37,5 +37,5 @@ class NilPluginTestCase(integration_tests.TestCase):
             project_dir)
 
         self.assertTrue(
-            "Additional properties are not allowed ('source' was unexpected)"
-            in exception.output.replace('\n', ' ').strip())
+            "Additional properties are not allowed ('extra-property' was "
+            "unexpected)" in exception.output.replace('\n', ' ').strip())

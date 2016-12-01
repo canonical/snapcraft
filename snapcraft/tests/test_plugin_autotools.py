@@ -106,9 +106,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
         build_properties = schema['build-properties']
-        self.assertEqual(3, len(build_properties))
+        self.assertEqual(2, len(build_properties))
         self.assertTrue('configflags' in build_properties)
-        self.assertTrue('disable-parallel' in build_properties)
         self.assertTrue('install-via' in build_properties)
 
     def test_install_via_invalid_enum(self):
@@ -123,12 +122,12 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def build_with_configure(self):
         plugin = autotools.AutotoolsPlugin('test-part', self.options,
                                            self.project_options)
-        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
 
         # Create both configure and autogen.sh.
         # Configure should take precedence.
-        open(os.path.join(plugin.sourcedir, 'configure'), 'w').close()
-        open(os.path.join(plugin.sourcedir, 'autogen.sh'), 'w').close()
+        open(os.path.join(plugin.builddir, 'configure'), 'w').close()
+        open(os.path.join(plugin.builddir, 'autogen.sh'), 'w').close()
 
         plugin.build()
 
@@ -162,7 +161,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
     def build_with_autogen(self, files=None, dirs=None):
         plugin = autotools.AutotoolsPlugin('test-part', self.options,
                                            self.project_options)
-        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
 
         if not files:
             files = ['autogen.sh']
@@ -171,11 +170,11 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         # No configure-- only autogen.sh. Make sure it's executable.
         for filename in files:
-            open(os.path.join(plugin.sourcedir, filename), 'w').close()
-            os.chmod(os.path.join(plugin.sourcedir, filename),
+            open(os.path.join(plugin.builddir, filename), 'w').close()
+            os.chmod(os.path.join(plugin.builddir, filename),
                      stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         for directory in dirs:
-            os.makedirs(os.path.join(plugin.sourcedir, directory))
+            os.makedirs(os.path.join(plugin.builddir, directory))
 
         plugin.build()
 

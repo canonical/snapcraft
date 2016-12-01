@@ -14,17 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import io
-from unittest import mock
-
 from snapcraft import main, tests
 from snapcraft.internal import parts
 
 
 class DefineCommandTestCase(tests.TestWithFakeRemoteParts):
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_defining_a_part_that_exists(self, mock_stdout):
+    def test_defining_a_part_that_exists(self):
         main.main(['define', 'curl'])
 
         expected_output = """Maintainer: 'none'
@@ -34,7 +30,7 @@ curl:
   plugin: autotools
   source: http://curl.org
 """
-        self.assertEqual(mock_stdout.getvalue(), expected_output)
+        self.assertEqual(self.fake_terminal.getvalue(), expected_output)
 
     def test_defining_a_part_that_doesnt_exist_helps_out(self):
         with self.assertRaises(RuntimeError) as raised:
@@ -45,8 +41,7 @@ curl:
             'Cannot find the part name {!r} in the cache. Please consider '
             'going to https://wiki.ubuntu.com/snapcraft/parts to add it.')
 
-    @mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_defining_a_part_with_multiline_description(self, mock_stdout):
+    def test_defining_a_part_with_multiline_description(self):
         main.main(['define', 'multiline-part'])
 
         expected_output = """Maintainer: 'none'
@@ -59,4 +54,4 @@ multiline-part:
   plugin: go
   source: http://source.tar.gz
 """
-        self.assertEqual(mock_stdout.getvalue(), expected_output)
+        self.assertEqual(self.fake_terminal.getvalue(), expected_output)

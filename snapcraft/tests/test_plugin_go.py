@@ -158,8 +158,8 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'main.go'), 'w').close()
 
         plugin.pull()
 
@@ -215,8 +215,8 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'main.go'), 'w').close()
 
         plugin.pull()
 
@@ -298,9 +298,6 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
-        os.makedirs(plugin.sourcedir)
-
         plugin.pull()
 
         os.makedirs(plugin._gopath_bin)
@@ -329,8 +326,8 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'main.go'), 'w').close()
 
         plugin.pull()
 
@@ -349,8 +346,8 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'main.go'), 'w').close()
 
         plugin.pull()
 
@@ -379,7 +376,8 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin = go.GoPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.options.source)
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'main.go'), 'w').close()
         os.makedirs(os.path.join(plugin.installdir, 'lib'))
         os.makedirs(os.path.join(plugin.installdir, 'usr', 'lib'))
         os.makedirs(os.path.join(plugin.project.stage_dir, 'lib'))
