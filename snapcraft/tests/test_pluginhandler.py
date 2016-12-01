@@ -18,7 +18,6 @@ from collections import OrderedDict
 import copy
 import logging
 import os
-import platform
 import shutil
 import stat
 import sys
