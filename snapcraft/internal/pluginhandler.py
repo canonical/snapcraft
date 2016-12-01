@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import copy
 import filecmp
 import importlib
 import logging
@@ -615,6 +616,10 @@ def _expand_part_properties(part_properties, part_schema):
     Any schema properties not set will contain their default value as defined
     in the schema itself.
     """
+
+    # First make a deep copy of the part schema. It contains nested mutables,
+    # and we'd rather not change them.
+    part_schema = copy.deepcopy(part_schema)
 
     # Come up with a dictionary of part schema properties and their default
     # values as defined in the schema.
