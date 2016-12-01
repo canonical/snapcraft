@@ -52,15 +52,15 @@ class TravisPreconditionsTestCase(tests.TestCase):
         ('refresh', {'entry_point': 'refresh'}),
     ]
 
-    def run_command(self):
-        getattr(travis, self.entry_point)()
+    def run_command(self, cmd):
+        getattr(travis, cmd)()
 
     @mock.patch('subprocess.check_call')
     def test_missing_travis_cli(self, mock_check_call):
         mock_check_call.side_effect = [FileNotFoundError()]
 
         with self.assertRaises(RequiredCommandNotFound) as raised:
-            self.run_command()
+            self.run_command(self.entry_point)
 
         self.assertEqual([
             'Travis CLI (`travis`) is not available.',
@@ -76,7 +76,7 @@ class TravisPreconditionsTestCase(tests.TestCase):
             subprocess.CalledProcessError(1, 'test')]
 
         with self.assertRaises(RequiredCommandFailure) as raised:
-            self.run_command()
+            self.run_command(self.entry_point)
 
         self.assertEqual([
             'Travis CLI (`travis version`) is not functional.',
@@ -89,7 +89,7 @@ class TravisPreconditionsTestCase(tests.TestCase):
         mock_check_call.side_effect = [None, FileNotFoundError()]
 
         with self.assertRaises(RequiredCommandNotFound) as raised:
-            self.run_command()
+            self.run_command(self.entry_point)
 
         self.assertEqual([
             'Git (`git`) is not available, this tool cannot verify its '
@@ -105,7 +105,7 @@ class TravisPreconditionsTestCase(tests.TestCase):
             None, subprocess.CalledProcessError(1, 'test')]
 
         with self.assertRaises(RequiredCommandFailure) as raised:
-            self.run_command()
+            self.run_command(self.entry_point)
 
         self.assertEqual([
             'The current directory is not a Git repository.',
@@ -118,7 +118,7 @@ class TravisPreconditionsTestCase(tests.TestCase):
         mock_check_call.side_effect = [None, None]
 
         with self.assertRaises(RequiredPathDoesNotExist) as raised:
-            self.run_command()
+            self.run_command(self.entry_point)
 
         self.assertEqual([
             'Travis project is not initialized for the current directory.',
