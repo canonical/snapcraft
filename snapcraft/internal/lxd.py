@@ -22,7 +22,6 @@ from contextlib import contextmanager
 from subprocess import CalledProcessError
 from time import sleep
 import pylxd
-import six
 from six.moves.urllib import parse
 from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager

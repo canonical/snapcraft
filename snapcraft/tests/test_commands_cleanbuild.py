@@ -44,7 +44,7 @@ parts:
         super().make_snapcraft_yaml(self.yaml_template)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
-    @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
+    @mock.patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_cleanbuild(self, mock_installed, mock_run):
         mock_installed.return_value = True

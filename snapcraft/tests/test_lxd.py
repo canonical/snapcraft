@@ -40,7 +40,6 @@ class LXDTestCase(tests.TestCase):
 
         project_options = ProjectOptions()
         lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
-        expected_arch = project_options.deb_arch
 
         self.assertEqual(
             'Setting up container with project assets\n'
