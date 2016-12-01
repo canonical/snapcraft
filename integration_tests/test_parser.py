@@ -76,6 +76,9 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
         ('Origin type, branch and commit options',
             {'wiki_file': 'origin_options_wiki',
              'expect_valid': True, 'expect_output': True}),
+        ('Origin type, branch and commit options (wrong values)',
+            {'wiki_file': 'wrong_origin_options_wiki',
+             'expect_valid': False, 'expect_output': False}),
     ]
 
     def test_parse_wiki(self):
