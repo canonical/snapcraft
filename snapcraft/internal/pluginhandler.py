@@ -46,6 +46,12 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
+class DirtyReport:
+    def __init__(self, dirty_properties, dirty_project_options):
+        self.dirty_properties = dirty_properties
+        self.dirty_project_options = dirty_project_options
+
+
 class PluginHandler:
 
     @property
@@ -214,27 +220,39 @@ class PluginHandler:
     def is_dirty(self, step):
         """Return true if the given step needs to run again."""
 
+        return self.get_dirty_report(step) is not None
+
+    def get_dirty_report(self, step):
+        """Return a DirtyReport class describing why step is dirty.
+
+        Returns None if step is not dirty.
+        """
+
         # Retrieve the stored state for this step (assuming it has already run)
         state = self.get_state(step)
+        differing_properties = set()
+        differing_options = set()
+
         with contextlib.suppress(AttributeError):
             # state.properties contains the old YAML that this step cares
             # about, and we're comparing it to those same keys in the current
             # YAML (self._part_properties). If they've changed, then this step
             # is dirty and needs to run again.
-            if state.properties != state.properties_of_interest(
-                    self._part_properties):
-                return True
+            differing_properties = state.diff_properties_of_interest(
+                self._part_properties)
 
         with contextlib.suppress(AttributeError):
             # state.project_options contains the old project options that this
             # step cares about, and we're comparing it to those same options in
             # the current project. If they've changed, then this step is dirty
             # and needs to run again.
-            if state.project_options != state.project_options_of_interest(
-                    self._project_options):
-                return True
+            differing_options = state.diff_project_options_of_interest(
+                self._project_options)
 
-        return False
+        if differing_properties or differing_options:
+            return DirtyReport(differing_properties, differing_options)
+
+        return None
 
     def should_step_run(self, step, force=False):
         return force or self.is_clean(step)

@@ -56,7 +56,7 @@ class PullState(State):
 
         properties = {}
         for name in self.schema_properties:
-            properties[name] = part_properties.get(name,)
+            properties[name] = part_properties.get(name)
 
         for name in _schema_properties():
             properties[name] = part_properties.get(name)

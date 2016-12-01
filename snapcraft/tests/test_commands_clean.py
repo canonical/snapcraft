@@ -31,26 +31,6 @@ from snapcraft.internal import (
 from snapcraft import tests
 
 
-class _CompareExpectedStates():
-    def __init__(self, test, expected_states):
-        self.test = test
-        self.expected_states = expected_states
-
-    def __eq__(self, actual_states):
-        self.test.assertEqual(
-            len(self.expected_states), len(actual_states))
-
-        for state_name in self.expected_states:
-            expected_state = self.expected_states[state_name]
-            actual_state = actual_states[state_name]
-            self.test.assertEqual(
-                expected_state.files, actual_state.files)
-            self.test.assertEqual(
-                expected_state.directories, actual_state.directories)
-
-        return True
-
-
 class CleanCommandTestCase(tests.TestCase):
 
     yaml_template = """name: clean-test
@@ -195,8 +175,7 @@ parts:
         }
 
         mock_clean.assert_called_with(
-            _CompareExpectedStates(self, expected_staged_state),
-            _CompareExpectedStates(self, expected_primed_state), 'foo')
+            expected_staged_state, expected_primed_state, 'foo')
 
     @mock.patch.object(pluginhandler.PluginHandler, 'clean')
     def test_cleaning_with_strip_does_prime_and_warns(self, mock_clean):
@@ -222,8 +201,7 @@ parts:
         self.assertEqual('DEPRECATED: Use `prime` instead of `strip` as '
                          'the step to clean\n', fake_logger.output)
         mock_clean.assert_called_with(
-            _CompareExpectedStates(self, expected_staged_state),
-            _CompareExpectedStates(self, expected_primed_state), 'prime')
+            expected_staged_state, expected_primed_state, 'prime')
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):

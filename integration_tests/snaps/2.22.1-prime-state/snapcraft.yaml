@@ -1,0 +1,10 @@
+name: old-part-src
+version: 0
+summary: summary
+description: description
+confinement: strict
+
+parts:
+  part-name:
+    plugin: dump
+    source: .

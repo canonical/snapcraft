@@ -1,0 +1,7 @@
+!PrimeState
+dependency_paths: !!set {}
+directories: !!set {}
+files: !!set {foo: null}
+project_options: {}
+properties:
+  snap: ['*']
