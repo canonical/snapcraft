@@ -1004,15 +1004,10 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(9, len(state.properties))
-        self.assertTrue('source' in state.properties)
-        self.assertTrue('source-branch' in state.properties)
-        self.assertTrue('source-commit' in state.properties)
-        self.assertTrue('source-depth' in state.properties)
-        self.assertTrue('source-subdir' in state.properties)
-        self.assertTrue('source-tag' in state.properties)
-        self.assertTrue('source-type' in state.properties)
-        self.assertTrue('plugin' in state.properties)
-        self.assertTrue('stage-packages' in state.properties)
+        for expected in ['source', 'source-branch', 'source-commit',
+                         'source-depth', 'source-subdir', 'source-tag',
+                         'source-type', 'plugin', 'stage-packages']:
+            self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
@@ -1065,10 +1060,9 @@ class StateTestCase(tests.TestCase):
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertEqual(4, len(state.properties))
-        self.assertTrue('after' in state.properties)
-        self.assertTrue('build-packages' in state.properties)
-        self.assertTrue('disable-parallel' in state.properties)
-        self.assertTrue('organize' in state.properties)
+        for expected in ['after', 'build-packages', 'disable-parallel',
+                         'organize']:
+            self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
