@@ -36,11 +36,11 @@ class StageState(State):
         self.directories = directories
 
     def properties_of_interest(self, part_properties):
-        '''Extract the properties concerning this step from part_properties.
+        """Extract the properties concerning this step from part_properties.
 
         The only property of interest to the stage step is the `stage` keyword
         used to filter out files with a white or blacklist.
-        '''
+        """
 
         return {
             'stage': part_properties.get('stage', ['*']) or ['*'],

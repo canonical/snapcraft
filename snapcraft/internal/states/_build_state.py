@@ -47,7 +47,7 @@ class BuildState(State):
         super().__init__(part_properties, project)
 
     def properties_of_interest(self, part_properties):
-        '''Extract the properties concerning this step from part_properties.'''
+        """Extract the properties concerning this step from part_properties."""
 
         properties = {}
         for name in self.schema_properties:
