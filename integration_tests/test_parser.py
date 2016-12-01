@@ -28,15 +28,13 @@ class ParserTestCase(integration_tests.TestCase):
 
     def setUp(self):
         super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable('TMPDIR', self.path))
 
-        tempdir = fixtures.TempDir()
-        self.useFixture(tempdir)
-        self.useFixture(fixtures.EnvironmentVariable('TMPDIR', tempdir.path))
-
-    def call_parser(self, wiki_path, expect_valid):
+    def call_parser(self, wiki_path, expect_valid, expect_output=True):
+        part_file = os.path.join(self.path, 'parts.yaml')
         args = [self.snapcraft_parser_command, '--index', wiki_path,
                 '--debug',
-                '--output', 'parts.yaml']
+                '--output', part_file]
 
         if expect_valid:
             subprocess.check_call(args, stderr=subprocess.DEVNULL,
@@ -47,7 +45,7 @@ class ParserTestCase(integration_tests.TestCase):
                 subprocess.check_call, args, stderr=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL)
 
-        self.assertTrue(os.path.exists('parts.yaml'))
+        self.assertEqual(os.path.exists(part_file), expect_output)
 
 
 class TestParser(ParserTestCase):
