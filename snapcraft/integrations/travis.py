@@ -186,8 +186,8 @@ def enable():
     project_config = load_config()
     snap_name = project_config.data['name']
     logger.info(
-        'Enabling Travis testbeds to push and release "{}" snaps '
-        'to edge channel in series {}'.format(snap_name, series))
+        'Enabling Travis testbeds to push and release {!r} snaps '
+        'to edge channel in series {!r}'.format(snap_name, series))
 
     packages = [{'name': snap_name, 'series': series}]
     channels = ['edge']

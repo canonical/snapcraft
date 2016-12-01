@@ -47,9 +47,7 @@ def enable_ci(ci_system, refresh_only):
 
     if refresh_only:
         module.refresh()
-        return
-
-    print(module.__doc__)
-
-    if input('Continue (y/N): ') == 'y':
-        module.enable()
+    else:
+        print(module.__doc__)
+        if input('Continue (y/N): ') == 'y':
+            module.enable()
