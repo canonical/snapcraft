@@ -530,7 +530,7 @@ class Local(Base):
         source_abspath = os.path.abspath(self.source)
 
         def ignore(directory, files):
-            if directory is source_abspath or \
+            if directory == source_abspath or \
                directory == current_dir:
                 ignored = copy.copy(common.SNAPCRAFT_FILES)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
