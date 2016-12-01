@@ -72,6 +72,8 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
             {'wiki_file': 'both_parts_wiki', 'expect_valid': False}),
         ('Missing .snapcraft.yaml file',
             {'wiki_file': 'missing_parts_wiki', 'expect_valid': False}),
+        ('Origin type, branch and commit options',
+            {'wiki_file': 'origin_options_wiki', 'expect_valid': True}),
     ]
 
     def test_parse_wiki(self):
