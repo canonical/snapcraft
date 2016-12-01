@@ -725,9 +725,21 @@ class TestSubversion(SourceTestCase):
 
 class TestLocal(tests.TestCase):
 
-    def test_pull_with_source_the_parent_of_current_dir(self):
+    @unittest.mock.patch('snapcraft.internal.sources.glob.glob')
+    def test_pull_does_not_change_snapcraft_files_list(self, mock_glob):
+        # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1614913
+        # Verify that SNAPCRAFT_FILES was not modified by the pull when there
+        # are files to ignore.
         snapcraft_files_before_pull = copy.copy(common.SNAPCRAFT_FILES)
+        mock_glob.return_value = ['a.snap', 'b.snap', 'c.snap']
 
+        local = sources.Local('.', 'destination')
+        local.pull()
+
+        self.assertEqual(
+            snapcraft_files_before_pull, common.SNAPCRAFT_FILES)
+
+    def test_pull_with_source_the_parent_of_current_dir(self):
         # Verify that the snapcraft root dir does not get copied into itself.
         os.makedirs('subdir')
 
@@ -743,12 +755,6 @@ class TestLocal(tests.TestCase):
                     'subdir', source_dir, 'subdir', snap_dir)))
             self.assertTrue(
                 'subdir' in os.listdir(os.path.join('subdir', source_dir)))
-
-        # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1614913
-        # Verify that SNAPCRAFT_FILES was not modified by the pull when there
-        # are files to ignore.
-        self.assertEqual(
-            snapcraft_files_before_pull, common.SNAPCRAFT_FILES)
 
     def test_pull_with_source_a_parent_of_current_dir(self):
         # Verify that the snapcraft root dir does not get copied into itself.
