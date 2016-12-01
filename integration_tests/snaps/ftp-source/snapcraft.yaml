@@ -1,0 +1,14 @@
+name: ftp-source
+version: 3.20.1
+summary: Test downloading files from ftp source
+description: |
+  Make sure sources can be fetched from FTP servers.
+  LP: #1602323
+
+grade: devel
+confinement: devmode
+
+parts:
+  libwnck:
+    plugin: dump
+    source: ftp://ftp.gnome.org/pub/GNOME/sources/libwnck/3.20/libwnck-$SNAPCRAFT_PROJECT_VERSION.tar.xz
