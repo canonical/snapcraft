@@ -739,43 +739,6 @@ class TestLocal(tests.TestCase):
         self.assertEqual(
             snapcraft_files_before_pull, common.SNAPCRAFT_FILES)
 
-    def test_pull_with_source_the_parent_of_current_dir(self):
-        # Verify that the snapcraft root dir does not get copied into itself.
-        os.makedirs('subdir')
-
-        for snap_dir in [f for f in common.SNAPCRAFT_FILES if '.' not in f]:
-            cwd = os.getcwd()
-            os.chdir('subdir')
-            source_dir = os.path.join(snap_dir, 'foo')
-            local = sources.Local('..', source_dir)
-            local.pull()
-            os.chdir(cwd)
-            self.assertFalse(
-                os.path.exists(os.path.join(
-                    'subdir', source_dir, 'subdir', snap_dir)))
-            self.assertTrue(
-                'subdir' in os.listdir(os.path.join('subdir', source_dir)))
-
-    def test_pull_with_source_a_parent_of_current_dir(self):
-        # Verify that the snapcraft root dir does not get copied into itself.
-        subdir = os.path.join('subdir', 'subsubdir', 'subsubsubdir')
-        os.makedirs(subdir)
-
-        for snap_dir in [f for f in common.SNAPCRAFT_FILES if '.' not in f]:
-            cwd = os.getcwd()
-            os.chdir(subdir)
-            source = '../' * (subdir.count(os.sep)+1)
-            source_dir = os.path.join(snap_dir, 'foo')
-            local = sources.Local(source, source_dir)
-            local.pull()
-            os.chdir(cwd)
-            self.assertFalse(
-                os.path.exists(os.path.join(
-                    subdir, source_dir, subdir, snap_dir)))
-            self.assertTrue(
-                os.path.basename(subdir) in os.listdir(
-                    os.path.join(subdir, source_dir, os.path.dirname(subdir))))
-
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
         open(os.path.join('src', 'dir', 'file'), 'w').close()
@@ -876,6 +839,46 @@ class TestLocal(tests.TestCase):
         self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
         self.assertGreater(
             os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+
+
+class TestLocalIgnores(tests.TestCase):
+    """Verify that the snapcraft root dir does not get copied into itself."""
+
+    scenarios = [(f, dict(snapcraft_dir=f))
+                 for f in common.SNAPCRAFT_FILES if '.' not in f]
+
+    def test_pull_with_source_the_parent_of_current_dir(self):
+        os.makedirs('subdir')
+
+        cwd = os.getcwd()
+        os.chdir('subdir')
+        source_dir = os.path.join(self.snapcraft_dir, 'foo_src')
+        local = sources.Local('..', source_dir)
+        local.pull()
+        os.chdir(cwd)
+        self.assertFalse(
+            os.path.exists(os.path.join(
+                'subdir', source_dir, 'subdir', self.snapcraft_dir)))
+        self.assertTrue(
+            'subdir' in os.listdir(os.path.join('subdir', source_dir)))
+
+    def test_pull_with_source_a_parent_of_current_dir(self):
+        subdir = os.path.join('subdir', 'subsubdir', 'subsubsubdir')
+        os.makedirs(subdir)
+
+        cwd = os.getcwd()
+        os.chdir(subdir)
+        source = '../' * (subdir.count(os.sep)+1)
+        source_dir = os.path.join(self.snapcraft_dir, 'foo_src')
+        local = sources.Local(source, source_dir)
+        local.pull()
+        os.chdir(cwd)
+        self.assertFalse(
+            os.path.exists(os.path.join(
+                subdir, source_dir, subdir, self.snapcraft_dir)))
+        self.assertTrue(
+            os.path.basename(subdir) in os.listdir(
+                os.path.join(subdir, source_dir, os.path.dirname(subdir))))
 
 
 class TestUri(tests.TestCase):
