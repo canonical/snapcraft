@@ -65,15 +65,19 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
 
     scenarios = [
         ('Hidden .snapcraft.yaml file',
-            {'wiki_file': 'hidden_parts_wiki', 'expect_valid': True}),
+            {'wiki_file': 'hidden_parts_wiki',
+             'expect_valid': True, 'expect_output': True}),
         ('Both snapcraft.yaml and .snapcraft.yaml files',
-            {'wiki_file': 'both_parts_wiki', 'expect_valid': False}),
+            {'wiki_file': 'both_parts_wiki',
+             'expect_valid': False, 'expect_output': True}),
         ('Missing .snapcraft.yaml file',
-            {'wiki_file': 'missing_parts_wiki', 'expect_valid': False}),
+            {'wiki_file': 'missing_parts_wiki',
+             'expect_valid': False, 'expect_output': True}),
         ('Origin type, branch and commit options',
-            {'wiki_file': 'origin_options_wiki', 'expect_valid': True}),
+            {'wiki_file': 'origin_options_wiki',
+             'expect_valid': True, 'expect_output': True}),
     ]
 
     def test_parse_wiki(self):
         wiki_file = os.path.join(os.path.dirname(__file__), self.wiki_file)
-        self.call_parser(wiki_file, self.expect_valid)
+        self.call_parser(wiki_file, self.expect_valid, self.expect_output)
