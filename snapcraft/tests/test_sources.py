@@ -16,10 +16,8 @@
 
 import copy
 import os
-import http.server
 import shutil
 import tarfile
-import threading
 import unittest.mock
 
 import fixtures
@@ -29,47 +27,100 @@ from snapcraft.internal import common, sources
 from snapcraft import tests
 
 
-class FakeFileHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+class TestFileBase(tests.TestCase):
 
-    def do_GET(self):
-        data = 'Test fake compressed file'
-        self.send_response(200)
-        self.send_header('Content-Length', len(data))
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
-        self.wfile.write(data.encode())
+    def get_mock_file_base(self, source, dir):
+        file_src = sources.FileBase(source, dir)
+        setattr(file_src, "provision", unittest.mock.Mock())
+        return file_src
 
-    def log_message(self, *args):
-        # Overwritten so the test does not write to stderr.
-        pass
+    @unittest.mock.patch('snapcraft.internal.sources.FileBase.download')
+    def test_pull_url(self, mock_download):
+        file_src = self.get_mock_file_base(
+            'http://snapcraft.io/snapcraft.yaml', 'dir')
+        file_src.pull()
+
+        mock_download.assert_called_once_with()
+        file_src.provision.assert_called_once_with(file_src.source_dir)
+
+    @unittest.mock.patch('shutil.copy2')
+    def test_pull_copy(self, mock_shutil_copy2):
+        file_src = self.get_mock_file_base('snapcraft.yaml', 'dir')
+        file_src.pull()
+
+        mock_shutil_copy2.assert_called_once_with(
+            file_src.source, file_src.source_dir)
+        file_src.provision.assert_called_once_with(file_src.source_dir)
+
+    @unittest.mock.patch('snapcraft.internal.sources.requests')
+    @unittest.mock.patch('snapcraft.internal.sources.download_requests_stream')
+    @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
+    def test_download_file_destination(self, dus, drs, req):
+        file_src = self.get_mock_file_base(
+            'http://snapcraft.io/snapcraft.yaml', 'dir')
+        self.assertFalse(hasattr(file_src, "file"))
+
+        file_src.pull()
+
+        self.assertEqual(file_src.file, os.path.join(
+                file_src.source_dir, os.path.basename(file_src.source)))
+
+    @unittest.mock.patch('snapcraft.internal.sources.download_requests_stream')
+    @unittest.mock.patch('snapcraft.internal.sources.requests')
+    def test_download_http(self, mock_requests, mock_download):
+        file_src = self.get_mock_file_base(
+            'http://snapcraft.io/snapcraft.yaml', 'dir')
+
+        mock_request = unittest.mock.Mock()
+        mock_requests.get.return_value = mock_request
+
+        file_src.pull()
+
+        mock_requests.get.assert_called_once_with(
+            file_src.source, stream=True, allow_redirects=True)
+        mock_request.raise_for_status.assert_called_once_with()
+        mock_download.assert_called_once_with(mock_request, file_src.file)
+
+    @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
+    def test_download_ftp(self, mock_download):
+        file_src = self.get_mock_file_base(
+            'ftp://snapcraft.io/snapcraft.yaml', 'dir')
+
+        file_src.pull()
+
+        mock_download.assert_called_once_with(file_src.source, file_src.file)
+
+    @unittest.mock.patch('snapcraft.internal.indicators.urlretrieve')
+    def test_download_ftp_url_opener(self, mock_urlretrieve):
+        file_src = self.get_mock_file_base(
+            'ftp://snapcraft.io/snapcraft.yaml', 'dir')
+
+        file_src.pull()
+
+        self.assertEqual(mock_urlretrieve.call_count, 1)
+        self.assertEqual(mock_urlretrieve.call_args[0][0], file_src.source)
+        self.assertEqual(mock_urlretrieve.call_args[0][1], file_src.file)
 
 
-class TestTar(tests.TestCase):
+class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
     scenarios = [
         ('TERM=dumb', dict(term='dumb')),
         ('TERM=vt100', dict(term='vt100')),
     ]
 
+    def setUp(self):
+        self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
+        super().setUp()
+
     @unittest.mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
-        self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(server.server_close)
-        self.addCleanup(server.shutdown)
-        server_thread.start()
-
         plugin_name = 'test_plugin'
         dest_dir = os.path.join('parts', plugin_name, 'src')
         os.makedirs(dest_dir)
         tar_file_name = 'test.tar'
         source = 'http://{}:{}/{file_name}'.format(
-            *server.server_address, file_name=tar_file_name)
+            *self.server.server_address, file_name=tar_file_name)
         tar_source = sources.Tar(source, dest_dir)
 
         tar_source.pull()
@@ -156,19 +207,7 @@ class TestTar(tests.TestCase):
         self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
 
 
-class TestZip(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=self.server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(self.server.server_close)
-        self.addCleanup(self.server.shutdown)
-        server_thread.start()
+class TestZip(tests.FakeFileHTTPServerBasedTestCase):
 
     @unittest.mock.patch('zipfile.ZipFile')
     def test_pull_zipfile_must_download_and_extract(self, mock_zip):
@@ -202,19 +241,10 @@ class TestZip(tests.TestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
 
-class TestDeb(tests.TestCase):
+class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixtures.EnvironmentVariable(
-            'no_proxy', 'localhost,127.0.0.1'))
-        self.server = http.server.HTTPServer(
-            ('127.0.0.1', 0), FakeFileHTTPRequestHandler)
-        server_thread = threading.Thread(target=self.server.serve_forever)
-        self.addCleanup(server_thread.join)
-        self.addCleanup(self.server.server_close)
-        self.addCleanup(self.server.shutdown)
-        server_thread.start()
 
         patcher = unittest.mock.patch('apt_inst.DebFile')
         self.mock_deb = patcher.start()

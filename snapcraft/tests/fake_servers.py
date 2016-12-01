@@ -38,6 +38,17 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         logger.debug(args)
 
 
+class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        data = 'Test fake compressed file'
+        self.send_response(200)
+        self.send_header('Content-Length', len(data))
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(data.encode())
+
+
 class FakePartsServer(http.server.HTTPServer):
 
     def __init__(self, server_address):
