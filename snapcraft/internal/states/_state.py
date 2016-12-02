@@ -69,7 +69,12 @@ def _get_differing_keys(dict1, dict2):
     differing_keys = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
-        if (dict1_value or dict2_value) and (dict1_value != dict2_value):
+        if dict1_value != dict2_value:
+            differing_keys.add(key)
+
+    for key, dict2_value in dict2.items():
+        dict1_value = dict1.get(key)
+        if dict1_value != dict2_value:
             differing_keys.add(key)
 
     return differing_keys
