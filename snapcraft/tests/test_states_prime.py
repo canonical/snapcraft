@@ -18,7 +18,7 @@ import snapcraft.internal
 from snapcraft import tests
 
 
-class PrimeStateTestCase(tests.TestCase):
+class PrimeStateBaseTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -35,6 +35,9 @@ class PrimeStateTestCase(tests.TestCase):
             self.files, self.directories, self.dependency_paths,
             self.part_properties, self.project)
 
+
+class PrimeStateTestCase(PrimeStateBaseTestCase):
+
     def test_representation(self):
         expected = ('PrimeState(dependency_paths: {}, directories: {}, '
                     'files: {}, project_options: {}, properties: {})').format(
@@ -49,23 +52,25 @@ class PrimeStateTestCase(tests.TestCase):
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
-    def test_comparison_not_equal(self):
-        others = [
-            snapcraft.internal.states.PrimeState(
-                set(), self.directories, self.dependency_paths,
-                self.part_properties, self.project),
-            snapcraft.internal.states.PrimeState(
-                self.files, set(), self.dependency_paths,
-                self.part_properties, self.project),
-            snapcraft.internal.states.PrimeState(
-                self.files, self.directories, set(),
-                self.part_properties, self.project),
-            snapcraft.internal.states.PrimeState(
-                self.files, self.directories, self.dependency_paths,
-                None, self.project)
-        ]
 
-        for index, other in enumerate(others):
-            with self.subTest('other #{}'.format(index+1)):
-                self.assertFalse(self.state == other,
-                                 'Expected states to be different')
+class PrimeStateNotEqualTestCase(PrimeStateBaseTestCase):
+
+    scenarios = [
+        ('no files', dict(
+            other_property='files', other_value=set())),
+        ('no directories', dict(
+            other_property='directories', other_value=set())),
+        ('no dependency paths', dict(
+            other_property='dependency_paths', other_value=set())),
+        ('no part properties', dict(
+            other_property='part_properties', other_value=None)),
+    ]
+
+    def test_comparison_not_equal(self):
+        setattr(self, self.other_property, self.other_value)
+        other_state = snapcraft.internal.states.PrimeState(
+            self.files, self.directories, self.dependency_paths,
+            self.part_properties, self.project)
+
+        self.assertFalse(self.state == other_state,
+                         'Expected states to be different')

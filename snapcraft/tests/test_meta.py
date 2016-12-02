@@ -27,7 +27,7 @@ from snapcraft.internal.errors import MissingGadgetError
 from snapcraft import tests
 
 
-class CreateTest(tests.TestCase):
+class CreateBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -45,6 +45,9 @@ class CreateTest(tests.TestCase):
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
+
+class CreateTestCase(CreateBaseTestCase):
+
     def test_create_meta(self):
         create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
@@ -61,54 +64,6 @@ class CreateTest(tests.TestCase):
                     'version': '1.0'}
 
         self.assertEqual(y, expected)
-
-    def test_create_meta_with_confinement(self):
-        confinement_types = [
-            'strict',
-            'devmode',
-        ]
-
-        for confinement_type in confinement_types:
-            with self.subTest(key=confinement_type):
-                self.config_data['confinement'] = confinement_type
-
-                create_snap_packaging(
-                    self.config_data, self.snap_dir, self.parts_dir)
-
-                self.assertTrue(
-                    os.path.exists(self.snap_yaml),
-                    'snap.yaml was not created')
-
-                with open(self.snap_yaml) as f:
-                    y = yaml.load(f)
-                self.assertTrue(
-                    'confinement' in y,
-                    'Expected "confinement" property to be in snap.yaml')
-                self.assertEqual(y['confinement'], confinement_type)
-
-    def test_create_meta_with_grade(self):
-        grade_types = [
-            'stable',
-            'devel',
-        ]
-
-        for grade_type in grade_types:
-            with self.subTest(key=grade_type):
-                self.config_data['grade'] = grade_type
-
-                create_snap_packaging(
-                    self.config_data, self.snap_dir, self.parts_dir)
-
-                self.assertTrue(
-                    os.path.exists(self.snap_yaml),
-                    'snap.yaml was not created')
-
-                with open(self.snap_yaml) as f:
-                    y = yaml.load(f)
-                self.assertTrue(
-                    'grade' in y,
-                    'Expected "grade" property to be in snap.yaml')
-                self.assertEqual(y['grade'], grade_type)
 
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
@@ -302,6 +257,52 @@ class CreateTest(tests.TestCase):
         }
 
         self.assertEqual(y, expected)
+
+
+class CreateWithConfinementTestCase(CreateBaseTestCase):
+
+    scenarios = [(confinement, dict(confinement=confinement)) for
+                 confinement in ['strict', 'devmode']]
+
+    def test_create_meta_with_confinement(self):
+        self.config_data['confinement'] = self.confinement
+
+        create_snap_packaging(
+            self.config_data, self.snap_dir, self.parts_dir)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml),
+            'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertTrue(
+            'confinement' in y,
+            'Expected "confinement" property to be in snap.yaml')
+        self.assertEqual(y['confinement'], self.confinement)
+
+
+class CreateWithGradeTestCase(CreateBaseTestCase):
+
+    scenarios = [(grade, dict(grade=grade)) for
+                 grade in ['stable', 'devel']]
+
+    def test_create_meta_with_grade(self):
+        self.config_data['grade'] = self.grade
+
+        create_snap_packaging(
+            self.config_data, self.snap_dir, self.parts_dir)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml),
+            'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertTrue(
+            'grade' in y,
+            'Expected "grade" property to be in snap.yaml')
+        self.assertEqual(y['grade'], self.grade)
 
 
 # TODO this needs more tests.
