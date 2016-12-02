@@ -154,8 +154,12 @@ def get_python2_path(root):
             'PYTHONPATH cannot be set for {!r}'.format(root))
 
 
+def get_url_scheme(url):
+    return urllib.parse.urlparse(url).scheme
+
+
 def isurl(url):
-    return urllib.parse.urlparse(url).scheme != ''
+    return get_url_scheme(url) != ''
 
 
 def reset_env():
