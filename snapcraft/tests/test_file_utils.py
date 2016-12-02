@@ -33,40 +33,36 @@ from snapcraft.internal.errors import (
 
 class ReplaceInFileTestCase(tests.TestCase):
 
+    scenarios = [
+        ('2to3', {
+            'file_path': os.path.join('bin', '2to3'),
+            'contents': '#!/foo/bar/baz/python',
+            'expected': '#!/usr/bin/env python',
+        }),
+        ('snapcraft', {
+            'file_path': os.path.join('bin', 'snapcraft'),
+            'contents': '#!/foo/baz/python',
+            'expected': '#!/usr/bin/env python',
+        }),
+        ('foo', {
+            'file_path': os.path.join('bin', 'foo'),
+            'contents': 'foo',
+            'expected': 'foo',
+        })
+    ]
+
     def test_replace_in_file(self):
         os.makedirs('bin')
 
-        # Place a few files with bad shebangs, and some files that shouldn't be
-        # changed.
-        files = [
-            {
-                'path': os.path.join('bin', '2to3'),
-                'contents': '#!/foo/bar/baz/python',
-                'expected': '#!/usr/bin/env python',
-            },
-            {
-                'path': os.path.join('bin', 'snapcraft'),
-                'contents': '#!/foo/baz/python',
-                'expected': '#!/usr/bin/env python',
-            },
-            {
-                'path': os.path.join('bin', 'foo'),
-                'contents': 'foo',
-                'expected': 'foo',
-            }
-        ]
+        with open(self.file_path, 'w') as f:
+            f.write(self.contents)
 
-        for file_info in files:
-            with self.subTest(key=file_info['path']):
-                with open(file_info['path'], 'w') as f:
-                    f.write(file_info['contents'])
+        file_utils.replace_in_file('bin', re.compile(r''),
+                                   re.compile(r'#!.*python'),
+                                   r'#!/usr/bin/env python')
 
-                file_utils.replace_in_file('bin', re.compile(r''),
-                                           re.compile(r'#!.*python'),
-                                           r'#!/usr/bin/env python')
-
-                with open(file_info['path'], 'r') as f:
-                    self.assertEqual(f.read(), file_info['expected'])
+        with open(self.file_path, 'r') as f:
+            self.assertEqual(f.read(), self.expected)
 
 
 class TestLinkOrCopyTree(tests.TestCase):
