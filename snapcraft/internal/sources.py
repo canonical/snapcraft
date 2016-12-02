@@ -534,16 +534,13 @@ class Local(Base):
         elif os.path.isdir(self.source_dir):
             shutil.rmtree(self.source_dir)
 
+        current_dir = os.getcwd()
         source_abspath = os.path.abspath(self.source)
 
         def ignore(directory, files):
-            if directory is source_abspath:
+            if directory == source_abspath or \
+               directory == current_dir:
                 ignored = copy.copy(common.SNAPCRAFT_FILES)
-                relative_cwd = os.path.basename(os.getcwd())
-                if os.path.join(directory, relative_cwd) == os.getcwd():
-                    # Source is a parent of the working directory.
-                    # Do not recursively copy it into itself.
-                    ignored.append(relative_cwd)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
