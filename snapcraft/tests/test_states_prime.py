@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import yaml
+
 import snapcraft.internal
 from snapcraft import tests
 
@@ -29,7 +31,7 @@ class PrimeStateBaseTestCase(tests.TestCase):
         self.files = {'foo'}
         self.directories = {'bar'}
         self.dependency_paths = {'baz'}
-        self.part_properties = {'snap': ['gux']}
+        self.part_properties = {'snap': ['qux']}
 
         self.state = snapcraft.internal.states.PrimeState(
             self.files, self.directories, self.dependency_paths,
@@ -38,12 +40,9 @@ class PrimeStateBaseTestCase(tests.TestCase):
 
 class PrimeStateTestCase(PrimeStateBaseTestCase):
 
-    def test_representation(self):
-        expected = ('PrimeState(dependency_paths: {}, directories: {}, '
-                    'files: {}, project_options: {}, properties: {})').format(
-            self.dependency_paths, self.directories, self.files,
-            self.project.__dict__, self.part_properties)
-        self.assertEqual(expected, repr(self.state))
+    def test_yaml_conversion(self):
+        state_from_yaml = yaml.load(yaml.dump(self.state))
+        self.assertEqual(self.state, state_from_yaml)
 
     def test_comparison(self):
         other = snapcraft.internal.states.PrimeState(
@@ -51,6 +50,14 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
             self.part_properties, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
+
+    def test_properties_of_interest(self):
+        properties = self.state.properties_of_interest(self.part_properties)
+        self.assertEqual(1, len(properties))
+        self.assertEqual(['qux'], properties['snap'])
+
+    def test_project_options_of_interest(self):
+        self.assertFalse(self.state.project_options_of_interest(self.project))
 
 
 class PrimeStateNotEqualTestCase(PrimeStateBaseTestCase):

@@ -24,8 +24,14 @@ import integration_tests
 
 class BuildPropertiesTestCase(integration_tests.TestCase):
 
-    def test_pull(self):
-        project_dir = 'local-plugin-build-properties'
+    def test_build(self):
+        self.assert_expected_build_state('local-plugin-build-properties')
+
+    def test_build_legacy_build_properties(self):
+        self.assert_expected_build_state(
+            'local-plugin-legacy-build-properties')
+
+    def assert_expected_build_state(self, project_dir):
         self.run_snapcraft('build', project_dir)
 
         state_file = os.path.join(

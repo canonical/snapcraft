@@ -38,6 +38,19 @@ class State(yaml.YAMLObject):
 
         raise NotImplementedError
 
+    def diff_properties_of_interest(self, other_properties):
+        """Return set of properties that differ."""
+
+        return _get_differing_keys(
+            self.properties, self.properties_of_interest(other_properties))
+
+    def diff_project_options_of_interest(self, other_project_options):
+        """Return set of project options that differ."""
+
+        return _get_differing_keys(
+            self.project_options, self.project_options_of_interest(
+                other_project_options))
+
     def __repr__(self):
         items = sorted(self.__dict__.items())
         strings = (': '.join((key, repr(value))) for key, value in items)
@@ -50,3 +63,18 @@ class State(yaml.YAMLObject):
             return self.__dict__ == other.__dict__
 
         return False
+
+
+def _get_differing_keys(dict1, dict2):
+    differing_keys = set()
+    for key, dict1_value in dict1.items():
+        dict2_value = dict2.get(key)
+        if dict1_value != dict2_value:
+            differing_keys.add(key)
+
+    for key, dict2_value in dict2.items():
+        dict1_value = dict1.get(key)
+        if dict1_value != dict2_value:
+            differing_keys.add(key)
+
+    return differing_keys

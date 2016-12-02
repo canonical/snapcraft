@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import yaml
+
 import snapcraft.internal
 from snapcraft import tests
 
@@ -28,7 +30,7 @@ class StageStateBaseTestCase(tests.TestCase):
         self.project = Project()
         self.files = {'foo'}
         self.directories = {'bar'}
-        self.part_properties = {'stage': ['baz']}
+        self.part_properties = {'stage': ['baz'], 'filesets': {'qux': 'quux'}}
 
         self.state = snapcraft.internal.states.StageState(
             self.files, self.directories, self.part_properties, self.project)
@@ -36,18 +38,24 @@ class StageStateBaseTestCase(tests.TestCase):
 
 class StateStageTestCase(StageStateBaseTestCase):
 
-    def test_representation(self):
-        expected = ('StageState(directories: {}, files: {}, '
-                    'project_options: {}, properties: {})').format(
-            self.directories, self.files, self.project.__dict__,
-            self.part_properties)
-        self.assertEqual(expected, repr(self.state))
+    def test_yaml_conversion(self):
+        state_from_yaml = yaml.load(yaml.dump(self.state))
+        self.assertEqual(self.state, state_from_yaml)
 
     def test_comparison(self):
         other = snapcraft.internal.states.StageState(
             self.files, self.directories, self.part_properties, self.project)
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
+
+    def test_properties_of_interest(self):
+        properties = self.state.properties_of_interest(self.part_properties)
+        self.assertEqual(2, len(properties))
+        self.assertEqual(['baz'], properties['stage'])
+        self.assertEqual({'qux': 'quux'}, properties['filesets'])
+
+    def test_project_options_of_interest(self):
+        self.assertFalse(self.state.project_options_of_interest(self.project))
 
 
 class StageStateNotEqualTestCase(StageStateBaseTestCase):
