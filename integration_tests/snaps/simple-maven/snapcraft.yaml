@@ -13,3 +13,5 @@ parts:
     source: my-app
     maven-options:
       - -DskipTests
+      - -X
+      - -e

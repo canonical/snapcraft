@@ -76,10 +76,11 @@ class PushCommandTestCase(tests.TestCase):
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
             main(['push', snap_file])
 
-        self.assertIn(
-            'Uploading my-snap-name_0.1_amd64.snap.\n'
-            'Revision 9 of \'my-snap-name\' created.',
-            self.fake_logger.output)
+        self.assertRegexpMatches(
+            self.fake_logger.output,
+            ".*Uploading my-snap-name_0\.1_\w*\.snap\.\n"
+            "Revision 9 of 'my-snap-name' created\.",
+        )
 
         mock_upload.assert_called_once_with('my-snap-name', snap_file)
 
@@ -144,10 +145,11 @@ class PushCommandTestCase(tests.TestCase):
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
             main(['upload', snap_file])
 
-        self.assertIn(
-            'Uploading my-snap-name_0.1_amd64.snap.\n'
-            'Revision 9 of \'my-snap-name\' created.',
-            self.fake_logger.output)
+        self.assertRegexpMatches(
+            self.fake_logger.output,
+            ".*Uploading my-snap-name_0\.1_\w*.snap\.\n"
+            "Revision 9 of 'my-snap-name' created\.",
+        )
 
         mock_upload.assert_called_once_with('my-snap-name', snap_file)
 
@@ -190,10 +192,11 @@ class PushCommandTestCase(tests.TestCase):
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
             main(['push', snap_file, '--release', 'beta'])
 
-        self.assertIn(
-            'Uploading my-snap-name_0.1_amd64.snap.\n'
-            'Revision 9 of \'my-snap-name\' created.',
-            self.fake_logger.output)
+        self.assertRegexpMatches(
+            self.fake_logger.output,
+            ".*Uploading my-snap-name_0\.1_\w*\.snap\.\n"
+            "Revision 9 of 'my-snap-name' created\.\n"
+            "The 'beta' channel is now open\.\n")
 
         mock_upload.assert_called_once_with('my-snap-name', snap_file)
         mock_release.assert_called_once_with('my-snap-name', 9, ['beta'])
@@ -239,10 +242,12 @@ class PushCommandTestCase(tests.TestCase):
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
             main(['push', snap_file, '--release', 'edge,beta,candidate'])
 
-        self.assertIn(
-            'Uploading my-snap-name_0.1_amd64.snap.\n'
-            'Revision 9 of \'my-snap-name\' created.',
-            self.fake_logger.output)
+        self.assertRegexpMatches(
+            self.fake_logger.output,
+            ".*Uploading my-snap-name_0\.1_\w*.snap\.\n"
+            "Revision 9 of 'my-snap-name' created.\n"
+            "The 'beta,edge,candidate' channel is now open\.\n"
+        )
 
         mock_upload.assert_called_once_with('my-snap-name', snap_file)
         mock_release.assert_called_once_with('my-snap-name', 9,
