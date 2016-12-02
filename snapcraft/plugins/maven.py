@@ -86,7 +86,7 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
     def build(self):
         super().build()
 
-        mvn_cmd = ['mvn', '-X', '-e', 'package']
+        mvn_cmd = ['mvn', 'package']
         if self._use_proxy():
             settings_path = os.path.join(self.partdir, 'm2', 'settings.xml')
             _create_settings(settings_path)
