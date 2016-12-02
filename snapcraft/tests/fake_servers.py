@@ -566,6 +566,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_register_409('already_registered')
         elif data['snap_name'] == 'test-reserved-snap-name':
             self._handle_register_409('reserved_name')
+        elif data['snap_name'] == 'test-already-owned-snap-name':
+            self._handle_register_409('already_owned')
         elif data['snap_name'].startswith('test-too-fast'):
             self._handle_register_429('register_window')
         elif data['snap_name'] == 'snap-name-no-clear-error':

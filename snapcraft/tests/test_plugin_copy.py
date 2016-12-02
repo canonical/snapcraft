@@ -251,19 +251,18 @@ class TestCopyPlugin(TestCase):
 
         for symlink in symlinks:
             destination = symlink['destination']
-            with self.subTest('link: {}'.format(destination)):
-                self.assertTrue(
-                    os.path.islink(destination),
-                    'Expected {!r} to be a symlink'.format(destination))
+            self.assertTrue(
+                os.path.islink(destination),
+                'Expected {!r} to be a symlink'.format(destination))
 
-                self.assertEqual(
-                    os.path.realpath(destination),
-                    symlink['expected_realpath'],
-                    'Expected {!r} to be a relative path to {!r}'.format(
-                        destination, symlink['expected_realpath']))
+            self.assertEqual(
+                os.path.realpath(destination),
+                symlink['expected_realpath'],
+                'Expected {!r} to be a relative path to {!r}'.format(
+                    destination, symlink['expected_realpath']))
 
-                with open(destination, 'r') as f:
-                    self.assertEqual(f.read(), symlink['expected_contents'])
+            with open(destination, 'r') as f:
+                self.assertEqual(f.read(), symlink['expected_contents'])
 
     def test_copy_symlinks_that_should_be_followed(self):
         self.mock_options.files = {'foo/*': '.'}
@@ -308,13 +307,12 @@ class TestCopyPlugin(TestCase):
 
         for symlink in symlinks:
             destination = symlink['destination']
-            with self.subTest('link: {}'.format(destination)):
-                self.assertFalse(os.path.islink(destination),
-                                 'Expected {!r} to be a copy rather than a '
-                                 'symlink'.format(destination))
+            self.assertFalse(os.path.islink(destination),
+                             'Expected {!r} to be a copy rather than a '
+                             'symlink'.format(destination))
 
-                with open(destination, 'r') as f:
-                    self.assertEqual(f.read(), symlink['expected_contents'])
+            with open(destination, 'r') as f:
+                self.assertEqual(f.read(), symlink['expected_contents'])
 
     def test_copy_enable_cross_compilation(self):
         c = CopyPlugin('copy', self.mock_options, self.project_options)

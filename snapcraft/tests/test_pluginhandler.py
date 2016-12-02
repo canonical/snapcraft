@@ -208,106 +208,6 @@ class PluginTestCase(tests.TestCase):
         self.assertEqual(include, ['*'])
         self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
 
-    def test_migrate_snap_files(self):
-        filesets = {
-            'nothing': {
-                'fileset': ['-*'],
-                'result': []
-            },
-            'all': {
-                'fileset': ['*'],
-                'result': [
-                    'stage/1',
-                    'stage/1/1a/1b',
-                    'stage/1/1a',
-                    'stage/1/a',
-                    'stage/2',
-                    'stage/2/2a',
-                    'stage/3',
-                    'stage/3/a',
-                    'stage/a',
-                    'stage/b',
-                ],
-            },
-            'no1': {
-                'fileset': ['-1'],
-                'result': [
-                    'stage/2',
-                    'stage/2/2a',
-                    'stage/3',
-                    'stage/3/a',
-                    'stage/a',
-                    'stage/b',
-                ],
-            },
-            'onlya': {
-                'fileset': ['a'],
-                'result': [
-                    'stage/a',
-                ],
-            },
-            'onlybase': {
-                'fileset': ['*', '-*/*'],
-                'result': [
-                    'stage/a',
-                    'stage/b',
-                    'stage/1',
-                    'stage/2',
-                    'stage/3',
-                ],
-            },
-            'nostara': {
-                'fileset': ['-*/a'],
-                'result': [
-                    'stage/1',
-                    'stage/1/1a/1b',
-                    'stage/1/1a',
-                    'stage/2',
-                    'stage/2/2a',
-                    'stage/3',
-                    'stage/a',
-                    'stage/b',
-                ],
-            },
-        }
-
-        for key in filesets:
-            with self.subTest(key=key):
-                tmpdirObject = tempfile.TemporaryDirectory()
-                self.addCleanup(tmpdirObject.cleanup)
-                tmpdir = tmpdirObject.name
-
-                srcdir = tmpdir + '/install'
-                os.makedirs(tmpdir + '/install/1/1a/1b')
-                os.makedirs(tmpdir + '/install/2/2a')
-                os.makedirs(tmpdir + '/install/3')
-                open(tmpdir + '/install/a', mode='w').close()
-                open(tmpdir + '/install/b', mode='w').close()
-                open(tmpdir + '/install/1/a', mode='w').close()
-                open(tmpdir + '/install/3/a', mode='w').close()
-
-                dstdir = tmpdir + '/stage'
-                os.makedirs(dstdir)
-
-                files, dirs = pluginhandler._migratable_filesets(
-                    filesets[key]['fileset'], srcdir)
-                pluginhandler._migrate_files(files, dirs, srcdir, dstdir)
-
-                expected = []
-                for item in filesets[key]['result']:
-                    expected.append(os.path.join(tmpdir, item))
-                expected.sort()
-
-                result = []
-                for root, subdirs, files in os.walk(dstdir):
-                    for item in files:
-                        result.append(os.path.join(root, item))
-                    for item in subdirs:
-                        result.append(os.path.join(root, item))
-                result.sort()
-
-                self.assertEqual(expected, result)
-
     def test_migrate_snap_files_already_exists(self):
         os.makedirs('install')
         os.makedirs('stage')
@@ -639,6 +539,107 @@ class PluginTestCase(tests.TestCase):
             'path "/abs/exclude" must be relative', str(raised.exception))
 
 
+class MigratePluginTestCase(tests.TestCase):
+
+    scenarios = [
+        ('nothing', {
+            'fileset': ['-*'],
+            'result': []
+        }),
+        ('all', {
+            'fileset': ['*'],
+            'result': [
+                'stage/1',
+                'stage/1/1a/1b',
+                'stage/1/1a',
+                'stage/1/a',
+                'stage/2',
+                'stage/2/2a',
+                'stage/3',
+                'stage/3/a',
+                'stage/a',
+                'stage/b',
+            ],
+        }),
+        ('no1', {
+            'fileset': ['-1'],
+            'result': [
+                'stage/2',
+                'stage/2/2a',
+                'stage/3',
+                'stage/3/a',
+                'stage/a',
+                'stage/b',
+            ],
+        }),
+        ('onlya', {
+            'fileset': ['a'],
+            'result': [
+                'stage/a',
+            ],
+        }),
+        ('onlybase', {
+            'fileset': ['*', '-*/*'],
+            'result': [
+                'stage/a',
+                'stage/b',
+                'stage/1',
+                'stage/2',
+                'stage/3',
+            ],
+        }),
+        ('nostara', {
+            'fileset': ['-*/a'],
+            'result': [
+                'stage/1',
+                'stage/1/1a/1b',
+                'stage/1/1a',
+                'stage/2',
+                'stage/2/2a',
+                'stage/3',
+                'stage/a',
+                'stage/b',
+            ],
+        }),
+    ]
+
+    def test_migrate_snap_files(self):
+        tmpdirObject = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdirObject.cleanup)
+        tmpdir = tmpdirObject.name
+
+        srcdir = tmpdir + '/install'
+        os.makedirs(tmpdir + '/install/1/1a/1b')
+        os.makedirs(tmpdir + '/install/2/2a')
+        os.makedirs(tmpdir + '/install/3')
+        open(tmpdir + '/install/a', mode='w').close()
+        open(tmpdir + '/install/b', mode='w').close()
+        open(tmpdir + '/install/1/a', mode='w').close()
+        open(tmpdir + '/install/3/a', mode='w').close()
+
+        dstdir = tmpdir + '/stage'
+        os.makedirs(dstdir)
+
+        files, dirs = pluginhandler._migratable_filesets(
+            self.fileset, srcdir)
+        pluginhandler._migrate_files(files, dirs, srcdir, dstdir)
+
+        expected = []
+        for item in self.result:
+            expected.append(os.path.join(tmpdir, item))
+        expected.sort()
+
+        result = []
+        for root, subdirs, files in os.walk(dstdir):
+            for item in files:
+                result.append(os.path.join(root, item))
+            for item in subdirs:
+                result.append(os.path.join(root, item))
+        result.sort()
+
+        self.assertEqual(expected, result)
+
+
 class MigratableFilesetsTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
@@ -940,7 +941,7 @@ class PluginMakedirsTestCase(tests.TestCase):
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
 
 
-class StateTestCase(tests.TestCase):
+class StateBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -960,36 +961,24 @@ class StateTestCase(tests.TestCase):
 
         self.handler.makedirs()
 
+
+class StateTestCase(StateBaseTestCase):
+
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
-            with contextlib.suppress(FileNotFoundError):
-                shutil.rmtree(self.parts_dir)
-            with self.subTest('{} step'.format(step)):
-                handler = _load_plugin('foo')
-                handler.makedirs()
-
-                for later_step in common.COMMAND_ORDER[index+1:]:
-                    open(handler._step_state_file(later_step), 'w').close()
-
-                handler.mark_done(step)
-
-                for later_step in common.COMMAND_ORDER[index+1:]:
-                    self.assertFalse(
-                        os.path.exists(handler._step_state_file(later_step)),
-                        'Expected later step states to be cleared')
-
-    def test_state_file_migration(self):
-        part_name = 'foo'
-        for step in common.COMMAND_ORDER:
             shutil.rmtree(self.parts_dir)
-            with self.subTest('{} step'.format(step)):
-                part_dir = os.path.join(self.parts_dir, part_name)
-                os.makedirs(part_dir)
-                with open(os.path.join(part_dir, 'state'), 'w') as f:
-                    f.write(step)
+            handler = _load_plugin('foo')
+            handler.makedirs()
 
-                handler = _load_plugin(part_name)
-                self.assertEqual(step, handler.last_step())
+            for later_step in common.COMMAND_ORDER[index+1:]:
+                open(handler._step_state_file(later_step), 'w').close()
+
+            handler.mark_done(step)
+
+            for later_step in common.COMMAND_ORDER[index+1:]:
+                self.assertFalse(
+                    os.path.exists(handler._step_state_file(later_step)),
+                    'Expected later step states to be cleared')
 
     @patch('snapcraft.internal.repo.Ubuntu')
     def test_pull_state(self, ubuntu_mock):
@@ -1486,6 +1475,23 @@ class StateTestCase(tests.TestCase):
             "This won't work until a complete clean has occurred.")
 
 
+class StateFileMigrationTestCase(StateBaseTestCase):
+
+    scenarios = [(step, dict(step=step)) for
+                 step in common.COMMAND_ORDER]
+
+    def test_state_file_migration(self):
+        part_name = 'foo'
+        shutil.rmtree(self.parts_dir)
+        part_dir = os.path.join(self.parts_dir, part_name)
+        os.makedirs(part_dir)
+        with open(os.path.join(part_dir, 'state'), 'w') as f:
+            f.write(self.step)
+
+        handler = _load_plugin(part_name)
+        self.assertEqual(self.step, handler.last_step())
+
+
 class IsDirtyTestCase(tests.TestCase):
 
     def setUp(self):
@@ -1638,7 +1644,20 @@ class IsDirtyTestCase(tests.TestCase):
             'Expected vanilla handler to not have a dirty pull step')
 
 
-class CleanTestCase(tests.TestCase):
+class CleanBaseTestCase(tests.TestCase):
+
+    def clear_common_directories(self):
+        if os.path.exists(self.parts_dir):
+            shutil.rmtree(self.parts_dir)
+
+        if os.path.exists(self.stage_dir):
+            shutil.rmtree(self.stage_dir)
+
+        if os.path.exists(self.snap_dir):
+            shutil.rmtree(self.snap_dir)
+
+
+class CleanTestCase(CleanBaseTestCase):
 
     @patch.object(pluginhandler.PluginHandler, 'is_clean')
     @patch('os.rmdir')
@@ -1696,71 +1715,6 @@ class CleanTestCase(tests.TestCase):
         mock_exists.assert_called_once_with(partdir)
         mock_listdir.assert_called_once_with(partdir)
         self.assertFalse(mock_rmdir.called)
-
-    def clear_common_directories(self):
-        if os.path.exists(self.parts_dir):
-            shutil.rmtree(self.parts_dir)
-
-        if os.path.exists(self.stage_dir):
-            shutil.rmtree(self.stage_dir)
-
-        if os.path.exists(self.snap_dir):
-            shutil.rmtree(self.snap_dir)
-
-    def test_clean_prime(self):
-        filesets = {
-            'all': {
-                'fileset': ['*'],
-            },
-            'no1': {
-                'fileset': ['-1'],
-            },
-            'onlya': {
-                'fileset': ['a'],
-            },
-            'onlybase': {
-                'fileset': ['*', '-*/*'],
-            },
-            'only1a': {
-                'fileset': ['1/a']
-            },
-            'nostara': {
-                'fileset': ['-*/a'],
-            },
-        }
-
-        for key, value in filesets.items():
-            with self.subTest(key=key):
-                self.clear_common_directories()
-
-                properties = {'snap': value['fileset']}
-
-                handler = _load_plugin('test_part', part_properties=properties)
-                handler.makedirs()
-
-                installdir = handler.code.installdir
-                os.makedirs(installdir + '/1/1a/1b')
-                os.makedirs(installdir + '/2/2a')
-                os.makedirs(installdir + '/3')
-                open(installdir + '/a', mode='w').close()
-                open(installdir + '/b', mode='w').close()
-                open(installdir + '/1/a', mode='w').close()
-                open(installdir + '/3/a', mode='w').close()
-
-                handler.mark_done('build')
-
-                # Stage the installed files
-                handler.stage()
-
-                # Now prime them
-                handler.prime()
-
-                self.assertTrue(os.listdir(self.snap_dir))
-
-                handler.clean_prime({})
-
-                self.assertFalse(os.listdir(self.snap_dir),
-                                 'Expected snapdir to be completely cleaned')
 
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
@@ -1880,58 +1834,6 @@ class CleanTestCase(tests.TestCase):
 
         self.assertTrue(os.path.isfile(primed_file))
 
-    def test_clean_stage(self):
-        filesets = {
-            'all': {
-                'fileset': ['*'],
-            },
-            'no1': {
-                'fileset': ['-1'],
-            },
-            'onlya': {
-                'fileset': ['a'],
-            },
-            'onlybase': {
-                'fileset': ['*', '-*/*'],
-            },
-            'only1a': {
-                'fileset': ['1/a']
-            },
-            'nostara': {
-                'fileset': ['-*/a'],
-            },
-        }
-
-        for key, value in filesets.items():
-            with self.subTest(key=key):
-                self.clear_common_directories()
-
-                properties = {'stage': value['fileset']}
-
-                handler = _load_plugin('test_part', part_properties=properties)
-                handler.makedirs()
-
-                installdir = handler.code.installdir
-                os.makedirs(installdir + '/1/1a/1b')
-                os.makedirs(installdir + '/2/2a')
-                os.makedirs(installdir + '/3')
-                open(installdir + '/a', mode='w').close()
-                open(installdir + '/b', mode='w').close()
-                open(installdir + '/1/a', mode='w').close()
-                open(installdir + '/3/a', mode='w').close()
-
-                handler.mark_done('build')
-
-                # Stage the installed files
-                handler.stage()
-
-                self.assertTrue(os.listdir(self.stage_dir))
-
-                handler.clean_stage({})
-
-                self.assertFalse(os.listdir(self.stage_dir),
-                                 'Expected snapdir to be completely cleaned')
-
     def test_clean_stage_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
         handler1 = _load_plugin('part1')
@@ -2044,6 +1946,89 @@ class CleanTestCase(tests.TestCase):
             "This won't work until a complete clean has occurred.")
 
         self.assertTrue(os.path.isfile(staged_file))
+
+
+class CleanPrimeTestCase(CleanBaseTestCase):
+
+    scenarios = [
+        ('all', {'fileset': ['*']}),
+        ('no1', {'fileset': ['-1']}),
+        ('onlya', {'fileset': ['a']}),
+        ('onlybase', {'fileset': ['*', '-*/*']}),
+        ('only1a', {'fileset': ['1/a']}),
+        ('nostara', {'fileset': ['-*/a']}),
+    ]
+
+    def test_clean_prime(self):
+        self.clear_common_directories()
+
+        handler = _load_plugin(
+            'test_part', part_properties={'snap': self.fileset})
+        handler.makedirs()
+
+        installdir = handler.code.installdir
+        os.makedirs(installdir + '/1/1a/1b')
+        os.makedirs(installdir + '/2/2a')
+        os.makedirs(installdir + '/3')
+        open(installdir + '/a', mode='w').close()
+        open(installdir + '/b', mode='w').close()
+        open(installdir + '/1/a', mode='w').close()
+        open(installdir + '/3/a', mode='w').close()
+
+        handler.mark_done('build')
+
+        # Stage the installed files
+        handler.stage()
+
+        # Now prime them
+        handler.prime()
+
+        self.assertTrue(os.listdir(self.snap_dir))
+
+        handler.clean_prime({})
+
+        self.assertFalse(os.listdir(self.snap_dir),
+                         'Expected snapdir to be completely cleaned')
+
+
+class CleanStageTestCase(CleanBaseTestCase):
+
+    scenarios = [
+        ('all', {'fileset': ['*']}),
+        ('no1', {'fileset': ['-1']}),
+        ('onlya', {'fileset': ['a']}),
+        ('onlybase', {'fileset': ['*', '-*/*']}),
+        ('only1a', {'fileset': ['1/a']}),
+        ('nostara', {'fileset': ['-*/a']}),
+    ]
+
+    def test_clean_stage(self):
+        self.clear_common_directories()
+
+        handler = _load_plugin(
+            'test_part', part_properties={'stage': self.fileset})
+        handler.makedirs()
+
+        installdir = handler.code.installdir
+        os.makedirs(installdir + '/1/1a/1b')
+        os.makedirs(installdir + '/2/2a')
+        os.makedirs(installdir + '/3')
+        open(installdir + '/a', mode='w').close()
+        open(installdir + '/b', mode='w').close()
+        open(installdir + '/1/a', mode='w').close()
+        open(installdir + '/3/a', mode='w').close()
+
+        handler.mark_done('build')
+
+        # Stage the installed files
+        handler.stage()
+
+        self.assertTrue(os.listdir(self.stage_dir))
+
+        handler.clean_stage({})
+
+        self.assertFalse(os.listdir(self.stage_dir),
+                         'Expected snapdir to be completely cleaned')
 
 
 class PerStepCleanTestCase(tests.TestCase):

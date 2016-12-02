@@ -1,0 +1,12 @@
+name: lets-dump
+version: '0.1'
+summary: Let's dump parent folders
+description: Dumping up-folder
+
+grade: devel
+confinement: strict
+
+parts:
+  dump-part:
+    plugin: dump
+    source: ../..
