@@ -45,14 +45,17 @@ class CreateTest(tests.TestCase):
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
-    def test_create_meta(self):
+    def generate_meta_yaml(self):
         create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
 
         with open(self.snap_yaml) as f:
-            y = yaml.load(f)
+            return yaml.load(f)
+
+    def test_create_meta(self):
+        y = self.generate_meta_yaml()
 
         expected = {'architectures': ['amd64'],
                     'description': 'my description',
@@ -72,15 +75,8 @@ class CreateTest(tests.TestCase):
             with self.subTest(key=confinement_type):
                 self.config_data['confinement'] = confinement_type
 
-                create_snap_packaging(
-                    self.config_data, self.snap_dir, self.parts_dir)
+                y = self.generate_meta_yaml()
 
-                self.assertTrue(
-                    os.path.exists(self.snap_yaml),
-                    'snap.yaml was not created')
-
-                with open(self.snap_yaml) as f:
-                    y = yaml.load(f)
                 self.assertTrue(
                     'confinement' in y,
                     'Expected "confinement" property to be in snap.yaml')
@@ -96,15 +92,8 @@ class CreateTest(tests.TestCase):
             with self.subTest(key=grade_type):
                 self.config_data['grade'] = grade_type
 
-                create_snap_packaging(
-                    self.config_data, self.snap_dir, self.parts_dir)
+                y = self.generate_meta_yaml()
 
-                self.assertTrue(
-                    os.path.exists(self.snap_yaml),
-                    'snap.yaml was not created')
-
-                with open(self.snap_yaml) as f:
-                    y = yaml.load(f)
                 self.assertTrue(
                     'grade' in y,
                     'Expected "grade" property to be in snap.yaml')
@@ -113,13 +102,8 @@ class CreateTest(tests.TestCase):
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertTrue(
             'epoch' in y,
             'Expected "epoch" property to be copied into snap.yaml')
@@ -128,13 +112,8 @@ class CreateTest(tests.TestCase):
     def test_create_meta_with_assumes(self):
         self.config_data['assumes'] = ['feature1', 'feature2']
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertTrue(
             'assumes' in y,
             'Expected "assumes" property to be copied into snap.yaml')
@@ -166,17 +145,12 @@ class CreateTest(tests.TestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         self.assertTrue(
             os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
             'icon.png was not setup correctly')
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
@@ -195,7 +169,7 @@ class CreateTest(tests.TestCase):
             f.write(declared_icon_content)
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -203,11 +177,6 @@ class CreateTest(tests.TestCase):
         with open(expected_icon, 'rb') as f:
             self.assertEqual(f.read(), declared_icon_content)
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
@@ -233,7 +202,7 @@ class CreateTest(tests.TestCase):
         with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
             f.write(icon_content)
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -241,11 +210,6 @@ class CreateTest(tests.TestCase):
         with open(expected_icon, 'rb') as f:
             self.assertEqual(f.read(), icon_content)
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
@@ -260,7 +224,7 @@ class CreateTest(tests.TestCase):
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         for app in ['app1', 'app2', 'app3']:
             app_wrapper_path = os.path.join(
@@ -268,12 +232,6 @@ class CreateTest(tests.TestCase):
             self.assertTrue(
                 os.path.exists(app_wrapper_path),
                 'the wrapper for {!r} was not setup correctly'.format(app))
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
 
         expected = {
             'architectures': ['amd64'],
@@ -302,6 +260,44 @@ class CreateTest(tests.TestCase):
         }
 
         self.assertEqual(y, expected)
+
+    def test_create_meta_with_hook(self):
+        os.mkdir(self.snap_dir)
+        open(os.path.join(self.snap_dir, 'run-foo.sh'), 'w').close()
+        open(os.path.join(self.snap_dir, 'run-bar.sh'), 'w').close()
+        self.config_data['hooks'] = {
+            'foo': {'command': 'run-foo.sh', 'plugs': ['plug']},
+            'bar': {'command': 'run-bar.sh'}
+        }
+
+        y = self.generate_meta_yaml()
+
+        for hook in ['foo', 'bar']:
+            generated_hook_path = os.path.join(
+                self.snap_dir, 'meta', 'hooks', hook)
+            self.assertTrue(
+                os.path.exists(generated_hook_path),
+                'The {!r} hook was not setup correctly'.format(hook))
+
+        self.assertTrue(
+            'hooks' in y, "Expected generated YAML to contain 'hooks'")
+        for hook in {'foo', 'bar'}:
+            self.assertTrue(
+                hook in y['hooks'],
+                'Expected generated hooks to contain {!r}'.format(hook))
+
+            generated_hook = y['hooks'][hook]
+            if generated_hook:
+                self.assertFalse(
+                    'command' in generated_hook,
+                    'Expected generated {!r} hook to not contain '
+                    "'command'".format(hook))
+
+        self.assertTrue(
+            'plugs' in y['hooks']['foo'],
+            "Expected generated 'foo' hook to contain 'plugs'".format(hook))
+        self.assertEqual(len(y['hooks']['foo']['plugs']), 1)
+        self.assertEqual(y['hooks']['foo']['plugs'][0], 'plug')
 
 
 # TODO this needs more tests.

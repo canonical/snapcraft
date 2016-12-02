@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import logging
 import re
@@ -148,6 +149,9 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
+        if 'hooks' in self._config_data:
+            snap_yaml['hooks'] = self._wrap_hooks(self._config_data['hooks'])
+
         return snap_yaml
 
     def _write_wrap_exe(self, wrapexec, wrappath,
@@ -178,35 +182,6 @@ class _SnapPackaging:
 
         os.chmod(wrappath, 0o755)
 
-    def _wrap_exe(self, command, basename=None):
-        execparts = shlex.split(command)
-        exepath = os.path.join(self._snap_dir, execparts[0])
-        if basename:
-            wrappath = os.path.join(self._snap_dir, basename) + '.wrapper'
-        else:
-            wrappath = exepath + '.wrapper'
-        shebang = None
-
-        if os.path.exists(wrappath):
-            os.remove(wrappath)
-
-        wrapexec = '$SNAP/{}'.format(execparts[0])
-        if not os.path.exists(exepath) and '/' not in execparts[0]:
-            _find_bin(execparts[0], self._snap_dir)
-            wrapexec = execparts[0]
-        else:
-            with open(exepath, 'rb') as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b'#!':
-                    shebang = exefile.readline().strip().decode('utf-8')
-
-        self._write_wrap_exe(wrapexec, wrappath,
-                             shebang=shebang, args=execparts[1:])
-
-        return os.path.relpath(wrappath, self._snap_dir)
-
     def _wrap_apps(self, apps):
         for app in apps:
             cmds = (k for k in ('command', 'stop-command') if k in apps[app])
@@ -220,6 +195,78 @@ class _SnapPackaging:
                         'does not exist or is not executable'.format(
                             str(e), app))
         return apps
+
+    def _wrap_exe(self, command, basename=None):
+        execparts = shlex.split(command)
+        exepath = os.path.join(self._snap_dir, execparts[0])
+        if basename:
+            wrappath = os.path.join(self._snap_dir, basename) + '.wrapper'
+        else:
+            wrappath = exepath + '.wrapper'
+        shebang = None
+
+        if os.path.exists(wrappath):
+            os.remove(wrappath)
+
+        wrapexec, shebang = _extract_binary_and_shebang(
+            execparts[0], self._snap_dir)
+
+        self._write_wrap_exe(wrapexec, wrappath,
+                             shebang=shebang, args=execparts[1:])
+
+        return os.path.relpath(wrappath, self._snap_dir)
+
+    def _wrap_hooks(self, hooks):
+        for hook in hooks:
+            try:
+                command = hooks[hook]['command']
+
+                # The 'command' is for snapcraft only, not snapd. Remove it,
+                # and if that makes the dict empty, set it to None instead.
+                del hooks[hook]['command']
+                if len(hooks[hook]) == 0:
+                    hooks[hook] = None
+
+                self._generate_hook(hook, command)
+            except CommandError as e:
+                raise EnvironmentError(
+                    'The specified command {!r} defined in the hook {!r} '
+                    'does not exist or is not executable'.format(
+                        str(e), hook))
+        return hooks
+
+    def _generate_hook(self, hook, command):
+        hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
+        os.makedirs(hooks_dir, exist_ok=True)
+
+        hook_path = os.path.join(hooks_dir, hook)
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(hook_path)
+
+        command_parts = shlex.split(command)
+
+        hook_exec, shebang = _extract_binary_and_shebang(
+            command_parts[0], self._snap_dir)
+
+        self._write_wrap_exe(hook_exec, hook_path,
+                             shebang=shebang, args=command_parts[1:])
+
+
+def _extract_binary_and_shebang(binary, basedir):
+    shebang = None
+    exepath = os.path.join(basedir, binary)
+    if not os.path.exists(exepath) and '/' not in binary:
+        _find_bin(binary, basedir)
+    else:
+        binary = '$SNAP/{}'.format(binary)
+        with open(exepath, 'rb') as f:
+            # If the file has a she-bang, the path might be pointing to
+            # the local 'parts' dir. Extract it so that _write_wrap_exe
+            # will have a chance to rewrite it.
+            if f.read(2) == b'#!':
+                shebang = f.readline().strip().decode('utf-8')
+
+    return (binary, shebang)
 
 
 def _find_bin(binary, basedir):
