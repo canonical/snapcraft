@@ -82,7 +82,7 @@ import tempfile
 import tarfile
 import zipfile
 
-import apt_inst
+import debian.debfile
 import libarchive
 
 from snapcraft.internal import common
@@ -475,8 +475,8 @@ class Deb(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_deb, deb_file)
 
-        deb = apt_inst.DebFile(deb_file)
-        deb.data.extractall(dst)
+        deb = debian.debfile.DebFile(deb_file)
+        deb.data.tgz().extractall(dst)
 
         if not keep_deb:
             os.remove(deb_file)
