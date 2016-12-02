@@ -1,5 +1,13 @@
 !PullState
 project_options: {deb_arch: amd64}
-properties: {source: ., source-branch: null, source-subdir: null, source-tag: null,
-  source-type: null}
-schema_properties: [source, source-type, source-branch, source-tag, source-subdir]
+properties:
+  plugin: copy
+  source: .
+  source-branch: ''
+  source-commit: ''
+  source-depth: 0
+  source-subdir: ''
+  source-tag: ''
+  source-type: ''
+  stage-packages: []
+schema_properties: []
