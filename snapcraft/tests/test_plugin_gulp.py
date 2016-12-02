@@ -76,8 +76,8 @@ class GulpPluginTestCase(tests.TestCase):
 
         plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
 
-        os.makedirs(plugin.sourcedir)
-        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, 'package.json'), 'w').close()
 
         plugin.build()
 
@@ -126,20 +126,10 @@ class GulpPluginTestCase(tests.TestCase):
                                'minitems': 1,
                                'type': 'array',
                                'uniqueItems': True},
-                'node-engine': {'default': '4.4.4', 'type': 'string'},
-                'source': {'type': 'string'},
-                'source-branch': {'default': '', 'type': 'string'},
-                'source-commit': {'default': '', 'type': 'string'},
-                'source-subdir': {'default': None, 'type': 'string'},
-                'source-tag': {'default': '', 'type:': 'string'},
-                'source-type': {'default': '', 'type': 'string'},
-                'source-depth': {'default': 0, 'type': 'integer'},
-                'disable-parallel': {'default': False, 'type': 'boolean'}},
-            'pull-properties': ['source', 'source-type', 'source-branch',
-                                'source-commit', 'source-tag', 'source-subdir',
-                                'node-engine'],
-            'build-properties': ['disable-parallel', 'gulp-tasks'],
-            'required': ['source', 'gulp-tasks'],
+                'node-engine': {'default': '4.4.4', 'type': 'string'}},
+            'pull-properties': ['node-engine'],
+            'build-properties': ['gulp-tasks'],
+            'required': ['gulp-tasks'],
             'type': 'object'}
 
         self.assertEqual(gulp.GulpPlugin.schema(), plugin_schema)

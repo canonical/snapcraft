@@ -50,6 +50,7 @@ Usage:
   snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
+  snapcraft [options] enable-ci [<ci-system>] [--refresh]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -108,6 +109,8 @@ The available commands are:
   status       Show the current status of a snap per channel and architecture.
   history      List all revisions of a snap.
   close        Close one or more channels of a snap.
+  enable-ci    EXPERIMENTAL enable continuous-integration systems to build and
+               release snaps to the Ubuntu Store.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -146,6 +149,7 @@ import sys
 from docopt import docopt
 
 import snapcraft
+from snapcraft.integrations import enable_ci
 from snapcraft.internal import lifecycle, log, parts
 from snapcraft.internal.common import (
     format_output_in_columns,
@@ -272,6 +276,8 @@ def run(args, project_options):  # noqa
     elif args['help']:
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
+    elif args['enable-ci']:
+        enable_ci(args['<ci-system>'], args['--refresh'])
     elif args['update']:
         parts.update()
     elif args['define']:

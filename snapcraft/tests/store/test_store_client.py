@@ -56,6 +56,39 @@ class LoginTestCase(tests.TestCase):
         self.assertIsNotNone(conf.get('macaroon'))
         self.assertIsNotNone(conf.get('unbound_discharge'))
 
+    def test_login_successful_with_package_attenuation(self):
+        self.client.login(
+            'dummy email',
+            'test correct password',
+            packages=[{'name': 'foo', 'series': '16'}],
+        )
+        conf = config.Config()
+        self.assertIsNotNone(conf.get('macaroon'))
+        self.assertIsNotNone(conf.get('unbound_discharge'))
+
+    def test_login_successful_with_channel_attenuation(self):
+        self.client.login(
+            'dummy email',
+            'test correct password',
+            channels=['edge'],
+        )
+        conf = config.Config()
+        self.assertIsNotNone(conf.get('macaroon'))
+        self.assertIsNotNone(conf.get('unbound_discharge'))
+
+    def test_login_successful_fully_attenuated(self):
+        self.client.login(
+            'dummy email',
+            'test correct password',
+            packages=[{'name': 'foo', 'series': '16'}],
+            channels=['edge'],
+            save=False
+        )
+        # Client configuration is filled, but it's not saved on disk.
+        self.assertIsNotNone(self.client.conf.get('macaroon'))
+        self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
+        self.assertTrue(config.Config().is_empty())
+
     def test_failed_login_with_wrong_password(self):
         with self.assertRaises(errors.StoreAuthenticationError):
             self.client.login('dummy email', 'wrong password')
@@ -339,6 +372,14 @@ class RegisterTestCase(tests.TestCase):
             "If you are the publisher most users expect for "
             "'test-reserved-snap-name' then please claim the "
             "name at 'https://myapps.com/register-name/'")
+
+    def test_register_already_owned_name(self):
+        self.client.login('dummy', 'test correct password')
+        with self.assertRaises(errors.StoreRegistrationError) as raised:
+            self.client.register('test-already-owned-snap-name')
+        self.assertEqual(
+            str(raised.exception),
+            "You already own the name 'test-already-owned-snap-name'.")
 
     def test_registering_too_fast_in_a_row(self):
         self.client.login('dummy', 'test correct password')

@@ -18,7 +18,8 @@ import snapcraft.internal
 from snapcraft import tests
 
 
-class BuildStateTestCase(tests.TestCase):
+class BuildStateBaseTestCase(tests.TestCase):
+
     def setUp(self):
         super().setUp()
 
@@ -33,6 +34,9 @@ class BuildStateTestCase(tests.TestCase):
         self.state = snapcraft.internal.states.BuildState(
             self.property_names, self.part_properties, self.project)
 
+
+class BuildStateTestCase(BuildStateBaseTestCase):
+
     def test_representation(self):
         expected = ('BuildState(project_options: {}, properties: {}, '
                     'schema_properties: {})').format(
@@ -46,17 +50,22 @@ class BuildStateTestCase(tests.TestCase):
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
-    def test_comparison_not_equal(self):
-        others = [
-            snapcraft.internal.states.BuildState(
-                [], self.part_properties, self.project),
-            snapcraft.internal.states.BuildState(
-                self.property_names, None, self.project),
-            snapcraft.internal.states.BuildState(
-                self.property_names, self.part_properties, None)
-        ]
 
-        for index, other in enumerate(others):
-            with self.subTest('other #{}'.format(index+1)):
-                self.assertFalse(self.state == other,
-                                 'Expected states to be different')
+class BuildStateNotEqualTestCase(BuildStateBaseTestCase):
+
+    scenarios = [
+        ('no property names', dict(
+            other_property='property_names', other_value=[])),
+        ('no part properties', dict(
+            other_property='part_properties', other_value=None)),
+        ('no project', dict(
+            other_property='project', other_value=None)),
+    ]
+
+    def test_comparison_not_equal(self):
+        setattr(self, self.other_property, self.other_value)
+        other_state = snapcraft.internal.states.BuildState(
+            self.property_names, self.part_properties, self.project)
+        self.assertFalse(
+            self.state == other_state,
+            'Expected states to be different')

@@ -58,7 +58,7 @@ If you don't have python3 installed, you can use the one from the archives:
 
 Install the needed dependencies.
 
-    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev libarchive13 squashfs-tools
+    sudo apt install build-essential python3-dev libapt-pkg-dev libsodium-dev gcc libffi-dev libarchive13 squashfs-tools xdelta3
 
 If installing to `PYTHONHOME` run:
 

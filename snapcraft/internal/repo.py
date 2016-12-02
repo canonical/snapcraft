@@ -39,6 +39,7 @@ from xdg import BaseDirectory
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import common
+from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
 
 
@@ -112,6 +113,27 @@ def install_build_packages(packages):
             logger.warning(
                 'Impossible to mark packages as auto-installed: {}'
                 .format(e))
+
+
+def get_packages_for_source_type(source_type):
+    """Return a list with required packages to handle the source_type.
+
+    :param source: the snapcraft source type
+    """
+    if source_type == 'bzr':
+        packages = 'bzr'
+    elif source_type == 'git':
+        packages = 'git'
+    elif source_type == 'tar':
+        packages = 'tar'
+    elif source_type == 'hg' or source_type == 'mercurial':
+        packages = 'mercurial'
+    elif source_type == 'subversion' or source_type == 'svn':
+        packages = 'subversion'
+    else:
+        packages = []
+
+    return packages
 
 
 class PackageNotFoundError(Exception):
@@ -485,3 +507,8 @@ def _try_copy_local(path, target):
         logger.warning(
             '{} will be a dangling symlink'.format(path))
         return False
+
+
+def check_for_command(command):
+    if not shutil.which(command):
+        raise MissingCommandError([command])
