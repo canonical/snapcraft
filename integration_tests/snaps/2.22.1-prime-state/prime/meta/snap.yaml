@@ -1,8 +1,0 @@
-architectures:
-- amd64
-confinement: strict
-description: description
-grade: stable
-name: old-part-src
-summary: summary
-version: 0

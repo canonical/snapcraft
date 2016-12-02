@@ -1,6 +1,0 @@
-!StageState
-directories: !!set {}
-files: !!set {foo: null}
-project_options: {}
-properties:
-  stage: ['*']
