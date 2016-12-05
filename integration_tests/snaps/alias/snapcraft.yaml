@@ -1,0 +1,19 @@
+name: my-alias
+version: '0.1'
+summary: command alias example
+description: |
+  Command alias example
+
+grade: devel
+confinement: devmode
+
+apps:
+  hello:
+    command: hello.sh
+    aliases: [hi.sh, howdy.sh]
+
+parts:
+  my-part:
+    # See 'snapcraft plugins'
+    plugin: dump
+    source: .

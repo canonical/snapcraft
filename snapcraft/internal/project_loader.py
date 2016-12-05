@@ -28,6 +28,7 @@ import snapcraft
 from snapcraft import formatting_utils
 from snapcraft.internal import (
     common,
+    errors,
     libraries,
     parts,
     pluginhandler,
@@ -130,6 +131,15 @@ class Config:
         snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
+
+        # Prevent multiple parts from having duplicate alias names
+        aliases = []
+        for app in self.data.get('apps', []):
+            app = self.data['apps'][app]
+            for alias in app.get('aliases', []):
+                if alias in aliases:
+                    raise errors.DuplicateAliasError(alias=alias)
+                aliases.append(alias)
 
         # both confinement type and build quality are optionals
         _ensure_confinement_default(self.data, self._validator.schema)
