@@ -817,7 +817,7 @@ parts:
 class ValidConfinmentTypesYamlTestCase(YamlBaseTestCase):
 
     scenarios = [(confinement, dict(confinement=confinement)) for
-                 confinement in ['strict', 'devmode']]
+                 confinement in ['strict', 'devmode', 'classic']]
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_valid_confinement_types(self, mock_loadPlugin):
@@ -868,8 +868,8 @@ parts:
         self.assertEqual(
             raised.exception.message,
             "The 'confinement' property does not match the required "
-            "schema: '{}' is not one of ['devmode', 'strict']".format(
-                self.confinement))
+            "schema: '{}' is not one of ['classic', 'devmode', "
+            "'strict']".format(self.confinement))
 
 
 class ValidGradeTypesYamlTestCase(YamlBaseTestCase):
