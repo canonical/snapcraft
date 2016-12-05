@@ -29,6 +29,19 @@ class CMakeTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
+        class Options:
+            configflags = []
+            source_subdir = None
+
+            # inherited from MakePlugin
+            makefile = None
+            make_parameters = []
+            make_install_var = 'DESTDIR'
+            disable_parallel = False
+            artifacts = []
+
+        self.options = Options()
+
         self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.internal.common.run')
@@ -40,10 +53,7 @@ class CMakeTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_build_referencing_sourcedir_if_no_subdir(self):
-        class Options:
-            configflags = []
-
-        plugin = cmake.CMakePlugin('test-part', Options(),
+        plugin = cmake.CMakePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
@@ -57,11 +67,9 @@ class CMakeTestCase(tests.TestCase):
                       cwd=plugin.builddir, env=mock.ANY)])
 
     def test_build_referencing_sourcedir_with_subdir(self):
-        class Options:
-            configflags = []
-            source_subdir = 'subdir'
+        self.options.source_subdir = 'subdir'
 
-        plugin = cmake.CMakePlugin('test-part', Options(),
+        plugin = cmake.CMakePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
@@ -77,10 +85,7 @@ class CMakeTestCase(tests.TestCase):
                       cwd=plugin.builddir, env=mock.ANY)])
 
     def test_build_environment(self):
-        class Options:
-            configflags = []
-
-        plugin = cmake.CMakePlugin('test-part', Options(),
+        plugin = cmake.CMakePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()

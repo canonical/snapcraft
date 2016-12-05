@@ -17,7 +17,9 @@
 from functools import partial
 import io
 import os
+import sys
 import threading
+from types import ModuleType
 import urllib.parse
 from unittest import mock
 
@@ -318,6 +320,7 @@ class TestStore(fixtures.Fixture):
             self.useFixture(FakeStore())
             self.register_delay = 0
             self.reserved_snap_name = 'test-reserved-snap-name'
+            self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
             self.register_delay = 10
@@ -344,3 +347,22 @@ class DeltaUploads(fixtures.Fixture):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
             'DELTA_UPLOADS_EXPERIMENTAL', 'True'))
+
+
+class FakePlugin(fixtures.Fixture):
+    '''Dynamically generate a new module containing the provided plugin'''
+
+    def __init__(self, plugin_name, plugin_class):
+        super().__init__()
+        self._import_name = 'snapcraft.plugins.{}'.format(
+            plugin_name.replace('-', '_'))
+        self._plugin_class = plugin_class
+
+    def _setUp(self):
+        plugin_module = ModuleType(self._import_name)
+        setattr(plugin_module, self._plugin_class.__name__, self._plugin_class)
+        sys.modules[self._import_name] = plugin_module
+        self.addCleanup(self._remove_module)
+
+    def _remove_module(self):
+        del sys.modules[self._import_name]

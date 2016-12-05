@@ -87,22 +87,34 @@ import libarchive
 
 from snapcraft.internal import common
 from snapcraft import file_utils
-from snapcraft.internal.errors import MissingCommandError
-from snapcraft.internal.indicators import download_requests_stream
+from snapcraft.internal.indicators import (
+    download_requests_stream,
+    download_urllib_source
+)
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+
+
+__SOURCE_DEFAULTS = {
+    'source': '.',
+    'source-commit': None,
+    'source-depth': None,
+    'source-tag': None,
+    'source-type': None,
+    'source-branch': None,
+    'source-subdir': None,
+}
+
+
+def get_source_defaults():
+    return __SOURCE_DEFAULTS.copy()
 
 
 class IncompatibleOptionsError(Exception):
 
     def __init__(self, message):
         self.message = message
-
-
-def _check_for_command(command):
-    if not shutil.which(command):
-        raise MissingCommandError([command])
 
 
 class Base:
@@ -119,9 +131,6 @@ class Base:
 
         self.command = command
 
-        if self.command:
-            _check_for_command(self.command)
-
 
 class FileBase(Base):
 
@@ -134,12 +143,17 @@ class FileBase(Base):
         self.provision(self.source_dir)
 
     def download(self):
-        request = requests.get(self.source, stream=True, allow_redirects=True)
-        request.raise_for_status()
-
         self.file = os.path.join(
-            self.source_dir, os.path.basename(self.source))
-        download_requests_stream(request, self.file)
+                self.source_dir, os.path.basename(self.source))
+
+        if common.get_url_scheme(self.source) == 'ftp':
+            download_urllib_source(self.source, self.file)
+        else:
+            request = requests.get(
+                self.source, stream=True, allow_redirects=True)
+            request.raise_for_status()
+
+            download_requests_stream(request, self.file)
 
 
 class Script(FileBase):
@@ -412,9 +426,6 @@ class Zip(FileBase):
         if source_tag:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-tag for a zip source')
-        elif source_commit:
-            raise IncompatibleOptionsError(
-                'can\'t specify a source-commit for a zip source')
         elif source_branch:
             raise IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
@@ -523,16 +534,13 @@ class Local(Base):
         elif os.path.isdir(self.source_dir):
             shutil.rmtree(self.source_dir)
 
+        current_dir = os.getcwd()
         source_abspath = os.path.abspath(self.source)
 
         def ignore(directory, files):
-            if directory is source_abspath:
+            if directory == source_abspath or \
+               directory == current_dir:
                 ignored = copy.copy(common.SNAPCRAFT_FILES)
-                relative_cwd = os.path.basename(os.getcwd())
-                if os.path.join(directory, relative_cwd) == os.getcwd():
-                    # Source is a parent of the working directory.
-                    # Do not recursively copy it into itself.
-                    ignored.append(relative_cwd)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
@@ -560,38 +568,9 @@ def get(sourcedir, builddir, options):
         source_branch=getattr(options, 'source_branch', None),
     )
 
-    handler_class = _get_source_handler(source_type, options.source)
+    handler_class = get_source_handler(options.source, source_type=source_type)
     handler = handler_class(options.source, sourcedir, **source_attributes)
     handler.pull()
-
-
-def get_required_packages(options):
-    """Return a list with required packages to handle the source.
-
-    :param source: the url for the source.
-    :param options: plugin options.
-    """
-    source = getattr(options, 'source', None)
-    if not source:
-        return []
-
-    source_type = getattr(options, 'source_type', None)
-    if not source_type:
-        source_type = _get_source_type_from_uri(source, ignore_errors=True)
-
-    packages = []
-    if source_type == 'bzr':
-        packages.append('bzr')
-    elif source_type == 'git':
-        packages.append('git')
-    elif source_type == 'tar':
-        packages.append('tar')
-    elif source_type == 'hg' or source_type == 'mercurial':
-        packages.append('mercurial')
-    elif source_type == 'subversion' or source_type == 'svn':
-        packages.append('subversion')
-
-    return packages
 
 
 _source_handler = {
@@ -608,7 +587,7 @@ _source_handler = {
 }
 
 
-def _get_source_handler(source_type, source):
+def get_source_handler(source, *, source_type=''):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 

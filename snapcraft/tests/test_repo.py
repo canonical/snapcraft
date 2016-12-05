@@ -24,9 +24,10 @@ from unittest.mock import ANY, call, patch, MagicMock
 import snapcraft
 from snapcraft import repo
 from snapcraft import tests
+from snapcraft.internal import errors
 
 
-class UbuntuTestCase(tests.TestCase):
+class RepoBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -35,6 +36,9 @@ class UbuntuTestCase(tests.TestCase):
         tempdirObj = tempfile.TemporaryDirectory()
         self.addCleanup(tempdirObj.cleanup)
         self.tempdir = tempdirObj.name
+
+
+class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.repo.apt')
     def test_get_package(self, mock_apt):
@@ -164,24 +168,6 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         self.assertEqual(os.readlink(self.tempdir + '/rel-to-1'), '1')
         self.assertEqual(os.readlink(self.tempdir + '/abs-to-1'), '1')
 
-    def test_fix_suid(self):
-        files = {
-            'suid_file': (0o4765, 0o0765),
-            'guid_file': (0o2777, 0o0777),
-            'suid_guid_file': (0o6744, 0o0744),
-            'suid_guid_sticky_file': (0o7744, 0o1744),
-        }
-
-        for key in files:
-            with self.subTest(key=key):
-                file = os.path.join(self.tempdir, key)
-                open(file, mode='w').close()
-                os.chmod(file, files[key][0])
-
-                repo._fix_artifacts(debdir=self.tempdir)
-                self.assertEqual(
-                    stat.S_IMODE(os.stat(file).st_mode), files[key][1])
-
     def test_fix_pkg_config(self):
         pc_file = os.path.join(self.tempdir, 'granite.pc')
 
@@ -217,52 +203,75 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 
         self.assertEqual(pc_file_content, expected_pc_file_content)
 
+
+class FixSUIDTestCase(RepoBaseTestCase):
+
+    scenarios = [
+        ('suid_file', dict(
+            key='suid_file', test_mod=0o4765, expected_mod=0o0765)),
+        ('guid_file', dict(
+            key='guid_file', test_mod=0o2777, expected_mod=0o0777)),
+        ('suid_guid_file', dict(
+            key='suid_guid_file', test_mod=0o6744, expected_mod=0o0744)),
+        ('suid_guid_sticky_file', dict(
+            key='suid_guid_sticky_file',
+            test_mod=0o7744, expected_mod=0o1744)),
+    ]
+
+    def test_fix_suid(self):
+        file = os.path.join(self.tempdir, self.key)
+        open(file, mode='w').close()
+        os.chmod(file, self.test_mod)
+
+        repo._fix_artifacts(debdir=self.tempdir)
+        self.assertEqual(
+            stat.S_IMODE(os.stat(file).st_mode), self.expected_mod)
+
+
+class FixShebangTestCase(RepoBaseTestCase):
+
+    scenarios = [
+        ('python bin dir', {
+            'file_path': os.path.join('root', 'bin', 'a'),
+            'content': '#!/usr/bin/python\nimport this',
+            'expected': '#!/usr/bin/env python\nimport this',
+        }),
+        ('python3 bin dir', {
+            'file_path': os.path.join('root', 'bin', 'd'),
+            'content': '#!/usr/bin/python3\nraise Exception()',
+            'expected': '#!/usr/bin/python3\nraise Exception()',
+        }),
+        ('sbin dir', {
+            'file_path': os.path.join('root', 'sbin', 'b'),
+            'content': '#!/usr/bin/python\nimport this',
+            'expected': '#!/usr/bin/env python\nimport this',
+        }),
+        ('usr/bin dir', {
+            'file_path': os.path.join('root', 'usr', 'bin', 'c'),
+            'content': '#!/usr/bin/python\nimport this',
+            'expected': '#!/usr/bin/env python\nimport this',
+        }),
+        ('usr/sbin dir', {
+            'file_path': os.path.join('root', 'usr', 'sbin', 'd'),
+            'content': '#!/usr/bin/python\nimport this',
+            'expected': '#!/usr/bin/env python\nimport this',
+        }),
+        ('opt/bin dir',  {
+            'file_path': os.path.join('root', 'opt', 'bin', 'e'),
+            'content': '#!/usr/bin/python\nraise Exception()',
+            'expected': '#!/usr/bin/python\nraise Exception()',
+        }),
+    ]
+
     def test_fix_shebang(self):
-        rootdir = 'root'
+        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+        with open(self.file_path, 'w') as fd:
+            fd.write(self.content)
 
-        files = [
-            {
-                'path': os.path.join(rootdir, 'bin', 'a'),
-                'content': '#!/usr/bin/python\nimport this',
-                'expected': '#!/usr/bin/env python\nimport this',
-            },
-            {
-                'path': os.path.join(rootdir, 'sbin', 'b'),
-                'content': '#!/usr/bin/python\nimport this',
-                'expected': '#!/usr/bin/env python\nimport this',
-            },
-            {
-                'path': os.path.join(rootdir, 'usr', 'bin', 'c'),
-                'content': '#!/usr/bin/python\nimport this',
-                'expected': '#!/usr/bin/env python\nimport this',
-            },
-            {
-                'path': os.path.join(rootdir, 'usr', 'sbin', 'd'),
-                'content': '#!/usr/bin/python\nimport this',
-                'expected': '#!/usr/bin/env python\nimport this',
-            },
-            {
-                'path': os.path.join(rootdir, 'opt', 'bin', 'e'),
-                'content': '#!/usr/bin/python\nraise Exception()',
-                'expected': '#!/usr/bin/python\nraise Exception()',
-            },
-            {
-                'path': os.path.join(rootdir, 'bin', 'd'),
-                'content': '#!/usr/bin/python3\nraise Exception()',
-                'expected': '#!/usr/bin/python3\nraise Exception()',
-            },
-        ]
+        repo._fix_shebangs('root')
 
-        for f in files:
-            with self.subTest(key=f['path']):
-                os.makedirs(os.path.dirname(f['path']), exist_ok=True)
-                with open(f['path'], 'w') as fd:
-                    fd.write(f['content'])
-
-                repo._fix_shebangs(rootdir)
-
-                with open(f['path'], 'r') as fd:
-                    self.assertEqual(fd.read(), f['expected'])
+        with open(self.file_path, 'r') as fd:
+            self.assertEqual(fd.read(), self.expected)
 
 
 class BuildPackagesTestCase(tests.TestCase):
@@ -345,3 +354,13 @@ class BuildPackagesTestCase(tests.TestCase):
             "Could not find a required package in 'build-packages': "
             '"The cache has no package named \'package-does-not-exist\'"',
             str(raised.exception))
+
+
+class CommandCheckTestCase(tests.TestCase):
+
+    def test_check_for_command_not_installed(self):
+        with self.assertRaises(errors.MissingCommandError):
+            repo.check_for_command('missing-command')
+
+    def test_check_for_command_installed(self):
+        repo.check_for_command('sh')

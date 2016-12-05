@@ -2,12 +2,16 @@
   "name": "simple-nodejs",
   "version": "1.0.0",
   "description": "Testing grounds for snapcraft integration tests",
-  "main": "index.js",
+  "main": "print.js",
+  "bin": {
+    "node-print": "print.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "run-command-one": "touch command-one-run",
     "run-command-two": "touch command-two-run",
-    "run-command-three": "test -f command-one-run -a -f command-two-run"
+    "run-command-three": "test -f command-one-run -a -f command-two-run",
+    "run-command-from-npm-install": "node-print"
   },
   "author": "",
   "license": "GPL-3.0"

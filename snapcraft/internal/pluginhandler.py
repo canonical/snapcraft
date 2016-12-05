@@ -15,13 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import copy
 import filecmp
 import importlib
 import logging
 import os
 import shutil
 import sys
-from glob import iglob
+from glob import glob, iglob
 
 import jsonschema
 import magic
@@ -38,10 +39,17 @@ from snapcraft.internal import (
     common,
     libraries,
     repo,
+    sources,
     states,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class DirtyReport:
+    def __init__(self, dirty_properties, dirty_project_options):
+        self.dirty_properties = dirty_properties
+        self.dirty_project_options = dirty_project_options
 
 
 class PluginHandler:
@@ -63,12 +71,20 @@ class PluginHandler:
 
         return self._ubuntu
 
-    def __init__(self, *, plugin_name, part_name, part_properties,
-                 project_options, part_schema):
+    def __init__(self, *, plugin_name, part_name,
+                 part_properties, project_options, part_schema):
         self.valid = False
         self.code = None
         self.config = {}
         self._name = part_name
+        self._part_properties = _expand_part_properties(
+            part_properties, part_schema)
+
+        # Some legacy parts can have a '/' in them to separate the main project
+        # part with the subparts. This is rather unfortunate as it affects the
+        # the layout of parts inside the parts directory causing collisions
+        # between the main project part and its subparts.
+        part_name = part_name.replace('/', '\N{BIG SOLIDUS}')
         self._ubuntu = None
         self._project_options = project_options
         self.deps = []
@@ -79,11 +95,14 @@ class PluginHandler:
         parts_dir = project_options.parts_dir
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
         self.statedir = os.path.join(parts_dir, part_name, 'state')
+        self.sourcedir = os.path.join(parts_dir, part_name, 'src')
+
+        self.source_handler = self._get_source_handler(self._part_properties)
 
         self._migrate_state_file()
 
         try:
-            self._load_code(plugin_name, part_properties, part_schema)
+            self._load_code(plugin_name, self._part_properties, part_schema)
         except jsonschema.ValidationError as e:
             raise PluginError('properties failed to load for {}: {}'.format(
                 part_name, e.message))
@@ -111,8 +130,8 @@ class PluginHandler:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
-        options, self.pull_properties, self.build_properties = _make_options(
-            part_schema, properties, plugin.schema())
+        _validate_pull_and_build_properties(plugin_name, plugin, part_schema)
+        options = _make_options(part_schema, properties, plugin.schema())
         # For backwards compatibility we add the project to the plugin
         try:
             self.code = plugin(self.name, options, self._project_options)
@@ -137,6 +156,25 @@ class PluginHandler:
                 'Setting {!r} as the compilation target for {!r}'.format(
                     self._project_options.deb_arch, plugin_name))
             self.code.enable_cross_compilation()
+
+    def _get_source_handler(self, properties):
+        """Returns a source_handler for the source in properties."""
+        # TODO: we cannot pop source as it is used by plugins. We also make
+        # the default '.'
+        source_handler = None
+        if properties['source']:
+            handler_class = sources.get_source_handler(
+                properties['source'], source_type=properties['source-type'])
+            source_handler = handler_class(
+                properties['source'],
+                self.sourcedir,
+                source_branch=properties['source-branch'],
+                source_tag=properties['source-tag'],
+                source_depth=properties['source-depth'],
+                source_commit=properties['source-commit'],
+            )
+
+        return source_handler
 
     def makedirs(self):
         dirs = [
@@ -182,27 +220,39 @@ class PluginHandler:
     def is_dirty(self, step):
         """Return true if the given step needs to run again."""
 
+        return self.get_dirty_report(step) is not None
+
+    def get_dirty_report(self, step):
+        """Return a DirtyReport class describing why step is dirty.
+
+        Returns None if step is not dirty.
+        """
+
         # Retrieve the stored state for this step (assuming it has already run)
         state = self.get_state(step)
+        differing_properties = set()
+        differing_options = set()
+
         with contextlib.suppress(AttributeError):
             # state.properties contains the old YAML that this step cares
             # about, and we're comparing it to those same keys in the current
-            # YAML (taken from self.code.options). If they've changed, then
-            # this step is dirty and needs to run again.
-            if state.properties != state.properties_of_interest(
-                    vars(self.code.options)):
-                return True
+            # YAML (self._part_properties). If they've changed, then this step
+            # is dirty and needs to run again.
+            differing_properties = state.diff_properties_of_interest(
+                self._part_properties)
 
         with contextlib.suppress(AttributeError):
             # state.project_options contains the old project options that this
             # step cares about, and we're comparing it to those same options in
             # the current project. If they've changed, then this step is dirty
             # and needs to run again.
-            if state.project_options != state.project_options_of_interest(
-                    self._project_options):
-                return True
+            differing_options = state.diff_project_options_of_interest(
+                self._project_options)
 
-        return False
+        if differing_properties or differing_options:
+            return DirtyReport(differing_properties, differing_options)
+
+        return None
 
     def should_step_run(self, step, force=False):
         return force or self.is_clean(step)
@@ -271,10 +321,17 @@ class PluginHandler:
     def pull(self, force=False):
         self.makedirs()
         self.notify_part_progress('Pulling')
+        if self.source_handler:
+            self.source_handler.pull()
         self.code.pull()
+
+        self.mark_pull_done()
+
+    def mark_pull_done(self):
+        pull_properties = self.code.get_pull_properties()
+
         self.mark_done('pull', states.PullState(
-            self.pull_properties,
-            vars(self.code.options),
+            pull_properties, self._part_properties,
             self._project_options))
 
     def clean_pull(self, hint=''):
@@ -289,6 +346,12 @@ class PluginHandler:
         if os.path.exists(self.ubuntudir):
             shutil.rmtree(self.ubuntudir)
 
+        if os.path.exists(self.sourcedir):
+            if os.path.islink(self.sourcedir):
+                os.remove(self.sourcedir)
+            else:
+                shutil.rmtree(self.sourcedir)
+
         self.code.clean_pull()
         self.mark_cleaned('pull')
 
@@ -302,10 +365,36 @@ class PluginHandler:
     def build(self, force=False):
         self.makedirs()
         self.notify_part_progress('Building')
+
+        if os.path.exists(self.code.build_basedir):
+            shutil.rmtree(self.code.build_basedir)
+
+        # FIXME: It's not necessary to ignore here anymore since it's now done
+        # in the Local source. However, it's left here so that it continues to
+        # work on old snapcraft trees that still have src symlinks.
+        def ignore(directory, files):
+            if directory == self.sourcedir:
+                snaps = glob(os.path.join(directory, '*.snap'))
+                if snaps:
+                    snaps = [os.path.basename(s) for s in snaps]
+                    return common.SNAPCRAFT_FILES + snaps
+                else:
+                    return common.SNAPCRAFT_FILES
+            else:
+                return []
+
+        shutil.copytree(self.code.sourcedir, self.code.build_basedir,
+                        symlinks=True, ignore=ignore)
+
         self.code.build()
+
+        self.mark_build_done()
+
+    def mark_build_done(self):
+        build_properties = self.code.get_build_properties()
+
         self.mark_done('build', states.BuildState(
-            self.build_properties,
-            vars(self.code.options),
+            build_properties, self._part_properties,
             self._project_options))
 
     def clean_build(self, hint=''):
@@ -316,6 +405,13 @@ class PluginHandler:
             return
 
         self.notify_part_progress('Cleaning build for', hint)
+
+        if os.path.exists(self.code.build_basedir):
+            shutil.rmtree(self.code.build_basedir)
+
+        if os.path.exists(self.installdir):
+            shutil.rmtree(self.installdir)
+
         self.code.clean_build()
         self.mark_cleaned('build')
 
@@ -364,9 +460,11 @@ class PluginHandler:
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
+        self.mark_stage_done(snap_files, snap_dirs)
+
+    def mark_stage_done(self, snap_files, snap_dirs):
         self.mark_done('stage', states.StageState(
-            snap_files, snap_dirs,
-            vars(self.code.options),
+            snap_files, snap_dirs, self._part_properties,
             self._project_options))
 
     def clean_stage(self, project_staged_state, hint=''):
@@ -431,9 +529,12 @@ class PluginHandler:
 
         dependency_paths = (part_dependency_paths | staged_dependency_paths |
                             system_dependency_paths)
+
+        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+
+    def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
         self.mark_done('prime', states.PrimeState(
-            snap_files, snap_dirs, dependency_paths,
-            vars(self.code.options),
+            snap_files, snap_dirs, dependency_paths, self._part_properties,
             self._project_options))
 
     def clean_prime(self, project_primed_state, hint=''):
@@ -542,41 +643,98 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
-def _validate_step_properties(step, plugin_schema):
-    step_properties_key = '{}-properties'.format(step)
-    properties = plugin_schema.get('properties', {})
-    step_properties = plugin_schema.get(step_properties_key, [])
+def _expand_part_properties(part_properties, part_schema):
+    """Returns properties with all part schema properties included.
 
-    invalid_properties = set()
-    for step_property in step_properties:
-        if step_property not in properties:
-            invalid_properties.add(step_property)
+    Any schema properties not set will contain their default value as defined
+    in the schema itself.
+    """
+
+    # First make a deep copy of the part schema. It contains nested mutables,
+    # and we'd rather not change them.
+    part_schema = copy.deepcopy(part_schema)
+
+    # Come up with a dictionary of part schema properties and their default
+    # values as defined in the schema.
+    properties = {}
+    for schema_property, subschema in part_schema.items():
+        properties[schema_property] = subschema.get('default')
+
+    # Now expand (overwriting if necessary) the default schema properties with
+    # the ones from the actual part.
+    properties.update(part_properties)
+
+    return properties
+
+
+def _merged_part_and_plugin_schemas(part_schema, plugin_schema):
+    plugin_schema = plugin_schema.copy()
+    if 'properties' not in plugin_schema:
+        plugin_schema['properties'] = {}
+
+    # The part schema takes precedence over the plugin's schema.
+    plugin_schema['properties'].update(part_schema)
+    return plugin_schema
+
+
+def _validate_pull_and_build_properties(plugin_name, plugin, part_schema):
+    merged_schema = _merged_part_and_plugin_schemas(
+        part_schema, plugin.schema())
+    merged_properties = merged_schema['properties']
+
+    # First, validate pull properties
+    invalid_properties = _validate_step_properties(
+        plugin.get_pull_properties(), merged_properties)
 
     if invalid_properties:
-        raise jsonschema.exceptions.ValidationError(
-            "Invalid {} specified in plugin's schema: {}".format(
-                step_properties_key, list(invalid_properties)))
+        raise ValueError(
+            "Invalid pull properties specified by {!r} plugin: {}".format(
+                plugin_name, list(invalid_properties)))
+
+    # Now, validate build properties
+    invalid_properties = _validate_step_properties(
+        plugin.get_build_properties(), merged_properties)
+
+    if invalid_properties:
+        raise ValueError(
+            "Invalid build properties specified by {!r} plugin: {}".format(
+                plugin_name, list(invalid_properties)))
+
+
+def _validate_step_properties(step_properties, schema_properties):
+    invalid_properties = set()
+    for step_property in step_properties:
+        if step_property not in schema_properties:
+            invalid_properties.add(step_property)
+
+    return invalid_properties
 
 
 def _make_options(part_schema, properties, plugin_schema):
     # Make copies as these dictionaries are tampered with
     part_schema = part_schema.copy()
     properties = properties.copy()
-    plugin_schema = plugin_schema.copy()
 
-    if 'properties' not in plugin_schema:
-        plugin_schema['properties'] = {}
-    # The base part_schema takes precedense over the plugin.
-    plugin_schema['properties'].update(part_schema)
+    plugin_schema = _merged_part_and_plugin_schemas(part_schema, plugin_schema)
 
-    _validate_step_properties('pull', plugin_schema)
-    _validate_step_properties('build', plugin_schema)
-    jsonschema.validate(properties, plugin_schema)
+    # This is for backwards compatibility for when most of the
+    # schema was overridable by the plugins.
+    if 'required' in plugin_schema and not plugin_schema['required']:
+            del plugin_schema['required']
+    # With the same backwards compatibility in mind we need to remove
+    # the source entry before validation. To those concerned, it has
+    # already been validated.
+    validated_properties = properties.copy()
+    remove_set = [k for k in sources.get_source_defaults().keys()
+                  if k in validated_properties]
+    for key in remove_set:
+        del validated_properties[key]
+
+    jsonschema.validate(validated_properties, plugin_schema)
 
     options = _populate_options(properties, plugin_schema)
 
-    return (options, plugin_schema.get('pull-properties', []),
-            plugin_schema.get('build-properties', []))
+    return options
 
 
 def _populate_options(properties, schema):

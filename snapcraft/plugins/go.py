@@ -45,6 +45,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import shutil
+from glob import iglob
 
 import snapcraft
 from snapcraft import common
@@ -91,7 +92,7 @@ class GoPlugin(snapcraft.BasePlugin):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         schema['build-properties'].extend(
-            ['source', 'go-packages', 'go-buildtags'])
+            ['go-packages', 'go-buildtags'])
 
         return schema
 
@@ -111,7 +112,7 @@ class GoPlugin(snapcraft.BasePlugin):
         super().pull()
         os.makedirs(self._gopath_src, exist_ok=True)
 
-        if self.options.source:
+        if any(iglob('{}/**/*.go'.format(self.sourcedir), recursive=True)):
             go_package = self._get_local_go_package()
             go_package_path = os.path.join(self._gopath_src, go_package)
             if os.path.islink(go_package_path):

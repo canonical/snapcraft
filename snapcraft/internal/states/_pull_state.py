@@ -26,6 +26,20 @@ def _pull_state_constructor(loader, node):
 yaml.add_constructor(u'!PullState', _pull_state_constructor)
 
 
+def _schema_properties():
+    return {
+        'plugin',
+        'stage-packages',
+        'source',
+        'source-commit',
+        'source-depth',
+        'source-tag',
+        'source-type',
+        'source-branch',
+        'source-subdir'
+    }
+
+
 class PullState(State):
     yaml_tag = u'!PullState'
 
@@ -38,12 +52,14 @@ class PullState(State):
         super().__init__(part_properties, project)
 
     def properties_of_interest(self, part_properties):
-        """Extract the properties concerning this step from part_properties.
-        """
+        """Extract the properties concerning this step from part_properties."""
 
         properties = {}
         for name in self.schema_properties:
-            properties[name] = part_properties.get(name, None)
+            properties[name] = part_properties.get(name)
+
+        for name in _schema_properties():
+            properties[name] = part_properties.get(name)
 
         return properties
 

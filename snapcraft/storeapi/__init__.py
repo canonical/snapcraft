@@ -132,13 +132,13 @@ class StoreClient():
         self.sca = SCAClient(self.conf)
 
     def login(self, email, password, one_time_password=None, acls=None,
-              save=True):
+              packages=None, channels=None, save=True):
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
             acls = ['package_upload', 'package_access']
         # Ask the store for the needed capabilities to be associated with the
         # macaroon.
-        macaroon = self.sca.get_macaroon(acls)
+        macaroon = self.sca.get_macaroon(acls, packages, channels)
         caveat_id = self._extract_caveat_id(macaroon)
         unbound_discharge = self.sso.get_unbound_discharge(
             email, password, one_time_password, caveat_id)
@@ -407,12 +407,23 @@ class SCAClient(Client):
             'UBUNTU_STORE_API_ROOT_URL',
             constants.UBUNTU_STORE_API_ROOT_URL))
 
-    def get_macaroon(self, acls):
+    def get_macaroon(self, acls, packages=None, channels=None):
+        data = {
+            'permissions': acls,
+        }
+        if packages is not None:
+            data.update({
+                'packages': packages,
+            })
+        if channels is not None:
+            data.update({
+                'channels': channels,
+            })
+        headers = {
+            'Accept': 'application/json',
+        }
         response = self.post(
-            'acl/',
-            data=json.dumps({'permissions': acls}),
-            headers={'Content-Type': 'application/json',
-                     'Accept': 'application/json'})
+            'acl/', json=data, headers=headers)
         if response.ok:
             return response.json()['macaroon']
         else:

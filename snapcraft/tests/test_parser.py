@@ -80,7 +80,11 @@ class TestParser(TestCase):
         base_dir.return_value = tempdir.path
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.sources.get')
+        patcher = mock.patch('snapcraft.internal.repo.check_for_command')
+        self.mock_check_command = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.sources.get_source_handler')
         self.mock_get = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -964,6 +968,80 @@ parts: [app1]
         self.assertEqual(parts,
                          _get_part_list())
 
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    def test_remote_after_parts(self, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example part on which parent depends on
+parts: [child]
+---
+maintainer: Marco Trevisan <marco@ubuntu.com>
+origin: lp:snapcraft-parser-example
+description: parent part that depends on child
+parts: [parent]
+""")
+        parts = OrderedDict()
+
+        child_part = OrderedDict()
+        child_part['description'] = 'parent part that depends on child'
+        child_part['maintainer'] = 'John Doe <john.doe@example.com>'
+        child_part['plugin'] = 'dump'
+        child_part['source'] = 'lp:project'
+        parts['child'] = child_part
+
+        parent_part = OrderedDict()
+        parent_part['description'] = 'example part on which parent depends on'
+        parent_part['maintainer'] = 'Marco Trevisan <marco@ubuntu.com>'
+        parent_part['plugin'] = 'dump'
+        parent_part['source'] = 'lp:project'
+        parent_part['after'] = ['child']
+        parts['parent'] = parent_part
+
+        mock_get_origin_data.return_value = {
+            'parts': parts,
+        }
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    def test_remote_after_parts_unordered(self, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: Marco Trevisan <marco@ubuntu.com>
+origin: lp:snapcraft-parser-example
+description: parent part that depends on child
+parts: [parent]
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example part on which parent depends on
+parts: [child]
+""")
+        parts = OrderedDict()
+
+        parent_part = OrderedDict()
+        parent_part['description'] = 'example part on which parent depends on'
+        parent_part['maintainer'] = 'Marco Trevisan <marco@ubuntu.com>'
+        parent_part['plugin'] = 'dump'
+        parent_part['source'] = 'lp:project'
+        parent_part['after'] = ['child']
+        parts['parent'] = parent_part
+
+        child_part = OrderedDict()
+        child_part['description'] = 'parent part that depends on child'
+        child_part['maintainer'] = 'John Doe <john.doe@example.com>'
+        child_part['plugin'] = 'dump'
+        child_part['source'] = 'lp:project'
+        parts['child'] = child_part
+
+        mock_get_origin_data.return_value = {
+            'parts': parts,
+        }
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(2, _get_part_list_count())
+
     def test__get_origin_data_both(self):
         with open(os.path.join(self.tempdir_path,
                   '.snapcraft.yaml'), 'w') as fp:
@@ -1004,6 +1082,13 @@ parts: [app1]
 
 class MissingAssetsTestCase(TestCase):
 
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.repo.check_for_command')
+        self.mock_check_command = patcher.start()
+        self.addCleanup(patcher.stop)
+
     @mock.patch('snapcraft.internal.sources.Local.pull')
     @mock.patch('snapcraft.internal.sources._get_source_type_from_uri')
     def test_filenotfound_for_non_repos(self, mock_type, mock_pull):
@@ -1022,9 +1107,8 @@ parts: [main]
         with self.assertRaises(FileNotFoundError):
             main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-    @mock.patch('snapcraft.internal.sources.Bazaar.__init__')
-    def test_missing_packages(self, mock_init):
-        mock_init.side_effect = MissingCommandError('bzr')
+    def test_missing_packages(self):
+        self.mock_check_command.side_effect = MissingCommandError('bzr')
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 

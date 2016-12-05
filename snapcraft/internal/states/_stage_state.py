@@ -42,7 +42,10 @@ class StageState(State):
         used to filter out files with a white or blacklist.
         """
 
-        return {'stage': part_properties.get('stage', ['*']) or ['*']}
+        return {
+            'stage': part_properties.get('stage', ['*']) or ['*'],
+            'filesets': part_properties.get('filesets', {}) or {},
+        }
 
     def project_options_of_interest(self, project):
         """Extract the options concerning this step from the project.

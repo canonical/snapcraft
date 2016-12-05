@@ -25,6 +25,7 @@ import fixtures
 from snapcraft.main import main
 from snapcraft.internal import (
     pluginhandler,
+    project_loader,
     states,
 )
 from snapcraft import tests
@@ -54,7 +55,10 @@ parts:
         parts = []
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(part_name, plugin_name='nil')
+            handler = pluginhandler.load_plugin(
+                part_name, plugin_name='nil',
+                part_properties={'plugin': 'nil'},
+                part_schema=project_loader.Validator().part_schema)
             parts.append({
                 'part_dir': handler.code.partdir,
             })
