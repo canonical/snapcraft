@@ -19,11 +19,13 @@ import os
 from unittest import mock
 
 import fixtures
+import http.server
 import progressbar
+import threading
 import testscenarios
 
 from snapcraft.internal import common
-from snapcraft.tests import fixture_setup
+from snapcraft.tests import fake_servers, fixture_setup
 
 
 class ContainsList(list):
@@ -107,6 +109,22 @@ class TestWithFakeRemoteParts(TestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixture_setup.FakeParts())
+
+
+class FakeFileHTTPServerBasedTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'no_proxy', 'localhost,127.0.0.1'))
+        self.server = http.server.HTTPServer(
+            ('127.0.0.1', 0), fake_servers.FakeFileHTTPRequestHandler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        self.addCleanup(server_thread.join)
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+        server_thread.start()
 
 
 class SilentProgressBar(progressbar.ProgressBar):

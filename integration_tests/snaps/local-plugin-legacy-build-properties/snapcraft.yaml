@@ -1,0 +1,14 @@
+name: test-package
+version: 0.1
+summary: one line summary
+description: |
+ A snap using a local plugin that specifies build properties using the
+ deprecated schema method.
+confinement: strict
+
+parts:
+    x-local-plugin:
+      plugin: x-local-plugin
+      stage-packages: [curl]
+      foo: bar
+      source: .

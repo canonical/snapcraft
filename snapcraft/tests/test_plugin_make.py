@@ -107,9 +107,9 @@ class MakePluginTestCase(tests.TestCase):
 
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-j2']),
+            mock.call(['make', '-j2'], env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)])
+                       'DESTDIR={}'.format(plugin.installdir)], env=None)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -123,9 +123,9 @@ class MakePluginTestCase(tests.TestCase):
 
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-j1']),
+            mock.call(['make', '-j1'], env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)])
+                       'DESTDIR={}'.format(plugin.installdir)], env=None)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -139,9 +139,9 @@ class MakePluginTestCase(tests.TestCase):
 
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-f', 'makefile.linux', '-j2']),
+            mock.call(['make', '-f', 'makefile.linux', '-j2'], env=None),
             mock.call(['make', '-f', 'makefile.linux', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)])
+                       'DESTDIR={}'.format(plugin.installdir)], env=None)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -155,9 +155,9 @@ class MakePluginTestCase(tests.TestCase):
 
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-j2']),
+            mock.call(['make', '-j2'], env=None),
             mock.call(['make', 'install',
-                       'PREFIX={}'.format(plugin.installdir)])
+                       'PREFIX={}'.format(plugin.installdir)], env=None)
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
@@ -175,7 +175,7 @@ class MakePluginTestCase(tests.TestCase):
 
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-j2']),
+            mock.call(['make', '-j2'], env=None),
         ])
         self.assertEqual(1, link_or_copy_mock.call_count)
         link_or_copy_mock.assert_has_calls([
@@ -189,3 +189,19 @@ class MakePluginTestCase(tests.TestCase):
                 os.path.join(plugin.builddir, 'dir_artifact'),
                 os.path.join(plugin.installdir, 'dir_artifact'),
             )])
+
+    @mock.patch.object(make.MakePlugin, 'run')
+    def test_make_with_env(self, run_mock):
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        env = {'foo': 'bar'}
+        plugin.make(env=env)
+
+        self.assertEqual(2, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j2'], env=env),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)], env=env)
+        ])

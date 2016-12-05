@@ -1012,6 +1012,80 @@ parts: [app1]
         self.assertEqual(parts,
                          _get_part_list())
 
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    def test_remote_after_parts(self, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example part on which parent depends on
+parts: [child]
+---
+maintainer: Marco Trevisan <marco@ubuntu.com>
+origin: lp:snapcraft-parser-example
+description: parent part that depends on child
+parts: [parent]
+""")
+        parts = OrderedDict()
+
+        child_part = OrderedDict()
+        child_part['description'] = 'parent part that depends on child'
+        child_part['maintainer'] = 'John Doe <john.doe@example.com>'
+        child_part['plugin'] = 'dump'
+        child_part['source'] = 'lp:project'
+        parts['child'] = child_part
+
+        parent_part = OrderedDict()
+        parent_part['description'] = 'example part on which parent depends on'
+        parent_part['maintainer'] = 'Marco Trevisan <marco@ubuntu.com>'
+        parent_part['plugin'] = 'dump'
+        parent_part['source'] = 'lp:project'
+        parent_part['after'] = ['child']
+        parts['parent'] = parent_part
+
+        mock_get_origin_data.return_value = {
+            'parts': parts,
+        }
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(2, _get_part_list_count())
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
+    def test_remote_after_parts_unordered(self, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: Marco Trevisan <marco@ubuntu.com>
+origin: lp:snapcraft-parser-example
+description: parent part that depends on child
+parts: [parent]
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example part on which parent depends on
+parts: [child]
+""")
+        parts = OrderedDict()
+
+        parent_part = OrderedDict()
+        parent_part['description'] = 'example part on which parent depends on'
+        parent_part['maintainer'] = 'Marco Trevisan <marco@ubuntu.com>'
+        parent_part['plugin'] = 'dump'
+        parent_part['source'] = 'lp:project'
+        parent_part['after'] = ['child']
+        parts['parent'] = parent_part
+
+        child_part = OrderedDict()
+        child_part['description'] = 'parent part that depends on child'
+        child_part['maintainer'] = 'John Doe <john.doe@example.com>'
+        child_part['plugin'] = 'dump'
+        child_part['source'] = 'lp:project'
+        parts['child'] = child_part
+
+        mock_get_origin_data.return_value = {
+            'parts': parts,
+        }
+        main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(2, _get_part_list_count())
+
     def test__get_origin_data_both(self):
         with open(os.path.join(self.tempdir_path,
                   '.snapcraft.yaml'), 'w') as fp:
