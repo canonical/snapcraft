@@ -87,7 +87,10 @@ import libarchive
 
 from snapcraft.internal import common
 from snapcraft import file_utils
-from snapcraft.internal.indicators import download_requests_stream
+from snapcraft.internal.indicators import (
+    download_requests_stream,
+    download_urllib_source
+)
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -140,12 +143,17 @@ class FileBase(Base):
         self.provision(self.source_dir)
 
     def download(self):
-        request = requests.get(self.source, stream=True, allow_redirects=True)
-        request.raise_for_status()
-
         self.file = os.path.join(
-            self.source_dir, os.path.basename(self.source))
-        download_requests_stream(request, self.file)
+                self.source_dir, os.path.basename(self.source))
+
+        if common.get_url_scheme(self.source) == 'ftp':
+            download_urllib_source(self.source, self.file)
+        else:
+            request = requests.get(
+                self.source, stream=True, allow_redirects=True)
+            request.raise_for_status()
+
+            download_requests_stream(request, self.file)
 
 
 class Script(FileBase):
@@ -526,16 +534,13 @@ class Local(Base):
         elif os.path.isdir(self.source_dir):
             shutil.rmtree(self.source_dir)
 
+        current_dir = os.getcwd()
         source_abspath = os.path.abspath(self.source)
 
         def ignore(directory, files):
-            if directory is source_abspath:
+            if directory == source_abspath or \
+               directory == current_dir:
                 ignored = copy.copy(common.SNAPCRAFT_FILES)
-                relative_cwd = os.path.basename(os.getcwd())
-                if os.path.join(directory, relative_cwd) == os.getcwd():
-                    # Source is a parent of the working directory.
-                    # Do not recursively copy it into itself.
-                    ignored.append(relative_cwd)
                 snaps = glob.glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]

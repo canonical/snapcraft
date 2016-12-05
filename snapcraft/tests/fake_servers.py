@@ -38,6 +38,17 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         logger.debug(args)
 
 
+class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        data = 'Test fake compressed file'
+        self.send_response(200)
+        self.send_header('Content-Length', len(data))
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(data.encode())
+
+
 class FakePartsServer(http.server.HTTPServer):
 
     def __init__(self, server_address):
@@ -555,6 +566,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_register_409('already_registered')
         elif data['snap_name'] == 'test-reserved-snap-name':
             self._handle_register_409('reserved_name')
+        elif data['snap_name'] == 'test-already-owned-snap-name':
+            self._handle_register_409('already_owned')
         elif data['snap_name'].startswith('test-too-fast'):
             self._handle_register_429('register_window')
         elif data['snap_name'] == 'snap-name-no-clear-error':

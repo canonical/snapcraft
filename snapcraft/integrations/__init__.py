@@ -27,7 +27,7 @@ SUPPORTED_CI_SYSTEMS = (
 )
 
 
-def enable_ci(ci_system):
+def enable_ci(ci_system, refresh_only):
     if not ci_system:
         # XXX cprov 20161116: we could possibly auto-detect currently
         # integration systems in master ?
@@ -45,7 +45,9 @@ def enable_ci(ci_system):
     module = importlib.import_module(
         'snapcraft.integrations.{}'.format(ci_system))
 
-    print(module.__doc__)
-
-    if input('Continue (y/N): ') == 'y':
-        module.enable()
+    if refresh_only:
+        module.refresh()
+    else:
+        print(module.__doc__)
+        if input('Continue (y/N): ') == 'y':
+            module.enable()

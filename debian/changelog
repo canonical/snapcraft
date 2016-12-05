@@ -1,3 +1,63 @@
+snapcraft (2.23) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * indicators: work with Content-Encoding set (#896)
+  * store: download without login (#903)
+  * readme: rocket instead of irc (#907)
+  * indicators: support TERM=dumb (#906)
+  * Update HACKING.md (#910)
+  * help: update stage-packages and build-packages (#913)
+  * meta: icon is now dedeprecated (#914)
+  * cache: cleanup logic to pass project name (#915)
+  * sources: missing command instead of package (#916)
+  * docs: update GUI related integrations (#919)
+  * pluginhandler: source management moved to the core (#923)
+  * store: return specific error when already owned (#942)
+  * nodejs plugin: install during pull to support npm run (#936)
+  * New upstream release 2.22.1 (LP: #1646993)
+
+  [ Parameswaran Sivatharman ]
+  * store: login with option to agree to terms of service and human friendly errors (#866)
+
+  [ Bayard Randel ]
+  * cache: snap revision caching on 'push'. (#889)
+  * deltas: migrate from xdelta to xdelta3. (#934)
+
+  [ Leo Arias ]
+  * tools: new script to retry autopktests (#893)
+  * tests: remove the outdated all snaps image set up for snaps tests (#911)
+  * plugin: add a gradle demo and test (#912)
+  * tests: unset the proxies for gradle unit testing (#922)
+  * tests: use the connectivity check page to test the downloader snap (#925)
+  * tests: add a script to build external snaps (#927)
+  * tests: replace coveralls with codecov (#939)
+  * tests: replace subTests with TestScenarios (#943)
+
+  [ Marco Trevisan ]
+  * repo: apt-mark new build-packages as automatically installed (#891)
+  * sources: add ftp support (#900)
+  * parser: support remote dependencies (#930)
+  * sources: add current dir to ignore list if we're iterating on parent (#926)
+
+  [ Kelvin Li ]
+  * cache: enable prune for snap cache. (#905)
+  * deltas: initial implementation (#918)
+
+  [ Celso Providelo ]
+  * cli: basic 'enable-ci' implementation. (#901)
+  * cli: implement `enable-ci travis --refresh` command (#932)
+
+  [ John Lenton ]
+  * cli: _filedir takes an extension, not a glob (#933)
+
+  [ Larry Price ]
+  * cmake plugin: utilize MakePlugin build logic within CMakePlugin (#935)
+
+  [ Kyle Fazzari ]
+  * pluginhandler: incorporate all part properties into state tracking. (#937)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 02 Dec 2016 23:44:19 +0000
+
 snapcraft (2.22.1) xenial; urgency=medium
 
   * Revert "Allow for architecture-specific packages (#876)" (#898)

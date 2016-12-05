@@ -320,6 +320,7 @@ class TestStore(fixtures.Fixture):
             self.useFixture(FakeStore())
             self.register_delay = 0
             self.reserved_snap_name = 'test-reserved-snap-name'
+            self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
             self.register_delay = 10

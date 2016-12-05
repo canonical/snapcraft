@@ -175,7 +175,7 @@ class PartsConfig:
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
 
-            plugin_name = properties.pop('plugin', None)
+            plugin_name = properties.get('plugin')
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
