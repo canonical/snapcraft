@@ -51,12 +51,13 @@ class ListKeysTestCase(tests.TestCase):
                                            mock_check_output):
         mock_installed.return_value = False
 
-        with self.assertRaises(SystemExit) as raised:
-            main([self.command_name])
+        raised = self.assertRaises(
+            SystemExit,
+            main, [self.command_name])
 
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'The snapd package is not installed.', self.fake_logger.output)
 
@@ -66,10 +67,12 @@ class ListKeysTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        with self.assertRaises(SystemExit) as raised:
-            main([self.command_name])
+        raised = self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)

@@ -33,11 +33,12 @@ curl:
         self.assertEqual(self.fake_terminal.getvalue(), expected_output)
 
     def test_defining_a_part_that_doesnt_exist_helps_out(self):
-        with self.assertRaises(RuntimeError) as raised:
-            parts.define('curler')
+        raised = self.assertRaises(
+            RuntimeError,
+            parts.define, 'curler')
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Cannot find the part name {!r} in the cache. Please consider '
             'going to https://wiki.ubuntu.com/snapcraft/parts to add it.')
 

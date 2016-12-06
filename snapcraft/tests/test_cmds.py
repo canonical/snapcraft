@@ -50,10 +50,11 @@ parts:
     plugin: does-not-exist
 ''')
 
-        with self.assertRaises(SystemExit) as raised:
-            snapcraft.internal.load_config()
+        raised = self.assertRaises(
+            SystemExit,
+            snapcraft.internal.load_config)
 
-        self.assertEqual(raised.exception.code, 1, 'Wrong exit code returned.')
+        self.assertEqual(raised.code, 1, 'Wrong exit code returned.')
         self.assertIn(
             'Issue while loading plugin: unknown plugin: does-not-exist\n',
             fake_logger.output)

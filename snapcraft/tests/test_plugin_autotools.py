@@ -112,11 +112,13 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
     def test_install_via_invalid_enum(self):
         self.options.install_via = 'invalid'
-        with self.assertRaises(RuntimeError) as raised:
-            autotools.AutotoolsPlugin('test-part', self.options,
-                                      self.project_options)
+        raised = self.assertRaises(
+            RuntimeError,
+            autotools.AutotoolsPlugin,
+            'test-part', self.options,
+            self.project_options)
 
-        self.assertEqual(str(raised.exception),
+        self.assertEqual(str(raised),
                          'Unsupported installation method: "invalid"')
 
     def build_with_configure(self):

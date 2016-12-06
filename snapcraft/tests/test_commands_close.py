@@ -42,10 +42,11 @@ class ChannelClosingTestCase(tests.TestCase):
             'snaps': {
             }
         }
-        with self.assertRaises(SystemExit) as raised:
-            main(['close', 'foo', 'beta'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['close', 'foo', 'beta'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '

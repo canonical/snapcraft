@@ -112,10 +112,12 @@ class CreateTestCase(CreateBaseTestCase):
     def test_create_gadget_meta_with_missing_gadget_yaml_raises_error(self):
         self.config_data['type'] = 'gadget'
 
-        with self.assertRaises(MissingGadgetError):
-            create_snap_packaging(self.config_data,
-                                  self.snap_dir,
-                                  self.parts_dir)
+        self.assertRaises(
+            MissingGadgetError,
+            create_snap_packaging,
+            self.config_data,
+            self.snap_dir,
+            self.parts_dir)
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
@@ -478,12 +480,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
-        with self.assertRaises(EnvironmentError) as raised:
-            self.packager._wrap_apps(apps)
+        raised = self.assertRaises(
+            EnvironmentError,
+            self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-does-not-exist' defined in the "
             "app 'app1' does not exist or is not executable",
-            str(raised.exception))
+            str(raised))
 
     def test_command_is_not_executable(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
@@ -494,12 +497,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            self.packager._wrap_apps(apps)
+        raised = self.assertRaises(
+            EnvironmentError,
+            self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-not-executable' defined in the "
             "app 'app1' does not exist or is not executable",
-            str(raised.exception))
+            str(raised))
 
     def test_command_found(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]

@@ -52,8 +52,9 @@ class GatedTestCase(tests.TestCase):
     def test_gated_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'notfound'])
+        self.assertRaises(
+            SystemExit,
+            main, [self.command_name, 'notfound'])
         self.assertIn("Snap 'notfound' was not found.",
                       self.fake_logger.output)
 
@@ -78,7 +79,8 @@ class GatedTestCase(tests.TestCase):
         self.assertEqual(expected_output, self.fake_terminal.getvalue())
 
     def test_no_login(self):
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'ubuntu-core'])
+        self.assertRaises(
+            SystemExit,
+            main, [self.command_name, 'ubuntu-core'])
         self.assertIn('No valid credentials found. Have you run',
                       self.fake_logger.output)
