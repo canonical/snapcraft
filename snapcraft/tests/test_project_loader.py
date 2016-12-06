@@ -74,7 +74,8 @@ parts:
 
         self.assertTrue('aliases' in c.data['apps']['test'],
                         'Expected "aliases" property to be in snap.yaml')
-        self.assertEqual(c.data['apps']['test']['aliases'], ['test-it', 'testing'])
+        self.assertEqual(
+            c.data['apps']['test']['aliases'], ['test-it', 'testing'])
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_aliases_with_duplicates(self, mock_loadPlugin):
@@ -103,7 +104,8 @@ parts:
         with self.assertRaises(DuplicateAliasError) as raised:
             project_loader.Config()
         self.assertEqual(
-            'Multiple parts have the same alias defined: {!r}'.format('testing'),
+            'Multiple parts have the same alias defined: {!r}'.format(
+                'testing'),
             str(raised.exception))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
