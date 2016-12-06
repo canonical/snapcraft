@@ -129,22 +129,26 @@ class PluginTestCase(tests.TestCase):
 
     @patch('os.path.isdir', return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
-        with self.assertRaises(ValueError) as raised:
-            _load_plugin('test-part', part_properties={'source': 'file'})
+        raised = self.assertRaises(
+            ValueError,
+            _load_plugin,
+            'test-part', part_properties={'source': 'file'})
 
         mock_isdir.assert_called_once_with('file')
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          'local source is not a directory')
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        with self.assertRaises(pluginhandler.PluginError) as raised:
-            _load_plugin('fake-part', 'test_unexisting')
+        raised = self.assertRaises(
+            pluginhandler.PluginError,
+            _load_plugin,
+            'fake-part', 'test_unexisting')
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          'unknown plugin: test_unexisting')
 
     def test_fileset_include_excludes(self):
@@ -496,12 +500,14 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        with self.assertRaises(ValueError) as raised:
-            _load_plugin('fake-part', 'plugin')
+        raised = self.assertRaises(
+            ValueError,
+            _load_plugin,
+            'fake-part', 'plugin')
 
         self.assertEqual(
             "Invalid pull properties specified by 'plugin' plugin: ['bar']",
-            str(raised.exception))
+            str(raised))
 
     def test_plugin_schema_invalid_build_hint(self):
         class Plugin(snapcraft.BasePlugin):
@@ -516,26 +522,31 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        with self.assertRaises(ValueError) as raised:
-            _load_plugin('fake-part', 'plugin')
+        raised = self.assertRaises(
+            ValueError,
+            _load_plugin, 'fake-part', 'plugin')
 
         self.assertEqual(
             "Invalid build properties specified by 'plugin' plugin: ['bar']",
-            str(raised.exception))
+            str(raised))
 
     def test_filesets_includes_without_relative_paths(self):
-        with self.assertRaises(pluginhandler.PluginError) as raised:
-            pluginhandler._get_file_list(['rel', '/abs/include'])
+        raised = self.assertRaises(
+            pluginhandler.PluginError,
+            pluginhandler._get_file_list,
+            ['rel', '/abs/include'])
 
         self.assertEqual(
-            'path "/abs/include" must be relative', str(raised.exception))
+            'path "/abs/include" must be relative', str(raised))
 
     def test_filesets_exlcudes_without_relative_paths(self):
-        with self.assertRaises(pluginhandler.PluginError) as raised:
-            pluginhandler._get_file_list(['rel', '-/abs/exclude'])
+        raised = self.assertRaises(
+            pluginhandler.PluginError,
+            pluginhandler._get_file_list,
+            ['rel', '-/abs/exclude'])
 
         self.assertEqual(
-            'path "/abs/exclude" must be relative', str(raised.exception))
+            'path "/abs/exclude" must be relative', str(raised))
 
 
 class MigratePluginTestCase(tests.TestCase):
@@ -790,8 +801,10 @@ class OrganizeTestCase(tests.TestCase):
 
         if (isinstance(self.expected, type) and
                 issubclass(self.expected, Exception)):
-            with self.assertRaises(self.expected):
-                pluginhandler._organize_filesets(self.organize_set, base_dir)
+            self.assertRaises(
+                self.expected,
+                pluginhandler._organize_filesets,
+                self.organize_set, base_dir)
         else:
             pluginhandler._organize_filesets(self.organize_set, base_dir)
             for expect in self.expected:
@@ -1219,11 +1232,12 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_stage_old_state(self):
         self.handler.mark_done('stage', None)
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            self.handler.clean_stage({})
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            self.handler.clean_stage, {})
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'stage': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -1465,11 +1479,12 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_old_state(self):
         self.handler.mark_done('prime', None)
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            self.handler.clean_prime({})
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            self.handler.clean_prime, {})
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'prime': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -1823,11 +1838,12 @@ class CleanTestCase(CleanBaseTestCase):
 
         handler.mark_done('prime', None)
 
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            handler.clean(step='prime')
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            handler.clean, step='prime')
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'prime': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -1936,11 +1952,12 @@ class CleanTestCase(CleanBaseTestCase):
 
         handler.mark_done('stage', None)
 
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            handler.clean(step='stage')
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            handler.clean, step='stage')
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'stage': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -2166,24 +2183,26 @@ class CollisionTestCase(tests.TestCase):
         pluginhandler.check_for_collisions([self.part1, self.part2])
 
     def test_collisions_between_two_parts(self):
-        with self.assertRaises(SnapcraftPartConflictError) as raised:
-            pluginhandler.check_for_collisions(
-                [self.part1, self.part2, self.part3])
+        raised = self.assertRaises(
+            SnapcraftPartConflictError,
+            pluginhandler.check_for_collisions,
+            [self.part1, self.part2, self.part3])
 
         self.assertIn(
             "Parts 'part2' and 'part3' have the following file paths in "
             "common which have different contents:\n    1\n    a/2",
-            raised.exception.__str__())
+            raised.__str__())
 
     def test_collisions_between_two_parts_pc_files(self):
-        with self.assertRaises(SnapcraftPartConflictError) as raised:
-            pluginhandler.check_for_collisions(
-                [self.part1, self.part4])
+        raised = self.assertRaises(
+            SnapcraftPartConflictError,
+            pluginhandler.check_for_collisions,
+            [self.part1, self.part4])
 
         self.assertIn(
             "Parts 'part1' and 'part4' have the following file paths in "
             "common which have different contents:\n    file.pc",
-            raised.exception.__str__())
+            raised.__str__())
 
 
 class StagePackagesTestCase(tests.TestCase):
@@ -2200,11 +2219,12 @@ class StagePackagesTestCase(tests.TestCase):
         part = _load_plugin(
             'stage-test', part_properties={'stage-packages': ['non-existing']})
 
-        with self.assertRaises(RuntimeError) as raised:
-            part.prepare_pull()
+        raised = self.assertRaises(
+            RuntimeError,
+            part.prepare_pull)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Error downloading stage packages for part 'stage-test': "
             "no such package 'non-existing'")
 
@@ -2354,11 +2374,12 @@ class FindDependenciesTestCase(tests.TestCase):
     def test_fail_to_load_magic_raises_exception(self, mock_magic):
         mock_magic.return_value.load.return_value = 1
 
-        with self.assertRaises(RuntimeError) as raised:
-            pluginhandler._find_dependencies('.', set())
+        raised = self.assertRaises(
+            RuntimeError,
+            pluginhandler._find_dependencies, '.', set())
 
         self.assertEqual(
-            raised.exception.__str__(), 'Cannot load magic header detection')
+            raised.__str__(), 'Cannot load magic header detection')
 
 
 class SourcesTestCase(tests.TestCase):
@@ -2419,10 +2440,11 @@ class SourcesTestCase(tests.TestCase):
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source='unrecognized://test_source')
 
-        with self.assertRaises(ValueError) as raised:
-            _load_plugin('test-part', part_properties=properties)
+        raised = self.assertRaises(
+            ValueError,
+            _load_plugin, 'test-part', part_properties=properties)
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          'no handler to manage source')
 
 

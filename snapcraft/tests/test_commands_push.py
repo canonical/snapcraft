@@ -46,10 +46,11 @@ class PushCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_push_without_snap_must_raise_exception(self):
-        with self.assertRaises(docopt.DocoptExit) as raised:
-            main(['push'])
+        raised = self.assertRaises(
+            docopt.DocoptExit,
+            main, ['push'])
 
-        self.assertTrue('Usage:' in str(raised.exception))
+        self.assertTrue('Usage:' in str(raised))
 
     def test_push_a_snap(self):
         self.useFixture(fixture_setup.FakeTerminal())
@@ -88,15 +89,17 @@ class PushCommandTestCase(tests.TestCase):
         snap_path = os.path.join(
             os.path.dirname(tests.__file__), 'data',
             'test-snap.snap')
-        with self.assertRaises(SystemExit):
-            main(['push', snap_path])
+        self.assertRaises(
+            SystemExit,
+            main, ['push', snap_path])
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
 
     def test_push_nonexisting_snap_must_raise_exception(self):
-        with self.assertRaises(SystemExit):
-            main(['push', 'test-unexisting-snap'])
+        self.assertRaises(
+            SystemExit,
+            main, ['push', 'test-unexisting-snap'])
 
     def test_push_with_updown_error(self):
         # We really don't know of a reason why this would fail
@@ -117,8 +120,9 @@ class PushCommandTestCase(tests.TestCase):
         main(['snap'])
         snap_file = glob.glob('*.snap')[0]
 
-        with self.assertRaises(SystemExit):
-            main(['push', snap_file])
+        self.assertRaises(
+            SystemExit,
+            main, ['push', snap_file])
 
     def test_upload_raises_deprecation_warning(self):
         self.useFixture(fixture_setup.FakeTerminal())

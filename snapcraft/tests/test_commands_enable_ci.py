@@ -34,19 +34,21 @@ class EnableCITestCase(tests.TestCase):
         self.useFixture(self.fake_terminal)
 
     def test_enable_ci_empty(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['enable-ci'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['enable-ci'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             'Please select one of the supported integration systems: travis.'
         ], self.fake_logger.output.splitlines())
 
     def test_enable_ci_unknown(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['enable-ci', 'bazinga'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['enable-ci', 'bazinga'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             '"bazinga" integration is not supported by snapcraft.',
             'Please select one of the supported integration systems: travis.'

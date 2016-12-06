@@ -90,29 +90,33 @@ class LoginTestCase(tests.TestCase):
         self.assertTrue(config.Config().is_empty())
 
     def test_failed_login_with_wrong_password(self):
-        with self.assertRaises(errors.StoreAuthenticationError):
-            self.client.login('dummy email', 'wrong password')
+        self.assertRaises(
+            errors.StoreAuthenticationError,
+            self.client.login, 'dummy email', 'wrong password')
 
         self.assertTrue(config.Config().is_empty())
 
     def test_failed_login_requires_one_time_password(self):
-        with self.assertRaises(errors.StoreTwoFactorAuthenticationRequired):
-            self.client.login('dummy email', 'test requires 2fa')
+        self.assertRaises(
+            errors.StoreTwoFactorAuthenticationRequired,
+            self.client.login, 'dummy email', 'test requires 2fa')
 
         self.assertTrue(config.Config().is_empty())
 
     def test_failed_login_with_wrong_one_time_password(self):
-        with self.assertRaises(errors.StoreAuthenticationError):
-            self.client.login(
-                'dummy email',
-                'test correct password',
-                'wrong one-time password')
+        self.assertRaises(
+            errors.StoreAuthenticationError,
+            self.client.login,
+            'dummy email',
+            'test correct password',
+            'wrong one-time password')
 
         self.assertTrue(config.Config().is_empty())
 
     def test_failed_login_with_invalid_json(self):
-        with self.assertRaises(errors.StoreAuthenticationError):
-            self.client.login('dummy email', 'test 401 invalid json')
+        self.assertRaises(
+            errors.StoreAuthenticationError,
+            self.client.login, 'dummy email', 'test 401 invalid json')
 
         self.assertTrue(config.Config().is_empty())
 
@@ -132,13 +136,14 @@ class DownloadTestCase(tests.TestCase):
 
     def test_download_unexisting_snap_raises_exception(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.SnapNotFoundError) as e:
-            self.client.download(
-                'unexisting-snap', 'test-channel', 'dummy', 'test-arch')
+        e = self.assertRaises(
+            errors.SnapNotFoundError,
+            self.client.download,
+            'unexisting-snap', 'test-channel', 'dummy', 'test-arch')
         self.assertEqual(
             "Snap 'unexisting-snap' for 'test-arch' cannot be found in "
             "the 'test-channel' channel.",
-            str(e.exception))
+            str(e))
 
     def test_download_snap(self):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -182,9 +187,10 @@ class DownloadTestCase(tests.TestCase):
     def test_download_with_hash_mismatch_raises_exception(self):
         self.client.login('dummy', 'test correct password')
         download_path = os.path.join(self.path, 'test-snap.snap')
-        with self.assertRaises(errors.SHAMismatchError):
-            self.client.download(
-                'test-snap-with-wrong-sha', 'test-channel', download_path)
+        self.assertRaises(
+            errors.SHAMismatchError,
+            self.client.download,
+            'test-snap-with-wrong-sha', 'test-channel', download_path)
 
 
 class PushSnapBuildTestCase(tests.TestCase):
@@ -195,8 +201,9 @@ class PushSnapBuildTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_push_snap_build_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.push_snap_build('snap-id', 'dummy')
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.push_snap_build, 'snap-id', 'dummy')
 
     def test_push_snap_build_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
@@ -208,29 +215,32 @@ class PushSnapBuildTestCase(tests.TestCase):
         # If the "enable_snap_build" feature switch is off in the store, we
         # will get a descriptive error message.
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreSnapBuildError) as raised:
-            self.client.push_snap_build('snap-id', 'test-not-implemented')
+        raised = self.assertRaises(
+            errors.StoreSnapBuildError,
+            self.client.push_snap_build, 'snap-id', 'test-not-implemented')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Could not assert build: The snap-build assertions are '
             'currently disabled.')
 
     def test_push_snap_build_invalid_data(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreSnapBuildError) as raised:
-            self.client.push_snap_build('snap-id', 'test-invalid-data')
+        raised = self.assertRaises(
+            errors.StoreSnapBuildError,
+            self.client.push_snap_build, 'snap-id', 'test-invalid-data')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Could not assert build: The snap-build assertion is not valid.')
 
     def test_push_snap_build_unexpected_data(self):
         # The endpoint in SCA would never return plain/text, however anything
         # might happen in the internet, so we are a little defensive.
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreSnapBuildError) as raised:
-            self.client.push_snap_build('snap-id', 'test-unexpected-data')
+        raised = self.assertRaises(
+            errors.StoreSnapBuildError,
+            self.client.push_snap_build, 'snap-id', 'test-unexpected-data')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Could not assert build: 500 Internal Server Error')
 
     def test_push_snap_build_successfully(self):
@@ -247,8 +257,9 @@ class GetAccountInformationTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_get_account_information_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.get_account_information()
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_account_information)
 
     def test_get_account_information_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -281,8 +292,9 @@ class RegisterKeyTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_register_key_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.register_key('dummy')
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.register_key, 'dummy')
 
     def test_register_key_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -305,18 +317,20 @@ class RegisterKeyTestCase(tests.TestCase):
         # If the enable_account_key feature switch is off in the store, we
         # will get a 501 Not Implemented response.
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreKeyRegistrationError) as raised:
-            self.client.register_key('test-not-implemented')
+        raised = self.assertRaises(
+            errors.StoreKeyRegistrationError,
+            self.client.register_key, 'test-not-implemented')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Key registration failed: 501 Not Implemented')
 
     def test_invalid_data(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreKeyRegistrationError) as raised:
-            self.client.register_key('test-invalid-data')
+        raised = self.assertRaises(
+            errors.StoreKeyRegistrationError,
+            self.client.register_key, 'test-invalid-data')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Key registration failed: '
             'The account-key-request assertion is not valid.')
 
@@ -329,8 +343,9 @@ class RegisterTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_register_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.register('dummy')
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.register, 'dummy')
 
     def test_register_name_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -350,10 +365,11 @@ class RegisterTestCase(tests.TestCase):
 
     def test_already_registered(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreRegistrationError) as raised:
-            self.client.register('test-already-registered-snap-name')
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, 'test-already-registered-snap-name')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "The name 'test-already-registered-snap-name' is already taken."
             "\n\n"
             "We can if needed rename snaps to ensure they match the "
@@ -363,10 +379,11 @@ class RegisterTestCase(tests.TestCase):
 
     def test_register_a_reserved_name(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreRegistrationError) as raised:
-            self.client.register('test-reserved-snap-name')
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, 'test-reserved-snap-name')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "The name 'test-reserved-snap-name' is reserved."
             "\n\n"
             "If you are the publisher most users expect for "
@@ -375,26 +392,29 @@ class RegisterTestCase(tests.TestCase):
 
     def test_register_already_owned_name(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreRegistrationError) as raised:
-            self.client.register('test-already-owned-snap-name')
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, 'test-already-owned-snap-name')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "You already own the name 'test-already-owned-snap-name'.")
 
     def test_registering_too_fast_in_a_row(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreRegistrationError) as raised:
-            self.client.register('test-too-fast')
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, 'test-too-fast')
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'You must wait 177 seconds before trying to register your '
             'next snap.')
 
     def test_unhandled_registration_error_path(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreRegistrationError) as raised:
-            self.client.register('snap-name-no-clear-error')
-        self.assertEqual(str(raised.exception), 'Registration failed.')
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, 'snap-name-no-clear-error')
+        self.assertEqual(str(raised), 'Registration failed.')
 
 
 class ValidationsTestCase(tests.TestCase):
@@ -451,11 +471,12 @@ class ValidationsTestCase(tests.TestCase):
     def test_get_bad_response(self):
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(errors.StoreValidationError) as err:
-            self.client.get_validations('bad')
+        err = self.assertRaises(
+            errors.StoreValidationError,
+            self.client.get_validations, 'bad')
 
         expected = ("Received error 200: 'Invalid response from the server'")
-        self.assertEqual(str(err.exception), expected)
+        self.assertEqual(str(err), expected)
         self.assertIn(
             'Invalid response from the server', self.fake_logger.output)
 
@@ -463,11 +484,12 @@ class ValidationsTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         expected = []
 
-        with self.assertRaises(errors.StoreValidationError) as err:
-            self.client.get_validations('err')
+        err = self.assertRaises(
+            errors.StoreValidationError,
+            self.client.get_validations, 'err')
 
         expected = ("Received error 503: 'error'")
-        self.assertEqual(str(err.exception), expected)
+        self.assertEqual(str(err), expected)
 
     def test_push_success(self):
         self.client.login('dummy', 'test correct password')
@@ -482,11 +504,12 @@ class ValidationsTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
 
-        with self.assertRaises(errors.StoreValidationError) as err:
-            self.client.push_validation('bad', assertion)
+        err = self.assertRaises(
+            errors.StoreValidationError,
+            self.client.push_validation, 'bad', assertion)
 
         expected = ("Received error 200: 'Invalid response from the server'")
-        self.assertEqual(str(err.exception), expected)
+        self.assertEqual(str(err), expected)
         self.assertIn(
             'Invalid response from the server', self.fake_logger.output)
 
@@ -494,11 +517,12 @@ class ValidationsTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
 
-        with self.assertRaises(errors.StoreValidationError) as err:
-            self.client.push_validation('err', assertion)
+        err = self.assertRaises(
+            errors.StoreValidationError,
+            self.client.push_validation, 'err', assertion)
 
         expected = ("Received error 501: 'error'")
-        self.assertEqual(str(err.exception), expected)
+        self.assertEqual(str(err), expected)
 
 
 class UploadTestCase(tests.TestCase):
@@ -521,8 +545,9 @@ class UploadTestCase(tests.TestCase):
             self.addCleanup(patcher.stop)
 
     def test_upload_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload('test-snap', self.snap_path)
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.upload, 'test-snap', self.snap_path)
 
     def test_upload_snap(self):
         self.client.login('dummy', 'test correct password')
@@ -566,11 +591,12 @@ class UploadTestCase(tests.TestCase):
 
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(errors.StoreUploadError) as raised:
-            self.client.upload('test-snap', self.snap_path)
+        raised = self.assertRaises(
+            errors.StoreUploadError,
+            self.client.upload, 'test-snap', self.snap_path)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'There was an error uploading the package.\n'
             'Reason: \'Internal Server Error\'\n'
             'Text: \'Broken\'')
@@ -589,15 +615,17 @@ class UploadTestCase(tests.TestCase):
         }
         self.assertEqual(result, expected_result)
 
-        with self.assertRaises(errors.StoreReviewError):
-            tracker.raise_for_code()
+        self.assertRaises(
+            errors.StoreReviewError,
+            tracker.raise_for_code)
 
     def test_upload_unregistered_snap(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StorePushError) as raised:
-            self.client.upload('test-snap-unregistered', self.snap_path)
+        raised = self.assertRaises(
+            errors.StorePushError,
+            self.client.upload, 'test-snap-unregistered', self.snap_path)
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Sorry, try `snapcraft register '
             'test-snap-unregistered` before pushing again.')
 
@@ -605,8 +633,9 @@ class UploadTestCase(tests.TestCase):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.upload('test-snap', self.snap_path)
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.upload, 'test-snap', self.snap_path)
 
 
 class ReleaseTestCase(tests.TestCase):
@@ -617,8 +646,9 @@ class ReleaseTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_release_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.release('test-snap', '19', ['beta'])
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.release, 'test-snap', '19', ['beta'])
 
     def test_release_snap(self):
         self.client.login('dummy', 'test correct password')
@@ -654,20 +684,22 @@ class ReleaseTestCase(tests.TestCase):
 
     def test_release_snap_to_invalid_channel(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreReleaseError) as raised:
-            self.client.release('test-snap', '19', ['alpha'])
+        raised = self.assertRaises(
+            errors.StoreReleaseError,
+            self.client.release, 'test-snap', '19', ['alpha'])
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Not a valid channel: alpha')
 
     def test_release_unregistered_snap(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreReleaseError) as raised:
-            self.client.release('test-snap-unregistered', '19', ['alpha'])
+        raised = self.assertRaises(
+            errors.StoreReleaseError,
+            self.client.release, 'test-snap-unregistered', '19', ['alpha'])
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Sorry, try `snapcraft register test-snap-unregistered` '
             'before trying to release or choose an existing '
             'revision.')
@@ -676,8 +708,9 @@ class ReleaseTestCase(tests.TestCase):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.release('test-snap', '10', ['beta'])
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.release, 'test-snap', '10', ['beta'])
 
 
 class CloseChannelsTestCase(tests.TestCase):
@@ -690,8 +723,9 @@ class CloseChannelsTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
 
     def test_close_requires_login(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.close_channels('snap-id', ['dummy'])
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.close_channels, 'snap-id', ['dummy'])
 
     def test_close_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
@@ -701,10 +735,11 @@ class CloseChannelsTestCase(tests.TestCase):
 
     def test_close_invalid_data(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreChannelClosingError) as raised:
-            self.client.close_channels('snap-id', ['invalid'])
+        raised = self.assertRaises(
+            errors.StoreChannelClosingError,
+            self.client.close_channels, 'snap-id', ['invalid'])
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Could not close channel: The 'channels' field content "
             "is not valid.")
 
@@ -712,20 +747,22 @@ class CloseChannelsTestCase(tests.TestCase):
         # The endpoint in SCA would never return plain/text, however anything
         # might happen in the internet, so we are a little defensive.
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreChannelClosingError) as raised:
-            self.client.close_channels('snap-id', ['unexpected'])
+        raised = self.assertRaises(
+            errors.StoreChannelClosingError,
+            self.client.close_channels, 'snap-id', ['unexpected'])
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Could not close channel: 500 Internal Server Error')
 
     def test_close_broken_store_plain(self):
         # If the contract is broken by the Store, users will be have additional
         # debug information available.
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreChannelClosingError) as raised:
-            self.client.close_channels('snap-id', ['broken-plain'])
+        raised = self.assertRaises(
+            errors.StoreChannelClosingError,
+            self.client.close_channels, 'snap-id', ['broken-plain'])
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Could not close channel: 200 OK')
         self.assertEqual([
             'Invalid response from the server on channel closing:',
@@ -735,10 +772,11 @@ class CloseChannelsTestCase(tests.TestCase):
 
     def test_close_broken_store_json(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.StoreChannelClosingError) as raised:
-            self.client.close_channels('snap-id', ['broken-json'])
+        raised = self.assertRaises(
+            errors.StoreChannelClosingError,
+            self.client.close_channels, 'snap-id', ['broken-json'])
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'Could not close channel: 200 OK')
         self.assertEqual([
             'Invalid response from the server on channel closing:',
@@ -769,16 +807,18 @@ class MacaroonsTestCase(tests.TestCase):
         conf = config.Config()
         conf.set('macaroon', 'inval"id')
         conf.save()
-        with self.assertRaises(errors.InvalidCredentialsError):
-            storeapi._macaroon_auth(conf)
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            storeapi._macaroon_auth, conf)
 
     def test_invalid_discharge_raises_exception(self):
         conf = config.Config()
         conf.set('macaroon', pymacaroons.Macaroon().serialize())
         conf.set('unbound_discharge', 'inval*id')
         conf.save()
-        with self.assertRaises(errors.InvalidCredentialsError):
-            storeapi._macaroon_auth(conf)
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            storeapi._macaroon_auth, conf)
 
 
 class GetSnapHistoryTestCase(tests.TestCase):
@@ -806,8 +846,9 @@ class GetSnapHistoryTestCase(tests.TestCase):
         }]
 
     def test_get_snap_history_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.get_snap_history('basic')
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_snap_history, 'basic')
 
     def test_get_snap_history_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -835,19 +876,21 @@ class GetSnapHistoryTestCase(tests.TestCase):
 
     def test_get_snap_history_filter_by_unknown_series(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
-            self.client.get_snap_history('basic', series='12')
+        e = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.client.get_snap_history, 'basic', series='12')
         self.assertEqual(
             "Snap 'basic' was not found in '12' series.",
-            str(e.exception))
+            str(e))
 
     def test_get_snap_history_filter_by_unknown_arch(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
-            self.client.get_snap_history('basic', arch='somearch')
+        e = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.client.get_snap_history, 'basic', arch='somearch')
         self.assertEqual(
             "Snap 'basic' for 'somearch' was not found in '16' series.",
-            str(e.exception))
+            str(e))
 
     def test_get_snap_history_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
@@ -869,12 +912,13 @@ class GetSnapHistoryTestCase(tests.TestCase):
             ok=False, status_code=500, reason='Server error', json=lambda: {})
 
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.errors.StoreSnapHistoryError) as e:
-            self.client.get_snap_history('basic')
+        e = self.assertRaises(
+            storeapi.errors.StoreSnapHistoryError,
+            self.client.get_snap_history, 'basic')
         self.assertEqual(
             "Error fetching history of snap id 'my_snap_id' for 'any arch' "
             "in '16' series: 500 Server error.",
-            str(e.exception))
+            str(e))
 
 
 class GetSnapStatusTestCase(tests.TestCase):
@@ -921,8 +965,9 @@ class GetSnapStatusTestCase(tests.TestCase):
         }
 
     def test_get_snap_status_without_login_raises_exception(self):
-        with self.assertRaises(errors.InvalidCredentialsError):
-            self.client.get_snap_status('basic')
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_snap_status, 'basic')
 
     def test_get_snap_status_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -949,19 +994,21 @@ class GetSnapStatusTestCase(tests.TestCase):
 
     def test_get_snap_status_filter_by_unknown_series(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
-            self.client.get_snap_status('basic', series='12')
+        e = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.client.get_snap_status, 'basic', series='12')
         self.assertEqual(
             "Snap 'basic' was not found in '12' series.",
-            str(e.exception))
+            str(e))
 
     def test_get_snap_status_filter_by_unknown_arch(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.errors.SnapNotFoundError) as e:
-            self.client.get_snap_status('basic', arch='somearch')
+        e = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.client.get_snap_status, 'basic', arch='somearch')
         self.assertEqual(
             "Snap 'basic' for 'somearch' was not found in '16' series.",
-            str(e.exception))
+            str(e))
 
     def test_get_snap_status_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
@@ -980,12 +1027,13 @@ class GetSnapStatusTestCase(tests.TestCase):
             ok=False, status_code=500, reason='Server error', json=lambda: {})
 
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(storeapi.errors.StoreSnapStatusError) as e:
-            self.client.get_snap_status('basic')
+        e = self.assertRaises(
+            storeapi.errors.StoreSnapStatusError,
+            self.client.get_snap_status, 'basic')
         self.assertEqual(
             "Error fetching status of snap id 'my_snap_id' for 'any arch' "
             "in '16' series: 500 Server error.",
-            str(e.exception))
+            str(e))
 
 
 class SignDeveloperAgreementTestCase(tests.TestCase):
@@ -1011,20 +1059,23 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
 
     def test_sign_dev_agreement_exception(self):
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
-            self.client.sign_developer_agreement(False)
+        raised = self.assertRaises(
+            errors.DeveloperAgreementSignError,
+            self.client.sign_developer_agreement, False)
         self.assertIn(
             'There was an error while signing developer agreement.\n'
             'Reason: \'Bad Request\'\n',
-            str(raised.exception))
+            str(raised))
 
     def test_sign_dev_agreement_exception_store_down(self):
         self.useFixture(fixtures.EnvironmentVariable('STORE_DOWN', '1'))
         self.client.login('dummy', 'test correct password')
-        with self.assertRaises(errors.DeveloperAgreementSignError) as raised:
-            self.client.sign_developer_agreement(latest_tos_accepted=True)
+        raised = self.assertRaises(
+            errors.DeveloperAgreementSignError,
+            self.client.sign_developer_agreement,
+            latest_tos_accepted=True)
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'There was an error while signing developer agreement.\n'
             'Reason: \'Internal Server Error\'\n'
             'Text: \'Broken\'')

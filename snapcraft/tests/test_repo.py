@@ -347,20 +347,24 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
-        with self.assertRaises(EnvironmentError) as raised:
-            repo.install_build_packages(['package-does-not-exist'])
+        raised = self.assertRaises(
+            EnvironmentError,
+            repo.install_build_packages,
+            ['package-does-not-exist'])
 
         self.assertEqual(
             "Could not find a required package in 'build-packages': "
             '"The cache has no package named \'package-does-not-exist\'"',
-            str(raised.exception))
+            str(raised))
 
 
 class CommandCheckTestCase(tests.TestCase):
 
     def test_check_for_command_not_installed(self):
-        with self.assertRaises(errors.MissingCommandError):
-            repo.check_for_command('missing-command')
+        raised = self.assertRaises(
+            errors.MissingCommandError,
+            repo.check_for_command,
+            'missing-command')
 
     def test_check_for_command_installed(self):
         repo.check_for_command('sh')

@@ -63,12 +63,14 @@ class TestParserBaseDir(TestCase):
 
 
 class TestParser(TestCase):
+
     def tearDown(self):
         try:
             os.remove(PARTS_FILE)
             os.remove(TEST_OUTPUT_PATH)
         except FileNotFoundError:
             pass
+        super().tearDown()
 
     def setUp(self):
         super().setUp()
@@ -1104,8 +1106,9 @@ origin: lp:not-a-real-snapcraft-parser-example
 description: example main
 parts: [main]
 """)
-        with self.assertRaises(FileNotFoundError):
-            main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertRaises(
+            FileNotFoundError,
+            main, ['--debug', '--index', TEST_OUTPUT_PATH])
 
     def test_missing_packages(self):
         self.mock_check_command.side_effect = MissingCommandError('bzr')

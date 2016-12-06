@@ -72,14 +72,16 @@ class StatusCommandTestCase(tests.TestCase):
         }
 
     def test_status_without_snap_raises_exception(self):
-        with self.assertRaises(docopt.DocoptExit) as raised:
-            main(['status'])
+        raised = self.assertRaises(
+            docopt.DocoptExit,
+            main, ['status'])
 
-        self.assertIn('Usage:', str(raised.exception))
+        self.assertIn('Usage:', str(raised))
 
     def test_status_with_no_permissions(self):
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['status', 'snap-test'])
 
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?',
@@ -89,8 +91,9 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test'])
+        self.assertRaises(
+            SystemExit,
+            main, ['status', 'snap-test'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '16' series.",
@@ -100,8 +103,9 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test', '--arch=arm64'])
+        self.assertRaises(
+            SystemExit,
+            main, ['status', 'snap-test', '--arch=arm64'])
 
         self.assertIn(
             "Snap 'snap-test' for 'arm64' was not found in '16' series.",
@@ -111,8 +115,9 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test', '--series=15'])
+        self.assertRaises(
+            SystemExit,
+            main, ['status', 'snap-test', '--series=15'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '15' series.",
@@ -123,8 +128,9 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_by_unknown_arch(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test', '--arch=some-arch'])
+        self.assertRaises(
+            SystemExit,
+            main, ['status', 'snap-test', '--arch=some-arch'])
 
         self.assertIn(
             "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
@@ -135,8 +141,9 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_by_unknown_series(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['status', 'snap-test', '--series=some-series'])
+        self.assertRaises(
+            SystemExit,
+            main, ['status', 'snap-test', '--series=some-series'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in 'some-series' series.",

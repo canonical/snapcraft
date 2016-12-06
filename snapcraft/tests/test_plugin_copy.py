@@ -49,11 +49,10 @@ class TestCopyPlugin(TestCase):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            c.build()
+        raised = self.assertRaises(EnvironmentError, c.build)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "[Errno 2] No such file or directory: '{}/src'".format(
                 c.builddir))
 
@@ -66,10 +65,9 @@ class TestCopyPlugin(TestCase):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            c.build()
+        raised = self.assertRaises(EnvironmentError, c.build)
 
-        self.assertEqual(raised.exception.__str__(), "no matches for 'src*'")
+        self.assertEqual(raised.__str__(), "no matches for 'src*'")
 
     def test_copy_plugin_copies(self):
         self.mock_options.files = {
@@ -365,11 +363,12 @@ class TestRecursivelyLink(TestCase):
 
     def test_recursively_link_directory_overwrite_file_raises(self):
         open('qux', 'w').close()
-        with self.assertRaises(NotADirectoryError) as raised:
-            _recursively_link('foo', 'qux', os.getcwd())
+        raised = self.assertRaises(
+            NotADirectoryError,
+            _recursively_link,'foo', 'qux', os.getcwd())
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Cannot overwrite non-directory 'qux' with directory 'foo'")
 
     def test_recursively_link_subtree(self):

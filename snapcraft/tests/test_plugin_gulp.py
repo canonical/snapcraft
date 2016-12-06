@@ -109,10 +109,11 @@ class GulpPluginTestCase(tests.TestCase):
             gulp_tasks = []
             node_engine = '4'
 
-        with self.assertRaises(EnvironmentError) as raised:
-            gulp.GulpPlugin('test-part', Options(), self.project_options)
+        raised = self.assertRaises(
+            EnvironmentError,
+            gulp.GulpPlugin, 'test-part', Options(), self.project_options)
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          'architecture not supported (fantasy-arch)')
 
     def test_schema(self):

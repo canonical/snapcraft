@@ -79,12 +79,14 @@ grade: stable
       - part1
 """)
 
-        with self.assertRaises(RuntimeError) as raised:
-            lifecycle.execute('pull', self.project_options,
-                              part_names=['part2'])
+        raised = self.assertRaises(
+            RuntimeError,
+            lifecycle.execute,
+            'pull', self.project_options,
+            part_names=['part2'])
 
         self.assertEqual(
-            raised.exception.__str__(),
+            raised.__str__(),
             "Requested 'pull' of 'part2' but there are unsatisfied "
             "prerequisites: 'part1'")
 
@@ -404,9 +406,11 @@ grade: stable
         # it has dependents that need it.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            with self.assertRaises(RuntimeError) as raised:
-                lifecycle.execute('stage', self.project_options,
-                                  part_names=['part1'])
+            raised = self.assertRaises(
+                RuntimeError,
+                lifecycle.execute,
+                'stage', self.project_options,
+                part_names=['part1'])
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -420,7 +424,7 @@ grade: stable
         self.assertEqual(
             "The 'stage' step for 'part1' needs to be run again, but 'part2' "
             "depends upon it. Please clean the build step of 'part2' first.",
-            str(raised.exception))
+            str(raised))
 
     def test_dirty_stage_part_with_unbuilt_dependent(self):
         self.make_snapcraft_yaml("""parts:
@@ -517,8 +521,10 @@ grade: stable
         # Should catch that the part needs to be rebuilt and raise an error.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            with self.assertRaises(RuntimeError) as raised:
-                lifecycle.execute('build', self.project_options)
+            raised = self.assertRaises(
+                RuntimeError,
+                lifecycle.execute,
+                'build', self.project_options)
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n',
@@ -528,7 +534,7 @@ grade: stable
             "The 'build' step of 'part1' is out of date:\n\n"
             "The 'bar' and 'foo' part properties appear to have changed.\n\n"
             "Please clean that part's 'build' step in order to continue",
-            str(raised.exception))
+            str(raised))
 
     def test_dirty_pull_raises(self):
         self.make_snapcraft_yaml("""parts:
@@ -551,8 +557,10 @@ grade: stable
         # Should catch that the part needs to be re-pulled and raise an error.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            with self.assertRaises(RuntimeError) as raised:
-                lifecycle.execute('pull', self.project_options)
+            raised = self.assertRaises(
+                RuntimeError,
+                lifecycle.execute,
+                'pull', self.project_options)
 
         self.assertEqual('', self.fake_logger.output)
 
@@ -560,7 +568,7 @@ grade: stable
             "The 'pull' step of 'part1' is out of date:\n\n"
             "The 'bar' and 'foo' project options appear to have changed.\n\n"
             "Please clean that part's 'pull' step in order to continue",
-            str(raised.exception))
+            str(raised))
 
     @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
     @mock.patch('snapcraft.repo.install_build_packages')
@@ -582,8 +590,10 @@ grade: stable
         # Pull it again with armhf. Should catch that the part needs to be
         # re-pulled due to the change in target architecture and raise an
         # error.
-        with self.assertRaises(RuntimeError) as raised:
-            lifecycle.execute('pull', snapcraft.ProjectOptions(
+        raised = self.assertRaises(
+            RuntimeError,
+            lifecycle.execute,
+            'pull', snapcraft.ProjectOptions(
                 target_deb_arch='armhf'))
 
         self.assertEqual("Setting target machine to 'armhf'\n",
@@ -593,4 +603,4 @@ grade: stable
             "The 'pull' step of 'part1' is out of date:\n\n"
             "The 'deb_arch' project option appears to have changed.\n\n"
             "Please clean that part's 'pull' step in order to continue",
-            str(raised.exception))
+            str(raised))
