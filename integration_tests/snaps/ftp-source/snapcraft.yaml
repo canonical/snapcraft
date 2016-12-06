@@ -1,5 +1,5 @@
 name: ftp-source
-version: 3.20.1
+version: 0.2.3
 summary: Test downloading files from ftp source
 description: |
   Make sure sources can be fetched from FTP servers.
@@ -11,4 +11,4 @@ confinement: devmode
 parts:
   libwnck:
     plugin: dump
-    source: ftp://ftp.gnome.org/pub/GNOME/sources/libwnck/3.20/libwnck-$SNAPCRAFT_PROJECT_VERSION.tar.xz
+    source: ftp://ftp.kernel.org/pub/software/admin/A3Com/A3Com-0.2.3.tar.gz
