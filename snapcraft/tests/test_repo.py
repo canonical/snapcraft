@@ -361,7 +361,7 @@ class BuildPackagesTestCase(tests.TestCase):
 class CommandCheckTestCase(tests.TestCase):
 
     def test_check_for_command_not_installed(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.MissingCommandError,
             repo.check_for_command,
             'missing-command')

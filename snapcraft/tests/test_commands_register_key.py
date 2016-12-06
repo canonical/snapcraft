@@ -212,7 +212,7 @@ class RegisterKeyTestCase(tests.TestCase):
 
         raised = self.assertRaises(
             SystemExit,
-            main,['register-key', 'default'])
+            main, ['register-key', 'default'])
 
         self.assertEqual(0, mock_get_account_information.call_count)
         self.assertEqual(0, mock_register_key.call_count)

@@ -365,7 +365,7 @@ class TestRecursivelyLink(TestCase):
         open('qux', 'w').close()
         raised = self.assertRaises(
             NotADirectoryError,
-            _recursively_link,'foo', 'qux', os.getcwd())
+            _recursively_link, 'foo', 'qux', os.getcwd())
 
         self.assertEqual(
             str(raised),

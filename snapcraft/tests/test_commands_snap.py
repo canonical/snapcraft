@@ -21,7 +21,6 @@ import subprocess
 from unittest import mock
 
 import fixtures
-import testtools
 from testtools.matchers import (
     FileContains,
     FileExists,

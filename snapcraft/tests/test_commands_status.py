@@ -79,7 +79,7 @@ class StatusCommandTestCase(tests.TestCase):
         self.assertIn('Usage:', str(raised))
 
     def test_status_with_no_permissions(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             SystemExit,
             main, ['status', 'snap-test'])
 
