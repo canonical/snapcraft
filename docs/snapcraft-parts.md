@@ -186,7 +186,10 @@ required fields:
 
 Optional fields are:
 
- * origin-type - A hint about the type of project that contains the part. (e.g. bzr, git, tar)
+ * origin-type - the type of project that contains the part. (e.g. bzr, git, tar)
+ * origin-branch - the source branch that contains the part.
+ * origin-commit - the source commit that contains the part.
+ * origin-tag - the source tag that contains the part.
 
 ### Note:
 
