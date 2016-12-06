@@ -80,6 +80,16 @@ class TestCase(testtools.TestCase):
 
         return snapcraft_output
 
+    def run_snapcraft_parser(self, arguments):
+        try:
+            snapcraft_output = subprocess.check_output(
+                [self.snapcraft_parser_command, '-d'] + arguments,
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('output', content.text_content(e.output))
+            raise
+        return snapcraft_output
+
     def run_apt_autoremove(self):
         deb_env = os.environ.copy()
         deb_env.update({
