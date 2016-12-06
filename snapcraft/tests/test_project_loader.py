@@ -129,9 +129,12 @@ parts:
 """)
         with self.assertRaises(SnapcraftSchemaError) as raised:
             project_loader.Config()
-        self.assertEqual(
-            'Multiple parts have the same alias defined: {!r}'.format('testing'),
-            str(raised.exception))
+        expected = (
+            'The {path!r} property does not match the required schema: '
+            '{alias!r} does not match '.format(
+                path='apps/test/aliases[0]', alias='.test'
+            ))
+        self.assertEqual(expected, str(raised.exception)[:len(expected)])
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
