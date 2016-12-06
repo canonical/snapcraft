@@ -197,6 +197,50 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
+    def test_origin_options(self, mock_get_origin_data):
+        _create_example_output("""
+{{{
+---
+maintainer: John Doe <john.doe@example.com
+origin: lp:snapcraft-parser-example
+origin-type: bzr
+origin-branch: stable-branch
+origin-commit: 123
+origin-tag: source-tag
+description: example
+parts: [main]
+}}}
+""")
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'main': {
+                    'source': 'lp:something',
+                    'plugin': 'copy',
+                    'files': ['file1', 'file2'],
+                },
+            }
+        }
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+
+        self.mock_get.assert_has_calls([
+            mock.call('lp:snapcraft-parser-example', source_type='bzr')
+        ])
+
+        mock_source_handler = self.mock_get.return_value
+        mock_source_handler.assert_has_calls([
+            mock.call(
+                'lp:snapcraft-parser-example',
+                source_dir=os.path.join(
+                    parser._get_base_dir(),
+                    _encode_origin('lp:snapcraft-parser-example')))
+        ])
+
+        mock_handler = mock_source_handler.return_value
+        self.assertEqual(mock_handler.source_branch, 'stable-branch')
+        self.assertEqual(mock_handler.source_commit, 123)
+        self.assertEqual(mock_handler.source_tag, 'source-tag')
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_valid_variable_substition(self, mock_get_origin_data):
         _create_example_output("""
 ---
