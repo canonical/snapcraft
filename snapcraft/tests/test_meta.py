@@ -262,7 +262,7 @@ class CreateTestCase(CreateBaseTestCase):
 class CreateWithConfinementTestCase(CreateBaseTestCase):
 
     scenarios = [(confinement, dict(confinement=confinement)) for
-                 confinement in ['strict', 'devmode']]
+                 confinement in ['strict', 'devmode', 'classic']]
 
     def test_create_meta_with_confinement(self):
         self.config_data['confinement'] = self.confinement
