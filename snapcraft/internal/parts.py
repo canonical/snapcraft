@@ -149,6 +149,7 @@ class PartsConfig:
 
     def __init__(self, parts, project_options, validator, build_tools,
                  snapcraft_yaml):
+        self._snap_name = parts['name']
         self._confinement = parts['confinement']
         self._parts_data = parts.get('parts', {})
         self._project_options = project_options
@@ -285,12 +286,16 @@ class PartsConfig:
                 stagedir, self._project_options.arch_triplet)
             env += project_loader._build_env(
                 part.installdir,
+                self._snap_name,
                 self._confinement,
-                self._project_options.arch_triplet)
+                self._project_options.arch_triplet,
+                core_linker=self._project_options.core_linker)
             env += project_loader._build_env_for_stage(
                 stagedir,
+                self._snap_name,
                 self._confinement,
-                self._project_options.arch_triplet)
+                self._project_options.arch_triplet,
+                core_linker=self._project_options.core_linker)
             env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
         else:
             env += part.env(stagedir)

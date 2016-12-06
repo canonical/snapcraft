@@ -161,9 +161,12 @@ class Config:
         env = []
 
         env += _runtime_env(stage_dir, self._project_options.arch_triplet)
-        env += _build_env_for_stage(stage_dir,
-                                    self.data['confinement'],
-                                    self._project_options.arch_triplet)
+        env += _build_env_for_stage(
+            stage_dir,
+            self.data['name'],
+            self.data['confinement'],
+            self._project_options.arch_triplet,
+            core_linker=self._project_options.core_linker)
         for part in self.parts.all_parts:
             env += part.env(stage_dir)
 
@@ -287,7 +290,7 @@ def _runtime_env(root, arch_triplet):
     return env
 
 
-def _build_env(root, confinement, arch_triplet):
+def _build_env(root, snap_name, confinement, arch_triplet, core_linker=None):
     """Set the environment variables required for building.
 
     This is required for the current parts installdir due to stage-packages
@@ -301,20 +304,29 @@ def _build_env(root, confinement, arch_triplet):
             env.append(formatting_utils.format_path_variable(
                 envvar, paths, prepend='-I', separator=' '))
 
-    paths = common.get_library_paths(root, arch_triplet)
     if confinement == 'classic':
-        core_paths = [
-            '/snap/core/current/lib/{}'.format(arch_triplet),
-            '/snap/core/current/usr/lib/{}'.format(arch_triplet),
-        ]
-        core_rpaths = formatting_utils.combine_paths(
-            core_paths, prepend='', separator=':')
+        if not core_linker:
+            raise EnvironmentError('classic confinement requires the '
+                                   'core_linker to be set')
+
+        core_path = os.path.join('/snap', 'core', 'current')
+        core_rpaths = common.get_library_paths(core_path, arch_triplet,
+                                               existing_only=False)
+        snap_path = os.path.join('/snap', snap_name, 'current')
+        snap_rpaths = common.get_library_paths(snap_path, arch_triplet,
+                                               existing_only=False)
+
+        rpaths = formatting_utils.combine_paths(
+            core_rpaths + snap_rpaths, prepend='', separator=':')
         env.append('LDFLAGS="$LDFLAGS '
                    # Building tools to continue the build becomes problematic
-                   # with this.
-                   # '-Wl,-z,nodefaultlib '
+                   # with nodefaultlib.
+                   '-Wl,-z,nodefaultlib '
                    '-Wl,--enable-new-dtags '
-                   '-Wl,-rpath,{}"'.format(core_rpaths))
+                   '-Wl,--dynamic-linker={0}{1} '
+                   '-Wl,-rpath,{2}"'.format(core_path, core_linker, rpaths))
+
+    paths = common.get_library_paths(root, arch_triplet)
     if paths:
         env.append(formatting_utils.format_path_variable(
             'LDFLAGS', paths, prepend='-L', separator=' '))
@@ -327,8 +339,10 @@ def _build_env(root, confinement, arch_triplet):
     return env
 
 
-def _build_env_for_stage(stagedir, confinement, arch_triplet):
-    env = _build_env(stagedir, confinement, arch_triplet)
+def _build_env_for_stage(stagedir, snap_name, confinement,
+                         arch_triplet, core_linker=None):
+    env = _build_env(stagedir, snap_name, confinement,
+                     arch_triplet, core_linker)
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
 
     return env

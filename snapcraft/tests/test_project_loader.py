@@ -1141,6 +1141,7 @@ parts:
         mock_project_options.return_value = project_options
         self.arch = project_options.deb_arch
         self.arch_triplet = project_options.arch_triplet
+        self.core_linker = project_options.core_linker
         self.addCleanup(patcher.stop)
 
     def test_config_snap_environment(self):
@@ -1296,9 +1297,19 @@ parts:
         config = project_loader.Config()
         environment = config.stage_env()
         self.assertIn(
-            'LDFLAGS="$LDFLAGS -Wl,--enable-new-dtags '
-            '-Wl,-rpath,/snap/core/current/lib/{arch_triplet}:'
-            '/snap/core/current/usr/lib/{arch_triplet}"'.format(
+            'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
+            '-Wl,--enable-new-dtags '
+            '-Wl,--dynamic-linker=/snap/core/current{core_linker} '
+            '-Wl,-rpath,'
+            '/snap/core/current/lib:'
+            '/snap/core/current/usr/lib:'
+            '/snap/core/current/lib/{arch_triplet}:'
+            '/snap/core/current/usr/lib/{arch_triplet}:'
+            '/snap/test/current/lib:'
+            '/snap/test/current/usr/lib:'
+            '/snap/test/current/lib/{arch_triplet}:'
+            '/snap/test/current/usr/lib/{arch_triplet}"'.format(
+                core_linker=self.core_linker,
                 arch_triplet=self.arch_triplet),
             environment)
 

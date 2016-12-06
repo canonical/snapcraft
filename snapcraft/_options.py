@@ -61,6 +61,7 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'amd64',
         'triplet': 'x86_64-linux-gnu',
+        'core_linker': '/lib/{triplet}/ld-linux-x86-64.so.2'
     },
     's390x': {
         'kernel': 's390x',
@@ -126,6 +127,12 @@ class ProjectOptions:
     @property
     def kernel_arch(self):
         return self.__machine_info['kernel']
+
+    @property
+    def core_linker(self):
+        core_linker = self.__machine_info.get('core_linker',
+                                              '/lib/ld-linux.so.2')
+        return core_linker.format(triplet=self.arch_triplet)
 
     @property
     def local_plugins_dir(self):
