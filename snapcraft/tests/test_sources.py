@@ -394,30 +394,35 @@ class TestBazaar(SourceTestCase):
              'source_dir'])
 
     def test_init_with_source_branch_raises_exception(self):
-        with self.assertRaises(
-                sources.IncompatibleOptionsError) as raised:
-            sources.Bazaar('lp:mysource', 'source_dir', source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Bazaar,
+            'lp:mysource', 'source_dir', source_branch='branch')
 
         expected_message = 'can\'t specify a source-branch for a bzr source'
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_depth_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Bazaar('lp://mysource', 'source_dir', source_depth=2)
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Bazaar,
+            'lp://mysource', 'source_dir', source_depth=2)
 
         expected_message = (
             'can\'t specify source-depth for a bzr source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Bazaar('lp://mysource', 'source_dir', source_tag="tag",
-                           source_commit="2")
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Bazaar,
+            'lp://mysource', 'source_dir', source_tag="tag",
+            source_commit="2")
 
         expected_message = (
             'can\'t specify both source-tag and source-commit for '
             'a bzr source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
 
 class TestGit(SourceTestCase):
@@ -530,37 +535,41 @@ class TestGit(SourceTestCase):
         ])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Git('git://mysource', 'source_dir',
-                        source_tag='tag', source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Git,
+            'git://mysource', 'source_dir',
+            source_tag='tag', source_branch='branch')
 
         expected_message = \
             'can\'t specify both source-tag and source-branch for a git source'
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_branch_and_commit_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Git(
-                'git://mysource', 'source_dir',
-                source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
-                source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Git,
+            'git://mysource', 'source_dir',
+            source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
+            source_branch='branch')
 
         expected_message = \
             'can\'t specify both source-branch and source-commit for ' \
             'a git source'
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Git(
-                'git://mysource', 'source_dir',
-                source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
-                source_tag='tag')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Git,
+            'git://mysource', 'source_dir',
+            source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
+            source_tag='tag')
 
         expected_message = \
             'can\'t specify both source-tag and source-commit for ' \
             'a git source'
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
 
 class TestMercurial(SourceTestCase):
@@ -639,45 +648,50 @@ class TestMercurial(SourceTestCase):
             ['hg', 'pull', '-b', 'my-branch', 'hg://my-source'])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Mercurial(
-                'hg://mysource', 'source_dir', source_tag='tag',
-                source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Mercurial,
+            'hg://mysource', 'source_dir', source_tag='tag',
+            source_branch='branch')
 
         expected_message = (
             'can\'t specify both source-tag and source-branch for a mercurial '
             'source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_commit_and_tag_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Mercurial(
-                'hg://mysource', 'source_dir', source_commit='2',
-                source_tag='tag')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Mercurial,
+            'hg://mysource', 'source_dir', source_commit='2',
+            source_tag='tag')
 
         expected_message = (
             'can\'t specify both source-tag and source-commit for a mercurial '
             'source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_commit_and_branch_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Mercurial(
-                'hg://mysource', 'source_dir', source_commit='2',
-                source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Mercurial,
+            'hg://mysource', 'source_dir', source_commit='2',
+            source_branch='branch')
 
         expected_message = (
             'can\'t specify both source-branch and source-commit for '
             'a mercurial source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_depth_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Mercurial('hg://mysource', 'source_dir', source_depth=2)
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Mercurial,
+            'hg://mysource', 'source_dir', source_depth=2)
 
         expected_message = (
             'can\'t specify source-depth for a mercurial source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
 
 class TestSubversion(SourceTestCase):
@@ -718,39 +732,44 @@ class TestSubversion(SourceTestCase):
             ['svn', 'update'], cwd=svn.source_dir)
 
     def test_init_with_source_tag_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Subversion(
-                'svn://mysource', 'source_dir', source_tag='tag')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Subversion,
+            'svn://mysource', 'source_dir', source_tag='tag')
         expected_message = (
             "Can't specify source-tag for a Subversion source")
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_branch_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Subversion(
-                'svn://mysource', 'source_dir', source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Subversion,
+            'svn://mysource', 'source_dir', source_branch='branch')
         expected_message = (
             "Can't specify source-branch for a Subversion source")
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Subversion(
-                'svn://mysource', 'source_dir', source_tag='tag',
-                source_branch='branch')
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Subversion,
+            'svn://mysource', 'source_dir', source_tag='tag',
+            source_branch='branch')
 
         expected_message = (
             "Can't specify source-tag OR source-branch for a Subversion "
             "source")
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
     def test_init_with_source_depth_raises_exception(self):
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            sources.Subversion('svn://mysource', 'source_dir', source_depth=2)
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            sources.Subversion,
+            'svn://mysource', 'source_dir', source_depth=2)
 
         expected_message = (
             'can\'t specify source-depth for a Subversion source')
-        self.assertEqual(raised.exception.message, expected_message)
+        self.assertEqual(raised.message, expected_message)
 
 
 class TestLocal(tests.TestCase):
@@ -987,15 +1006,17 @@ class SourceWithBranchTestCase(tests.TestCase):
     def test_get_source_with_branch_must_raise_error(self):
         handler = sources.get_source_handler('https://source.com',
                                              source_type=self.source_type)
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            handler('https://source.com',
-                    source_dir='.',
-                    source_branch=self.source_branch,
-                    source_tag=self.source_tag,
-                    source_commit=self.source_commit)
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            handler,
+            'https://source.com',
+            source_dir='.',
+            source_branch=self.source_branch,
+            source_tag=self.source_tag,
+            source_commit=self.source_commit)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'can\'t specify a {} for a {} source'.format(
                 self.error, self.source_type))
 
@@ -1018,14 +1039,16 @@ class SourceWithBranchAndTagTestCase(tests.TestCase):
     def test_get_source_with_branch_and_tag_must_raise_error(self):
         handler = sources.get_source_handler('https://source.com',
                                              source_type=self.source_type)
-        with self.assertRaises(sources.IncompatibleOptionsError) as raised:
-            handler('https://source.com',
-                    source_dir='.',
-                    source_branch=self.source_branch,
-                    source_tag=self.source_tag)
+        raised = self.assertRaises(
+            sources.IncompatibleOptionsError,
+            handler,
+            'https://source.com',
+            source_dir='.',
+            source_branch=self.source_branch,
+            source_tag=self.source_tag)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             'can\'t specify both source-tag and source-branch for a {} '
             'source'.format(self.source_type))
 

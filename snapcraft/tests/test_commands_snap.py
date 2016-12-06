@@ -21,7 +21,6 @@ import subprocess
 from unittest import mock
 
 import fixtures
-import testtools
 from testtools.matchers import (
     FileContains,
     FileExists,
@@ -32,7 +31,7 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
-class SnapCommandTestCase(testtools.TestCase, tests.TestCase):
+class SnapCommandTestCase(tests.TestCase):
 
     yaml_template = """name: snap-test
 version: 1.0

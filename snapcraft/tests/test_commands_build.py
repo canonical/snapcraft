@@ -59,10 +59,11 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['build', 'no-build', ])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['build', 'no-build', ])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             "The part named 'no-build' is not defined in 'snapcraft.yaml'\n")

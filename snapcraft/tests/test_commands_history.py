@@ -53,14 +53,16 @@ class HistoryCommandTestCase(tests.TestCase):
         }]
 
     def test_history_without_snap_raises_exception(self):
-        with self.assertRaises(docopt.DocoptExit) as raised:
-            main(['history'])
+        raised = self.assertRaises(
+            docopt.DocoptExit,
+            main, ['history'])
 
-        self.assertIn('Usage:', str(raised.exception))
+        self.assertIn('Usage:', str(raised))
 
     def test_history_with_no_permissions(self):
-        with self.assertRaises(SystemExit):
-            main(['history', 'snap-test'])
+        self.assertRaises(
+            SystemExit,
+            main, ['history', 'snap-test'])
 
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?',
@@ -70,8 +72,9 @@ class HistoryCommandTestCase(tests.TestCase):
     def test_history_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['history', 'snap-test'])
+        self.assertRaises(
+            SystemExit,
+            main, ['history', 'snap-test'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '16' series.",
@@ -81,8 +84,9 @@ class HistoryCommandTestCase(tests.TestCase):
     def test_history_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['history', 'snap-test', '--arch=arm64'])
+        self.assertRaises(
+            SystemExit,
+            main, ['history', 'snap-test', '--arch=arm64'])
 
         self.assertIn(
             "Snap 'snap-test' for 'arm64' was not found in '16' series.",
@@ -92,8 +96,9 @@ class HistoryCommandTestCase(tests.TestCase):
     def test_history_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['history', 'snap-test', '--series=15'])
+        self.assertRaises(
+            SystemExit,
+            main, ['history', 'snap-test', '--series=15'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '15' series.",
@@ -104,8 +109,9 @@ class HistoryCommandTestCase(tests.TestCase):
     def test_history_by_unknown_arch(self, mock_account_api, mock_history):
         mock_history.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['history', 'snap-test', '--arch=some-arch'])
+        self.assertRaises(
+            SystemExit,
+            main, ['history', 'snap-test', '--arch=some-arch'])
 
         self.assertIn(
             "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
@@ -116,8 +122,9 @@ class HistoryCommandTestCase(tests.TestCase):
     def test_history_by_unknown_series(self, mock_account_api, mock_history):
         mock_history.return_value = {}
 
-        with self.assertRaises(SystemExit):
-            main(['history', 'snap-test', '--series=some-series'])
+        self.assertRaises(
+            SystemExit,
+            main, ['history', 'snap-test', '--series=some-series'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in 'some-series' series.",

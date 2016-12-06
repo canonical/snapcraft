@@ -65,10 +65,11 @@ parts:
 
         self.make_snapcraft_yaml()
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['pull', 'no-pull', ])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['pull', 'no-pull', ])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             "The part named 'no-pull' is not defined in 'snapcraft.yaml'\n")
