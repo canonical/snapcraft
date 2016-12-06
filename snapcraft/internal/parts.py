@@ -147,10 +147,10 @@ class SnapcraftLogicError(Exception):
 
 class PartsConfig:
 
-    def __init__(self, parts_data, project_options, validator, build_tools,
+    def __init__(self, parts, project_options, validator, build_tools,
                  snapcraft_yaml):
-
-        self._parts_data = parts_data
+        self._confinement = parts['confinement']
+        self._parts_data = parts.get('parts', {})
         self._project_options = project_options
         self._validator = validator
         self.build_tools = build_tools
@@ -284,9 +284,13 @@ class PartsConfig:
             env += project_loader._runtime_env(
                 stagedir, self._project_options.arch_triplet)
             env += project_loader._build_env(
-                part.installdir, self._project_options.arch_triplet)
+                part.installdir,
+                self._confinement,
+                self._project_options.arch_triplet)
             env += project_loader._build_env_for_stage(
-                stagedir, self._project_options.arch_triplet)
+                stagedir,
+                self._confinement,
+                self._project_options.arch_triplet)
             env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
         else:
             env += part.env(stagedir)

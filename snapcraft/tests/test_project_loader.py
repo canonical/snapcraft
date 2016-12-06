@@ -1281,6 +1281,27 @@ parts:
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
                                 item))
 
+    def test_config_stage_environment_confinement_classic(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: classic
+grade: stable
+
+parts:
+  part1:
+    plugin: nil
+""")
+        config = project_loader.Config()
+        environment = config.stage_env()
+        self.assertIn(
+            'LDFLAGS="$LDFLAGS -Wl,--enable-new-dtags '
+            '-Wl,-rpath,/snap/core/current/lib/{arch_triplet}:'
+            '/snap/core/current/usr/lib/{arch_triplet}"'.format(
+                arch_triplet=self.arch_triplet),
+            environment)
+
     def test_config_stage_environment(self):
         paths = [os.path.join(self.stage_dir, 'lib'),
                  os.path.join(self.stage_dir, 'lib',

@@ -138,7 +138,7 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        self.parts = parts.PartsConfig(self.data.get('parts', {}),
+        self.parts = parts.PartsConfig(self.data,
                                        self._project_options,
                                        self._validator,
                                        self.build_tools,
@@ -162,6 +162,7 @@ class Config:
 
         env += _runtime_env(stage_dir, self._project_options.arch_triplet)
         env += _build_env_for_stage(stage_dir,
+                                    self.data['confinement'],
                                     self._project_options.arch_triplet)
         for part in self.parts.all_parts:
             env += part.env(stage_dir)
@@ -286,7 +287,7 @@ def _runtime_env(root, arch_triplet):
     return env
 
 
-def _build_env(root, arch_triplet):
+def _build_env(root, confinement, arch_triplet):
     """Set the environment variables required for building.
 
     This is required for the current parts installdir due to stage-packages
@@ -299,10 +300,25 @@ def _build_env(root, arch_triplet):
         for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
             env.append(formatting_utils.format_path_variable(
                 envvar, paths, prepend='-I', separator=' '))
+
     paths = common.get_library_paths(root, arch_triplet)
+    if confinement == 'classic':
+        core_paths = [
+            '/snap/core/current/lib/{}'.format(arch_triplet),
+            '/snap/core/current/usr/lib/{}'.format(arch_triplet),
+        ]
+        core_rpaths = formatting_utils.combine_paths(
+            core_paths, prepend='', separator=':')
+        env.append('LDFLAGS="$LDFLAGS '
+                   # Building tools to continue the build becomes problematic
+                   # with this.
+                   # '-Wl,-z,nodefaultlib '
+                   '-Wl,--enable-new-dtags '
+                   '-Wl,-rpath,{}"'.format(core_rpaths))
     if paths:
         env.append(formatting_utils.format_path_variable(
             'LDFLAGS', paths, prepend='-L', separator=' '))
+
     paths = common.get_pkg_config_paths(root, arch_triplet)
     if paths:
         env.append(formatting_utils.format_path_variable(
@@ -311,8 +327,8 @@ def _build_env(root, arch_triplet):
     return env
 
 
-def _build_env_for_stage(stagedir, arch_triplet):
-    env = _build_env(stagedir, arch_triplet)
+def _build_env_for_stage(stagedir, confinement, arch_triplet):
+    env = _build_env(stagedir, confinement, arch_triplet)
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
 
     return env
