@@ -30,6 +30,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'arm-linux-gnueabihf-',
         'cross-build-packages': ['gcc-arm-linux-gnueabihf'],
         'triplet': 'arm-linux-gnueabihf',
+        'core_linker': 'lib/ld-linux-armhf.so.3',
     },
     'aarch64': {
         'kernel': 'arm64',
@@ -37,6 +38,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'aarch64-linux-gnu-',
         'cross-build-packages': ['gcc-aarch64-linux-gnu'],
         'triplet': 'aarch64-linux-gnu',
+        'core_linker': 'lib/ld-linux-aarch64.so.1',
     },
     'i686': {
         'kernel': 'x86',
@@ -61,7 +63,7 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'amd64',
         'triplet': 'x86_64-linux-gnu',
-        'core_linker': '/lib/{triplet}/ld-linux-x86-64.so.2'
+        'core_linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
         'kernel': 's390x',
@@ -130,9 +132,11 @@ class ProjectOptions:
 
     @property
     def core_linker(self):
+        core_path = os.path.join('/snap', 'core', 'current')
         core_linker = self.__machine_info.get('core_linker',
-                                              '/lib/ld-linux.so.2')
-        return core_linker.format(triplet=self.arch_triplet)
+                                              'lib/ld-linux.so.2')
+
+        return os.readlink(os.path.join(core_path, core_linker))
 
     @property
     def local_plugins_dir(self):

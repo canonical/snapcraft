@@ -323,8 +323,8 @@ def _build_env(root, snap_name, confinement, arch_triplet, core_linker=None):
                    # with nodefaultlib.
                    '-Wl,-z,nodefaultlib '
                    '-Wl,--enable-new-dtags '
-                   '-Wl,--dynamic-linker={0}{1} '
-                   '-Wl,-rpath,{2}"'.format(core_path, core_linker, rpaths))
+                   '-Wl,--dynamic-linker={0} '
+                   '-Wl,-rpath,{1}"'.format(core_linker, rpaths))
 
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
