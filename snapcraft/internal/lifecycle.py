@@ -56,7 +56,7 @@ confinement: devmode # use 'strict' once you have the right plugs and slots
 
 parts:
   my-part:
-    # See 'snapcraft plugins'
+    # See 'snapcraft list-plugins'
     plugin: nil
 """  # noqa, lines too long.
 
