@@ -52,4 +52,6 @@ class TestSnapcraftExamples(
         # Build snap will raise an exception in case of error.
         snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
-        self.install_snap(snap_path, self.name, self.version)
+        # TODO reenable git once snap-confine and snapd bits are in place
+        if self.name != 'git':
+            self.install_snap(snap_path, self.name, self.version)
