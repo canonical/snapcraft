@@ -41,9 +41,7 @@ class MissingState(Exception):
 
 class DuplicateAliasError(SnapcraftError):
 
-    fmt = (
-        'Multiple parts have the same alias defined: {alias!r}'
-    )
+    fmt = 'Multiple parts have the same alias defined: {alias!r}'
 
 
 class SnapcraftPartMissingError(SnapcraftError):

@@ -75,7 +75,7 @@ class Validator:
             while e.absolute_path:
                 element = e.absolute_path.popleft()
                 # assume numbers are indices and use 'xxx[123]' notation.
-                if int == type(element):
+                if isinstance(element, int):
                     path[-1] = '{}[{}]'.format(path[-1], element)
                 else:
                     path.append(str(element))
