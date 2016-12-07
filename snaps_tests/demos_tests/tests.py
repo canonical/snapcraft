@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
+
 import testscenarios
 
 import snaps_tests
@@ -46,6 +48,9 @@ class TestSnapcraftExamples(
     ]
 
     def test_demo(self):
+        # Building classic snaps require the core snap to be installed
+        if self.name == 'git':
+            subprocess.check_call(['sudo', 'snap', 'install', 'core'])
         # Build snap will raise an exception in case of error.
         snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
