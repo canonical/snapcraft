@@ -158,6 +158,7 @@ class Config:
 
     def stage_env(self):
         stage_dir = self._project_options.stage_dir
+        core_dynamic_linker = self._project_options.get_core_dynamic_linker()
         env = []
 
         env += _runtime_env(stage_dir, self._project_options.arch_triplet)
@@ -166,7 +167,7 @@ class Config:
             self.data['name'],
             self.data['confinement'],
             self._project_options.arch_triplet,
-            core_linker=self._project_options.core_linker)
+            core_dynamic_linker=core_dynamic_linker)
         for part in self.parts.all_parts:
             env += part.env(stage_dir)
 
@@ -290,7 +291,8 @@ def _runtime_env(root, arch_triplet):
     return env
 
 
-def _build_env(root, snap_name, confinement, arch_triplet, core_linker=None):
+def _build_env(root, snap_name, confinement, arch_triplet,
+               core_dynamic_linker=None):
     """Set the environment variables required for building.
 
     This is required for the current parts installdir due to stage-packages
@@ -305,9 +307,9 @@ def _build_env(root, snap_name, confinement, arch_triplet, core_linker=None):
                 envvar, paths, prepend='-I', separator=' '))
 
     if confinement == 'classic':
-        if not core_linker:
+        if not core_dynamic_linker:
             raise EnvironmentError('classic confinement requires the '
-                                   'core_linker to be set')
+                                   'core_dynamic_linker to be set')
 
         core_path = os.path.join('/snap', 'core', 'current')
         core_rpaths = common.get_library_paths(core_path, arch_triplet,
@@ -324,7 +326,7 @@ def _build_env(root, snap_name, confinement, arch_triplet, core_linker=None):
                    '-Wl,-z,nodefaultlib '
                    '-Wl,--enable-new-dtags '
                    '-Wl,--dynamic-linker={0} '
-                   '-Wl,-rpath,{1}"'.format(core_linker, rpaths))
+                   '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
 
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
@@ -340,9 +342,9 @@ def _build_env(root, snap_name, confinement, arch_triplet, core_linker=None):
 
 
 def _build_env_for_stage(stagedir, snap_name, confinement,
-                         arch_triplet, core_linker=None):
+                         arch_triplet, core_dynamic_linker=None):
     env = _build_env(stagedir, snap_name, confinement,
-                     arch_triplet, core_linker)
+                     arch_triplet, core_dynamic_linker)
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
 
     return env

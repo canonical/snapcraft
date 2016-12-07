@@ -1141,7 +1141,6 @@ parts:
         mock_project_options.return_value = project_options
         self.arch = project_options.deb_arch
         self.arch_triplet = project_options.arch_triplet
-        self.core_linker = project_options.core_linker
         self.addCleanup(patcher.stop)
 
     def test_config_snap_environment(self):
@@ -1283,6 +1282,12 @@ parts:
                                 item))
 
     def test_config_stage_environment_confinement_classic(self):
+        dynamic_linker = '/snap/core/current/lib/ld.so'
+        patcher = unittest.mock.patch(
+            'snapcraft._options.ProjectOptions.get_core_dynamic_linker')
+        mock_core_dynamic_linker = patcher.start()
+        mock_core_dynamic_linker.return_value = dynamic_linker
+
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1299,7 +1304,7 @@ parts:
         self.assertIn(
             'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
             '-Wl,--enable-new-dtags '
-            '-Wl,--dynamic-linker=/snap/core/current{core_linker} '
+            '-Wl,--dynamic-linker={core_dynamic_linker} '
             '-Wl,-rpath,'
             '/snap/core/current/lib:'
             '/snap/core/current/usr/lib:'
@@ -1309,7 +1314,7 @@ parts:
             '/snap/test/current/usr/lib:'
             '/snap/test/current/lib/{arch_triplet}:'
             '/snap/test/current/usr/lib/{arch_triplet}"'.format(
-                core_linker=self.core_linker,
+                core_dynamic_linker=dynamic_linker,
                 arch_triplet=self.arch_triplet),
             environment)
 
