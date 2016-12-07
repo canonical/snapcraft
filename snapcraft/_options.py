@@ -30,7 +30,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'arm-linux-gnueabihf-',
         'cross-build-packages': ['gcc-arm-linux-gnueabihf'],
         'triplet': 'arm-linux-gnueabihf',
-        'core_dynamic_linker': 'lib/ld-linux-armhf.so.3',
+        'core-dynamic-linker': 'lib/ld-linux-armhf.so.3',
     },
     'aarch64': {
         'kernel': 'arm64',
@@ -38,7 +38,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'aarch64-linux-gnu-',
         'cross-build-packages': ['gcc-aarch64-linux-gnu'],
         'triplet': 'aarch64-linux-gnu',
-        'core_dynamic_linker': 'lib/ld-linux-aarch64.so.1',
+        'core-dynamic-linker': 'lib/ld-linux-aarch64.so.1',
     },
     'i686': {
         'kernel': 'x86',
@@ -51,6 +51,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'powerpc64le-linux-gnu-',
         'cross-build-packages': ['gcc-powerpc64le-linux-gnu'],
         'triplet': 'powerpc64le-linux-gnu',
+        'core-dynamic-linker': '/lib64/ld64.so.2',
     },
     'ppc': {
         'kernel': 'powerpc',
@@ -63,7 +64,7 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'amd64',
         'triplet': 'x86_64-linux-gnu',
-        'core_dynamic_linker': 'lib64/ld-linux-x86-64.so.2',
+        'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
         'kernel': 's390x',
@@ -71,6 +72,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 's390x-linux-gnu-',
         'cross-build-packages': ['gcc-s390x-linux-gnu'],
         'triplet': 's390x-linux-gnu',
+        'core-dynamic-linker': '/lib/ld64.so.1',
     }
 }
 
@@ -166,7 +168,7 @@ class ProjectOptions:
         However if core is not installed None will be returned.
         """
         core_path = os.path.join('/snap', 'core', 'current')
-        core_dynamic_linker = self.__machine_info.get('core_dynamic_linker',
+        core_dynamic_linker = self.__machine_info.get('core-dynamic-linker',
                                                       'lib/ld-linux.so.2')
 
         try:
