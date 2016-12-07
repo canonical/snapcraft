@@ -163,12 +163,19 @@ class ProjectOptions:
     def get_core_dynamic_linker(self):
         """Returns the dynamic linker used for the targetted core.
         If not found realpath for `/lib/ld-linux.so.2` is returned.
+        However if core is not installed None will be returned.
         """
         core_path = os.path.join('/snap', 'core', 'current')
         core_dynamic_linker = self.__machine_info.get('core_dynamic_linker',
                                                       'lib/ld-linux.so.2')
 
-        return os.readlink(os.path.join(core_path, core_dynamic_linker))
+        try:
+            dynamic_linker_path = os.readlink(
+                os.path.join(core_path, core_dynamic_linker))
+        except FileNotFoundError:
+            dynamic_linker_path = None
+
+        return dynamic_linker_path
 
     def _set_machine(self, target_deb_arch):
         self.__host_machine = platform.machine()
