@@ -169,12 +169,10 @@ class GodepsPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        self.assertTrue(os.path.exists(plugin.sourcedir))
         self.assertTrue(os.path.exists(plugin._gopath))
 
         plugin.clean_pull()
 
-        self.assertFalse(os.path.exists(plugin.sourcedir))
         self.assertFalse(os.path.exists(plugin._gopath))
 
     def test_build(self):

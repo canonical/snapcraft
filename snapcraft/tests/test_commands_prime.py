@@ -59,10 +59,11 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['prime', 'no-prime', ])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['prime', 'no-prime', ])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             "The part named 'no-prime' is not defined in 'snapcraft.yaml'\n")

@@ -183,11 +183,11 @@ def requires_command_success(command, not_found_fmt=None, failure_fmt=None):
     try:
         subprocess.check_call(
             cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except FileNotFoundError as err:
+    except FileNotFoundError:
         if not_found_fmt is not None:
             kwargs['fmt'] = not_found_fmt
         raise RequiredCommandNotFound(**kwargs)
-    except subprocess.CalledProcessError as err:
+    except subprocess.CalledProcessError:
         if failure_fmt is not None:
             kwargs['fmt'] = failure_fmt
         raise RequiredCommandFailure(**kwargs)

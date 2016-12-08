@@ -53,7 +53,17 @@ See the example below::
         snapcraft && snapcraft push *.snap --release edge"
       on:
         branch: master
+
+The dedicated credentials will be functional for exactly 1 year or until
+a password change on the related Ubuntu One SSO account. In order to
+refresh the project credentials, please run the following command::
+
+    $ snapcraft enable-ci travis --refresh
 """
+from contextlib import (
+    ExitStack,
+    contextmanager,
+)
 import logging
 import os
 import subprocess
@@ -75,83 +85,122 @@ TRAVIS_CONFIG_FILENAME = '.travis.yml'
 ENCRYPTED_CONFIG_FILENAME = '.snapcraft/travis_snapcraft.cfg'
 
 
-def _encrypt_config(config_path):
-    """Encrypt given snapcraft config file for Travis jobs."""
-    cmd = [
-        'travis', 'encrypt-file',
-        '--force',
-        '--add', 'after_success',
-        '--decrypt-to', LOCAL_CONFIG_FILENAME,
-        config_path, ENCRYPTED_CONFIG_FILENAME,
-    ]
-    try:
-        subprocess.check_output(cmd, stderr=subprocess.PIPE)
-    except subprocess.CalledProcessError as err:
-        raise RuntimeError(
-            '`travis encrypt-file` failed: {}\n{}'.format(
-                err.returncode, err.stderr.decode()))
+class TravisRuntimeError(Exception):
+    """Local runtime error to not confuse importlib.
+
+    Raising `RuntimeError` from a module imported in runtime
+    results in python hanging instead of just exiting.
+    """
 
 
-@requires_command_success(
-    'travis version',
-    not_found_fmt=(
-        'Travis CLI (`{cmd_list[0]}`) is not available.\n'
-        'Please install it before trying this command again:\n\n'
-        '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
-        '    $ sudo gem install travis\n'),
-    failure_fmt=(
-        'Travis CLI (`{command}`) is not functional.\n'
-        'Make sure it works correctly in your system '
-        'before trying this command again.'))
-@requires_command_success(
-    'git status',
-    not_found_fmt=(
-        'Git (`{cmd_list[0]}`) is not available, this tool cannot verify '
-        'its prerequisites.\n'
-        'Please install it before trying this command again:\n\n'
-        '    $ sudo apt install git\n'),
-    failure_fmt=(
-        'The current directory is not a Git repository.\n'
-        'Please switch to the desired project repository where '
-        'Travis should be enabled.'))
-@requires_path_exists(
-    TRAVIS_CONFIG_FILENAME,
-    error_fmt=(
-        'Travis project is not initialized for the current directory.\n'
-        'Please initialize Travis project (e.g. `travis init`) with '
-        'appropriate parameters.'))
-def enable():
-    series = storeapi.constants.DEFAULT_SERIES
-    project_config = load_config()
-    snap_name = project_config.data['name']
-    logger.info(
-        'Enabling Travis testbeds to push and release "{}" snaps '
-        'to edge channel in series {}'.format(snap_name, series)
-    )
-
-    packages = [{'name': snap_name, 'series': series}]
-    channels = ['edge']
-
-    # XXX cprov 20161116: Needs caveat syntax for restricting
-    # origins (IP or reverse-dns) but Travis sudo-enabled containers
-    # do not have static egress routes.
+def _acquire_and_encrypt_credentials(packages, channels):
+    """Acquire and encrypt Store credentials for Travis jobs."""
+    # XXX cprov 20161116: Needs caveat syntax for restricting origins
+    # (IP or reverse-dns) but Travis sudo-enabled containers, needed for
+    # running xenial snapcraft, do not have static egress routes.
     # See https://docs.travis-ci.com/user/ip-addresses.
-
     logger.info('Acquiring specific authorization information ...')
     store = storeapi.StoreClient()
     if not _login(store, packages=packages, channels=channels, save=False):
-        raise RuntimeError(
+        raise TravisRuntimeError(
             'Cannot continue without logging in successfully.')
 
     logger.info(
         'Encrypting authorization for Travis and adjusting project to '
         'automatically decrypt and use it during "after_success".')
-
-    os.makedirs(os.path.dirname(LOCAL_CONFIG_FILENAME), exist_ok=True)
     with tempfile.NamedTemporaryFile(mode='w') as fd:
         store.conf.parser.write(fd)
         fd.flush()
-        _encrypt_config(fd.name)
+        os.makedirs(
+            os.path.dirname(LOCAL_CONFIG_FILENAME), exist_ok=True)
+        cmd = [
+            'travis', 'encrypt-file',
+            '--force',
+            '--add', 'after_success',
+            '--decrypt-to', LOCAL_CONFIG_FILENAME,
+            fd.name, ENCRYPTED_CONFIG_FILENAME,
+        ]
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as err:
+            raise TravisRuntimeError(
+                '`travis encrypt-file` failed: {}\n{}'.format(
+                    err.returncode, err.stderr.decode()))
+
+
+@contextmanager
+def requires_travis_preconditions():
+    """Verify all Travis CI integration preconditions."""
+    required = (
+        requires_command_success(
+            'travis settings',
+            not_found_fmt=(
+                'Travis CLI (`{cmd_list[0]}`) is not available.\n'
+                'Please install it before trying this command again:\n\n'
+                '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
+                '    $ sudo gem install travis\n'),
+            failure_fmt=(
+                'Travis CLI (`{command}`) is not functional or you are not '
+                'allowed to access this repository settings.\n'
+                'Make sure it works correctly in your system before trying '
+                'this command again.')
+        ),
+        requires_command_success(
+            'git status',
+            not_found_fmt=(
+                'Git (`{cmd_list[0]}`) is not available, this tool cannot '
+                'verify its prerequisites.\n'
+                'Please install it before trying this command again:\n\n'
+                '    $ sudo apt install git\n'),
+            failure_fmt=(
+                'The current directory is not a Git repository.\n'
+                'Please switch to the desired project repository where '
+                'Travis should be enabled.')
+        ),
+        requires_path_exists(
+            TRAVIS_CONFIG_FILENAME,
+            error_fmt=(
+                'Travis project is not initialized for the current '
+                'directory.\n'
+                'Please initialize Travis project (e.g. `travis init`) with '
+                'appropriate parameters.')
+        ),
+    )
+    with ExitStack() as cm:
+        [cm.enter_context(c) for c in required]
+        yield
+
+
+@requires_travis_preconditions()
+def refresh():
+    series = storeapi.constants.DEFAULT_SERIES
+    project_config = load_config()
+    snap_name = project_config.data['name']
+    logger.info(
+        'Refreshing credentials to push and release "{}" snaps '
+        'to edge channel in series {}'.format(snap_name, series))
+
+    packages = [{'name': snap_name, 'series': series}]
+    channels = ['edge']
+    _acquire_and_encrypt_credentials(packages, channels)
+
+    logger.info(
+        'Done. Please commit the changes to `{}` file.'.format(
+            ENCRYPTED_CONFIG_FILENAME))
+
+
+@requires_travis_preconditions()
+def enable():
+    series = storeapi.constants.DEFAULT_SERIES
+    project_config = load_config()
+    snap_name = project_config.data['name']
+    logger.info(
+        'Enabling Travis testbeds to push and release {!r} snaps '
+        'to edge channel in series {!r}'.format(snap_name, series))
+
+    packages = [{'name': snap_name, 'series': series}]
+    channels = ['edge']
+    _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
         'Configuring "deploy" phase to build and release the snap in the '

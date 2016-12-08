@@ -47,8 +47,13 @@ env = []
 logger = logging.getLogger(__name__)
 
 
-def assemble_env():
-    return '\n'.join(['export ' + e for e in env])
+def assemble_env(include_ld_library_paths=True):
+    if include_ld_library_paths:
+        parse_env = env
+    else:
+        parse_env = [e for e in env if not e.startswith('LD_LIBRARY_PATH')]
+
+    return '\n'.join(['export ' + e for e in parse_env])
 
 
 def run(cmd, **kwargs):
@@ -154,8 +159,12 @@ def get_python2_path(root):
             'PYTHONPATH cannot be set for {!r}'.format(root))
 
 
+def get_url_scheme(url):
+    return urllib.parse.urlparse(url).scheme
+
+
 def isurl(url):
-    return urllib.parse.urlparse(url).scheme != ''
+    return get_url_scheme(url) != ''
 
 
 def reset_env():
@@ -229,7 +238,12 @@ def get_include_paths(root, arch_triplet):
     return [p for p in paths if os.path.exists(p)]
 
 
-def get_library_paths(root, arch_triplet):
+def get_library_paths(root, arch_triplet, existing_only=True):
+    """Returns common library paths for a snap.
+
+    If existing_only is set the paths returned must exist for
+    the root that was set.
+    """
     paths = [
         os.path.join(root, 'lib'),
         os.path.join(root, 'usr', 'lib'),
@@ -237,7 +251,10 @@ def get_library_paths(root, arch_triplet):
         os.path.join(root, 'usr', 'lib', arch_triplet),
     ]
 
-    return [p for p in paths if os.path.exists(p)]
+    if existing_only:
+        paths = [p for p in paths if os.path.exists(p)]
+
+    return paths
 
 
 def get_pkg_config_paths(root, arch_triplet):

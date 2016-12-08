@@ -87,9 +87,8 @@ class WafPluginTestCase(tests.TestCase):
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
         build_properties = schema['build-properties']
-        self.assertEqual(2, len(build_properties))
+        self.assertEqual(1, len(build_properties))
         self.assertTrue('configflags' in build_properties)
-        self.assertTrue('disable-parallel' in build_properties)
 
     def waf_build(self):
         """Helper to call a full build"""

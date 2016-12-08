@@ -120,7 +120,7 @@ class MavenPluginTestCase(tests.TestCase):
 
         build_properties = schema['build-properties']
         self.assertEqual(
-            ['disable-parallel', 'maven-options', 'maven-targets'],
+            ['maven-options', 'maven-targets'],
             build_properties)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
@@ -163,8 +163,7 @@ class MavenPluginTestCase(tests.TestCase):
 
         os.makedirs(plugin.sourcedir)
 
-        with self.assertRaises(RuntimeError):
-            plugin.build()
+        self.assertRaises(RuntimeError, plugin.build)
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package']),

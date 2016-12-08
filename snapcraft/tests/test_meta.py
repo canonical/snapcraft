@@ -27,7 +27,7 @@ from snapcraft.internal.errors import MissingGadgetError
 from snapcraft import tests
 
 
-class CreateTest(tests.TestCase):
+class CreateBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -38,12 +38,16 @@ class CreateTest(tests.TestCase):
             'version': '1.0',
             'description': 'my description',
             'summary': 'my summary',
+            'confinement': 'devmode',
         }
 
         self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
         self.meta_dir = os.path.join(self.snap_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
+
+
+class CreateTestCase(CreateBaseTestCase):
 
     def test_create_meta(self):
         create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
@@ -55,60 +59,13 @@ class CreateTest(tests.TestCase):
             y = yaml.load(f)
 
         expected = {'architectures': ['amd64'],
+                    'confinement': 'devmode',
                     'description': 'my description',
                     'summary': 'my summary',
                     'name': 'my-package',
                     'version': '1.0'}
 
-        self.assertEqual(y, expected)
-
-    def test_create_meta_with_confinement(self):
-        confinement_types = [
-            'strict',
-            'devmode',
-        ]
-
-        for confinement_type in confinement_types:
-            with self.subTest(key=confinement_type):
-                self.config_data['confinement'] = confinement_type
-
-                create_snap_packaging(
-                    self.config_data, self.snap_dir, self.parts_dir)
-
-                self.assertTrue(
-                    os.path.exists(self.snap_yaml),
-                    'snap.yaml was not created')
-
-                with open(self.snap_yaml) as f:
-                    y = yaml.load(f)
-                self.assertTrue(
-                    'confinement' in y,
-                    'Expected "confinement" property to be in snap.yaml')
-                self.assertEqual(y['confinement'], confinement_type)
-
-    def test_create_meta_with_grade(self):
-        grade_types = [
-            'stable',
-            'devel',
-        ]
-
-        for grade_type in grade_types:
-            with self.subTest(key=grade_type):
-                self.config_data['grade'] = grade_type
-
-                create_snap_packaging(
-                    self.config_data, self.snap_dir, self.parts_dir)
-
-                self.assertTrue(
-                    os.path.exists(self.snap_yaml),
-                    'snap.yaml was not created')
-
-                with open(self.snap_yaml) as f:
-                    y = yaml.load(f)
-                self.assertTrue(
-                    'grade' in y,
-                    'Expected "grade" property to be in snap.yaml')
-                self.assertEqual(y['grade'], grade_type)
+        self.assertEqual(y, expected, expected)
 
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
@@ -157,10 +114,12 @@ class CreateTest(tests.TestCase):
     def test_create_gadget_meta_with_missing_gadget_yaml_raises_error(self):
         self.config_data['type'] = 'gadget'
 
-        with self.assertRaises(MissingGadgetError):
-            create_snap_packaging(self.config_data,
-                                  self.snap_dir,
-                                  self.parts_dir)
+        self.assertRaises(
+            MissingGadgetError,
+            create_snap_packaging,
+            self.config_data,
+            self.snap_dir,
+            self.parts_dir)
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
@@ -294,6 +253,7 @@ class CreateTest(tests.TestCase):
             'summary': 'my summary',
             'name': 'my-package',
             'version': '1.0',
+            'confinement': 'devmode',
             'plugs': {
                 'network-server': {
                     'interface': 'network-bind',
@@ -304,6 +264,52 @@ class CreateTest(tests.TestCase):
         self.assertEqual(y, expected)
 
 
+class CreateWithConfinementTestCase(CreateBaseTestCase):
+
+    scenarios = [(confinement, dict(confinement=confinement)) for
+                 confinement in ['strict', 'devmode', 'classic']]
+
+    def test_create_meta_with_confinement(self):
+        self.config_data['confinement'] = self.confinement
+
+        create_snap_packaging(
+            self.config_data, self.snap_dir, self.parts_dir)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml),
+            'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertTrue(
+            'confinement' in y,
+            'Expected "confinement" property to be in snap.yaml')
+        self.assertEqual(y['confinement'], self.confinement)
+
+
+class CreateWithGradeTestCase(CreateBaseTestCase):
+
+    scenarios = [(grade, dict(grade=grade)) for
+                 grade in ['stable', 'devel']]
+
+    def test_create_meta_with_grade(self):
+        self.config_data['grade'] = self.grade
+
+        create_snap_packaging(
+            self.config_data, self.snap_dir, self.parts_dir)
+
+        self.assertTrue(
+            os.path.exists(self.snap_yaml),
+            'snap.yaml was not created')
+
+        with open(self.snap_yaml) as f:
+            y = yaml.load(f)
+        self.assertTrue(
+            'grade' in y,
+            'Expected "grade" property to be in snap.yaml')
+        self.assertEqual(y['grade'], self.grade)
+
+
 # TODO this needs more tests.
 class WrapExeTestCase(tests.TestCase):
 
@@ -311,7 +317,9 @@ class WrapExeTestCase(tests.TestCase):
         super().setUp()
 
         # TODO move to use outer interface
-        self.packager = _SnapPackaging({}, self.snap_dir, self.parts_dir)
+        self.packager = _SnapPackaging({'confinement': 'devmode'},
+                                       self.snap_dir,
+                                       self.parts_dir)
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
@@ -477,12 +485,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
-        with self.assertRaises(EnvironmentError) as raised:
-            self.packager._wrap_apps(apps)
+        raised = self.assertRaises(
+            EnvironmentError,
+            self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-does-not-exist' defined in the "
             "app 'app1' does not exist or is not executable",
-            str(raised.exception))
+            str(raised))
 
     def test_command_is_not_executable(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
@@ -493,12 +502,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            self.packager._wrap_apps(apps)
+        raised = self.assertRaises(
+            EnvironmentError,
+            self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-not-executable' defined in the "
             "app 'app1' does not exist or is not executable",
-            str(raised.exception))
+            str(raised))
 
     def test_command_found(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]

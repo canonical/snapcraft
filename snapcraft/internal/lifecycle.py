@@ -132,8 +132,9 @@ class _Executor:
         for part in self.config.all_parts:
             steps_run[part.name] = set()
             for step in common.COMMAND_ORDER:
-                if part.is_dirty(step):
-                    self._handle_dirty(part, step)
+                dirty_report = part.get_dirty_report(step)
+                if dirty_report:
+                    self._handle_dirty(part, step, dirty_report)
                 elif not (part.should_step_run(step)):
                     steps_run[part.name].add(step)
                     part.notify_part_progress('Skipping {}'.format(step),
@@ -203,12 +204,36 @@ class _Executor:
                                        self.project_options.snap_dir,
                                        self.project_options.parts_dir)
 
-    def _handle_dirty(self, part, step):
+    def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
-            raise RuntimeError(
-                'The {0!r} step of {1!r} is out of date. Please clean that '
-                "part's {0!r} step in order to rebuild".format(
-                    step, part.name))
+            message_components = [
+                'The {!r} step of {!r} is out of date:\n\n'.format(
+                    step, part.name)]
+
+            if dirty_report.dirty_properties:
+                humanized_properties = formatting_utils.humanize_list(
+                    dirty_report.dirty_properties, 'and')
+                pluralized_connection = formatting_utils.pluralize(
+                    dirty_report.dirty_properties, 'property appears',
+                    'properties appear')
+                message_components.append(
+                    'The {} part {} to have changed.\n'.format(
+                        humanized_properties, pluralized_connection))
+
+            if dirty_report.dirty_project_options:
+                humanized_options = formatting_utils.humanize_list(
+                    dirty_report.dirty_project_options, 'and')
+                pluralized_connection = formatting_utils.pluralize(
+                    dirty_report.dirty_project_options, 'option appears',
+                    'options appear')
+                message_components.append(
+                    'The {} project {} to have changed.\n'.format(
+                        humanized_options, pluralized_connection))
+
+            message_components.append(
+                "\nPlease clean that part's {!r} step in order to "
+                'continue'.format(step))
+            raise RuntimeError(''.join(message_components))
 
         staged_state = self.config.get_project_state('stage')
         primed_state = self.config.get_project_state('prime')
@@ -225,13 +250,15 @@ class _Executor:
                         not dependent.is_clean('build')):
                     humanized_parts = formatting_utils.humanize_list(
                         dependents, 'and')
+                    pluralized_depends = formatting_utils.pluralize(
+                        dependents, "depends", "depend")
 
                     raise RuntimeError(
                         'The {0!r} step for {1!r} needs to be run again, but '
-                        '{2} depend{3} upon it. Please clean the build '
+                        '{2} {3} upon it. Please clean the build '
                         'step of {2} first.'.format(
                             step, part.name, humanized_parts,
-                            's' if len(dependents) == 1 else ''))
+                            pluralized_depends))
 
         part.clean(staged_state, primed_state, step, '(out of date)')
 

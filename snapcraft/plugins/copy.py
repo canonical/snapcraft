@@ -61,8 +61,6 @@ class CopyPlugin(snapcraft.BasePlugin):
         # The `files` keyword is required here, but the `source` keyword is
         # not. It should default to the current working directory.
         schema['required'].append('files')
-        schema['required'].remove('source')
-        schema['properties']['source']['default'] = '.'
 
         return schema
 

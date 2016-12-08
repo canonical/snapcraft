@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import yaml
+
 import snapcraft.internal
 from snapcraft import tests
 
 
-class StageStateTestCase(tests.TestCase):
+class StageStateBaseTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -28,17 +30,17 @@ class StageStateTestCase(tests.TestCase):
         self.project = Project()
         self.files = {'foo'}
         self.directories = {'bar'}
-        self.part_properties = {'stage': ['baz']}
+        self.part_properties = {'stage': ['baz'], 'filesets': {'qux': 'quux'}}
 
         self.state = snapcraft.internal.states.StageState(
             self.files, self.directories, self.part_properties, self.project)
 
-    def test_representation(self):
-        expected = ('StageState(directories: {}, files: {}, '
-                    'project_options: {}, properties: {})').format(
-            self.directories, self.files, self.project.__dict__,
-            self.part_properties)
-        self.assertEqual(expected, repr(self.state))
+
+class StateStageTestCase(StageStateBaseTestCase):
+
+    def test_yaml_conversion(self):
+        state_from_yaml = yaml.load(yaml.dump(self.state))
+        self.assertEqual(self.state, state_from_yaml)
 
     def test_comparison(self):
         other = snapcraft.internal.states.StageState(
@@ -46,17 +48,31 @@ class StageStateTestCase(tests.TestCase):
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
-    def test_comparison_not_equal(self):
-        others = [
-            snapcraft.internal.states.StageState(
-                set(), self.directories, self.part_properties, self.project),
-            snapcraft.internal.states.StageState(
-                self.files, set(), self.part_properties, self.project),
-            snapcraft.internal.states.StageState(
-                self.files, self.directories, None, self.project),
-        ]
+    def test_properties_of_interest(self):
+        properties = self.state.properties_of_interest(self.part_properties)
+        self.assertEqual(2, len(properties))
+        self.assertEqual(['baz'], properties['stage'])
+        self.assertEqual({'qux': 'quux'}, properties['filesets'])
 
-        for index, other in enumerate(others):
-            with self.subTest('other #{}'.format(index+1)):
-                self.assertFalse(self.state == other,
-                                 'Expected states to be different')
+    def test_project_options_of_interest(self):
+        self.assertFalse(self.state.project_options_of_interest(self.project))
+
+
+class StageStateNotEqualTestCase(StageStateBaseTestCase):
+
+    scenarios = [
+        ('no files', dict(
+            other_property='files', other_value=set())),
+        ('no directories', dict(
+            other_property='directories', other_value=set())),
+        ('no part properties', dict(
+            other_property='part_properties', other_value=None)),
+    ]
+
+    def test_comparison_not_equal(self):
+        setattr(self, self.other_property, self.other_value)
+        other_state = snapcraft.internal.states.StageState(
+            self.files, self.directories, self.part_properties, self.project)
+
+        self.assertFalse(self.state == other_state,
+                         'Expected states to be different')

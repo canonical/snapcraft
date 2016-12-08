@@ -79,12 +79,14 @@ grade: stable
       - part1
 """)
 
-        with self.assertRaises(RuntimeError) as raised:
-            lifecycle.execute('pull', self.project_options,
-                              part_names=['part2'])
+        raised = self.assertRaises(
+            RuntimeError,
+            lifecycle.execute,
+            'pull', self.project_options,
+            part_names=['part2'])
 
         self.assertEqual(
-            raised.exception.__str__(),
+            raised.__str__(),
             "Requested 'pull' of 'part2' but there are unsatisfied "
             "prerequisites: 'part1'")
 
@@ -192,13 +194,15 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return self.name == 'part1' and step == 'prime'
+        def _fake_dirty_report(self, step):
+            if self.name == 'part1' and step == 'prime':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should automatically clean and re-prime if that step is dirty
         # for the part.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
             lifecycle.execute('prime', self.project_options)
 
         output = self.fake_logger.output.split('\n')
@@ -239,13 +243,15 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'prime'
+        def _fake_dirty_report(self, step):
+            if step == 'prime':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should automatically clean and re-prime if that step is dirty
         # for the part.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
             lifecycle.execute('prime', self.project_options)
 
         output = self.fake_logger.output.split('\n')
@@ -287,13 +293,15 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return self.name == 'part1' and step == 'stage'
+        def _fake_dirty_report(self, step):
+            if self.name == 'part1' and step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should automatically clean and re-stage if that step is dirty
         # for the part.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
             lifecycle.execute('stage', self.project_options)
 
         output = self.fake_logger.output.split('\n')
@@ -334,13 +342,15 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'stage'
+        def _fake_dirty_report(self, step):
+            if step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should automatically clean and re-stage if that step is dirty
         # for the part.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
             lifecycle.execute('stage', self.project_options)
 
         output = self.fake_logger.output.split('\n')
@@ -387,16 +397,20 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'stage'
+        def _fake_dirty_report(self, step):
+            if step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should raise a RuntimeError about the fact that stage is dirty but
         # it has dependents that need it.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
-            with self.assertRaises(RuntimeError) as raised:
-                lifecycle.execute('stage', self.project_options,
-                                  part_names=['part1'])
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
+            raised = self.assertRaises(
+                RuntimeError,
+                lifecycle.execute,
+                'stage', self.project_options,
+                part_names=['part1'])
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -410,7 +424,7 @@ grade: stable
         self.assertEqual(
             "The 'stage' step for 'part1' needs to be run again, but 'part2' "
             "depends upon it. Please clean the build step of 'part2' first.",
-            str(raised.exception))
+            str(raised))
 
     def test_dirty_stage_part_with_unbuilt_dependent(self):
         self.make_snapcraft_yaml("""parts:
@@ -428,13 +442,15 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'stage'
+        def _fake_dirty_report(self, step):
+            if step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should automatically clean and re-stage if that step is dirty
         # for the part.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
             lifecycle.execute('stage', self.project_options,
                               part_names=['part1'])
 
@@ -464,13 +480,15 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'stage'
+        def _fake_dirty_report(self, step):
+            if step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
 
         # Should automatically clean and re-stage if that step is dirty
         # for the part.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
             lifecycle.execute('prime', self.project_options)
 
         self.assertEqual(
@@ -495,22 +513,28 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'build'
+        def _fake_dirty_report(self, step):
+            if step == 'build':
+                return pluginhandler.DirtyReport({'foo', 'bar'}, set())
+            return None
 
         # Should catch that the part needs to be rebuilt and raise an error.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
-            with self.assertRaises(RuntimeError) as raised:
-                lifecycle.execute('build', self.project_options)
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
+            raised = self.assertRaises(
+                RuntimeError,
+                lifecycle.execute,
+                'build', self.project_options)
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n',
             self.fake_logger.output)
 
         self.assertEqual(
-            "The 'build' step of 'part1' is out of date. Please clean that "
-            "part's 'build' step in order to rebuild", str(raised.exception))
+            "The 'build' step of 'part1' is out of date:\n\n"
+            "The 'bar' and 'foo' part properties appear to have changed.\n\n"
+            "Please clean that part's 'build' step in order to continue",
+            str(raised))
 
     def test_dirty_pull_raises(self):
         self.make_snapcraft_yaml("""parts:
@@ -525,20 +549,26 @@ grade: stable
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        def _fake_is_dirty(self, step):
-            return step == 'pull'
+        def _fake_dirty_report(self, step):
+            if step == 'pull':
+                return pluginhandler.DirtyReport(set(), {'foo', 'bar'})
+            return None
 
         # Should catch that the part needs to be re-pulled and raise an error.
-        with mock.patch.object(pluginhandler.PluginHandler, 'is_dirty',
-                               _fake_is_dirty):
-            with self.assertRaises(RuntimeError) as raised:
-                lifecycle.execute('pull', self.project_options)
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
+            raised = self.assertRaises(
+                RuntimeError,
+                lifecycle.execute,
+                'pull', self.project_options)
 
         self.assertEqual('', self.fake_logger.output)
 
         self.assertEqual(
-            "The 'pull' step of 'part1' is out of date. Please clean that "
-            "part's 'pull' step in order to rebuild", str(raised.exception))
+            "The 'pull' step of 'part1' is out of date:\n\n"
+            "The 'bar' and 'foo' project options appear to have changed.\n\n"
+            "Please clean that part's 'pull' step in order to continue",
+            str(raised))
 
     @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
     @mock.patch('snapcraft.repo.install_build_packages')
@@ -560,13 +590,17 @@ grade: stable
         # Pull it again with armhf. Should catch that the part needs to be
         # re-pulled due to the change in target architecture and raise an
         # error.
-        with self.assertRaises(RuntimeError) as raised:
-            lifecycle.execute('pull', snapcraft.ProjectOptions(
+        raised = self.assertRaises(
+            RuntimeError,
+            lifecycle.execute,
+            'pull', snapcraft.ProjectOptions(
                 target_deb_arch='armhf'))
 
         self.assertEqual("Setting target machine to 'armhf'\n",
                          self.fake_logger.output)
 
         self.assertEqual(
-            "The 'pull' step of 'part1' is out of date. Please clean that "
-            "part's 'pull' step in order to rebuild", str(raised.exception))
+            "The 'pull' step of 'part1' is out of date:\n\n"
+            "The 'deb_arch' project option appears to have changed.\n\n"
+            "Please clean that part's 'pull' step in order to continue",
+            str(raised))

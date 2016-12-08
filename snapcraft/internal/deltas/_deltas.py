@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 delta_format_options = [
-    'xdelta'
+    'xdelta3'
 ]
 
 
@@ -177,7 +177,7 @@ class BaseDeltasGenerator:
         stdout_file.close()
         stderr_file.close()
 
-        if self.is_returncode_unexpected(proc):
+        if proc.returncode != 0:
             _stdout = _stderr = ''
             with open(stdout_path) as f:
                 _stdout = f.read()

@@ -19,6 +19,7 @@ import os
 from testtools.matchers import FileExists
 
 import integration_tests
+import testscenarios
 
 
 class LocalSourceTestCase(integration_tests.TestCase):
@@ -41,3 +42,25 @@ class LocalSourceTestCase(integration_tests.TestCase):
                 project_dir, 'parts', 'make-project', 'build',
                 'stamp-install'),
             FileExists())
+
+
+class LocalSourceSubfoldersTestCase(
+        testscenarios.WithScenarios, integration_tests.TestCase):
+
+    scenarios = [
+        ('Top folder',
+            {'subfolder': '.'}),
+        ('Sub folder Level 1',
+            {'subfolder': 'packaging'}),
+        ('Sub folder Level 2',
+            {'subfolder': os.path.join('packaging', 'snap-package')}),
+        ('Sub folder Level 3',
+            {'subfolder': os.path.join(
+                'packaging', 'snap-package', 'yes-really-deep')}),
+    ]
+
+    def test_pull_local_source(self):
+        project_dir = 'local-source-subfolders'
+        self.run_snapcraft(
+            'pull', project_dir,
+            yaml_dir=os.path.join(project_dir, self.subfolder))

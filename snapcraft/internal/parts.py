@@ -26,7 +26,7 @@ from xdg import BaseDirectory
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal.errors import SnapcraftPartMissingError
-from snapcraft.internal import sources, pluginhandler
+from snapcraft.internal import pluginhandler, repo
 from snapcraft.internal import project_loader
 
 
@@ -147,10 +147,11 @@ class SnapcraftLogicError(Exception):
 
 class PartsConfig:
 
-    def __init__(self, parts_data, project_options, validator, build_tools,
+    def __init__(self, parts, project_options, validator, build_tools,
                  snapcraft_yaml):
-
-        self._parts_data = parts_data
+        self._snap_name = parts['name']
+        self._confinement = parts['confinement']
+        self._parts_data = parts.get('parts', {})
         self._project_options = project_options
         self._validator = validator
         self.build_tools = build_tools
@@ -175,7 +176,7 @@ class PartsConfig:
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
 
-            plugin_name = properties.pop('plugin', None)
+            plugin_name = properties.get('plugin')
 
             if 'after' in properties:
                 self.after_requests[part_name] = properties.pop('after')
@@ -263,8 +264,11 @@ class PartsConfig:
             part_schema=self._validator.part_schema)
 
         self.build_tools += part.code.build_packages
-        self.build_tools += sources.get_required_packages(part.code.options)
+        if part.source_handler and part.source_handler.command:
+            self.build_tools.append(
+                repo.get_packages_for_source_type(part.source_handler.command))
         self.all_parts.append(part)
+
         return part
 
     def build_env_for_part(self, part, root_part=True):
@@ -272,6 +276,7 @@ class PartsConfig:
 
         env = []
         stagedir = self._project_options.stage_dir
+        core_dynamic_linker = self._project_options.get_core_dynamic_linker()
 
         if root_part:
             # this has to come before any {}/usr/bin
@@ -281,9 +286,17 @@ class PartsConfig:
             env += project_loader._runtime_env(
                 stagedir, self._project_options.arch_triplet)
             env += project_loader._build_env(
-                part.installdir, self._project_options.arch_triplet)
+                part.installdir,
+                self._snap_name,
+                self._confinement,
+                self._project_options.arch_triplet,
+                core_dynamic_linker=core_dynamic_linker)
             env += project_loader._build_env_for_stage(
-                stagedir, self._project_options.arch_triplet)
+                stagedir,
+                self._snap_name,
+                self._confinement,
+                self._project_options.arch_triplet,
+                core_dynamic_linker=core_dynamic_linker)
             env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
         else:
             env += part.env(stagedir)

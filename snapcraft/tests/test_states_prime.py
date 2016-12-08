@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import yaml
+
 import snapcraft.internal
 from snapcraft import tests
 
 
-class PrimeStateTestCase(tests.TestCase):
+class PrimeStateBaseTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -29,18 +31,18 @@ class PrimeStateTestCase(tests.TestCase):
         self.files = {'foo'}
         self.directories = {'bar'}
         self.dependency_paths = {'baz'}
-        self.part_properties = {'snap': ['gux']}
+        self.part_properties = {'snap': ['qux']}
 
         self.state = snapcraft.internal.states.PrimeState(
             self.files, self.directories, self.dependency_paths,
             self.part_properties, self.project)
 
-    def test_representation(self):
-        expected = ('PrimeState(dependency_paths: {}, directories: {}, '
-                    'files: {}, project_options: {}, properties: {})').format(
-            self.dependency_paths, self.directories, self.files,
-            self.project.__dict__, self.part_properties)
-        self.assertEqual(expected, repr(self.state))
+
+class PrimeStateTestCase(PrimeStateBaseTestCase):
+
+    def test_yaml_conversion(self):
+        state_from_yaml = yaml.load(yaml.dump(self.state))
+        self.assertEqual(self.state, state_from_yaml)
 
     def test_comparison(self):
         other = snapcraft.internal.states.PrimeState(
@@ -49,23 +51,33 @@ class PrimeStateTestCase(tests.TestCase):
 
         self.assertTrue(self.state == other, 'Expected states to be identical')
 
-    def test_comparison_not_equal(self):
-        others = [
-            snapcraft.internal.states.PrimeState(
-                set(), self.directories, self.dependency_paths,
-                self.part_properties, self.project),
-            snapcraft.internal.states.PrimeState(
-                self.files, set(), self.dependency_paths,
-                self.part_properties, self.project),
-            snapcraft.internal.states.PrimeState(
-                self.files, self.directories, set(),
-                self.part_properties, self.project),
-            snapcraft.internal.states.PrimeState(
-                self.files, self.directories, self.dependency_paths,
-                None, self.project)
-        ]
+    def test_properties_of_interest(self):
+        properties = self.state.properties_of_interest(self.part_properties)
+        self.assertEqual(1, len(properties))
+        self.assertEqual(['qux'], properties['snap'])
 
-        for index, other in enumerate(others):
-            with self.subTest('other #{}'.format(index+1)):
-                self.assertFalse(self.state == other,
-                                 'Expected states to be different')
+    def test_project_options_of_interest(self):
+        self.assertFalse(self.state.project_options_of_interest(self.project))
+
+
+class PrimeStateNotEqualTestCase(PrimeStateBaseTestCase):
+
+    scenarios = [
+        ('no files', dict(
+            other_property='files', other_value=set())),
+        ('no directories', dict(
+            other_property='directories', other_value=set())),
+        ('no dependency paths', dict(
+            other_property='dependency_paths', other_value=set())),
+        ('no part properties', dict(
+            other_property='part_properties', other_value=None)),
+    ]
+
+    def test_comparison_not_equal(self):
+        setattr(self, self.other_property, self.other_value)
+        other_state = snapcraft.internal.states.PrimeState(
+            self.files, self.directories, self.dependency_paths,
+            self.part_properties, self.project)
+
+        self.assertFalse(self.state == other_state,
+                         'Expected states to be different')

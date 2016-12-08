@@ -27,7 +27,7 @@ from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
 
-class HelpCommandTestCase(tests.TestCase):
+class HelpCommandBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -37,14 +37,18 @@ class HelpCommandTestCase(tests.TestCase):
         p.start()
         self.addCleanup(p.stop)
 
+
+class HelpCommandTestCase(HelpCommandBaseTestCase):
+
     def test_topic_and_plugin_not_found_exits_with_tip(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['help', 'does-not-exist'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['help', 'does-not-exist'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             'The plugin does not exist. Run `snapcraft '
@@ -92,23 +96,6 @@ class HelpCommandTestCase(tests.TestCase):
                          'The help message does not start with {!r} but with '
                          '{!r} instead'.format(expected, output))
 
-    def test_print_topic_help_with_devel_for_valid_topic(self):
-        expected = {
-            'sources': 'Help on module snapcraft',
-            'plugins': 'Help on package snapcraft',
-        }
-
-        for key in _TOPICS:
-            fake_terminal = fixture_setup.FakeTerminal()
-            self.useFixture(fake_terminal)
-            with self.subTest(key=key):
-                main(['help', key, '--devel'])
-                output = fake_terminal.getvalue()[:len(expected[key])]
-                self.assertEqual(
-                    output, expected[key],
-                    'The help message does not start with {!r} but with '
-                    '{!r} instead'.format(expected[key], output))
-
     def test_no_unicode_in_help_strings(self):
         helps = ['topics']
 
@@ -127,8 +114,28 @@ class HelpCommandTestCase(tests.TestCase):
         for key in helps:
             fake_terminal = fixture_setup.FakeTerminal()
             self.useFixture(fake_terminal)
-            with self.subTest(key=key):
-                main(['help', key])
-                # An UnicodeEncodeError will be raised if the help text has
-                # non-ASCII characters.
-                fake_terminal.getvalue().encode('ascii')
+            main(['help', key])
+            # An UnicodeEncodeError will be raised if the help text has
+            # non-ASCII characters.
+            fake_terminal.getvalue().encode('ascii')
+
+
+class TopicWithDevelTestCase(HelpCommandBaseTestCase):
+
+    scenarios = [(topic, dict(topic=topic)) for
+                 topic in _TOPICS]
+
+    def test_print_topic_help_with_devel_for_valid_topic(self):
+        expected = {
+            'sources': 'Help on module snapcraft',
+            'plugins': 'Help on package snapcraft',
+        }
+
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+        main(['help', self.topic, '--devel'])
+        output = fake_terminal.getvalue()[:len(expected[self.topic])]
+        self.assertEqual(
+            output, expected[self.topic],
+            'The help message does not start with {!r} but with '
+            '{!r} instead'.format(expected[self.topic], output))
