@@ -174,6 +174,14 @@ class SnapsTestCase(testtools.TestCase):
     def _add_output_detail(self, output):
         self.addDetail('output', content.text_content(str(output)))
 
+    def install_store_snap(self, snap_name):
+        try:
+            subprocess.check_call(['sudo', 'snap', 'install', snap_name])
+        except subprocess.CalledProcessError as e:
+            self.addDetail('snap install output',
+                           content.text_content(str(e.output)))
+            raise
+
     def install_snap(self, snap_local_path, snap_name, version,
                      devmode=False):
         if not config.get('skip-install', False):
