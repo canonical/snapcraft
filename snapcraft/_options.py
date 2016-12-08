@@ -172,8 +172,10 @@ class ProjectOptions:
                                                       'lib/ld-linux.so.2')
 
         try:
-            dynamic_linker_path = os.readlink(
+            dynamic_linker_resolved_path = os.readlink(
                 os.path.join(core_path, core_dynamic_linker))
+            dynamic_linker_path = os.path.join(
+                core_path, dynamic_linker_resolved_path.lstrip('/'))
         except FileNotFoundError:
             dynamic_linker_path = None
 
