@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
-import itertools
 import logging
 import os
 import os.path
@@ -134,10 +133,9 @@ class Config:
         self.data = self._expand_env(snapcraft_yaml)
 
         # Prevent multiple parts from having duplicate alias names
-        aliases = [
-            app.get('aliases', []) for app_name, app in self.data.get(
-                'apps', {}).items()]
-        aliases = list(itertools.chain.from_iterable(aliases))
+        aliases = []
+        for app_name, app in self.data.get('apps', {}).items():
+            aliases.extend(app.get('aliases', []))
         unique_aliases = set(aliases)
         if len(aliases) != len(unique_aliases):
             for alias in unique_aliases:
