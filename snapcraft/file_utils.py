@@ -163,9 +163,9 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)
-    except PermissionError:
-        # This file was readonly or otherwise uneditable.
-        return
+    except PermissionError as e:
+        logger.debug('Unable to open {path} for writing: {error}'.format(
+            path=file_path, error=e))
 
 
 def executable_exists(path):
