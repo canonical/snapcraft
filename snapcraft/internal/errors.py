@@ -44,7 +44,8 @@ class DuplicateAliasError(SnapcraftError):
     fmt = 'Multiple parts have the same alias defined: {aliases!r}'
 
     def __str__(self):
-        self.aliases = ','.join(self.aliases)
+        if isinstance(self.aliases, list):
+            self.aliases = ','.join(self.aliases)
         return super().__str__()
 
 

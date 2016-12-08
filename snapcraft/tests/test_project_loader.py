@@ -101,12 +101,16 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(DuplicateAliasError) as raised:
-            project_loader.Config()
+        raised = self.assertRaises(
+            DuplicateAliasError,
+            project_loader.Config)
+
+        print("JOE: raised: {}".format(raised))
+
         self.assertEqual(
             'Multiple parts have the same alias defined: {!r}'.format(
                 'testing'),
-            str(raised.exception))
+            str(raised))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_invalid_alias(self, mock_loadPlugin):
@@ -129,14 +133,15 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        with self.assertRaises(SnapcraftSchemaError) as raised:
-            project_loader.Config()
+        raised = self.assertRaises(
+            SnapcraftSchemaError,
+            project_loader.Config)
         expected = (
             'The {path!r} property does not match the required schema: '
             '{alias!r} does not match '.format(
                 path='apps/test/aliases[0]', alias='.test'
             ))
-        self.assertEqual(expected, str(raised.exception)[:len(expected)])
+        self.assertEqual(expected, str(raised)[:len(expected)])
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
