@@ -1281,6 +1281,43 @@ parts:
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
                                 item))
 
+    def test_config_stage_environment_confinement_classic(self):
+        dynamic_linker = '/snap/core/current/lib/ld.so'
+        patcher = unittest.mock.patch(
+            'snapcraft._options.ProjectOptions.get_core_dynamic_linker')
+        mock_core_dynamic_linker = patcher.start()
+        mock_core_dynamic_linker.return_value = dynamic_linker
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: classic
+grade: stable
+
+parts:
+  part1:
+    plugin: nil
+""")
+        config = project_loader.Config()
+        environment = config.stage_env()
+        self.assertIn(
+            'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
+            '-Wl,--enable-new-dtags '
+            '-Wl,--dynamic-linker={core_dynamic_linker} '
+            '-Wl,-rpath,'
+            '/snap/core/current/lib:'
+            '/snap/core/current/usr/lib:'
+            '/snap/core/current/lib/{arch_triplet}:'
+            '/snap/core/current/usr/lib/{arch_triplet}:'
+            '/snap/test/current/lib:'
+            '/snap/test/current/usr/lib:'
+            '/snap/test/current/lib/{arch_triplet}:'
+            '/snap/test/current/usr/lib/{arch_triplet}"'.format(
+                core_dynamic_linker=dynamic_linker,
+                arch_triplet=self.arch_triplet),
+            environment)
+
     def test_config_stage_environment(self):
         paths = [os.path.join(self.stage_dir, 'lib'),
                  os.path.join(self.stage_dir, 'lib',

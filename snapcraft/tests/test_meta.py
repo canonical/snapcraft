@@ -38,6 +38,7 @@ class CreateBaseTestCase(tests.TestCase):
             'version': '1.0',
             'description': 'my description',
             'summary': 'my summary',
+            'confinement': 'devmode',
         }
 
         self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
@@ -58,12 +59,13 @@ class CreateTestCase(CreateBaseTestCase):
             y = yaml.load(f)
 
         expected = {'architectures': ['amd64'],
+                    'confinement': 'devmode',
                     'description': 'my description',
                     'summary': 'my summary',
                     'name': 'my-package',
                     'version': '1.0'}
 
-        self.assertEqual(y, expected)
+        self.assertEqual(y, expected, expected)
 
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
@@ -251,6 +253,7 @@ class CreateTestCase(CreateBaseTestCase):
             'summary': 'my summary',
             'name': 'my-package',
             'version': '1.0',
+            'confinement': 'devmode',
             'plugs': {
                 'network-server': {
                     'interface': 'network-bind',
@@ -314,7 +317,9 @@ class WrapExeTestCase(tests.TestCase):
         super().setUp()
 
         # TODO move to use outer interface
-        self.packager = _SnapPackaging({}, self.snap_dir, self.parts_dir)
+        self.packager = _SnapPackaging({'confinement': 'devmode'},
+                                       self.snap_dir,
+                                       self.parts_dir)
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
