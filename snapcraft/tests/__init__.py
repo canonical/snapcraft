@@ -23,6 +23,7 @@ import http.server
 import progressbar
 import threading
 import testscenarios
+import testtools
 
 from snapcraft.internal import common
 from snapcraft.tests import fake_servers, fixture_setup
@@ -49,7 +50,7 @@ class MockOptions:
         self.disable_parallel = disable_parallel
 
 
-class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
+class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
     def setUp(self):
         super().setUp()

@@ -45,13 +45,14 @@ class CreateKeyTestCase(tests.TestCase):
                                             mock_check_call):
         mock_installed.return_value = False
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['create-key'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['create-key'])
 
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
         self.assertEqual(0, mock_check_call.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'The snapd package is not installed.', self.fake_logger.output)
 
@@ -63,11 +64,12 @@ class CreateKeyTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['create-key'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['create-key'])
 
         self.assertEqual(0, mock_check_call.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'You already have a key named "default".', self.fake_logger.output)
 
@@ -92,11 +94,12 @@ class CreateKeyTestCase(tests.TestCase):
             ],
         }
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['create-key', 'new-key'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['create-key', 'new-key'])
 
         self.assertEqual(0, mock_check_call.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'You have already registered a key named "new-key".',
             self.fake_logger.output)

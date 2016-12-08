@@ -63,6 +63,7 @@ properties:
     description: the type of confinement supported by the snap
     default: strict
     enum:
+      - classic
       - devmode
       - strict
   grade:

@@ -65,12 +65,13 @@ class SignBuildTestCase(tests.TestCase):
                                             mock_check_output):
         mock_installed.return_value = False
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', self.snap_test.snap_path, '--local'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['sign-build', self.snap_test.snap_path, '--local'])
 
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'The snapd package is not installed.', self.fake_logger.output)
 
@@ -80,10 +81,11 @@ class SignBuildTestCase(tests.TestCase):
                                          mock_check_output):
         mock_installed.return_value = True
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', 'nonexisting.snap'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['sign-build', 'nonexisting.snap'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(0, mock_check_output.call_count)
         self.assertIn(
             'The file \'nonexisting.snap\' does not exist.',
@@ -107,11 +109,12 @@ class SignBuildTestCase(tests.TestCase):
             'grade': 'stable',
         }
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['sign-build', self.snap_test.snap_path])
 
         self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'Your account lacks permission to assert builds for this '
             'snap. Make sure you are logged in as the publisher of '
@@ -142,10 +145,11 @@ class SignBuildTestCase(tests.TestCase):
             '[]',
         ]
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             'You have no usable keys.',
             'Please create at least one key with `snapcraft create-key` '
@@ -179,11 +183,12 @@ class SignBuildTestCase(tests.TestCase):
             '[{"name": "default"}]',
         ]
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', '--key-name', 'zoing',
-                  self.snap_test.snap_path])
+        raised = self.assertRaises(
+            SystemExit,
+            main,
+            ['sign-build', '--key-name', 'zoing', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             'You have no usable key named "zoing".',
             'See the keys available in your system with `snapcraft keys`.'
@@ -217,10 +222,11 @@ class SignBuildTestCase(tests.TestCase):
             '[{"name": "default", "sha3-384": "a_hash"}]',
         ]
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             'The key \'default\' is not registered in the Store.',
             'Please register it with `snapcraft register-key \'default\'` '
@@ -255,10 +261,11 @@ class SignBuildTestCase(tests.TestCase):
             subprocess.CalledProcessError(1, ['a', 'b'])
         ]
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual([
             'Failed to sign build assertion for {}.'.format(
                 self.snap_test.snap_path),

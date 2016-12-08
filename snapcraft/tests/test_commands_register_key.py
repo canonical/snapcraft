@@ -89,12 +89,13 @@ class RegisterKeyTestCase(tests.TestCase):
                                               mock_check_output):
         mock_installed.return_value = False
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key'])
 
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'The snapd package is not installed.', self.fake_logger.output)
 
@@ -148,11 +149,12 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_check_output.return_value = json.dumps([])
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key'])
 
         self.assertEqual(0, mock_input.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn('You have no usable keys.\n', self.fake_logger.output)
 
     @mock.patch('subprocess.check_output')
@@ -165,11 +167,12 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_check_output.return_value = json.dumps(None)
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key'])
 
         self.assertEqual(0, mock_input.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn('You have no usable keys.\n', self.fake_logger.output)
 
     @mock.patch('subprocess.check_output')
@@ -180,11 +183,12 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'nonexistent'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key', 'nonexistent'])
 
         self.assertEqual(0, mock_input.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'You have no usable key named "nonexistent".\n',
             self.fake_logger.output)
@@ -206,12 +210,13 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'test')
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'default'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key', 'default'])
 
         self.assertEqual(0, mock_get_account_information.call_count)
         self.assertEqual(0, mock_register_key.call_count)
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'Cannot continue without logging in successfully.\n',
             self.fake_logger.output)
@@ -240,10 +245,11 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_get_account_information.side_effect = (
             storeapi.errors.StoreAccountInformationError(response))
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'default'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key', 'default'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'Error fetching account information from store: '
             '500 Internal Server Error\n',
@@ -270,10 +276,11 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_register_key.side_effect = (
             storeapi.errors.StoreKeyRegistrationError(response))
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['register-key', 'default'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register-key', 'default'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'Key registration failed: 500 Internal Server Error\n',
             self.fake_logger.output)

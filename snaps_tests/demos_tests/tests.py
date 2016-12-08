@@ -46,7 +46,12 @@ class TestSnapcraftExamples(
     ]
 
     def test_demo(self):
+        # Building classic snaps require the core snap to be installed
+        if self.name == 'git':
+            self.install_store_snap('core')
         # Build snap will raise an exception in case of error.
         snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
-        self.install_snap(snap_path, self.name, self.version)
+        # TODO reenable git once snap-confine and snapd bits are in place
+        if self.name != 'git':
+            self.install_snap(snap_path, self.name, self.version)

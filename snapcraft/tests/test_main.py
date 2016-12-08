@@ -50,10 +50,11 @@ class TestMain(TestCase):
         with mock.patch('snapcraft.topic_help') as mock_cmd:
             mock_cmd.side_effect = Exception('some error')
 
-            with self.assertRaises(SystemExit) as raised:
-                snapcraft.main.main(['help', 'topics'])
+            raised = self.assertRaises(
+                SystemExit,
+                snapcraft.main.main, ['help', 'topics'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(fake_logger.output, 'some error\n')
 
     @mock.patch('snapcraft.internal.log.configure')
@@ -64,10 +65,11 @@ class TestMain(TestCase):
             # When verbose, the exception should be re-raised instead of
             # SystemExit. Note that this test works since SystemExit doesn't
             # inherit from Exception.
-            with self.assertRaises(Exception) as cm:
-                snapcraft.main.main(['help', 'topics', '--debug'])
+            cm = self.assertRaises(
+                Exception,
+                snapcraft.main.main, ['help', 'topics', '--debug'])
 
-        self.assertEqual(str(cm.exception), 'some error')
+        self.assertEqual(str(cm), 'some error')
         mock_log_configure.assert_called_once_with(
             log_level=logging.DEBUG)
 

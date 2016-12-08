@@ -44,10 +44,11 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['help', 'does-not-exist'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['help', 'does-not-exist'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             'The plugin does not exist. Run `snapcraft '

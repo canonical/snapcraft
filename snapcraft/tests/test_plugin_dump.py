@@ -193,11 +193,10 @@ class DumpPluginTestCase(TestCase):
 
         plugin.pull()
 
-        with self.assertRaises(FileNotFoundError) as raised:
-            plugin.build()
+        raised = self.assertRaises(FileNotFoundError, plugin.build)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             '{!r} is a broken symlink pointing outside the snap'.format(
                 os.path.join(plugin.builddir, 'src', 'bad_relative')))
 

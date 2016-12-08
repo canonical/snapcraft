@@ -82,11 +82,12 @@ class LXDTestCase(tests.TestCase):
 
         cb = lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64')
 
-        with self.assertRaises(CalledProcessError) as raised:
-            cb._wait_for_network()
+        raised = self.assertRaises(
+            CalledProcessError,
+            cb._wait_for_network)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Command '['my-cmd']' returned non-zero exit status -1")
 
     @patch('snapcraft.internal.lxd.check_call')
@@ -121,8 +122,10 @@ class LXDTestCase(tests.TestCase):
         mock_run.side_effect = run_effect
 
         project_options = ProjectOptions(debug=False)
-        with self.assertRaises(CalledProcessError):
-            lxd.Cleanbuilder('snap.snap', 'project.tar',
-                             project_options).execute()
+        self.assertRaises(
+            CalledProcessError,
+            lxd.Cleanbuilder(
+                'snap.snap', 'project.tar',
+                project_options).execute)
 
         self.assertNotIn(['bash', '-i'], call_list)
