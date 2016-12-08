@@ -125,6 +125,7 @@ properties:
               type: string
           aliases:
             type: array
+            uniqueItems: true
             items:
               type: string
               pattern: "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"

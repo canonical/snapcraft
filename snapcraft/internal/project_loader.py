@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
+import itertools
 import logging
 import os
 import os.path
@@ -133,13 +134,16 @@ class Config:
         self.data = self._expand_env(snapcraft_yaml)
 
         # Prevent multiple parts from having duplicate alias names
-        aliases = []
-        for app in self.data.get('apps', []):
-            app = self.data['apps'][app]
-            for alias in app.get('aliases', []):
-                if alias in aliases:
-                    raise errors.DuplicateAliasError(alias=alias)
-                aliases.append(alias)
+        aliases = [
+            app.get('aliases', []) for app_name, app in self.data.get(
+                'apps', {}).items()]
+        aliases = list(itertools.chain.from_iterable(aliases))
+        unique_aliases = set(aliases)
+        if len(aliases) != len(unique_aliases):
+            for alias in unique_aliases:
+                aliases.remove(alias)
+
+            raise errors.DuplicateAliasError(aliases=aliases)
 
         # both confinement type and build quality are optionals
         _ensure_confinement_default(self.data, self._validator.schema)
