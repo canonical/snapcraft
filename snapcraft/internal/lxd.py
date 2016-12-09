@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from subprocess import CalledProcessError
 from time import sleep
 import pylxd
-from six.moves.urllib import parse
+import urllib
 from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
 
@@ -54,7 +54,7 @@ class _CommandWebsocketclient(WebSocketBaseClient):
         if self._io == sys.stdin:
             return
 
-        if len(message.data) == 0:
+        if not message.data:
             self.close()
             self._manager.remove(self)
         if message.encoding:
@@ -106,7 +106,7 @@ class Cleanbuilder:
     def _container_run(self, cmd):
         if not self._container:
             raise CalledProcessError(-1, cmd)
-        print('Executing {}'.format(cmd))
+        logger.info('Executing {}'.format(cmd))
         # API call because self._container.execute doesn't expose IO streams
         response = self._container.api.exec.post(json={
             'command': cmd,
@@ -119,7 +119,7 @@ class Cleanbuilder:
         })
         fds = response.json()['metadata']['metadata']['fds']
         operation_id = response.json()['operation'].split('/')[-1]
-        parsed = parse.urlparse(
+        parsed = urllib.parse.urlparse(
             self._client.api.operations[operation_id].websocket._api_endpoint)
         manager = WebSocketManager()
         for io in [sys.stdin, sys.stdout, sys.stderr]:
