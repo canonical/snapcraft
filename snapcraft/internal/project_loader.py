@@ -143,7 +143,7 @@ class Config:
                 duplicates.add(alias)
             else:
                 seen.add(alias)
-        if len(duplicates) > 0:
+        if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
         # both confinement type and build quality are optionals
