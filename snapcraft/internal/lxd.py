@@ -117,27 +117,24 @@ class Cleanbuilder:
             'wait-for-websocket': True,
             'interactive': False,
         })
-        self._fds = response.json()['metadata']['metadata']['fds']
+        fds = response.json()['metadata']['metadata']['fds']
         operation_id = response.json()['operation'].split('/')[-1]
-        self._parsed = parse.urlparse(
+        parsed = parse.urlparse(
             self._client.api.operations[operation_id].websocket._api_endpoint)
-        self._manager = WebSocketManager()
-        self._pipe(sys.stdin), self._pipe(sys.stdout), self._pipe(sys.stderr)
-        self._manager.start()
-        while len(self._manager) > 0:
+        manager = WebSocketManager()
+        for io in [sys.stdin, sys.stdout, sys.stderr]:
+            pipe = _CommandWebsocketclient(
+                manager, io, self._client.websocket_url)
+            secret = fds[str(io.fileno())]
+            pipe.resource = '{}?secret={}'.format(parsed.path, secret)
+            pipe.connect()
+        manager.start()
+        while len(manager) > 0:
             sleep(.1)
         response = self._client.api.operations[operation_id].get()
         exit_status = response.json()['metadata']['metadata']['return']
         if exit_status is not 0:
             raise CalledProcessError(exit_status, cmd)
-
-    def _pipe(self, io):
-        pipe = _CommandWebsocketclient(
-            self._manager, io, self._client.websocket_url)
-        pipe.resource = '{}?secret={}'.format(
-            self._parsed.path, self._fds[str(io.fileno())])
-        pipe.connect()
-        return pipe
 
     def _get_fingerprint_by_name(self, name):
         for url in self._client.api.images.get().json()['metadata']:
