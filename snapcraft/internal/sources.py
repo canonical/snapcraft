@@ -73,10 +73,9 @@ import glob
 import logging
 import os
 import os.path
-import stat
 import re
-import requests
 import shutil
+import stat
 import subprocess
 import tempfile
 import tarfile
@@ -86,11 +85,12 @@ import apt_inst
 import libarchive
 
 from snapcraft.internal import common
-from snapcraft import file_utils
-from snapcraft.internal.indicators import (
-    download_requests_stream,
-    download_urllib_source
+from snapcraft.internal.new_sources import (
+    Base,
+    FileBase,
+    IncompatibleOptionsError
 )
+from snapcraft import file_utils
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -109,51 +109,6 @@ __SOURCE_DEFAULTS = {
 
 def get_source_defaults():
     return __SOURCE_DEFAULTS.copy()
-
-
-class IncompatibleOptionsError(Exception):
-
-    def __init__(self, message):
-        self.message = message
-
-
-class Base:
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None,
-                 command=None):
-        self.source = source
-        self.source_dir = source_dir
-        self.source_tag = source_tag
-        self.source_commit = source_commit
-        self.source_branch = source_branch
-        self.source_depth = source_depth
-
-        self.command = command
-
-
-class FileBase(Base):
-
-    def pull(self):
-        if common.isurl(self.source):
-            self.download()
-        else:
-            shutil.copy2(self.source, self.source_dir)
-
-        self.provision(self.source_dir)
-
-    def download(self):
-        self.file = os.path.join(
-                self.source_dir, os.path.basename(self.source))
-
-        if common.get_url_scheme(self.source) == 'ftp':
-            download_urllib_source(self.source, self.file)
-        else:
-            request = requests.get(
-                self.source, stream=True, allow_redirects=True)
-            request.raise_for_status()
-
-            download_requests_stream(request, self.file)
 
 
 class Script(FileBase):

@@ -25,81 +25,7 @@ import libarchive
 
 from snapcraft.internal import common, sources
 from snapcraft import tests
-
-
-class TestFileBase(tests.TestCase):
-
-    def get_mock_file_base(self, source, dir):
-        file_src = sources.FileBase(source, dir)
-        setattr(file_src, "provision", unittest.mock.Mock())
-        return file_src
-
-    @unittest.mock.patch('snapcraft.internal.sources.FileBase.download')
-    def test_pull_url(self, mock_download):
-        file_src = self.get_mock_file_base(
-            'http://snapcraft.io/snapcraft.yaml', 'dir')
-        file_src.pull()
-
-        mock_download.assert_called_once_with()
-        file_src.provision.assert_called_once_with(file_src.source_dir)
-
-    @unittest.mock.patch('shutil.copy2')
-    def test_pull_copy(self, mock_shutil_copy2):
-        file_src = self.get_mock_file_base('snapcraft.yaml', 'dir')
-        file_src.pull()
-
-        mock_shutil_copy2.assert_called_once_with(
-            file_src.source, file_src.source_dir)
-        file_src.provision.assert_called_once_with(file_src.source_dir)
-
-    @unittest.mock.patch('snapcraft.internal.sources.requests')
-    @unittest.mock.patch('snapcraft.internal.sources.download_requests_stream')
-    @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
-    def test_download_file_destination(self, dus, drs, req):
-        file_src = self.get_mock_file_base(
-            'http://snapcraft.io/snapcraft.yaml', 'dir')
-        self.assertFalse(hasattr(file_src, "file"))
-
-        file_src.pull()
-
-        self.assertEqual(file_src.file, os.path.join(
-                file_src.source_dir, os.path.basename(file_src.source)))
-
-    @unittest.mock.patch('snapcraft.internal.sources.download_requests_stream')
-    @unittest.mock.patch('snapcraft.internal.sources.requests')
-    def test_download_http(self, mock_requests, mock_download):
-        file_src = self.get_mock_file_base(
-            'http://snapcraft.io/snapcraft.yaml', 'dir')
-
-        mock_request = unittest.mock.Mock()
-        mock_requests.get.return_value = mock_request
-
-        file_src.pull()
-
-        mock_requests.get.assert_called_once_with(
-            file_src.source, stream=True, allow_redirects=True)
-        mock_request.raise_for_status.assert_called_once_with()
-        mock_download.assert_called_once_with(mock_request, file_src.file)
-
-    @unittest.mock.patch('snapcraft.internal.sources.download_urllib_source')
-    def test_download_ftp(self, mock_download):
-        file_src = self.get_mock_file_base(
-            'ftp://snapcraft.io/snapcraft.yaml', 'dir')
-
-        file_src.pull()
-
-        mock_download.assert_called_once_with(file_src.source, file_src.file)
-
-    @unittest.mock.patch('snapcraft.internal.indicators.urlretrieve')
-    def test_download_ftp_url_opener(self, mock_urlretrieve):
-        file_src = self.get_mock_file_base(
-            'ftp://snapcraft.io/snapcraft.yaml', 'dir')
-
-        file_src.pull()
-
-        self.assertEqual(mock_urlretrieve.call_count, 1)
-        self.assertEqual(mock_urlretrieve.call_args[0][0], file_src.source)
-        self.assertEqual(mock_urlretrieve.call_args[0][1], file_src.file)
+from snapcraft.tests.sources import SourceTestCase
 
 
 class TestTar(tests.FakeFileHTTPServerBasedTestCase):
@@ -320,26 +246,6 @@ class TestRpm(tests.TestCase):
 
         test_output_files = ['test.txt', rpm_file_name]
         self.assertCountEqual(os.listdir(dest_dir), test_output_files)
-
-
-class SourceTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = unittest.mock.patch('subprocess.check_call')
-        self.mock_run = patcher.start()
-        self.mock_run.return_value = True
-        self.addCleanup(patcher.stop)
-
-        patcher = unittest.mock.patch('os.rmdir')
-        self.mock_rmdir = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = unittest.mock.patch('os.path.exists')
-        self.mock_path_exists = patcher.start()
-        self.mock_path_exists.return_value = False
-        self.addCleanup(patcher.stop)
 
 
 class TestBazaar(SourceTestCase):
