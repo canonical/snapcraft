@@ -136,12 +136,15 @@ class Config:
         aliases = []
         for app_name, app in self.data.get('apps', {}).items():
             aliases.extend(app.get('aliases', []))
-        unique_aliases = set(aliases)
-        if len(aliases) != len(unique_aliases):
-            for alias in unique_aliases:
-                aliases.remove(alias)
-
-            raise errors.DuplicateAliasError(aliases=aliases)
+        seen = set()
+        duplicates = set()
+        for alias in aliases:
+            if alias in seen:
+                duplicates.add(alias)
+            else:
+                seen.add(alias)
+        if len(duplicates) > 0:
+            raise errors.DuplicateAliasError(aliases=duplicates)
 
         # both confinement type and build quality are optionals
         _ensure_confinement_default(self.data, self._validator.schema)
