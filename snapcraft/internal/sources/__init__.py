@@ -79,7 +79,6 @@ import shutil
 import subprocess
 import tempfile
 import tarfile
-import zipfile
 
 import apt_inst
 import libarchive
@@ -89,6 +88,7 @@ from snapcraft import file_utils
 from . import errors
 from . import _base
 
+from ._zip import Zip  # noqa
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -367,38 +367,6 @@ class Tar(_base.FileBase):
             if member.linkname.startswith(common + '/'):
                 member.linkname = member.linkname[len(common + '/'):]
             member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
-
-
-class Zip(_base.FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
-        if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a zip source')
-        elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a zip source')
-        if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a zip source')
-
-    def provision(self, dst, clean_target=True, keep_zip=False):
-        zip = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if clean_target:
-            tmp_zip = tempfile.NamedTemporaryFile().name
-            shutil.move(zip, tmp_zip)
-            shutil.rmtree(dst)
-            os.makedirs(dst)
-            shutil.move(tmp_zip, zip)
-
-        zipfile.ZipFile(zip).extractall(path=dst)
-
-        if not keep_zip:
-            os.remove(zip)
 
 
 class Deb(_base.FileBase):
