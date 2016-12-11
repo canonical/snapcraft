@@ -164,7 +164,7 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
                 f.truncate()
                 f.write(replaced)
     except PermissionError as e:
-        logger.debug('Unable to open {path} for writing: {error}'.format(
+        logger.warning('Unable to open {path} for writing: {error}'.format(
             path=file_path, error=e))
 
 
