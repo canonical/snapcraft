@@ -42,6 +42,7 @@ from snapcraft.internal import (
     sources,
     states,
 )
+from ._scriptlets import ScriptRunner
 
 logger = logging.getLogger(__name__)
 
@@ -386,7 +387,10 @@ class PluginHandler:
         shutil.copytree(self.code.sourcedir, self.code.build_basedir,
                         symlinks=True, ignore=ignore)
 
+        script_runner = ScriptRunner(builddir=self.code.build_basedir)
+
         self.code.build()
+        script_runner.install(scriptlet=self._part_properties.get('install'))
 
         self.mark_build_done()
 
