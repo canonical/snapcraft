@@ -64,6 +64,14 @@ class RustPlugin(snapcraft.BasePlugin):
 
         return schema
 
+    @classmethod
+    def get_pull_properties(cls):
+        return ['rust-revision', 'rust-channel']
+
+    @classmethod
+    def get_build_properties(cls):
+        return ['rust-features']
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend([
