@@ -74,6 +74,8 @@ class ReplaceInFileTestCase(tests.TestCase):
         with open(file_info['path'], 'w') as f:
             f.write(file_info['contents'])
 
+        # Use a mock here to force a PermissionError, even within a docker
+        # container which always runs with elevated permissions
         with mock.patch('snapcraft.file_utils.open',
                         side_effect=PermissionError('')):
             file_utils.replace_in_file('bin', re.compile(r''),
