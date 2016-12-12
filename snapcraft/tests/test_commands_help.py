@@ -127,7 +127,7 @@ class TopicWithDevelTestCase(HelpCommandBaseTestCase):
 
     def test_print_topic_help_with_devel_for_valid_topic(self):
         expected = {
-            'sources': 'Help on module snapcraft',
+            'sources': 'Help on package snapcraft',
             'plugins': 'Help on package snapcraft',
         }
 
