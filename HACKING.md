@@ -13,6 +13,10 @@ We'd love the help!
 - Our mailing list is snapcraft@lists.ubuntu.com
 - We can also be found on the #snappy IRC channel on Freenode
 
+It would help a lot if you setup a pre-commit hook to run at least the
+static tests. a simple way to set this up is by running:
+
+    ./runtests.sh setup-pre-commit
 
 ### Staging server
 

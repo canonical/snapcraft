@@ -38,6 +38,8 @@ parseargs(){
         # Temporary: backward compatibility until CI run the "snaps" target
         elif [ "$1" == "examples" ] ; then
             export RUN_SNAPS="true"
+        elif [ "$1" == "setup-pre-commit" ] ; then
+            export SETUP_PRE_COMMIT="true"
         else
             echo "Not recognized option, should be one of all, static, unit, integration or snaps"
             exit 1
@@ -45,7 +47,7 @@ parseargs(){
     fi
 }
 
-python3 -m coverage && coverage="true"
+python3 -m coverage 1>/dev/null && coverage="true"
 
 run_static_tests(){
     SRC_PATHS="bin snapcraft integration_tests snaps_tests"
@@ -70,6 +72,17 @@ run_integration(){
     python3 -m unittest discover -b -v -s integration_tests -p $pattern
 }
 
+setup_pre_commit(){
+    echo "Setting up the pre commit hook"
+    root=$(git rev-parse --show-toplevel)
+    pre_commit_hook="$root/.git/hooks/pre-commit"
+    cat > "$pre_commit_hook" << EOF
+#!/bin/sh
+./runtests.sh static
+EOF
+    chmod +x "$pre_commit_hook"
+}
+
 run_snaps(){
     python3 -m snaps_tests "$@"
 }
@@ -86,6 +99,11 @@ fi
 
 if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration "$@"
+fi
+
+if [ ! -z "$SETUP_PRE_COMMIT" ] ; then
+    setup_pre_commit
+    exit 0
 fi
 
 if [ ! -z "$RUN_SNAPS" ]; then
