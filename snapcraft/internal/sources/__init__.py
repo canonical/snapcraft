@@ -73,9 +73,9 @@ import glob
 import logging
 import os
 import os.path
+import stat
 import re
 import shutil
-import stat
 import subprocess
 import tempfile
 import tarfile
@@ -85,12 +85,13 @@ import apt_inst
 import libarchive
 
 from snapcraft.internal import common
-from snapcraft.internal.new_sources import (
+from snapcraft import file_utils
+
+from ._base import (  # noqa
     Base,
     FileBase,
     IncompatibleOptionsError
 )
-from snapcraft import file_utils
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)

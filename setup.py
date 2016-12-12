@@ -42,7 +42,7 @@ setup(
               'snapcraft.internal',
               'snapcraft.internal.cache',
               'snapcraft.internal.deltas',
-              'snapcraft.internal.new_sources',
+              'snapcraft.internal.sources',
               'snapcraft.internal.states',
               'snapcraft.plugins',
               'snapcraft.storeapi'],

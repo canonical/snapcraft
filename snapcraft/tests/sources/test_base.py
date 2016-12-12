@@ -17,18 +17,18 @@
 import os
 import unittest.mock
 
-from snapcraft.internal import new_sources
+from snapcraft.internal import sources
 from snapcraft import tests
 
 
 class TestFileBase(tests.TestCase):
 
     def get_mock_file_base(self, source, dir):
-        file_src = new_sources.FileBase(source, dir)
+        file_src = sources.FileBase(source, dir)
         setattr(file_src, "provision", unittest.mock.Mock())
         return file_src
 
-    @unittest.mock.patch('snapcraft.internal.new_sources.FileBase.download')
+    @unittest.mock.patch('snapcraft.internal.sources.FileBase.download')
     def test_pull_url(self, mock_download):
         file_src = self.get_mock_file_base(
             'http://snapcraft.io/snapcraft.yaml', 'dir')
@@ -46,11 +46,11 @@ class TestFileBase(tests.TestCase):
             file_src.source, file_src.source_dir)
         file_src.provision.assert_called_once_with(file_src.source_dir)
 
-    @unittest.mock.patch('snapcraft.internal.new_sources._base.requests')
+    @unittest.mock.patch('snapcraft.internal.sources._base.requests')
     @unittest.mock.patch(
-        'snapcraft.internal.new_sources._base.download_requests_stream')
+        'snapcraft.internal.sources._base.download_requests_stream')
     @unittest.mock.patch(
-        'snapcraft.internal.new_sources._base.download_urllib_source')
+        'snapcraft.internal.sources._base.download_urllib_source')
     def test_download_file_destination(self, dus, drs, req):
         file_src = self.get_mock_file_base(
             'http://snapcraft.io/snapcraft.yaml', 'dir')
@@ -62,8 +62,8 @@ class TestFileBase(tests.TestCase):
                 file_src.source_dir, os.path.basename(file_src.source)))
 
     @unittest.mock.patch(
-        'snapcraft.internal.new_sources._base.download_requests_stream')
-    @unittest.mock.patch('snapcraft.internal.new_sources._base.requests')
+        'snapcraft.internal.sources._base.download_requests_stream')
+    @unittest.mock.patch('snapcraft.internal.sources._base.requests')
     def test_download_http(self, mock_requests, mock_download):
         file_src = self.get_mock_file_base(
             'http://snapcraft.io/snapcraft.yaml', 'dir')
@@ -79,7 +79,7 @@ class TestFileBase(tests.TestCase):
         mock_download.assert_called_once_with(mock_request, file_src.file)
 
     @unittest.mock.patch(
-        'snapcraft.internal.new_sources._base.download_urllib_source')
+        'snapcraft.internal.sources._base.download_urllib_source')
     def test_download_ftp(self, mock_download):
         file_src = self.get_mock_file_base(
             'ftp://snapcraft.io/snapcraft.yaml', 'dir')
