@@ -215,10 +215,11 @@ class StoreTestCase(TestCase):
     def list_registered(self, expected_snaps):
         process = pexpect.spawn(self.snapcraft_command, ['list-registered'])
 
-        for name, status, private in expected_snaps:
-            # Ignores 'snap-id' to avoid confusion on fake and actual stores.
+        for name, visibility, price, notes in expected_snaps:
+            # Ignores 'since' to avoid confusion on fake and actual stores.
             process.expect(
-                '{} *{} *[A-Za-z\d\-]+ *{}'.format(name, status, private))
+                '{} *[T:\-\d]+Z *{} *{} *{}'.format(
+                    name, visibility, price, notes))
 
         process.expect(pexpect.EOF)
         process.close()

@@ -42,10 +42,11 @@ class ListRegisteredTestCase(tests.TestCase):
         self.useFixture(self.fake_terminal)
 
     def test_list_registered_without_login(self):
-        with self.assertRaises(SystemExit) as raised:
-            main([self.command_name])
+        raised = self.assertRaises(
+            SystemExit,
+            main, [self.command_name])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
@@ -70,12 +71,30 @@ class ListRegisteredTestCase(tests.TestCase):
                     'foo': {
                         'status': 'Approved',
                         'snap-id': 'a_snap_id',
-                        'private': False
+                        'private': False,
+                        'since': '2016-12-12T01:01:01Z',
+                        'price': '9.99',
                     },
                     'bar': {
                         'status': 'ReviewPending',
                         'snap-id': 'another_snap_id',
-                        'private': True
+                        'private': True,
+                        'since': '2016-12-12T01:01:01Z',
+                        'price': None,
+                    },
+                    'baz': {
+                        'status': 'Approved',
+                        'snap-id': 'yet_another_snap_id',
+                        'private': True,
+                        'since': '2016-12-12T02:02:02Z',
+                        'price': '6.66',
+                    },
+                    'boing': {
+                        'status': 'Approved',
+                        'snap-id': 'boing_snap_id',
+                        'private': False,
+                        'since': '2016-12-12T03:03:03Z',
+                        'price': None,
                     },
                 },
             },
@@ -84,8 +103,9 @@ class ListRegisteredTestCase(tests.TestCase):
         main([self.command_name])
 
         expected_output = dedent('''\
-        Name    Status         Snap-Id          Visibility
-        bar     ReviewPending  another_snap_id  private
-        foo     Approved       a_snap_id        public
+        Name    Since                 Visibility    Price    Notes
+        baz     2016-12-12T02:02:02Z  private       6.66     -
+        boing   2016-12-12T03:03:03Z  public        -        -
+        foo     2016-12-12T01:01:01Z  public        9.99     -
         ''')
         self.assertIn(expected_output, self.fake_terminal.getvalue())

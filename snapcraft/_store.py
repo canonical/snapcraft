@@ -171,9 +171,13 @@ def list_registered():
     with _requires_login():
         account_info = store.get_account_information()
     snaps = [
-        (name, info['status'], info['snap-id'],
-         'private' if info['private'] else 'public')
-        for name, info in account_info['snaps'].get(series, {}).items()]
+        (name, info['since'], 'private' if info['private'] else 'public',
+         info['price'] or '-', '-')
+        for name, info in account_info['snaps'].get(series, {}).items()
+        # Presenting only approved snap registrations, which means name
+        # disputes will be displayed/sorted some other way.
+        if info['status'] == 'Approved'
+    ]
 
     if not snaps:
         print('There are no registered snaps for series {!r}.'.format(series))
@@ -181,7 +185,7 @@ def list_registered():
 
     tabulated_snaps = tabulate(
         sorted(snaps, key=operator.itemgetter(0)),
-        headers=["Name", "Status", "Snap-Id", "Visibility"],
+        headers=["Name", "Since", "Visibility", "Price", "Notes"],
         tablefmt="plain")
     print(tabulated_snaps)
 

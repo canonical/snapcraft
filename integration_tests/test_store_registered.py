@@ -32,7 +32,7 @@ class RegisteredTestCase(integration_tests.StoreTestCase):
         self.register(snap_private, private=True)
 
         expected_snaps = [
-            (snap_public, 'Approved', 'public'),
-            (snap_private, 'Approved', 'private'),
+            (snap_public, 'public', '-', '-'),
+            (snap_private, 'private', '-', '-'),
         ]
         self.list_registered(expected_snaps)

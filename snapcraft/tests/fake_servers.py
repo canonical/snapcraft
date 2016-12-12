@@ -851,13 +851,16 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         snaps = {
             'basic': {'snap-id': 'snap-id', 'status': 'Approved',
-                      'private': False},
+                      'private': False, 'price': None,
+                      'since': '2016-12-12T01:01:01Z'},
             'ubuntu-core': {'snap-id': 'good', 'status': 'Approved',
-                            'private': False},
+                            'private': False, 'price': None,
+                            'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
             name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
-                   'private': private}
+                   'private': private, 'price': None,
+                   'since': '2016-12-12T01:01:01Z'}
             for name, private in self.server.registered_names})
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
