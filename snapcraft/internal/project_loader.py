@@ -132,19 +132,7 @@ class Config:
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
 
-        # Prevent multiple parts from having duplicate alias names
-        aliases = []
-        for app_name, app in self.data.get('apps', {}).items():
-            aliases.extend(app.get('aliases', []))
-        seen = set()
-        duplicates = set()
-        for alias in aliases:
-            if alias in seen:
-                duplicates.add(alias)
-            else:
-                seen.add(alias)
-        if duplicates:
-            raise errors.DuplicateAliasError(aliases=duplicates)
+        self._ensure_no_duplicate_app_aliases()
 
         # both confinement type and build quality are optionals
         _ensure_confinement_default(self.data, self._validator.schema)
@@ -161,6 +149,21 @@ class Config:
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
+
+    def _ensure_no_duplicate_app_aliases(self):
+        # Prevent multiple apps within a snap from having duplicate alias names
+        aliases = []
+        for app_name, app in self.data.get('apps', {}).items():
+            aliases.extend(app.get('aliases', []))
+        seen = set()
+        duplicates = set()
+        for alias in aliases:
+            if alias in seen:
+                duplicates.add(alias)
+            else:
+                seen.add(alias)
+        if duplicates:
+            raise errors.DuplicateAliasError(aliases=duplicates)
 
     def get_project_state(self, step):
         """Returns a dict of states for the given step of each part."""

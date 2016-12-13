@@ -13,7 +13,6 @@ apps:
     aliases: [hi.sh, howdy.sh]
 
 parts:
-  my-part:
-    # See 'snapcraft plugins'
+  aliases:
     plugin: dump
     source: .
