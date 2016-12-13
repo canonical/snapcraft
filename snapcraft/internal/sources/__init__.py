@@ -86,12 +86,8 @@ import libarchive
 
 from snapcraft.internal import common
 from snapcraft import file_utils
-
-from ._base import (  # noqa
-    Base,
-    FileBase,
-    IncompatibleOptionsError
-)
+from . import errors
+from . import _base
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -112,7 +108,7 @@ def get_source_defaults():
     return __SOURCE_DEFAULTS.copy()
 
 
-class Script(FileBase):
+class Script(_base.FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
@@ -125,20 +121,20 @@ class Script(FileBase):
         os.chmod(self.file, st.st_mode | stat.S_IEXEC)
 
 
-class Bazaar(Base):
+class Bazaar(_base.Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, 'bzr')
         if source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
         if source_depth:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a bzr source')
         if source_tag and source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-commit for '
                 'a bzr source')
 
@@ -159,22 +155,22 @@ class Bazaar(Base):
         subprocess.check_call(cmd)
 
 
-class Git(Base):
+class Git(_base.Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, 'git')
         if source_tag and source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
                 'a git source')
         if source_tag and source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-commit for '
                 'a git source')
         if source_branch and source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-branch and source-commit for '
                 'a git source')
 
@@ -210,26 +206,26 @@ class Git(Base):
                                        'checkout', self.source_commit])
 
 
-class Mercurial(Base):
+class Mercurial(_base.Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, 'hg')
         if source_tag and source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
                 'mercurial source')
         if source_tag and source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-commit for a '
                 'mercurial source')
         if source_branch and source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-branch and source-commit for a '
                 'mercurial source')
         if source_depth:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a mercurial source')
 
     def pull(self):
@@ -253,7 +249,7 @@ class Mercurial(Base):
         subprocess.check_call(cmd)
 
 
-class Subversion(Base):
+class Subversion(_base.Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
@@ -261,17 +257,17 @@ class Subversion(Base):
                          source_branch, source_depth, 'svn')
         if source_tag:
             if source_branch:
-                raise IncompatibleOptionsError(
+                raise errors.IncompatibleOptionsError(
                     "Can't specify source-tag OR source-branch for a "
                     "Subversion source")
             else:
-                raise IncompatibleOptionsError(
+                raise errors.IncompatibleOptionsError(
                     "Can't specify source-tag for a Subversion source")
         elif source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 "Can't specify source-branch for a Subversion source")
         if source_depth:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a Subversion source')
 
     def pull(self):
@@ -295,23 +291,23 @@ class Subversion(Base):
                     opts)
 
 
-class Tar(FileBase):
+class Tar(_base.FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth)
         if source_tag:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-tag for a tar source')
         elif source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-commit for a tar source')
         elif source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a tar source')
         if source_depth:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-depth for a tar source')
 
     def provision(self, dst, clean_target=True, keep_tarball=False):
@@ -373,20 +369,20 @@ class Tar(FileBase):
             member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
 
 
-class Zip(FileBase):
+class Zip(_base.FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth)
         if source_tag:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-tag for a zip source')
         elif source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a zip source')
         if source_depth:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-depth for a zip source')
 
     def provision(self, dst, clean_target=True, keep_zip=False):
@@ -405,20 +401,20 @@ class Zip(FileBase):
             os.remove(zip)
 
 
-class Deb(FileBase):
+class Deb(_base.FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth)
         if source_tag:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-tag for a deb source')
         elif source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-commit for a deb source')
         elif source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a deb source')
 
     def provision(self, dst, clean_target=True, keep_deb=False):
@@ -438,20 +434,20 @@ class Deb(FileBase):
             os.remove(deb_file)
 
 
-class Rpm(FileBase):
+class Rpm(_base.FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth)
         if source_tag:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-tag for a rpm source')
         elif source_commit:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-commit for a rpm source')
         elif source_branch:
-            raise IncompatibleOptionsError(
+            raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a rpm source')
 
     def provision(self, dst, clean_target=True, keep_rpm=False):
@@ -482,7 +478,7 @@ class Rpm(FileBase):
             os.remove(rpm_file)
 
 
-class Local(Base):
+class Local(_base.Base):
 
     def pull(self):
         if os.path.islink(self.source_dir) or os.path.isfile(self.source_dir):

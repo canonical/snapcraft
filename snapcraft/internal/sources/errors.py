@@ -14,26 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from unittest import mock
-
-from snapcraft import tests
+from snapcraft.internal import errors
 
 
-class SourceTestCase(tests.TestCase):
+class IncompatibleOptionsError(errors.SnapcraftError):
 
-    def setUp(self):
-        super().setUp()
+    fmt = '{message}'
 
-        patcher = mock.patch('subprocess.check_call')
-        self.mock_run = patcher.start()
-        self.mock_run.return_value = True
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('os.rmdir')
-        self.mock_rmdir = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('os.path.exists')
-        self.mock_path_exists = patcher.start()
-        self.mock_path_exists.return_value = False
-        self.addCleanup(patcher.stop)
+    def __init__(self, message):
+        super().__init__(message=message)

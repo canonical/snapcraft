@@ -25,12 +25,6 @@ from snapcraft.internal.indicators import (
 )
 
 
-class IncompatibleOptionsError(Exception):
-
-    def __init__(self, message):
-        self.message = message
-
-
 class Base:
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,

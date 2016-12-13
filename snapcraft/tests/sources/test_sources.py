@@ -301,7 +301,7 @@ class TestBazaar(SourceTestCase):
 
     def test_init_with_source_branch_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Bazaar,
             'lp:mysource', 'source_dir', source_branch='branch')
 
@@ -310,7 +310,7 @@ class TestBazaar(SourceTestCase):
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Bazaar,
             'lp://mysource', 'source_dir', source_depth=2)
 
@@ -320,7 +320,7 @@ class TestBazaar(SourceTestCase):
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Bazaar,
             'lp://mysource', 'source_dir', source_tag="tag",
             source_commit="2")
@@ -442,7 +442,7 @@ class TestGit(SourceTestCase):
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_tag='tag', source_branch='branch')
@@ -453,7 +453,7 @@ class TestGit(SourceTestCase):
 
     def test_init_with_source_branch_and_commit_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
@@ -466,7 +466,7 @@ class TestGit(SourceTestCase):
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
@@ -555,7 +555,7 @@ class TestMercurial(SourceTestCase):
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_tag='tag',
             source_branch='branch')
@@ -567,7 +567,7 @@ class TestMercurial(SourceTestCase):
 
     def test_init_with_source_commit_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_commit='2',
             source_tag='tag')
@@ -579,7 +579,7 @@ class TestMercurial(SourceTestCase):
 
     def test_init_with_source_commit_and_branch_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_commit='2',
             source_branch='branch')
@@ -591,7 +591,7 @@ class TestMercurial(SourceTestCase):
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_depth=2)
 
@@ -639,7 +639,7 @@ class TestSubversion(SourceTestCase):
 
     def test_init_with_source_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Subversion,
             'svn://mysource', 'source_dir', source_tag='tag')
         expected_message = (
@@ -648,7 +648,7 @@ class TestSubversion(SourceTestCase):
 
     def test_init_with_source_branch_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Subversion,
             'svn://mysource', 'source_dir', source_branch='branch')
         expected_message = (
@@ -657,7 +657,7 @@ class TestSubversion(SourceTestCase):
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Subversion,
             'svn://mysource', 'source_dir', source_tag='tag',
             source_branch='branch')
@@ -669,7 +669,7 @@ class TestSubversion(SourceTestCase):
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             sources.Subversion,
             'svn://mysource', 'source_dir', source_depth=2)
 
@@ -913,7 +913,7 @@ class SourceWithBranchTestCase(tests.TestCase):
         handler = sources.get_source_handler('https://source.com',
                                              source_type=self.source_type)
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             handler,
             'https://source.com',
             source_dir='.',
@@ -946,7 +946,7 @@ class SourceWithBranchAndTagTestCase(tests.TestCase):
         handler = sources.get_source_handler('https://source.com',
                                              source_type=self.source_type)
         raised = self.assertRaises(
-            sources.IncompatibleOptionsError,
+            sources.errors.IncompatibleOptionsError,
             handler,
             'https://source.com',
             source_dir='.',
