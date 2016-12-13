@@ -105,8 +105,6 @@ parts:
             DuplicateAliasError,
             project_loader.Config)
 
-        print("JOE: raised: {}".format(raised))
-
         self.assertEqual(
             'Multiple parts have the same alias defined: {!r}'.format(
                 'testing'),
