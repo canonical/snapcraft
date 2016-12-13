@@ -144,6 +144,7 @@ class Cleanbuilder:
                 image.properties['architecture'])
             if name == image_name:
                 return image.fingerprint
+        return 'N/A'
 
     @contextmanager
     def _create_container(self):
@@ -165,7 +166,8 @@ class Cleanbuilder:
         finally:
             # Stopping takes a while and lxc doesn't print anything.
             print('Stopping {}'.format(self._container_name))
-            self._container.stop(force=True, wait=True)
+            if self._container:
+                self._container.stop(force=True, wait=True)
 
     def execute(self):
         with self._create_container():
