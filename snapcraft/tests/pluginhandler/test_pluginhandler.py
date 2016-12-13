@@ -137,7 +137,7 @@ class PluginTestCase(tests.TestCase):
         mock_isdir.assert_called_once_with('file')
 
         self.assertEqual(raised.__str__(),
-                         'local source is not a directory')
+                         'local source (file) is not a directory')
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -2445,7 +2445,8 @@ class SourcesTestCase(tests.TestCase):
             _load_plugin, 'test-part', part_properties=properties)
 
         self.assertEqual(raised.__str__(),
-                         'no handler to manage source')
+                         'no handler to manage source '
+                         '(unrecognized://test_source)')
 
 
 class CleanPullTestCase(tests.TestCase):
