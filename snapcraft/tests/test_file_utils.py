@@ -64,6 +64,27 @@ class ReplaceInFileTestCase(tests.TestCase):
         with open(self.file_path, 'r') as f:
             self.assertEqual(f.read(), self.expected)
 
+    def test_replace_in_file_with_permission_error(self):
+        os.makedirs('bin')
+        file_info = {
+            'path': os.path.join('bin', 'readonly'),
+            'contents': '#!/foo/bar/baz/python',
+            'expected': '#!/foo/bar/baz/python',
+        }
+        with open(file_info['path'], 'w') as f:
+            f.write(file_info['contents'])
+
+        # Use a mock here to force a PermissionError, even within a docker
+        # container which always runs with elevated permissions
+        with mock.patch('snapcraft.file_utils.open',
+                        side_effect=PermissionError('')):
+            file_utils.replace_in_file('bin', re.compile(r''),
+                                       re.compile(r'#!.*python'),
+                                       r'#!/usr/bin/env python')
+
+        with open(file_info['path'], 'r') as f:
+            self.assertEqual(f.read(), file_info['expected'])
+
 
 class TestLinkOrCopyTree(tests.TestCase):
 
