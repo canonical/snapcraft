@@ -53,11 +53,17 @@ run_static_tests(){
 }
 
 run_unit_tests(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+
     if [ ! -z "$coverage" ]; then
         python3 -m coverage erase
-        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s snapcraft -t .
+        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s snapcraft/tests -t . -p $pattern
     else
-        python3 -m unittest discover -b -v -s snapcraft -t .
+        python3 -m unittest discover -b -v -s snapcraft/tests -t . -p $pattern
     fi
 }
 
@@ -81,7 +87,7 @@ if [ ! -z "$RUN_STATIC" ] ; then
 fi
 
 if [ ! -z "$RUN_UNIT" ]; then
-    run_unit_tests
+    run_unit_tests "$@"
 fi
 
 if [ ! -z "$RUN_INTEGRATION" ]; then

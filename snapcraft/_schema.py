@@ -73,7 +73,12 @@ class Validator:
             messages = [e.message]
             path = []
             while e.absolute_path:
-                path.append(e.absolute_path.popleft())
+                element = e.absolute_path.popleft()
+                # assume numbers are indices and use 'xxx[123]' notation.
+                if isinstance(element, int):
+                    path[-1] = '{}[{}]'.format(path[-1], element)
+                else:
+                    path.append(str(element))
             if path:
                 messages.insert(0, "The '{}' property does not match the "
                                    "required schema:".format('/'.join(path)))
