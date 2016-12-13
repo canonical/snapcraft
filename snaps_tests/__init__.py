@@ -25,6 +25,7 @@ import sys
 
 import fixtures
 import pexpect
+import requests_unixsocket
 import testtools
 from testtools import content
 from testtools.matchers import (
@@ -175,6 +176,13 @@ class SnapsTestCase(testtools.TestCase):
         self.addDetail('output', content.text_content(str(output)))
 
     def install_store_snap(self, snap_name):
+        # snapd is not idempotent so we need to query first
+        snap_query = 'http+unix://%2Frun%2Fsnapd.socket/v2/snaps/{}'.format(
+            snap_name)
+        with requests_unixsocket.Session() as session:
+            if session.get(snap_query).ok:
+                return
+
         try:
             subprocess.check_call(['sudo', 'snap', 'install', snap_name])
         except subprocess.CalledProcessError as e:
