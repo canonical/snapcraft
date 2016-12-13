@@ -13,7 +13,6 @@ Depends: @,
          python-flake8,
          python3-fixtures,
          python3-pexpect,
-         python-requests-unixsocket,
          python3-testscenarios
 
 Tests: snapstests
@@ -23,5 +22,6 @@ Depends: @,
          curl,
          python3-fixtures,
          python3-pexpect,
+         python3-requests-unixsocket,
          python3-testscenarios,
          snapd (>= 2.15~)
