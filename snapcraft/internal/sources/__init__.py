@@ -567,8 +567,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):
     elif source.endswith('rpm'):
         source_type = 'rpm'
     elif common.isurl(source) and not ignore_errors:
-        raise ValueError('no handler to manage source')
+        raise ValueError('no handler to manage source ({})'.format(source))
     elif not os.path.isdir(source) and not ignore_errors:
-        raise ValueError('local source is not a directory')
+        raise ValueError('local source ({}) is not a directory'.format(source))
 
     return source_type

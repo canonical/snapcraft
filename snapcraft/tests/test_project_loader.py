@@ -27,6 +27,7 @@ import fixtures
 import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import project_loader
+from snapcraft.internal.errors import DuplicateAliasError
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 from snapcraft._schema import SnapcraftSchemaError
@@ -48,6 +49,97 @@ class YamlBaseTestCase(tests.TestCase):
 
 
 class YamlTestCase(YamlBaseTestCase):
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_aliases(self, mock_loadPlugin):
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+apps:
+  test:
+    command: test
+    aliases: [test-it, testing]
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        c = project_loader.Config()
+        self.maxDiff = None
+
+        self.assertTrue('aliases' in c.data['apps']['test'],
+                        'Expected "aliases" property to be in snap.yaml')
+        self.assertEqual(
+            c.data['apps']['test']['aliases'], ['test-it', 'testing'])
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_aliases_with_duplicates(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+apps:
+  test1:
+    command: test
+    aliases: [testing]
+  test2:
+    command: test
+    aliases: [testing]
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        raised = self.assertRaises(
+            DuplicateAliasError,
+            project_loader.Config)
+
+        self.assertEqual(
+            'Multiple parts have the same alias defined: {!r}'.format(
+                'testing'),
+            str(raised))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_invalid_alias(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+apps:
+  test:
+    command: test
+    aliases: ['.test']  # can't have a non alphanumeric first character
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        raised = self.assertRaises(
+            SnapcraftSchemaError,
+            project_loader.Config)
+        expected = (
+            'The {path!r} property does not match the required schema: '
+            '{alias!r} does not match '.format(
+                path='apps/test/aliases[0]', alias='.test'
+            ))
+        self.assertEqual(expected, str(raised)[:len(expected)])
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
