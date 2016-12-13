@@ -137,14 +137,13 @@ class Cleanbuilder:
             raise CalledProcessError(exit_status, cmd)
 
     def _get_fingerprint_by_name(self, name):
-        for url in self._client.api.images.get().json()['metadata']:
-            fingerprint = url.split('/')[-1]
-            response = self._client.api.images[fingerprint].get()
-            props = response.json()['metadata']['properties']
+        for image in self._client.images.all():
             image_name = '{}:{}/{}'.format(
-                props['os'], props['release'], props['architecture'])
+                image.properties['os'],
+                image.properties['release'],
+                image.properties['architecture'])
             if name == image_name:
-                return fingerprint
+                return image.fingerprint
 
     @contextmanager
     def _create_container(self):
