@@ -271,12 +271,16 @@ class GetAccountInformationTestCase(tests.TestCase):
                     'basic': {
                         'snap-id': 'snap-id',
                         'status': 'Approved',
-                        'private': False
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
                     },
                     'ubuntu-core': {
                         'snap-id': 'good',
                         'status': 'Approved',
-                        'private': False
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
                     }
                 }
             }
@@ -293,12 +297,16 @@ class GetAccountInformationTestCase(tests.TestCase):
                     'basic': {
                         'snap-id': 'snap-id',
                         'status': 'Approved',
-                        'private': False
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
                     },
                     'ubuntu-core': {
                         'snap-id': 'good',
                         'status': 'Approved',
-                        'private': False
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
                     }
                 }
             }
