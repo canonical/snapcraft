@@ -84,10 +84,11 @@ import libarchive
 from snapcraft.internal import common
 from . import errors
 from . import _base
-from ._bazaar import Bazaar  # noqa
-from ._deb import Deb        # noqa
-from ._git import Git        # noqa
-from ._local import Local    # noqa
+from ._bazaar import Bazaar        # noqa
+from ._deb import Deb              # noqa
+from ._git import Git              # noqa
+from ._local import Local          # noqa
+from ._mercurial import Mercurial  # noqa
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -119,49 +120,6 @@ class Script(_base.FileBase):
         super().download()
         st = os.stat(self.file)
         os.chmod(self.file, st.st_mode | stat.S_IEXEC)
-
-
-class Mercurial(_base.Base):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, 'hg')
-        if source_tag and source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-branch for a '
-                'mercurial source')
-        if source_tag and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for a '
-                'mercurial source')
-        if source_branch and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-branch and source-commit for a '
-                'mercurial source')
-        if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a mercurial source')
-
-    def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, '.hg')):
-            ref = []
-            if self.source_tag:
-                ref = ['-r', self.source_tag]
-            elif self.source_commit:
-                ref = ['-r', self.source_commit]
-            elif self.source_branch:
-                ref = ['-b', self.source_branch]
-            cmd = [self.command, 'pull'] + ref + [self.source, ]
-        else:
-            ref = []
-            if self.source_tag or self.source_branch or self.source_commit:
-                ref = ['-u', self.source_tag or self.source_branch or
-                       self.source_commit]
-            cmd = [self.command, 'clone'] + ref + [self.source,
-                                                   self.source_dir]
-
-        subprocess.check_call(cmd)
 
 
 class Subversion(_base.Base):
