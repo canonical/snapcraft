@@ -76,24 +76,28 @@ class ValidateTestCase(tests.TestCase):
     def test_validate_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'notfound', "ubuntu-core=3",
-                 "test-snap=4"])
+        self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name, 'notfound', "ubuntu-core=3", "test-snap=4"])
 
         self.assertIn("Snap 'notfound' was not found", self.fake_logger.output)
 
     def test_validate_bad_argument(self):
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'ubuntu-core', "ubuntu-core=foo"])
+        self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name, 'ubuntu-core', "ubuntu-core=foo"])
 
         self.assertIn('format must be name=revision',
                       self.fake_logger.output)
 
     def test_no_login(self):
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'ubuntu-core', "ubuntu-core=3",
-                 "test-snap=4"])
+        self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name, 'ubuntu-core', "ubuntu-core=3", "test-snap=4"])
         self.assertIn('No valid credentials found. Have you run',
                       self.fake_logger.output)

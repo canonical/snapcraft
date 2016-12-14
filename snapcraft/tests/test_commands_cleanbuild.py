@@ -103,11 +103,12 @@ parts:
         self.useFixture(fake_logger)
 
         mock_installed.return_value = False
-        with self.assertRaises(SystemExit) as raised:
-            main(['cleanbuild'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['cleanbuild'])
 
         self.maxDiff = None
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             'The lxd package is not installed, in order to use `cleanbuild` '

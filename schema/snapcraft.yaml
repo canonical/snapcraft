@@ -63,6 +63,7 @@ properties:
     description: the type of confinement supported by the snap
     default: strict
     enum:
+      - classic
       - devmode
       - strict
   grade:
@@ -123,6 +124,12 @@ properties:
             uniqueItems: true
             items:
               type: string
+          aliases:
+            type: array
+            uniqueItems: true
+            items:
+              type: string
+              pattern: "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"
   parts:
     type: object
     minProperties: 1

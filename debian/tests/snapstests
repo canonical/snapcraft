@@ -1,4 +1,10 @@
 #!/bin/sh
+
+if [ "$(uname -i)" = 'armv7l' ]; then
+    # not yet working.
+    exit 0
+fi
+
 snapd_config_dir=/etc/systemd/system/snapd.service.d
 sudo mkdir -p $snapd_config_dir
 echo "[Service]\nEnvironment='http_proxy=$http_proxy'\nEnvironment='https_proxy=$https_proxy'\nEnvironment='ftp_proxy=$http_proxy'\nEnvironment='no_proxy=$no_proxy'\n" | sudo tee $snapd_config_dir/snapd.env.conf > /dev/null

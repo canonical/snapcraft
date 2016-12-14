@@ -123,8 +123,7 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
                                      self.project_options)
 
         os.makedirs(plugin.sourcedir)
-        with self.assertRaises(RuntimeError):
-            plugin.build()
+        self.assertRaises(RuntimeError, plugin.build)
 
         run_mock.assert_has_calls([
             mock.call(['./gradlew', 'jar']),

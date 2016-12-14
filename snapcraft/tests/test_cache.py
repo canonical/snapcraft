@@ -138,10 +138,12 @@ class SnapCachedFilePruneTestCase(tests.TestCase):
                                         real_cached_snap)))
 
         if not self.valid_revision:
-            with self.assertRaises(ValueError):
-                snap_cache.prune(keep_revision='invalid-revision')
-            with self.assertRaises(TypeError):
-                snap_cache.prune(keep_revision=None)
+            self.assertRaises(
+                ValueError,
+                snap_cache.prune, keep_revision='invalid-revision')
+            self.assertRaises(
+                TypeError,
+                snap_cache.prune, keep_revision=None)
         else:
             # prune cached snaps
             purned_file_list = snap_cache.prune(keep_revision=snap_revision)

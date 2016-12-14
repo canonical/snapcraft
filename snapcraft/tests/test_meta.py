@@ -38,6 +38,7 @@ class CreateBaseTestCase(tests.TestCase):
             'version': '1.0',
             'description': 'my description',
             'summary': 'my summary',
+            'confinement': 'devmode',
         }
 
         self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
@@ -58,12 +59,13 @@ class CreateTestCase(CreateBaseTestCase):
             y = yaml.load(f)
 
         expected = {'architectures': ['amd64'],
+                    'confinement': 'devmode',
                     'description': 'my description',
                     'summary': 'my summary',
                     'name': 'my-package',
                     'version': '1.0'}
 
-        self.assertEqual(y, expected)
+        self.assertEqual(y, expected, expected)
 
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
@@ -112,10 +114,12 @@ class CreateTestCase(CreateBaseTestCase):
     def test_create_gadget_meta_with_missing_gadget_yaml_raises_error(self):
         self.config_data['type'] = 'gadget'
 
-        with self.assertRaises(MissingGadgetError):
-            create_snap_packaging(self.config_data,
-                                  self.snap_dir,
-                                  self.parts_dir)
+        self.assertRaises(
+            MissingGadgetError,
+            create_snap_packaging,
+            self.config_data,
+            self.snap_dir,
+            self.parts_dir)
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
@@ -249,6 +253,7 @@ class CreateTestCase(CreateBaseTestCase):
             'summary': 'my summary',
             'name': 'my-package',
             'version': '1.0',
+            'confinement': 'devmode',
             'plugs': {
                 'network-server': {
                     'interface': 'network-bind',
@@ -262,7 +267,7 @@ class CreateTestCase(CreateBaseTestCase):
 class CreateWithConfinementTestCase(CreateBaseTestCase):
 
     scenarios = [(confinement, dict(confinement=confinement)) for
-                 confinement in ['strict', 'devmode']]
+                 confinement in ['strict', 'devmode', 'classic']]
 
     def test_create_meta_with_confinement(self):
         self.config_data['confinement'] = self.confinement
@@ -312,7 +317,9 @@ class WrapExeTestCase(tests.TestCase):
         super().setUp()
 
         # TODO move to use outer interface
-        self.packager = _SnapPackaging({}, self.snap_dir, self.parts_dir)
+        self.packager = _SnapPackaging({'confinement': 'devmode'},
+                                       self.snap_dir,
+                                       self.parts_dir)
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
@@ -478,12 +485,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
-        with self.assertRaises(EnvironmentError) as raised:
-            self.packager._wrap_apps(apps)
+        raised = self.assertRaises(
+            EnvironmentError,
+            self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-does-not-exist' defined in the "
             "app 'app1' does not exist or is not executable",
-            str(raised.exception))
+            str(raised))
 
     def test_command_is_not_executable(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
@@ -494,12 +502,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
 
-        with self.assertRaises(EnvironmentError) as raised:
-            self.packager._wrap_apps(apps)
+        raised = self.assertRaises(
+            EnvironmentError,
+            self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-not-executable' defined in the "
             "app 'app1' does not exist or is not executable",
-            str(raised.exception))
+            str(raised))
 
     def test_command_found(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]

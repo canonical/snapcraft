@@ -30,6 +30,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'arm-linux-gnueabihf-',
         'cross-build-packages': ['gcc-arm-linux-gnueabihf'],
         'triplet': 'arm-linux-gnueabihf',
+        'core-dynamic-linker': 'lib/ld-linux-armhf.so.3',
     },
     'aarch64': {
         'kernel': 'arm64',
@@ -37,6 +38,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'aarch64-linux-gnu-',
         'cross-build-packages': ['gcc-aarch64-linux-gnu'],
         'triplet': 'aarch64-linux-gnu',
+        'core-dynamic-linker': 'lib/ld-linux-aarch64.so.1',
     },
     'i686': {
         'kernel': 'x86',
@@ -49,6 +51,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 'powerpc64le-linux-gnu-',
         'cross-build-packages': ['gcc-powerpc64le-linux-gnu'],
         'triplet': 'powerpc64le-linux-gnu',
+        'core-dynamic-linker': '/lib64/ld64.so.2',
     },
     'ppc': {
         'kernel': 'powerpc',
@@ -61,6 +64,7 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'amd64',
         'triplet': 'x86_64-linux-gnu',
+        'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
         'kernel': 's390x',
@@ -68,6 +72,7 @@ _ARCH_TRANSLATIONS = {
         'cross-compiler-prefix': 's390x-linux-gnu-',
         'cross-build-packages': ['gcc-s390x-linux-gnu'],
         'triplet': 's390x-linux-gnu',
+        'core-dynamic-linker': '/lib/ld64.so.1',
     }
 }
 
@@ -156,6 +161,25 @@ class ProjectOptions:
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)
         self.__debug = debug
+
+    def get_core_dynamic_linker(self):
+        """Returns the dynamic linker used for the targetted core.
+        If not found realpath for `/lib/ld-linux.so.2` is returned.
+        However if core is not installed None will be returned.
+        """
+        core_path = os.path.join('/snap', 'core', 'current')
+        core_dynamic_linker = self.__machine_info.get('core-dynamic-linker',
+                                                      'lib/ld-linux.so.2')
+
+        try:
+            dynamic_linker_resolved_path = os.readlink(
+                os.path.join(core_path, core_dynamic_linker))
+            dynamic_linker_path = os.path.join(
+                core_path, dynamic_linker_resolved_path.lstrip('/'))
+        except FileNotFoundError:
+            dynamic_linker_path = None
+
+        return dynamic_linker_path
 
     def _set_machine(self, target_deb_arch):
         self.__host_machine = platform.machine()
