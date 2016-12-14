@@ -24,6 +24,7 @@ import fixtures
 import snapcraft
 from snapcraft import tests
 from snapcraft.plugins import maven
+from snapcraft.internal import pluginhandler
 
 
 class MavenPluginTestCase(tests.TestCase):
@@ -64,64 +65,19 @@ class MavenPluginTestCase(tests.TestCase):
             self._canonicalize_settings(expected),
             self._canonicalize_settings(observed))
 
+    def test_get_build_properties(self):
+        plugin = maven.MavenPlugin('test-part', self.options,
+                                   self.project_options)
+        maven_build_properties = ['maven-options', 'maven-targets']
+        plugin.get_build_properties()
+        for prop in maven_build_properties:
+            self.assertTrue(prop in plugin.get_build_properties(),
+                            'Expected "' + prop + '" to be included in '
+                            'properties')
+
     def test_schema(self):
         schema = maven.MavenPlugin.schema()
-
         properties = schema['properties']
-        self.assertTrue('maven-options' in properties,
-                        'Expected "maven-options" to be included in '
-                        'properties')
-
-        maven_options = properties['maven-options']
-
-        self.assertTrue(
-            'type' in maven_options,
-            'Expected "type" to be included in "maven-options"')
-        self.assertEqual(maven_options['type'], 'array',
-                         'Expected "maven-options" "type" to be "array", but '
-                         'it was "{}"'.format(maven_options['type']))
-
-        self.assertTrue(
-            'minitems' in maven_options,
-            'Expected "minitems" to be included in "maven-options"')
-        self.assertEqual(maven_options['minitems'], 1,
-                         'Expected "maven-options" "minitems" to be 1, but '
-                         'it was "{}"'.format(maven_options['minitems']))
-
-        self.assertTrue(
-            'uniqueItems' in maven_options,
-            'Expected "uniqueItems" to be included in "maven-options"')
-        self.assertTrue(
-            maven_options['uniqueItems'],
-            'Expected "maven-options" "uniqueItems" to be "True"')
-
-        maven_targets = properties['maven-targets']
-
-        self.assertTrue(
-            'type' in maven_targets,
-            'Expected "type" to be included in "maven-targets"')
-        self.assertEqual(maven_targets['type'], 'array',
-                         'Expected "maven-targets" "type" to be "array", but '
-                         'it was "{}"'.format(maven_targets['type']))
-
-        self.assertTrue(
-            'minitems' in maven_targets,
-            'Expected "minitems" to be included in "maven-targets"')
-        self.assertEqual(maven_targets['minitems'], 1,
-                         'Expected "maven-targets" "minitems" to be 1, but '
-                         'it was "{}"'.format(maven_targets['minitems']))
-
-        self.assertTrue(
-            'uniqueItems' in maven_targets,
-            'Expected "uniqueItems" to be included in "maven-targets"')
-        self.assertTrue(
-            maven_targets['uniqueItems'],
-            'Expected "maven-targets" "uniqueItems" to be "True"')
-
-        build_properties = schema['build-properties']
-        self.assertEqual(
-            ['maven-options', 'maven-targets'],
-            build_properties)
 
     @mock.patch.object(maven.MavenPlugin, 'run')
     def test_build(self, run_mock):
