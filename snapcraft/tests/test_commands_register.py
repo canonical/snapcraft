@@ -36,16 +36,18 @@ class RegisterTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
 
     def test_register_without_name_must_raise_exception(self):
-        with self.assertRaises(docopt.DocoptExit) as raised:
-            main(['register'])
+        raised = self.assertRaises(
+            docopt.DocoptExit,
+            main, ['register'])
 
-        self.assertTrue('Usage:' in str(raised.exception))
+        self.assertTrue('Usage:' in str(raised))
 
     def test_register_without_login_must_raise_exception(self):
-        with self.assertRaises(SystemExit) as raised:
-            main(['register', 'dummy'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['register', 'dummy'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
@@ -81,10 +83,11 @@ class RegisterTestCase(tests.TestCase):
                 storeapi.SCAClient, 'register') as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
                 'test-snap', response)
-            with self.assertRaises(SystemExit) as raised:
-                main(['register', 'test-snap'])
+            raised = self.assertRaises(
+                SystemExit,
+                main, ['register', 'test-snap'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             'Registering test-snap.\n'
             'Registration failed.\n',

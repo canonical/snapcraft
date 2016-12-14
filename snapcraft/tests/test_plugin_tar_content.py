@@ -40,11 +40,13 @@ class TestTarContentPlugin(TestCase):
             destination = '/destdir1'
         # ensure that a absolute path for a destination directory
         # raises an exception
-        with self.assertRaises(ValueError) as raised:
-            TarContentPlugin('tar_content', Options(),
-                             self.project_options)
+        raised = self.assertRaises(
+            ValueError,
+            TarContentPlugin,
+            'tar_content', Options(),
+            self.project_options)
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          "path '/destdir1' must be relative")
 
     def test_install_destination_dir_exists(self):

@@ -2,5 +2,6 @@ coverage==4.1
 flake8==3.0.4
 fixtures==3.0.0
 mccabe==0.5.2
+requests_unixsocket==0.1.5
 testscenarios==0.5.0
 pexpect==4.2.0

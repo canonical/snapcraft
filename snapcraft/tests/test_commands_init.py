@@ -30,10 +30,11 @@ class InitCommandTestCase(tests.TestCase):
 
         open('snapcraft.yaml', 'w').close()
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['init'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['init'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             'snapcraft.yaml already exists!\n')
@@ -44,10 +45,11 @@ class InitCommandTestCase(tests.TestCase):
 
         open('.snapcraft.yaml', 'w').close()
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['init'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['init'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             '.snapcraft.yaml already exists!\n')

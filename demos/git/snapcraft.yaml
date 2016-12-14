@@ -2,17 +2,25 @@ name: git
 version: 2.8.0
 summary: Git is a free and open source distributed version control system.
 description: This example is not really production quality
-confinement: strict
+confinement: classic
 
 apps:
-  server:
-    command: bin/git
+  git:
+    command: env PATH=$PATH:$SNAP/libexec/git-core GIT_TEMPLATE_DIR=$SNAP/share/git-core/templates git
 
 parts:
   git:
-    plugin: make
     source: https://github.com/git/git
     source-type: git
-    make-parameters:
-      - prefix=
-    build-packages: [gettext, libssl-dev, libcurl4-openssl-dev, libexpat1-dev]
+    source-depth: 1
+    plugin: autotools
+    configflags:
+      - --with-curl
+      - --with-expat
+    build-packages:
+        - gettext
+        - libssl-dev
+        - libcurl4-openssl-dev
+        - libexpat1-dev
+    stage-packages:
+        - libcurl3

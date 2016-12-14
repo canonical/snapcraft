@@ -155,7 +155,14 @@ class _SnapPackaging:
         args = ' '.join(args) + ' "$@"' if args else '"$@"'
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
-        assembled_env = common.assemble_env().replace(self._snap_dir, '$SNAP')
+        # If we are dealing with classic confinement it means all our
+        # binaries are linked with `nodefaultlib` so this is harmless.
+        # We do however want to be on the safe side and make sure no
+        # ABI breakage happens by accidentally loading a library from
+        # the classic system.
+        include_library_paths = self._config_data['confinement'] != 'classic'
+        assembled_env = common.assemble_env(include_library_paths)
+        assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
         replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
             self._parts_dir)
         assembled_env = re.sub(replace_path, '$SNAP', assembled_env)

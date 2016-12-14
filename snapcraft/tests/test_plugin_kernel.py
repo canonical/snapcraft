@@ -268,11 +268,12 @@ class KernelPluginTestCase(tests.TestCase):
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
 
-        with self.assertRaises(RuntimeError) as raised:
-            plugin._unpack_generic_initrd()
+        raised = self.assertRaises(
+            RuntimeError,
+            plugin._unpack_generic_initrd)
 
         self.assertEqual("initrd file type is unsupported: 'application/foo'",
-                         str(raised.exception))
+                         str(raised))
 
     def test_pack_initrd_modules(self):
         self.options.kernel_initrd_modules = [
@@ -633,11 +634,10 @@ ACCEPT=n
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir)
 
-        with self.assertRaises(RuntimeError) as raised:
-            plugin.build()
+        raised = self.assertRaises(RuntimeError, plugin.build)
 
         self.assertEqual(
-            "No match for dtb 'fake-dtb.dtb' was found", str(raised.exception))
+            "No match for dtb 'fake-dtb.dtb' was found", str(raised))
 
     def test_build_with_kconfigfile_and_modules(self):
         self.options.kconfigfile = 'config'
@@ -795,15 +795,14 @@ ACCEPT=n
             plugin.sourcedir, plugin.builddir, plugin.installdir,
             do_kernel=False)
 
-        with self.assertRaises(ValueError) as raised:
-            plugin.build()
+        raised = self.assertRaises(ValueError, plugin.build)
 
         self.assertEqual(
             'kernel build did not output a vmlinux binary in top level dir, '
             'expected {!r}'.format(os.path.join(
                 plugin.builddir, 'arch', self.project_options.kernel_arch,
                 'boot', 'bzImage')),
-            str(raised.exception))
+            str(raised))
 
     def test_build_with_missing_kernel_release_fails(self):
         self.options.kconfigfile = 'config'
@@ -818,13 +817,12 @@ ACCEPT=n
             plugin.sourcedir, plugin.builddir, plugin.installdir,
             do_release=False)
 
-        with self.assertRaises(ValueError) as raised:
-            plugin.build()
+        raised = self.assertRaises(ValueError, plugin.build)
 
         self.assertEqual(
             'No kernel release version info found at {!r}'.format(os.path.join(
                 plugin.builddir, 'include', 'config', 'kernel.release')),
-            str(raised.exception))
+            str(raised))
 
     def test_build_with_missing_system_map_fails(self):
         self.options.kconfigfile = 'config'
@@ -839,12 +837,11 @@ ACCEPT=n
             plugin.sourcedir, plugin.builddir, plugin.installdir,
             do_system_map=False)
 
-        with self.assertRaises(ValueError) as raised:
-            plugin.build()
+        raised = self.assertRaises(ValueError, plugin.build)
 
         self.assertEqual(
             'kernel build did not output a System.map in top level dir',
-            str(raised.exception))
+            str(raised))
 
     def test_enable_cross_compilation(self):
         project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')

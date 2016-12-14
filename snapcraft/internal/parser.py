@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: make this a temporary directory that get's removed when finished
-BASE_DIR = "/tmp"
+BASE_DIR = os.getenv('TMPDIR', '/tmp')
 PARTS_FILE = "snap-parts.yaml"
 
 
@@ -178,6 +178,9 @@ def _process_entry(data):
 
     # Get optional wiki entry fields.
     origin_type = data.get('origin-type')
+    origin_branch = data.get('origin-branch')
+    origin_commit = data.get('origin-commit')
+    origin_tag = data.get('origin-tag')
 
     # Get required wiki entry fields.
     try:
@@ -195,6 +198,9 @@ def _process_entry(data):
                                                 source_type=origin_type)
     handler = source_handler(origin, source_dir=origin_dir)
     repo.check_for_command(handler.command)
+    handler.source_branch = origin_branch
+    handler.source_commit = origin_commit
+    handler.source_tag = origin_tag
     handler.pull()
 
     try:

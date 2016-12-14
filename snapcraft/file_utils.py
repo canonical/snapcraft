@@ -155,18 +155,22 @@ def _search_and_replace_contents(file_path, search_pattern, replacement):
     if os.path.islink(file_path):
         return
 
-    with open(file_path, 'r+') as f:
-        try:
-            original = f.read()
-        except UnicodeDecodeError:
-            # This was probably a binary file. Skip it.
-            return
+    try:
+        with open(file_path, 'r+') as f:
+            try:
+                original = f.read()
+            except UnicodeDecodeError:
+                # This was probably a binary file. Skip it.
+                return
 
-        replaced = search_pattern.sub(replacement, original)
-        if replaced != original:
-            f.seek(0)
-            f.truncate()
-            f.write(replaced)
+            replaced = search_pattern.sub(replacement, original)
+            if replaced != original:
+                f.seek(0)
+                f.truncate()
+                f.write(replaced)
+    except PermissionError as e:
+        logger.warning('Unable to open {path} for writing: {error}'.format(
+            path=file_path, error=e))
 
 
 def executable_exists(path):

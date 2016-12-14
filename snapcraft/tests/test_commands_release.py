@@ -36,10 +36,11 @@ class ReleaseCommandTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
 
     def test_upload_without_snap_must_raise_exception(self):
-        with self.assertRaises(docopt.DocoptExit) as raised:
-            main(['release'])
+        raised = self.assertRaises(
+            docopt.DocoptExit,
+            main, ['release'])
 
-        self.assertIn('Usage:', str(raised.exception))
+        self.assertIn('Usage:', str(raised))
 
     def test_release_snap(self):
         fake_terminal = fixture_setup.FakeTerminal()
@@ -120,16 +121,18 @@ class ReleaseCommandTestCase(tests.TestCase):
             ]
         }
 
-        with self.assertRaises(SystemExit):
-            main(['release', 'nil-snap', '19', 'beta'])
+        self.assertRaises(
+            SystemExit,
+            main, ['release', 'nil-snap', '19', 'beta'])
 
         self.assertIn(
             'Unexpected channel info \'fake-bad-channel-info\'.',
             self.fake_logger.output)
 
     def test_release_without_login_must_raise_exception(self):
-        with self.assertRaises(SystemExit):
-            main(['release', 'nil-snap', '19', 'beta'])
+        self.assertRaises(
+            SystemExit,
+            main, ['release', 'nil-snap', '19', 'beta'])
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)

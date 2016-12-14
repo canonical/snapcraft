@@ -148,11 +148,13 @@ class NodePluginTestCase(tests.TestCase):
             node_engine = '4'
             npm_run = []
 
-        with self.assertRaises(EnvironmentError) as raised:
-            nodejs.NodePlugin('test-part', Options(),
-                              self.project_options)
+        raised = self.assertRaises(
+            EnvironmentError,
+            nodejs.NodePlugin,
+            'test-part', Options(),
+            self.project_options)
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          'architecture not supported (fantasy-arch)')
 
     def test_schema(self):
