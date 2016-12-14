@@ -86,6 +86,7 @@ from . import errors
 from . import _base
 from ._bazaar import Bazaar  # noqa
 from ._deb import Deb        # noqa
+from ._git import Git        # noqa
 from ._local import Local    # noqa
 
 
@@ -118,57 +119,6 @@ class Script(_base.FileBase):
         super().download()
         st = os.stat(self.file)
         os.chmod(self.file, st.st_mode | stat.S_IEXEC)
-
-
-class Git(_base.Base):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, 'git')
-        if source_tag and source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-branch for '
-                'a git source')
-        if source_tag and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for '
-                'a git source')
-        if source_branch and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-branch and source-commit for '
-                'a git source')
-
-    def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, '.git')):
-            refspec = 'HEAD'
-            if self.source_branch:
-                refspec = 'refs/heads/' + self.source_branch
-            elif self.source_tag:
-                refspec = 'refs/tags/' + self.source_tag
-            elif self.source_commit:
-                refspec = self.source_commit
-
-            # Pull changes to this repository and any submodules.
-            subprocess.check_call([self.command, '-C', self.source_dir,
-                                   'pull', '--recurse-submodules=yes',
-                                   self.source, refspec])
-
-            # Merge any updates for the submodules (if any).
-            subprocess.check_call([self.command, '-C', self.source_dir,
-                                   'submodule', 'update'])
-        else:
-            command = [self.command, 'clone', '--recursive']
-            if self.source_tag or self.source_branch:
-                command.extend([
-                    '--branch', self.source_tag or self.source_branch])
-            if self.source_depth:
-                command.extend(['--depth', str(self.source_depth)])
-            subprocess.check_call(command + [self.source, self.source_dir])
-
-            if self.source_commit:
-                subprocess.check_call([self.command, '-C', self.source_dir,
-                                       'checkout', self.source_commit])
 
 
 class Mercurial(_base.Base):
