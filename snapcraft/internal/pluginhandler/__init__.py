@@ -1050,8 +1050,25 @@ def check_for_collisions(parts):
                                   'installdir': part.installdir}
 
 
+def _get_includes(fileset):
+    return [x for x in fileset if x[0] != '-']
+
+
+def _get_excludes(fileset):
+    return [x[1:] for x in fileset if x[0] == '-']
+
+
 def _combine_filesets(fileset_1, fileset_2):
     """Combine filesets if the first is an explicit or implicit wildcard."""
+
+    f1_excludes = set(_get_excludes(fileset_1))
+    f2_includes = set(_get_includes(fileset_2))
+
+    contradicting_fileset = set.intersection(f1_excludes, f2_includes)
+
+    if contradicting_fileset:
+        raise EnvironmentError('File conflicts: {key!r}'.format(
+                               key=contradicting_fileset))
 
     to_combine = False
     # combine if fileset_1 has a wildcard

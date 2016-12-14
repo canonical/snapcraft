@@ -2391,10 +2391,10 @@ class FindDependenciesTestCase(tests.TestCase):
         self.assertEqual(set(expected_fileset), set(combined_fileset))
 
     def test__combine_filesets_implicit_wildcard(self):
-        fileset_1 = ['-a']
+        fileset_1 = ['-c']
         fileset_2 = ['a', 'b']
 
-        expected_fileset = ['a', '-a', 'b']
+        expected_fileset = ['a', '-c', 'b']
         combined_fileset = pluginhandler._combine_filesets(
             fileset_1, fileset_2)
         self.assertEqual(set(expected_fileset), set(combined_fileset))
@@ -2407,6 +2407,32 @@ class FindDependenciesTestCase(tests.TestCase):
         combined_fileset = pluginhandler._combine_filesets(
             fileset_1, fileset_2)
         self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_with_contradiciton(self):
+        fileset_1 = ['-a']
+        fileset_2 = ['a']
+
+        raised = self.assertRaises(
+            EnvironmentError,
+            pluginhandler._combine_filesets, fileset_1, fileset_2
+        )
+        self.assertEqual(
+            raised.__str__(), "File conflicts: {'a'}"
+        )
+
+    def test__get_includes(self):
+        fileset = ['-a', 'b']
+        expected_includes = ['b']
+
+        includes = pluginhandler._get_includes(fileset)
+        self.assertEqual(set(expected_includes), set(includes))
+
+    def test__get_excludes(self):
+        fileset = ['-a', 'b']
+        expected_excludes = ['a']
+
+        excludes = pluginhandler._get_excludes(fileset)
+        self.assertEqual(set(expected_excludes), set(excludes))
 
 
 class SourcesTestCase(tests.TestCase):
