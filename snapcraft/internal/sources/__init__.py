@@ -68,8 +68,6 @@ cases you want to refer to the help text for the specific plugin.
 
 """
 
-import copy
-import glob
 import logging
 import os
 import os.path
@@ -84,11 +82,11 @@ import zipfile
 import libarchive
 
 from snapcraft.internal import common
-from snapcraft import file_utils
 from . import errors
 from . import _base
-from ._deb import Deb  # noqa
 from ._bazaar import Bazaar  # noqa
+from ._deb import Deb        # noqa
+from ._local import Local    # noqa
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -410,33 +408,6 @@ class Rpm(_base.FileBase):
 
         if not keep_rpm:
             os.remove(rpm_file)
-
-
-class Local(_base.Base):
-
-    def pull(self):
-        if os.path.islink(self.source_dir) or os.path.isfile(self.source_dir):
-            os.remove(self.source_dir)
-        elif os.path.isdir(self.source_dir):
-            shutil.rmtree(self.source_dir)
-
-        current_dir = os.getcwd()
-        source_abspath = os.path.abspath(self.source)
-
-        def ignore(directory, files):
-            if directory == source_abspath or \
-               directory == current_dir:
-                ignored = copy.copy(common.SNAPCRAFT_FILES)
-                snaps = glob.glob(os.path.join(directory, '*.snap'))
-                if snaps:
-                    snaps = [os.path.basename(s) for s in snaps]
-                    ignored += snaps
-                return ignored
-            else:
-                return []
-
-        shutil.copytree(source_abspath, self.source_dir,
-                        copy_function=file_utils.link_or_copy, ignore=ignore)
 
 
 def get(sourcedir, builddir, options):
