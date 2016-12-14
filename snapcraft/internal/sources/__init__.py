@@ -71,7 +71,6 @@ cases you want to refer to the help text for the specific plugin.
 import logging
 import os
 import os.path
-import stat
 import re
 import shutil
 import subprocess
@@ -88,6 +87,7 @@ from ._git import Git              # noqa
 from ._local import Local          # noqa
 from ._mercurial import Mercurial  # noqa
 from ._rpm import Rpm              # noqa
+from ._script import Script        # noqa
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -105,19 +105,6 @@ __SOURCE_DEFAULTS = {
 
 def get_source_defaults():
     return __SOURCE_DEFAULTS.copy()
-
-
-class Script(_base.FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
-
-    def download(self):
-        super().download()
-        st = os.stat(self.file)
-        os.chmod(self.file, st.st_mode | stat.S_IEXEC)
 
 
 class Subversion(_base.Base):
