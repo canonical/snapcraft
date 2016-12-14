@@ -167,46 +167,6 @@ class TestZip(tests.FakeFileHTTPServerBasedTestCase):
             self.assertEqual('Test fake compressed file', zip_file.read())
 
 
-class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = unittest.mock.patch('apt_inst.DebFile')
-        self.mock_deb = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_pull_debfile_must_download_and_extract(self):
-        dest_dir = 'src'
-        os.makedirs(dest_dir)
-        deb_file_name = 'test.deb'
-        source = 'http://{}:{}/{file_name}'.format(
-            *self.server.server_address, file_name=deb_file_name)
-        deb_source = sources.Deb(source, dest_dir)
-
-        deb_source.pull()
-
-        self.mock_deb.assert_called_once_with(
-            os.path.join(deb_source.source_dir, deb_file_name))
-
-    def test_extract_and_keep_debfile(self):
-        deb_file_name = 'test.deb'
-        source = 'http://{}:{}/{file_name}'.format(
-            *self.server.server_address, file_name=deb_file_name)
-        dest_dir = os.path.abspath(os.curdir)
-        deb_source = sources.Deb(source, dest_dir)
-
-        deb_source.download()
-        deb_source.provision(dst=dest_dir, keep_deb=True)
-
-        deb_download = os.path.join(deb_source.source_dir, deb_file_name)
-        self.mock_deb.assert_called_once_with(
-            os.path.join(deb_source.source_dir, deb_file_name))
-
-        with open(deb_download, 'r') as deb_file:
-            self.assertEqual('Test fake compressed file', deb_file.read())
-
-
 class TestRpm(tests.TestCase):
 
     def test_pull_rpm_file_must_extract(self):
