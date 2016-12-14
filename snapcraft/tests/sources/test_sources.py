@@ -207,9 +207,6 @@ class TestRpm(tests.TestCase):
         self.assertCountEqual(os.listdir(dest_dir), test_output_files)
 
 
-        self.assertEqual(raised.message, expected_message)
-
-
 class TestSubversion(SourceTestCase):
 
     def test_pull_remote(self):
