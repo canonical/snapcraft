@@ -7,6 +7,9 @@ Checklist:
 
 - Have you reported a bug for the problem you are fixing?
   https://bugs.launchpad.net/snapcraft/+filebug
+  Once you have the BUG_NUMBER, replace it here:
+
+LP: [#BUG_NUMBER](https://bugs.launchpad.net/snapcraft/+bug/BUG_NUMBER)
 
 - Have you read our contribution guide?
   [CONTRIBUTING.md](CONTRIBUTING.md)
