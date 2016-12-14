@@ -79,8 +79,6 @@ import tempfile
 import tarfile
 import zipfile
 
-import libarchive
-
 from snapcraft.internal import common
 from . import errors
 from . import _base
@@ -89,7 +87,7 @@ from ._deb import Deb              # noqa
 from ._git import Git              # noqa
 from ._local import Local          # noqa
 from ._mercurial import Mercurial  # noqa
-
+from ._rpm import Rpm              # noqa
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -272,50 +270,6 @@ class Zip(_base.FileBase):
 
         if not keep_zip:
             os.remove(zip)
-
-
-class Rpm(_base.FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
-        if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a rpm source')
-        elif source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a rpm source')
-        elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a rpm source')
-
-    def provision(self, dst, clean_target=True, keep_rpm=False):
-        rpm_file = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if clean_target:
-            tmp_rpm = tempfile.NamedTemporaryFile().name
-            shutil.move(rpm_file, tmp_rpm)
-            shutil.rmtree(dst)
-            os.makedirs(dst)
-            shutil.move(tmp_rpm, rpm_file)
-
-        # Ensure dst does not have trailing slash
-        dst = dst.rstrip('/')
-        # Open the RPM file and extract it to destination
-        with libarchive.file_reader(rpm_file) as rpm:
-            for rpm_file_entry in rpm:
-                # Binary RPM archive data has paths starting with ./ to support
-                # relocation if enabled in the building of RPMs
-                rpm_file_entrypath = rpm_file_entry.pathname.lstrip('./')
-                rpm_file_entrypath = rpm_file_entrypath.lstrip('/')
-                rpm_file_entry.pathname = os.path.join(dst, rpm_file_entrypath)
-                # XXX: libarchive frees the entry at the end of loop iterations
-                # See https://github.com/Changaco/python-libarchive-c/issues/43
-                libarchive.extract.extract_entries([rpm_file_entry])
-
-        if not keep_rpm:
-            os.remove(rpm_file)
 
 
 def get(sourcedir, builddir, options):
