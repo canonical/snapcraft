@@ -1,0 +1,16 @@
+name: my-snap-name
+version: '0.1'
+summary: Test that stage files are added to the prime fileset.
+description: |
+    Test that stage files are added to the prime fileset.
+
+parts:
+  my-part:
+    plugin: make
+    source: .
+    stage:
+        - a
+        - b
+        - c
+    snap:
+        - -b
