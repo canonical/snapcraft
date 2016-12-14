@@ -417,9 +417,10 @@ class PluginHandler:
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
+        fileset_step = step
         if step == 'prime':
-            step = 'snap'
-        fileset = self._get_fileset(step).copy()
+            fileset_step = 'snap'
+        fileset = self._get_fileset(fileset_step).copy()
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
         if step == 'prime' and fileset == ['*']:
