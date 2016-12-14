@@ -97,7 +97,7 @@ The available commands are:
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
   list-registered List snap names registered or shared with you.
-  registered   Alias for list-snaps.
+  registered   Alias for list-registered.
   list-keys    List keys available for signing snaps.
   keys         Alias for list-keys.
   create-key   Create a key pair for signing snaps.

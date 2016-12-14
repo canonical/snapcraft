@@ -185,8 +185,8 @@ def list_registered():
 
     tabulated_snaps = tabulate(
         sorted(snaps, key=operator.itemgetter(0)),
-        headers=["Name", "Since", "Visibility", "Price", "Notes"],
-        tablefmt="plain")
+        headers=['Name', 'Since', 'Visibility', 'Price', 'Notes'],
+        tablefmt='plain')
     print(tabulated_snaps)
 
 
