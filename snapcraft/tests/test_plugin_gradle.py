@@ -77,6 +77,16 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
             gradle_options['uniqueItems'],
             'Expected "gradle-options" "uniqueItems" to be "True"')
 
+    def test_get_build_properties(self):
+        plugin = gradle.GradlePlugin('test-part', self.options,
+                                     self.project_options)
+        gradle_build_properties = ['gradle-options']
+        plugin.get_build_properties()
+        for prop in gradle_build_properties:
+            self.assertTrue(prop in plugin.get_build_properties(),
+                            'Expected "' + prop + '" to be included in '
+                            'properties')
+
     @mock.patch.object(gradle.GradlePlugin, 'run')
     def test_build(self, run_mock):
         plugin = gradle.GradlePlugin('test-part', self.options,
