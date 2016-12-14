@@ -84,10 +84,9 @@ import libarchive
 from snapcraft.internal import common
 from . import errors
 from . import _base
-from ._deb import Deb  # noqa
 from ._bazaar import Bazaar  # noqa
-
-from ._local import Local  # noqa
+from ._deb import Deb        # noqa
+from ._local import Local    # noqa
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
