@@ -52,6 +52,15 @@ class CMakeTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+    def test_get_build_properties(self):
+        plugin = cmake.CMakePlugin('test-part', self.options,
+                                   self.project_options)
+        cmake_build_properties = ['configflags']
+        for prop in cmake_build_properties:
+            self.assertTrue(prop in plugin.get_build_properties(),
+                            'Expected "' + prop + '" to be included in '
+                            'properties')
+
     def test_build_referencing_sourcedir_if_no_subdir(self):
         plugin = cmake.CMakePlugin('test-part', self.options,
                                    self.project_options)
