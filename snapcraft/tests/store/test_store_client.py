@@ -266,10 +266,25 @@ class GetAccountInformationTestCase(tests.TestCase):
         self.assertEqual({
             'account_id': 'abcd',
             'account_keys': [],
-            'snaps': {'16': {
-                'basic': {'snap-id': 'snap-id'},
-                'ubuntu-core': {'snap-id': 'good'}}}},
-            self.client.get_account_information())
+            'snaps': {
+                '16': {
+                    'basic': {
+                        'snap-id': 'snap-id',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'ubuntu-core': {
+                        'snap-id': 'good',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    }
+                }
+            }
+        }, self.client.get_account_information())
 
     def test_get_account_information_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
@@ -277,10 +292,25 @@ class GetAccountInformationTestCase(tests.TestCase):
         self.assertEqual({
             'account_id': 'abcd',
             'account_keys': [],
-            'snaps': {'16': {
-                'basic': {'snap-id': 'snap-id'},
-                'ubuntu-core': {'snap-id': 'good'}}}},
-            self.client.get_account_information())
+            'snaps': {
+                '16': {
+                    'basic': {
+                        'snap-id': 'snap-id',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'ubuntu-core': {
+                        'snap-id': 'good',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    }
+                }
+            }
+        }, self.client.get_account_information())
         self.assertFalse(self.fake_store.needs_refresh)
 
 

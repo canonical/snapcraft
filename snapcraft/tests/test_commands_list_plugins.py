@@ -21,6 +21,11 @@ from snapcraft.tests import fixture_setup
 
 class ListPluginsCommandTestCase(tests.TestCase):
 
+    scenarios = [
+        ('list-plugins', {'command_name': 'list-plugins'}),
+        ('plugins alias', {'command_name': 'plugins'}),
+    ]
+
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
         'ant        catkin  copy  go      gradle  jdk     kernel  maven  '
@@ -34,7 +39,7 @@ class ListPluginsCommandTestCase(tests.TestCase):
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
         self.useFixture(fake_terminal)
 
-        main(['list-plugins'])
+        main([self.command_name])
         self.assertEqual(fake_terminal.getvalue(), self.default_plugin_output)
 
     def test_list_plugins_large_terminal(self):
@@ -42,7 +47,7 @@ class ListPluginsCommandTestCase(tests.TestCase):
         fake_terminal = fixture_setup.FakeTerminal(columns=999)
         self.useFixture(fake_terminal)
 
-        main(['list-plugins'])
+        main([self.command_name])
         self.assertEqual(fake_terminal.getvalue(), self.default_plugin_output)
 
     def test_list_plugins_small_terminal(self):
@@ -59,5 +64,5 @@ class ListPluginsCommandTestCase(tests.TestCase):
             'dump       kbuild  plainbox-provider  scons  \n'
         )
 
-        main(['list-plugins'])
+        main([self.command_name])
         self.assertEqual(fake_terminal.getvalue(), expected_output)
