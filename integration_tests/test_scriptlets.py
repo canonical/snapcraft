@@ -35,3 +35,12 @@ class ScriptletTestCase(integration_tests.TestCase):
         self.assertThat(echoed_file_path, FileExists())
         self.assertThat(echoed_file_path,
                         FileContains('config-key=config-value\n'))
+
+    def test_prepare_scriptlet(self):
+        project_dir = 'scriptlet-prepare'
+        self.run_snapcraft('build', project_dir)
+
+        installdir = os.path.join(
+            project_dir, 'parts', 'install-scriptlet-test', 'install')
+        touch_file_path = os.path.join(installdir, 'prepared')
+        self.assertThat(touch_file_path, FileExists())

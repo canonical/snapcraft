@@ -44,6 +44,14 @@ class ScriptRunner:
             with suppress(FileNotFoundError):
                 os.unlink(scriptlet_path)
 
+    def prepare(self, *, scriptlet):
+        """Runs pre build procedures for a part.
+
+        Every plugin has a `build` step, this method runs
+        whatever is in the part's prepapre keyword as a shell
+        """
+        self._run(scriptlet)
+
     def install(self, *, scriptlet):
         """Runs post build procedures for a part.
 
