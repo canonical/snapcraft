@@ -29,6 +29,7 @@ yaml.add_constructor(u'!BuildState', _build_state_constructor)
 def _schema_properties():
     return {
         'after',
+        'build-attributes',
         'build-packages',
         'disable-parallel',
         'organize'

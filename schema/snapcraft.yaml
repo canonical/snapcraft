@@ -164,8 +164,8 @@ properties:
             type: string
             default: ''
           disable-parallel:
-              type: boolean
-              default: false
+            type: boolean
+            default: false
           after:
             type: array
             minitems: 1
@@ -181,6 +181,13 @@ properties:
               type: string
             default: []
           build-packages:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          build-attributes:
             type: array
             minitems: 1
             uniqueItems: true
