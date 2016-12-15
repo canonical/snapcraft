@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -50,37 +51,38 @@ class SconsPluginTestCase(tests.TestCase):
                         'Expected "scons-options" to be included in '
                         'properties')
 
-        maven_options = properties['scons-options']
+        scons_options = properties['scons-options']
 
         self.assertTrue(
-            'type' in maven_options,
+            'type' in scons_options,
             'Expected "type" to be included in "scons-options"')
-        self.assertEqual(maven_options['type'], 'array',
+        self.assertEqual(scons_options['type'], 'array',
                          'Expected "scons-options" "type" to be "array", but '
-                         'it was "{}"'.format(maven_options['type']))
+                         'it was "{}"'.format(scons_options['type']))
 
         self.assertTrue(
-            'minitems' in maven_options,
+            'minitems' in scons_options,
             'Expected "minitems" to be included in "scons-options"')
-        self.assertEqual(maven_options['minitems'], 1,
+        self.assertEqual(scons_options['minitems'], 1,
                          'Expected "scons-options" "minitems" to be 1, but '
-                         'it was "{}"'.format(maven_options['minitems']))
+                         'it was "{}"'.format(scons_options['minitems']))
 
         self.assertTrue(
-            'uniqueItems' in maven_options,
+            'uniqueItems' in scons_options,
             'Expected "uniqueItems" to be included in "scons-options"')
         self.assertTrue(
-            maven_options['uniqueItems'],
+            scons_options['uniqueItems'],
             'Expected "scons-options" "uniqueItems" to be "True"')
 
     def test_get_build_properties(self):
-        plugin = scons.SconsPlugin('test-part', self.options,
-                                   self.project_options)
-        scons_build_properties = ['scons-options']
-        for prop in scons_build_properties:
-            self.assertTrue(prop in plugin.get_build_properties(),
-                            'Expected "' + prop + '" to be included in '
-                            'properties')
+        expected_build_properties = ['scons-options']
+        resulting_build_properties = scons.SconsPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def scons_build(self):
         """Helper to call a full build"""
