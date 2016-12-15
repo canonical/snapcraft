@@ -72,13 +72,8 @@ import logging
 import os
 import os.path
 import re
-import shutil
-import tempfile
-import zipfile
 
 from snapcraft.internal import common
-from . import errors
-from . import _base
 from ._bazaar import Bazaar          # noqa
 from ._deb import Deb                # noqa
 from ._git import Git                # noqa
@@ -88,6 +83,7 @@ from ._rpm import Rpm                # noqa
 from ._script import Script          # noqa
 from ._subversion import Subversion  # noqa
 from ._tar import Tar                # noqa
+from ._zip import Zip                # noqa
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -105,38 +101,6 @@ __SOURCE_DEFAULTS = {
 
 def get_source_defaults():
     return __SOURCE_DEFAULTS.copy()
-
-
-class Zip(_base.FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
-        if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a zip source')
-        elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a zip source')
-        if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a zip source')
-
-    def provision(self, dst, clean_target=True, keep_zip=False):
-        zip = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if clean_target:
-            tmp_zip = tempfile.NamedTemporaryFile().name
-            shutil.move(zip, tmp_zip)
-            shutil.rmtree(dst)
-            os.makedirs(dst)
-            shutil.move(tmp_zip, zip)
-
-        zipfile.ZipFile(zip).extractall(path=dst)
-
-        if not keep_zip:
-            os.remove(zip)
 
 
 def get(sourcedir, builddir, options):
