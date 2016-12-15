@@ -23,10 +23,12 @@ from ._base import Base
 
 class Git(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, 'git')
+    def __init__(self, source, source_dir, source_tag=None,
+                 source_checksum=None, source_commit=None, source_branch=None,
+                 source_depth=None):
+        super().__init__(source, source_dir, source_checksum,
+                         source_tag, source_commit, source_branch,
+                         source_depth, 'git')
         if source_tag and source_branch:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for '
@@ -39,6 +41,9 @@ class Git(Base):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-branch and source-commit for '
                 'a git source')
+        if source_checksum:
+            raise errors.IncompatibleOptionsError(
+                'can\'t specify a source-checksum for a git source')
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.git')):

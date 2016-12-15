@@ -23,10 +23,12 @@ from ._base import Base
 
 class Bazaar(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, 'bzr')
+    def __init__(self, source, source_dir, source_checksum=None,
+                 source_tag=None, source_commit=None, source_branch=None,
+                 source_depth=None):
+        super().__init__(source, source_dir, source_checksum,
+                         source_tag, source_commit, source_branch,
+                         source_depth, 'bzr')
         if source_branch:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a bzr source')
@@ -37,6 +39,9 @@ class Bazaar(Base):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-commit for '
                 'a bzr source')
+        if source_checksum:
+            raise errors.IncompatibleOptionsError(
+                'can\'t specify a source-checksum for a bzr source')
 
     def pull(self):
         tag_opts = []

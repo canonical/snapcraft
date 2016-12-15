@@ -17,21 +17,24 @@
 import os
 import requests
 import shutil
+import hashlib
 
 import snapcraft.internal.common
 from snapcraft.internal.indicators import (
     download_requests_stream,
     download_urllib_source
 )
+from . import errors
 
 
 class Base:
 
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None,
-                 command=None):
+    def __init__(self, source, source_dir, source_checksum=None,
+                 source_tag=None, source_commit=None, source_branch=None,
+                 source_depth=None, command=None):
         self.source = source
         self.source_dir = source_dir
+        self.source_checksum = source_checksum
         self.source_tag = source_tag
         self.source_commit = source_commit
         self.source_branch = source_branch
@@ -62,3 +65,35 @@ class FileBase(Base):
             request.raise_for_status()
 
             download_requests_stream(request, self.file)
+
+    def verify_checksum(source_checksum, checkfile):
+        _MD5_SHA1_SHA2_FUNCTIONS = {
+            32: hashlib.md5(),
+            40: hashlib.sha1(),
+            56: hashlib.sha224(),
+            64: hashlib.sha256(),
+            96: hashlib.sha384(),
+            128: hashlib.sha512()
+        }
+
+        try:
+            checksum = \
+                     _MD5_SHA1_SHA2_FUNCTIONS[
+                            len(source_checksum.split('/', 1)[1])]
+
+        except KeyError:
+            raise errors.IncompatibleOptionsError('Invalid checksum format')
+
+        source_checksum_digest = source_checksum.split('/', 1)[1]
+
+        with open(checkfile, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                checksum.update(chunk)
+
+        checksum = checksum.hexdigest()
+
+        if checksum != source_checksum_digest:
+            raise errors.ChecksumDoesNotMatchError(
+                    'The checksum specified ({0}) doesn\'t match'
+                    ' the file checksum calculation ({1})'.format(
+                        source_checksum_digest, checksum))

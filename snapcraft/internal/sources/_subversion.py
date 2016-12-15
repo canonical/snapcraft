@@ -23,10 +23,12 @@ from ._base import Base
 
 class Subversion(Base):
 
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, 'svn')
+    def __init__(self, source, source_dir, source_checksum=None,
+                 source_tag=None, source_commit=None, source_branch=None,
+                 source_depth=None):
+        super().__init__(source, source_dir, source_checksum,
+                         source_tag, source_commit, source_branch,
+                         source_depth, 'svn')
         if source_tag:
             if source_branch:
                 raise errors.IncompatibleOptionsError(
@@ -41,6 +43,9 @@ class Subversion(Base):
         if source_depth:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a Subversion source')
+        if source_checksum:
+            raise errors.IncompatibleOptionsError(
+                'can\'t specify a source-checksum for a Subversion source')
 
     def pull(self):
         opts = []

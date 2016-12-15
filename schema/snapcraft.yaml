@@ -145,6 +145,9 @@ properties:
           source:
             type: string
             default: '.'
+          source-checksum:
+              type: string
+              default: ''
           source-branch:
             type: string
             default: ''

@@ -169,6 +169,7 @@ class PluginHandler:
             source_handler = handler_class(
                 properties['source'],
                 self.sourcedir,
+                source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
                 source_tag=properties['source-tag'],
                 source_depth=properties['source-depth'],

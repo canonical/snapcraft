@@ -23,3 +23,11 @@ class IncompatibleOptionsError(errors.SnapcraftError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class ChecksumDoesNotMatchError(errors.SnapcraftError):
+
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)

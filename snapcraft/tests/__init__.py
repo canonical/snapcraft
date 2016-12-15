@@ -38,9 +38,10 @@ class ContainsList(list):
 
 class MockOptions:
 
-    def __init__(self, source=None, source_type=None, source_branch=None,
-                 source_tag=None, source_subdir=None, source_depth=None,
-                 source_commit=None, disable_parallel=False):
+    def __init__(self, source=None, source_type=None, source_checksum=None,
+                 source_branch=None, source_tag=None, source_subdir=None,
+                 source_depth=None, source_commit=None,
+                 disable_parallel=False):
         self.source = source
         self.source_type = source_type
         self.source_depth = source_depth

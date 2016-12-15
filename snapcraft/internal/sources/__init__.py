@@ -33,6 +33,12 @@ code for that part, and how to unpack it if necessary.
     control system or compression algorithm. The source-type key can tell
     snapcraft exactly how to treat that content.
 
+  - source-checksum: <algorithm>/<digest>
+
+    Snapcraft will use the digest specified to verify the integrity of the
+    source. The source-type needs to be a file (tar, zip, deb or rpm) and
+    the algorithm either md5, sha1, sha2 or sha3.
+
   - source-depth: <integer>
 
     By default clones or branches with full history, specifying a depth
@@ -91,6 +97,7 @@ logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 __SOURCE_DEFAULTS = {
     'source': '.',
     'source-commit': None,
+    'source-checksum': None,
     'source-depth': None,
     'source-tag': None,
     'source-type': None,
@@ -113,6 +120,7 @@ def get(sourcedir, builddir, options):
     source_type = getattr(options, 'source_type', None)
     source_attributes = dict(
         source_depth=getattr(options, 'source_depth', None),
+        source_checksum=getattr(options, 'source_checksum', None),
         source_tag=getattr(options, 'source_tag', None),
         source_commit=getattr(options, 'source_commit', None),
         source_branch=getattr(options, 'source_branch', None),
