@@ -18,6 +18,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import cmake
@@ -53,13 +54,14 @@ class CMakeTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_get_build_properties(self):
-        plugin = cmake.CMakePlugin('test-part', self.options,
-                                   self.project_options)
-        cmake_build_properties = ['configflags']
-        for prop in cmake_build_properties:
-            self.assertTrue(prop in plugin.get_build_properties(),
-                            'Expected "' + prop + '" to be included in '
-                            'properties')
+        expected_build_properties = ['configflags']
+        resulting_build_properties = cmake.CMakePlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_build_referencing_sourcedir_if_no_subdir(self):
         plugin = cmake.CMakePlugin('test-part', self.options,
