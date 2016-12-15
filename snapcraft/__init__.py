@@ -225,6 +225,17 @@ of the choice of plugin.
     `prime/` directory reflects the file structure of the snap with no
     extraneous content).
 
+  - install: shell script
+
+    If present, the shell script defined here is run after the `build` step
+    of the plugin has finished. The working directory is the base build
+    directory for the given part. The defined script is run with `/bin/sh`.
+
+    For example:
+
+      install: |
+        sed -i 's|/usr/bin|$SNAP/usr/bin|g' my-bin-artifact.sh
+        mv my-bin-artifact.sh $SNAPCRAFT_PART_INSTALL/bin/my-bin-build.sh
 """
 
 from collections import OrderedDict                 # noqa
