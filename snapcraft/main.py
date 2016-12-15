@@ -44,6 +44,7 @@ Usage:
   snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
+  snapcraft [options] plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] gated <snap-name>
@@ -92,6 +93,7 @@ The available commands are:
   help         Obtain help for a certain plugin or topic
   init         Initialize a snapcraft project.
   list-plugins List the available plugins that handle different types of part.
+  plugins      Alias for list-plugins.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
   list-keys    List keys available for signing snaps.
@@ -250,6 +252,7 @@ def _get_command_from_arg(args):
         'login': snapcraft.login,
         'logout': snapcraft.logout,
         'list-plugins': _list_plugins,
+        'plugins': _list_plugins,
     }
     function = [k for k in functions if args[k]]
     if len(function) == 0:
