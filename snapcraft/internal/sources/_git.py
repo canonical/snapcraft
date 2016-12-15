@@ -40,33 +40,46 @@ class Git(Base):
                 'can\'t specify both source-branch and source-commit for '
                 'a git source')
 
-    def pull(self):
+    def _pull_existing(self, **kwargs):
+        refspec = 'HEAD'
+        if self.source_branch:
+            refspec = 'refs/heads/' + self.source_branch
+        elif self.source_tag:
+            refspec = 'refs/tags/' + self.source_tag
+        elif self.source_commit:
+            refspec = self.source_commit
+
+        # Pull changes to this repository and any submodules.
+        subprocess.check_call([self.command, '-C', self.source_dir,
+                               'pull', '--recurse-submodules=yes',
+                               self.source, refspec], **kwargs)
+
+        # Merge any updates for the submodules (if any).
+        subprocess.check_call([self.command, '-C', self.source_dir,
+                              'submodule', 'update'], **kwargs)
+
+    def _clone_new(self, **kwargs):
+        command = [self.command, 'clone', '--recursive']
+        if self.source_tag or self.source_branch:
+            command.extend([
+                '--branch', self.source_tag or self.source_branch])
+        if self.source_depth:
+            command.extend(['--depth', str(self.source_depth)])
+        subprocess.check_call(command + [self.source, self.source_dir],
+                              **kwargs)
+
+        if self.source_commit:
+            subprocess.check_call([self.command, '-C', self.source_dir,
+                                  'checkout', self.source_commit],
+                                  **kwargs)
+
+    def pull(self, debug=True):
+        kwargs = {}
+        if not debug:
+            kwargs['stdout'] = subprocess.DEVNULL
+            kwargs['stderr'] = subprocess.DEVNULL
+
         if os.path.exists(os.path.join(self.source_dir, '.git')):
-            refspec = 'HEAD'
-            if self.source_branch:
-                refspec = 'refs/heads/' + self.source_branch
-            elif self.source_tag:
-                refspec = 'refs/tags/' + self.source_tag
-            elif self.source_commit:
-                refspec = self.source_commit
-
-            # Pull changes to this repository and any submodules.
-            subprocess.check_call([self.command, '-C', self.source_dir,
-                                   'pull', '--recurse-submodules=yes',
-                                   self.source, refspec])
-
-            # Merge any updates for the submodules (if any).
-            subprocess.check_call([self.command, '-C', self.source_dir,
-                                   'submodule', 'update'])
+            self._pull_existing(**kwargs)
         else:
-            command = [self.command, 'clone', '--recursive']
-            if self.source_tag or self.source_branch:
-                command.extend([
-                    '--branch', self.source_tag or self.source_branch])
-            if self.source_depth:
-                command.extend(['--depth', str(self.source_depth)])
-            subprocess.check_call(command + [self.source, self.source_dir])
-
-            if self.source_commit:
-                subprocess.check_call([self.command, '-C', self.source_dir,
-                                       'checkout', self.source_commit])
+            self._clone_new(**kwargs)

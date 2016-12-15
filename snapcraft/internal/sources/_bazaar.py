@@ -38,7 +38,12 @@ class Bazaar(Base):
                 'can\'t specify both source-tag and source-commit for '
                 'a bzr source')
 
-    def pull(self):
+    def pull(self, debug=True):
+        kwargs = {}
+        if not debug:
+            kwargs['stdout'] = subprocess.DEVNULL
+            kwargs['stderr'] = subprocess.DEVNULL
+
         tag_opts = []
         if self.source_tag:
             tag_opts = ['-r', 'tag:' + self.source_tag]
@@ -52,4 +57,4 @@ class Bazaar(Base):
             cmd = [self.command, 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd, **kwargs)

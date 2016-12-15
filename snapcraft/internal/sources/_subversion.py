@@ -42,7 +42,12 @@ class Subversion(Base):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a Subversion source')
 
-    def pull(self):
+    def pull(self, debug=False):
+        kwargs = {}
+        if not debug:
+            kwargs['stdout'] = subprocess.DEVNULL
+            kwargs['stderr'] = subprocess.DEVNULL
+
         opts = []
 
         if self.source_commit:
@@ -50,14 +55,15 @@ class Subversion(Base):
 
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
-                [self.command, 'update'] + opts, cwd=self.source_dir)
+                [self.command, 'update'] + opts, cwd=self.source_dir,
+                **kwargs)
         else:
             if os.path.isdir(self.source):
                 subprocess.check_call(
                     [self.command, 'checkout',
                      'file://{}'.format(os.path.abspath(self.source)),
-                     self.source_dir] + opts)
+                     self.source_dir] + opts, **kwargs)
             else:
                 subprocess.check_call(
                     [self.command, 'checkout', self.source, self.source_dir] +
-                    opts)
+                    opts, **kwargs)

@@ -168,7 +168,7 @@ def _encode_origin(origin):
     return re.sub('[^A-Za-z0-9-_.]', '', origin)
 
 
-def _process_entry(data):
+def _process_entry(data, debug=False):
     parts_list = OrderedDict()
     # Store all the parts listed in 'after' for each included part so that
     # we can check later that we aren't missing any parts.
@@ -201,7 +201,7 @@ def _process_entry(data):
     handler.source_branch = origin_branch
     handler.source_commit = origin_commit
     handler.source_tag = origin_tag
-    handler.pull()
+    handler.pull(debug)
 
     try:
         origin_data = _get_origin_data(origin_dir)
@@ -224,7 +224,7 @@ def _process_entry(data):
 
 def _process_wiki_entry(
         entry, master_parts_list, master_missing_parts,
-        pending_validation_entries):
+        pending_validation_entries, debug=False):
     """Add valid wiki entries to the master parts list"""
     # return the number of errors encountered
     try:
@@ -244,7 +244,7 @@ def _process_wiki_entry(
                 'Duplicate part found in the wiki: {} in entry {}'.format(
                     part_name, entry))
 
-    parts_list, after_parts = _process_entry(data)
+    parts_list, after_parts = _process_entry(data, debug)
 
     known_parts = list(parts_list.keys()) + list(master_parts_list.keys())
     missing_parts = missing_parts_set(after_parts, known_parts)
@@ -255,19 +255,19 @@ def _process_wiki_entry(
     else:
         pending_validation_entries.append(entry)
         master_missing_parts.update(missing_parts)
-        logging.debug('Parts {!r} are missing'.format(
+        logger.debug('Parts {!r} are missing'.format(
             ",".join(missing_parts)))
 
 
 def _try_process_entry(
         entry, master_parts_list, missing_parts,
-        pending_validation_entries):
+        pending_validation_entries, debug=True):
     wiki_errors = 0
 
     try:
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
-            pending_validation_entries)
+            pending_validation_entries, debug)
     except SnapcraftError as e:
         logger.warning(e)
         wiki_errors += 1
@@ -275,7 +275,7 @@ def _try_process_entry(
     return wiki_errors
 
 
-def _process_index(output):
+def _process_index(output, debug=False):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
@@ -295,7 +295,7 @@ def _process_index(output):
             if entry:
                 wiki_errors += _try_process_entry(
                     entry, master_parts_list, missing_parts,
-                    pending_validation_entries)
+                    pending_validation_entries, debug)
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
@@ -303,14 +303,14 @@ def _process_index(output):
     if entry:
         wiki_errors += _try_process_entry(
             entry, master_parts_list,  missing_parts,
-            pending_validation_entries)
+            pending_validation_entries, debug)
 
     for entry in pending_validation_entries:
         wiki_errors += _try_process_entry(
-            entry, master_parts_list, missing_parts, [])
+            entry, master_parts_list, missing_parts, [], debug)
 
     if len(missing_parts):
-        logging.warning('Parts {!r} are not defined in the parts entry'.format(
+        logger.warning('Parts {!r} are not defined in the parts entry'.format(
                 ",".join(missing_parts)))
 
     return {'master_parts_list': master_parts_list,
@@ -328,11 +328,13 @@ def run(args):
             index = '{}{}'.format(
                 'file://', os.path.join(os.getcwd(), index))
         output = urllib.request.urlopen(index).read()
+        logger.info('Processing index: {index!r}'.format(index=index))
     else:
         # XXX: fetch the index from the wiki
         output = b'{}'
 
-    data = _process_index(output)
+    debug = args['--debug']
+    data = _process_index(output, debug)
     master_parts_list = data['master_parts_list']
     wiki_errors = data['wiki_errors']
 
@@ -357,7 +359,7 @@ def missing_parts_set(parts, known_parts):
 
 
 def _write_parts_list(path, master_parts_list):
-    logging.debug('Writing parts list to {!r}'.format(path))
+    logger.info('Writing parts list to {!r}'.format(path))
     with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
                  default_flow_style=False))
