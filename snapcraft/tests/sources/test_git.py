@@ -26,7 +26,7 @@ class TestGit(SourceTestCase):
     def test_pull(self):
         git = sources.Git('git://my-source', 'source_dir')
 
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['git', 'clone', '--recursive', 'git://my-source',
@@ -35,7 +35,7 @@ class TestGit(SourceTestCase):
     def test_pull_with_depth(self):
         git = sources.Git('git://my-source', 'source_dir', source_depth=2)
 
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['git', 'clone', '--recursive', '--depth', '2', 'git://my-source',
@@ -44,7 +44,7 @@ class TestGit(SourceTestCase):
     def test_pull_branch(self):
         git = sources.Git('git://my-source', 'source_dir',
                           source_branch='my-branch')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['git', 'clone', '--recursive', '--branch',
@@ -52,7 +52,7 @@ class TestGit(SourceTestCase):
 
     def test_pull_tag(self):
         git = sources.Git('git://my-source', 'source_dir', source_tag='tag')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['git', 'clone', '--recursive', '--branch', 'tag',
@@ -62,7 +62,7 @@ class TestGit(SourceTestCase):
         git = sources.Git(
             'git://my-source', 'source_dir',
             source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_has_calls([
             mock.call(['git', 'clone', '--recursive', 'git://my-source',
@@ -75,7 +75,7 @@ class TestGit(SourceTestCase):
         self.mock_path_exists.return_value = True
 
         git = sources.Git('git://my-source', 'source_dir')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_has_calls([
             mock.call(['git', '-C', 'source_dir', 'pull',
@@ -87,7 +87,7 @@ class TestGit(SourceTestCase):
         self.mock_path_exists.return_value = True
 
         git = sources.Git('git://my-source', 'source_dir', source_tag='tag')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_has_calls([
             mock.call(['git', '-C', 'source_dir', 'pull',
@@ -102,7 +102,7 @@ class TestGit(SourceTestCase):
         git = sources.Git(
             'git://my-source', 'source_dir',
             source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_has_calls([
             mock.call(['git', '-C', 'source_dir', 'pull',
@@ -116,7 +116,7 @@ class TestGit(SourceTestCase):
 
         git = sources.Git('git://my-source', 'source_dir',
                           source_branch='my-branch')
-        git.pull()
+        git.pull(debug=True)
 
         self.mock_run.assert_has_calls([
             mock.call(['git', '-C', 'source_dir', 'pull',

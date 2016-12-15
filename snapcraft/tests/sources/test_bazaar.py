@@ -24,7 +24,7 @@ class TestBazaar(SourceTestCase):
     def test_pull(self):
         bzr = sources.Bazaar('lp:my-source', 'source_dir')
 
-        bzr.pull()
+        bzr.pull(debug=True)
 
         self.mock_rmdir.assert_called_once_with('source_dir')
         self.mock_run.assert_called_once_with(
@@ -33,7 +33,7 @@ class TestBazaar(SourceTestCase):
     def test_pull_tag(self):
         bzr = sources.Bazaar(
             'lp:my-source', 'source_dir', source_tag='tag')
-        bzr.pull()
+        bzr.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'branch', '-r', 'tag:tag', 'lp:my-source',
@@ -44,7 +44,7 @@ class TestBazaar(SourceTestCase):
 
         bzr = sources.Bazaar(
             'lp:my-source', 'source_dir', source_tag='tag')
-        bzr.pull()
+        bzr.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'pull', '-r', 'tag:tag', 'lp:my-source', '-d',
@@ -53,7 +53,7 @@ class TestBazaar(SourceTestCase):
     def test_pull_commit(self):
         bzr = sources.Bazaar(
             'lp:my-source', 'source_dir', source_commit='2')
-        bzr.pull()
+        bzr.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'branch', '-r', '2', 'lp:my-source',
@@ -64,7 +64,7 @@ class TestBazaar(SourceTestCase):
 
         bzr = sources.Bazaar(
             'lp:my-source', 'source_dir', source_commit='2')
-        bzr.pull()
+        bzr.pull(debug=True)
 
         self.mock_run.assert_called_once_with(
             ['bzr', 'pull', '-r', '2', 'lp:my-source', '-d',
