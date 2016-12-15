@@ -86,9 +86,16 @@ class WafPluginTestCase(tests.TestCase):
 
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
-        build_properties = schema['build-properties']
+
+    def test_get_build_properties(self):
+        plugin = waf.WafPlugin('test-part', self.options,
+                                   self.project_options)
+        waf_build_properties = ['configflags']
+        for prop in waf_build_properties:
+            self.assertTrue(prop in plugin.get_build_properties(),
+                            'Expected "' + prop + '" to be included in '
+                            'properties')
         self.assertEqual(1, len(build_properties))
-        self.assertTrue('configflags' in build_properties)
 
     def waf_build(self):
         """Helper to call a full build"""
