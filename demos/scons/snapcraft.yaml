@@ -1,0 +1,19 @@
+name: scons-hello
+version: 0
+summary: A scons example
+description: this is not much more than an example
+confinement: strict
+grade: stable
+
+apps:
+ scons-hello:
+   command: wrapper
+
+parts:
+    local:
+        plugin: scons
+        source: .
+        scons-options: [--debug=explain]
+        organize:
+            ../build/wrapper: bin/
+
