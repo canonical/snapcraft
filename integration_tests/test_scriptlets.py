@@ -23,7 +23,6 @@ from testtools.matchers import FileContains, FileExists
 
 class ScriptletTestCase(integration_tests.TestCase):
 
-
     def test_prepare_scriptlet(self):
         project_dir = 'scriptlet-prepare'
         self.run_snapcraft('build', project_dir)
