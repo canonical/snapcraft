@@ -1,0 +1,15 @@
+name: install-scriptlet-test
+version: '0.1'
+summary: Runs the install scriptlet for a part
+description: |
+  Runs the shell script defined in `install` after the build takes place.
+
+grade: devel
+confinement: devmode
+
+parts:
+  install-scriptlet-test:
+    plugin: nil
+    install: |
+      touch $SNAPCRAFT_PART_INSTALL/build-done
+      echo config-key=config-value > $SNAPCRAFT_PART_INSTALL/config.ini
