@@ -89,13 +89,13 @@ class WafPluginTestCase(tests.TestCase):
 
     def test_get_build_properties(self):
         plugin = waf.WafPlugin('test-part', self.options,
-                                   self.project_options)
+                               self.project_options)
         waf_build_properties = ['configflags']
         for prop in waf_build_properties:
             self.assertTrue(prop in plugin.get_build_properties(),
                             'Expected "' + prop + '" to be included in '
                             'properties')
-        self.assertEqual(1, len(build_properties))
+        self.assertEqual(1, len(plugin.get_build_properties()))
 
     def waf_build(self):
         """Helper to call a full build"""
