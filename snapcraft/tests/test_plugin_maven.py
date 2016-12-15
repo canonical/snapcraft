@@ -61,7 +61,6 @@ class MavenPluginTestCase(tests.TestCase):
         plugin = maven.MavenPlugin('test-part', self.options,
                                    self.project_options)
         maven_build_properties = ['maven-options', 'maven-targets']
-        plugin.get_build_properties()
         for prop in maven_build_properties:
             self.assertTrue(prop in plugin.get_build_properties(),
                             'Expected "' + prop + '" to be included in '
