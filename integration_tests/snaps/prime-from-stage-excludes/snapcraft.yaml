@@ -1,0 +1,14 @@
+name: my-snap-name
+version: '0.1'
+summary: Test that stage exclude files are not added to the prime fileset.
+description: |
+    Test that stage exclude files are not added to the prime fileset.
+
+parts:
+  stage-excludes-from-prime:
+    plugin: make
+    source: .
+    stage:
+        - -a
+        - b
+        - c

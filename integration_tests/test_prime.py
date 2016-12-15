@@ -44,3 +44,17 @@ class PrimeTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(project_dir, 'prime', 'b'),
             Not(FileExists()))
+
+    def test_prime_includes_stage_excludes_fileset(self):
+        project_dir = 'prime-from-stage-excludes'
+
+        self.run_snapcraft('prime', project_dir)
+        self.assertThat(
+            os.path.join(project_dir, 'prime', 'a'),
+            Not(FileExists()))
+        self.assertThat(
+            os.path.join(project_dir, 'prime', 'c'),
+            FileExists())
+        self.assertThat(
+            os.path.join(project_dir, 'prime', 'b'),
+            FileExists())
