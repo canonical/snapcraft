@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -88,14 +89,14 @@ class WafPluginTestCase(tests.TestCase):
                         'Expected schema to include "build-properties"')
 
     def test_get_build_properties(self):
-        plugin = waf.WafPlugin('test-part', self.options,
-                               self.project_options)
-        waf_build_properties = ['configflags']
-        for prop in waf_build_properties:
-            self.assertTrue(prop in plugin.get_build_properties(),
-                            'Expected "' + prop + '" to be included in '
-                            'properties')
-        self.assertEqual(1, len(plugin.get_build_properties()))
+        expected_build_properties = ['configflags']
+        resulting_build_properties = waf.WafPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def waf_build(self):
         """Helper to call a full build"""
