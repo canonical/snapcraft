@@ -191,6 +191,7 @@ def _process_entry(data, debug=False):
     except KeyError as e:
         raise InvalidWikiEntryError('Missing key in wiki entry: {}'.format(e))
 
+    logger.info('Processing origin {origin!r}'.format(origin=origin))
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
