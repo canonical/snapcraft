@@ -74,7 +74,6 @@ import os.path
 import re
 import shutil
 import tempfile
-import tarfile
 import zipfile
 
 from snapcraft.internal import common
@@ -88,6 +87,7 @@ from ._mercurial import Mercurial    # noqa
 from ._rpm import Rpm                # noqa
 from ._script import Script          # noqa
 from ._subversion import Subversion  # noqa
+from ._tar import Tar                # noqa
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -105,84 +105,6 @@ __SOURCE_DEFAULTS = {
 
 def get_source_defaults():
     return __SOURCE_DEFAULTS.copy()
-
-
-class Tar(_base.FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
-        if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a tar source')
-        elif source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a tar source')
-        elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a tar source')
-        if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a tar source')
-
-    def provision(self, dst, clean_target=True, keep_tarball=False):
-        # TODO add unit tests.
-        tarball = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if clean_target:
-            tmp_tarball = tempfile.NamedTemporaryFile().name
-            shutil.move(tarball, tmp_tarball)
-            shutil.rmtree(dst)
-            os.makedirs(dst)
-            shutil.move(tmp_tarball, tarball)
-
-        self._extract(tarball, dst)
-
-        if not keep_tarball:
-            os.remove(tarball)
-
-    def _extract(self, tarball, dst):
-        with tarfile.open(tarball) as tar:
-            def filter_members(tar):
-                """Filters members and member names:
-                    - strips common prefix
-                    - bans dangerous names"""
-                members = tar.getmembers()
-                common = os.path.commonprefix([m.name for m in members])
-
-                # commonprefix() works a character at a time and will
-                # consider "d/ab" and "d/abc" to have common prefix "d/ab";
-                # check all members either start with common dir
-                for m in members:
-                    if not (m.name.startswith(common + '/') or
-                            m.isdir() and m.name == common):
-                        # commonprefix() didn't return a dir name; go up one
-                        # level
-                        common = os.path.dirname(common)
-                        break
-
-                for m in members:
-                    if m.name == common:
-                        continue
-                    self._strip_prefix(common, m)
-                    # We mask all files to be writable to be able to easily
-                    # extract on top.
-                    m.mode = m.mode | 0o200
-                    yield m
-
-            tar.extractall(members=filter_members(tar), path=dst)
-
-    def _strip_prefix(self, common, member):
-        if member.name.startswith(common + '/'):
-            member.name = member.name[len(common + '/'):]
-        # strip leading '/', './' or '../' as many times as needed
-        member.name = re.sub(r'^(\.{0,2}/)*', r'', member.name)
-        # do the same for linkname if this is a hardlink
-        if member.islnk() and not member.issym():
-            if member.linkname.startswith(common + '/'):
-                member.linkname = member.linkname[len(common + '/'):]
-            member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
 
 
 class Zip(_base.FileBase):
