@@ -156,6 +156,49 @@ class DownloadTestCase(tests.TestCase):
             'Successfully downloaded test-snap at {}'.format(download_path),
             self.fake_logger.output)
 
+    def test_download_from_branded_store_requires_login(self):
+        err = self.assertRaises(
+            errors.SnapNotFoundError,
+            self.client.download,
+            'test-snap-branded-store', 'test-channel', 'dummy')
+
+        self.assertEqual(
+            "Snap 'test-snap-branded-store' for 'amd64' cannot be found in "
+            "the 'test-channel' channel.",
+            str(err))
+
+    def test_download_from_branded_store_requires_store(self):
+        self.client.login('dummy', 'test correct password')
+        err = self.assertRaises(
+            errors.SnapNotFoundError,
+            self.client.download,
+            'test-snap-branded-store', 'test-channel', 'dummy')
+
+        self.assertEqual(
+            "Snap 'test-snap-branded-store' for 'amd64' cannot be found in "
+            "the 'test-channel' channel.",
+            str(err))
+
+    def test_download_from_branded_store(self):
+        # Downloading from a branded-store requires login (authorization)
+        # and setting 'SNAPCRAFT_UBUNTU_STORE' environment variable to the
+        # correct store 'slug' (the branded store identifier).
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_UBUNTU_STORE', 'Test-Branded'))
+        self.client.login('dummy', 'test correct password')
+
+        download_path = os.path.join(self.path, 'brand.snap')
+        self.client.download(
+            'test-snap-branded-store', 'test-channel', download_path)
+
+        self.assertIn(
+            'Successfully downloaded test-snap-branded-store at {}'
+            .format(download_path), self.fake_logger.output)
+
     def test_download_already_downloaded_snap(self):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)

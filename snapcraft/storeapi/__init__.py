@@ -354,11 +354,31 @@ class SnapIndexClient(Client):
             'UBUNTU_STORE_SEARCH_ROOT_URL',
             constants.UBUNTU_STORE_SEARCH_ROOT_URL))
 
+    def get_default_headers(self):
+        """Return default headers for CPI requests.
+
+        Tries to build an 'Authorization' header with local credentials
+        if they are available.
+        Also pin specific branded store if `SNAPCRAFT_UBUNTU_STORE`
+        environment is set.
+        """
+        headers = {}
+
+        with contextlib.suppress(errors.InvalidCredentialsError):
+            headers['Authorization'] = _macaroon_auth(self.conf)
+
+        branded_store = os.getenv("SNAPCRAFT_UBUNTU_STORE")
+        if branded_store:
+            headers['X-Ubuntu-Store'] = branded_store
+
+        return headers
+
     def get_package(self, snap_name, channel, arch=None):
-        headers = {
+        headers = self.get_default_headers()
+        headers.update({
             'Accept': 'application/hal+json',
             'X-Ubuntu-Release': constants.DEFAULT_SERIES,
-        }
+        })
         if arch:
             headers['X-Ubuntu-Architecture'] = arch
 
@@ -376,9 +396,7 @@ class SnapIndexClient(Client):
 
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
-            headers = {}
-        with contextlib.suppress(errors.InvalidCredentialsError):
-            headers.update({'Authorization': _macaroon_auth(self.conf)})
+            headers = self.get_default_headers()
         response = self.request('GET', url, stream=stream,
                                 headers=headers, params=params)
         return response

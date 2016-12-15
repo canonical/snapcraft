@@ -1036,16 +1036,26 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def _get_details_response(self, package):
         # ubuntu-core is used in integration tests with fake servers.
+
+        # sha512sum snapcraft/tests/data/test-snap.snap
+        test_sha512 = (
+            '69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef'
+            'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
+            'fda4128234e4c201f28fe9')
+
         if package in ('test-snap', 'ubuntu-core'):
-            # sha512sum snapcraft/tests/data/test-snap.snap
-            sha512 = (
-                '69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef'
-                'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
-                'fda4128234e4c201f28fe9')
+            sha512 = test_sha512
         elif package == 'test-snap-with-wrong-sha':
             sha512 = 'wrong sha'
+        elif package == 'test-snap-branded-store':
+            # Branded-store snaps require Store pinning and authorization.
+            if (self.headers.get('X-Ubuntu-Store') != 'Test-Branded' or
+                    self.headers.get('Authorization') is None):
+                return None
+            sha512 = test_sha512
         else:
             return None
+
         response = {
             'anon_download_url': urllib.parse.urljoin(
                 'http://localhost:{}'.format(self.server.server_port),
