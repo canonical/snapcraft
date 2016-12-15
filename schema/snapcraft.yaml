@@ -207,6 +207,9 @@ properties:
             items:
               type: string
             default: ['*']
+          install:
+            type: string
+            default: ''
   plugs:
     type: object
   slots:
