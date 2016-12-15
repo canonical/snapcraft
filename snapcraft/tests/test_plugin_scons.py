@@ -31,7 +31,7 @@ class SconsPluginTestCase(tests.TestCase):
 
         class Options:
             """Internal Options Class matching the Scons plugin"""
-            scons_options = []
+            scons_options = ['--debug=explain']
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -86,13 +86,8 @@ class SconsPluginTestCase(tests.TestCase):
         """Helper to call a full build"""
         plugin = scons.SconsPlugin('test-part', self.options,
                                    self.project_options)
-        os.makedirs(plugin.sourcedir)
-
         # Create fake scons
-        open(os.path.join(plugin.sourcedir, 'scons'), 'w').close()
-
         plugin.build()
-
         return plugin
 
     @mock.patch.object(scons.SconsPlugin, 'run')
@@ -104,6 +99,6 @@ class SconsPluginTestCase(tests.TestCase):
 
         self.assertEqual(2, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['scons']),
-            mock.call(['scons', 'install'], env=env)
+            mock.call(['scons', '--debug=explain']),
+            mock.call(['scons', 'install', '--debug=explain'], env=env)
         ])
