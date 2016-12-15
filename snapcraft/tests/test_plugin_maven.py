@@ -20,6 +20,7 @@ from unittest import mock
 from xml.etree import ElementTree
 
 import fixtures
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -58,13 +59,14 @@ class MavenPluginTestCase(tests.TestCase):
             return f.getvalue() + '\n'
 
     def test_get_build_properties(self):
-        plugin = maven.MavenPlugin('test-part', self.options,
-                                   self.project_options)
-        maven_build_properties = ['maven-options', 'maven-targets']
-        for prop in maven_build_properties:
-            self.assertTrue(prop in plugin.get_build_properties(),
-                            'Expected "' + prop + '" to be included in '
-                            'properties')
+        expected_build_properties = ['maven-options', 'maven-targets']
+        resulting_build_properties = maven.MavenPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def assertSettingsEqual(self, expected, observed):
         print(repr(self._canonicalize_settings(expected)))
