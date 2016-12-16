@@ -1,3 +1,67 @@
+snapcraft (2.24) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * meta: support classic confinment (#946)
+  * project: support building classic snaps (#949)
+  * pluginhandler: convert to package (#954)
+  * tests: idempotent store installs. (#956)
+  * demos: do not force arch for the tomcat demo (#976)
+  * pluginhandler: install scriptlet support (#960)
+  * pluginhandler: prepare scriptlet support (#987)
+  * pluginhandler: build scriptlet support (#988)
+  * New upstream release 2.24 (LP: #1650632)
+
+  [ Leo Arias ]
+  * tests: fix unittests for armhf (#945)
+  * tests: Use a more stable ftp source (#950)
+  * tests: use testtools as the base of all unit tests (#948)
+
+  [ Marco Trevisan ]
+  * parser: add support for origin-{branch,commit,tag} (#931)
+
+  [ Chris MacNaughton ]
+  * rust plugin: fetch dependencies in pull (#908)
+
+  [ Larry Price ]
+  * file_utils: catch PermissionError when attempting to replace contents in
+    a readonly file (#892)
+
+  [ Albert Astals Cid ]
+  * sources: add source value to error message (#958)
+  * cli: make plugins be an alias of list-plugins (#959)
+
+  [ Joe Talbott ]
+  * meta: add `aliases` support to `apps` (#947)
+  * parser: Use the same version method as 'snapcraft' (#982)
+
+  [ Kyle Fazzari ]
+  * sources: convert to package. (#955)
+  * sources: refactor base sources into module. (#957)
+  * sources: refactor bazaar source into module. (#962)
+  * sources: refactor deb source into module. (#963)
+  * sources: refactor local source into module. (#961)
+  * sources: refactor git source into module. (#964)
+  * sources: refactor mercurial source into module. (#965)
+  * sources: refactor rpm source into module. (#966)
+  * sources: refactor script source into module. (#967)
+  * sources: refactor subversion source into module. (#968)
+  * sources: refactor tar source into module. (#969)
+  * sources: refactor zip source into module. (#970)
+  * libraries: prefer in-snap libraries to system libraries. (#977)
+
+  [ Celso Providelo ]
+  * cli: implementing '[list-]registered' command (#890)
+  * store: support download and validate on branded stores. (#981)
+
+  [ Matthew Aguirre ]
+  * maven plugin: implement get_build_properties() (#974)
+  * gradle plugin: implement get_build_properties()  (#975)
+  * cmake plugin: implement get_build_properties() (#978)
+  * waf plugin: implement get_build_properties() (#979)
+  * scons plugin: implement get_build_properties() (#983)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 16 Dec 2016 17:10:40 +0000
+
 snapcraft (2.23) xenial; urgency=medium
 
   [ Sergio Schvezov ]
