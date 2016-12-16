@@ -5,6 +5,7 @@ Maintainer: Snapcraft Team <snapcraft@lists.snapcraft.io>
 Build-Depends: bash-completion,
                debhelper (>= 9),
                dh-python,
+               libssl-dev,
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
@@ -39,7 +40,8 @@ Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
-Depends: python3-apt,
+Depends: libssl-dev,
+         python3-apt,
          python3-docopt,
          python3-jsonschema,
          python3-libarchive-c,
