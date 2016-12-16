@@ -106,7 +106,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
     def test_get_build_properties(self):
         expected_build_properties = ['configflags', 'install-via']
-        resulting_build_properties = autotools.AutotoolsPlugin.get_build_properties()
+        resulting_build_properties = \
+            autotools.AutotoolsPlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
                         HasLength(len(expected_build_properties)))
