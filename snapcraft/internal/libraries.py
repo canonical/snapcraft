@@ -72,7 +72,8 @@ def _get_system_libs():
 
     if not os.path.exists(lib_path):
         logger.warning('No libraries to exclude from this release')
-        return frozenset()
+        # Always exclude libc.so.6
+        return frozenset(['libc.so.6'])
 
     with open(lib_path) as fn:
         _libraries = frozenset(fn.read().split())
