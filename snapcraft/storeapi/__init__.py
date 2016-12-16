@@ -1,3 +1,4 @@
+
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016 Canonical Ltd
@@ -367,7 +368,7 @@ class SnapIndexClient(Client):
         with contextlib.suppress(errors.InvalidCredentialsError):
             headers['Authorization'] = _macaroon_auth(self.conf)
 
-        branded_store = os.getenv("SNAPCRAFT_UBUNTU_STORE")
+        branded_store = os.getenv('SNAPCRAFT_UBUNTU_STORE')
         if branded_store:
             headers['X-Ubuntu-Store'] = branded_store
 

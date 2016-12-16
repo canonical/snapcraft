@@ -26,7 +26,8 @@ import pymacaroons
 from snapcraft import (
     config,
     storeapi,
-    tests
+    tests,
+    ProjectOptions,
 )
 from snapcraft.storeapi import errors
 from snapcraft.tests import fixture_setup
@@ -162,9 +163,10 @@ class DownloadTestCase(tests.TestCase):
             self.client.download,
             'test-snap-branded-store', 'test-channel', 'dummy')
 
+        arch = ProjectOptions().deb_arch
         self.assertEqual(
-            "Snap 'test-snap-branded-store' for 'amd64' cannot be found in "
-            "the 'test-channel' channel.",
+            "Snap 'test-snap-branded-store' for '{}' cannot be found in "
+            "the 'test-channel' channel.".format(arch),
             str(err))
 
     def test_download_from_branded_store_requires_store(self):
@@ -174,9 +176,10 @@ class DownloadTestCase(tests.TestCase):
             self.client.download,
             'test-snap-branded-store', 'test-channel', 'dummy')
 
+        arch = ProjectOptions().deb_arch
         self.assertEqual(
-            "Snap 'test-snap-branded-store' for 'amd64' cannot be found in "
-            "the 'test-channel' channel.",
+            "Snap 'test-snap-branded-store' for '{}' cannot be found in "
+            "the 'test-channel' channel.".format(arch),
             str(err))
 
     def test_download_from_branded_store(self):
