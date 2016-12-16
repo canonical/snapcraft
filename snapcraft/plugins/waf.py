@@ -51,10 +51,6 @@ class WafPlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
-        # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend(['configflags'])
-
         return schema
 
     def __init__(self, name, options, project):
@@ -62,6 +58,12 @@ class WafPlugin(snapcraft.BasePlugin):
         self.build_packages.extend([
             'python-dev',
         ])
+
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['configflags']
 
     def build(self):
         super().build()
