@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -91,11 +92,15 @@ class MakePluginTestCase(tests.TestCase):
             'Expected "make-install-var" "default" to be "DESTDIR", but it '
             'was "{}"'.format(make_install_var_default))
 
-        build_properties = schema['build-properties']
-        self.assertEqual(3, len(build_properties))
-        self.assertTrue('makefile' in build_properties)
-        self.assertTrue('make-parameters' in build_properties)
-        self.assertTrue('make-install-var' in build_properties)
+    def test_get_build_properties(self):
+        expected_build_properties = ['makefile', 'make-parameters', 'make-install-var']
+        resulting_build_properties = gradle.GradlePlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     @mock.patch.object(make.MakePlugin, 'run')
     def test_build(self, run_mock):
