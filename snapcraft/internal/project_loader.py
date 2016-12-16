@@ -28,6 +28,7 @@ import snapcraft
 from snapcraft import formatting_utils
 from snapcraft.internal import (
     common,
+    errors,
     libraries,
     parts,
     pluginhandler,
@@ -131,6 +132,8 @@ class Config:
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
 
+        self._ensure_no_duplicate_app_aliases()
+
         # both confinement type and build quality are optionals
         _ensure_confinement_default(self.data, self._validator.schema)
         _ensure_grade_default(self.data, self._validator.schema)
@@ -138,7 +141,7 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        self.parts = parts.PartsConfig(self.data.get('parts', {}),
+        self.parts = parts.PartsConfig(self.data,
                                        self._project_options,
                                        self._validator,
                                        self.build_tools,
@@ -146,6 +149,21 @@ class Config:
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
+
+    def _ensure_no_duplicate_app_aliases(self):
+        # Prevent multiple apps within a snap from having duplicate alias names
+        aliases = []
+        for app_name, app in self.data.get('apps', {}).items():
+            aliases.extend(app.get('aliases', []))
+        seen = set()
+        duplicates = set()
+        for alias in aliases:
+            if alias in seen:
+                duplicates.add(alias)
+            else:
+                seen.add(alias)
+        if duplicates:
+            raise errors.DuplicateAliasError(aliases=duplicates)
 
     def get_project_state(self, step):
         """Returns a dict of states for the given step of each part."""
@@ -158,11 +176,16 @@ class Config:
 
     def stage_env(self):
         stage_dir = self._project_options.stage_dir
+        core_dynamic_linker = self._project_options.get_core_dynamic_linker()
         env = []
 
         env += _runtime_env(stage_dir, self._project_options.arch_triplet)
-        env += _build_env_for_stage(stage_dir,
-                                    self._project_options.arch_triplet)
+        env += _build_env_for_stage(
+            stage_dir,
+            self.data['name'],
+            self.data['confinement'],
+            self._project_options.arch_triplet,
+            core_dynamic_linker=core_dynamic_linker)
         for part in self.parts.all_parts:
             env += part.env(stage_dir)
 
@@ -286,7 +309,8 @@ def _runtime_env(root, arch_triplet):
     return env
 
 
-def _build_env(root, arch_triplet):
+def _build_env(root, snap_name, confinement, arch_triplet,
+               core_dynamic_linker=None):
     """Set the environment variables required for building.
 
     This is required for the current parts installdir due to stage-packages
@@ -299,10 +323,34 @@ def _build_env(root, arch_triplet):
         for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
             env.append(formatting_utils.format_path_variable(
                 envvar, paths, prepend='-I', separator=' '))
+
+    if confinement == 'classic':
+        if not core_dynamic_linker:
+            raise EnvironmentError('classic confinement requires the '
+                                   'core_dynamic_linker to be set')
+
+        core_path = os.path.join('/snap', 'core', 'current')
+        core_rpaths = common.get_library_paths(core_path, arch_triplet,
+                                               existing_only=False)
+        snap_path = os.path.join('/snap', snap_name, 'current')
+        snap_rpaths = common.get_library_paths(snap_path, arch_triplet,
+                                               existing_only=False)
+
+        rpaths = formatting_utils.combine_paths(
+            core_rpaths + snap_rpaths, prepend='', separator=':')
+        env.append('LDFLAGS="$LDFLAGS '
+                   # Building tools to continue the build becomes problematic
+                   # with nodefaultlib.
+                   '-Wl,-z,nodefaultlib '
+                   '-Wl,--enable-new-dtags '
+                   '-Wl,--dynamic-linker={0} '
+                   '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
+
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
         env.append(formatting_utils.format_path_variable(
             'LDFLAGS', paths, prepend='-L', separator=' '))
+
     paths = common.get_pkg_config_paths(root, arch_triplet)
     if paths:
         env.append(formatting_utils.format_path_variable(
@@ -311,8 +359,10 @@ def _build_env(root, arch_triplet):
     return env
 
 
-def _build_env_for_stage(stagedir, arch_triplet):
-    env = _build_env(stagedir, arch_triplet)
+def _build_env_for_stage(stagedir, snap_name, confinement,
+                         arch_triplet, core_dynamic_linker=None):
+    env = _build_env(stagedir, snap_name, confinement,
+                     arch_triplet, core_dynamic_linker)
     env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
 
     return env

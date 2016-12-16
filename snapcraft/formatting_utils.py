@@ -66,3 +66,10 @@ def humanize_list(items, conjunction):
         humanized += ','
 
     return '{} {} {}'.format(humanized, conjunction, quoted_items[-1])
+
+
+def pluralize(container, if_one, if_multiple):
+    if len(container) == 1:
+        return if_one
+    else:
+        return if_multiple

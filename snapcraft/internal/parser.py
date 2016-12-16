@@ -32,7 +32,6 @@ Options:
 
 import logging
 import os
-import pkg_resources
 import re
 import urllib
 import yaml
@@ -41,6 +40,7 @@ from yaml.scanner import ScannerError
 from docopt import docopt
 from collections import OrderedDict
 
+import snapcraft
 from snapcraft.internal import log, repo, sources
 from snapcraft.internal.errors import SnapcraftError, InvalidWikiEntryError
 from snapcraft.internal.project_loader import replace_attr
@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: make this a temporary directory that get's removed when finished
-BASE_DIR = "/tmp"
+BASE_DIR = os.getenv('TMPDIR', '/tmp')
 PARTS_FILE = "snap-parts.yaml"
 
 
@@ -67,15 +67,8 @@ def _get_base_dir():
     return BASE_DIR
 
 
-def _get_version():
-    try:
-        return pkg_resources.require('snapcraft-parser')[0].version
-    except pkg_resources.DistributionNotFound:
-        return 'devel'
-
-
 def main(argv=None):
-    args = docopt(__doc__, version=_get_version(), argv=argv)
+    args = docopt(__doc__, version=snapcraft.__version__, argv=argv)
 
     # Default log level is INFO unless --debug is specified
     log_level = logging.INFO
@@ -178,6 +171,9 @@ def _process_entry(data):
 
     # Get optional wiki entry fields.
     origin_type = data.get('origin-type')
+    origin_branch = data.get('origin-branch')
+    origin_commit = data.get('origin-commit')
+    origin_tag = data.get('origin-tag')
 
     # Get required wiki entry fields.
     try:
@@ -195,6 +191,9 @@ def _process_entry(data):
                                                 source_type=origin_type)
     handler = source_handler(origin, source_dir=origin_dir)
     repo.check_for_command(handler.command)
+    handler.source_branch = origin_branch
+    handler.source_commit = origin_commit
+    handler.source_tag = origin_tag
     handler.pull()
 
     try:

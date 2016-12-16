@@ -1,7 +1,5 @@
 name: tomcat-webapp-demo
 version: 1.0
-architectures:
- - amd64
 summary: Demo of Tomcat-hosted Webapp
 description: This is a demo snap of a Tomcat-hosted webapp produced by snapcraft with maven.
 confinement: strict

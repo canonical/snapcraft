@@ -25,6 +25,7 @@ import fixtures
 from snapcraft.main import main
 from snapcraft.internal import (
     pluginhandler,
+    project_loader,
     states,
 )
 from snapcraft import tests
@@ -54,7 +55,10 @@ parts:
         parts = []
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(part_name, plugin_name='nil')
+            handler = pluginhandler.load_plugin(
+                part_name, plugin_name='nil',
+                part_properties={'plugin': 'nil'},
+                part_schema=project_loader.Validator().part_schema)
             parts.append({
                 'part_dir': handler.code.partdir,
             })
@@ -144,10 +148,11 @@ parts:
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml(n=3)
 
-        with self.assertRaises(SystemExit) as raised:
-            main(['clean', 'no-clean'])
+        raised = self.assertRaises(
+            SystemExit,
+            main, ['clean', 'no-clean'])
 
-        self.assertEqual(1, raised.exception.code)
+        self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
             "The part named 'no-clean' is not defined in 'snapcraft.yaml'\n")
@@ -261,11 +266,12 @@ parts:
         # Not specifying nested-dependent here should result in clean raising
         # an exception, saying that it has dependents. Note the use of '-d',
         # so we get a RuntimeError instead of SystemExit.
-        with self.assertRaises(RuntimeError) as raised:
-            main(['-d', 'clean', 'dependent'])
+        raised = self.assertRaises(
+            RuntimeError,
+            main, ['-d', 'clean', 'dependent'])
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Requested clean of 'dependent' but 'nested-dependent' depends "
             "upon it. Please add each to the clean command if that's what you "
             "intended.")
@@ -296,11 +302,12 @@ parts:
         # Not specifying dependent here should result in clean raising
         # an exception, saying that it has dependents.  Note the use of '-d',
         # so we get a RuntimeError instead of SystemExit.
-        with self.assertRaises(RuntimeError) as raised:
-            main(['-d', 'clean', 'main'])
+        raised = self.assertRaises(
+            RuntimeError,
+            main, ['-d', 'clean', 'main'])
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Requested clean of 'main' but 'dependent' depends upon it. "
             "Please add each to the clean command if that's what you "
             "intended.")
@@ -309,11 +316,12 @@ parts:
         # Not specifying nested-dependent here should result in clean raising
         # an exception, saying that it has dependents.  Note the use of '-d',
         # so we get a RuntimeError instead of SystemExit.
-        with self.assertRaises(RuntimeError) as raised:
-            main(['-d', 'clean', 'main', 'dependent'])
+        raised = self.assertRaises(
+            RuntimeError,
+            main, ['-d', 'clean', 'main', 'dependent'])
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Requested clean of 'dependent' but 'nested-dependent' depends "
             "upon it. Please add each to the clean command if that's what you "
             "intended.")

@@ -32,6 +32,7 @@ from unittest.mock import (
 import fixtures
 
 import snapcraft
+from . import mocks
 from snapcraft.internal.errors import SnapcraftPartConflictError
 from snapcraft.internal import (
     common,
@@ -43,41 +44,13 @@ from snapcraft.internal import (
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 from snapcraft.plugins import nil
-from snapcraft.plugins import cmake  # noqa
-
-
-class TestPlugin(snapcraft.BasePlugin):
-
-    @classmethod
-    def schema(cls):
-        return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'additionalProperties': False,
-            'properties': {
-                'test-property': {
-                    'type': 'string'
-                }
-            },
-        }
-
-    @classmethod
-    def get_pull_properties(cls):
-        return ['test-property']
-
-    @classmethod
-    def get_build_properties(cls):
-        return ['test-property']
 
 
 class PluginTestCase(tests.TestCase):
 
     def test_build_with_subdir_copies_sourcedir(self):
-        handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            part_properties={'source-subdir': 'src'},
-            part_schema={'source-subdir': {'type': 'string'}})
+        handler = mocks.loadplugin(
+            'test-part', part_properties={'source-subdir': 'src'})
 
         sourcedir = handler.sourcedir
         source_subdir = handler.code.options.source_subdir
@@ -99,9 +72,7 @@ class PluginTestCase(tests.TestCase):
             os.path.exists(os.path.join(handler.code.builddir, 'file2')))
 
     def test_build_without_subdir_copies_sourcedir(self):
-        handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
 
         os.makedirs(handler.sourcedir)
         open(os.path.join(handler.sourcedir, 'file'), 'w').close()
@@ -115,27 +86,26 @@ class PluginTestCase(tests.TestCase):
 
     @patch('os.path.isdir', return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
-        with self.assertRaises(ValueError) as raised:
-            pluginhandler.load_plugin(
-                part_name='test-part',
-                plugin_name='nil',
-                part_properties={'source': 'file'},
-                part_schema={'source': {'type': 'string'}})
+        raised = self.assertRaises(
+            ValueError,
+            mocks.loadplugin,
+            'test-part', part_properties={'source': 'file'})
 
         mock_isdir.assert_called_once_with('file')
 
-        self.assertEqual(raised.exception.__str__(),
-                         'local source is not a directory')
+        self.assertEqual(raised.__str__(),
+                         'local source (file) is not a directory')
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        with self.assertRaises(pluginhandler.PluginError) as raised:
-            pluginhandler.load_plugin(part_name='fake-part',
-                                      plugin_name='test_unexisting')
+        raised = self.assertRaises(
+            pluginhandler.PluginError,
+            mocks.loadplugin,
+            'fake-part', 'test_unexisting')
 
-        self.assertEqual(raised.exception.__str__(),
+        self.assertEqual(raised.__str__(),
                          'unknown plugin: test_unexisting')
 
     def test_fileset_include_excludes(self):
@@ -161,8 +131,7 @@ class PluginTestCase(tests.TestCase):
 
         mock_snap_fileset.return_value = ['baz']
 
-        handler = pluginhandler.load_plugin(part_name='test-part',
-                                            plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
         handler.code.options.snap = ['foo']
         handler.code.options.stage = ['bar']
         expected_options = copy.deepcopy(handler.code.options)
@@ -378,12 +347,7 @@ class PluginTestCase(tests.TestCase):
         mock_plugin.get_build_properties.return_value = []
         plugin_mock.return_value = mock_plugin
         local_load_mock.side_effect = ImportError()
-        pluginhandler.PluginHandler(
-            plugin_name='mock',
-            part_name='mock-part',
-            part_properties={},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
+        mocks.loadplugin('mock-part', 'mock')
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock', self.local_plugins_dir)
 
@@ -402,12 +366,8 @@ class PluginTestCase(tests.TestCase):
                 super().__init__(name, options)
 
         self.useFixture(fixture_setup.FakePlugin('oldplugin', OldPlugin))
-        plugin = pluginhandler.PluginHandler(
-            plugin_name='oldplugin',
-            part_name='fake-part',
-            part_properties={'fake-property': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema=OldPlugin.schema()['properties'])
+        plugin = mocks.loadplugin('fake-part', 'oldplugin',
+                                  {'fake-property': '.'})
 
         self.assertTrue(plugin.code.project is not None)
 
@@ -435,12 +395,7 @@ class PluginTestCase(tests.TestCase):
 
         plugin_mock.return_value = NonBaseOldPlugin
         local_load_mock.side_effect = ImportError()
-        plugin = pluginhandler.PluginHandler(
-            plugin_name='nonbaseoldplugin',
-            part_name='fake-part',
-            part_properties={'source': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
+        plugin = mocks.loadplugin('fake-part', 'nonbaseoldplugin')
 
         self.assertTrue(plugin.code.project is not None)
 
@@ -457,12 +412,7 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        pluginhandler.PluginHandler(
-            plugin_name='plugin',
-            part_name='fake-part',
-            part_properties={'source': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
+        mocks.loadplugin('fake-part', 'plugin')
 
     def test_plugin_schema_step_hint_build(self):
         class Plugin(snapcraft.BasePlugin):
@@ -477,12 +427,7 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        pluginhandler.PluginHandler(
-            plugin_name='plugin',
-            part_name='fake-part',
-            part_properties={'source': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
+        mocks.loadplugin('fake-part', 'plugin')
 
     def test_plugin_schema_step_hint_pull_and_build(self):
         class Plugin(snapcraft.BasePlugin):
@@ -498,12 +443,7 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        pluginhandler.PluginHandler(
-            plugin_name='plugin',
-            part_name='fake-part',
-            part_properties={'source': '.'},
-            project_options=snapcraft.ProjectOptions(),
-            part_schema={'properties': {}})
+        mocks.loadplugin('fake-part', 'plugin')
 
     def test_plugin_schema_invalid_pull_hint(self):
         class Plugin(snapcraft.BasePlugin):
@@ -518,17 +458,14 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        with self.assertRaises(ValueError) as raised:
-            pluginhandler.PluginHandler(
-                plugin_name='plugin',
-                part_name='fake-part',
-                part_properties={'source': '.'},
-                project_options=snapcraft.ProjectOptions(),
-                part_schema={'properties': {}})
+        raised = self.assertRaises(
+            ValueError,
+            mocks.loadplugin,
+            'fake-part', 'plugin')
 
         self.assertEqual(
             "Invalid pull properties specified by 'plugin' plugin: ['bar']",
-            str(raised.exception))
+            str(raised))
 
     def test_plugin_schema_invalid_build_hint(self):
         class Plugin(snapcraft.BasePlugin):
@@ -543,31 +480,31 @@ class PluginTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        with self.assertRaises(ValueError) as raised:
-            pluginhandler.PluginHandler(
-                plugin_name='plugin',
-                part_name='fake-part',
-                part_properties={'source': '.'},
-                project_options=snapcraft.ProjectOptions(),
-                part_schema={'properties': {}})
+        raised = self.assertRaises(
+            ValueError,
+            mocks.loadplugin, 'fake-part', 'plugin')
 
         self.assertEqual(
             "Invalid build properties specified by 'plugin' plugin: ['bar']",
-            str(raised.exception))
+            str(raised))
 
     def test_filesets_includes_without_relative_paths(self):
-        with self.assertRaises(pluginhandler.PluginError) as raised:
-            pluginhandler._get_file_list(['rel', '/abs/include'])
+        raised = self.assertRaises(
+            pluginhandler.PluginError,
+            pluginhandler._get_file_list,
+            ['rel', '/abs/include'])
 
         self.assertEqual(
-            'path "/abs/include" must be relative', str(raised.exception))
+            'path "/abs/include" must be relative', str(raised))
 
     def test_filesets_exlcudes_without_relative_paths(self):
-        with self.assertRaises(pluginhandler.PluginError) as raised:
-            pluginhandler._get_file_list(['rel', '-/abs/exclude'])
+        raised = self.assertRaises(
+            pluginhandler.PluginError,
+            pluginhandler._get_file_list,
+            ['rel', '-/abs/exclude'])
 
         self.assertEqual(
-            'path "/abs/exclude" must be relative', str(raised.exception))
+            'path "/abs/exclude" must be relative', str(raised))
 
 
 class MigratePluginTestCase(tests.TestCase):
@@ -822,8 +759,10 @@ class OrganizeTestCase(tests.TestCase):
 
         if (isinstance(self.expected, type) and
                 issubclass(self.expected, Exception)):
-            with self.assertRaises(self.expected):
-                pluginhandler._organize_filesets(self.organize_set, base_dir)
+            self.assertRaises(
+                self.expected,
+                pluginhandler._organize_filesets,
+                self.organize_set, base_dir)
         else:
             pluginhandler._organize_filesets(self.organize_set, base_dir)
             for expect in self.expected:
@@ -966,7 +905,7 @@ class PluginMakedirsTestCase(tests.TestCase):
             for d in dirs:
                 os.mkdir(d)
 
-        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
+        p = mocks.loadplugin(part_name)
         p.makedirs()
         for d in dirs:
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
@@ -988,9 +927,8 @@ class StateBaseTestCase(tests.TestCase):
         self.get_build_properties_mock.return_value = []
         self.addCleanup(patcher.stop)
 
-        part_name = 'test_part'
-        self.handler = pluginhandler.load_plugin(part_name=part_name,
-                                                 plugin_name='nil')
+        self.handler = mocks.loadplugin('test_part')
+
         self.handler.makedirs()
 
 
@@ -999,8 +937,7 @@ class StateTestCase(StateBaseTestCase):
     def test_mark_done_clears_later_steps(self):
         for index, step in enumerate(common.COMMAND_ORDER):
             shutil.rmtree(self.parts_dir)
-            handler = pluginhandler.load_plugin(part_name='foo',
-                                                plugin_name='nil')
+            handler = mocks.loadplugin('foo')
             handler.makedirs()
 
             for later_step in common.COMMAND_ORDER[index+1:]:
@@ -1025,7 +962,11 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(7, len(state.properties))
+        self.assertEqual(9, len(state.properties))
+        for expected in ['source', 'source-branch', 'source-commit',
+                         'source-depth', 'source-subdir', 'source-tag',
+                         'source-type', 'plugin', 'stage-packages']:
+            self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
@@ -1077,7 +1018,10 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(0, len(state.properties))
+        self.assertEqual(4, len(state.properties))
+        for expected in ['after', 'build-packages', 'disable-parallel',
+                         'organize']:
+            self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
@@ -1145,6 +1089,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
         self.assertEqual(state.properties['stage'], ['*'])
+        self.assertTrue('filesets' in state.properties)
+        self.assertEqual(state.properties['filesets'], {})
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
@@ -1244,11 +1190,12 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_stage_old_state(self):
         self.handler.mark_done('stage', None)
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            self.handler.clean_stage({})
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            self.handler.clean_stage, {})
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'stage': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -1387,6 +1334,44 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._migrate_files')
+    def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
+                                                    mock_find_dependencies):
+        mock_find_dependencies.return_value = {
+            '/foo/bar/baz'
+        }
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        foobardir = os.path.join(self.handler.code.installdir, 'foo', 'bar')
+        os.makedirs(bindir)
+        os.makedirs(foobardir)
+
+        # Make a "binary" as well as a "library" at the same path as the one on
+        # the system
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(foobardir, 'baz'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        mock_migrate_files.reset_mock()
+        self.handler.prime()
+
+        self.assertEqual('prime', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
+        mock_migrate_files.assert_called_once_with(
+            {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
+            self.handler.stagedir, self.handler.snapdir)
+
+        state = self.handler.get_state('prime')
+
+        self.assertTrue(type(state) is states.PrimeState)
+        self.assertEqual(1, len(state.dependency_paths))
+        self.assertTrue('foo/bar' in state.dependency_paths)
+
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
     def test_prime_state_with_snap_keyword(self, mock_copy,
                                            mock_find_dependencies):
@@ -1490,11 +1475,12 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_old_state(self):
         self.handler.mark_done('prime', None)
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            self.handler.clean_prime({})
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            self.handler.clean_prime, {})
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'prime': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -1512,8 +1498,7 @@ class StateFileMigrationTestCase(StateBaseTestCase):
         with open(os.path.join(part_dir, 'state'), 'w') as f:
             f.write(self.step)
 
-        handler = pluginhandler.load_plugin(part_name=part_name,
-                                            plugin_name='nil')
+        handler = mocks.loadplugin(part_name)
         self.assertEqual(self.step, handler.last_step())
 
 
@@ -1522,10 +1507,7 @@ class IsDirtyTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            project_options=snapcraft.ProjectOptions())
+        self.handler = mocks.loadplugin('test-part')
         self.handler.makedirs()
 
     def test_prime_is_dirty(self):
@@ -1555,11 +1537,8 @@ class IsDirtyTestCase(tests.TestCase):
             'Expected vanilla handler to not have a dirty prime step')
 
     def test_stage_is_dirty(self):
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            part_properties={'stage': ['foo']},
-            part_schema={'stage': {'type': 'array'}})
+        self.handler = mocks.loadplugin(
+            'test-part', part_properties={'stage': ['foo']})
 
         self.handler.mark_stage_done(set(), set())
         self.assertFalse(self.handler.is_clean('stage'),
@@ -1568,11 +1547,8 @@ class IsDirtyTestCase(tests.TestCase):
                          'Stage step was unexpectedly dirty')
 
         # Change the `stage` keyword-- thereby making the stage step dirty.
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            part_properties={'stage': ['bar']},
-            part_schema={'stage': {'type': 'array'}})
+        self.handler = mocks.loadplugin(
+            'test-part', part_properties={'stage': ['bar']})
         self.assertFalse(self.handler.is_clean('stage'),
                          'Stage step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('stage'),
@@ -1586,11 +1562,10 @@ class IsDirtyTestCase(tests.TestCase):
             'Expected vanilla handler to not have a dirty stage step')
 
     def test_build_is_dirty_from_options(self):
-        self.useFixture(fixture_setup.FakePlugin('test-plugin', TestPlugin))
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='test-plugin',
-            part_properties={'test-property': 'foo'})
+        self.useFixture(fixture_setup.FakePlugin('test-plugin',
+                                                 mocks.TestPlugin))
+        self.handler = mocks.loadplugin(
+            'test-part', 'test-plugin', {'test-property': 'foo'})
         self.handler.mark_build_done()
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
@@ -1598,10 +1573,8 @@ class IsDirtyTestCase(tests.TestCase):
                          'Build step was unexpectedly dirty')
 
         # Change `test-property`, thereby making the build step dirty.
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='test-plugin',
-            part_properties={'test-property': 'bar'})
+        self.handler = mocks.loadplugin(
+            'test-part', 'test-plugin', {'test-property': 'bar'})
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('build'),
@@ -1610,10 +1583,8 @@ class IsDirtyTestCase(tests.TestCase):
     @patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
     def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
         project_options = snapcraft.ProjectOptions(target_deb_arch='amd64')
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            project_options=project_options)
+        self.handler = mocks.loadplugin(
+            'test-part', project_options=project_options)
         self.handler.mark_build_done()
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
@@ -1623,10 +1594,8 @@ class IsDirtyTestCase(tests.TestCase):
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
         project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            project_options=project_options)
+        self.handler = mocks.loadplugin(
+            'test-part', project_options=project_options)
         self.assertFalse(self.handler.is_clean('build'),
                          'Build step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('build'),
@@ -1640,11 +1609,10 @@ class IsDirtyTestCase(tests.TestCase):
             'Expected vanilla handler to not have a dirty build step')
 
     def test_pull_is_dirty_from_options(self):
-        self.useFixture(fixture_setup.FakePlugin('test-plugin', TestPlugin))
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='test-plugin',
-            part_properties={'test-property': 'foo'})
+        self.useFixture(fixture_setup.FakePlugin('test-plugin',
+                                                 mocks.TestPlugin))
+        self.handler = mocks.loadplugin(
+            'test-part', 'test-plugin', {'test-property': 'foo'})
         self.handler.mark_pull_done()
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
@@ -1652,10 +1620,8 @@ class IsDirtyTestCase(tests.TestCase):
                          'Pull step was unexpectedly dirty')
 
         # Change `test-property`, thereby making the pull step dirty.
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='test-plugin',
-            part_properties={'test-property': 'bar'})
+        self.handler = mocks.loadplugin(
+            'test-part', 'test-plugin', {'test-property': 'bar'})
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('pull'),
@@ -1664,10 +1630,8 @@ class IsDirtyTestCase(tests.TestCase):
     @patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
     def test_pull_is_dirty_from_project(self, mock_enable_cross_compilation):
         project_options = snapcraft.ProjectOptions(target_deb_arch='amd64')
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            project_options=project_options)
+        self.handler = mocks.loadplugin(
+            'test-part', project_options=project_options)
         self.handler.mark_pull_done()
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
@@ -1677,10 +1641,8 @@ class IsDirtyTestCase(tests.TestCase):
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
         project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
-        self.handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            project_options=project_options)
+        self.handler = mocks.loadplugin(
+            'test-part', project_options=project_options)
         self.assertFalse(self.handler.is_clean('pull'),
                          'Pull step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('pull'),
@@ -1720,7 +1682,7 @@ class CleanTestCase(CleanBaseTestCase):
         mock_is_clean.return_value = True
 
         part_name = 'test_part'
-        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
+        p = mocks.loadplugin(part_name)
         p.clean()
 
         partdir = os.path.join(
@@ -1737,7 +1699,7 @@ class CleanTestCase(CleanBaseTestCase):
         mock_exists.return_value = False
 
         part_name = 'test_part'
-        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
+        p = mocks.loadplugin(part_name)
         p.clean()
 
         partdir = os.path.join(
@@ -1757,7 +1719,7 @@ class CleanTestCase(CleanBaseTestCase):
         mock_is_clean.return_value = True
 
         part_name = 'test_part'
-        p = pluginhandler.load_plugin(part_name=part_name, plugin_name='nil')
+        p = mocks.loadplugin(part_name)
         p.clean()
 
         partdir = os.path.join(
@@ -1768,8 +1730,7 @@ class CleanTestCase(CleanBaseTestCase):
 
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
-        handler1 = pluginhandler.load_plugin(part_name='part1',
-                                             plugin_name='nil')
+        handler1 = mocks.loadplugin('part1')
         handler1.makedirs()
 
         bindir = os.path.join(handler1.code.installdir, 'bin')
@@ -1779,8 +1740,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler1.mark_done('build')
 
         # Now create part2 and get it through the "build" step.
-        handler2 = pluginhandler.load_plugin(part_name='part2',
-                                             plugin_name='nil')
+        handler2 = mocks.loadplugin('part2')
         handler2.makedirs()
 
         bindir = os.path.join(handler2.code.installdir, 'bin')
@@ -1820,8 +1780,7 @@ class CleanTestCase(CleanBaseTestCase):
 
     def test_clean_prime_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
-        handler = pluginhandler.load_plugin(
-            part_name='part1', plugin_name='nil')
+        handler = mocks.loadplugin('part1')
         handler.makedirs()
 
         bindir = os.path.join(handler.code.installdir, 'bin')
@@ -1855,8 +1814,7 @@ class CleanTestCase(CleanBaseTestCase):
             'changed since it was primeped.')
 
     def test_clean_old_prime_state(self):
-        handler = pluginhandler.load_plugin(
-            part_name='part1', plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
         open(os.path.join(self.snap_dir, '1'), 'w').close()
@@ -1870,8 +1828,7 @@ class CleanTestCase(CleanBaseTestCase):
         self.assertFalse(os.path.exists(handler.code.partdir))
 
     def test_clean_prime_old_prime_state(self):
-        handler = pluginhandler.load_plugin(
-            part_name='part1', plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
         primed_file = os.path.join(self.snap_dir, '1')
@@ -1879,11 +1836,12 @@ class CleanTestCase(CleanBaseTestCase):
 
         handler.mark_done('prime', None)
 
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            handler.clean(step='prime')
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            handler.clean, step='prime')
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'prime': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -1891,8 +1849,7 @@ class CleanTestCase(CleanBaseTestCase):
 
     def test_clean_stage_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
-        handler1 = pluginhandler.load_plugin(part_name='part1',
-                                             plugin_name='nil')
+        handler1 = mocks.loadplugin('part1')
         handler1.makedirs()
 
         bindir = os.path.join(handler1.code.installdir, 'bin')
@@ -1902,8 +1859,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler1.mark_done('build')
 
         # Now create part2 and get it through the "build" step.
-        handler2 = pluginhandler.load_plugin(part_name='part2',
-                                             plugin_name='nil')
+        handler2 = mocks.loadplugin('part2')
         handler2.makedirs()
 
         bindir = os.path.join(handler2.code.installdir, 'bin')
@@ -1939,8 +1895,7 @@ class CleanTestCase(CleanBaseTestCase):
 
     def test_clean_stage_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
-        handler = pluginhandler.load_plugin(part_name='part1',
-                                            plugin_name='nil')
+        handler = mocks.loadplugin('part1')
         handler.makedirs()
 
         bindir = os.path.join(handler.code.installdir, 'bin')
@@ -1973,8 +1928,7 @@ class CleanTestCase(CleanBaseTestCase):
             'changed since it was staged.')
 
     def test_clean_old_stage_state(self):
-        handler = pluginhandler.load_plugin(part_name='part1',
-                                            plugin_name='nil')
+        handler = mocks.loadplugin('part1')
         handler.makedirs()
 
         open(os.path.join(self.stage_dir, '1'), 'w').close()
@@ -1988,8 +1942,7 @@ class CleanTestCase(CleanBaseTestCase):
         self.assertFalse(os.path.exists(handler.code.partdir))
 
     def test_clean_stage_old_stage_state(self):
-        handler = pluginhandler.load_plugin(part_name='part1',
-                                            plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
         staged_file = os.path.join(self.stage_dir, '1')
@@ -1997,11 +1950,12 @@ class CleanTestCase(CleanBaseTestCase):
 
         handler.mark_done('stage', None)
 
-        with self.assertRaises(pluginhandler.MissingState) as raised:
-            handler.clean(step='stage')
+        raised = self.assertRaises(
+            pluginhandler.MissingState,
+            handler.clean, step='stage')
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Failed to clean step 'stage': Missing necessary state. "
             "This won't work until a complete clean has occurred.")
 
@@ -2022,15 +1976,8 @@ class CleanPrimeTestCase(CleanBaseTestCase):
     def test_clean_prime(self):
         self.clear_common_directories()
 
-        schema = {'snap': {'type': 'array'}}
-        properties = {'snap': self.fileset}
-
-        handler = pluginhandler.load_plugin(
-            part_name='test_part',
-            plugin_name='nil',
-            part_properties=properties,
-            project_options=snapcraft.ProjectOptions(),
-            part_schema=schema)
+        handler = mocks.loadplugin(
+            'test_part', part_properties={'snap': self.fileset})
         handler.makedirs()
 
         installdir = handler.code.installdir
@@ -2072,15 +2019,8 @@ class CleanStageTestCase(CleanBaseTestCase):
     def test_clean_stage(self):
         self.clear_common_directories()
 
-        schema = {'stage': {'type': 'array'}}
-        properties = {'stage': self.fileset}
-
-        handler = pluginhandler.load_plugin(
-            part_name='test_part',
-            plugin_name='nil',
-            part_properties=properties,
-            project_options=snapcraft.ProjectOptions(),
-            part_schema=schema)
+        handler = mocks.loadplugin(
+            'test_part', part_properties={'stage': self.fileset})
         handler.makedirs()
 
         installdir = handler.code.installdir
@@ -2128,8 +2068,7 @@ class PerStepCleanTestCase(tests.TestCase):
         self.manager_mock.attach_mock(patcher.start(), 'clean_prime')
         self.addCleanup(patcher.stop)
 
-        self.handler = pluginhandler.load_plugin(
-            part_name='test_part', plugin_name='nil')
+        self.handler = mocks.loadplugin('test_part')
 
     def test_clean_with_hint(self):
         self.handler.clean(step='pull', hint='foo')
@@ -2195,7 +2134,7 @@ class CollisionTestCase(tests.TestCase):
         self.addCleanup(tmpdirObject.cleanup)
         tmpdir = tmpdirObject.name
 
-        part1 = pluginhandler.load_plugin(part_name='part1', plugin_name='nil')
+        part1 = mocks.loadplugin('part1')
         part1.code.installdir = tmpdir + '/install1'
         os.makedirs(part1.installdir + '/a')
         open(part1.installdir + '/a/1', mode='w').close()
@@ -2203,7 +2142,7 @@ class CollisionTestCase(tests.TestCase):
             f.write('prefix={}\n'.format(part1.installdir))
             f.write('Name: File\n')
 
-        part2 = pluginhandler.load_plugin(part_name='part2', plugin_name='nil')
+        part2 = mocks.loadplugin('part2')
         part2.code.installdir = tmpdir + '/install2'
         os.makedirs(part2.installdir + '/a')
         with open(part2.installdir + '/1', mode='w') as f:
@@ -2215,7 +2154,7 @@ class CollisionTestCase(tests.TestCase):
             f.write('prefix={}\n'.format(part2.installdir))
             f.write('Name: File\n')
 
-        part3 = pluginhandler.load_plugin(part_name='part3', plugin_name='nil')
+        part3 = mocks.loadplugin('part3')
         part3.code.installdir = tmpdir + '/install3'
         os.makedirs(part3.installdir + '/a')
         os.makedirs(part3.installdir + '/b')
@@ -2225,7 +2164,7 @@ class CollisionTestCase(tests.TestCase):
             f.write('1')
         open(part3.installdir + '/a/2', mode='w').close()
 
-        part4 = pluginhandler.load_plugin(part_name='part4', plugin_name='nil')
+        part4 = mocks.loadplugin('part4')
         part4.code.installdir = tmpdir + '/install4'
         os.makedirs(part4.installdir)
         with open(part4.installdir + '/file.pc', mode='w') as f:
@@ -2242,24 +2181,26 @@ class CollisionTestCase(tests.TestCase):
         pluginhandler.check_for_collisions([self.part1, self.part2])
 
     def test_collisions_between_two_parts(self):
-        with self.assertRaises(SnapcraftPartConflictError) as raised:
-            pluginhandler.check_for_collisions(
-                [self.part1, self.part2, self.part3])
+        raised = self.assertRaises(
+            SnapcraftPartConflictError,
+            pluginhandler.check_for_collisions,
+            [self.part1, self.part2, self.part3])
 
         self.assertIn(
             "Parts 'part2' and 'part3' have the following file paths in "
             "common which have different contents:\n    1\n    a/2",
-            raised.exception.__str__())
+            raised.__str__())
 
     def test_collisions_between_two_parts_pc_files(self):
-        with self.assertRaises(SnapcraftPartConflictError) as raised:
-            pluginhandler.check_for_collisions(
-                [self.part1, self.part4])
+        raised = self.assertRaises(
+            SnapcraftPartConflictError,
+            pluginhandler.check_for_collisions,
+            [self.part1, self.part4])
 
         self.assertIn(
             "Parts 'part1' and 'part4' have the following file paths in "
             "common which have different contents:\n    file.pc",
-            raised.exception.__str__())
+            raised.__str__())
 
 
 class StagePackagesTestCase(tests.TestCase):
@@ -2273,27 +2214,15 @@ class StagePackagesTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_missing_stage_package_displays_nice_error(self):
-        part_schema = {
-            'stage-packages': {
-                'minitems': 1,
-                'uniqueItems': True,
-                'default': [],
-                'type': 'array',
-                'items': {'type': 'string'}},
-            'plugin': {'description': 'plugin name', 'type': 'string'}
-        }
+        part = mocks.loadplugin(
+            'stage-test', part_properties={'stage-packages': ['non-existing']})
 
-        part = pluginhandler.load_plugin(
-            part_name='stage-test',
-            plugin_name='nil',
-            part_properties={'stage-packages': ['non-existing']},
-            part_schema=part_schema)
-
-        with self.assertRaises(RuntimeError) as raised:
-            part.prepare_pull()
+        raised = self.assertRaises(
+            RuntimeError,
+            part.prepare_pull)
 
         self.assertEqual(
-            str(raised.exception),
+            str(raised),
             "Error downloading stage packages for part 'stage-test': "
             "no such package 'non-existing'")
 
@@ -2443,20 +2372,19 @@ class FindDependenciesTestCase(tests.TestCase):
     def test_fail_to_load_magic_raises_exception(self, mock_magic):
         mock_magic.return_value.load.return_value = 1
 
-        with self.assertRaises(RuntimeError) as raised:
-            pluginhandler._find_dependencies('.', set())
+        raised = self.assertRaises(
+            RuntimeError,
+            pluginhandler._find_dependencies, '.', set())
 
         self.assertEqual(
-            raised.exception.__str__(), 'Cannot load magic header detection')
+            raised.__str__(), 'Cannot load magic header detection')
 
 
 class SourcesTestCase(tests.TestCase):
 
     def test_do_not_follow_links(self):
         properties = dict(source='.')
-        handler = pluginhandler.load_plugin(part_name='test-part',
-                                            plugin_name='nil',
-                                            part_properties=properties)
+        handler = mocks.loadplugin('test-part', part_properties=properties)
 
         # Create a file and a symlink to it
         open('file', mode='w').close()
@@ -2488,9 +2416,7 @@ class SourcesTestCase(tests.TestCase):
 
     def test_pull_ignores_snapcraft_files_in_source_dir(self):
         properties = dict(source='.')
-        handler = pluginhandler.load_plugin(part_name='test-part',
-                                            plugin_name='nil',
-                                            part_properties=properties)
+        handler = mocks.loadplugin('test-part', part_properties=properties)
 
         open('my-snap.snap', 'w').close()
         open('my-snap', 'w').close()
@@ -2512,20 +2438,19 @@ class SourcesTestCase(tests.TestCase):
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source='unrecognized://test_source')
 
-        with self.assertRaises(ValueError) as raised:
-            pluginhandler.load_plugin(part_name='test-part',
-                                      plugin_name='nil',
-                                      part_properties=properties)
+        raised = self.assertRaises(
+            ValueError,
+            mocks.loadplugin, 'test-part', part_properties=properties)
 
-        self.assertEqual(raised.exception.__str__(),
-                         'no handler to manage source')
+        self.assertEqual(raised.__str__(),
+                         'no handler to manage source '
+                         '(unrecognized://test_source)')
 
 
 class CleanPullTestCase(tests.TestCase):
 
     def test_clean_pull_directory(self):
-        handler = pluginhandler.load_plugin(part_name='test-part',
-                                            plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
 
         handler.pull()
         source_file = os.path.join(handler.sourcedir, 'source')
@@ -2540,11 +2465,8 @@ class CleanPullTestCase(tests.TestCase):
         real_source_directory = os.path.join(os.getcwd(), 'src')
         os.mkdir(real_source_directory)
 
-        handler = pluginhandler.load_plugin(
-            part_name='test-part',
-            plugin_name='nil',
-            part_properties={'source': 'src'},
-            part_schema={'source': {'type': 'string'}})
+        handler = mocks.loadplugin(
+            'test-part', part_properties={'source': 'src'})
 
         handler.pull()
         os.rmdir(handler.sourcedir)
@@ -2561,8 +2483,7 @@ class CleanPullTestCase(tests.TestCase):
 class CleanBuildTestCase(tests.TestCase):
 
     def test_clean_build(self):
-        handler = pluginhandler.load_plugin(part_name='test-part',
-                                            plugin_name='nil')
+        handler = mocks.loadplugin('test-part')
 
         handler.build()
 

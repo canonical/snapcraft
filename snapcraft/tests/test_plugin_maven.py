@@ -20,6 +20,7 @@ from unittest import mock
 from xml.etree import ElementTree
 
 import fixtures
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -56,6 +57,16 @@ class MavenPluginTestCase(tests.TestCase):
                 f, encoding='unicode',
                 default_namespace='http://maven.apache.org/SETTINGS/1.0.0')
             return f.getvalue() + '\n'
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['maven-options', 'maven-targets']
+        resulting_build_properties = maven.MavenPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def assertSettingsEqual(self, expected, observed):
         print(repr(self._canonicalize_settings(expected)))
@@ -118,11 +129,6 @@ class MavenPluginTestCase(tests.TestCase):
             maven_targets['uniqueItems'],
             'Expected "maven-targets" "uniqueItems" to be "True"')
 
-        build_properties = schema['build-properties']
-        self.assertEqual(
-            ['maven-options', 'maven-targets'],
-            build_properties)
-
     @mock.patch.object(maven.MavenPlugin, 'run')
     def test_build(self, run_mock):
         env_vars = (
@@ -163,8 +169,7 @@ class MavenPluginTestCase(tests.TestCase):
 
         os.makedirs(plugin.sourcedir)
 
-        with self.assertRaises(RuntimeError):
-            plugin.build()
+        self.assertRaises(RuntimeError, plugin.build)
 
         run_mock.assert_has_calls([
             mock.call(['mvn', 'package']),

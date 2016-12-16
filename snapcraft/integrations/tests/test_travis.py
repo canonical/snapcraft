@@ -59,8 +59,9 @@ class TravisPreconditionsTestCase(tests.TestCase):
     def test_missing_travis_cli(self, mock_check_call):
         mock_check_call.side_effect = [FileNotFoundError()]
 
-        with self.assertRaises(RequiredCommandNotFound) as raised:
-            self.run_command(self.entry_point)
+        raised = self.assertRaises(
+            RequiredCommandNotFound,
+            self.run_command, self.entry_point)
 
         self.assertEqual([
             'Travis CLI (`travis`) is not available.',
@@ -68,29 +69,32 @@ class TravisPreconditionsTestCase(tests.TestCase):
             '',
             '    $ sudo apt install ruby-dev ruby-ffi libffi-dev',
             '    $ sudo gem install travis'
-        ], str(raised.exception).splitlines())
+        ], str(raised).splitlines())
 
     @mock.patch('subprocess.check_call')
     def test_broken_travis_cli(self, mock_check_call):
         mock_check_call.side_effect = [
             subprocess.CalledProcessError(1, 'test')]
 
-        with self.assertRaises(RequiredCommandFailure) as raised:
-            self.run_command(self.entry_point)
+        raised = self.assertRaises(
+            RequiredCommandFailure,
+            self.run_command,
+            self.entry_point)
 
         self.assertEqual([
             'Travis CLI (`travis settings`) is not functional or you are '
             'not allowed to access this repository settings.',
             'Make sure it works correctly in your system before trying this '
             'command again.',
-        ], str(raised.exception).splitlines())
+        ], str(raised).splitlines())
 
     @mock.patch('subprocess.check_call')
     def test_missing_git(self, mock_check_call):
         mock_check_call.side_effect = [None, FileNotFoundError()]
 
-        with self.assertRaises(RequiredCommandNotFound) as raised:
-            self.run_command(self.entry_point)
+        raised = self.assertRaises(
+            RequiredCommandNotFound,
+            self.run_command, self.entry_point)
 
         self.assertEqual([
             'Git (`git`) is not available, this tool cannot verify its '
@@ -98,34 +102,37 @@ class TravisPreconditionsTestCase(tests.TestCase):
             'Please install it before trying this command again:',
             '',
             '    $ sudo apt install git',
-        ], str(raised.exception).splitlines())
+        ], str(raised).splitlines())
 
     @mock.patch('subprocess.check_call')
     def test_broken_git_repo(self, mock_check_call):
         mock_check_call.side_effect = [
             None, subprocess.CalledProcessError(1, 'test')]
 
-        with self.assertRaises(RequiredCommandFailure) as raised:
-            self.run_command(self.entry_point)
+        raised = self.assertRaises(
+            RequiredCommandFailure,
+            self.run_command, self.entry_point)
 
         self.assertEqual([
             'The current directory is not a Git repository.',
             'Please switch to the desired project repository where '
             'Travis should be enabled.',
-        ], str(raised.exception).splitlines())
+        ], str(raised).splitlines())
 
     @mock.patch('subprocess.check_call')
     def test_missing_travis_setup(self, mock_check_call):
         mock_check_call.side_effect = [None, None]
 
-        with self.assertRaises(RequiredPathDoesNotExist) as raised:
-            self.run_command(self.entry_point)
+        raised = self.assertRaises(
+            RequiredPathDoesNotExist,
+            self.run_command,
+            self.entry_point)
 
         self.assertEqual([
             'Travis project is not initialized for the current directory.',
             'Please initialize Travis project (e.g. `travis init`) with '
             'appropriate parameters.',
-        ], str(raised.exception).splitlines())
+        ], str(raised).splitlines())
 
 
 class TravisSuccessfulTestCase(tests.TestCase):

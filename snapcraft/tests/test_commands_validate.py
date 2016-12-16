@@ -73,27 +73,44 @@ class ValidateTestCase(tests.TestCase):
         self.assertIn('Signing validation test-snap=4',
                       self.fake_terminal.getvalue())
 
+    def test_validate_from_branded_store(self):
+        # Validating snaps from a branded store requires setting
+        # `SNAPCRAFT_UBUNTU_STORE` environment variable to the store 'slug'.
+        self.client.login('dummy', 'test correct password')
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_UBUNTU_STORE', 'Test-Branded'))
+
+        main([self.command_name, 'ubuntu-core', 'test-snap-branded-store=1'])
+
+        self.assertIn('Signing validation test-snap-branded-store=1',
+                      self.fake_terminal.getvalue())
+
     def test_validate_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'notfound', "ubuntu-core=3",
-                 "test-snap=4"])
+        self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name, 'notfound', "ubuntu-core=3", "test-snap=4"])
 
         self.assertIn("Snap 'notfound' was not found", self.fake_logger.output)
 
     def test_validate_bad_argument(self):
         self.client.login('dummy', 'test correct password')
 
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'ubuntu-core', "ubuntu-core=foo"])
+        self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name, 'ubuntu-core', "ubuntu-core=foo"])
 
         self.assertIn('format must be name=revision',
                       self.fake_logger.output)
 
     def test_no_login(self):
-        with self.assertRaises(SystemExit):
-            main([self.command_name, 'ubuntu-core', "ubuntu-core=3",
-                 "test-snap=4"])
+        self.assertRaises(
+            SystemExit,
+            main,
+            [self.command_name, 'ubuntu-core', "ubuntu-core=3", "test-snap=4"])
         self.assertIn('No valid credentials found. Have you run',
                       self.fake_logger.output)

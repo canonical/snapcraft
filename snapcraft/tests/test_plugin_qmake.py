@@ -153,10 +153,12 @@ class QMakeTestCase(tests.TestCase):
 
     def test_unsupported_qt_version(self):
         self.options.qt_version = 'qt3'
-        with self.assertRaises(RuntimeError) as raised:
-            qmake.QmakePlugin('test-part', self.options, self.project_options)
+        raised = self.assertRaises(
+            RuntimeError,
+            qmake.QmakePlugin,
+            'test-part', self.options, self.project_options)
 
-        self.assertEqual(str(raised.exception),
+        self.assertEqual(str(raised),
                          "Unsupported Qt version: 'qt3'")
 
     def test_build_referencing_sourcedir_if_no_subdir(self):

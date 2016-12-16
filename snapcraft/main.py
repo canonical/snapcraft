@@ -31,6 +31,8 @@ Usage:
   snapcraft [options] cleanbuild
   snapcraft [options] login
   snapcraft [options] logout
+  snapcraft [options] list-registered
+  snapcraft [options] registered
   snapcraft [options] list-keys
   snapcraft [options] keys
   snapcraft [options] create-key [<key-name>]
@@ -44,6 +46,7 @@ Usage:
   snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
+  snapcraft [options] plugins
   snapcraft [options] tour [<directory>]
   snapcraft [options] update
   snapcraft [options] gated <snap-name>
@@ -92,8 +95,11 @@ The available commands are:
   help         Obtain help for a certain plugin or topic
   init         Initialize a snapcraft project.
   list-plugins List the available plugins that handle different types of part.
+  plugins      Alias for list-plugins.
   login        Authenticate session against Ubuntu One SSO.
   logout       Clear session credentials.
+  list-registered List snap names registered or shared with you.
+  registered   Alias for list-registered.
   list-keys    List keys available for signing snaps.
   keys         Alias for list-keys.
   create-key   Create a key pair for signing snaps.
@@ -250,6 +256,7 @@ def _get_command_from_arg(args):
         'login': snapcraft.login,
         'logout': snapcraft.logout,
         'list-plugins': _list_plugins,
+        'plugins': _list_plugins,
     }
     function = [k for k in functions if args[k]]
     if len(function) == 0:
@@ -301,16 +308,18 @@ def _run_clean(args, project_options):
 
 def _is_store_command(args):
     commands = (
-        'list-keys', 'keys', 'create-key', 'register-key', 'register',
-        'sign-build', 'upload', 'release', 'push', 'validate', 'gated',
-        'history', 'status', 'close')
+        'list-registered', 'registered', 'list-keys', 'keys', 'create-key',
+        'register-key', 'register', 'sign-build', 'upload', 'release',
+        'push', 'validate', 'gated', 'history', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
 # This function's complexity is correlated to the number of
 # commands, no point in checking that.
 def _run_store_command(args):  # noqa: C901
-    if args['list-keys'] or args['keys']:
+    if args['list-registered'] or args['registered']:
+        snapcraft.list_registered()
+    elif args['list-keys'] or args['keys']:
         snapcraft.list_keys()
     elif args['create-key']:
         snapcraft.create_key(args['<key-name>'])

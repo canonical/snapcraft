@@ -25,7 +25,12 @@ import integration_tests
 class PullPropertiesTestCase(integration_tests.TestCase):
 
     def test_pull(self):
-        project_dir = 'local-plugin-pull-properties'
+        self.assert_expected_pull_state('local-plugin-pull-properties')
+
+    def test_pull_legacy_pull_properties(self):
+        self.assert_expected_pull_state('local-plugin-legacy-pull-properties')
+
+    def assert_expected_pull_state(self, project_dir):
         self.run_snapcraft('pull', project_dir)
 
         state_file = os.path.join(

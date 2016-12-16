@@ -16,13 +16,15 @@
 
 import logging
 import os
-from unittest import mock
+import stat
 
+from unittest import mock
 import fixtures
 import http.server
 import progressbar
 import threading
 import testscenarios
+import testtools
 
 from snapcraft.internal import common
 from snapcraft.tests import fake_servers, fixture_setup
@@ -49,7 +51,21 @@ class MockOptions:
         self.disable_parallel = disable_parallel
 
 
-class TestCase(testscenarios.WithScenarios, fixtures.TestWithFixtures):
+class IsExecutable:
+    """Match if a file path is executable."""
+
+    def __str__(self):
+        return 'IsExecutable()'
+
+    def match(self, file_path):
+        if not os.stat(file_path).st_mode & stat.S_IEXEC:
+            return testtools.matchers.Mismatch(
+                'Expected {!r} to be executable, but it was not'.format(
+                    file_path))
+        return None
+
+
+class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
     def setUp(self):
         super().setUp()

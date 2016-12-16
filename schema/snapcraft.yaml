@@ -63,6 +63,7 @@ properties:
     description: the type of confinement supported by the snap
     default: strict
     enum:
+      - classic
       - devmode
       - strict
   grade:
@@ -123,6 +124,12 @@ properties:
             uniqueItems: true
             items:
               type: string
+          aliases:
+            type: array
+            uniqueItems: true
+            items:
+              type: string
+              pattern: "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"
   parts:
     type: object
     minProperties: 1
@@ -137,26 +144,28 @@ properties:
             description: plugin name
           source:
             type: string
-          source-type:
-            type: string
+            default: '.'
           source-branch:
             type: string
-          source-tag:
-            type: string
+            default: ''
           source-commit:
             type: string
+            default: ''
+          source-depth:
+            type: integer
+            default: 0
           source-subdir:
             type: string
+            default: ''
+          source-tag:
+            type: string
+            default: ''
+          source-type:
+            type: string
+            default: ''
           disable-parallel:
               type: boolean
               default: false
-          stage-packages:
-            type: array
-            description: Ubuntu packages used to support the part.
-            minItems: 1
-            uniqueItems: true
-            items:
-              type: string
           after:
             type: array
             minitems: 1
@@ -180,8 +189,10 @@ properties:
             default: []
           organize:
             type: object
+            default: {}
           filesets:
             type: object
+            default: {}
           stage:
             type: array
             minitems: 1
@@ -196,6 +207,15 @@ properties:
             items:
               type: string
             default: ['*']
+          install:
+            type: string
+            default: ''
+          build:
+            type: string
+            default: ''
+          prepare:
+            type: string
+            default: ''
   plugs:
     type: object
   slots:

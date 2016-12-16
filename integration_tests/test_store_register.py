@@ -35,7 +35,7 @@ class RegisterTestCase(integration_tests.StoreTestCase):
     def test_successful_private_registration(self):
         self.login()
         snap_name = 'u1test{}'.format(uuid.uuid4().int)
-        self.register(snap_name, '--private')
+        self.register(snap_name, private=True)
 
     def test_failed_registration_already_registered(self):
         self.login()
