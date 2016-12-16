@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import go
