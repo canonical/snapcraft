@@ -159,14 +159,14 @@ class QMakeTestCase(tests.TestCase):
             self.assertIn(property, resulting_build_properties)
 
     def test_get_pull_properties(self):
-        expected_build_properties = ['qt-version']
-        resulting_build_properties = qmake.QmakePlugin.get_pull_properties()
+        expected_pull_properties = ['qt-version']
+        resulting_pull_properties = qmake.QmakePlugin.get_pull_properties()
 
-        self.assertThat(resulting_build_properties,
-                        HasLength(len(expected_build_properties)))
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
 
-        for property in expected_build_properties:
-            self.assertIn(property, resulting_build_properties)
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_unsupported_qt_version(self):
         self.options.qt_version = 'qt3'
