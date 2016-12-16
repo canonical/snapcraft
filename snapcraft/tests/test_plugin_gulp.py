@@ -151,10 +151,10 @@ class GulpPluginTestCase(tests.TestCase):
                         'Expected "node-engine" to be included in '
                         'properties')
         node_engine_type = properties['node-engine']['type']
-        self.assertEqual(node_engine_tpe, 'string',
+        self.assertEqual(node_engine_type, 'string',
                          'Expected "node_engine" "type" to be '
                          '"string", but it was "{}"'
-                         .format(node_engine_tpe))
+                         .format(node_engine_type))
 
     def test_get_build_properties(self):
         expected_build_properties = ['gulp-tasks']
