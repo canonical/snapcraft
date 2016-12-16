@@ -20,6 +20,7 @@ from os import path
 from unittest import mock
 
 import fixtures
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import gulp, nodejs
@@ -117,23 +118,63 @@ class GulpPluginTestCase(tests.TestCase):
                          'architecture not supported (fantasy-arch)')
 
     def test_schema(self):
-        self.maxDiff = None
-        plugin_schema = {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'additionalProperties': False,
-            'properties': {
-                'gulp-tasks': {'default': [],
-                               'items': {'type': 'string'},
-                               'minitems': 1,
-                               'type': 'array',
-                               'uniqueItems': True},
-                'node-engine': {'default': '4.4.4', 'type': 'string'}},
-            'pull-properties': ['node-engine'],
-            'build-properties': ['gulp-tasks'],
-            'required': ['gulp-tasks'],
-            'type': 'object'}
+        schema = gulp.GulpPlugin.schema()
 
-        self.assertEqual(gulp.GulpPlugin.schema(), plugin_schema)
+        properties = schema['properties']
+        self.assertTrue('gulp-tasks' in properties,
+                        'Expected "gulp-tasks" to be included in '
+                        'properties')
+        gulp_tasks = properties['gulp-tasks']
+
+        self.assertTrue(
+            'type' in gulp_tasks,
+            'Expected "type" to be included in "gulp-tasks"')
+        self.assertEqual(gulp_tasks['type'], 'array',
+                         'Expected "gulp-tasks" "type" to be "array", but '
+                         'it was "{}"'.format(gulp_tasks['type']))
+
+        self.assertTrue(
+            'minitems' in gulp_tasks,
+            'Expected "minitems" to be included in "gulp-tasks"')
+        self.assertEqual(gulp_tasks['minitems'], 1,
+                         'Expected "gulp-tasks" "minitems" to be 1, but '
+                         'it was "{}"'.format(gulp_tasks['minitems']))
+
+        self.assertTrue(
+            'uniqueItems' in gulp_tasks,
+            'Expected "uniqueItems" to be included in "gulp-tasks"')
+        self.assertTrue(
+            gulp_tasks['uniqueItems'],
+            'Expected "gulp-tasks" "uniqueItems" to be "True"')
+
+        self.assertTrue('node-engine' in properties,
+                        'Expected "node-engine" to be included in '
+                        'properties')
+        node_engine_type = properties['node-engine']['type']
+        self.assertEqual(node_engine_tpe, 'string',
+                         'Expected "node_engine" "type" to be '
+                         '"string", but it was "{}"'
+                         .format(node_engine_tpe))
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['gulp-tasks']
+        resulting_build_properties = gulp.GulpPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
+
+    def test_get_pull_properties(self):
+        expected_build_properties = ['node-engine']
+        resulting_build_properties = gulp.GulpPlugin.get_pull_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_clean_pull_step(self):
         class Options:
