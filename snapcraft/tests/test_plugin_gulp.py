@@ -167,14 +167,14 @@ class GulpPluginTestCase(tests.TestCase):
             self.assertIn(property, resulting_build_properties)
 
     def test_get_pull_properties(self):
-        expected_build_properties = ['node-engine']
-        resulting_build_properties = gulp.GulpPlugin.get_pull_properties()
+        expected_pull_properties = ['node-engine']
+        resulting_pull_properties = gulp.GulpPlugin.get_pull_properties()
 
-        self.assertThat(resulting_build_properties,
-                        HasLength(len(expected_build_properties)))
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
 
-        for property in expected_build_properties:
-            self.assertIn(property, resulting_build_properties)
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_clean_pull_step(self):
         class Options:
