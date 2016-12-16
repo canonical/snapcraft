@@ -23,7 +23,7 @@ class TestMercurial(SourceTestCase):
 
     def test_pull(self):
         hg = sources.Mercurial('hg://my-source', 'source_dir')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', 'hg://my-source', 'source_dir'])
@@ -31,7 +31,7 @@ class TestMercurial(SourceTestCase):
     def test_pull_branch(self):
         hg = sources.Mercurial('hg://my-source', 'source_dir',
                                source_branch='my-branch')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', '-u', 'my-branch', 'hg://my-source',
@@ -40,7 +40,7 @@ class TestMercurial(SourceTestCase):
     def test_pull_tag(self):
         hg = sources.Mercurial('hg://my-source', 'source_dir',
                                source_tag='tag')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', '-u', 'tag', 'hg://my-source',
@@ -49,7 +49,7 @@ class TestMercurial(SourceTestCase):
     def test_pull_commit(self):
         hg = sources.Mercurial('hg://my-source', 'source_dir',
                                source_commit='2')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'clone', '-u', '2', 'hg://my-source',
@@ -59,7 +59,7 @@ class TestMercurial(SourceTestCase):
         self.mock_path_exists.return_value = True
 
         hg = sources.Mercurial('hg://my-source', 'source_dir')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', 'hg://my-source'])
@@ -69,7 +69,7 @@ class TestMercurial(SourceTestCase):
 
         hg = sources.Mercurial('hg://my-source', 'source_dir',
                                source_tag='tag')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', '-r', 'tag', 'hg://my-source'])
@@ -79,7 +79,7 @@ class TestMercurial(SourceTestCase):
 
         hg = sources.Mercurial('hg://my-source', 'source_dir',
                                source_commit='2')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', '-r', '2', 'hg://my-source'])
@@ -89,7 +89,7 @@ class TestMercurial(SourceTestCase):
 
         hg = sources.Mercurial('hg://my-source', 'source_dir',
                                source_branch='my-branch')
-        hg.pull(debug=True)
+        hg.pull()
 
         self.mock_run.assert_called_once_with(
             ['hg', 'pull', '-b', 'my-branch', 'hg://my-source'])

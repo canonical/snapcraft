@@ -43,11 +43,7 @@ class Mercurial(Base):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a mercurial source')
 
-    def pull(self, debug=True):
-        kwargs = {}
-        if not debug:
-            kwargs['stdout'] = subprocess.DEVNULL
-            kwargs['stderr'] = subprocess.DEVNULL
+    def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):
             ref = []
             if self.source_tag:
@@ -65,4 +61,4 @@ class Mercurial(Base):
             cmd = [self.command, 'clone'] + ref + [self.source,
                                                    self.source_dir]
 
-        subprocess.check_call(cmd, **kwargs)
+        subprocess.check_call(cmd)

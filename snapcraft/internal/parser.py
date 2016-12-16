@@ -168,7 +168,7 @@ def _encode_origin(origin):
     return re.sub('[^A-Za-z0-9-_.]', '', origin)
 
 
-def _process_entry(data, debug=False):
+def _process_entry(data):
     parts_list = OrderedDict()
     # Store all the parts listed in 'after' for each included part so that
     # we can check later that we aren't missing any parts.
@@ -202,7 +202,7 @@ def _process_entry(data, debug=False):
     handler.source_branch = origin_branch
     handler.source_commit = origin_commit
     handler.source_tag = origin_tag
-    handler.pull(debug)
+    handler.pull()
 
     try:
         origin_data = _get_origin_data(origin_dir)
@@ -225,7 +225,7 @@ def _process_entry(data, debug=False):
 
 def _process_wiki_entry(
         entry, master_parts_list, master_missing_parts,
-        pending_validation_entries, debug=False):
+        pending_validation_entries):
     """Add valid wiki entries to the master parts list"""
     # return the number of errors encountered
     try:
@@ -245,7 +245,7 @@ def _process_wiki_entry(
                 'Duplicate part found in the wiki: {} in entry {}'.format(
                     part_name, entry))
 
-    parts_list, after_parts = _process_entry(data, debug)
+    parts_list, after_parts = _process_entry(data)
 
     known_parts = list(parts_list.keys()) + list(master_parts_list.keys())
     missing_parts = missing_parts_set(after_parts, known_parts)
@@ -262,13 +262,13 @@ def _process_wiki_entry(
 
 def _try_process_entry(
         entry, master_parts_list, missing_parts,
-        pending_validation_entries, debug=True):
+        pending_validation_entries):
     wiki_errors = 0
 
     try:
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
-            pending_validation_entries, debug)
+            pending_validation_entries)
     except SnapcraftError as e:
         logger.warning(e)
         wiki_errors += 1
@@ -276,7 +276,7 @@ def _try_process_entry(
     return wiki_errors
 
 
-def _process_index(output, debug=False):
+def _process_index(output):
     # XXX: This can't remain in memory if the list gets very large, but it
     # should be okay for now.
     master_parts_list = OrderedDict()
@@ -296,7 +296,7 @@ def _process_index(output, debug=False):
             if entry:
                 wiki_errors += _try_process_entry(
                     entry, master_parts_list, missing_parts,
-                    pending_validation_entries, debug)
+                    pending_validation_entries)
                 entry = ''
         else:
             entry = '\n'.join([entry, line])
@@ -304,11 +304,11 @@ def _process_index(output, debug=False):
     if entry:
         wiki_errors += _try_process_entry(
             entry, master_parts_list,  missing_parts,
-            pending_validation_entries, debug)
+            pending_validation_entries)
 
     for entry in pending_validation_entries:
         wiki_errors += _try_process_entry(
-            entry, master_parts_list, missing_parts, [], debug)
+            entry, master_parts_list, missing_parts, [])
 
     if len(missing_parts):
         logger.warning('Parts {!r} are not defined in the parts entry'.format(
@@ -334,8 +334,7 @@ def run(args):
         # XXX: fetch the index from the wiki
         output = b'{}'
 
-    debug = args['--debug']
-    data = _process_index(output, debug)
+    data = _process_index(output)
     master_parts_list = data['master_parts_list']
     wiki_errors = data['wiki_errors']
 
