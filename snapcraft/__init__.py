@@ -237,6 +237,20 @@ of the choice of plugin.
         cd scripts
         ./bootstrap.sh
 
+  - build: shell script
+
+    If present, the shell script defined here is run instead of the `build`
+    step of the plugin. The working directory is the base build directory
+    for the given part. The defined script is run with `/bin/sh`.
+
+    For example:
+
+      plugin: make
+      build: |
+        make project
+        make test
+        make special-install
+
   - install: shell script
 
     If present, the shell script defined here is run after the `build` step
