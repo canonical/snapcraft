@@ -210,9 +210,9 @@ class NodePluginTestCase(tests.TestCase):
         self.assertTrue(
             'uniqueItems' in npm_run,
             'Expected "uniqueItems" to be included in "npm-run"')
-        self.assertTrue(
+        self.assertFalse(
             npm_run['uniqueItems'],
-            'Expected "npm-run" "uniqueItems" to be "True"')
+            'Expected "npm-run" "uniqueItems" to be "False"')
 
         self.assertTrue('node-engine' in properties,
                         'Expected "node-engine" to be included in '
