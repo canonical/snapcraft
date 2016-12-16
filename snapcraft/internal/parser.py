@@ -18,7 +18,11 @@
 """
 snapcraft-parser
 
-Parse a wiki index of parts and output formated YAML for use by 'snapcraft'
+Parse a wiki index of parts and output formatted YAML for use by 'snapcraft'.
+'snapcraft' uses the YAML to find non-local parts referred to by a project's
+'snapcraft.yaml' file.  See 'snapcraft update' and 'snapcraft define' for more
+details.
+
 
 Usage:
   snapcraft-parser [options]
@@ -28,7 +32,7 @@ Options:
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
                                         (including backtraces)
-  -i --index=<filename|URL>             a file containing a part index.
+  -i --index=<filepath>                 a file containing a part index.
                                         ({default_index!r})
   -o --output=<filename>                where to write the parsed parts list.
                                         ({default_parts_file!r})
