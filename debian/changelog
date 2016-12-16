@@ -1,7 +1,7 @@
 snapcraft (2.24) xenial; urgency=medium
 
   [ Sergio Schvezov ]
-  * meta: support classic confinment (#946)
+  * meta: support classic confinement (#946)
   * project: support building classic snaps (#949)
   * pluginhandler: convert to package (#954)
   * tests: idempotent store installs. (#956)
@@ -47,7 +47,7 @@ snapcraft (2.24) xenial; urgency=medium
   * sources: refactor subversion source into module. (#968)
   * sources: refactor tar source into module. (#969)
   * sources: refactor zip source into module. (#970)
-  * libraries: prefer in-snap libraries to system libraries. (#977)
+  * pluginhandler: prefer in-snap libraries to system libraries. (#977)
 
   [ Celso Providelo ]
   * cli: implementing '[list-]registered' command (#890)
@@ -55,7 +55,7 @@ snapcraft (2.24) xenial; urgency=medium
 
   [ Matthew Aguirre ]
   * maven plugin: implement get_build_properties() (#974)
-  * gradle plugin: implement get_build_properties()  (#975)
+  * gradle plugin: implement get_build_properties() (#975)
   * cmake plugin: implement get_build_properties() (#978)
   * waf plugin: implement get_build_properties() (#979)
   * scons plugin: implement get_build_properties() (#983)
