@@ -205,7 +205,7 @@ class CatkinPluginTestCase(tests.TestCase):
 
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
-                                    'source-space', 'nclude-roscore']
+                                    'source-space', 'include-roscore']
         resulting_pull_properties = catkin.CatkinPlugin.get_pull_properties()
 
         self.assertThat(resulting_pull_properties,
