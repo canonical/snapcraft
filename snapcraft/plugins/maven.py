@@ -69,11 +69,6 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             'default': [''],
         }
 
-        # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append('maven-options')
-        schema['build-properties'].append('maven-targets')
-
         return schema
 
     def __init__(self, name, options, project):
@@ -82,6 +77,12 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
 
     def _use_proxy(self):
         return any(k in os.environ for k in ('http_proxy', 'https_proxy'))
+
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['maven-options', 'maven-targets']
 
     def build(self):
         super().build()
