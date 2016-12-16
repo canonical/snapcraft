@@ -16,7 +16,7 @@ Depends: @,
          python3-testscenarios
 
 Tests: snapstests
-Restrictions: allow-stderr, isolation-container, rw-build-tree
+Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          git,
          curl,
