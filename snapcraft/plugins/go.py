@@ -85,16 +85,19 @@ class GoPlugin(snapcraft.BasePlugin):
         if 'required' in schema:
             del schema['required']
 
-        # Inform Snapcraft of the properties associated with pulling. If these
-        # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].append('go-packages')
+        return schema
 
+    @classmethod
+    def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend(
-            ['go-packages', 'go-buildtags'])
+        return ['go-packages', 'go-buildtags']
 
-        return schema
+    @classmethod
+    def get_pull_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['go-packages']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
