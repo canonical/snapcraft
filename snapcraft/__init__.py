@@ -225,6 +225,18 @@ of the choice of plugin.
     `prime/` directory reflects the file structure of the snap with no
     extraneous content).
 
+  - prepare: shell script
+
+    If present, the shell script defined here is run before the `build` step
+    of the plugin starts. The working directory is the base build
+    directory for the given part. The defined script is run with `/bin/sh`.
+
+    For example:
+
+      prepare: |
+        cd scripts
+        ./bootstrap.sh
+
   - install: shell script
 
     If present, the shell script defined here is run after the `build` step
