@@ -19,6 +19,7 @@ import os
 import stat
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -103,12 +104,15 @@ class AutotoolsPluginTestCase(tests.TestCase):
                          'Expected "install-via" "default" to be "destdir", '
                          'but it was "{}"'.format(installvia_default))
 
-        self.assertTrue('build-properties' in schema,
-                        'Expected schema to include "build-properties"')
-        build_properties = schema['build-properties']
-        self.assertEqual(2, len(build_properties))
-        self.assertTrue('configflags' in build_properties)
-        self.assertTrue('install-via' in build_properties)
+    def test_get_build_properties(self):
+        expected_build_properties = ['configflags', 'install-via']
+        resulting_build_properties = autotools.AutotoolsPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_install_via_invalid_enum(self):
         self.options.install_via = 'invalid'
