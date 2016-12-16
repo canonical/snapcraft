@@ -17,3 +17,15 @@ parts:
       echo '\techo building' >> Makefile
       echo "install:" >> Makefile
       echo '\ttouch $(DESTDIR)/prepared' >> Makefile
+
+  prepare-and-install:
+    source: .
+    plugin: make
+    prepare: |
+      echo 'all:' > Makefile
+      echo '\ttouch built' >> Makefile
+      echo 'install:' >> Makefile
+      echo '\ttouch installed' >> Makefile
+    install: |
+      cp built $SNAPCRAFT_PART_INSTALL/
+      cp installed $SNAPCRAFT_PART_INSTALL/
