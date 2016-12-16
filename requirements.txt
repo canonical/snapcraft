@@ -17,3 +17,4 @@ pymacaroons-pynacl==0.9.3
 simplejson==3.8.2
 tabulate==0.7.5
 python-debian==0.1.28
+chardet==2.3.0
