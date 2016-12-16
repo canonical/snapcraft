@@ -124,6 +124,8 @@ class KernelPluginTestCase(tests.TestCase):
             'kernel-initrd-modules', 'kernel-initrd-firmware',
             'kernel-device-trees', 'kernel-initrd-compression']
         resulting_build_properties = kernel.KernelPlugin.get_build_properties()
+        expected_build_properties.extend(
+            snapcraft.plugins.kbuild.KBuildPlugin.get_build_properties())
 
         self.assertThat(resulting_build_properties,
                         HasLength(len(expected_build_properties)))
