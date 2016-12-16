@@ -1,0 +1,17 @@
+name: build-scriptlet-test
+version: '0.1'
+summary: Runs the build scriptlet for a part
+description: |
+  Runs the shell script defined in `build` overriding the plugins
+  build directives.
+
+grade: devel
+confinement: devmode
+
+parts:
+  build-scriptlet-test:
+    source: .
+    plugin: make
+    build: |
+      make build
+      make move-to-dest DESTDIR=$SNAPCRAFT_PART_INSTALL

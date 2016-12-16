@@ -210,6 +210,12 @@ properties:
           install:
             type: string
             default: ''
+          build:
+            type: string
+            default: ''
+          prepare:
+            type: string
+            default: ''
   plugs:
     type: object
   slots:

@@ -24,6 +24,16 @@ from snapcraft import tests
 
 class ScriptletTestCase(tests.TestCase):
 
+    def test_run_prepare_scriptlet(self):
+        handler = mocks.loadplugin(
+            'test-part', part_properties={'prepare': 'touch before-build'})
+
+        handler.build()
+
+        before_build_file_path = os.path.join(handler.code.build_basedir,
+                                              'before-build')
+        self.assertThat(before_build_file_path, FileExists())
+
     def test_run_install_scriptlet(self):
         handler = mocks.loadplugin(
             'test-part', part_properties={'install': 'touch after-build'})

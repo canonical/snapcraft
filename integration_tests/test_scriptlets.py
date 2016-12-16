@@ -23,6 +23,28 @@ from testtools.matchers import FileContains, FileExists
 
 class ScriptletTestCase(integration_tests.TestCase):
 
+    def test_prepare_scriptlet(self):
+        project_dir = 'scriptlet-prepare'
+        self.run_snapcraft('build', project_dir)
+
+        installdir = os.path.join(
+            project_dir, 'parts', 'prepare-scriptlet-test', 'install')
+        touch_file_path = os.path.join(installdir, 'prepared')
+        self.assertThat(touch_file_path, FileExists())
+
+    def test_build_scriptlet(self):
+        project_dir = 'scriptlet-build'
+        self.run_snapcraft('build', project_dir)
+
+        partdir = os.path.join(project_dir, 'parts', 'build-scriptlet-test')
+        builddir = os.path.join(partdir, 'build')
+        installdir = os.path.join(partdir, 'install')
+
+        touch_file_path = os.path.join(builddir, 'build-build')
+        self.assertThat(touch_file_path, FileExists())
+        touch_file_path = os.path.join(installdir, 'build-install')
+        self.assertThat(touch_file_path, FileExists())
+
     def test_install_scriptlet(self):
         project_dir = 'scriptlet-install'
         self.run_snapcraft('build', project_dir)
