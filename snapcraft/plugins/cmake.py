@@ -51,11 +51,13 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             'default': [],
         }
 
+        return schema
+
+    @classmethod
+    def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append('configflags')
-
-        return schema
+        return ['configflags']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
