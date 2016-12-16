@@ -207,7 +207,7 @@ def _process_entry(data):
         origin_data = _get_origin_data(origin_dir)
     except MissingSnapcraftYAMLError:
         raise InvalidWikiEntryError(
-            'Origin {origin!r} is missing a snapcraft.yaml file'.format(
+            'Origin {origin!r} is missing a snapcraft.yaml file.'.format(
                 origin=origin))
     except BadSnapcraftYAMLError as e:
         raise InvalidWikiEntryError('snapcraft.yaml error: {}'.format(e))
