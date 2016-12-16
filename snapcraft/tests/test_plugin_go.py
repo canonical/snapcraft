@@ -146,14 +146,14 @@ class GoPluginTestCase(tests.TestCase):
         self.assertNotIn('required', schema)
 
     def test_get_pull_properties(self):
-        expected_build_properties = ['go-packages']
-        resulting_build_properties = go.GoPlugin.get_pull_properties()
+        expected_pull_properties = ['go-packages']
+        resulting_pull_properties = go.GoPlugin.get_pull_properties()
 
-        self.assertThat(resulting_build_properties,
-                        HasLength(len(expected_build_properties)))
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
 
-        for property in expected_build_properties:
-            self.assertIn(property, resulting_build_properties)
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
         expected_build_properties = ['go-packages', 'go-buildtags']
