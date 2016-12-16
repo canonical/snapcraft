@@ -93,8 +93,9 @@ class MakePluginTestCase(tests.TestCase):
             'was "{}"'.format(make_install_var_default))
 
     def test_get_build_properties(self):
-        expected_build_properties = ['makefile', 'make-parameters', 'make-install-var']
-        resulting_build_properties = gradle.GradlePlugin.get_build_properties()
+        expected_build_properties = ['makefile', 'make-parameters',
+                                     'make-install-var']
+        resulting_build_properties = make.MakePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
                         HasLength(len(expected_build_properties)))
