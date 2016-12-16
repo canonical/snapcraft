@@ -91,9 +91,15 @@ class GodepsPluginTestCase(tests.TestCase):
         self.assertTrue('go-importpath' in schema['required'],
                         'Expeced "go-importpath" to be required')
 
-        # Verify both are pull dependencies
-        self.assertTrue('godeps-file' in schema['pull-properties'])
-        self.assertTrue('go-importpath' in schema['pull-properties'])
+    def test_get_build_properties(self):
+        expected_build_properties = ['godeps-file', 'go-importpath']
+        resulting_build_properties = godeps.GodepsPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_build_environment(self):
         plugin = godeps.GodepsPlugin(
