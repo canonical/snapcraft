@@ -72,24 +72,22 @@ class Cleanbuilder:
         self._project_options = project_options
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
-        self._find_lxd()
+        self._client = self._find_lxd()
         self._container = None
 
     def _find_lxd(self):
-        try:
-            self._client = pylxd.Client()
-        except:
+        for socket in ['/var/lib/lxd', '/var/snap/lxd/common/lxd']:
             try:
-                os.environ['LXD_DIR'] = '/var/snap/lxd/common/lxd'
-                self._client = pylxd.Client()
-            except:
-                raise EnvironmentError(
-                    'The lxd package is not installed, in order to use '
-                    '`cleanbuild` you must install lxd onto your system. '
-                    'Refer to the "Ubuntu Desktop and Ubuntu Server" section '
-                    'on https://linuxcontainers.org/lxd/getting-started-cli/'
-                    '#ubuntu-desktop-and-ubuntu-server to enable a proper '
-                    'setup.')
+                os.environ['LXD_DIR'] = socket
+                return pylxd.Client()
+            except Exception as e:
+                logger.info('Socket at {} not usable: {}'.format(socket, e))
+        raise EnvironmentError(
+            'The lxd package is not installed, in order to use '
+            '`cleanbuild` you must install lxd onto your system. '
+            'Refer to the "Ubuntu Desktop and Ubuntu Server" section '
+            'on https://linuxcontainers.org/lxd/getting-started-cli/'
+            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
 
     def _push_file(self, src, dst):
         logger.info('Pushing {} to {}'.format(src, dst))
