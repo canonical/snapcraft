@@ -18,6 +18,7 @@ import os
 from unittest import mock
 
 import fixtures
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -76,6 +77,16 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         self.assertTrue(
             gradle_options['uniqueItems'],
             'Expected "gradle-options" "uniqueItems" to be "True"')
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['gradle-options']
+        resulting_build_properties = gradle.GradlePlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
     def test_build(self, run_mock):
