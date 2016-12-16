@@ -390,8 +390,9 @@ class PluginHandler:
         script_runner = ScriptRunner(builddir=self.code.build_basedir)
 
         script_runner.run(scriptlet=self._part_properties.get('prepare'))
-        if self._part_properties.get('build'):
-            script_runner.run(scriptlet=self._part_properties.get('build'))
+        build_scriptlet = self._part_properties.get('build') 
+        if build_scriptlet:
+            script_runner.run(scriptlet=build_scriptlet)
         else:
             self.code.build()
         script_runner.run(scriptlet=self._part_properties.get('install'))
