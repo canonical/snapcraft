@@ -149,7 +149,7 @@ class QMakeTestCase(tests.TestCase):
                         'Expected "qt-version" to be required')
 
     def test_get_build_properties(self):
-        expected_build_properties = ['options']
+        expected_build_properties = ['options', 'project-files']
         resulting_build_properties = qmake.QmakePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,

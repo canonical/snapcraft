@@ -83,7 +83,7 @@ class QmakePlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building and
         # pulling so it can mark those steps dirty if they change in the YAML.
-        return ['options']
+        return ['options', 'project-files']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
