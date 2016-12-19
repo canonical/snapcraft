@@ -269,7 +269,7 @@ class PythonPluginTestCase(tests.TestCase):
         self.assertListEqual(expected_fileset, fileset)
 
     @mock.patch.object(python.PythonPlugin, 'run')
-    def test_pull_fixes_python_shebangs(self, run_mock):
+    def test_build_fixes_python_shebangs(self, run_mock):
         if self.options.python_version == 'python2':
             py_version_short = 'python2'
             py_version_long = 'python2'
