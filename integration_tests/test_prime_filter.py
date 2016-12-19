@@ -44,7 +44,9 @@ class PrimeKeywordTestCase(integration_tests.TestCase):
         # Verify that the `snap` keyword is deprecated.
         self.assertThat(
             output, Contains(
-                "DEPRECATED: The 'snap' keyword has been replaced by 'prime'"))
+                "DEPRECATED: The 'snap' keyword has been replaced by 'prime'."
+                "\nSee https://github.com/snapcore/snapcraft/wiki/Deprecation-"
+                "Notices#dn1 for more information."))
 
         # Verify that only the `snap1` file made it into prime (i.e. `snap2`
         # was filtered out).

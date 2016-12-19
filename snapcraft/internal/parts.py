@@ -26,8 +26,12 @@ from xdg import BaseDirectory
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal.errors import SnapcraftPartMissingError
-from snapcraft.internal import pluginhandler, repo
-from snapcraft.internal import project_loader
+from snapcraft.internal import (
+    deprecations,
+    pluginhandler,
+    project_loader,
+    repo
+)
 
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
@@ -186,9 +190,7 @@ class PartsConfig:
 
             # FIXME: snap is deprecated, rewrite it to prime instead.
             if properties.get('snap'):
-                logger.warning(
-                    "DEPRECATED: The 'snap' keyword has been replaced by "
-                    "'prime'")
+                deprecations.handle_deprecation_notice('dn1')
                 properties['prime'] = properties.pop('snap')
 
             self.load_plugin(part_name, plugin_name, properties)
