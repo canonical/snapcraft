@@ -95,7 +95,7 @@ class GoPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def get_pull_properties(cls):
-        # Inform Snapcraft of the properties associated with building. If these
+        # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return ['go-packages']
 
