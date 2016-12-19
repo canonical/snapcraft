@@ -17,6 +17,7 @@
 import os
 
 from testtools.matchers import (
+    Contains,
     DirExists,
     FileExists,
     Not
@@ -42,9 +43,17 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
     def test_clean_stage_step(self):
         self.assert_files_exist()
 
-        self.run_snapcraft(['clean', '--step=stage'], self.project_dir)
+        output = self.run_snapcraft(
+            ['clean', '--step=stage'], self.project_dir, debug=False)
         self.assertThat(self.stagedir, Not(DirExists()))
         self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+
+        # Assert that the priming and staging areas were removed wholesale, not
+        # a part at a time (since we didn't specify any parts).
+        self.assertThat(output, Contains("Cleaning up priming area"))
+        self.assertThat(output, Contains("Cleaning up staging area"))
+        self.expectThat(output, Not(Contains('part1')))
+        self.expectThat(output, Not(Contains('part2')))
 
         # Now try to stage again
         self.run_snapcraft('stage', self.project_dir)

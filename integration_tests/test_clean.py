@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -47,3 +47,11 @@ class CleanTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', project_dir)
         self.run_snapcraft('clean', project_dir)
         self.run_snapcraft('clean', project_dir)
+
+    # Regression test for LP: #1596596
+    def test_clean_invalid_yaml(self):
+        project_dir = 'invalid-snap'
+        self.run_snapcraft('clean', project_dir)
+        self.assertThat(os.path.join(project_dir, 'parts'), Not(DirExists()))
+        self.assertThat(os.path.join(project_dir, 'stage'), Not(DirExists()))
+        self.assertThat(os.path.join(project_dir, 'prime'), Not(DirExists()))
