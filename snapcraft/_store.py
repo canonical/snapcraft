@@ -409,11 +409,14 @@ def push(snap_filename, release_channels=None):
         raise FileNotFoundError(
             'The file {!r} does not exist.'.format(snap_filename))
 
-    logger.info('Uploading {}.'.format(snap_filename))
-
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
+
+    with _requires_login():
+        store.push_precheck(snap_name)
+
+    logger.info('Uploading {}.'.format(snap_filename))
     with _requires_login():
         tracker = store.upload(snap_name, snap_filename)
 
