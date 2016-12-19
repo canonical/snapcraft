@@ -73,6 +73,19 @@ class ValidateTestCase(tests.TestCase):
         self.assertIn('Signing validation test-snap=4',
                       self.fake_terminal.getvalue())
 
+    def test_validate_from_branded_store(self):
+        # Validating snaps from a branded store requires setting
+        # `SNAPCRAFT_UBUNTU_STORE` environment variable to the store 'slug'.
+        self.client.login('dummy', 'test correct password')
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_UBUNTU_STORE', 'Test-Branded'))
+
+        main([self.command_name, 'ubuntu-core', 'test-snap-branded-store=1'])
+
+        self.assertIn('Signing validation test-snap-branded-store=1',
+                      self.fake_terminal.getvalue())
+
     def test_validate_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
 

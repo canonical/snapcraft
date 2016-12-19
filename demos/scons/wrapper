@@ -1,0 +1,3 @@
+#!/bin/bash
+
+$SNAP/usr/bin/hello
