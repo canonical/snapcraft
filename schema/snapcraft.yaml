@@ -141,6 +141,7 @@ properties:
           - not:
               type: object
               required: [snap, prime]
+              validation-failure: "{.instance} cannot contain both 'snap' and 'prime' keywords."
         type: object
         minProperties: 1
         properties:

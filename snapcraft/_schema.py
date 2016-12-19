@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 
 import jsonschema
@@ -80,18 +81,13 @@ def _handle_validation_error(error):
     tries to make them a bit more understandable.
     """
 
-    main_message = error.message
-    exclusivity = {
-        'type': 'object',
-        'required': ['snap', 'prime'],
-    }
-    # The message for a failed `not` is total garbage. Rewrite it completely.
-    if error.validator == 'not' and error.validator_value == exclusivity:
-        main_message = (
-            "{} cannot contain both 'snap' and 'prime' keywords.").format(
-                error.instance)
+    messages = [error.message]
 
-    messages = [main_message]
+    # error.validator_value may contain a custom validation error message. If
+    # so, use it instead of the garbage message jsonschema gives us.
+    with contextlib.suppress(TypeError, KeyError):
+        messages = [error.validator_value['validation-failure'].format(error)]
+
     path = []
     while error.absolute_path:
         element = error.absolute_path.popleft()
