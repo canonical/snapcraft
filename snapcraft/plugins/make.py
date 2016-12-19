@@ -89,7 +89,7 @@ class MakePlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['makefile', 'make-parameters', 'make-install-var']
+        return ['makefile', 'make-parameters', 'make-install-var', 'artifacts']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)

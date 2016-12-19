@@ -94,7 +94,7 @@ class MakePluginTestCase(tests.TestCase):
 
     def test_get_build_properties(self):
         expected_build_properties = ['makefile', 'make-parameters',
-                                     'make-install-var']
+                                     'make-install-var', 'artifacts']
         resulting_build_properties = make.MakePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
