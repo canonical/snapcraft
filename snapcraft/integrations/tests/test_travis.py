@@ -196,9 +196,8 @@ class TravisSuccessfulTestCase(tests.TestCase):
                 'skip_cleanup': True,
                 'provider': 'script',
                 'script': (
-                    'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
-                    '"apt update -qq && apt install snapcraft -y && '
-                    'cd $(pwd) && '
+                    'docker run -e TERM -v $PWD:$PWD -w $PWD -t ubuntu:xenial '
+                    'sh -c "apt update -qq && apt install snapcraft -y && '
                     'snapcraft && snapcraft push *.snap --release edge"'),
                 'on': {
                     'branch': 'master',
