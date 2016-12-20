@@ -1334,6 +1334,44 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._migrate_files')
+    def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
+                                                    mock_find_dependencies):
+        mock_find_dependencies.return_value = {
+            '/foo/bar/baz'
+        }
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        foobardir = os.path.join(self.handler.code.installdir, 'foo', 'bar')
+        os.makedirs(bindir)
+        os.makedirs(foobardir)
+
+        # Make a "binary" as well as a "library" at the same path as the one on
+        # the system
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(foobardir, 'baz'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        mock_migrate_files.reset_mock()
+        self.handler.prime()
+
+        self.assertEqual('prime', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
+        mock_migrate_files.assert_called_once_with(
+            {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
+            self.handler.stagedir, self.handler.snapdir)
+
+        state = self.handler.get_state('prime')
+
+        self.assertTrue(type(state) is states.PrimeState)
+        self.assertEqual(1, len(state.dependency_paths))
+        self.assertTrue('foo/bar' in state.dependency_paths)
+
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
     def test_prime_state_with_snap_keyword(self, mock_copy,
                                            mock_find_dependencies):
