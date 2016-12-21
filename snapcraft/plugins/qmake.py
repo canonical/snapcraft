@@ -75,7 +75,7 @@ class QmakePlugin(snapcraft.BasePlugin):
 
     @classmethod
     def get_pull_properties(cls):
-        # Inform Snapcraft of the properties associated with building and
+        # Inform Snapcraft of the properties associated with pulling and
         # pulling so it can mark those steps dirty if they change in the YAML.
         return ['qt-version']
 
