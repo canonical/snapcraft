@@ -28,6 +28,7 @@ import snapcraft
 from snapcraft import formatting_utils
 from snapcraft.internal import (
     common,
+    deprecations,
     errors,
     libraries,
     parts,
@@ -371,19 +372,36 @@ def _build_env_for_stage(stagedir, snap_name, confinement,
 
 
 def _get_snapcraft_yaml():
+    snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
+
+    snapcraft_yaml_exists = os.path.exists(snapcraft_yaml_path)
     visible_yaml_exists = os.path.exists('snapcraft.yaml')
     hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
 
-    if visible_yaml_exists and hidden_yaml_exists:
+    if snapcraft_yaml_exists and visible_yaml_exists:
+        raise EnvironmentError(
+            "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', "
+            "please remove one (though note that 'snapcraft.yaml' is "
+            'deprecated)')
+    elif snapcraft_yaml_exists and hidden_yaml_exists:
+        raise EnvironmentError(
+            "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', "
+            "please remove one (though note that '.snapcraft.yaml' is "
+            'deprecated)')
+    elif visible_yaml_exists and hidden_yaml_exists:
         raise EnvironmentError(
             "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
             "please remove one")
+    elif snapcraft_yaml_exists:
+        return snapcraft_yaml_path
     elif visible_yaml_exists:
+        deprecations.handle_deprecation_notice('dn2')
         return 'snapcraft.yaml'
     elif hidden_yaml_exists:
+        deprecations.handle_deprecation_notice('dn3')
         return '.snapcraft.yaml'
     else:
-        raise SnapcraftYamlFileError('snapcraft.yaml')
+        raise SnapcraftYamlFileError(snapcraft_yaml_path)
 
 
 def _snapcraft_yaml_load(yaml_file):
@@ -409,9 +427,8 @@ def load_config(project_options=None):
         return Config(project_options)
     except SnapcraftYamlFileError as e:
         logger.error(
-            'Could not find {}.  Are you sure you are in the right '
-            'directory?\nTo start a new project, use \'snapcraft '
-            'init\''.format(e.file))
+            "Could not find {}. Are you sure you're in the right directory?\n"
+            "To start a new project, use 'snapcraft init'".format(e.file))
         sys.exit(1)
     except SnapcraftSchemaError as e:
         msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)

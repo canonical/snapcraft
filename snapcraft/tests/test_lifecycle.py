@@ -14,10 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
+import os
 
 import fixtures
+import testtools
 from unittest import mock
+from testtools.matchers import FileExists
 
 import snapcraft
 from snapcraft.internal import (

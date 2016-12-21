@@ -155,7 +155,8 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            "The part named 'no-clean' is not defined in 'snapcraft.yaml'\n")
+            "The part named 'no-clean' is not defined in "
+            "'snap/snapcraft.yaml'\n")
 
     @mock.patch.object(pluginhandler.PluginHandler, 'clean')
     def test_per_step_cleaning(self, mock_clean):

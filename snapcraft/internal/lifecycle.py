@@ -66,14 +66,19 @@ _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 def init():
     """Initialize a snapcraft project."""
 
-    if os.path.exists('snapcraft.yaml'):
+    if os.path.exists(os.path.join('snap', 'snapcraft.yaml')):
+        raise EnvironmentError('snap/snapcraft.yaml already exists!')
+    # FIXME: snapcraft.yaml and .snapcraft.yaml are deprecated.
+    elif os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
-    with open('snapcraft.yaml', mode='w+') as f:
+    with contextlib.suppress(FileExistsError):
+        os.mkdir('snap')
+    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w+') as f:
         f.write(yaml)
-    logger.info('Created snapcraft.yaml.')
+    logger.info('Created snap/snapcraft.yaml.')
     logger.info(
         'Edit the file to your liking or run `snapcraft` to get started')
 

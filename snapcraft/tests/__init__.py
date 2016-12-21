@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 import os
 import stat
@@ -137,7 +138,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.local_plugins_dir = os.path.join(self.parts_dir, 'plugins')
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
-        with open('snapcraft.yaml', 'w', encoding=encoding) as fp:
+        with contextlib.suppress(FileExistsError):
+            os.mkdir('snap')
+        snapcraft_yaml = os.path.join('snap', 'snapcraft.yaml')
+        with open(snapcraft_yaml, 'w', encoding=encoding) as fp:
             fp.write(content)
 
     def verify_state(self, part_name, state_dir, expected_step):

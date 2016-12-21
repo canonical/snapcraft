@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import os
 import unittest
 import unittest.mock
 from testtools.matchers import Contains
@@ -39,7 +40,8 @@ class TestParts(tests.TestCase):
         patcher = unittest.mock.patch(
             'snapcraft.internal.project_loader._get_snapcraft_yaml')
         self.mock_get_yaml = patcher.start()
-        self.mock_get_yaml.return_value = 'snapcraft.yaml'
+        self.mock_get_yaml.return_value = os.path.join(
+            'snap', 'snapcraft.yaml')
         self.addCleanup(patcher.stop)
         self.part_schema = project_loader.Validator().part_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
