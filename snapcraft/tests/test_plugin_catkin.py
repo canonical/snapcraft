@@ -20,6 +20,7 @@ import subprocess
 import builtins
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import catkin
@@ -202,14 +203,16 @@ class CatkinPluginTestCase(tests.TestCase):
                         'Expected "catkin-packages" to be included in '
                         '"required"')
 
-        # Check pull-properties
-        self.assertTrue('pull-properties' in schema,
-                        'Expected schema to include "pull-properties"')
-        pull_properties = schema['pull-properties']
-        self.assertTrue('rosdistro' in pull_properties)
-        self.assertTrue('catkin-packages' in pull_properties)
-        self.assertTrue('source-space' in pull_properties)
-        self.assertTrue('include-roscore' in pull_properties)
+    def test_get_pull_properties(self):
+        expected_pull_properties = ['rosdistro', 'catkin-packages',
+                                    'source-space', 'include-roscore']
+        resulting_pull_properties = catkin.CatkinPlugin.get_pull_properties()
+
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_invalid_rosdistro(self):
         self.properties.rosdistro = 'invalid'
