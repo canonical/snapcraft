@@ -199,15 +199,14 @@ class _SnapPackaging:
 
         wrapexec = '$SNAP/{}'.format(execparts[0])
         if not os.path.exists(exepath) and '/' not in execparts[0]:
-            _find_bin(execparts[0], self._snap_dir)
-            wrapexec = execparts[0]
-        else:
-            with open(exepath, 'rb') as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b'#!':
-                    shebang = exefile.readline().strip().decode('utf-8')
+            exepath = _find_bin(execparts[0], self._snap_dir)
+
+        with open(exepath, 'rb') as exefile:
+            # If the file has a she-bang, the path might be pointing to
+            # the local 'parts' dir. Extract it so that _write_wrap_exe
+            # will have a chance to rewrite it.
+            if exefile.read(2) == b'#!':
+                shebang = exefile.readline().strip().decode('utf-8')
 
         self._write_wrap_exe(wrapexec, wrappath,
                              shebang=shebang, args=execparts[1:])
@@ -239,7 +238,7 @@ def _find_bin(binary, basedir):
         tempf.write(script)
         tempf.flush()
         try:
-            common.run(['/bin/sh', tempf.name], cwd=basedir,
-                       stdout=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
-            raise CommandError(binary)
+            output = common.run_output(['/bin/sh', tempf.name], cwd=basedir)
+            return output
+        except subprocess.CalledProcessError as e:
+            raise CommandError(binary) from e

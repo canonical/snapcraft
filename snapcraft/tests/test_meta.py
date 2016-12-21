@@ -462,9 +462,10 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         with open(os.path.join(self.snap_dir, relative_exe_path), 'rb') as exe:
             self.assertEqual(exe_contents, exe.read())
 
-    @patch('snapcraft.internal.common.run')
-    def test_exe_is_in_path(self, run_mock):
+    @patch('snapcraft.internal.common.run_output')
+    def test_exe_is_in_path(self, run_mock_output):
         app_path = os.path.join(self.snap_dir, 'bin', 'app1')
+        run_mock_output.return_value = app_path
         os.mkdir(os.path.dirname(app_path))
         open(app_path, 'w').close()
 
@@ -474,7 +475,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         expected = ('#!/bin/sh\n'
                     '\n\n'
                     'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                    'exec "app1" "$@"\n')
+                    'exec "$SNAP/app1" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
