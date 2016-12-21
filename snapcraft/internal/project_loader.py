@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -122,7 +122,7 @@ class Config:
         self.build_tools = []
         self._project_options = project_options
 
-        self._snapcraft_yaml = _get_snapcraft_yaml()
+        self._snapcraft_yaml = get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
 
         self._validator = Validator(snapcraft_yaml)
@@ -370,20 +370,23 @@ def _build_env_for_stage(stagedir, snap_name, confinement,
     return env
 
 
-def _get_snapcraft_yaml():
-    visible_yaml_exists = os.path.exists('snapcraft.yaml')
-    hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
+def get_snapcraft_yaml():
+    possible_yamls = [
+        os.path.join('snap', 'snapcraft.yaml'),
+        'snapcraft.yaml',
+        '.snapcraft.yaml',
+    ]
 
-    if visible_yaml_exists and hidden_yaml_exists:
+    snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
+
+    if not snapcraft_yamls:
+        raise SnapcraftYamlFileError('snap/snapcraft.yaml')
+    elif len(snapcraft_yamls) > 1:
         raise EnvironmentError(
-            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
-            "please remove one")
-    elif visible_yaml_exists:
-        return 'snapcraft.yaml'
-    elif hidden_yaml_exists:
-        return '.snapcraft.yaml'
-    else:
-        raise SnapcraftYamlFileError('snapcraft.yaml')
+            'Found a {!r} and a {!r}, please remove one.'.format(
+                snapcraft_yamls[0], snapcraft_yamls[1]))
+
+    return snapcraft_yamls[0]
 
 
 def _snapcraft_yaml_load(yaml_file):
@@ -409,9 +412,8 @@ def load_config(project_options=None):
         return Config(project_options)
     except SnapcraftYamlFileError as e:
         logger.error(
-            'Could not find {}.  Are you sure you are in the right '
-            'directory?\nTo start a new project, use \'snapcraft '
-            'init\''.format(e.file))
+            "Could not find {}. Are you sure you're in the right directory?\n"
+            "To start a new project, use 'snapcraft init'".format(e.file))
         sys.exit(1)
     except SnapcraftSchemaError as e:
         msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
