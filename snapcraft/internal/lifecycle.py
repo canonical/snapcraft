@@ -276,7 +276,7 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def cleanbuild(project_options):
+def cleanbuild(project_options, hostname=None):
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
         config.data['name'], config.data['version'])
@@ -285,7 +285,7 @@ def cleanbuild(project_options):
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
 
     snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options).execute()
+    lxd.Cleanbuilder(snap_filename, tar_filename, project_options, hostname).execute()
 
 
 def _snap_data_from_dir(directory):

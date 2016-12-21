@@ -28,7 +28,7 @@ Usage:
   snapcraft [options] strip [<part> ...]
   snapcraft [options] clean [<part> ...] [--step <step>]
   snapcraft [options] snap [<directory> --output <snap-file>]
-  snapcraft [options] cleanbuild
+  snapcraft [options] cleanbuild [<hostname>]
   snapcraft [options] login
   snapcraft [options] logout
   snapcraft [options] list-keys
@@ -268,7 +268,7 @@ def run(args, project_options):  # noqa
     elif args['clean']:
         _run_clean(args, project_options)
     elif args['cleanbuild']:
-        lifecycle.cleanbuild(project_options),
+        lifecycle.cleanbuild(project_options, args['<hostname>'])
     elif _is_store_command(args):
         _run_store_command(args)
     elif args['tour']:

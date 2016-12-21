@@ -66,16 +66,26 @@ class _CommandWebsocketclient(WebSocketBaseClient):
 
 class Cleanbuilder:
 
-    def __init__(self, snap_output, tar_filename, project_options):
+    def __init__(self, snap_output, tar_filename, project_options, hostname=None):
         self._snap_output = snap_output
         self._tar_filename = tar_filename
         self._project_options = project_options
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
-        self._client = self._find_lxd()
+        self._client = self._find_lxd(hostname)
         self._container = None
 
-    def _find_lxd(self):
+    def _find_lxd(self, hostname):
+        if hostname:
+            try:
+                cert = os.path.expanduser('~/.config/lxc/client.crt')
+                key = os.path.expanduser('~/.config/lxc/client.key')
+                return pylxd.Client(endpoint='https://{}'.format(hostname),
+                    cert=(cert, key), verify=False)
+            except Exception as e:
+                raise EnvironmentError('Can\'t connect to remote host {}: {}'
+                    .format(hostname, e))
+
         for socket in ['/var/lib/lxd', '/var/snap/lxd/common/lxd']:
             try:
                 os.environ['LXD_DIR'] = socket
