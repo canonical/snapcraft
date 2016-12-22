@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import godeps
@@ -91,9 +92,15 @@ class GodepsPluginTestCase(tests.TestCase):
         self.assertTrue('go-importpath' in schema['required'],
                         'Expeced "go-importpath" to be required')
 
-        # Verify both are pull dependencies
-        self.assertTrue('godeps-file' in schema['pull-properties'])
-        self.assertTrue('go-importpath' in schema['pull-properties'])
+    def test_get_pull_properties(self):
+        expected_pull_properties = ['godeps-file', 'go-importpath']
+        resulting_pull_properties = godeps.GodepsPlugin.get_pull_properties()
+
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_build_environment(self):
         plugin = godeps.GodepsPlugin(
