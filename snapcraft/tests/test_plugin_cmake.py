@@ -54,7 +54,8 @@ class CMakeTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_get_build_properties(self):
-        expected_build_properties = ['configflags']
+        expected_build_properties = ['configflags', 'makefile',
+                                     'make-parameters', 'make-install-var']
         resulting_build_properties = cmake.CMakePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
