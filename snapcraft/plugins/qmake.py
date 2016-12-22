@@ -82,7 +82,7 @@ class QmakePlugin(snapcraft.BasePlugin):
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the pull step dirty.
+        # change in the YAML Snapcraft will consider the build step dirty.
         return ['options', 'project-files']
 
     def __init__(self, name, options, project):
