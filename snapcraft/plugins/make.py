@@ -118,7 +118,7 @@ class MakePlugin(snapcraft.BasePlugin):
         else:
             command.append('install')
             if self.options.make_install_var:
-                command.append("{}={}".format(
+                command.append('{}={}'.format(
                     self.options.make_install_var, self.installdir))
 
             self.run(command, env=env)

@@ -91,9 +91,9 @@ class AutotoolsPlugin(make.MakePlugin):
                 options.install_via))
 
     def build(self):
-        if not os.path.exists(os.path.join(self.builddir, "configure")):
+        if not os.path.exists(os.path.join(self.builddir, 'configure')):
             generated = False
-            scripts = ["autogen.sh", "bootstrap"]
+            scripts = ['autogen.sh', 'bootstrap']
             for script in scripts:
                 path = os.path.join(self.builddir, script)
                 if not os.path.exists(path) or os.path.isdir(path):

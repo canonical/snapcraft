@@ -110,8 +110,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
                          'but it was "{}"'.format(installvia_default))
 
     def test_get_build_properties(self):
-        expected_build_properties = make.MakePlugin.get_build_properties() + \
-            ['configflags', 'install-via']
+        expected_build_properties = make.MakePlugin.get_build_properties() + (
+            ['configflags', 'install-via'])
         resulting_build_properties = \
             autotools.AutotoolsPlugin.get_build_properties()
 
