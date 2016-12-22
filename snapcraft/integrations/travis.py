@@ -218,9 +218,8 @@ def enable():
             'skip_cleanup': True,
             'provider': 'script',
             'script': (
-                'docker run -e TERM -v $PWD:$PWD -w $PWD -t ubuntu:xenial '
-                'sh -c "apt update -qq && apt install snapcraft -y && '
-                'snapcraft && snapcraft push *.snap --release edge"'),
+                'docker run -e TERM -v $PWD:$PWD -w $PWD -t snapcore/snapcraft'
+                ' sh -c "snapcraft && snapcraft push *.snap --release edge"'),
             'on': {
                 'branch': 'master',
             },
