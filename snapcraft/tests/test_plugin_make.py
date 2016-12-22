@@ -211,3 +211,51 @@ class MakePluginTestCase(tests.TestCase):
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)], None, env=env)
         ])
+
+    @mock.patch.object(make.MakePlugin, 'run')
+    def test_make_with_cwd(self, run_mock):
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        cwd = '/foo/snapcraft/dir'
+        plugin.make(cwd=cwd)
+
+        self.assertEqual(2, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j2'], cwd, env=None),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)], cwd, env=None)
+        ])
+
+    @mock.patch.object(make.MakePlugin, 'run')
+    @mock.patch('snapcraft.file_utils.link_or_copy_tree')
+    @mock.patch('snapcraft.file_utils.link_or_copy')
+    def test_make_artifacts_with_cwd(self, link_or_copy_mock,
+                                     link_or_copy_tree_mock, run_mock):
+        self.options.artifacts = ['dir_artifact', 'file_artifact']
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        cwd = 'test/cwd/subdir'
+        os.makedirs(os.path.join(plugin.builddir, cwd, 'dir_artifact'))
+
+        plugin.make(cwd=cwd)
+
+        self.assertEqual(1, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j2'], cwd, env=None),
+        ])
+        self.assertEqual(1, link_or_copy_mock.call_count)
+        link_or_copy_mock.assert_has_calls([
+            mock.call(
+                os.path.join(plugin.builddir, cwd, 'file_artifact'),
+                os.path.join(plugin.installdir, cwd, 'file_artifact'),
+            )])
+        self.assertEqual(1, link_or_copy_tree_mock.call_count)
+        link_or_copy_tree_mock.assert_has_calls([
+            mock.call(
+                os.path.join(plugin.builddir, cwd, 'dir_artifact'),
+                os.path.join(plugin.installdir, cwd, 'dir_artifact'),
+            )])
