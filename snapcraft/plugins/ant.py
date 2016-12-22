@@ -70,6 +70,12 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         super().__init__(name, options, project)
         self.build_packages.append('ant')
 
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['ant-build-targets', 'ant-properties']
+
     def build(self):
         super().build()
 
