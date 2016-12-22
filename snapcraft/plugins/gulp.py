@@ -74,7 +74,7 @@ class GulpPlugin(snapcraft.BasePlugin):
     @classmethod
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
+        # change in the YAML Snapcraft will consider the pull step dirty.
         return ['node-engine']
 
     def __init__(self, name, options, project):
