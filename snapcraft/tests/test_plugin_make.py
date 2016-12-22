@@ -167,6 +167,21 @@ class MakePluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(make.MakePlugin, 'run')
+    def test_build_empty_install_var(self, run_mock):
+        self.options.make_install_var = ''
+        plugin = make.MakePlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertEqual(2, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', 'install'], env=None)
+        ])
+
+    @mock.patch.object(make.MakePlugin, 'run')
     @mock.patch('snapcraft.file_utils.link_or_copy_tree')
     @mock.patch('snapcraft.file_utils.link_or_copy')
     def test_build_artifacts(self, link_or_copy_mock,
