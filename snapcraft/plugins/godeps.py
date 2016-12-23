@@ -65,11 +65,13 @@ class GodepsPlugin(snapcraft.BasePlugin):
         # The import path must be specified.
         schema['required'].append('go-importpath')
 
+        return schema
+
+    @classmethod
+    def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].extend(['godeps-file', 'go-importpath'])
-
-        return schema
+        return ['godeps-file', 'go-importpath']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)

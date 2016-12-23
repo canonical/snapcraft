@@ -56,7 +56,8 @@ class CMakeTestCase(tests.TestCase):
     def test_get_build_properties(self):
         expected_build_properties = ['configflags']
         resulting_build_properties = cmake.CMakePlugin.get_build_properties()
-
+        expected_build_properties.extend(
+            snapcraft.plugins.make.MakePlugin.get_build_properties())
         self.assertThat(resulting_build_properties,
                         HasLength(len(expected_build_properties)))
 

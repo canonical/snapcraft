@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import qmake
@@ -103,13 +104,9 @@ class QMakeTestCase(tests.TestCase):
 
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
-        build_properties = schema['build-properties']
-        self.assertTrue('options' in build_properties)
 
         self.assertTrue('pull-properties' in schema,
                         'Expected schema to include "pull-properties"')
-        pull_properties = schema['pull-properties']
-        self.assertTrue('qt-version' in pull_properties)
 
         # Check project-files property
         project_files = properties['project-files']
@@ -150,6 +147,26 @@ class QMakeTestCase(tests.TestCase):
         required = schema['required']
         self.assertTrue('qt-version' in required,
                         'Expected "qt-version" to be required')
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['options', 'project-files']
+        resulting_build_properties = qmake.QmakePlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
+
+    def test_get_pull_properties(self):
+        expected_pull_properties = ['qt-version']
+        resulting_pull_properties = qmake.QmakePlugin.get_pull_properties()
+
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_unsupported_qt_version(self):
         self.options.qt_version = 'qt3'
