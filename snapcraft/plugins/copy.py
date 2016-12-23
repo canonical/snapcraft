@@ -54,15 +54,17 @@ class CopyPlugin(snapcraft.BasePlugin):
             'type': 'object',
         }
 
-        # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].append('files')
-
         # The `files` keyword is required here, but the `source` keyword is
         # not. It should default to the current working directory.
         schema['required'].append('files')
 
         return schema
+
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return super().get_build_properties() + ['files']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
