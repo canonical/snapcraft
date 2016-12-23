@@ -130,14 +130,16 @@ class KernelPlugin(kbuild.KBuildPlugin):
             'enum': ['gz'],
         }
 
+        return schema
+
+    @classmethod
+    def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend([
+        return super().get_build_properties() + [
             'kernel-image-target', 'kernel-with-firmware',
             'kernel-initrd-modules', 'kernel-initrd-firmware',
-            'kernel-device-trees', 'kernel-initrd-compression'])
-
-        return schema
+            'kernel-device-trees', 'kernel-initrd-compression']
 
     @property
     def compression_cmd(self):
