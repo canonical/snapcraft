@@ -62,7 +62,7 @@ class Validator:
                 self._schema = yaml.load(fp)
         except FileNotFoundError:
             raise SnapcraftSchemaError(
-                'snapcraft validation file is missing from installation path')
+                'snapcraft validation file not found at {}'.format(schema_file))
 
     def validate(self):
         format_check = jsonschema.FormatChecker()

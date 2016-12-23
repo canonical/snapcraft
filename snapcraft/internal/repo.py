@@ -32,7 +32,11 @@ import urllib.request
 from distutils.dir_util import copy_tree
 from contextlib import contextmanager
 
-import apt
+try:
+    import apt
+except:
+    apt = object
+
 from xml.etree import ElementTree
 from xdg import BaseDirectory
 
