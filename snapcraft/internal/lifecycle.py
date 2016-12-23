@@ -276,15 +276,7 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def cleanbuild(project_options):
-    if not repo.is_package_installed('lxd'):
-        raise EnvironmentError(
-            'The lxd package is not installed, in order to use `cleanbuild` '
-            'you must install lxd onto your system. Refer to the '
-            '"Ubuntu Desktop and Ubuntu Server" section on '
-            'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
-
+def cleanbuild(project_options, hostname=None):
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
         config.data['name'], config.data['version'])
@@ -293,7 +285,7 @@ def cleanbuild(project_options):
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
 
     snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options).execute()
+    lxd.Cleanbuilder(snap_filename, tar_filename, project_options, hostname).execute()
 
 
 def _snap_data_from_dir(directory):
