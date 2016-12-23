@@ -25,9 +25,11 @@ class IncompatibleOptionsError(errors.SnapcraftError):
         super().__init__(message=message)
 
 
-class ChecksumDoesNotMatchError(errors.SnapcraftError):
+class DigestDoesNotMatchError(errors.SnapcraftError):
 
     fmt = '{message}'
 
-    def __init__(self, message):
-        super().__init__(message=message)
+    def __init__(self, digest, calculated_digest):
+        super().__init__(message='The specified digest ({0}) doesn\'t match'
+                                 ' the calculated one ({1})'.
+                                 format(digest, calculated_digest))
