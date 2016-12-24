@@ -19,6 +19,7 @@ import os
 from unittest import mock
 
 import fixtures
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -59,11 +60,15 @@ class KBuildPluginTestCase(tests.TestCase):
         self.assertEqual(properties['kconfigs']['items']['type'], 'string')
         self.assertTrue(properties['kconfigs']['uniqueItems'])
 
-        build_properties = schema['build-properties']
-        self.assertEqual(3, len(build_properties))
-        self.assertTrue('kdefconfig' in build_properties)
-        self.assertTrue('kconfigfile' in build_properties)
-        self.assertTrue('kconfigs' in build_properties)
+    def test_get_build_properties(self):
+        expected_build_properties = ['kdefconfig', 'kconfigfile', 'kconfigs']
+        resulting_build_properties = kbuild.KBuildPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
