@@ -32,6 +32,7 @@ class BaseGradlePluginTestCase(tests.TestCase):
 
         class Options:
             gradle_options = []
+            gradle_output_dir = 'build/libs'
         self.options = Options()
 
         self.project_options = snapcraft.ProjectOptions()

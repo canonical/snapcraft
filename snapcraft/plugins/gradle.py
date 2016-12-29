@@ -30,7 +30,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       flags to pass to the build using the gradle semantics for parameters.
 """
 
-import glob
 import logging
 import os
 import urllib.parse
@@ -56,45 +55,57 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             },
             'default': [],
         }
+        schema['properties']['gradle-output-dir'] = {
+            'type': 'string',
+            'default': ['build/libs'],
+        }
 
         return schema
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        dir = os.path.dirname(__file__)
+        filename = os.path.join(dir, '/gradlew')
+        if not os.path.isfile(filename):
+            self.build_packages.append('gradle')
         self.build_packages.append('ca-certificates-java')
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['gradle-options']
+        return super().get_build_properties() + ['gradle-options',
+                                                 'gradle-output-dir']
 
     def build(self):
         super().build()
-
-        gradle_cmd = ['./gradlew']
+        dir = os.path.dirname(__file__)
+        filename = os.path.join(dir, '/gradlew')
+        if os.path.isfile(filename):
+            gradle_cmd = ['./gradlew']
+        gradle_cmd = ['gradle']
         self.run(gradle_cmd +
                  self._get_proxy_options() +
                  self.options.gradle_options + ['jar'])
 
-        src = os.path.join(self.builddir, 'build', 'libs')
-        jarfiles = glob.glob(os.path.join(src, '*.jar'))
-        warfiles = glob.glob(os.path.join(src, '*.war'))
-
-        if len(jarfiles) > 0:
-            basedir = 'jar'
-        elif len(warfiles) > 0:
-            basedir = 'war'
-            jarfiles = warfiles
-        else:
-            raise RuntimeError("Could not find any "
-                               "built jar files for part")
-
-        targetdir = os.path.join(self.installdir, basedir)
-        os.makedirs(targetdir, exist_ok=True)
-        for f in jarfiles:
-            base = os.path.basename(f)
-            os.link(f, os.path.join(targetdir, base))
+        print(self.options)
+        src = os.path.join(self.builddir, self.options.gradle_output_dir)
+        # jarfiles = glob.glob(os.path.join(src, '*.jar'))
+        # warfiles = glob.glob(os.path.join(src, '*.war'))
+        #
+        # if len(jarfiles) > 0:
+        #     basedir = 'jar'
+        # elif len(warfiles) > 0:
+        #     basedir = 'war'
+        #     jarfiles = warfiles
+        # else:
+        #     raise RuntimeError("Could not find any "
+        #                        "built jar files for part")
+        #
+        snapcraft.file_utils.link_or_copy_tree(
+            src, os.path.join(self.installdir, self.options.gradle_output_dir),
+            copy_function=lambda src, dst: _link_or_copy(src, dst,
+                                                         self.installdir))
 
     def _get_proxy_options(self):
         # XXX This doesn't yet support username and password.
@@ -110,3 +121,27 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
                     proxy_options.append(
                         '-D{}.proxyPort={}'.format(var, parsed_url.port))
         return proxy_options
+
+
+def _link_or_copy(source, destination, boundary):
+    """Attempt to copy symlinks as symlinks unless pointing out of boundary."""
+
+    follow_symlinks = False
+
+    # If this is a symlink, analyze where it's pointing and make sure it will
+    # still be valid when snapped. If it won't, follow the symlink when
+    # copying (i.e. copy the file to which the symlink is pointing instead).
+    if os.path.islink(source):
+        link = os.readlink(source)
+        destination_dirname = os.path.dirname(destination)
+        normalized = os.path.normpath(os.path.join(destination_dirname, link))
+        if os.path.isabs(link) or not normalized.startswith(boundary):
+            follow_symlinks = True
+
+    try:
+        snapcraft.file_utils.link_or_copy(source, destination,
+                                          follow_symlinks=follow_symlinks)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            '{!r} is a broken symlink pointing outside the snap'.format(
+                source))
