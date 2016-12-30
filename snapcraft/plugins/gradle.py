@@ -30,6 +30,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       flags to pass to the build using the gradle semantics for parameters.
 """
 
+import glob
 import logging
 import os
 import urllib.parse
@@ -88,22 +89,19 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
                  self.options.gradle_options + ['jar'])
 
         src = os.path.join(self.builddir, self.options.gradle_output_dir)
-        if not os.path.isdir(src):
+        jarfiles = glob.glob(os.path.join(src, '*.jar'))
+        warfiles = glob.glob(os.path.join(src, '*.war'))
+
+        if len(jarfiles) > 0:
+            basedir = 'jar'
+        elif len(warfiles) > 0:
+            basedir = 'war'
+            jarfiles = warfiles
+        else:
             raise RuntimeError("Could not find any built jar files for part")
-        # jarfiles = glob.glob(os.path.join(src, '*.jar'))
-        # warfiles = glob.glob(os.path.join(src, '*.war'))
-        #
-        # if len(jarfiles) > 0:
-        #     basedir = 'jar'
-        # elif len(warfiles) > 0:
-        #     basedir = 'war'
-        #     jarfiles = warfiles
-        # else:
-        #     raise RuntimeError("Could not find any "
-        #                        "built jar files for part")
-        #
+
         snapcraft.file_utils.link_or_copy_tree(
-            src, os.path.join(self.installdir, 'jar'),
+            src, os.path.join(self.installdir, basedir),
             copy_function=lambda src, dst: _link_or_copy(src, dst,
                                                          self.installdir))
 
