@@ -57,7 +57,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
         }
         schema['properties']['gradle-output-dir'] = {
             'type': 'string',
-            'default': ['build/libs'],
+            'default': 'build/libs',
         }
 
         return schema
