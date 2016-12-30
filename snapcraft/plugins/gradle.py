@@ -103,7 +103,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
         #                        "built jar files for part")
         #
         snapcraft.file_utils.link_or_copy_tree(
-            src, os.path.join(self.installdir, self.options.gradle_output_dir),
+            src, os.path.join(self.installdir, 'jar'),
             copy_function=lambda src, dst: _link_or_copy(src, dst,
                                                          self.installdir))
 
