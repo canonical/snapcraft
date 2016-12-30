@@ -64,8 +64,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        dir = os.path.dirname(__file__)
-        filename = os.path.join(dir, '/gradlew')
+        filename = os.path.join(os.getcwd(), 'gradlew')
         if not os.path.isfile(filename):
             self.build_packages.append('gradle')
         self.build_packages.append('ca-certificates-java')
@@ -79,17 +78,18 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
 
     def build(self):
         super().build()
-        dir = os.path.dirname(__file__)
-        filename = os.path.join(dir, '/gradlew')
+        filename = os.path.join(os.getcwd(), 'gradlew')
         if os.path.isfile(filename):
             gradle_cmd = ['./gradlew']
-        gradle_cmd = ['gradle']
+        else:
+            gradle_cmd = ['gradle']
         self.run(gradle_cmd +
                  self._get_proxy_options() +
                  self.options.gradle_options + ['jar'])
 
-        print(self.options)
         src = os.path.join(self.builddir, self.options.gradle_output_dir)
+        if not os.path.isdir(src):
+            raise RuntimeError("Could not find any built jar files for part")
         # jarfiles = glob.glob(os.path.join(src, '*.jar'))
         # warfiles = glob.glob(os.path.join(src, '*.war'))
         #
