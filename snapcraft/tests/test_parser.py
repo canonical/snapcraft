@@ -320,7 +320,17 @@ parts: [main/a]
         self.assertTrue(m in fake_logger.output,
                         'Missing slash deprecation warning in output')
 
-    def test_main_valid_with_default_index(self):
+    def test_main_valid_with_empty_index(self):
+        _create_example_output('')
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('urllib.request.urlopen')
+    def test_main_valid_with_default_index(self, mock_urlopen):
+        class FakeResponse:
+            def read(self):
+                return b''
+        mock_urlopen.return_value = FakeResponse()
         main(['--debug'])
         self.assertEqual(0, _get_part_list_count())
 
