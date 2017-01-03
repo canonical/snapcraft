@@ -22,7 +22,6 @@ addons:
     packages:
       - python3-coverage
 install:
-<<<<<<< a725e69dac582b9b77189573cfe7549f367b5c8e
   - if [ ! -z $TEST_SUITE ]; then docker run --name builder -e TEST_USER_EMAIL -e TEST_USER_PASSWORD -e TEST_STORE
     -e LC_ALL=en_US.UTF-8 -v $PWD:$PWD -w $PWD -td ubuntu:xenial; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder locale-gen en_US.UTF-8; fi
