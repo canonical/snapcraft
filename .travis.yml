@@ -1,12 +1,13 @@
 sudo: required
 dist: trusty
-services:
-  - docker
+
+services: [docker]
+
 language: python
-python:
-  - 3.4
+python: [3.4]
 virtualenv:
   system_site_packages: true
+
 env:
   global:
   # Encrypted test user password. Generated with the travis gem:
@@ -17,19 +18,23 @@ env:
   - TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
   - TEST_SUITE=unit DEPENDENCIES="apt install -y libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
   - TEST_SUITE=integration TEST_STORE=fake DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
+
 addons:
   apt:
     packages:
       - python3-coverage
+
 install:
+  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then $DEPENDENCIES; fi
   - if [ ! -z $TEST_SUITE ]; then docker run --name builder -e TEST_USER_EMAIL -e TEST_USER_PASSWORD -e TEST_STORE
     -e LC_ALL=en_US.UTF-8 -v $PWD:$PWD -w $PWD -td ubuntu:xenial; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder locale-gen en_US.UTF-8; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder apt update; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder sh -c "$DEPENDENCIES"; fi
+
 script:
-  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then $DEPENDENCIES && ./tools/cla_check_in_travis.sh; fi
+  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then ./tools/cla_check_in_travis.sh; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
 
 after_success:
