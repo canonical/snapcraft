@@ -34,10 +34,16 @@ _DEPRECATION_URL_FMT = (
 logger = logging.getLogger(__name__)
 
 
-def handle_deprecation_notice(id):
+def _deprecation_message(id):
     message = _DEPRECATION_MESSAGES.get(id)
     if not message:
-        raise RuntimeError('No deprecation notice with id {!r}', id)
+        raise RuntimeError('No deprecation notice with id {!r}'.format(id))
+
+    return message
+
+
+def handle_deprecation_notice(id):
+    message = _deprecation_message(id)
 
     logger.warning('DEPRECATED: {}\nSee {} for more information.'.format(
         message, _DEPRECATION_URL_FMT.format(id=id)))
