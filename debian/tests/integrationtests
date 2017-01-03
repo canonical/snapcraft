@@ -1,8 +1,7 @@
 #!/bin/sh
 
 if [ "$(uname -i)" = 'armv7l' ]; then
-    # not yet working.
-    exit 0
+    echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 fi
 
-SNAPCRAFT_FROM_INSTALLED=1 TEST_STORE=fake python3 -m unittest discover -b -v -s integration_tests
+su ubuntu -c "SNAPCRAFT_FROM_INSTALLED=1 TEST_STORE=fake python3 -m unittest discover -b -v -s integration_tests"

@@ -16,6 +16,7 @@
 
 import os.path
 from unittest.mock import Mock, patch
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins.copy import (
@@ -37,6 +38,16 @@ class TestCopyPlugin(TestCase):
         self.dst_prefix = 'parts/copy/install/'
         os.makedirs(self.dst_prefix)
         self.project_options = snapcraft.ProjectOptions()
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['files']
+        resulting_build_properties = CopyPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_copy_plugin_any_missing_src_raises_exception(self):
         # ensure that a bad file causes a warning and fails the build even

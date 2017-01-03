@@ -14,11 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
+
 import integration_tests
 
 
 class MavenPluginTestCase(integration_tests.TestCase):
 
     def test_build_maven_plugin(self):
+        if platform.machine() == 'armv7l':
+            # https://bugs.launchpad.net/snapcraft/+bug/1647405
+            self.skipTest('The maven plugin does not support armhf')
         project_dir = 'simple-maven'
         self.run_snapcraft('build', project_dir)

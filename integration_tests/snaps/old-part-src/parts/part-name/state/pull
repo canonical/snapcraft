@@ -1,5 +1,5 @@
 !PullState
-project_options: {deb_arch: amd64}
+project_options: {deb_arch: $arch}
 properties:
   plugin: copy
   source: .

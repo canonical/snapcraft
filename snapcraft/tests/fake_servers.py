@@ -561,6 +561,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         logger.debug(
             'Handling registration request with content {}'.format(data))
         snap_name = data['snap_name']
+        is_private = data['is_private']
 
         if data['snap_name'] == 'test-already-registered-snap-name':
             self._handle_register_409('already_registered')
@@ -573,10 +574,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif data['snap_name'] == 'snap-name-no-clear-error':
             self._handle_unclear_registration_error()
         else:
-            self._handle_successful_registration(snap_name)
+            self._handle_successful_registration(snap_name, is_private)
 
-    def _handle_successful_registration(self, name):
-        self.server.registered_names.append(name)
+    def _handle_successful_registration(self, name, is_private):
+        self.server.registered_names.append((name, is_private))
         self.send_response(201)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -849,12 +850,18 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         snaps = {
-            'basic': {'snap-id': 'snap-id'},
-            'ubuntu-core': {'snap-id': 'good'},
+            'basic': {'snap-id': 'snap-id', 'status': 'Approved',
+                      'private': False, 'price': None,
+                      'since': '2016-12-12T01:01:01Z'},
+            'ubuntu-core': {'snap-id': 'good', 'status': 'Approved',
+                            'private': False, 'price': None,
+                            'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
-            n: {'snap-id': 'fake-snap-id'}
-            for n in self.server.registered_names})
+            name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
+                   'private': private, 'price': None,
+                   'since': '2016-12-12T01:01:01Z'}
+            for name, private in self.server.registered_names})
         self.wfile.write(json.dumps({
             'account_id': 'abcd',
             'account_keys': self.server.account_keys,
@@ -1036,16 +1043,26 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def _get_details_response(self, package):
         # ubuntu-core is used in integration tests with fake servers.
+
+        # sha512sum snapcraft/tests/data/test-snap.snap
+        test_sha512 = (
+            '69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef'
+            'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
+            'fda4128234e4c201f28fe9')
+
         if package in ('test-snap', 'ubuntu-core'):
-            # sha512sum snapcraft/tests/data/test-snap.snap
-            sha512 = (
-                '69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef'
-                'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
-                'fda4128234e4c201f28fe9')
+            sha512 = test_sha512
         elif package == 'test-snap-with-wrong-sha':
             sha512 = 'wrong sha'
+        elif package == 'test-snap-branded-store':
+            # Branded-store snaps require Store pinning and authorization.
+            if (self.headers.get('X-Ubuntu-Store') != 'Test-Branded' or
+                    self.headers.get('Authorization') is None):
+                return None
+            sha512 = test_sha512
         else:
             return None
+
         response = {
             'anon_download_url': urllib.parse.urljoin(
                 'http://localhost:{}'.format(self.server.server_port),
