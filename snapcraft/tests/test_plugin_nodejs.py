@@ -18,6 +18,7 @@ import os
 
 from os import path
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import nodejs
@@ -158,27 +159,89 @@ class NodePluginTestCase(tests.TestCase):
                          'architecture not supported (fantasy-arch)')
 
     def test_schema(self):
-        self.maxDiff = None
-        plugin_schema = {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'additionalProperties': False,
-            'properties': {
-                'node-engine': {'default': '4.4.4', 'type': 'string'},
-                'node-packages': {'default': [],
-                                  'items': {'type': 'string'},
-                                  'minitems': 1,
-                                  'type': 'array',
-                                  'uniqueItems': True},
-                'npm-run': {'default': [],
-                            'items': {'type': 'string'},
-                            'minitems': 1,
-                            'type': 'array',
-                            'uniqueItems': False}},
-            'pull-properties': ['node-engine'],
-            'build-properties': ['node-packages', 'npm-run'],
-            'type': 'object'}
+        schema = nodejs.NodePlugin.schema()
+        properties = schema['properties']
+        self.assertTrue('node-packages' in properties,
+                        'Expected "node-packages" to be included in '
+                        'properties')
+        node_packages = properties['node-packages']
 
-        self.assertEqual(nodejs.NodePlugin.schema(), plugin_schema)
+        self.assertTrue(
+            'type' in node_packages,
+            'Expected "type" to be included in "node-packages"')
+        self.assertEqual(node_packages['type'], 'array',
+                         'Expected "node-packages" "type" to be "array", but '
+                         'it was "{}"'.format(node_packages['type']))
+
+        self.assertTrue(
+            'minitems' in node_packages,
+            'Expected "minitems" to be included in "node-packages"')
+        self.assertEqual(node_packages['minitems'], 1,
+                         'Expected "node-packages" "minitems" to be 1, but '
+                         'it was "{}"'.format(node_packages['minitems']))
+
+        self.assertTrue(
+            'uniqueItems' in node_packages,
+            'Expected "uniqueItems" to be included in "node-packages"')
+        self.assertTrue(
+            node_packages['uniqueItems'],
+            'Expected "node-packages" "uniqueItems" to be "True"')
+
+        self.assertTrue('node-packages' in properties,
+                        'Expected "node-packages" to be included in '
+                        'properties')
+
+        npm_run = properties['npm-run']
+
+        self.assertTrue(
+            'type' in npm_run,
+            'Expected "type" to be included in "npm-run"')
+        self.assertEqual(npm_run['type'], 'array',
+                         'Expected "npm-run" "type" to be "array", but '
+                         'it was "{}"'.format(npm_run['type']))
+
+        self.assertTrue(
+            'minitems' in npm_run,
+            'Expected "minitems" to be included in "npm-run"')
+        self.assertEqual(npm_run['minitems'], 1,
+                         'Expected "npm-run" "minitems" to be 1, but '
+                         'it was "{}"'.format(npm_run['minitems']))
+
+        self.assertTrue(
+            'uniqueItems' in npm_run,
+            'Expected "uniqueItems" to be included in "npm-run"')
+        self.assertFalse(
+            npm_run['uniqueItems'],
+            'Expected "npm-run" "uniqueItems" to be "False"')
+
+        self.assertTrue('node-engine' in properties,
+                        'Expected "node-engine" to be included in '
+                        'properties')
+        node_engine_type = properties['node-engine']['type']
+        self.assertEqual(node_engine_type, 'string',
+                         'Expected "node_engine" "type" to be '
+                         '"string", but it was "{}"'
+                         .format(node_engine_type))
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['node-packages', 'npm-run']
+        resulting_build_properties = nodejs.NodePlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
+
+    def test_get_pull_properties(self):
+        expected_pull_properties = ['node-engine']
+        resulting_pull_properties = nodejs.NodePlugin.get_pull_properties()
+
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     @mock.patch('snapcraft.BasePlugin.schema')
     def test_required_not_in_parent_schema(self, schema_mock):
