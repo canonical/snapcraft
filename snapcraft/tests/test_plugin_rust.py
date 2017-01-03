@@ -22,7 +22,6 @@ from snapcraft.plugins import rust
 
 
 class RustPluginTestCase(tests.TestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -64,15 +63,19 @@ class RustPluginTestCase(tests.TestCase):
     def test_build(self, run_mock):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
+        plugin.options.rust_features = ['conditional-compilation']
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
 
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call([plugin._cargo, 'install',
-                       '-j{}'.format(plugin.project.parallel_build_count),
-                       '--root', plugin.installdir], env=plugin._build_env())
+            mock.call(
+                [plugin._cargo, 'install',
+                 '-j{}'.format(plugin.project.parallel_build_count),
+                 '--root', plugin.installdir,
+                 '--features', 'conditional-compilation'],
+                env=plugin._build_env())
         ])
 
     @mock.patch.object(rust.sources, 'Script')

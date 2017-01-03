@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - rust-revision
       (string)
       select rust version
+    - rust-features
+      (list of strings)
+      Features used to build optional dependencies
 """
 
 import os
@@ -40,7 +43,6 @@ _RUSTUP = "https://static.rust-lang.org/rustup.sh"
 
 
 class RustPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
@@ -50,7 +52,25 @@ class RustPlugin(snapcraft.BasePlugin):
         schema['properties']['rust-revision'] = {
             'type': 'string',
         }
+        schema['properties']['rust-features'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
+        }
+
         return schema
+
+    @classmethod
+    def get_pull_properties(cls):
+        return ['rust-revision', 'rust-channel']
+
+    @classmethod
+    def get_build_properties(cls):
+        return ['rust-features']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -72,9 +92,13 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self.run([self._cargo, "install",
-                  "-j{}".format(self.parallel_build_count),
-                  "--root", self.installdir], env=self._build_env())
+        cmd = [self._cargo, "install",
+               "-j{}".format(self.parallel_build_count),
+               "--root", self.installdir]
+        if self.options.rust_features:
+            cmd.append("--features")
+            cmd.append(' '.join(self.options.rust_features))
+        self.run(cmd, env=self._build_env())
 
     def _build_env(self):
         env = os.environ.copy()
