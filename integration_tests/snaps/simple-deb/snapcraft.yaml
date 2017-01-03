@@ -13,3 +13,6 @@ parts:
     plugin: dump
     source: small_0.1-1.deb
 
+  deb-with-symlink:
+    plugin: dump
+    source: symlink_1.0.deb
