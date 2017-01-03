@@ -17,6 +17,7 @@
 import os
 import copy
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -56,6 +57,16 @@ class AntPluginTestCase(tests.TestCase):
         self.assertEqual(build_targets_type, 'array',
                          'Expected "ant-build-targets" "type" to be "object", '
                          'but it was "{}"'.format(build_targets_type))
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['ant-build-targets', 'ant-properties']
+        resulting_build_properties = ant.AntPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     @mock.patch.object(ant.AntPlugin, 'run')
     def test_build(self, run_mock):

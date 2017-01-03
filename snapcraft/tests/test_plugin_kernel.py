@@ -20,6 +20,7 @@ import os
 from unittest import mock
 
 import fixtures
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import (
@@ -117,17 +118,20 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual(
             properties['kernel-initrd-compression']['enum'], ['gz'])
 
-        build_properties = schema['build-properties']
-        self.assertEqual(9, len(build_properties))
-        self.assertTrue('kdefconfig' in build_properties)
-        self.assertTrue('kconfigfile' in build_properties)
-        self.assertTrue('kconfigs' in build_properties)
-        self.assertTrue('kernel-image-target' in build_properties)
-        self.assertTrue('kernel-with-firmware' in build_properties)
-        self.assertTrue('kernel-initrd-modules' in build_properties)
-        self.assertTrue('kernel-initrd-firmware' in build_properties)
-        self.assertTrue('kernel-device-trees' in build_properties)
-        self.assertTrue('kernel-initrd-compression' in build_properties)
+    def test_get_build_properties(self):
+        expected_build_properties = [
+            'kernel-image-target', 'kernel-with-firmware',
+            'kernel-initrd-modules', 'kernel-initrd-firmware',
+            'kernel-device-trees', 'kernel-initrd-compression']
+        resulting_build_properties = kernel.KernelPlugin.get_build_properties()
+        expected_build_properties.extend(
+            snapcraft.plugins.kbuild.KBuildPlugin.get_build_properties())
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def _assert_generic_check_call(self, builddir, installdir, os_snap_path):
         self.assertEqual(4, self.check_call_mock.call_count)

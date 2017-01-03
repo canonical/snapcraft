@@ -17,6 +17,7 @@
 import os
 import tempfile
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -69,7 +70,6 @@ class PythonPluginTestCase(tests.TestCase):
             'items': {'type': 'string'},
             'default': [],
         }
-        extend_pull = ['requirements', 'constraints', 'python-packages']
 
         self.assertDictEqual(expected_requirements,
                              schema['properties']['requirements'])
@@ -77,9 +77,21 @@ class PythonPluginTestCase(tests.TestCase):
                              schema['properties']['constraints'])
         self.assertDictEqual(expected_python_packages,
                              schema['properties']['python-packages'])
-        self.assertTrue(
-            set(extend_pull).issubset(set(schema['pull-properties']))
-        )
+
+    def test_get_pull_properties(self):
+        expected_pull_properties = [
+            'requirements',
+            'constraints',
+            'python-packages',
+            'python-version',
+        ]
+        resulting_pull_properties = python.PythonPlugin.get_pull_properties()
+
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
 
     def test_env(self):
         plugin = python.PythonPlugin('test-part', self.options,

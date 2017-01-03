@@ -16,8 +16,9 @@
 
 import logging
 import os
-from unittest import mock
+import stat
 
+from unittest import mock
 import fixtures
 import http.server
 import progressbar
@@ -48,6 +49,20 @@ class MockOptions:
         self.source_tag = source_tag
         self.source_subdir = source_subdir
         self.disable_parallel = disable_parallel
+
+
+class IsExecutable:
+    """Match if a file path is executable."""
+
+    def __str__(self):
+        return 'IsExecutable()'
+
+    def match(self, file_path):
+        if not os.stat(file_path).st_mode & stat.S_IEXEC:
+            return testtools.matchers.Mismatch(
+                'Expected {!r} to be executable, but it was not'.format(
+                    file_path))
+        return None
 
 
 class TestCase(testscenarios.WithScenarios, testtools.TestCase):
