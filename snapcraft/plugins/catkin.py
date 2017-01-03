@@ -95,13 +95,14 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         schema['required'].append('catkin-packages')
 
+        return schema
+
+    @classmethod
+    def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].extend(
-            ['rosdistro', 'catkin-packages', 'source-space',
-             'include-roscore'])
-
-        return schema
+        return ['rosdistro', 'catkin-packages', 'source-space',
+                'include-roscore']
 
     @property
     def PLUGIN_STAGE_SOURCES(self):

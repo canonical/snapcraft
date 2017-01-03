@@ -16,7 +16,10 @@
 
 import os
 
-from testtools.matchers import FileExists
+from testtools.matchers import (
+    Equals,
+    FileExists
+)
 
 import integration_tests
 
@@ -25,7 +28,7 @@ class DebSourceTestCase(integration_tests.TestCase):
 
     def test_stage_deb(self):
         project_dir = self.copy_project_to_tmp('simple-deb')
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft(['stage', 'deb'], project_dir)
 
         self.assertThat(
             os.path.join(project_dir, 'stage', 'bin', 'hello'),
@@ -33,3 +36,15 @@ class DebSourceTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(project_dir, 'stage', 'usr', 'bin', 'world'),
             FileExists())
+
+    # Regression test for LP: #1634813
+    def test_stage_deb_with_symlink(self):
+        project_dir = self.copy_project_to_tmp('simple-deb')
+        self.run_snapcraft(['stage', 'deb-with-symlink'], project_dir)
+
+        target = os.path.join(project_dir, 'stage', 'target')
+        symlink = os.path.join(project_dir, 'stage', 'symlink')
+        self.assertThat(target, FileExists())
+        self.assertThat(symlink, FileExists())
+        self.assertTrue(os.path.islink(symlink))
+        self.assertThat(os.readlink(symlink), Equals('target'))
