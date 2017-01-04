@@ -27,9 +27,8 @@ class IncompatibleOptionsError(errors.SnapcraftError):
 
 class DigestDoesNotMatchError(errors.SnapcraftError):
 
-    fmt = '{message}'
+    fmt = 'Expected the digest for source to be {expected}, '\
+          'but it was {calculated}'
 
-    def __init__(self, digest, calculated_digest):
-        super().__init__(message='The specified digest ({0}) doesn\'t match'
-                                 ' the calculated one ({1})'.
-                                 format(digest, calculated_digest))
+    def __init__(self, expected, calculated):
+        super().__init__(expected=expected, calculated=calculated)

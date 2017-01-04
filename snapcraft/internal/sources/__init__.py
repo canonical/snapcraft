@@ -187,12 +187,12 @@ def verify_checksum(source_checksum, checkfile):
         algorithm, digest = source_checksum.split('/', 1)
 
     except ValueError:
-            raise ValueError('invalid checksum format: {!r}'
-                             .format(source_checksum))
+        raise ValueError('invalid checksum format: {!r}'
+                         .format(source_checksum))
 
     with open(checkfile, 'rb') as f:
-            # This will raise a ValueError if algorithm is unsupported
-            calculated_digest = hashlib.new(algorithm, f.read())
+        # This will raise a ValueError if algorithm is unsupported
+        calculated_digest = hashlib.new(algorithm, f.read())
 
     calculated_digest = calculated_digest.hexdigest()
     if digest != calculated_digest:
