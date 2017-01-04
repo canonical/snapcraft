@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import configparser
 import logging
 import re
 import shlex
@@ -122,10 +123,11 @@ class _SnapPackaging:
 
         gui_src = os.path.join(setup_dir, 'gui')
         gui_dst = os.path.join(self.meta_dir, 'gui')
-        if os.path.exists(gui_dst) and os.path.exists(gui_src):
-            shutil.rmtree(gui_dst)
         if os.path.exists(gui_src):
-            shutil.copytree(gui_src, gui_dst)
+            for f in os.listdir(gui_src):
+                if not os.path.exists(gui_dst):
+                    os.mkdir(gui_dst)
+                shutil.copy2(os.path.join(gui_src, f), gui_dst)
 
     def _compose_snap_yaml(self):
         """Create a new dictionary from config_data to obtain snap.yaml.
@@ -215,18 +217,68 @@ class _SnapPackaging:
         return os.path.relpath(wrappath, self._snap_dir)
 
     def _wrap_apps(self, apps):
+        gui_dir = os.path.join(self.meta_dir, 'gui')
+        if not os.path.exists(gui_dir):
+            os.mkdir(gui_dir)
+        for f in os.listdir(gui_dir):
+            if os.path.splitext(f)[1] == '.desktop':
+                os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            cmds = (k for k in ('command', 'stop-command') if k in apps[app])
-            for k in cmds:
-                try:
-                    apps[app][k] = self._wrap_exe(
-                        apps[app][k], '{}-{}'.format(k, app))
-                except CommandError as e:
-                    raise EnvironmentError(
-                        'The specified command {!r} defined in the app {!r} '
-                        'does not exist or is not executable'.format(
-                            str(e), app))
+            self._wrap_app(app, apps[app])
         return apps
+
+    def _wrap_app(self, name, app):
+        cmds = (k for k in ('command', 'stop-command') if k in app)
+        for k in cmds:
+            try:
+                app[k] = self._wrap_exe(app[k], '{}-{}'.format(k, name))
+            except CommandError as e:
+                raise EnvironmentError(
+                    'The specified command {!r} defined in the app {!r} '
+                    'does not exist or is not executable'.format(str(e), name))
+        if 'desktop' in app:
+            self._reformat_desktop(name, app)
+
+    def _reformat_desktop(self, name, app):
+        gui_dir = os.path.join(self.meta_dir, 'gui')
+        desktop_file = os.path.join(self._snap_dir, app['desktop'])
+        if not os.path.exists(desktop_file):
+            raise EnvironmentError(
+                'The specified desktop file {!r} defined in the app '
+                '{!r} does not exist'.format(desktop_file, name))
+        desktop_contents = configparser.ConfigParser(interpolation=None)
+        desktop_contents.optionxform = str
+        desktop_contents.read(desktop_file)
+        section = 'Desktop Entry'
+        if section not in desktop_contents.sections():
+            raise EnvironmentError(
+                'The specified desktop file {!r} is not a valid '
+                'desktop file'.format(desktop_file))
+        if 'Exec' not in desktop_contents[section]:
+            raise EnvironmentError(
+                'The specified desktop file {!r} is missing the '
+                '"Exec" key'.format(desktop_file))
+        # XXX: do we want to allow more parameters for Exec?
+        exec_value = '{}.{} %U'.format(self._config_data['name'], name)
+        desktop_contents[section]['Exec'] = exec_value
+        if 'Icon' in desktop_contents[section]:
+            icon = desktop_contents[section]['Icon']
+            if icon.startswith('/'):
+                icon = icon.lstrip('/')
+                if os.path.exists(os.path.join(self._snap_dir, icon)):
+                    desktop_contents[section]['Icon'] = \
+                        '${{SNAP}}/{}'.format(icon)
+                else:
+                    logger.warning(
+                        'Icon {} specified in desktop file {} not found '
+                        'in prime directory'.format(icon, app['desktop']))
+        target = os.path.join(gui_dir, os.path.basename(desktop_file))
+        if os.path.exists(target):
+            raise EnvironmentError(
+                'Conflicting desktop file referenced by more than one '
+                'app: {!r}'.format(desktop_file))
+        with open(target, 'w') as f:
+            desktop_contents.write(f, space_around_delimiters=False)
 
 
 def _find_bin(binary, basedir):
