@@ -20,3 +20,12 @@ parts:
     plugin: cmake
     source: src/main
     after: [fake-curl]
+
+  main-no-prereq:
+    plugin: cmake
+    source: src/main
+
+  main-no-libs:
+    plugin: cmake
+    source: src/main
+    build-attributes: [no-system-libraries]
