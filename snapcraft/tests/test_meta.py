@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import configparser
 import logging
 import os
 from unittest.mock import patch
@@ -262,6 +263,45 @@ class CreateTestCase(CreateBaseTestCase):
         }
 
         self.assertEqual(y, expected)
+
+    def test_create_meta_with_app_desktop_key(self):
+        os.mkdir(self.snap_dir)
+        open(os.path.join(self.snap_dir, 'app.sh'), 'w').close()
+        with open(os.path.join(self.snap_dir, 'app1.desktop'), 'w') as f:
+            f.write('[Desktop Entry]\nExec=app1.exe\nIcon=app1.png')
+        icon_dir = os.path.join(self.snap_dir, 'usr', 'share')
+        os.makedirs(icon_dir)
+        open(os.path.join(icon_dir, 'app2.png'), 'w').close()
+        with open(os.path.join(self.snap_dir, 'app2.desktop'), 'w') as f:
+            f.write('[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png')
+        self.config_data['apps'] = {
+            'app1': {'command': 'app.sh', 'desktop': 'app1.desktop'},
+            'app2': {'command': 'app.sh', 'desktop': 'app2.desktop'}
+        }
+        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        self.assertTrue(
+            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        desktop_file = os.path.join(self.meta_dir, 'gui', 'app1.desktop')
+        self.assertTrue(os.path.exists(desktop_file),
+                        'app1.desktop was not setup correctly')
+        contents = configparser.ConfigParser(interpolation=None)
+        contents.read(desktop_file)
+        section = 'Desktop Entry'
+        self.assertTrue(section in contents)
+        self.assertEqual(contents[section].get('Exec'), 'my-package.app1 %U')
+        self.assertEqual(contents[section].get('Icon'), 'app1.png')
+
+        desktop_file = os.path.join(self.meta_dir, 'gui', 'app2.desktop')
+        self.assertTrue(os.path.exists(desktop_file),
+                        'app2.desktop was not setup correctly')
+        contents = configparser.ConfigParser(interpolation=None)
+        contents.read(desktop_file)
+        section = 'Desktop Entry'
+        self.assertTrue(section in contents)
+        self.assertEqual(contents[section].get('Exec'), 'my-package.app2 %U')
+        self.assertEqual(contents[section].get('Icon'),
+                         '${SNAP}/usr/share/app2.png')
 
 
 class CreateWithConfinementTestCase(CreateBaseTestCase):
