@@ -1,0 +1,12 @@
+# SConstruct
+import os
+
+env = Environment()
+
+destdir = os.environ.get("DESTDIR")
+if destdir == None:
+    destdir = ""
+
+hello = env.Program(["hello.c"])
+env.Install(destdir + "/usr/bin", hello)
+env.Alias('install', destdir + "/usr/bin")

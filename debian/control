@@ -9,6 +9,7 @@ Build-Depends: bash-completion,
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
+               python3-debian,
                python3-docopt,
                python3-fixtures,
                python3-jsonschema,
@@ -41,6 +42,7 @@ Standards-Version: 3.9.8
 Package: snapcraft
 Architecture: all
 Depends: python3-apt,
+         python3-debian,
          python3-docopt,
          python3-jsonschema,
          python3-libarchive-c,

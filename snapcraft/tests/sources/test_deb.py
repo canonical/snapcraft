@@ -27,7 +27,7 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('apt_inst.DebFile')
+        patcher = mock.patch('debian.debfile.DebFile')
         self.mock_deb = patcher.start()
         self.addCleanup(patcher.stop)
 

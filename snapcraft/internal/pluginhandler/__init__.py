@@ -42,6 +42,8 @@ from snapcraft.internal import (
     sources,
     states,
 )
+from ._scriptlets import ScriptRunner
+from ._build_attributes import BuildAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +100,9 @@ class PluginHandler:
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
 
         self.source_handler = self._get_source_handler(self._part_properties)
+
+        self._build_attributes = BuildAttributes(
+            self._part_properties['build-attributes'])
 
         self._migrate_state_file()
 
@@ -386,7 +391,15 @@ class PluginHandler:
         shutil.copytree(self.code.sourcedir, self.code.build_basedir,
                         symlinks=True, ignore=ignore)
 
-        self.code.build()
+        script_runner = ScriptRunner(builddir=self.code.build_basedir)
+
+        script_runner.run(scriptlet=self._part_properties.get('prepare'))
+        build_scriptlet = self._part_properties.get('build')
+        if build_scriptlet:
+            script_runner.run(scriptlet=build_scriptlet)
+        else:
+            self.code.build()
+        script_runner.run(scriptlet=self._part_properties.get('install'))
 
         self.mark_build_done()
 
@@ -476,8 +489,9 @@ class PluginHandler:
     def prime(self, force=False):
         self.makedirs()
         self.notify_part_progress('Priming')
-        snap_files, snap_dirs = self.migratable_fileset_for('snap')
+        snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+
         dependencies = _find_dependencies(self.snapdir, snap_files)
 
         # Split the necessary dependencies into their corresponding location.
@@ -485,35 +499,24 @@ class PluginHandler:
         # track the part and staged dependencies, since they should have
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
-        part_dependencies = set()
-        staged_dependencies = set()
-        primed_dependencies = set()
-        system_dependencies = set()
-        for file_path in dependencies:
-            if file_path.startswith(self.installdir):
-                part_dependencies.add(
-                    os.path.relpath(file_path, self.installdir))
-            elif file_path.startswith(self.stagedir):
-                staged_dependencies.add(
-                    os.path.relpath(file_path, self.stagedir))
-            elif file_path.startswith(self.snapdir):
-                primed_dependencies.add(
-                    os.path.relpath(file_path, self.snapdir))
-            else:
-                system_dependencies.add(file_path.lstrip('/'))
+        (in_part, staged, primed, system) = _split_dependencies(
+            dependencies, self.installdir, self.stagedir, self.snapdir)
 
-        part_dependency_paths = {os.path.dirname(d) for d in part_dependencies}
-        staged_dependency_paths = {os.path.dirname(d) for d in
-                                   staged_dependencies}
-        system_dependency_paths = {os.path.dirname(d) for d in
-                                   system_dependencies}
-        # Lots of dependencies are linked with a symlink, so we need to make
-        # sure we follow those symlinks when we migrate the dependencies.
-        _migrate_files(system_dependencies, system_dependency_paths, '/',
-                       self.snapdir, follow_symlinks=True)
+        part_dependency_paths = {os.path.dirname(d) for d in in_part}
+        staged_dependency_paths = {os.path.dirname(d) for d in staged}
 
-        dependency_paths = (part_dependency_paths | staged_dependency_paths |
-                            system_dependency_paths)
+        dependency_paths = part_dependency_paths | staged_dependency_paths
+
+        if not self._build_attributes.no_system_libraries():
+            system_dependency_paths = {os.path.dirname(d) for d in system}
+            dependency_paths.update(system_dependency_paths)
+
+            if system:
+                # Lots of dependencies are linked with a symlink, so we need to
+                # make sure we follow those symlinks when we migrate the
+                # dependencies.
+                _migrate_files(system, system_dependency_paths, '/',
+                               self.snapdir, follow_symlinks=True)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
@@ -626,6 +629,45 @@ class PluginHandler:
 
         if not index or index <= common.COMMAND_ORDER.index('pull'):
             self.clean_pull(hint)
+
+
+def _split_dependencies(dependencies, installdir, stagedir, snapdir):
+    """Split dependencies into their corresponding location.
+
+    Return a tuple of sets for each location.
+    """
+
+    part_dependencies = set()
+    staged_dependencies = set()
+    primed_dependencies = set()
+    system_dependencies = set()
+
+    for file_path in dependencies:
+        if file_path.startswith(installdir):
+            part_dependencies.add(os.path.relpath(file_path, installdir))
+        elif file_path.startswith(stagedir):
+            staged_dependencies.add(os.path.relpath(file_path, stagedir))
+        elif file_path.startswith(snapdir):
+            primed_dependencies.add(os.path.relpath(file_path, snapdir))
+        else:
+            file_path = file_path.lstrip('/')
+
+            # This was a dependency that was resolved to be on the system.
+            # However, it's possible that this library is actually included in
+            # the snap and we just missed it because it's in a non-standard
+            # path. Let's make sure it isn't already in the part, stage dir, or
+            # prime dir. If so, add it to that set.
+            if os.path.exists(os.path.join(installdir, file_path)):
+                part_dependencies.add(file_path)
+            elif os.path.exists(os.path.join(stagedir, file_path)):
+                staged_dependencies.add(file_path)
+            elif os.path.exists(os.path.join(snapdir, file_path)):
+                primed_dependencies.add(file_path)
+            else:
+                system_dependencies.add(file_path)
+
+    return (part_dependencies, staged_dependencies, primed_dependencies,
+            system_dependencies)
 
 
 def _expand_part_properties(part_properties, part_schema):

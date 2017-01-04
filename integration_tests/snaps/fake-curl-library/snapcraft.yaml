@@ -1,0 +1,31 @@
+name: test-package
+version: 0.1
+summary: Fake curl library test.
+description: A snap with two parts, a curl-like library and a user of it.
+confinement: strict
+grade: stable
+
+apps:
+  test-package:
+    command: main
+
+build-packages: [gcc, libc6-dev, libcurl4-openssl-dev]
+
+parts:
+  fake-curl:
+    plugin: cmake
+    source: src/fake-curl
+
+  main:
+    plugin: cmake
+    source: src/main
+    after: [fake-curl]
+
+  main-no-prereq:
+    plugin: cmake
+    source: src/main
+
+  main-no-libs:
+    plugin: cmake
+    source: src/main
+    build-attributes: [no-system-libraries]
