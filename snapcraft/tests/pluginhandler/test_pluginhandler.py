@@ -1018,9 +1018,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(4, len(state.properties))
-        for expected in ['after', 'build-packages', 'disable-parallel',
-                         'organize']:
+        self.assertEqual(5, len(state.properties))
+        for expected in ['after', 'build-attributes', 'build-packages',
+                         'disable-parallel', 'organize']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
@@ -1332,6 +1332,51 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
+
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._migrate_files')
+    def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
+                                           mock_find_dependencies):
+        # Disable system library migration (i.e. ldd crawling).
+        self.handler = mocks.loadplugin('test_part', part_properties={
+            'build-attributes': ['no-system-libraries']
+        })
+
+        # Pretend we found a system dependency, as well as a part and stage
+        # dependency.
+        mock_find_dependencies.return_value = {
+            '/foo/bar/baz',
+            '{}/lib1/installed'.format(self.handler.installdir),
+            '{}/lib2/staged'.format(self.handler.stagedir),
+        }
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, 'file'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        mock_migrate_files.reset_mock()
+        self.handler.prime()
+
+        self.assertEqual('prime', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {'bin/file'})
+        # Verify that only the part's files were migrated-- not the system
+        # dependency.
+        mock_migrate_files.assert_called_once_with(
+            {'bin/file'}, {'bin'}, self.handler.stagedir, self.handler.snapdir)
+
+        state = self.handler.get_state('prime')
+
+        # Verify that only the part and staged libraries were saved into the
+        # dependency paths, not the system dependency.
+        self.assertTrue(type(state.dependency_paths) is set)
+        self.assertEqual(2, len(state.dependency_paths))
+        self.assertTrue('lib1' in state.dependency_paths)
+        self.assertTrue('lib2' in state.dependency_paths)
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
