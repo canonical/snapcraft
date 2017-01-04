@@ -238,7 +238,8 @@ class Config:
         parts = snapcraft_yaml.get('parts', {})
 
         for part_name in parts:
-            for step in ('stage', 'snap'):
+            # FIXME: Remove `snap` from here; it's deprecated
+            for step in ('stage', 'snap', 'prime'):
                 step_fileset = _expand_filesets_for(step, parts[part_name])
                 parts[part_name][step] = step_fileset
 
