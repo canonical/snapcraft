@@ -17,12 +17,16 @@
 import logging
 import unittest
 import unittest.mock
+from testtools.matchers import Contains
 
 import fixtures
 
 import snapcraft
-from snapcraft.internal import dirs
-from snapcraft.internal import project_loader
+from snapcraft.internal import (
+    deprecations,
+    dirs,
+    project_loader
+)
 from snapcraft import tests
 
 
@@ -74,8 +78,30 @@ parts:
 """)
         project_loader.load_config()
 
-        self.assertTrue(
+        self.assertThat(fake_logger.output, Contains(
             'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
-                'part/1')
-            in fake_logger.output,
-            'Missing slash deprecation warning in output')
+                'part/1')))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_snap_deprecation(self, mock_loadPlugin):
+        """Test that using the 'snap' keyword results in a warning."""
+
+        fake_logger = fixtures.FakeLogger(level=logging.WARN)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+    snap: [foo]
+""")
+        project_loader.load_config()
+
+        self.assertThat(fake_logger.output,
+                        Contains(deprecations._deprecation_message('dn1')))

@@ -485,7 +485,7 @@ class PluginHandler:
     def prime(self, force=False):
         self.makedirs()
         self.notify_part_progress('Priming')
-        snap_files, snap_dirs = self.migratable_fileset_for('snap')
+        snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
         dependency_paths = _migrate_system_dependencies(
             self.installdir, self.stagedir, self.snapdir, snap_files)

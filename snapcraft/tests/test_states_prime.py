@@ -31,7 +31,7 @@ class PrimeStateBaseTestCase(tests.TestCase):
         self.files = {'foo'}
         self.directories = {'bar'}
         self.dependency_paths = {'baz'}
-        self.part_properties = {'snap': ['qux']}
+        self.part_properties = {'prime': ['qux']}
 
         self.state = snapcraft.internal.states.PrimeState(
             self.files, self.directories, self.dependency_paths,
@@ -54,7 +54,7 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
     def test_properties_of_interest(self):
         properties = self.state.properties_of_interest(self.part_properties)
         self.assertEqual(1, len(properties))
-        self.assertEqual(['qux'], properties['snap'])
+        self.assertEqual(['qux'], properties['prime'])
 
     def test_project_options_of_interest(self):
         self.assertFalse(self.state.project_options_of_interest(self.project))
