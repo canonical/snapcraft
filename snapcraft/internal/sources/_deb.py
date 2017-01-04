@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt_inst
+import debian.debfile
 import os
 import shutil
 import tempfile
@@ -53,8 +53,8 @@ class Deb(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_deb, deb_file)
 
-        deb = apt_inst.DebFile(deb_file)
-        deb.data.extractall(dst)
+        deb = debian.debfile.DebFile(deb_file)
+        deb.data.tgz().extractall(dst)
 
         if not keep_deb:
             os.remove(deb_file)

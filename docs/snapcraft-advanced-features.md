@@ -207,7 +207,7 @@ shipped to the user (download size being just one factor), you can
 explicitly tell `snapcraft` which files to snap:
 
 ```yaml
-  snap:
+  prime:
     - usr/lib/x86_64-linux-gnu/libgudev-1.0.so*
     - usr/lib/x86_64-linux-gnu/libobject-2.0.so*
     - usr/lib/x86_64-linux-gnu/libglib-2.0.so*
@@ -215,7 +215,7 @@ explicitly tell `snapcraft` which files to snap:
 ```
 
 Here `godd` further defines the list of files to be placed in the app
-during the `snap` phase. As you can see above, globs (using asterisks as
+during the `prime` phase. As you can see above, globs (using asterisks as
 wildcard characters) are a good way of handling complexities within the
 directory structure.
 
@@ -238,7 +238,7 @@ cam:
     stage:
       - $fswebcam
       - $go-server
-    snap:
+    prime:
       - $fswebcam
       - $go-server
       - -usr/share/doc
@@ -247,7 +247,7 @@ cam:
 In the `stage` definition you can see how named filesets are re-used
 (`$fswebcam` and `$go-server`).
 
-Another feature used in the `snap` definition is an exclude (`-usr/share/doc`
+Another feature used in the `prime` definition is an exclude (`-usr/share/doc`
 in this case), meaning that files in these directories will not be installed.
 
 

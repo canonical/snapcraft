@@ -1,0 +1,21 @@
+name: test-snap
+version: '0.1'
+grade: stable
+confinement: strict
+summary: Snap to test prime and snap keywords.
+description: |
+ This snap contained two parts, one of which uses the deprecated `snap`
+ keyword, the other of which uses the new `prime` keyword.
+
+parts:
+  snap-keyword:
+    plugin: dump
+    source: snap-keyword/
+    snap:
+      - snap1
+
+  prime-keyword:
+    plugin: dump
+    source: prime-keyword/
+    prime:
+      - prime1
