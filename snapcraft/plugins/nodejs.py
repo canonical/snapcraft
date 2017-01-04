@@ -135,7 +135,7 @@ class NodePlugin(snapcraft.BasePlugin):
         for pkg in self.options.node_packages:
             self.run(npm_install + ['--global'] + [pkg], cwd=rootdir)
         if os.path.exists(os.path.join(rootdir, 'package.json')):
-            self.run(npm_install)
+            self.run(npm_install, cwd=rootdir)
             self.run(npm_install + ['--global'], cwd=rootdir)
         for target in self.options.npm_run:
             self.run(['npm', 'run', target], cwd=rootdir)

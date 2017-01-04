@@ -136,6 +136,12 @@ properties:
     additionalProperties: false
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
+        # Make sure snap/prime are mutually exclusive
+        allOf:
+          - not:
+              type: object
+              required: [snap, prime]
+              validation-failure: "{.instance} cannot contain both 'snap' and 'prime' keywords."
         type: object
         minProperties: 1
         properties:
@@ -200,7 +206,14 @@ properties:
             items:
               type: string
             default: ['*']
-          snap:
+          snap: # FIXME: This is deprecated, replaced by `prime`, below.
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: ['*']
+          prime:
             type: array
             minitems: 1
             uniqueItems: true
