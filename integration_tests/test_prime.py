@@ -39,11 +39,11 @@ class PrimeTestCase(integration_tests.TestCase):
             os.path.join(project_dir, 'prime', 'a'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'c'),
-            FileExists())
-        self.assertThat(
             os.path.join(project_dir, 'prime', 'b'),
             Not(FileExists()))
+        self.assertThat(
+            os.path.join(project_dir, 'prime', 'c'),
+            FileExists())
 
     def test_prime_includes_stage_excludes_fileset(self):
         project_dir = 'prime-from-stage-excludes'
@@ -53,8 +53,8 @@ class PrimeTestCase(integration_tests.TestCase):
             os.path.join(project_dir, 'prime', 'a'),
             Not(FileExists()))
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'c'),
+            os.path.join(project_dir, 'prime', 'b'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'b'),
+            os.path.join(project_dir, 'prime', 'c'),
             FileExists())
