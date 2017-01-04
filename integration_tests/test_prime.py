@@ -36,25 +36,25 @@ class PrimeTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('prime', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'a'),
+            os.path.join(project_dir, 'prime', 'without-a'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'b'),
+            os.path.join(project_dir, 'prime', 'without-b'),
             Not(FileExists()))
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'c'),
+            os.path.join(project_dir, 'prime', 'without-c'),
             FileExists())
 
     def test_prime_includes_stage_excludes_fileset(self):
-        project_dir = 'prime-from-stage-excludes'
+        project_dir = 'prime-from-stage'
 
         self.run_snapcraft('prime', project_dir)
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'a'),
+            os.path.join(project_dir, 'prime', 'with-a'),
             Not(FileExists()))
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'b'),
+            os.path.join(project_dir, 'prime', 'with-b'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'c'),
+            os.path.join(project_dir, 'prime', 'with-c'),
             FileExists())
