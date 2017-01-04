@@ -52,15 +52,18 @@ class BuildStateTestCase(BuildStateBaseTestCase):
     def test_properties_of_interest(self):
         self.part_properties.update({
             'after': 'test-after',
+            'build-attributes': ['test-build-attribute'],
             'build-packages': 'test-build-packages',
             'disable-parallel': 'test-disable-parallel',
             'organize': {'baz': 'qux'}
         })
 
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertEqual(5, len(properties))
+        self.assertEqual(6, len(properties))
         self.assertEqual('bar', properties['foo'])
         self.assertEqual('test-after', properties['after'])
+        self.assertEqual(
+            ['test-build-attribute'], properties['build-attributes'])
         self.assertEqual('test-build-packages', properties['build-packages'])
         self.assertEqual('test-disable-parallel',
                          properties['disable-parallel'])
