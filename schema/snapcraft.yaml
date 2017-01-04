@@ -88,6 +88,9 @@ properties:
           stop-command: ["daemon"]
         additionalProperties: false
         properties:
+          desktop:
+            type: string
+            description: path to a desktop file representing the app, relative to the prime directory
           command:
             type: string
             description: command executed to run the binary
