@@ -39,6 +39,14 @@ class MissingState(Exception):
     pass
 
 
+class FileConflictError(SnapcraftError):
+
+    fmt = (
+        'The following files would create a conflict in the snap: '
+        '{fileset!r}'
+    )
+
+
 class DuplicateAliasError(SnapcraftError):
 
     fmt = 'Multiple parts have the same alias defined: {aliases!r}'

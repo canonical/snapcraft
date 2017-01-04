@@ -1106,8 +1106,7 @@ def _combine_filesets(fileset_1, fileset_2):
     contradicting_fileset = set.intersection(f1_excludes, f2_includes)
 
     if contradicting_fileset:
-        raise EnvironmentError('File conflicts: {key!r}'.format(
-                               key=contradicting_fileset))
+        raise FileConflictError(fileset=contradicting_fileset)
 
     to_combine = False
     # combine if fileset_1 has a wildcard
