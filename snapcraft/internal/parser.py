@@ -196,6 +196,7 @@ def _process_entry(data):
     except KeyError as e:
         raise InvalidWikiEntryError('Missing key in wiki entry: {}'.format(e))
 
+    logger.info('Processing origin {origin!r}'.format(origin=origin))
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
@@ -264,7 +265,7 @@ def _process_wiki_entry(
     else:
         pending_validation_entries.append(entry)
         master_missing_parts.update(missing_parts)
-        logging.debug('Parts {!r} are missing'.format(
+        logger.debug('Parts {!r} are missing'.format(
             ",".join(missing_parts)))
 
 
@@ -319,7 +320,7 @@ def _process_index(output):
             entry, master_parts_list, missing_parts, [])
 
     if len(missing_parts):
-        logging.warning('Parts {!r} are not defined in the parts entry'.format(
+        logger.warning('Parts {!r} are not defined in the parts entry'.format(
                 ",".join(missing_parts)))
 
     return {'master_parts_list': master_parts_list,
@@ -364,7 +365,7 @@ def missing_parts_set(parts, known_parts):
 
 
 def _write_parts_list(path, master_parts_list):
-    logging.debug('Writing parts list to {!r}'.format(path))
+    logger.info('Writing parts list to {!r}'.format(path))
     with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
                  default_flow_style=False))
