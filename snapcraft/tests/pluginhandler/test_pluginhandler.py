@@ -1233,8 +1233,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
@@ -1276,8 +1276,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
@@ -1328,18 +1328,56 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('foo/bar' in state.dependency_paths)
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._migrate_files')
+    def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
+                                                    mock_find_dependencies):
+        mock_find_dependencies.return_value = {
+            '/foo/bar/baz'
+        }
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        foobardir = os.path.join(self.handler.code.installdir, 'foo', 'bar')
+        os.makedirs(bindir)
+        os.makedirs(foobardir)
+
+        # Make a "binary" as well as a "library" at the same path as the one on
+        # the system
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(foobardir, 'baz'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        mock_migrate_files.reset_mock()
+        self.handler.prime()
+
+        self.assertEqual('prime', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
+        mock_migrate_files.assert_called_once_with(
+            {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
+            self.handler.stagedir, self.handler.snapdir)
+
+        state = self.handler.get_state('prime')
+
+        self.assertTrue(type(state) is states.PrimeState)
+        self.assertEqual(1, len(state.dependency_paths))
+        self.assertTrue('foo/bar' in state.dependency_paths)
+
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_prime_state_with_snap_keyword(self, mock_copy,
-                                           mock_find_dependencies):
+    def test_prime_state_with_prime_keyword(self, mock_copy,
+                                            mock_find_dependencies):
         mock_find_dependencies.return_value = set()
-        self.handler.code.options.snap = ['bin/1']
-        self.handler._part_properties = {'snap': ['bin/1']}
+        self.handler = mocks.loadplugin(
+            'test_part', part_properties={'prime': ['bin/1']})
 
         self.assertEqual(None, self.handler.last_step())
 
@@ -1369,8 +1407,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['bin/1'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['bin/1'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
@@ -1474,7 +1512,7 @@ class IsDirtyTestCase(tests.TestCase):
 
     def test_prime_is_dirty(self):
         self.handler.code.options.snap = ['foo']
-        self.handler._part_properties = {'snap': ['foo']}
+        self.handler._part_properties = {'prime': ['foo']}
         self.handler.mark_done(
             'prime', states.PrimeState(
                 set(), set(), set(), self.handler._part_properties))
@@ -1485,7 +1523,7 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Change the `snap` keyword-- thereby making the prime step dirty.
         self.handler.code.options.snap = ['bar']
-        self.handler._part_properties = {'snap': ['bar']}
+        self.handler._part_properties = {'prime': ['bar']}
         self.assertFalse(self.handler.is_clean('prime'),
                          'Strip step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('prime'),
@@ -1939,7 +1977,7 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         self.clear_common_directories()
 
         handler = mocks.loadplugin(
-            'test_part', part_properties={'snap': self.fileset})
+            'test_part', part_properties={'prime': self.fileset})
         handler.makedirs()
 
         installdir = handler.code.installdir

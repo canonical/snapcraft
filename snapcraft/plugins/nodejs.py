@@ -90,14 +90,19 @@ class NodePlugin(snapcraft.BasePlugin):
         if 'required' in schema:
             del schema['required']
 
+        return schema
+
+    @classmethod
+    def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['build-properties'].extend(['node-packages', 'npm-run'])
+        return ['node-packages', 'npm-run']
+
+    @classmethod
+    def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        schema['pull-properties'].append('node-engine')
-
-        return schema
+        return ['node-engine']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -130,7 +135,7 @@ class NodePlugin(snapcraft.BasePlugin):
         for pkg in self.options.node_packages:
             self.run(npm_install + ['--global'] + [pkg], cwd=rootdir)
         if os.path.exists(os.path.join(rootdir, 'package.json')):
-            self.run(npm_install)
+            self.run(npm_install, cwd=rootdir)
             self.run(npm_install + ['--global'], cwd=rootdir)
         for target in self.options.npm_run:
             self.run(['npm', 'run', target], cwd=rootdir)

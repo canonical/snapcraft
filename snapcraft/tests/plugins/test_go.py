@@ -17,6 +17,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import go
@@ -144,11 +145,25 @@ class GoPluginTestCase(tests.TestCase):
         # Check required properties
         self.assertNotIn('required', schema)
 
-        # Check pull properties
-        self.assertTrue('go-packages' in schema['pull-properties'])
-        # Check build properties
-        self.assertTrue('go-packages' in schema['build-properties'])
-        self.assertTrue('go-buildtags' in schema['build-properties'])
+    def test_get_pull_properties(self):
+        expected_pull_properties = ['go-packages']
+        resulting_pull_properties = go.GoPlugin.get_pull_properties()
+
+        self.assertThat(resulting_pull_properties,
+                        HasLength(len(expected_pull_properties)))
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['go-packages', 'go-buildtags']
+        resulting_build_properties = go.GoPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_pull_local_sources(self):
         class Options:
