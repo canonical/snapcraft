@@ -100,7 +100,7 @@ contain.
       applying to the list here are the same as those of filesets. Referencing
       of fileset keys is done with a $ prefixing the fileset key, which will
       expand with the value of such key.
-    * `snap` (list of strings)
+    * `prime` (list of strings)
       A list of files from a part's installation to expose in snap. Rules
       applying to the list here are the same as those of filesets. Referencing
       of fileset keys is done with a `$` prefixing the fileset key, which will
