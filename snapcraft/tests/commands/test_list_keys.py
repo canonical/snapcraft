@@ -25,9 +25,9 @@ from snapcraft import (
     storeapi,
     tests,
 )
-from snapcraft.tests.test_commands_register_key import (
+from . import (
     get_sample_key,
-    mock_snap_output,
+    mock_snap_output
 )
 
 

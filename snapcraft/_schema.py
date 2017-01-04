@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 
 import jsonschema
@@ -70,19 +71,35 @@ class Validator:
             jsonschema.validate(
                 self._snapcraft, self._schema, format_checker=format_check)
         except jsonschema.ValidationError as e:
-            messages = [e.message]
-            path = []
-            while e.absolute_path:
-                element = e.absolute_path.popleft()
-                # assume numbers are indices and use 'xxx[123]' notation.
-                if isinstance(element, int):
-                    path[-1] = '{}[{}]'.format(path[-1], element)
-                else:
-                    path.append(str(element))
-            if path:
-                messages.insert(0, "The '{}' property does not match the "
-                                   "required schema:".format('/'.join(path)))
-            if e.cause:
-                messages.append('({})'.format(e.cause))
+            _handle_validation_error(e)
 
-            raise SnapcraftSchemaError(' '.join(messages))
+
+def _handle_validation_error(error):
+    """Take a jsonschema.ValidationError and raise a SnapcraftSchemaError.
+
+    The validation errors coming from jsonschema are a nightmare. This function
+    tries to make them a bit more understandable.
+    """
+
+    messages = [error.message]
+
+    # error.validator_value may contain a custom validation error message. If
+    # so, use it instead of the garbage message jsonschema gives us.
+    with contextlib.suppress(TypeError, KeyError):
+        messages = [error.validator_value['validation-failure'].format(error)]
+
+    path = []
+    while error.absolute_path:
+        element = error.absolute_path.popleft()
+        # assume numbers are indices and use 'xxx[123]' notation.
+        if isinstance(element, int):
+            path[-1] = '{}[{}]'.format(path[-1], element)
+        else:
+            path.append(str(element))
+    if path:
+        messages.insert(0, "The '{}' property does not match the "
+                           "required schema:".format('/'.join(path)))
+    if error.cause:
+        messages.append('({})'.format(error.cause))
+
+    raise SnapcraftSchemaError(' '.join(messages))

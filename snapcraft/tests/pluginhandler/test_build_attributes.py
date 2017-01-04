@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,16 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import platform
+from snapcraft.internal.pluginhandler._build_attributes import BuildAttributes
 
-import integration_tests
+from snapcraft import tests
 
 
-class MavenPluginTestCase(integration_tests.TestCase):
+class BuildAttributesTestCase(tests.TestCase):
+    def test_no_system_libraries(self):
+        build_attributes = BuildAttributes([])
+        self.assertFalse(build_attributes.no_system_libraries())
 
-    def test_build_maven_plugin(self):
-        if platform.machine() == 'armv7l':
-            # https://bugs.launchpad.net/snapcraft/+bug/1647405
-            self.skipTest('The maven plugin does not support armhf')
-        project_dir = 'simple-maven'
-        self.run_snapcraft('build', project_dir)
+        build_attributes = BuildAttributes(['no-system-libraries'])
+        self.assertTrue(build_attributes.no_system_libraries())
