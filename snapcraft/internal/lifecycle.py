@@ -496,6 +496,8 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
 
 
 def clean(project_options, parts, step=None):
+    # step defaults to None because that's how it comes from docopt when it's
+    # not set.
     if not step:
         step = 'pull'
 
