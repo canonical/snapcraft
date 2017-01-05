@@ -75,11 +75,11 @@ parts:
 
         main(['prime'])
 
-        self.assertTrue(os.path.exists(self.snap_dir),
+        self.assertTrue(os.path.exists(self.prime_dir),
                         'Expected a prime directory')
         self.assertTrue(
             os.path.exists(
-                os.path.join(self.snap_dir, 'meta', 'snap.yaml')),
+                os.path.join(self.prime_dir, 'meta', 'snap.yaml')),
             'Expected a snap.yaml')
         self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')
@@ -99,9 +99,9 @@ parts:
 
         self.assertFalse(
             os.path.exists(
-                os.path.join(self.snap_dir, 'meta', 'snap.yaml')),
+                os.path.join(self.prime_dir, 'meta', 'snap.yaml')),
             'There should not be a snap.yaml')
-        self.assertTrue(os.path.exists(self.snap_dir),
+        self.assertTrue(os.path.exists(self.prime_dir),
                         'Expected a prime directory')
         self.assertTrue(os.path.exists(self.stage_dir),
                         'Expected a stage directory')

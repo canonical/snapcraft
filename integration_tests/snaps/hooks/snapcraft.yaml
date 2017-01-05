@@ -1,0 +1,27 @@
+name: hooks-test
+version: '0.1'
+summary: Hooks test
+description: |
+  This snap simply includes a few hooks. It does so via two methods:
+
+    1) Simply distributing hook scripts in snap/hooks.
+    2) Installing hook scripts into snap/hooks from parts.
+
+  Both of these methods should work, and the first should overwrite the second
+  if the same hook is supplied via both methods (as it is here).
+
+grade: devel
+confinement: strict
+
+parts:
+  another-hook:
+    plugin: dump
+    source: another-hook/
+    organize:
+      another-hook: snap/hooks/another-hook
+
+  configure-hook:
+    plugin: dump
+    source: configure-again/
+    organize:
+      configure: snap/hooks/configure

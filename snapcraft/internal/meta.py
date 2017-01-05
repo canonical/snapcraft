@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import configparser
 import logging
@@ -49,6 +50,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     'confinement',
     'epoch',
     'grade',
+    'hooks',
 ]
 
 
@@ -58,7 +60,7 @@ class CommandError(Exception):
 
 def create_snap_packaging(config_data, snap_dir, parts_dir):
     """Create snap.yaml and related assets in meta.
-    Create  the meta directory and provision it with snap.yaml
+    Create the meta directory and provision it with snap.yaml
     in the snap dir using information from config_data.
 
     :param dict config_data: project values defined in snapcraft.yaml.
@@ -67,6 +69,7 @@ def create_snap_packaging(config_data, snap_dir, parts_dir):
     packaging = _SnapPackaging(config_data, snap_dir, parts_dir)
     packaging.write_snap_yaml()
     packaging.setup_assets()
+    packaging.write_snap_directory()
 
     return packaging.meta_dir
 
@@ -115,6 +118,38 @@ class _SnapPackaging:
                 raise MissingGadgetError()
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
+
+    def write_snap_directory(self):
+        # First migrate the snap directory. It will overwrite any conflicting
+        # files.
+        for root, directories, files in os.walk('snap'):
+            for directory in directories:
+                source = os.path.join(root, directory)
+                destination = os.path.join(self._snap_dir, source)
+                file_utils.create_similar_directory(source, destination)
+
+            for file_path in files:
+                source = os.path.join(root, file_path)
+                destination = os.path.join(self._snap_dir, source)
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(destination)
+                file_utils.link_or_copy(source, destination)
+
+        # Now write hook wrappers for any hooks included in that directory.
+        self._generate_hook_wrappers()
+
+    def _generate_hook_wrappers(self):
+        snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
+        hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
+        os.makedirs(hooks_dir, exist_ok=True)
+        if os.path.isdir(snap_hooks_dir):
+            for hook_name in os.listdir(snap_hooks_dir):
+                hook_exec = os.path.join('$SNAP', 'snap', 'hooks', hook_name)
+                hook_path = os.path.join(hooks_dir, hook_name)
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(hook_path)
+
+                self._write_wrap_exe(hook_exec, hook_path)
 
     def _setup_from_setup(self):
         setup_dir = 'setup'
