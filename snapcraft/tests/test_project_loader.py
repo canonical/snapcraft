@@ -1239,11 +1239,11 @@ parts:
     def test_config_snap_environment(self):
         config = project_loader.Config()
 
-        lib_paths = [os.path.join(self.snap_dir, 'lib'),
-                     os.path.join(self.snap_dir, 'usr', 'lib'),
-                     os.path.join(self.snap_dir, 'lib',
+        lib_paths = [os.path.join(self.prime_dir, 'lib'),
+                     os.path.join(self.prime_dir, 'usr', 'lib'),
+                     os.path.join(self.prime_dir, 'lib',
                                   self.arch_triplet),
-                     os.path.join(self.snap_dir, 'usr', 'lib',
+                     os.path.join(self.prime_dir, 'usr', 'lib',
                                   self.arch_triplet)]
         for lib_path in lib_paths:
             os.makedirs(lib_path)
@@ -1251,7 +1251,7 @@ parts:
         environment = config.snap_env()
         self.assertTrue(
             'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
-                self.snap_dir)
+                self.prime_dir)
             in environment)
 
         # Ensure that LD_LIBRARY_PATH is present and it contains only the
@@ -1265,7 +1265,7 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        expected = (os.path.join(self.snap_dir, i) for i in
+        expected = (os.path.join(self.prime_dir, i) for i in
                     ['lib', os.path.join('usr', 'lib'),
                      os.path.join('lib', self.arch_triplet),
                      os.path.join('usr', 'lib', self.arch_triplet)])
@@ -1281,7 +1281,7 @@ parts:
         environment = config.snap_env()
         self.assertTrue(
             'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
-                self.snap_dir)
+                self.prime_dir)
             in environment,
             'Current PATH is {!r}'.format(environment))
         for e in environment:
@@ -1293,8 +1293,8 @@ parts:
     def test_config_snap_environment_with_dependencies(self,
                                                        mock_get_dependencies):
         library_paths = {
-            os.path.join(self.snap_dir, 'lib1'),
-            os.path.join(self.snap_dir, 'lib2'),
+            os.path.join(self.prime_dir, 'lib1'),
+            os.path.join(self.prime_dir, 'lib2'),
         }
         mock_get_dependencies.return_value = library_paths
         config = project_loader.Config()
@@ -1313,7 +1313,7 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        expected = (os.path.join(self.snap_dir, i) for i in ['lib1', 'lib2'])
+        expected = (os.path.join(self.prime_dir, i) for i in ['lib1', 'lib2'])
         for item in expected:
             self.assertTrue(
                 item in paths,
@@ -1325,8 +1325,8 @@ parts:
     def test_config_snap_environment_with_dependencies_but_no_paths(
             self, mock_get_dependencies):
         library_paths = {
-            os.path.join(self.snap_dir, 'lib1'),
-            os.path.join(self.snap_dir, 'lib2'),
+            os.path.join(self.prime_dir, 'lib1'),
+            os.path.join(self.prime_dir, 'lib2'),
         }
         mock_get_dependencies.return_value = library_paths
         config = project_loader.Config()
@@ -1342,13 +1342,13 @@ parts:
         # Place a few ld.so.conf files in supported locations. We expect the
         # contents of these to make it into the LD_LIBRARY_PATH.
         mesa_dir = os.path.join(
-            self.snap_dir, 'usr', 'lib', 'my_arch', 'mesa')
+            self.prime_dir, 'usr', 'lib', 'my_arch', 'mesa')
         os.makedirs(mesa_dir)
         with open(os.path.join(mesa_dir, 'ld.so.conf'), 'w') as f:
             f.write('/mesa')
 
         mesa_egl_dir = os.path.join(
-            self.snap_dir, 'usr', 'lib', 'my_arch', 'mesa-egl')
+            self.prime_dir, 'usr', 'lib', 'my_arch', 'mesa-egl')
         os.makedirs(mesa_egl_dir)
         with open(os.path.join(mesa_egl_dir, 'ld.so.conf'), 'w') as f:
             f.write('# Standalone comment\n')
@@ -1367,7 +1367,7 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        expected = (os.path.join(self.snap_dir, i) for i in
+        expected = (os.path.join(self.prime_dir, i) for i in
                     ['mesa', 'mesa-egl'])
         for item in expected:
             self.assertTrue(item in paths,

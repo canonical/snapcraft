@@ -58,7 +58,7 @@ parts:
         dirs = [
             os.path.join(self.parts_dir, 'part1', 'src'),
             self.stage_dir,
-            self.snap_dir,
+            self.prime_dir,
             os.path.join(self.parts_dir, 'plugins'),
         ]
         files_tar = [
@@ -67,7 +67,7 @@ parts:
         ]
         files_no_tar = [
             os.path.join(self.stage_dir, 'binary'),
-            os.path.join(self.snap_dir, 'binary'),
+            os.path.join(self.prime_dir, 'binary'),
             'snap-test.snap',
             'snap-test_1.0_source.tar.bz2',
         ]
