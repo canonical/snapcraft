@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 from testtools.matchers import (
     Contains,
-    Equals,
-    FileExists
+    FileContains,
+    FileExists,
+    Not
 )
 
 import integration_tests
@@ -45,15 +45,14 @@ class HookTestCase(integration_tests.TestCase):
             self.assertThat(
                 os.path.join(primedir, 'meta', 'hooks', hook), FileExists())
 
-            # Assert that the hook itself was the static one in snap/, not the
-            # one from the part.
-            output = subprocess.check_output(
-                os.path.join(primedir, 'snap', 'hooks', 'configure')).decode(
-                    'utf8')
-            self.assertThat(output, Equals("I'm the configure hook\n"))
+        # Assert that the wrapper execs the correct thing
+        self.assertThat(
+            os.path.join(primedir, 'meta', 'hooks', 'another-hook'),
+            FileContains(matcher=Contains('exec "$SNAP/snap/hooks/{}"'.format(
+                hook))))
 
-            # Assert that the wrapper execs the correct thing
-            with open(os.path.join(primedir, 'meta', 'hooks', hook)) as f:
-                self.assertThat(
-                    f.read(),
-                    Contains('exec "$SNAP/snap/hooks/{}"'.format(hook)))
+        # Assert that the configure hook doesn't have a wrapper
+        self.assertThat(
+            os.path.join(primedir, 'meta', 'hooks', 'configure'),
+            Not(FileContains(matcher=Contains('exec'.format(
+                hook)))))
