@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,9 +18,11 @@ import configparser
 import logging
 import os
 from unittest.mock import patch
+import testtools
 from testtools.matchers import (
     Contains,
     Equals,
+    FileContains,
     FileExists,
     HasLength,
     Not
@@ -29,7 +31,11 @@ from testtools.matchers import (
 import fixtures
 import yaml
 
-from snapcraft.internal.meta import create_snap_packaging, _SnapPackaging
+from snapcraft.internal.meta import (
+    CommandError,
+    create_snap_packaging,
+    _SnapPackaging
+)
 from snapcraft.internal import common
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft import tests
@@ -285,6 +291,8 @@ class CreateTestCase(CreateBaseTestCase):
         os.makedirs(hooksdir)
         open(os.path.join(hooksdir, 'foo'), 'w').close()
         open(os.path.join(hooksdir, 'bar'), 'w').close()
+        os.chmod(os.path.join(hooksdir, 'foo'), 0o755)
+        os.chmod(os.path.join(hooksdir, 'bar'), 0o755)
         self.config_data['hooks'] = {
             'foo': {'plugs': ['plug']},
             'bar': {}
@@ -314,6 +322,104 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(
             y['hooks']['bar'], Not(Contains('plugs')),
             "Expected generated 'bar' hook to not contain 'plugs'")
+
+
+class WriteSnapDirectoryTestCase(CreateBaseTestCase):
+    def test_write_snap_directory(self):
+        # Setup a snap directory containing a few things.
+        _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
+        _create_file(
+            os.path.join(self.snap_dir, 'hooks', 'test-hook'), executable=True)
+
+        # Now write the snap directory, and verify everything was migrated, as
+        # well as the hook making it into meta/.
+        self.generate_meta_yaml()
+        prime_snap_dir = os.path.join(self.prime_dir, 'snap')
+        self.assertThat(
+            os.path.join(prime_snap_dir, 'snapcraft.yaml'), FileExists())
+        self.assertThat(
+            os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
+        self.assertThat(
+            os.path.join(self.hooks_dir, 'test-hook'), FileExists())
+
+        # The hook should be empty, because the one in snap/hooks is empty, and
+        # no wrapper is generated (i.e. that hook is copied to both locations).
+        self.assertThat(
+            os.path.join(self.hooks_dir, 'test-hook'), FileContains(''))
+
+    def test_snap_hooks_overwrite_part_hooks(self):
+        # Setup a prime/snap directory containing a hook.
+        part_hook = os.path.join(self.prime_dir, 'snap', 'hooks', 'test-hook')
+        _create_file(part_hook, content='from part', executable=True)
+
+        # Setup a snap directory containing the same hook
+        snap_hook = os.path.join(self.snap_dir, 'hooks', 'test-hook')
+        _create_file(snap_hook, content='from snap', executable=True)
+
+        # Now write the snap directory, and verify that the snap hook overwrote
+        # the part hook in both prime/snap/hooks and prime/meta/hooks.
+        self.generate_meta_yaml()
+        prime_snap_dir = os.path.join(self.prime_dir, 'snap')
+        self.assertThat(
+            os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
+        self.assertThat(
+            os.path.join(self.hooks_dir, 'test-hook'), FileExists())
+
+        # Both hooks in snap/hooks and meta/hooks should contain 'from snap' as
+        # that one should have overwritten the other (and its wrapper).
+        self.assertThat(
+            os.path.join(self.prime_dir, 'snap', 'hooks', 'test-hook'),
+            FileContains('from snap'))
+        self.assertThat(
+            os.path.join(self.prime_dir, 'meta', 'hooks', 'test-hook'),
+            FileContains('from snap'))
+
+    def test_snap_hooks_not_executable_raises(self):
+        # Setup a snap directory containing a few things.
+        _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
+        _create_file(os.path.join(self.snap_dir, 'hooks', 'test-hook'))
+
+        # Now write the snap directory. This process should fail as the hook
+        # isn't executable.
+        with testtools.ExpectedException(CommandError,
+                                         "hook 'test-hook' is not executable"):
+            self.generate_meta_yaml()
+
+
+class GenerateHookWrappersTestCase(CreateBaseTestCase):
+    def test_generate_hook_wrappers(self):
+        # Set up the prime directory to contain a few hooks in snap/hooks
+        snap_hooks_dir = os.path.join(self.prime_dir, 'snap', 'hooks')
+        hook1_path = os.path.join(snap_hooks_dir, 'test-hook1')
+        hook2_path = os.path.join(snap_hooks_dir, 'test-hook2')
+
+        for path in (hook1_path, hook2_path):
+            _create_file(path, executable=True)
+
+        # Now generate hook wrappers, and verify that they're correct
+        self.generate_meta_yaml()
+        for hook in ('test-hook1', 'test-hook2'):
+            hook_path = os.path.join(self.hooks_dir, hook)
+            self.assertThat(hook_path, FileExists())
+            self.assertThat(hook_path, tests.IsExecutable())
+
+            # The hook in meta/hooks should exec the one in snap/hooks, as it's
+            # a wrapper generated by snapcraft.
+            self.assertThat(
+                hook_path, FileContains(matcher=Contains(
+                    'exec "$SNAP/snap/hooks/{}"'.format(hook))))
+
+    def test_generate_hook_wrappers_not_executable_raises(self):
+        # Set up the prime directory to contain a hook in snap/hooks that is
+        # not executable.
+        snap_hooks_dir = os.path.join(self.prime_dir, 'snap', 'hooks')
+        _create_file(os.path.join(snap_hooks_dir, 'test-hook'))
+
+        # Now attempt to generate hook wrappers. This should fail, as the hook
+        # itself is not executable.
+        with testtools.ExpectedException(CommandError,
+                                         "hook 'test-hook' is not executable"):
+            self.generate_meta_yaml()
 
 
 class CreateWithConfinementTestCase(CreateBaseTestCase):
@@ -561,3 +667,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         self.assertEqual(wrapped_apps,
                          {'app1': {'command': 'command-app1.wrapper'}})
+
+
+def _create_file(path, *, content='', executable=False):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        f.write(content)
+    if executable:
+        os.chmod(path, 0o755)

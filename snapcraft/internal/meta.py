@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,6 +21,7 @@ import logging
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import tempfile
 
@@ -69,6 +70,7 @@ def create_snap_packaging(config_data, snap_dir, parts_dir):
     packaging = _SnapPackaging(config_data, snap_dir, parts_dir)
     packaging.write_snap_yaml()
     packaging.setup_assets()
+    packaging.generate_hook_wrappers()
     packaging.write_snap_directory()
 
     return packaging.meta_dir
@@ -135,15 +137,38 @@ class _SnapPackaging:
                     os.remove(destination)
                 file_utils.link_or_copy(source, destination)
 
-        # Now write hook wrappers for any hooks included in that directory.
-        self._generate_hook_wrappers()
+        # Now copy the hooks contained within the snap directory directly into
+        # meta (they don't get wrappers like the ones that come from parts).
+        snap_hooks_dir = os.path.join('snap', 'hooks')
+        hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
+        if os.path.isdir(snap_hooks_dir):
+            os.makedirs(hooks_dir, exist_ok=True)
+            for hook_name in os.listdir(snap_hooks_dir):
+                source = os.path.join(snap_hooks_dir, hook_name)
+                destination = os.path.join(hooks_dir, hook_name)
 
-    def _generate_hook_wrappers(self):
+                # First, verify that the hook is actually executable
+                if not os.stat(source).st_mode & stat.S_IEXEC:
+                    raise CommandError('hook {!r} is not executable'.format(
+                        hook_name))
+
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(destination)
+
+                file_utils.link_or_copy(source, destination)
+
+    def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
         hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
-        os.makedirs(hooks_dir, exist_ok=True)
         if os.path.isdir(snap_hooks_dir):
+            os.makedirs(hooks_dir, exist_ok=True)
             for hook_name in os.listdir(snap_hooks_dir):
+                file_path = os.path.join(snap_hooks_dir, hook_name)
+                # First, verify that the hook is actually executable
+                if not os.stat(file_path).st_mode & stat.S_IEXEC:
+                    raise CommandError('hook {!r} is not executable'.format(
+                        hook_name))
+
                 hook_exec = os.path.join('$SNAP', 'snap', 'hooks', hook_name)
                 hook_path = os.path.join(hooks_dir, hook_name)
                 with contextlib.suppress(FileNotFoundError):
