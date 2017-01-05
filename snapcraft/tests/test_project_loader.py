@@ -1173,7 +1173,7 @@ class InitTestCase(tests.TestCase):
 
         self.assertEqual(
             "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', please "
-            "remove one (though note that 'snapcraft.yaml' is deprecated)",
+            "remove one.",
             str(raised))
 
     def test_both_new_and_hidden_yamls_cause_error(self):
@@ -1187,7 +1187,7 @@ class InitTestCase(tests.TestCase):
 
         self.assertEqual(
             "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', please "
-            "remove one (though note that '.snapcraft.yaml' is deprecated)",
+            "remove one.",
             str(raised))
 
     def test_both_visible_and_hidden_yamls_cause_error(self):
@@ -1200,7 +1200,7 @@ class InitTestCase(tests.TestCase):
 
         self.assertEqual(
             "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', please "
-            'remove one',
+            'remove one.',
             str(raised))
 
     def test_snapcraft_yaml_loads(self):

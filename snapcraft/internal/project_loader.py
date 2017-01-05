@@ -372,36 +372,27 @@ def _build_env_for_stage(stagedir, snap_name, confinement,
 
 
 def _get_snapcraft_yaml():
-    snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
+    possible_yamls = [
+        os.path.join('snap', 'snapcraft.yaml'),
+        'snapcraft.yaml',
+        '.snapcraft.yaml',
+    ]
 
-    snapcraft_yaml_exists = os.path.exists(snapcraft_yaml_path)
-    visible_yaml_exists = os.path.exists('snapcraft.yaml')
-    hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
+    snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
 
-    if snapcraft_yaml_exists and visible_yaml_exists:
-        raise EnvironmentError(
-            "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', "
-            "please remove one (though note that 'snapcraft.yaml' is "
-            'deprecated)')
-    elif snapcraft_yaml_exists and hidden_yaml_exists:
-        raise EnvironmentError(
-            "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', "
-            "please remove one (though note that '.snapcraft.yaml' is "
-            'deprecated)')
-    elif visible_yaml_exists and hidden_yaml_exists:
-        raise EnvironmentError(
-            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
-            "please remove one")
-    elif snapcraft_yaml_exists:
-        return snapcraft_yaml_path
-    elif visible_yaml_exists:
+    if 'snapcraft.yaml' in snapcraft_yamls:
         deprecations.handle_deprecation_notice('dn2')
-        return 'snapcraft.yaml'
-    elif hidden_yaml_exists:
+    if '.snapcraft.yaml' in snapcraft_yamls:
         deprecations.handle_deprecation_notice('dn3')
-        return '.snapcraft.yaml'
-    else:
-        raise SnapcraftYamlFileError(snapcraft_yaml_path)
+
+    if not snapcraft_yamls:
+        raise SnapcraftYamlFileError('snap/snapcraft.yaml')
+    elif len(snapcraft_yamls) > 1:
+        raise EnvironmentError(
+            'Found a {!r} and a {!r}, please remove one.'.format(
+                snapcraft_yamls[0], snapcraft_yamls[1]))
+
+    return snapcraft_yamls[0]
 
 
 def _snapcraft_yaml_load(yaml_file):
