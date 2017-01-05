@@ -53,7 +53,8 @@ class TestCase(testtools.TestCase):
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
-    def run_snapcraft(self, command, project_dir=None, yaml_dir=None):
+    def run_snapcraft(self, command, project_dir=None, yaml_dir=None,
+                      debug=True):
         if isinstance(command, str):
             command = [command]
         if project_dir:
@@ -68,8 +69,11 @@ class TestCase(testtools.TestCase):
             cwd = os.path.join(self.path, yaml_dir)
 
         try:
+            snapcraft_command = [self.snapcraft_command]
+            if debug:
+                command.append('-d')
             snapcraft_output = subprocess.check_output(
-                [self.snapcraft_command, '-d'] + command, cwd=cwd,
+                snapcraft_command + command, cwd=cwd,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))

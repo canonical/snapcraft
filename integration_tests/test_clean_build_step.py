@@ -17,7 +17,9 @@
 import os
 
 from testtools.matchers import (
+    Contains,
     DirExists,
+    Equals,
     FileExists,
     Not
 )
@@ -54,12 +56,32 @@ class CleanBuildStepBuiltTestCase(integration_tests.TestCase):
     def test_clean_build_step(self):
         self.assert_files_exist()
 
-        self.run_snapcraft(['clean', '--step=build'], self.project_dir)
+        output = self.run_snapcraft(
+            ['clean', '--step=build'], self.project_dir, debug=False)
 
         for part_name, part in self.parts.items():
             self.assertThat(part['builddir'], Not(DirExists()))
             self.assertThat(part['installdir'], Not(DirExists()))
             self.assertThat(part['sourcedir'], DirExists())
+
+        # Assert that the priming and staging areas were removed wholesale, not
+        # a part at a time (since we didn't specify any parts).
+        self.assertThat(output, Contains("Cleaning up priming area"))
+        self.assertThat(output, Contains("Cleaning up staging area"))
+
+        output = output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
+        self.expectThat(part1_output, Equals([
+            'Skipping cleaning priming area for part1 (already clean)',
+            'Skipping cleaning staging area for part1 (already clean)',
+            'Cleaning build for part1'
+        ]))
+        self.expectThat(part2_output, Equals([
+            'Skipping cleaning priming area for part2 (already clean)',
+            'Skipping cleaning staging area for part2 (already clean)',
+            'Cleaning build for part2'
+        ]))
 
         # Now try to build again
         self.run_snapcraft('build', self.project_dir)
