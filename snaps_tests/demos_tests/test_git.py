@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
+
 import snaps_tests
 
 
@@ -28,7 +30,7 @@ class GitTestCase(snaps_tests.SnapsTestCase):
         # Building classic snaps require the core snap to be installed
         self.install_store_snap('core')
 
-        snap_path = self.build_snap(self.snap_content_dir)
-        snap_name = 'git'
+        self.build_snap(self.snap_content_dir)
         # TODO reenable git once snap-confine and snapd bits are in place
+        # snap_name = 'git'
         # self.install_snap(snap_path, snap_name, '2.8.0')
