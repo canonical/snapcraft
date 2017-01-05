@@ -24,7 +24,7 @@ class GitTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'git'
 
     def test_gopaste(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armv7l':
+        if snapcraft.ProjectOptions().deb_arch == 'armhf':
             self.skipTest("Snaps can't yet be installed in a lxc container.")
 
         # Building classic snaps require the core snap to be installed

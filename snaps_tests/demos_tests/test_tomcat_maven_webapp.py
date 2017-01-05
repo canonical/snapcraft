@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,7 +24,7 @@ class TomcatMavenWebappTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'tomcat-maven-webapp'
 
     def test_tomcat_maven_webapp(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armv7l':
+        if snapcraft.ProjectOptions().deb_arch == 'armhf':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The maven plugin does not support armhf')
         snap_path = self.build_snap(self.snap_content_dir)

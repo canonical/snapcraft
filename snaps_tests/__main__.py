@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -49,7 +49,7 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    if snapcraft.ProjectOptions().deb_arch == 'armv7l':
+    if snapcraft.ProjectOptions().deb_arch == 'armhf':
         # snaps can't yet be installed in a lxc container.
         snaps_tests.config['skip-install'] = True
     else:
