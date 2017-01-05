@@ -22,6 +22,9 @@ class TomcatMavenWebappTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'tomcat-maven-webapp'
 
     def test_tomcat_maven_webapp(self):
+        if platform.machine() == 'armv7l':
+            # https://bugs.launchpad.net/snapcraft/+bug/1647405
+            self.skipTest('The maven plugin does not support armhf')
         snap_path = self.build_snap(self.snap_content_dir)
         snap_name = 'tomcat-webapp-demo'
         self.install_snap(snap_path, snap_name, '1.0')
