@@ -25,7 +25,6 @@ from testtools.matchers import (
     FileExists,
     Not,
 )
-import yaml
 
 import snapcraft
 import integration_tests
@@ -170,20 +169,3 @@ class SnapTestCase(integration_tests.TestCase):
             "Issues while validating snapcraft.yaml: found character '\\t' "
             "that cannot start any token on line 13 of snapcraft.yaml",
             str(error.output))
-
-    def test_aliases(self):
-        project_dir = 'alias'
-
-        self.run_snapcraft('prime', project_dir)
-        snap_yaml = os.path.join(project_dir, 'prime', 'meta', 'snap.yaml')
-        self.assertThat(
-            snap_yaml,
-            FileExists())
-
-        data = {}
-        with open(snap_yaml) as fp:
-            data = yaml.load(fp)
-
-        expected_aliases = ['hi.sh', 'howdy.sh']
-        self.assertEqual(set(expected_aliases),
-                         set(data['apps']['hello']['aliases']))
