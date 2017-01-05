@@ -31,7 +31,7 @@ import yaml
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal.errors import (
-    FileConflictError,
+    PrimeFileConflictError,
     PluginError,
     MissingState,
     SnapcraftPartConflictError,
@@ -1113,7 +1113,7 @@ def _combine_filesets(starting_fileset, modifying_fileset):
                                              modifying_includes)
 
     if contradicting_fileset:
-        raise FileConflictError(fileset=contradicting_fileset)
+        raise PrimeFileConflictError(fileset=contradicting_fileset)
 
     to_combine = False
     # combine if starting_fileset has a wildcard

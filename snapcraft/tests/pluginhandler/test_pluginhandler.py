@@ -34,7 +34,7 @@ import fixtures
 import snapcraft
 from . import mocks
 from snapcraft.internal.errors import (
-    FileConflictError,
+    PrimeFileConflictError,
     SnapcraftPartConflictError,
 )
 from snapcraft.internal import (
@@ -2459,12 +2459,13 @@ class FindDependenciesTestCase(tests.TestCase):
         fileset_2 = ['a']
 
         raised = self.assertRaises(
-            FileConflictError,
+            PrimeFileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
         self.assertEqual(
             raised.__str__(),
-            "The following files would create a conflict in the snap: {'a'}"
+            "The following files have been excluded by the `stage` keyword, "
+            "but included by the `prime` keyword: {'a'}"
         )
 
     def test__get_includes(self):

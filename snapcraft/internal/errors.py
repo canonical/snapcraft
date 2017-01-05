@@ -39,11 +39,11 @@ class MissingState(Exception):
     pass
 
 
-class FileConflictError(SnapcraftError):
+class PrimeFileConflictError(SnapcraftError):
 
     fmt = (
-        'The following files would create a conflict in the snap: '
-        '{fileset!r}'
+        'The following files have been excluded by the `stage` keyword, '
+        'but included by the `prime` keyword: {fileset!r}'
     )
 
 
