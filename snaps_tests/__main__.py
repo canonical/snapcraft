@@ -49,7 +49,7 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    if snapcraft.project_options().deb_arch == 'armv7l':
+    if snapcraft.ProjectOptions().deb_arch == 'armv7l':
         # snaps can't yet be installed in a lxc container.
         snaps_tests.config['skip-install'] = True
     else:

@@ -24,7 +24,7 @@ class GradleTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'gradle'
 
     def test_java_hello_world(self):
-        if snapcraft.project_options().deb_arch == 'armv7l':
+        if snapcraft.ProjectOptions().deb_arch == 'armv7l':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The gradle plugin does not support armhf')
         snap_path = self.build_snap(self.snap_content_dir)

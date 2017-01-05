@@ -22,7 +22,7 @@ import integration_tests
 class MavenPluginTestCase(integration_tests.TestCase):
 
     def test_build_maven_plugin(self):
-        if snapcraft.project_options().deb_arch == 'armv7l':
+        if snapcraft.ProjectOptions().deb_arch == 'armv7l':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The maven plugin does not support armhf')
         project_dir = 'simple-maven'
