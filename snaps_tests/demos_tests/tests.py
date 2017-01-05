@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,11 +28,6 @@ class TestSnapcraftExamples(
             'name': 'godd',
             'version': '1.0',
             }),
-        ('git', {
-            'snap_content_dir': 'git',
-            'name': 'git',
-            'version': '2.8.0',
-            }),
         ('py2-project', {
             'snap_content_dir': 'py2-project',
             'name': 'spongeshaker',
@@ -46,12 +41,7 @@ class TestSnapcraftExamples(
     ]
 
     def test_demo(self):
-        # Building classic snaps require the core snap to be installed
-        if self.name == 'git':
-            self.install_store_snap('core')
         # Build snap will raise an exception in case of error.
         snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
-        # TODO reenable git once snap-confine and snapd bits are in place
-        if self.name != 'git':
-            self.install_snap(snap_path, self.name, self.version)
+        self.install_snap(snap_path, self.name, self.version)
