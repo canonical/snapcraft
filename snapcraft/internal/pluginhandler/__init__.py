@@ -31,6 +31,7 @@ import yaml
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal.errors import (
+    FileConflictError,
     PluginError,
     MissingState,
     SnapcraftPartConflictError,
@@ -431,11 +432,13 @@ class PluginHandler:
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
         fileset = self._get_fileset(step).copy()
+        includes = _get_includes(fileset)
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if step == 'prime' and fileset == ['*']:
+        if step == 'prime' and (fileset == ['*'] or
+                                len(includes) == 0):
             stage_fileset = self._get_fileset('stage').copy()
-            fileset = _combine_filesets(fileset, stage_fileset)
+            fileset = _combine_filesets(stage_fileset, fileset)
 
         fileset.extend(plugin_fileset)
 
@@ -1097,29 +1100,33 @@ def _get_excludes(fileset):
     return [x[1:] for x in fileset if x[0] == '-']
 
 
-def _combine_filesets(fileset_1, fileset_2):
-    """Combine filesets if the first is an explicit or implicit wildcard."""
+def _combine_filesets(starting_fileset, modifying_fileset):
+    """
+    Combine filesets if modifying_fileset is an explicit or implicit
+    wildcard.
+    """
 
-    f1_excludes = set(_get_excludes(fileset_1))
-    f2_includes = set(_get_includes(fileset_2))
+    starting_excludes = set(_get_excludes(starting_fileset))
+    modifying_includes = set(_get_includes(modifying_fileset))
 
-    contradicting_fileset = set.intersection(f1_excludes, f2_includes)
+    contradicting_fileset = set.intersection(starting_excludes,
+                                             modifying_includes)
 
     if contradicting_fileset:
         raise FileConflictError(fileset=contradicting_fileset)
 
     to_combine = False
-    # combine if fileset_1 has a wildcard
+    # combine if starting_fileset has a wildcard
     # XXX: should this only be a single wildcard and possibly excludes?
-    if '*' in fileset_1:
+    if '*' in modifying_fileset:
         to_combine = True
-        fileset_1.remove('*')
+        modifying_fileset.remove('*')
 
-    # combine if fileset_1 is only excludes
-    if set([x[0] for x in fileset_1]) == set('-'):
+    # combine if modifying_fileset is only excludes
+    if set([x[0] for x in modifying_fileset]) == set('-'):
         to_combine = True
 
     if to_combine:
-        return list(set(fileset_1 + fileset_2))
+        return list(set(starting_fileset + modifying_fileset))
     else:
-        return fileset_1
+        return modifying_fileset

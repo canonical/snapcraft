@@ -33,7 +33,10 @@ import fixtures
 
 import snapcraft
 from . import mocks
-from snapcraft.internal.errors import SnapcraftPartConflictError
+from snapcraft.internal.errors import (
+    FileConflictError,
+    SnapcraftPartConflictError,
+)
 from snapcraft.internal import (
     common,
     lifecycle,
@@ -2425,8 +2428,8 @@ class FindDependenciesTestCase(tests.TestCase):
             raised.__str__(), 'Cannot load magic header detection')
 
     def test__combine_filesets_explicit_wildcard(self):
-        fileset_1 = ['*']
-        fileset_2 = ['a', 'b']
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['*']
 
         expected_fileset = ['a', 'b']
         combined_fileset = pluginhandler._combine_filesets(
@@ -2434,8 +2437,8 @@ class FindDependenciesTestCase(tests.TestCase):
         self.assertEqual(set(expected_fileset), set(combined_fileset))
 
     def test__combine_filesets_implicit_wildcard(self):
-        fileset_1 = ['-c']
-        fileset_2 = ['a', 'b']
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['-c']
 
         expected_fileset = ['a', '-c', 'b']
         combined_fileset = pluginhandler._combine_filesets(
@@ -2443,8 +2446,8 @@ class FindDependenciesTestCase(tests.TestCase):
         self.assertEqual(set(expected_fileset), set(combined_fileset))
 
     def test__combine_filesets_no_wildcard(self):
-        fileset_1 = ['a']
-        fileset_2 = ['a', 'b']
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['a']
 
         expected_fileset = ['a']
         combined_fileset = pluginhandler._combine_filesets(
@@ -2456,11 +2459,12 @@ class FindDependenciesTestCase(tests.TestCase):
         fileset_2 = ['a']
 
         raised = self.assertRaises(
-            EnvironmentError,
+            FileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
         self.assertEqual(
-            raised.__str__(), "File conflicts: {'a'}"
+            raised.__str__(),
+            "The following files would create a conflict in the snap: {'a'}"
         )
 
     def test__get_includes(self):
