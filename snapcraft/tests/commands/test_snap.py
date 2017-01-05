@@ -95,7 +95,7 @@ parts:
         self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -124,7 +124,7 @@ parts:
         self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -154,7 +154,7 @@ parts:
         self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -181,7 +181,7 @@ parts:
             fake_logger.output)
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', self.snap_dir, 'snap-test_1.0_amd64.snap',
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -289,7 +289,7 @@ type: os
         self.verify_state('part1', self.state_dir, 'prime')
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', self.snap_dir, 'mysnap.snap',
+            'mksquashfs', self.prime_dir, 'mysnap.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 

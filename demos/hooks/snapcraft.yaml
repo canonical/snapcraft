@@ -1,0 +1,10 @@
+name: hooks
+version: 1.0
+summary: Snap containing a configure hook
+description: This snap contains a configure hook that fails upon command
+confinement: strict
+grade: stable
+
+parts:
+  nil-part:
+    plugin: nil
