@@ -495,7 +495,10 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
         part.mark_cleaned('pull')
 
 
-def clean(project_options, parts, step='pull'):
+def clean(project_options, parts, step=None):
+    if not step:
+        step = 'pull'
+
     if not parts and step == 'pull':
         _cleanup_common_directories_for_step(step, project_options)
         return
