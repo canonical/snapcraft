@@ -61,8 +61,10 @@ class CommandError(Exception):
 
 def create_snap_packaging(config_data, snap_dir, parts_dir):
     """Create snap.yaml and related assets in meta.
-    Create the meta directory and provision it with snap.yaml
-    in the snap dir using information from config_data.
+
+    Create the meta directory and provision it with snap.yaml in the snap dir
+    using information from config_data. Also copy in the local 'snap'
+    directory, and generate wrappers for hooks coming from parts.
 
     :param dict config_data: project values defined in snapcraft.yaml.
     :return: meta_dir.
