@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import platform
+import snapcraft
 
 import snaps_tests
 
@@ -24,7 +24,7 @@ class GitTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'git'
 
     def test_gopaste(self):
-        if platform.machine() == 'armv7l':
+        if snapcraft.project_options().deb_arch == 'armv7l':
             self.skipTest("Snaps can't yet be installed in a lxc container.")
 
         # Building classic snaps require the core snap to be installed

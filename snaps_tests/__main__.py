@@ -35,10 +35,11 @@ Options:
 
 import logging
 import os
-import platform
 import sys
 
 import docopt
+
+import snapcraft
 
 import snaps_tests
 
@@ -48,7 +49,7 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    if platform.machine() == 'armv7l':
+    if snapcraft.project_options().deb_arch == 'armv7l':
         # snaps can't yet be installed in a lxc container.
         snaps_tests.config['skip-install'] = True
     else:

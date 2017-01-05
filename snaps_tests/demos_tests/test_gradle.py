@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import platform
+import snapcraft
 
 import snaps_tests
 
@@ -24,7 +24,7 @@ class GradleTestCase(snaps_tests.SnapsTestCase):
     snap_content_dir = 'gradle'
 
     def test_java_hello_world(self):
-        if platform.machine() == 'armv7l':
+        if snapcraft.project_options().deb_arch == 'armv7l':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The gradle plugin does not support armhf')
         snap_path = self.build_snap(self.snap_content_dir)
