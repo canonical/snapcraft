@@ -33,7 +33,10 @@ import fixtures
 
 import snapcraft
 from . import mocks
-from snapcraft.internal.errors import SnapcraftPartConflictError
+from snapcraft.internal.errors import (
+    PrimeFileConflictError,
+    SnapcraftPartConflictError,
+)
 from snapcraft.internal import (
     common,
     lifecycle,
@@ -2423,6 +2426,61 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertEqual(
             raised.__str__(), 'Cannot load magic header detection')
+
+    def test__combine_filesets_explicit_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['*']
+
+        expected_fileset = ['a', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_implicit_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['-c']
+
+        expected_fileset = ['a', '-c', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_no_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['a']
+
+        expected_fileset = ['a']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_with_contradiciton(self):
+        fileset_1 = ['-a']
+        fileset_2 = ['a']
+
+        raised = self.assertRaises(
+            PrimeFileConflictError,
+            pluginhandler._combine_filesets, fileset_1, fileset_2
+        )
+        self.assertEqual(
+            raised.__str__(),
+            "The following files have been excluded by the `stage` keyword, "
+            "but included by the `prime` keyword: {'a'}"
+        )
+
+    def test__get_includes(self):
+        fileset = ['-a', 'b']
+        expected_includes = ['b']
+
+        includes = pluginhandler._get_includes(fileset)
+        self.assertEqual(set(expected_includes), set(includes))
+
+    def test__get_excludes(self):
+        fileset = ['-a', 'b']
+        expected_excludes = ['a']
+
+        excludes = pluginhandler._get_excludes(fileset)
+        self.assertEqual(set(expected_excludes), set(excludes))
 
 
 class SourcesTestCase(tests.TestCase):
