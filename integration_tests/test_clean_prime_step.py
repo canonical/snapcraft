@@ -17,6 +17,7 @@
 import os
 
 from testtools.matchers import (
+    Contains,
     DirExists,
     FileExists,
     Not
@@ -39,10 +40,17 @@ class CleanPrimeStepTestCase(integration_tests.TestCase):
         self.assertThat(os.path.join(bindir, 'file1'), FileExists())
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
 
-        self.run_snapcraft(['clean', '--step=prime'], self.project_dir)
+        output = self.run_snapcraft(
+            ['clean', '--step=prime'], self.project_dir, debug=False)
         self.assertThat(snapdir, Not(DirExists()))
         self.assertThat(os.path.join(self.project_dir, 'stage'), DirExists())
         self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+
+        # Assert that the priming area was removed wholesale, not a part at a
+        # time (since we didn't specify any parts).
+        self.assertThat(output, Contains("Cleaning up priming area"))
+        self.expectThat(output, Not(Contains('part1')))
+        self.expectThat(output, Not(Contains('part2')))
 
         # Now try to prime again
         self.run_snapcraft('prime', self.project_dir)

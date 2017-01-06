@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,11 +18,24 @@ import configparser
 import logging
 import os
 from unittest.mock import patch
+import testtools
+from testtools.matchers import (
+    Contains,
+    Equals,
+    FileContains,
+    FileExists,
+    HasLength,
+    Not
+)
 
 import fixtures
 import yaml
 
-from snapcraft.internal.meta import create_snap_packaging, _SnapPackaging
+from snapcraft.internal.meta import (
+    CommandError,
+    create_snap_packaging,
+    _SnapPackaging
+)
 from snapcraft.internal import common
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft import tests
@@ -43,21 +56,25 @@ class CreateBaseTestCase(tests.TestCase):
         }
 
         self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
-        self.meta_dir = os.path.join(self.snap_dir, 'meta')
+        self.prime_dir = os.path.join(os.path.abspath(os.curdir), 'prime')
+        self.meta_dir = os.path.join(self.prime_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
-
-class CreateTestCase(CreateBaseTestCase):
-
-    def test_create_meta(self):
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+    def generate_meta_yaml(self):
+        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
 
         with open(self.snap_yaml) as f:
-            y = yaml.load(f)
+            return yaml.load(f)
+
+
+class CreateTestCase(CreateBaseTestCase):
+
+    def test_create_meta(self):
+        y = self.generate_meta_yaml()
 
         expected = {'architectures': ['amd64'],
                     'confinement': 'devmode',
@@ -71,13 +88,7 @@ class CreateTestCase(CreateBaseTestCase):
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
+        y = self.generate_meta_yaml()
         self.assertTrue(
             'epoch' in y,
             'Expected "epoch" property to be copied into snap.yaml')
@@ -86,13 +97,7 @@ class CreateTestCase(CreateBaseTestCase):
     def test_create_meta_with_assumes(self):
         self.config_data['assumes'] = ['feature1', 'feature2']
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
+        y = self.generate_meta_yaml()
         self.assertTrue(
             'assumes' in y,
             'Expected "assumes" property to be copied into snap.yaml')
@@ -104,7 +109,7 @@ class CreateTestCase(CreateBaseTestCase):
             f.write(gadget_yaml)
 
         self.config_data['type'] = 'gadget'
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -119,24 +124,19 @@ class CreateTestCase(CreateBaseTestCase):
             MissingGadgetError,
             create_snap_packaging,
             self.config_data,
-            self.snap_dir,
+            self.prime_dir,
             self.parts_dir)
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         self.assertTrue(
             os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
             'icon.png was not setup correctly')
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
@@ -155,7 +155,7 @@ class CreateTestCase(CreateBaseTestCase):
             f.write(declared_icon_content)
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -163,11 +163,6 @@ class CreateTestCase(CreateBaseTestCase):
         with open(expected_icon, 'rb') as f:
             self.assertEqual(f.read(), declared_icon_content)
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
@@ -181,10 +176,10 @@ class CreateTestCase(CreateBaseTestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
 
         # Running again should be good
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -193,7 +188,7 @@ class CreateTestCase(CreateBaseTestCase):
         with open(os.path.join(gui_path, 'icon.png'), 'wb') as f:
             f.write(icon_content)
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         expected_icon = os.path.join(self.meta_dir, 'gui', 'icon.png')
         self.assertTrue(os.path.exists(expected_icon),
@@ -201,17 +196,12 @@ class CreateTestCase(CreateBaseTestCase):
         with open(expected_icon, 'rb') as f:
             self.assertEqual(f.read(), icon_content)
 
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
     def test_create_meta_with_app(self):
-        os.mkdir(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app.sh'), 'w').close()
+        os.mkdir(self.prime_dir)
+        open(os.path.join(self.prime_dir, 'app.sh'), 'w').close()
         self.config_data['apps'] = {
             'app1': {'command': 'app.sh'},
             'app2': {'command': 'app.sh', 'plugs': ['network']},
@@ -220,20 +210,14 @@ class CreateTestCase(CreateBaseTestCase):
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
 
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
+        y = self.generate_meta_yaml()
 
         for app in ['app1', 'app2', 'app3']:
             app_wrapper_path = os.path.join(
-                self.snap_dir, 'command-{}.wrapper'.format(app))
+                self.prime_dir, 'command-{}.wrapper'.format(app))
             self.assertTrue(
                 os.path.exists(app_wrapper_path),
                 'the wrapper for {!r} was not setup correctly'.format(app))
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
 
         expected = {
             'architectures': ['amd64'],
@@ -265,22 +249,21 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertEqual(y, expected)
 
     def test_create_meta_with_app_desktop_key(self):
-        os.mkdir(self.snap_dir)
-        open(os.path.join(self.snap_dir, 'app.sh'), 'w').close()
-        with open(os.path.join(self.snap_dir, 'app1.desktop'), 'w') as f:
+        os.mkdir(self.prime_dir)
+        open(os.path.join(self.prime_dir, 'app.sh'), 'w').close()
+        with open(os.path.join(self.prime_dir, 'app1.desktop'), 'w') as f:
             f.write('[Desktop Entry]\nExec=app1.exe\nIcon=app1.png')
-        icon_dir = os.path.join(self.snap_dir, 'usr', 'share')
+        icon_dir = os.path.join(self.prime_dir, 'usr', 'share')
         os.makedirs(icon_dir)
         open(os.path.join(icon_dir, 'app2.png'), 'w').close()
-        with open(os.path.join(self.snap_dir, 'app2.desktop'), 'w') as f:
+        with open(os.path.join(self.prime_dir, 'app2.desktop'), 'w') as f:
             f.write('[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png')
         self.config_data['apps'] = {
             'app1': {'command': 'app.sh', 'desktop': 'app1.desktop'},
             'app2': {'command': 'app.sh', 'desktop': 'app2.desktop'}
         }
-        create_snap_packaging(self.config_data, self.snap_dir, self.parts_dir)
-        self.assertTrue(
-            os.path.exists(self.snap_yaml), 'snap.yaml was not created')
+
+        self.generate_meta_yaml()
 
         desktop_file = os.path.join(self.meta_dir, 'gui', 'app1.desktop')
         self.assertTrue(os.path.exists(desktop_file),
@@ -303,6 +286,141 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertEqual(contents[section].get('Icon'),
                          '${SNAP}/usr/share/app2.png')
 
+    def test_create_meta_with_hook(self):
+        hooksdir = os.path.join(self.snap_dir, 'hooks')
+        os.makedirs(hooksdir)
+        open(os.path.join(hooksdir, 'foo'), 'w').close()
+        open(os.path.join(hooksdir, 'bar'), 'w').close()
+        os.chmod(os.path.join(hooksdir, 'foo'), 0o755)
+        os.chmod(os.path.join(hooksdir, 'bar'), 0o755)
+        self.config_data['hooks'] = {
+            'foo': {'plugs': ['plug']},
+            'bar': {}
+        }
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(
+            y, Contains('hooks'), "Expected generated YAML to contain 'hooks'")
+
+        for hook in ('foo', 'bar'):
+            generated_hook_path = os.path.join(
+                self.prime_dir, 'meta', 'hooks', hook)
+            self.assertThat(
+                generated_hook_path, FileExists(),
+                'The {!r} hook was not setup correctly'.format(hook))
+
+            self.assertThat(
+                y['hooks'], Contains(hook),
+                'Expected generated hooks to contain {!r}'.format(hook))
+
+        self.assertThat(
+            y['hooks']['foo'], Contains('plugs'),
+            "Expected generated 'foo' hook to contain 'plugs'")
+        self.assertThat(y['hooks']['foo']['plugs'], HasLength(1))
+        self.assertThat(y['hooks']['foo']['plugs'][0], Equals('plug'))
+        self.assertThat(
+            y['hooks']['bar'], Not(Contains('plugs')),
+            "Expected generated 'bar' hook to not contain 'plugs'")
+
+
+class WriteSnapDirectoryTestCase(CreateBaseTestCase):
+    def test_write_snap_directory(self):
+        # Setup a snap directory containing a few things.
+        _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
+        _create_file(
+            os.path.join(self.snap_dir, 'hooks', 'test-hook'), executable=True)
+
+        # Now write the snap directory, and verify everything was migrated, as
+        # well as the hook making it into meta/.
+        self.generate_meta_yaml()
+        prime_snap_dir = os.path.join(self.prime_dir, 'snap')
+        self.assertThat(
+            os.path.join(prime_snap_dir, 'snapcraft.yaml'), FileExists())
+        self.assertThat(
+            os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
+        self.assertThat(
+            os.path.join(self.hooks_dir, 'test-hook'), FileExists())
+
+        # The hook should be empty, because the one in snap/hooks is empty, and
+        # no wrapper is generated (i.e. that hook is copied to both locations).
+        self.assertThat(
+            os.path.join(self.hooks_dir, 'test-hook'), FileContains(''))
+
+    def test_snap_hooks_overwrite_part_hooks(self):
+        # Setup a prime/snap directory containing a hook.
+        part_hook = os.path.join(self.prime_dir, 'snap', 'hooks', 'test-hook')
+        _create_file(part_hook, content='from part', executable=True)
+
+        # Setup a snap directory containing the same hook
+        snap_hook = os.path.join(self.snap_dir, 'hooks', 'test-hook')
+        _create_file(snap_hook, content='from snap', executable=True)
+
+        # Now write the snap directory, and verify that the snap hook overwrote
+        # the part hook in both prime/snap/hooks and prime/meta/hooks.
+        self.generate_meta_yaml()
+        prime_snap_dir = os.path.join(self.prime_dir, 'snap')
+        self.assertThat(
+            os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
+        self.assertThat(
+            os.path.join(self.hooks_dir, 'test-hook'), FileExists())
+
+        # Both hooks in snap/hooks and meta/hooks should contain 'from snap' as
+        # that one should have overwritten the other (and its wrapper).
+        self.assertThat(
+            os.path.join(self.prime_dir, 'snap', 'hooks', 'test-hook'),
+            FileContains('from snap'))
+        self.assertThat(
+            os.path.join(self.prime_dir, 'meta', 'hooks', 'test-hook'),
+            FileContains('from snap'))
+
+    def test_snap_hooks_not_executable_raises(self):
+        # Setup a snap directory containing a few things.
+        _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
+        _create_file(os.path.join(self.snap_dir, 'hooks', 'test-hook'))
+
+        # Now write the snap directory. This process should fail as the hook
+        # isn't executable.
+        with testtools.ExpectedException(CommandError,
+                                         "hook 'test-hook' is not executable"):
+            self.generate_meta_yaml()
+
+
+class GenerateHookWrappersTestCase(CreateBaseTestCase):
+    def test_generate_hook_wrappers(self):
+        # Set up the prime directory to contain a few hooks in snap/hooks
+        snap_hooks_dir = os.path.join(self.prime_dir, 'snap', 'hooks')
+        hook1_path = os.path.join(snap_hooks_dir, 'test-hook1')
+        hook2_path = os.path.join(snap_hooks_dir, 'test-hook2')
+
+        for path in (hook1_path, hook2_path):
+            _create_file(path, executable=True)
+
+        # Now generate hook wrappers, and verify that they're correct
+        self.generate_meta_yaml()
+        for hook in ('test-hook1', 'test-hook2'):
+            hook_path = os.path.join(self.hooks_dir, hook)
+            self.assertThat(hook_path, FileExists())
+            self.assertThat(hook_path, tests.IsExecutable())
+
+            # The hook in meta/hooks should exec the one in snap/hooks, as it's
+            # a wrapper generated by snapcraft.
+            self.assertThat(
+                hook_path, FileContains(matcher=Contains(
+                    'exec "$SNAP/snap/hooks/{}"'.format(hook))))
+
+    def test_generate_hook_wrappers_not_executable_raises(self):
+        # Set up the prime directory to contain a hook in snap/hooks that is
+        # not executable.
+        snap_hooks_dir = os.path.join(self.prime_dir, 'snap', 'hooks')
+        _create_file(os.path.join(snap_hooks_dir, 'test-hook'))
+
+        # Now attempt to generate hook wrappers. This should fail, as the hook
+        # itself is not executable.
+        with testtools.ExpectedException(CommandError,
+                                         "hook 'test-hook' is not executable"):
+            self.generate_meta_yaml()
+
 
 class CreateWithConfinementTestCase(CreateBaseTestCase):
 
@@ -312,15 +430,7 @@ class CreateWithConfinementTestCase(CreateBaseTestCase):
     def test_create_meta_with_confinement(self):
         self.config_data['confinement'] = self.confinement
 
-        create_snap_packaging(
-            self.config_data, self.snap_dir, self.parts_dir)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml),
-            'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
+        y = self.generate_meta_yaml()
         self.assertTrue(
             'confinement' in y,
             'Expected "confinement" property to be in snap.yaml')
@@ -335,15 +445,7 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
     def test_create_meta_with_grade(self):
         self.config_data['grade'] = self.grade
 
-        create_snap_packaging(
-            self.config_data, self.snap_dir, self.parts_dir)
-
-        self.assertTrue(
-            os.path.exists(self.snap_yaml),
-            'snap.yaml was not created')
-
-        with open(self.snap_yaml) as f:
-            y = yaml.load(f)
+        y = self.generate_meta_yaml()
         self.assertTrue(
             'grade' in y,
             'Expected "grade" property to be in snap.yaml')
@@ -358,7 +460,7 @@ class WrapExeTestCase(tests.TestCase):
 
         # TODO move to use outer interface
         self.packager = _SnapPackaging({'confinement': 'devmode'},
-                                       self.snap_dir,
+                                       self.prime_dir,
                                        self.parts_dir)
 
     @patch('snapcraft.internal.common.assemble_env')
@@ -368,14 +470,14 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 """.format(self.parts_dir)
 
         relative_exe_path = 'test_relexepath'
-        open(os.path.join(self.snap_dir, relative_exe_path), 'w').close()
+        open(os.path.join(self.prime_dir, relative_exe_path), 'w').close()
 
         # Check that the wrapper is created even if there is already a file
         # with the same name.
         open(os.path.join('prime', 'test_relexepath.wrapper'), 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n'
@@ -395,11 +497,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 """.format(self.parts_dir)
 
         relative_exe_path = 'test_relexepath'
-        open(os.path.join(self.snap_dir, relative_exe_path), 'w').close()
+        open(os.path.join(self.prime_dir, relative_exe_path), 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe(
             relative_exe_path, basename='new-name')
-        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
 
@@ -429,11 +531,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         shebang_path = os.path.join(
             self.parts_dir, 'testsnap', 'install', 'snap_exe')
         exe_contents = '#!{}\n'.format(shebang_path)
-        with open(os.path.join(self.snap_dir, relative_exe_path), 'w') as exe:
+        with open(os.path.join(self.prime_dir, relative_exe_path), 'w') as exe:
             exe.write(exe_contents)
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = (
             '#!/bin/sh\n'
@@ -445,7 +547,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
-        with open(os.path.join(self.snap_dir, relative_exe_path), 'r') as exe:
+        with open(os.path.join(self.prime_dir, relative_exe_path), 'r') as exe:
             # The shebang wasn't changed, since we don't know what the
             # path will be on the installed system.
             self.assertEqual(exe_contents, exe.read())
@@ -458,11 +560,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         """
         relative_exe_path = 'test_relexepath'
         exe_contents = '#!/bin/bash\necho hello\n'
-        with open(os.path.join(self.snap_dir, relative_exe_path), 'w') as exe:
+        with open(os.path.join(self.prime_dir, relative_exe_path), 'w') as exe:
             exe.write(exe_contents)
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
@@ -472,7 +574,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
-        with open(os.path.join(self.snap_dir, relative_exe_path), 'r') as exe:
+        with open(os.path.join(self.prime_dir, relative_exe_path), 'r') as exe:
             self.assertEqual(exe_contents, exe.read())
 
     def test_non_shebang_binaries_ignored(self):
@@ -485,11 +587,12 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         # Choose a content which can't be decoded with utf-8, to make
         # sure no decoding errors happen.
         exe_contents = b'\xf0\xf1'
-        with open(os.path.join(self.snap_dir, relative_exe_path), 'wb') as exe:
+        path = os.path.join(self.prime_dir, relative_exe_path)
+        with open(path, 'wb') as exe:
             exe.write(exe_contents)
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
@@ -499,17 +602,17 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             wrapper_contents = wrapper_file.read()
 
         self.assertEqual(expected, wrapper_contents)
-        with open(os.path.join(self.snap_dir, relative_exe_path), 'rb') as exe:
+        with open(path, 'rb') as exe:
             self.assertEqual(exe_contents, exe.read())
 
     @patch('snapcraft.internal.common.run')
     def test_exe_is_in_path(self, run_mock):
-        app_path = os.path.join(self.snap_dir, 'bin', 'app1')
+        app_path = os.path.join(self.prime_dir, 'bin', 'app1')
         os.mkdir(os.path.dirname(app_path))
         open(app_path, 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe('app1')
-        wrapper_path = os.path.join(self.snap_dir, relative_wrapper_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
                     '\n\n'
@@ -521,7 +624,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertEqual(expected, wrapper_contents)
 
     def test_command_does_not_exist(self):
-        common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
+        common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
 
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
@@ -534,11 +637,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             str(raised))
 
     def test_command_is_not_executable(self):
-        common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
+        common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
 
         apps = {'app1': {'command': 'command-not-executable'}}
 
-        cmd_path = os.path.join(self.snap_dir, 'bin', apps['app1']['command'])
+        cmd_path = os.path.join(self.prime_dir, 'bin', apps['app1']['command'])
         os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
 
@@ -551,11 +654,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             str(raised))
 
     def test_command_found(self):
-        common.env = ['PATH={}/bin:$PATH'.format(self.snap_dir)]
+        common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
 
         apps = {'app1': {'command': 'command-executable'}}
 
-        cmd_path = os.path.join(self.snap_dir, 'bin', apps['app1']['command'])
+        cmd_path = os.path.join(self.prime_dir, 'bin', apps['app1']['command'])
         os.mkdir(os.path.dirname(cmd_path))
         open(cmd_path, 'w').close()
         os.chmod(cmd_path, 0o755)
@@ -564,3 +667,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         self.assertEqual(wrapped_apps,
                          {'app1': {'command': 'command-app1.wrapper'}})
+
+
+def _create_file(path, *, content='', executable=False):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        f.write(content)
+    if executable:
+        os.chmod(path, 0o755)
