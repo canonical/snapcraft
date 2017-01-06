@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,15 +19,18 @@ import snapcraft
 import snaps_tests
 
 
-class GradleTestCase(snaps_tests.SnapsTestCase):
+class GitTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'gradle'
+    snap_content_dir = 'git'
 
-    def test_java_hello_world(self):
+    def test_gopaste(self):
         if snapcraft.ProjectOptions().deb_arch == 'armhf':
-            # https://bugs.launchpad.net/snapcraft/+bug/1647405
-            self.skipTest('The gradle plugin does not support armhf')
-        snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'java-hello-gradle', '0')
-        self.assert_command_in_snappy_testbed(
-            '/snap/bin/java-hello-gradle.hello', 'Hello Gradle\n')
+            self.skipTest("Snaps can't yet be installed in a lxc container.")
+
+        # Building classic snaps require the core snap to be installed
+        self.install_store_snap('core')
+
+        self.build_snap(self.snap_content_dir)
+        # TODO reenable git once snap-confine and snapd bits are in place
+        # snap_name = 'git'
+        # self.install_snap(snap_path, snap_name, '2.8.0')
