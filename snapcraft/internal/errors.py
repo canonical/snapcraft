@@ -39,6 +39,14 @@ class MissingState(Exception):
     pass
 
 
+class PrimeFileConflictError(SnapcraftError):
+
+    fmt = (
+        'The following files have been excluded by the `stage` keyword, '
+        'but included by the `prime` keyword: {fileset!r}'
+    )
+
+
 class DuplicateAliasError(SnapcraftError):
 
     fmt = 'Multiple parts have the same alias defined: {aliases!r}'
