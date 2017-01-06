@@ -29,8 +29,9 @@ class PyHookCase(snaps_tests.SnapsTestCase):
         # Regular `snap set` should succeed.
         self.run_command_in_snappy_testbed('sudo snap set pyhooks foo=bar')
 
-        # Setting fail=true should fail.
-        self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_command_in_snappy_testbed,
-            'sudo snap set pyhooks fail=true')
+        if not snaps_tests.config.get('skip-install', False):
+            # Setting fail=true should fail.
+            self.assertRaises(
+                subprocess.CalledProcessError,
+                self.run_command_in_snappy_testbed,
+                'sudo snap set pyhooks fail=true')
