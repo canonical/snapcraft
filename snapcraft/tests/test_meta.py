@@ -55,7 +55,19 @@ class CreateBaseTestCase(tests.TestCase):
             'confinement': 'devmode',
         }
 
-        self.project_options = ProjectOptions()
+        patcher = patch(
+            'snapcraft.internal.project_loader.get_snapcraft_yaml')
+        self.mock_get_yaml = patcher.start()
+        self.mock_get_yaml.return_value = os.path.join(
+            'snap', 'snapcraft.yaml')
+        self.addCleanup(patcher.stop)
+
+        # Ensure the ensure snapcraft.yaml method has something to copy.
+        os.makedirs('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+
+        self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
+        self.prime_dir = os.path.join(os.path.abspath(os.curdir), 'prime')
         self.meta_dir = os.path.join(self.prime_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')

@@ -123,7 +123,7 @@ class Config:
         self.build_tools = []
         self._project_options = project_options
 
-        self._snapcraft_yaml = _get_snapcraft_yaml()
+        self._snapcraft_yaml = get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
 
         self._validator = Validator(snapcraft_yaml)
@@ -371,7 +371,7 @@ def _build_env_for_stage(stagedir, snap_name, confinement,
     return env
 
 
-def _get_snapcraft_yaml():
+def get_snapcraft_yaml():
     possible_yamls = [
         os.path.join('snap', 'snapcraft.yaml'),
         'snapcraft.yaml',

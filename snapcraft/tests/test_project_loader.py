@@ -41,7 +41,7 @@ class YamlBaseTestCase(tests.TestCase):
         dirs.setup_dirs()
 
         patcher = unittest.mock.patch(
-            'snapcraft.internal.project_loader._get_snapcraft_yaml')
+            'snapcraft.internal.project_loader.get_snapcraft_yaml')
         self.mock_get_yaml = patcher.start()
         self.mock_get_yaml.return_value = os.path.join(
             'snap', 'snapcraft.yaml')

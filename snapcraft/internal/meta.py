@@ -28,7 +28,7 @@ import tempfile
 import yaml
 
 from snapcraft import file_utils
-from snapcraft.internal import common
+from snapcraft.internal import common, project_loader
 from snapcraft.internal.errors import MissingGadgetError
 
 
@@ -125,6 +125,16 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
+    def _ensure_snapcraft_yaml(self):
+        source = project_loader.get_snapcraft_yaml()
+        destination = os.path.join(self._snap_dir, 'snap', 'snapcraft.yaml')
+
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(destination)
+
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        file_utils.link_or_copy(source, destination)
+
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
@@ -160,6 +170,8 @@ class _SnapPackaging:
                     os.remove(destination)
 
                 file_utils.link_or_copy(source, destination)
+
+        self._ensure_snapcraft_yaml()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
