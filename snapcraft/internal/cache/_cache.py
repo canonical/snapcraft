@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-17 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,6 +33,15 @@ class SnapcraftCache:
 
     def prune(self, *args, **kwargs):
         raise NotImplementedError
+
+
+class SnapcraftParserCache(SnapcraftCache):
+    """Parser specific cache"""
+
+    def __init__(self):
+        super().__init__()
+        self.parser_cache_root = os.path.join(
+            self.cache_root, 'parser')
 
 
 class SnapcraftProjectCache(SnapcraftCache):

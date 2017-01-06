@@ -41,10 +41,10 @@ Options:
 import logging
 import os
 import re
-import tempfile
 import urllib
 import yaml
 from yaml.scanner import ScannerError
+from xdg import BaseDirectory
 
 from docopt import docopt
 from collections import OrderedDict
@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: make this a temporary directory that get's removed when finished
-BASE_DIR = tempfile.mkdtemp()
+BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, 'snapcraft-parser')
 PARTS_FILE = 'snap-parts.yaml'
 DEFAULT_INDEX = 'http://wiki.ubuntu.com/snapcraft/parts?action=raw'
 
