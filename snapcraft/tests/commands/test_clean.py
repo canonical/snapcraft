@@ -83,7 +83,7 @@ parts:
 
         self.assertFalse(os.path.exists(self.parts_dir))
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)
@@ -95,7 +95,7 @@ parts:
         main(['clean'])
 
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
         self.assertTrue(os.path.exists(self.parts_dir))
         self.assertTrue(os.path.isfile(local_plugin))
 
@@ -106,7 +106,7 @@ parts:
 
         self.assertFalse(os.path.exists(self.parts_dir))
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
     def test_partial_clean(self):
         parts = self.make_snapcraft_yaml(n=3)
@@ -123,7 +123,7 @@ parts:
 
         self.assertTrue(os.path.exists(self.parts_dir))
         self.assertTrue(os.path.exists(self.stage_dir))
-        self.assertTrue(os.path.exists(self.snap_dir))
+        self.assertTrue(os.path.exists(self.prime_dir))
 
         # Now clean it the rest of the way
         main(['clean', 'clean1'])
@@ -135,7 +135,7 @@ parts:
 
         self.assertFalse(os.path.exists(self.parts_dir))
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
     def test_everything_is_clean(self):
         """Don't crash if everything is already clean."""
@@ -190,7 +190,7 @@ parts:
             fake_logger.output, MatchesRegex(
                 'DEPRECATED: Use `prime` instead of `strip` as the step to '
                 'clean'))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):
@@ -225,7 +225,7 @@ parts:
                  'w').close()
 
         os.makedirs(self.stage_dir)
-        os.makedirs(self.snap_dir)
+        os.makedirs(self.prime_dir)
 
     def assert_clean(self, parts):
         for part in parts:

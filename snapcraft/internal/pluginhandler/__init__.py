@@ -31,6 +31,7 @@ import yaml
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal.errors import (
+    PrimeFileConflictError,
     PluginError,
     MissingState,
     SnapcraftPartConflictError,
@@ -430,13 +431,28 @@ class PluginHandler:
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
+        fileset = self._get_fileset(step).copy()
+        includes = _get_includes(fileset)
+        # If we're priming and we don't have an explicit set of files to prime
+        # include the files from the stage step
+        if step == 'prime' and (fileset == ['*'] or
+                                len(includes) == 0):
+            stage_fileset = self._get_fileset('stage').copy()
+            fileset = _combine_filesets(stage_fileset, fileset)
+
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
 
+    def _get_fileset(self, option, default=None):
+        if default is None:
+            default = ['*']
+
+        fileset = getattr(self.code.options, option, default)
+        return fileset if fileset else default
+
     def _organize(self):
-        fileset = getattr(self.code.options, 'organize', {}) or {}
+        fileset = self._get_fileset('organize', {})
 
         _organize_filesets(fileset.copy(), self.code.installdir)
 
@@ -1074,3 +1090,43 @@ def check_for_collisions(parts):
         # And add our files to the list
         parts_files[part.name] = {'files': part_files,
                                   'installdir': part.installdir}
+
+
+def _get_includes(fileset):
+    return [x for x in fileset if x[0] != '-']
+
+
+def _get_excludes(fileset):
+    return [x[1:] for x in fileset if x[0] == '-']
+
+
+def _combine_filesets(starting_fileset, modifying_fileset):
+    """
+    Combine filesets if modifying_fileset is an explicit or implicit
+    wildcard.
+    """
+
+    starting_excludes = set(_get_excludes(starting_fileset))
+    modifying_includes = set(_get_includes(modifying_fileset))
+
+    contradicting_fileset = set.intersection(starting_excludes,
+                                             modifying_includes)
+
+    if contradicting_fileset:
+        raise PrimeFileConflictError(fileset=contradicting_fileset)
+
+    to_combine = False
+    # combine if starting_fileset has a wildcard
+    # XXX: should this only be a single wildcard and possibly excludes?
+    if '*' in modifying_fileset:
+        to_combine = True
+        modifying_fileset.remove('*')
+
+    # combine if modifying_fileset is only excludes
+    if set([x[0] for x in modifying_fileset]) == set('-'):
+        to_combine = True
+
+    if to_combine:
+        return list(set(starting_fileset + modifying_fileset))
+    else:
+        return modifying_fileset

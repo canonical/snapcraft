@@ -33,7 +33,10 @@ import fixtures
 
 import snapcraft
 from . import mocks
-from snapcraft.internal.errors import SnapcraftPartConflictError
+from snapcraft.internal.errors import (
+    PrimeFileConflictError,
+    SnapcraftPartConflictError,
+)
 from snapcraft.internal import (
     common,
     lifecycle,
@@ -1459,7 +1462,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(self.snap_dir, 'bin')
+        bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -1476,7 +1479,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state_multiple_parts(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(self.snap_dir, 'bin')
+        bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -1498,7 +1501,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state_common_files(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(self.snap_dir, 'bin')
+        bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -1710,8 +1713,8 @@ class CleanBaseTestCase(tests.TestCase):
         if os.path.exists(self.stage_dir):
             shutil.rmtree(self.stage_dir)
 
-        if os.path.exists(self.snap_dir):
-            shutil.rmtree(self.snap_dir)
+        if os.path.exists(self.prime_dir):
+            shutil.rmtree(self.prime_dir)
 
 
 class CleanTestCase(CleanBaseTestCase):
@@ -1804,23 +1807,23 @@ class CleanTestCase(CleanBaseTestCase):
 
         # Verify that part1's file has been primeped
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')))
 
         # Verify that part2's file has been primeped
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')))
 
         # Now clean the prime step for part1
         handler1.clean_prime({})
 
         # Verify that part1's file is no longer primeped
         self.assertFalse(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')),
             "Expected part1's primeped files to be cleaned")
 
         # Verify that part2's file is still there
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')),
             "Expected part2's primeped files to be untouched")
 
     def test_clean_prime_after_fileset_change(self):
@@ -1839,9 +1842,9 @@ class CleanTestCase(CleanBaseTestCase):
 
         # Verify that both files have been primeped
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')))
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')))
 
         # Now update the `snap` fileset to only snap one of these files
         handler.code.options.snap = ['bin/1']
@@ -1851,10 +1854,10 @@ class CleanTestCase(CleanBaseTestCase):
 
         # Verify that part1's file is no longer primeped
         self.assertFalse(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
             'changed since it was primeped.')
 
@@ -1862,7 +1865,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
-        open(os.path.join(self.snap_dir, '1'), 'w').close()
+        open(os.path.join(self.prime_dir, '1'), 'w').close()
 
         handler.mark_done('prime', None)
 
@@ -1876,7 +1879,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
-        primed_file = os.path.join(self.snap_dir, '1')
+        primed_file = os.path.join(self.prime_dir, '1')
         open(primed_file, 'w').close()
 
         handler.mark_done('prime', None)
@@ -2042,11 +2045,11 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         # Now prime them
         handler.prime()
 
-        self.assertTrue(os.listdir(self.snap_dir))
+        self.assertTrue(os.listdir(self.prime_dir))
 
         handler.clean_prime({})
 
-        self.assertFalse(os.listdir(self.snap_dir),
+        self.assertFalse(os.listdir(self.prime_dir),
                          'Expected snapdir to be completely cleaned')
 
 
@@ -2423,6 +2426,61 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertEqual(
             raised.__str__(), 'Cannot load magic header detection')
+
+    def test__combine_filesets_explicit_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['*']
+
+        expected_fileset = ['a', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_implicit_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['-c']
+
+        expected_fileset = ['a', '-c', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_no_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['a']
+
+        expected_fileset = ['a']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_with_contradiciton(self):
+        fileset_1 = ['-a']
+        fileset_2 = ['a']
+
+        raised = self.assertRaises(
+            PrimeFileConflictError,
+            pluginhandler._combine_filesets, fileset_1, fileset_2
+        )
+        self.assertEqual(
+            raised.__str__(),
+            "The following files have been excluded by the `stage` keyword, "
+            "but included by the `prime` keyword: {'a'}"
+        )
+
+    def test__get_includes(self):
+        fileset = ['-a', 'b']
+        expected_includes = ['b']
+
+        includes = pluginhandler._get_includes(fileset)
+        self.assertEqual(set(expected_includes), set(includes))
+
+    def test__get_excludes(self):
+        fileset = ['-a', 'b']
+        expected_excludes = ['a']
+
+        excludes = pluginhandler._get_excludes(fileset)
+        self.assertEqual(set(expected_excludes), set(excludes))
 
 
 class SourcesTestCase(tests.TestCase):
