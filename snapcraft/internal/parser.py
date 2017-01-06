@@ -41,6 +41,7 @@ Options:
 import logging
 import os
 import re
+import tempfile
 import urllib
 import yaml
 from yaml.scanner import ScannerError
@@ -66,7 +67,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: make this a temporary directory that get's removed when finished
-BASE_DIR = os.getenv('TMPDIR', '/tmp')
+BASE_DIR = tempfile.mkdtemp()
 PARTS_FILE = 'snap-parts.yaml'
 DEFAULT_INDEX = 'http://wiki.ubuntu.com/snapcraft/parts?action=raw'
 

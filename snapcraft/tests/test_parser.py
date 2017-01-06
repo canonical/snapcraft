@@ -20,6 +20,7 @@ from unittest import mock
 
 import requests
 import fixtures
+import tempfile
 import yaml
 from collections import OrderedDict
 
@@ -59,7 +60,7 @@ def _get_part_list_count(path=PARTS_FILE):
 
 class TestParserBaseDir(TestCase):
     def test__get_base_dir(self):
-        self.assertEqual('/tmp', parser._get_base_dir())
+        self.assertEqual(parser.BASE_DIR, parser._get_base_dir())
 
 
 class TestParser(TestCase):
@@ -196,8 +197,9 @@ parts: [main]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertEqual(1, _get_part_list_count())
 
+    @mock.patch('snapcraft.internal.parser._get_base_dir')
     @mock.patch('snapcraft.internal.parser._get_origin_data')
-    def test_origin_options(self, mock_get_origin_data):
+    def test_origin_options(self, mock_get_origin_data, mock_get_base_dir):
         _create_example_output("""
 {{{
 ---
@@ -211,6 +213,7 @@ description: example
 parts: [main]
 }}}
 """)
+        mock_get_base_dir.return_value = tempfile.mkdtemp()
         mock_get_origin_data.return_value = {
             'parts': {
                 'main': {
