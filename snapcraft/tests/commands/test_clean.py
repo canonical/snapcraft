@@ -190,7 +190,7 @@ parts:
             fake_logger.output, MatchesRegex(
                 'DEPRECATED: Use `prime` instead of `strip` as the step to '
                 'clean'))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):
