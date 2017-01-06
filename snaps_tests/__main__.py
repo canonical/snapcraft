@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,6 +39,8 @@ import sys
 
 import docopt
 
+import snapcraft
+
 import snaps_tests
 
 
@@ -47,7 +49,11 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    snaps_tests.config['skip-install'] = arguments['--skip-install']
+    if snapcraft.ProjectOptions().deb_arch == 'armhf':
+        # snaps can't yet be installed in a lxc container.
+        snaps_tests.config['skip-install'] = True
+    else:
+        snaps_tests.config['skip-install'] = arguments['--skip-install']
     snaps_tests.config['ip'] = arguments['--ip']
     snaps_tests.config['port'] = arguments['--port']
     snaps_tests.config['filter'] = arguments['--filter']
