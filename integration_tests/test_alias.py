@@ -17,6 +17,8 @@
 import os
 import stat
 
+import yaml
+
 import integration_tests
 from testtools.matchers import FileExists
 
@@ -33,3 +35,16 @@ class AliasTestCase(integration_tests.TestCase):
         self.assertThat(file_path, FileExists())
         self.assertTrue(os.stat(file_path).st_mode & stat.S_IEXEC,
                         'Expected hello.sh to be executable')
+
+        snap_yaml = os.path.join(project_dir, 'prime', 'meta', 'snap.yaml')
+        self.assertThat(
+            snap_yaml,
+            FileExists())
+
+        data = {}
+        with open(snap_yaml) as fp:
+            data = yaml.load(fp)
+
+        expected_aliases = ['hi.sh', 'howdy.sh']
+        self.assertEqual(set(expected_aliases),
+                         set(data['apps']['hello']['aliases']))
