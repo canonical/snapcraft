@@ -132,8 +132,9 @@ class PushCommandTestCase(tests.TestCase):
             main, ['push', snap_file])
 
         self.assertIn(
-            'Sorry, try `snapcraft register my-snap-name` '
-            'before pushing again.',
+            'You are not the publisher or allowed to push revisions for this '
+            'snap. To become the publisher, run `snapcraft register '
+            'my-snap-name` and try to push again.',
             self.fake_logger.output)
 
     def test_push_with_updown_error(self):
