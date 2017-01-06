@@ -695,15 +695,16 @@ class UploadTestCase(tests.TestCase):
             errors.StoreReviewError,
             tracker.raise_for_code)
 
-    def test_upload_unregistered_snap(self):
+    def test_push_unregistered_snap(self):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
             errors.StorePushError,
             self.client.upload, 'test-snap-unregistered', self.snap_path)
         self.assertEqual(
             str(raised),
-            'Sorry, try `snapcraft register '
-            'test-snap-unregistered` before pushing again.')
+            'You are not the publisher or allowed to push revisions for this '
+            'snap. To become the publisher, run `snapcraft register '
+            'test-snap-unregistered` and try to push again.')
 
     def test_upload_with_invalid_credentials_raises_exception(self):
         conf = config.Config()
