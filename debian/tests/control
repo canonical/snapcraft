@@ -13,6 +13,7 @@ Depends: @,
          python-flake8,
          python3-fixtures,
          python3-pexpect,
+         python3-subunit,
          python3-testscenarios
 
 Tests: snapstests
