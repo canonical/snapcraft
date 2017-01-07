@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016, 2017 Marius Gripsgard (mariogrip@ubuntu.com)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -92,9 +92,10 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        cmd = [self._cargo, "install",
-               "-j{}".format(self.parallel_build_count),
-               "--root", self.installdir]
+        cmd = [self._cargo, 'install',
+               '-j{}'.format(self.parallel_build_count),
+               '--root', self.installdir,
+               '--path', self.sourcedir]
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
@@ -141,4 +142,6 @@ class RustPlugin(snapcraft.BasePlugin):
                   '--disable-sudo', '--save'] + options)
 
     def _fetch_deps(self):
-        self.run([self._cargo, 'fetch'])
+        self.run([self._cargo, 'fetch',
+                  '--manifest-path',
+                  os.path.join(self.sourcedir, 'Cargo.toml')])
