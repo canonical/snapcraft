@@ -39,8 +39,11 @@ curl:
 
         self.assertEqual(
             str(raised),
-            'Cannot find the part name {!r} in the cache. Please consider '
-            'going to https://wiki.ubuntu.com/snapcraft/parts to add it.')
+            'Cannot find the part name {!r} in the cache. '
+            'Please run `snapcraft update` and try again.\n'
+            'If it is indeed missing, consider going to '
+            'https://wiki.ubuntu.com/snapcraft/parts '
+            'to add it.'.format('curler'))
 
     def test_defining_a_part_with_multiline_description(self):
         main.main(['define', 'multiline-part'])
