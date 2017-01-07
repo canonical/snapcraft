@@ -39,7 +39,7 @@ import shutil
 import snapcraft
 from snapcraft import sources
 
-_RUSTUP = "https://static.rust-lang.org/rustup.sh"
+_RUSTUP = 'https://static.rust-lang.org/rustup.sh'
 
 
 class RustPlugin(snapcraft.BasePlugin):
@@ -123,20 +123,22 @@ class RustPlugin(snapcraft.BasePlugin):
         options = []
 
         if self.options.rust_revision:
-            options.append("--revision=%s" % self.options.rust_revision)
+            options.append('--revision={}'.format(self.options.rust_revision))
 
         if self.options.rust_channel:
-            if self.options.rust_channel in ["stable", "beta", "nightly"]:
-                options.append("--channel=%s" % self.options.rust_channel)
+            if self.options.rust_channel in ['stable', 'beta', 'nightly']:
+                options.append(
+                    '--channel={}'.format(self.options.rust_channel))
             else:
-                raise EnvironmentError("%s is not a valid rust channel"
-                                       % self.options.rust_channel)
+                raise EnvironmentError(
+                    '{} is not a valid rust channel'.format(
+                        self.options.rust_channel))
         if not os.path.exists(self._rustpath):
             os.makedirs(self._rustpath)
         self._rustup_get.download()
-        self.run(["%s" % self._rustup,
-                  "--prefix=%s" % self._rustpath,
-                  "--disable-sudo", "--save"])
+        self.run([self._rustup,
+                  '--prefix={}'.format(self._rustpath),
+                  '--disable-sudo', '--save'] + options)
 
     def _fetch_deps(self):
-        self.run([self._cargo, "fetch"])
+        self.run([self._cargo, 'fetch'])

@@ -29,6 +29,14 @@ class RustPluginTestCase(integration_tests.TestCase):
             os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
         self.assertEqual('There is rust on snaps!\n', binary_output)
 
+    def test_stage_rust_with_revision(self):
+        project_dir = 'simple-rust-with-revision'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
+        self.assertEqual('There is rust on snaps!\n', binary_output)
+
     def test_stage_rust_plugin_with_conditional_feature(self):
         project_dir = 'rust-with-conditional'
         self.run_snapcraft('stage', project_dir)
