@@ -7,7 +7,7 @@ description: |
 confinement: strict
 
 parts:
-  simple-rust:
+  rust-with-revision:
     plugin: rust
     rust-revision: 1.13.0
     source: .
