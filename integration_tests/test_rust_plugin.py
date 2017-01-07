@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016, 2017 Marius Gripsgard (mariogrip@ubuntu.com)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,4 +27,12 @@ class RustPluginTestCase(integration_tests.TestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
-        self.assertEqual("There is rust on snaps!\n", binary_output)
+        self.assertEqual('There is rust on snaps!\n', binary_output)
+
+    def test_stage_rust_plugin_with_conditional_feature(self):
+        project_dir = 'rust-with-conditional'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
+        self.assertEqual('Conditional features work!\n', binary_output)
