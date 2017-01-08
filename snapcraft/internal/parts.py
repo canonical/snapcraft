@@ -329,8 +329,9 @@ def define(part_name):
     except SnapcraftPartMissingError as e:
         raise RuntimeError(
             'Cannot find the part name {!r} in the cache. Please '
+            'run `snapcraft update` and try again.\nIf it is indeed missing, '
             'consider going to https://wiki.ubuntu.com/snapcraft/parts '
-            'to add it.') from e
+            'to add it.'.format(part_name)) from e
     print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
     print('Description: {}'.format(remote_part.pop('description')))
     print('')
