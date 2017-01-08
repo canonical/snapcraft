@@ -17,6 +17,7 @@
 import os
 
 import integration_tests
+import snapcraft
 
 
 class RustPluginTestCase(integration_tests.TestCase):
@@ -30,6 +31,9 @@ class RustPluginTestCase(integration_tests.TestCase):
         self.assertEqual('There is rust on snaps!\n', binary_output)
 
     def test_stage_rust_with_revision(self):
+        if snapcraft.ProjectOptions().deb_arch == 'armhf':
+            self.skipTest('The rust revision chosen fails on armhf')
+
         project_dir = 'rust-with-revision'
         self.run_snapcraft('stage', project_dir)
 
