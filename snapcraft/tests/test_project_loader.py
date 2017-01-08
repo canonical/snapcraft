@@ -1678,7 +1678,11 @@ class ValidationTestCase(ValidationBaseTestCase):
                 'command': 'binary4',
                 'daemon': 'simple',
                 'restart-condition': 'always',
-            }
+            },
+            'service5': {
+                'command': 'binary5',
+                'daemon': 'notify',
+            },
         }
 
         project_loader.Validator(self.data).validate()
