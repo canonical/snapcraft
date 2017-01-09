@@ -225,6 +225,54 @@ of the choice of plugin.
     `prime/` directory reflects the file structure of the snap with no
     extraneous content).
 
+  - prepare: shell script
+
+    If present, the shell script defined here is run before the `build` step
+    of the plugin starts. The working directory is the base build
+    directory for the given part. The defined script is run with `/bin/sh`.
+
+    For example:
+
+      prepare: |
+        cd scripts
+        ./bootstrap.sh
+
+  - build: shell script
+
+    If present, the shell script defined here is run instead of the `build`
+    step of the plugin. The working directory is the base build directory
+    for the given part. The defined script is run with `/bin/sh`.
+
+    For example:
+
+      plugin: make
+      build: |
+        make project
+        make test
+        make special-install
+
+  - install: shell script
+
+    If present, the shell script defined here is run after the `build` step
+    of the plugin has finished. The working directory is the base build
+    directory for the given part. The defined script is run with `/bin/sh`.
+
+    For example:
+
+      install: |
+        sed -i 's|/usr/bin|$SNAP/usr/bin|g' my-bin-artifact.sh
+        mv my-bin-artifact.sh $SNAPCRAFT_PART_INSTALL/bin/my-bin-build.sh
+
+  - build-attributes: [attribute1, attribute2]
+
+    A list of special attributes that affect the build of this specific part.
+    Supported attributes:
+
+      - no-system-libraries:
+        Do not automatically copy required libraries from the system to satisfy
+        the dependencies of this part. This might be useful if one knows these
+        dependencies will be satisfied in other manner, e.g. via content
+        sharing from other snaps.
 """
 
 from collections import OrderedDict                 # noqa
@@ -241,6 +289,7 @@ from snapcraft._store import (                      # noqa
     history,
     gated,
     list_keys,
+    list_registered,
     login,
     logout,
     push,

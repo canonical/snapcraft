@@ -18,6 +18,7 @@ import os
 
 from testtools.matchers import (
     DirExists,
+    Equals,
     FileExists,
     Not
 )
@@ -106,7 +107,8 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
     def test_clean_pull_step(self):
         self.assert_files_exist()
 
-        self.run_snapcraft(['clean', '--step=pull'], self.project_dir)
+        output = self.run_snapcraft(['clean', '--step=pull'], self.project_dir,
+                                    debug=False)
         self.assertThat(self.stagedir, Not(DirExists()))
         self.assertThat(self.snapdir, Not(DirExists()))
 
@@ -114,6 +116,15 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
             self.assertThat(part['builddir'], Not(DirExists()))
             self.assertThat(part['installdir'], Not(DirExists()))
             self.assertThat(part['sourcedir'], Not(DirExists()))
+
+        # Assert that the priming and staging areas were removed wholesale, not
+        # a part at a time (since we didn't specify any parts).
+        output = output.strip().split('\n')
+        self.expectThat(output, Equals([
+            'Cleaning up priming area',
+            'Cleaning up staging area',
+            'Cleaning up parts directory'
+        ]))
 
         # Now try to prime again
         self.run_snapcraft('prime', self.project_dir)

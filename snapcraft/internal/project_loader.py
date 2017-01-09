@@ -238,7 +238,8 @@ class Config:
         parts = snapcraft_yaml.get('parts', {})
 
         for part_name in parts:
-            for step in ('stage', 'snap'):
+            # FIXME: Remove `snap` from here; it's deprecated
+            for step in ('stage', 'snap', 'prime'):
                 step_fileset = _expand_filesets_for(step, parts[part_name])
                 parts[part_name][step] = step_fileset
 
@@ -326,8 +327,9 @@ def _build_env(root, snap_name, confinement, arch_triplet,
 
     if confinement == 'classic':
         if not core_dynamic_linker:
-            raise EnvironmentError('classic confinement requires the '
-                                   'core_dynamic_linker to be set')
+            raise EnvironmentError(
+                'classic confinement requires the core snap to be installed. '
+                'Install it by running `snap install core`.')
 
         core_path = os.path.join('/snap', 'core', 'current')
         core_rpaths = common.get_library_paths(core_path, arch_triplet,

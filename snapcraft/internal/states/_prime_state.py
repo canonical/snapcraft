@@ -43,11 +43,11 @@ class PrimeState(State):
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from part_properties.
 
-        The only property of interest to the prime step is the `snap` keyword
+        The only property of interest to the prime step is the `prime` keyword
         used to filter out files with a white or blacklist.
         """
 
-        return {'snap': part_properties.get('snap', ['*']) or ['*']}
+        return {'prime': part_properties.get('prime', ['*']) or ['*']}
 
     def project_options_of_interest(self, project):
         """Extract the options concerning this step from the project.

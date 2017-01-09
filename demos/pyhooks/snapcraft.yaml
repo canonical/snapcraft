@@ -1,0 +1,15 @@
+name: pyhooks
+version: 1.0
+confinement: strict
+grade: stable
+summary: Snap containing a configure hook written in python
+description: |
+  This snap contains a configure hook written in python that fails upon
+  command
+
+parts:
+  hook:
+    plugin: python
+    install: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
+      cp configure_hook.py $SNAPCRAFT_PART_INSTALL/snap/hooks/configure

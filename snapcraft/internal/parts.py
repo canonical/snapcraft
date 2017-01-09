@@ -26,8 +26,12 @@ from xdg import BaseDirectory
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal.errors import SnapcraftPartMissingError
-from snapcraft.internal import pluginhandler, repo
-from snapcraft.internal import project_loader
+from snapcraft.internal import (
+    deprecations,
+    pluginhandler,
+    project_loader,
+    repo
+)
 
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
@@ -184,6 +188,11 @@ class PartsConfig:
             if 'filesets' in properties:
                 del properties['filesets']
 
+            # FIXME: snap is deprecated, rewrite it to prime instead.
+            if properties.get('snap'):
+                deprecations.handle_deprecation_notice('dn1')
+                properties['prime'] = properties.pop('snap')
+
             self.load_plugin(part_name, plugin_name, properties)
 
         self._compute_dependencies()
@@ -320,8 +329,9 @@ def define(part_name):
     except SnapcraftPartMissingError as e:
         raise RuntimeError(
             'Cannot find the part name {!r} in the cache. Please '
+            'run `snapcraft update` and try again.\nIf it is indeed missing, '
             'consider going to https://wiki.ubuntu.com/snapcraft/parts '
-            'to add it.') from e
+            'to add it.'.format(part_name)) from e
     print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
     print('Description: {}'.format(remote_part.pop('description')))
     print('')

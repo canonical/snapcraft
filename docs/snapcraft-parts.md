@@ -9,7 +9,7 @@ parts have general keywords that apply to all of them. In one case, you may
 want to enhance your part's functionality using `stage-packages` which end up
 bringing Ubuntu deb-based packages into your part, `filesets` to declare
 inclusion and exclusion sets, `organize` to make the artifact output for your
-part neater, `stage` and `snap` to make certain only the right set of files is
+part neater, `stage` and `prime` to make certain only the right set of files is
 seen at each step (making use of `filesets` or not). An example integrating
 these concepts for a part called `example-part` using a hypothetical plugin
 called `sample` would look like:
@@ -34,7 +34,7 @@ parts:
       - $binaries
       - test/bin/test_app
       - $headers
-    snap:
+    prime:
       - $binaries
 ```
 
@@ -59,7 +59,7 @@ the internal layout.
 The concept of `filesets` basically allows the creation of sets named after
 the keywords defined within, in this case *binaries* and *headers*, these are
 not necessarily needed but allow for variable expansion in the common
-targets: `stage` and `snap`. An inclusion is defined by just listing the
+targets: `stage` and `prime`. An inclusion is defined by just listing the
 target file, it can be globbed with `*` and a file can be explicitly
 excluded by prepending a `-` (when using `*` at the beginning of a path it
 needs to be quoted).
@@ -70,8 +70,8 @@ in `filesets`, but it also adds *test/bin/test_app* to the `stage` file set;
 live in *include* as it has a `-` in front of it. These are the files that
 will make it to the *stage* directory.
 
-The behavior for `snap` is identical to `stage` with the exception of applying
-this in the snap directory, which is the final layout for the snap, this is
+The behavior for `prime` is identical to `stage` with the exception of applying
+this in the prime directory, which is the final layout for the snap, this is
 where everything should look clean and crisp for a good quality snap.
 
 

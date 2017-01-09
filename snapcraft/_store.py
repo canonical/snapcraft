@@ -19,6 +19,7 @@ import datetime
 import getpass
 import json
 import logging
+import operator
 import os
 import re
 import subprocess
@@ -161,6 +162,32 @@ def _requires_login():
         logger.error('No valid credentials found.'
                      ' Have you run "snapcraft login"?')
         raise
+
+
+def list_registered():
+    series = storeapi.constants.DEFAULT_SERIES
+
+    store = storeapi.StoreClient()
+    with _requires_login():
+        account_info = store.get_account_information()
+    snaps = [
+        (name, info['since'], 'private' if info['private'] else 'public',
+         info['price'] or '-', '-')
+        for name, info in account_info['snaps'].get(series, {}).items()
+        # Presenting only approved snap registrations, which means name
+        # disputes will be displayed/sorted some other way.
+        if info['status'] == 'Approved'
+    ]
+
+    if not snaps:
+        print('There are no registered snaps for series {!r}.'.format(series))
+        return
+
+    tabulated_snaps = tabulate(
+        sorted(snaps, key=operator.itemgetter(0)),
+        headers=['Name', 'Since', 'Visibility', 'Price', 'Notes'],
+        tablefmt='plain')
+    print(tabulated_snaps)
 
 
 def _get_usable_keys(name=None):
@@ -382,11 +409,14 @@ def push(snap_filename, release_channels=None):
         raise FileNotFoundError(
             'The file {!r} does not exist.'.format(snap_filename))
 
-    logger.info('Uploading {}.'.format(snap_filename))
-
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
+
+    logger.info('Pushing {!r} to the store.'.format(snap_filename))
+    with _requires_login():
+        store.push_precheck(snap_name)
+
     with _requires_login():
         tracker = store.upload(snap_name, snap_filename)
 

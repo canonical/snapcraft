@@ -92,16 +92,18 @@ class PythonPlugin(snapcraft.BasePlugin):
         }
         schema.pop('required')
 
+        return schema
+
+    @classmethod
+    def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        schema['pull-properties'].extend([
+        return [
             'requirements',
             'constraints',
             'python-packages',
             'python-version',
-        ])
-
-        return schema
+        ]
 
     @property
     def plugin_build_packages(self):
