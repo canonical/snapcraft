@@ -114,3 +114,41 @@ class RustPluginTestCase(tests.TestCase):
             os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
             '--disable-sudo', '--save']),
             mock.call([plugin._cargo, "fetch"])])
+
+    @mock.patch.object(rust.sources, 'Script')
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_pull_with_channel(self, run_mock, script_mock):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        plugin.options.rust_revision = ''
+        plugin.options.rust_channel = 'nightly'
+
+        plugin.pull()
+
+        self.assertEqual(2, run_mock.call_count)
+
+        rustdir = os.path.join(plugin.partdir, 'rust')
+        run_mock.assert_has_calls([mock.call([
+            os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
+            '--disable-sudo', '--save', '--channel=nightly']),
+            mock.call([plugin._cargo, "fetch"])])
+
+    @mock.patch.object(rust.sources, 'Script')
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_pull_with_revision(self, run_mock, script_mock):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        plugin.options.rust_revision = '1.13.0'
+        plugin.options.rust_channel = ''
+
+        plugin.pull()
+
+        self.assertEqual(2, run_mock.call_count)
+
+        rustdir = os.path.join(plugin.partdir, 'rust')
+        run_mock.assert_has_calls([mock.call([
+            os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
+            '--disable-sudo', '--save', '--revision=1.13.0']),
+            mock.call([plugin._cargo, "fetch"])])
