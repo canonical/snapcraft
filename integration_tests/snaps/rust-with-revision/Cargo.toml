@@ -1,0 +1,9 @@
+[package]
+name = "rust-with-revision"
+version = "0.1.0"
+authors = ["Marius Gripsgard <mariogrip@ubuntu.com>"]
+
+[dependencies]
+log = "*"
+rustc_version = "= 0.1.2"
+rustc_version_runtime = "0.1.0"

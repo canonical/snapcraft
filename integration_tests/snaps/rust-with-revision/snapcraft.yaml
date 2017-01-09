@@ -1,0 +1,13 @@
+name: test-rust-on-revision
+version: 0.1
+summary: A simple rust project using a specific rust revision.
+description: |
+  Build a simple project tied to a rust revision defined in the
+  plugin's schema.
+confinement: strict
+
+parts:
+  rust-with-revision:
+    plugin: rust
+    rust-revision: 1.13.0
+    source: .
