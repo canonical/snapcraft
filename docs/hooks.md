@@ -22,12 +22,12 @@ use the top-level attribute `hooks` in `snapcraft.yaml` to request plugs, like
 so:
 
     hooks: # Top-level YAML attribute, parallel to `apps`
-        configure: # Hook name, corresponds to executable name
-            plugs: [network] # Or any other plugs required by this hook
+      configure: # Hook name, corresponds to executable name
+        plugs: [network] # Or any other plugs required by this hook
 
 Note that hooks will be called with no parameters. If they need more information
 from snapd (or need to provide information to snapd) they can utilize the
-`snapctl` command (for more information on `snapctl`, see `snapctl -h`).
+`snapctl` command (for more information on `snapctl`, run `snapctl -h`).
 
 [1]: https://github.com/snapcore/snapd/wiki/hooks
 [2]: https://github.com/snapcore/snapcraft/tree/master/demos/hooks
