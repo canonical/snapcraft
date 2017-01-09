@@ -1,6 +1,6 @@
 # Snapcraft hook support
 
-Snapcraft supports snapd's [hooks][1] mechanism with two conventions:
+Snapcraft supports snapd's [hooks][1] mechanism using two possible methods:
 
 1. Create a `snap/hooks/` directory in the root of the project and place hook
    executables in there. They will automatically be copied into the snap during
