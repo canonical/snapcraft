@@ -1376,7 +1376,8 @@ class StateTestCase(StateBaseTestCase):
         # Verify that only the part's files were migrated-- not the system
         # dependency.
         mock_migrate_files.assert_called_once_with(
-            {'bin/file'}, {'bin'}, self.handler.stagedir, self.handler.snapdir)
+            {'bin/file'}, {'bin'}, self.handler.code.installdir,
+            self.handler.snapdir, step='prime')
 
         state = self.handler.get_state('prime')
 
@@ -1417,7 +1418,8 @@ class StateTestCase(StateBaseTestCase):
             self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
-            self.handler.stagedir, self.handler.snapdir)
+            self.handler.code.installdir,
+            self.handler.snapdir, step='prime')
 
         state = self.handler.get_state('prime')
 
