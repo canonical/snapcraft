@@ -9,5 +9,5 @@ confinement: strict
 parts:
   rust-with-revision:
     plugin: rust
-    rust-revision: 1.13.0
+    rust-revision: 1.12.0
     source: .
