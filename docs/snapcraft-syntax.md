@@ -44,16 +44,18 @@ contain.
       command is used to start the service.
     * `daemon` (string)
       If present, integrates the runnable as a system service. Valid values are
-      `forking`, `oneshot` and `simple`.
-      If set to `simple`, it is expected that the command configured is the main
-      process.
-      If set to `oneshot`, it is expected that the command configured
-      will exit once it's done (won't be a long-lasting process).
-      If set to `forking`, it is expected that the configured command will call
-      fork() as part of its start-up. The parent process is expected to exit
-      when start-up is complete and all communication channels are set up.
-      The child continues to run as the main daemon process. This is the
-      behavior of traditional UNIX daemons.
+      `forking`, `notify`, `oneshot` and `simple`.
+        - If set to `simple`, it is expected that the command configured is the
+          main process.
+        - If set to `oneshot`, it is expected that the command configured will
+          exit once it's done (won't be a long-lasting process).
+        - If set to `forking`, it is expected that the configured command will
+          call fork() as part of its start-up. The parent process is expected
+          to exit when start-up is complete and all communication channels are
+          set up. The child continues to run as the main daemon process. This
+          is the behavior of traditional UNIX daemons.
+        - If set to `notify`, it is expected that the command configured will
+          send a signal to systemd to indicate that it's running.
     * `stop-command` (string)
       Requires `daemon` to be specified and represents the command to run to
       stop the service.
