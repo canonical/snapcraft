@@ -185,6 +185,10 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.register, snap_name, is_private, constants.DEFAULT_SERIES)
 
+    def push_precheck(self, snap_name):
+        return self._refresh_if_necessary(
+            self.sca.snap_push_precheck, snap_name)
+
     def push_snap_build(self, snap_id, snap_build):
         return self._refresh_if_necessary(
             self.sca.push_snap_build, snap_id, snap_build)
@@ -493,6 +497,20 @@ class SCAClient(Client):
                      'Content-Type': 'application/json'})
         if not response.ok:
             raise errors.StoreRegistrationError(snap_name, response)
+
+    def snap_push_precheck(self, snap_name):
+        data = {
+            'name': snap_name,
+            'dry_run': True,
+        }
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'snap-push/', data=json.dumps(data),
+            headers={'Authorization': auth,
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'})
+        if not response.ok:
+            raise errors.StorePushError(data['name'], response)
 
     def snap_push_metadata(self, snap_name, updown_data):
         data = {
