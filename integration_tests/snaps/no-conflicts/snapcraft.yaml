@@ -1,19 +1,20 @@
 name: test-package
 version: 0.1
-summary: one line summary
-description: a longer description
+summary: A snap without file conflicts due to 'organize'
+description:
+    A snap with parts that would have conflicting files if not for the renaming done in 'organize'
 confinement: strict
 grade: stable
 
 build-packages: [gcc, libc6-dev]
 
 parts:
-  p1:
+  no-conflict-p1:
     plugin: make
     source: .
     organize:
         bin/test: bin/p1-test
-  p2:
+  no-conflict-p2:
     plugin: make
     source: ./p2
-    after: [p1]
+    after: [no-conflict-p1]

@@ -916,12 +916,6 @@ def _migrate_dirs(snap_dirs, srcdir, dstdir, step='stage'):
 
 
 def _can_skip(src, dst, missing_ok=False):
-    if os.path.isdir(src):
-        snapcraft.file_utils.create_similar_directory(
-            src, dst
-        )
-        return True
-
     if missing_ok and not os.path.exists(src):
         return True
 
@@ -948,6 +942,12 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
 
         snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
                                                       os.path.dirname(dst))
+        if os.path.isdir(src):
+            snapcraft.file_utils.create_similar_directory(
+                src, dst
+            )
+            continue
+
         if _can_skip(src, dst, missing_ok):
             continue
 

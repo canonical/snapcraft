@@ -24,15 +24,17 @@ import integration_tests
 class StageTestCase(integration_tests.TestCase):
 
     def test_conflicts(self):
-        project_dir = 'conflicts'
+        project_dir = 'organize'
+        self.run_snapcraft(['stage', 'conflicts-p1'], project_dir)
         exception = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'stage', project_dir)
+            self.run_snapcraft, ['stage', 'conflicts-p2'], project_dir)
 
         self.assertEqual(1, exception.returncode)
         expected_conflicts = (
-            "Parts 'p1' and 'p2' have the following file paths in common "
-            "which have different contents:\n    bin/test\n")
+            "Parts 'conflicts-p1' and 'conflicts-p2' have the following "
+            "file paths in common which have different contents:\n    "
+            "bin/test\n")
         self.assertThat(exception.output, Contains(expected_conflicts))
 
         expected_help = (
@@ -48,19 +50,22 @@ class StageTestCase(integration_tests.TestCase):
         self.assertThat(exception.output, Contains(expected_help))
 
     def test_no_conflicts(self):
-        project_dir = 'no-conflicts'
-        self.run_snapcraft('stage', project_dir)
+        project_dir = 'organize'
+        self.run_snapcraft(['stage', 'no-conflicts-p1'], project_dir)
+        self.run_snapcraft(['stage', 'no-conflicts-p2'], project_dir)
 
     def test_post_organize_conflicts(self):
-        project_dir = 'post-organize-conflicts'
+        project_dir = 'organize'
+        self.run_snapcraft(['stage', 'post-organize-p1'], project_dir)
 
         exception = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'stage', project_dir)
+            self.run_snapcraft, ['stage', 'post-organize-p2'], project_dir)
 
         self.assertEqual(1, exception.returncode)
         expected_conflicts = (
-            "Parts 'p1' and 'p2' have the following file paths in common "
+            "Parts 'post-organize-p1' and 'post-organize-p2' have the "
+            "following file paths in common "
             "which have different contents:\n    bin/test\n")
         self.assertThat(exception.output, Contains(expected_conflicts))
 

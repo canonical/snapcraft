@@ -1,7 +1,7 @@
 # -*- Mode: Makefile; indent-tabs-mode:t; tab-width: 4 -*-
 
 all:
-	gcc -o test_tmp test_tmp.c
+	gcc -o test_tmp test.c
 
 install:
 	mkdir -p $(DESTDIR)/bin

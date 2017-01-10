@@ -1,6 +1,6 @@
 name: test-package
 version: 0.1
-summary: one line summary
+summary: 
 description: a longer description
 icon: icon.png
 confinement: strict
@@ -8,10 +8,10 @@ confinement: strict
 build-packages: [gcc, libc6-dev]
 
 parts:
-  p1:
+  conflicts-p1:
     plugin: make
     source: .
-  p2:
+  conflicts-p2:
     plugin: make
     source: ./p2
-    after: [p1]
+    after: [conflicts-p1]
