@@ -95,7 +95,7 @@ class RustPlugin(snapcraft.BasePlugin):
         cmd = [self._cargo, 'install',
                '-j{}'.format(self.parallel_build_count),
                '--root', self.installdir,
-               '--path', self.sourcedir]
+               '--path', self.builddir]
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
