@@ -1,0 +1,12 @@
+name: rust-subdir-test
+version: 0.1
+summary: A rust project in a subdirectory.
+description: |
+  Test that a rust project can be build when the source is not in the working
+  directory where snapcraft is called.
+confinement: strict
+
+parts:
+  rust-subdir:
+    plugin: rust
+    source: subdir

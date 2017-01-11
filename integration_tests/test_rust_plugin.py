@@ -16,6 +16,8 @@
 
 import os
 
+from testtools.matchers import FileExists, Not
+
 import integration_tests
 
 
@@ -45,3 +47,15 @@ class RustPluginTestCase(integration_tests.TestCase):
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
         self.assertEqual('Conditional features work!\n', binary_output)
+
+    def test_stage_rust_with_source_subdir(self):
+        project_dir = 'rust-subdir'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'rust-subdir'), cwd=project_dir)
+        self.assertEqual('Rust in a subdirectory works\n', binary_output)
+        # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
+        self.assertThat(
+            os.path.join(project_dir, 'Cargo.lock'),
+            Not(FileExists()))
