@@ -34,3 +34,8 @@ parts:
     plugin: make
     source: ./no-conflicts-p2
     after: [no-conflicts-p1]
+  organize-file-to-dir:
+    plugin: make
+    source: .
+    organize:
+        bin/test: new_dir

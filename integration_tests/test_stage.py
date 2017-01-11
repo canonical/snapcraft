@@ -80,3 +80,7 @@ class StageTestCase(integration_tests.TestCase):
             '`snapcraft help plugins`'
         )
         self.assertThat(exception.output, Contains(expected_help))
+
+    def test_organize_file_to_directory(self):
+        project_dir = 'organize'
+        self.run_snapcraft(['stage', 'organize-file-to-dir'], project_dir)

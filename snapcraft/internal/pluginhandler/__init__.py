@@ -952,7 +952,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
             continue
 
         # Otherwise, remove and re-link it.
-        if os.path.exists(dst):
+        if os.path.exists(dst) and not os.path.isdir(dst):
             os.remove(dst)
 
         if src.endswith('.pc'):
