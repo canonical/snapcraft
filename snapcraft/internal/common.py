@@ -63,13 +63,21 @@ def assemble_env(include_core_library_paths=False, arch_triplet=''):
 
 def run(cmd, **kwargs):
     assert isinstance(cmd, list), 'run command must be a list'
+    env_bak = {k: os.environ[k]  for k in ['PYTHONUSERBASE', 'PYTHONHOME']
+               if k in os.environ}
+    for k in env_bak:
+        os.environ.pop(k)
     # FIXME: This is gross to keep writing this, even when env is the same
-    with tempfile.NamedTemporaryFile(mode='w+') as f:
-        f.write(assemble_env())
-        f.write('\n')
-        f.write('exec "$@"')
-        f.flush()
-        subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
+    try:
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(assemble_env())
+            f.write('\n')
+            f.write('exec "$@"')
+            f.flush()
+            subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
+    finally:
+        for k in env_bak:
+            os.environ[k] = env_bak[k]
 
 
 def run_output(cmd, **kwargs):
@@ -117,6 +125,9 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
+    snap = os.environ.get('SNAP')
+    if snap:
+        return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
 

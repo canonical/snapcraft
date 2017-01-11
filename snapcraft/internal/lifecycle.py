@@ -200,8 +200,7 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create_snap_packaging(self.config.data,
-                                       self.project_options)
+            meta.create_snap_packaging(self.config.data, self.project_options)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
