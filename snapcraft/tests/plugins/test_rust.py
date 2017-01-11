@@ -74,7 +74,7 @@ class RustPluginTestCase(tests.TestCase):
                 [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
                  '--root', plugin.installdir,
-                 '--path', plugin.sourcedir],
+                 '--path', plugin.builddir],
                 env=plugin._build_env())
         ])
 
@@ -93,7 +93,7 @@ class RustPluginTestCase(tests.TestCase):
                 [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
                  '--root', plugin.installdir,
-                 '--path', plugin.sourcedir,
+                 '--path', plugin.builddir,
                  '--features', 'conditional-compilation'],
                 env=plugin._build_env())
         ])
