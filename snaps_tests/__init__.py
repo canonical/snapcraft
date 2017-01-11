@@ -18,10 +18,12 @@ import glob
 import inspect
 import logging
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 import fixtures
 import pexpect
@@ -201,8 +203,11 @@ class SnapsTestCase(testtools.TestCase):
             self.addCleanup(
                 self.snappy_testbed.run_command,
                 ['rm', snap_path_in_testbed])
-            cmd = ['sudo', 'snap', 'install', '--force-dangerous',
-                   snap_path_in_testbed]
+            if platform.linux_distribution()[2] == 'yakkety':
+                dangerous = '--dangerous'
+            else:
+                dangerous = '--force-dangerous'
+            cmd = ['sudo', 'snap', 'install', dangerous, snap_path_in_testbed]
             if devmode:
                 cmd.append('--devmode')
             try:
