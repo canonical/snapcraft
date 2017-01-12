@@ -39,7 +39,7 @@ class Bazaar(Base):
                 'a bzr source')
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-checksum for a bzr source')
+                "can't specify a source-checksum for a bzr source")
 
     def pull(self):
         tag_opts = []

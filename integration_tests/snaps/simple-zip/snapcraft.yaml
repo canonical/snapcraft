@@ -6,43 +6,29 @@ confinement: strict
 
 parts:
   file1:
-    plugin: copy
+    plugin: dump
     source: simple.zip
-    files:
-        "*": .
   checksum-md5:
-    plugin: copy
+    plugin: dump
     source: simple.zip
     source-checksum: md5/fe049cfba688aa1af88bc78191d7f904
-    files:
-        "*": .
   checksum-sha1:
-    plugin: copy
+    plugin: dump
     source: simple.zip
     source-checksum: sha1/30fdfacb19b557a762932c5a3a867cdc698e447f
-    files:
-        "*": .
   checksum-sha224:
-    plugin: copy
+    plugin: dump
     source: simple.zip
     source-checksum: sha224/3a7aa780dee4d9c1ed25359d7514589876ff0dc5f1cd7ac7d20e79ab
-    files:
-        "*": .
   checksum-sha256:
-    plugin: copy
+    plugin: dump
     source: simple.zip
     source-checksum: sha256/035ae7da4bd0ff39960466353e0810f51d17193a13e8b75e767391820aed484c
-    files:
-        "*": .
   checksum-sha384:
-    plugin: copy
+    plugin: dump
     source: simple.zip
     source-checksum: sha384/fa50da87b4fdd9c28a3c8b653d4cc37f942d91cd4da4099c0b0c85713971ca72948014aadde2eb824ff82176e0f32a96
-    files:
-        "*": .
   checksum-sha512:
-    plugin: copy
+    plugin: dump
     source: simple.zip
     source-checksum: sha512/c4f762b25393dafd1b3cd34c9bda82ecda6af552a46cc17d0c3abd9f19beb3abed2bd9948559aec8a81aa9d242cc112c08ef5ba80d4456ec0517ca517b8d3253
-    files:
-        "*": .

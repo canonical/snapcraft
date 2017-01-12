@@ -41,7 +41,7 @@ class Git(Base):
                 'a git source')
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-checksum for a git source')
+                "can't specify a source-checksum for a git source")
 
     def _pull_existing(self):
         refspec = 'HEAD'

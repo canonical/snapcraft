@@ -44,7 +44,7 @@ class Mercurial(Base):
                 'can\'t specify source-depth for a mercurial source')
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-checksum for a mercurial source')
+                "can't specify a source-checksum for a mercurial source")
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):

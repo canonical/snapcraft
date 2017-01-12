@@ -43,7 +43,7 @@ class Subversion(Base):
                 'can\'t specify source-depth for a Subversion source')
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-checksum for a Subversion source')
+                "can't specify a source-checksum for a Subversion source")
 
     def pull(self):
         opts = []
