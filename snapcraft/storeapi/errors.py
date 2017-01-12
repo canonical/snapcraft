@@ -200,7 +200,9 @@ class StoreUploadError(StoreError):
 class StorePushError(StoreError):
 
     __FMT_NOT_REGISTERED = (
-        'Sorry, try `snapcraft register {snap_name}` before pushing again.')
+        'You are not the publisher or allowed to push revisions for this '
+        'snap. To become the publisher, run `snapcraft register {snap_name}` '
+        'and try to push again.')
 
     fmt = 'Received {status_code!r}: {text!r}'
 

@@ -30,7 +30,10 @@ from snapcraft import (
 )
 from snapcraft.internal.cache._snap import _rewrite_snap_filename_with_revision
 from snapcraft.main import main
-from snapcraft.storeapi.errors import StoreUploadError
+from snapcraft.storeapi.errors import (
+    StorePushError,
+    StoreUploadError,
+)
 from snapcraft.tests import fixture_setup
 
 
@@ -42,6 +45,10 @@ class PushCommandTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
 
         patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -79,7 +86,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Uploading my-snap-name_0\.1_\w*.snap\.\n"
+            ".*Pushing 'my-snap-name_0\.1_\w*.snap' to the store\.\n"
             "Revision 9 of 'my-snap-name' created\.",
         )
 
@@ -100,6 +107,35 @@ class PushCommandTestCase(tests.TestCase):
         self.assertRaises(
             SystemExit,
             main, ['push', 'test-unexisting-snap'])
+
+    def test_push_unregistered_snap_must_raise_exception(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+
+        class MockResponse:
+            status_code = 404
+            error_list = [{'code': 'resource-not-found',
+                           'message': 'Snap not found for name=my-snap-name'}]
+
+        patcher = mock.patch.object(storeapi.StoreClient, 'push_precheck')
+        mock_precheck = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_precheck.side_effect = StorePushError(
+            'my-snap-name', MockResponse())
+
+        # Create a snap
+        main(['init'])
+        main(['snap'])
+        snap_file = glob.glob('*.snap')[0]
+
+        self.assertRaises(
+            SystemExit,
+            main, ['push', snap_file])
+
+        self.assertIn(
+            'You are not the publisher or allowed to push revisions for this '
+            'snap. To become the publisher, run `snapcraft register '
+            'my-snap-name` and try to push again.',
+            self.fake_logger.output)
 
     def test_push_with_updown_error(self):
         # We really don't know of a reason why this would fail
@@ -151,7 +187,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Uploading my-snap-name_0\.1_\w*.snap\.\n"
+            ".*Pushing 'my-snap-name_0\.1_\w*.snap\' to the store.\n"
             "Revision 9 of 'my-snap-name' created\.",
         )
 
@@ -198,7 +234,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Uploading my-snap-name_0\.1_\w*\.snap\.\n"
+            ".*Pushing 'my-snap-name_0\.1_\w*\.snap\' to the store.\n"
             "Revision 9 of 'my-snap-name' created\.\n"
             "The 'beta' channel is now open\.\n")
 
@@ -248,7 +284,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Uploading my-snap-name_0\.1_\w*.snap\.\n"
+            ".*Pushing 'my-snap-name_0\.1_\w*.snap\' to the store.\n"
             "Revision 9 of 'my-snap-name' created.\n"
             "The 'beta,edge,candidate' channel is now open\.\n"
         )
@@ -264,6 +300,13 @@ class PushCommandDeltasTestCase(tests.TestCase):
         ('with deltas', dict(enable_deltas=True)),
         ('without deltas', dict(enable_deltas=False)),
     ]
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_push_revision_cached_with_experimental_deltas(self):
         self.useFixture(fixture_setup.FakeTerminal())
@@ -327,6 +370,10 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
         self.useFixture(fixture_setup.DeltaUploads())
 
         snap_revision = 9
+
+        patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
         mock_tracker = mock.Mock(storeapi.StatusTracker)
         mock_tracker.track.return_value = {

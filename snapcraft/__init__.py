@@ -262,6 +262,17 @@ of the choice of plugin.
       install: |
         sed -i 's|/usr/bin|$SNAP/usr/bin|g' my-bin-artifact.sh
         mv my-bin-artifact.sh $SNAPCRAFT_PART_INSTALL/bin/my-bin-build.sh
+
+  - build-attributes: [attribute1, attribute2]
+
+    A list of special attributes that affect the build of this specific part.
+    Supported attributes:
+
+      - no-system-libraries:
+        Do not automatically copy required libraries from the system to satisfy
+        the dependencies of this part. This might be useful if one knows these
+        dependencies will be satisfied in other manner, e.g. via content
+        sharing from other snaps.
 """
 
 from collections import OrderedDict                 # noqa

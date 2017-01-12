@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016, 2017 Marius Gripsgard (mariogrip@ubuntu.com)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,6 +28,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - rust-revision
       (string)
       select rust version
+    - rust-features
+      (list of strings)
+      Features used to build optional dependencies
 """
 
 import os
@@ -36,11 +39,10 @@ import shutil
 import snapcraft
 from snapcraft import sources
 
-_RUSTUP = "https://static.rust-lang.org/rustup.sh"
+_RUSTUP = 'https://static.rust-lang.org/rustup.sh'
 
 
 class RustPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
@@ -50,7 +52,25 @@ class RustPlugin(snapcraft.BasePlugin):
         schema['properties']['rust-revision'] = {
             'type': 'string',
         }
+        schema['properties']['rust-features'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': []
+        }
+
         return schema
+
+    @classmethod
+    def get_pull_properties(cls):
+        return ['rust-revision', 'rust-channel']
+
+    @classmethod
+    def get_build_properties(cls):
+        return ['rust-features']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -72,9 +92,14 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self.run([self._cargo, "install",
-                  "-j{}".format(self.parallel_build_count),
-                  "--root", self.installdir], env=self._build_env())
+        cmd = [self._cargo, 'install',
+               '-j{}'.format(self.parallel_build_count),
+               '--root', self.installdir,
+               '--path', self.builddir]
+        if self.options.rust_features:
+            cmd.append("--features")
+            cmd.append(' '.join(self.options.rust_features))
+        self.run(cmd, env=self._build_env())
 
     def _build_env(self):
         env = os.environ.copy()
@@ -99,20 +124,24 @@ class RustPlugin(snapcraft.BasePlugin):
         options = []
 
         if self.options.rust_revision:
-            options.append("--revision=%s" % self.options.rust_revision)
+            options.append('--revision={}'.format(self.options.rust_revision))
 
         if self.options.rust_channel:
-            if self.options.rust_channel in ["stable", "beta", "nightly"]:
-                options.append("--channel=%s" % self.options.rust_channel)
+            if self.options.rust_channel in ['stable', 'beta', 'nightly']:
+                options.append(
+                    '--channel={}'.format(self.options.rust_channel))
             else:
-                raise EnvironmentError("%s is not a valid rust channel"
-                                       % self.options.rust_channel)
+                raise EnvironmentError(
+                    '{} is not a valid rust channel'.format(
+                        self.options.rust_channel))
         if not os.path.exists(self._rustpath):
             os.makedirs(self._rustpath)
         self._rustup_get.download()
-        self.run(["%s" % self._rustup,
-                  "--prefix=%s" % self._rustpath,
-                  "--disable-sudo", "--save"])
+        self.run([self._rustup,
+                  '--prefix={}'.format(self._rustpath),
+                  '--disable-sudo', '--save'] + options)
 
     def _fetch_deps(self):
-        self.run([self._cargo, "fetch"])
+        self.run([self._cargo, 'fetch',
+                  '--manifest-path',
+                  os.path.join(self.sourcedir, 'Cargo.toml')])

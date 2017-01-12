@@ -88,6 +88,9 @@ properties:
           stop-command: ["daemon"]
         additionalProperties: false
         properties:
+          desktop:
+            type: string
+            description: path to a desktop file representing the app, relative to the prime directory
           command:
             type: string
             description: command executed to run the binary
@@ -103,6 +106,7 @@ properties:
               - simple
               - forking
               - oneshot
+              - notify
           restart-condition:
               type: string
               enum:
@@ -130,6 +134,20 @@ properties:
             items:
               type: string
               pattern: "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"
+  hooks:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
+        type: object
+        additionalProperties: false
+        properties:
+          plugs:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
   parts:
     type: object
     minProperties: 1
@@ -173,8 +191,8 @@ properties:
             type: string
             default: ''
           disable-parallel:
-              type: boolean
-              default: false
+            type: boolean
+            default: false
           after:
             type: array
             minitems: 1
@@ -190,6 +208,13 @@ properties:
               type: string
             default: []
           build-packages:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
+          build-attributes:
             type: array
             minitems: 1
             uniqueItems: true

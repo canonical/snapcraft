@@ -19,7 +19,7 @@ import os
 import shutil
 
 from unittest import mock
-
+from testtools.matchers import MatchesRegex
 import fixtures
 
 from snapcraft.main import main
@@ -83,7 +83,7 @@ parts:
 
         self.assertFalse(os.path.exists(self.parts_dir))
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)
@@ -95,7 +95,7 @@ parts:
         main(['clean'])
 
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
         self.assertTrue(os.path.exists(self.parts_dir))
         self.assertTrue(os.path.isfile(local_plugin))
 
@@ -106,7 +106,7 @@ parts:
 
         self.assertFalse(os.path.exists(self.parts_dir))
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
     def test_partial_clean(self):
         parts = self.make_snapcraft_yaml(n=3)
@@ -123,7 +123,7 @@ parts:
 
         self.assertTrue(os.path.exists(self.parts_dir))
         self.assertTrue(os.path.exists(self.stage_dir))
-        self.assertTrue(os.path.exists(self.snap_dir))
+        self.assertTrue(os.path.exists(self.prime_dir))
 
         # Now clean it the rest of the way
         main(['clean', 'clean1'])
@@ -135,7 +135,7 @@ parts:
 
         self.assertFalse(os.path.exists(self.parts_dir))
         self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.snap_dir))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
     def test_everything_is_clean(self):
         """Don't crash if everything is already clean."""
@@ -178,8 +178,7 @@ parts:
         mock_clean.assert_called_with(
             expected_staged_state, expected_primed_state, 'foo')
 
-    @mock.patch.object(pluginhandler.PluginHandler, 'clean')
-    def test_cleaning_with_strip_does_prime_and_warns(self, mock_clean):
+    def test_cleaning_with_strip_does_prime_and_warns(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 
@@ -187,22 +186,11 @@ parts:
 
         main(['clean', '--step=strip'])
 
-        expected_staged_state = {
-            'clean0': states.StageState({'clean0'}, set()),
-            'clean1': states.StageState({'clean1'}, set()),
-            'clean2': states.StageState({'clean2'}, set()),
-        }
-
-        expected_primed_state = {
-            'clean0': states.PrimeState({'clean0'}, set()),
-            'clean1': states.PrimeState({'clean1'}, set()),
-            'clean2': states.PrimeState({'clean2'}, set()),
-        }
-
-        self.assertEqual('DEPRECATED: Use `prime` instead of `strip` as '
-                         'the step to clean\n', fake_logger.output)
-        mock_clean.assert_called_with(
-            expected_staged_state, expected_primed_state, 'prime')
+        self.assertThat(
+            fake_logger.output, MatchesRegex(
+                'DEPRECATED: Use `prime` instead of `strip` as the step to '
+                'clean'))
+        self.assertFalse(os.path.exists(self.prime_dir))
 
 
 class CleanCommandReverseDependenciesTestCase(tests.TestCase):
@@ -237,7 +225,7 @@ parts:
                  'w').close()
 
         os.makedirs(self.stage_dir)
-        os.makedirs(self.snap_dir)
+        os.makedirs(self.prime_dir)
 
     def assert_clean(self, parts):
         for part in parts:

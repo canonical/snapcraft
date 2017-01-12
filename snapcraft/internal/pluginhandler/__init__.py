@@ -31,6 +31,7 @@ import yaml
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal.errors import (
+    PrimeFileConflictError,
     PluginError,
     MissingState,
     SnapcraftPartConflictError,
@@ -43,6 +44,7 @@ from snapcraft.internal import (
     states,
 )
 from ._scriptlets import ScriptRunner
+from ._build_attributes import BuildAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,9 @@ class PluginHandler:
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
 
         self.source_handler = self._get_source_handler(self._part_properties)
+
+        self._build_attributes = BuildAttributes(
+            self._part_properties['build-attributes'])
 
         self._migrate_state_file()
 
@@ -427,13 +432,28 @@ class PluginHandler:
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.code.snap_fileset()
-        fileset = (getattr(self.code.options, step, ['*']) or ['*']).copy()
+        fileset = self._get_fileset(step).copy()
+        includes = _get_includes(fileset)
+        # If we're priming and we don't have an explicit set of files to prime
+        # include the files from the stage step
+        if step == 'prime' and (fileset == ['*'] or
+                                len(includes) == 0):
+            stage_fileset = self._get_fileset('stage').copy()
+            fileset = _combine_filesets(stage_fileset, fileset)
+
         fileset.extend(plugin_fileset)
 
         return _migratable_filesets(fileset, self.code.installdir)
 
+    def _get_fileset(self, option, default=None):
+        if default is None:
+            default = ['*']
+
+        fileset = getattr(self.code.options, option, default)
+        return fileset if fileset else default
+
     def _organize(self):
-        fileset = getattr(self.code.options, 'organize', {}) or {}
+        fileset = self._get_fileset('organize', {})
 
         _organize_filesets(fileset.copy(), self.code.installdir)
 
@@ -488,8 +508,32 @@ class PluginHandler:
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
-        dependency_paths = _migrate_system_dependencies(
-            self.installdir, self.stagedir, self.snapdir, snap_files)
+
+        dependencies = _find_dependencies(self.snapdir, snap_files)
+
+        # Split the necessary dependencies into their corresponding location.
+        # We'll both migrate and track the system dependencies, but we'll only
+        # track the part and staged dependencies, since they should have
+        # already been primed by other means, and migrating them again could
+        # potentially override the `stage` or `snap` filtering.
+        (in_part, staged, primed, system) = _split_dependencies(
+            dependencies, self.installdir, self.stagedir, self.snapdir)
+
+        part_dependency_paths = {os.path.dirname(d) for d in in_part}
+        staged_dependency_paths = {os.path.dirname(d) for d in staged}
+
+        dependency_paths = part_dependency_paths | staged_dependency_paths
+
+        if not self._build_attributes.no_system_libraries():
+            system_dependency_paths = {os.path.dirname(d) for d in system}
+            dependency_paths.update(system_dependency_paths)
+
+            if system:
+                # Lots of dependencies are linked with a symlink, so we need to
+                # make sure we follow those symlinks when we migrate the
+                # dependencies.
+                _migrate_files(system, system_dependency_paths, '/',
+                               self.snapdir, follow_symlinks=True)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
@@ -602,31 +646,6 @@ class PluginHandler:
 
         if not index or index <= common.COMMAND_ORDER.index('pull'):
             self.clean_pull(hint)
-
-
-def _migrate_system_dependencies(installdir, stagedir, snapdir, snap_files):
-    dependencies = _find_dependencies(snapdir, snap_files)
-
-    # Split the necessary dependencies into their corresponding location.
-    # We'll both migrate and track the system dependencies, but we'll only
-    # track the part and staged dependencies, since they should have
-    # already been primed by other means, and migrating them again could
-    # potentially override the `stage` or `snap` filtering.
-    (in_part, staged, primed, system) = _split_dependencies(
-        dependencies, installdir, stagedir, snapdir)
-
-    part_dependency_paths = {os.path.dirname(d) for d in in_part}
-    staged_dependency_paths = {os.path.dirname(d) for d in staged}
-    system_dependency_paths = {os.path.dirname(d) for d in system}
-
-    if system:
-        # Lots of dependencies are linked with a symlink, so we need to make
-        # sure we follow those symlinks when we migrate the dependencies.
-        _migrate_files(system, system_dependency_paths, '/', snapdir,
-                       follow_symlinks=True)
-
-    return (part_dependency_paths | staged_dependency_paths |
-            system_dependency_paths)
 
 
 def _split_dependencies(dependencies, installdir, stagedir, snapdir):
@@ -1072,3 +1091,43 @@ def check_for_collisions(parts):
         # And add our files to the list
         parts_files[part.name] = {'files': part_files,
                                   'installdir': part.installdir}
+
+
+def _get_includes(fileset):
+    return [x for x in fileset if x[0] != '-']
+
+
+def _get_excludes(fileset):
+    return [x[1:] for x in fileset if x[0] == '-']
+
+
+def _combine_filesets(starting_fileset, modifying_fileset):
+    """
+    Combine filesets if modifying_fileset is an explicit or implicit
+    wildcard.
+    """
+
+    starting_excludes = set(_get_excludes(starting_fileset))
+    modifying_includes = set(_get_includes(modifying_fileset))
+
+    contradicting_fileset = set.intersection(starting_excludes,
+                                             modifying_includes)
+
+    if contradicting_fileset:
+        raise PrimeFileConflictError(fileset=contradicting_fileset)
+
+    to_combine = False
+    # combine if starting_fileset has a wildcard
+    # XXX: should this only be a single wildcard and possibly excludes?
+    if '*' in modifying_fileset:
+        to_combine = True
+        modifying_fileset.remove('*')
+
+    # combine if modifying_fileset is only excludes
+    if set([x[0] for x in modifying_fileset]) == set('-'):
+        to_combine = True
+
+    if to_combine:
+        return list(set(starting_fileset + modifying_fileset))
+    else:
+        return modifying_fileset

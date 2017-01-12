@@ -327,8 +327,9 @@ def _build_env(root, snap_name, confinement, arch_triplet,
 
     if confinement == 'classic':
         if not core_dynamic_linker:
-            raise EnvironmentError('classic confinement requires the '
-                                   'core_dynamic_linker to be set')
+            raise EnvironmentError(
+                'classic confinement requires the core snap to be installed. '
+                'Install it by running `snap install core`.')
 
         core_path = os.path.join('/snap', 'core', 'current')
         core_rpaths = common.get_library_paths(core_path, arch_triplet,

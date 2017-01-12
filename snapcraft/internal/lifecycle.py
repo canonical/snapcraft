@@ -430,10 +430,6 @@ def _remove_directory_if_empty(directory):
 
 
 def _cleanup_common_directories(config, project_options):
-    _remove_directory_if_empty(project_options.parts_dir)
-    _remove_directory_if_empty(project_options.stage_dir)
-    _remove_directory_if_empty(project_options.snap_dir)
-
     max_index = -1
     for part in config.all_parts:
         step = part.last_step()
@@ -442,31 +438,82 @@ def _cleanup_common_directories(config, project_options):
             if index > max_index:
                 max_index = index
 
-    # If no parts have been pulled, remove the parts directory. In most cases
-    # this directory should have already been cleaned, but this handles the
-    # case of a failed pull. Note however that the presence of local plugins
-    # should prevent this removal.
-    if (max_index < common.COMMAND_ORDER.index('pull') and
-            os.path.exists(project_options.parts_dir) and not
-            os.path.exists(project_options.local_plugins_dir)):
+    with contextlib.suppress(IndexError):
+        _cleanup_common_directories_for_step(
+            common.COMMAND_ORDER[max_index+1], project_options)
+
+
+def _cleanup_common_directories_for_step(step, project_options, parts=None):
+    if not parts:
+        parts = []
+
+    index = common.COMMAND_ORDER.index(step)
+
+    if index <= common.COMMAND_ORDER.index('prime'):
+        # Remove the priming area.
+        _cleanup_common(
+            project_options.snap_dir, 'prime', 'Cleaning up priming area',
+            parts)
+
+    if index <= common.COMMAND_ORDER.index('stage'):
+        # Remove the staging area.
+        _cleanup_common(
+            project_options.stage_dir, 'stage', 'Cleaning up staging area',
+            parts)
+
+    if index <= common.COMMAND_ORDER.index('pull'):
+        # Remove the parts directory (but leave local plugins alone).
+        _cleanup_parts_dir(
+            project_options.parts_dir, project_options.local_plugins_dir,
+            parts)
+
+    _remove_directory_if_empty(project_options.snap_dir)
+    _remove_directory_if_empty(project_options.stage_dir)
+    _remove_directory_if_empty(project_options.parts_dir)
+
+
+def _cleanup_common(directory, step, message, parts):
+    if os.path.isdir(directory):
+        logger.info(message)
+        shutil.rmtree(directory)
+    for part in parts:
+        part.mark_cleaned(step)
+
+
+def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
+    if os.path.exists(parts_dir):
         logger.info('Cleaning up parts directory')
-        shutil.rmtree(project_options.parts_dir)
-
-    # If no parts have been staged, remove staging area.
-    should_remove_stagedir = max_index < common.COMMAND_ORDER.index('stage')
-    if should_remove_stagedir and os.path.exists(project_options.stage_dir):
-        logger.info('Cleaning up staging area')
-        shutil.rmtree(project_options.stage_dir)
-
-    # If no parts have been primed, remove snapping area.
-    should_remove_snapdir = max_index < common.COMMAND_ORDER.index('prime')
-    if should_remove_snapdir and os.path.exists(project_options.snap_dir):
-        logger.info('Cleaning up snapping area')
-        shutil.rmtree(project_options.snap_dir)
+        for subdirectory in os.listdir(parts_dir):
+            path = os.path.join(parts_dir, subdirectory)
+            if path != local_plugins_dir:
+                try:
+                    shutil.rmtree(path)
+                except NotADirectoryError:
+                    os.remove(path)
+    for part in parts:
+        part.mark_cleaned('build')
+        part.mark_cleaned('pull')
 
 
 def clean(project_options, parts, step=None):
+    # step defaults to None because that's how it comes from docopt when it's
+    # not set.
+    if not step:
+        step = 'pull'
+
+    if not parts and step == 'pull':
+        _cleanup_common_directories_for_step(step, project_options)
+        return
+
     config = snapcraft.internal.load_config()
+
+    if not parts and (step == 'stage' or step == 'prime'):
+        # If we've been asked to clean stage or prime without being given
+        # specific parts, just blow away those directories instead of
+        # doing it per part.
+        _cleanup_common_directories_for_step(
+            step, project_options, parts=config.all_parts)
+        return
 
     if parts:
         config.parts.validate(parts)
