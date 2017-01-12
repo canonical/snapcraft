@@ -1,3 +1,4 @@
+
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016, 2017 Canonical Ltd
@@ -138,9 +139,15 @@ class _SnapPackaging:
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
+        skip_directories = [os.path.join('snap', d)
+                            for d in ['parts', 'stage', 'prime']]
         for root, directories, files in os.walk('snap'):
-            for directory in directories:
-                source = os.path.join(root, directory)
+            if any([root.startswith(d) for d in skip_directories]):
+                continue
+            for dir in directories:
+                if root == 'snap' and dir in ['parts', 'stage', 'prime']:
+                    continue
+                source = os.path.join(root, dir)
                 destination = os.path.join(self._snap_dir, source)
                 file_utils.create_similar_directory(source, destination)
 

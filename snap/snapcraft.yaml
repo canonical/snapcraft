@@ -1,0 +1,13 @@
+name: snapcraft
+version: '2.25'
+summary: Create snaps
+description: |
+  packaging tool
+
+grade: devel
+confinement: classic
+
+parts:
+  snapcraft:
+    plugin: python
+    requirements: requirements.txt

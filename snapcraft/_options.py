@@ -156,7 +156,7 @@ class ProjectOptions:
                  target_deb_arch=None, debug=False):
         # TODO: allow setting a different project dir and check for
         #       snapcraft.yaml
-        self.__project_dir = os.getcwd()
+        self.__project_dir = os.path.join(os.getcwd(), 'snap')
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)
