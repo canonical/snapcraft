@@ -23,6 +23,7 @@ addons:
   apt:
     packages:
       - python3-coverage
+      - python-launchpadlib
 
 install:
   - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then $DEPENDENCIES; fi
