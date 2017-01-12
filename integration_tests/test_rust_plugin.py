@@ -16,8 +16,9 @@
 
 import os
 
+from testtools.matchers import FileExists, Not
+
 import integration_tests
-import snapcraft
 
 
 class RustPluginTestCase(integration_tests.TestCase):
@@ -31,16 +32,13 @@ class RustPluginTestCase(integration_tests.TestCase):
         self.assertEqual('There is rust on snaps!\n', binary_output)
 
     def test_stage_rust_with_revision(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armhf':
-            self.skipTest('The rust revision chosen fails on armhf')
-
         project_dir = 'rust-with-revision'
         self.run_snapcraft('stage', project_dir)
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join('stage', 'bin', 'rust-with-revision'),
             cwd=project_dir)
-        self.assertIn('Rust revision: 1.13.0', binary_output)
+        self.assertIn('Rust revision: 1.12.0', binary_output)
 
     def test_stage_rust_plugin_with_conditional_feature(self):
         project_dir = 'rust-with-conditional'
@@ -49,3 +47,15 @@ class RustPluginTestCase(integration_tests.TestCase):
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
         self.assertEqual('Conditional features work!\n', binary_output)
+
+    def test_stage_rust_with_source_subdir(self):
+        project_dir = 'rust-subdir'
+        self.run_snapcraft('stage', project_dir)
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join('stage', 'bin', 'rust-subdir'), cwd=project_dir)
+        self.assertEqual('Rust in a subdirectory works\n', binary_output)
+        # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
+        self.assertThat(
+            os.path.join(project_dir, 'Cargo.lock'),
+            Not(FileExists()))
