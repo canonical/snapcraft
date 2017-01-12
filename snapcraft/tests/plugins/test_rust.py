@@ -73,7 +73,8 @@ class RustPluginTestCase(tests.TestCase):
             mock.call(
                 [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
-                 '--root', plugin.installdir],
+                 '--root', plugin.installdir,
+                 '--path', plugin.builddir],
                 env=plugin._build_env())
         ])
 
@@ -92,6 +93,7 @@ class RustPluginTestCase(tests.TestCase):
                 [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
                  '--root', plugin.installdir,
+                 '--path', plugin.builddir,
                  '--features', 'conditional-compilation'],
                 env=plugin._build_env())
         ])
@@ -113,7 +115,9 @@ class RustPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([mock.call([
             os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
             '--disable-sudo', '--save']),
-            mock.call([plugin._cargo, "fetch"])])
+            mock.call([plugin._cargo, 'fetch',
+                       '--manifest-path',
+                       os.path.join(plugin.sourcedir, 'Cargo.toml')])])
 
     @mock.patch.object(rust.sources, 'Script')
     @mock.patch.object(rust.RustPlugin, 'run')
@@ -131,8 +135,11 @@ class RustPluginTestCase(tests.TestCase):
         rustdir = os.path.join(plugin.partdir, 'rust')
         run_mock.assert_has_calls([mock.call([
             os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
-            '--disable-sudo', '--save', '--channel=nightly']),
-            mock.call([plugin._cargo, "fetch"])])
+            '--disable-sudo', '--save',
+            '--channel=nightly']),
+            mock.call([plugin._cargo, 'fetch',
+                       '--manifest-path',
+                       os.path.join(plugin.sourcedir, 'Cargo.toml')])])
 
     @mock.patch.object(rust.sources, 'Script')
     @mock.patch.object(rust.RustPlugin, 'run')
@@ -150,5 +157,9 @@ class RustPluginTestCase(tests.TestCase):
         rustdir = os.path.join(plugin.partdir, 'rust')
         run_mock.assert_has_calls([mock.call([
             os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
-            '--disable-sudo', '--save', '--revision=1.13.0']),
-            mock.call([plugin._cargo, "fetch"])])
+            '--disable-sudo', '--save',
+            '--revision=1.13.0']),
+            mock.call([
+                plugin._cargo, 'fetch',
+                '--manifest-path', os.path.join(plugin.sourcedir, 'Cargo.toml')
+            ])])
