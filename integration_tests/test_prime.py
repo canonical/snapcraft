@@ -58,3 +58,8 @@ class PrimeTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(project_dir, 'prime', 'with-c'),
             FileExists())
+
+    def test_prime_after_organize(self):
+        project_dir = 'prime-after-organize'
+
+        self.run_snapcraft('prime', project_dir)

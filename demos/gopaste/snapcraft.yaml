@@ -29,5 +29,7 @@ parts:
     source: .
     organize:
       gopaste: bin/
-    stage: [gopaste]
-    snap: [bin/gopaste]
+    filesets:
+      bin: [bin/gopaste]
+    stage: [$bin]
+    snap: [$bin]

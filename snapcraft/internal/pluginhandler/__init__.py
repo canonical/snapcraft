@@ -1271,6 +1271,9 @@ def _organize_fileset(fileset_orig, organize_fileset, srcdir):
 
     rev_organize_fileset = {}
     for key, value in organize_fileset.items():
+        # handle <file>: <dir>/ entries
+        if value[-1] == '/':
+            value = '{}{}'.format(value, key)
         if value not in rev_organize_fileset:
             rev_organize_fileset[value] = []
         rev_organize_fileset[value].append(key)
