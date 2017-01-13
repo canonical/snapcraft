@@ -1,3 +1,76 @@
+snapcraft (2.25) xenial; urgency=medium
+
+  [ Joe Talbott ]
+  * parser: better message for missing snapcraft.yaml in origins. (#985)
+  * parser: clean up help. (#986)
+  * parser: improve output. (#984)
+  * pluginhandler: ensure staged files are included in the prime step. (#920)
+  * tests: add aliases integration test. (#1004)
+
+  [ Matthew Aguirre ]
+  * Update ant plugin to use get_build_properties(). (#991)
+  * Updated autotools plugin to use get_build_properties(). (#999)
+  * godeps plugin: update godeps plugin to use get_pull_properties(). (#1000)
+  * catkin plugin: update catkin plugin to use get_pull_properties(). (#1001)
+  * make plugin: update make plugin to use get_build_properties(). (#992)
+  * nodejs plugin: update nodejs plugin to use get_build_properties(). (#996)
+  * go plugin: update go plugin to use get_build_properties(). (#997)
+  * python plugin: update python plugin to support get_pull_properties(). (#1002)
+  * qmake plugin: update qmake to use get_build_properties() and
+    get_pull_properties(). (#993)
+  * gulp plugins: update gulp plugin to use get_build_properties(). and
+    get_pull_properties(). (#998)
+  * kernel plugin: update kernel plugin to use get_build_properties(). (#995)
+
+  [ Kyle Fazzari ]
+  * copy plugin: update copy plugin to use get_build_properties(). (#1022)
+  * tests: add alias integration test. (#1021)
+  * sources: support symlinks in deb sources. (#941)
+  * schema: replace `snap` filter with `prime` filter. (#1006)
+  * tests: reorganize plugin tests into subdirectory. (#1014)
+  * tests: reorganize command tests into subdirectory. (#1015)
+  * tests: reorganize state tests into subdirectory. (#1019)
+  * pluginhandler: add support for disabling system library migration. (#989)
+  * docs: document the `notify` daemon type. (#1041)
+  * docs: describe hooks. (#1042)
+  * lifecycle: clean without parsing if possible. (#1007)
+  * core: add support for hooks. (#1026)
+
+  [ Marco Trevisan ]
+  * travis.yaml: use docker exec to split build phases. (#1012)
+
+  [ Leo Arias ]
+  * tests: fix integration tests in armhf. (#971)
+  * ci: add a checklist in the pull request template. (#972)
+  * ci: check the license agreement on Travis. (#973)
+  * tests: fix snaps tests in armhf. (#990)
+  * rust plugin: add conditional compilation. (#1029)
+  * tests: use rust 1.12 to test the rust-revision in armhf. (#1040)
+  * rust plugin: use the part source path. (#1035)
+  * misc: delete bzr ignore. (#1038)
+
+  [ Jonathon Love ]
+  * nodejs plugin: fix the plugin’s dependency installation. (#1023)
+
+  [ Olivier Tilloy ]
+  * meta: add 'desktop' entry for apps. (#1010)
+
+  [ Sergio Schvezov ]
+  * project loader: better error message for classic. (#1025)
+  * tests: fix broken unit test in master. (#1027)
+  * parts: better error message when defining parts. (#1036)
+  * schema: support the notify daemon type. (#1037)
+  * godeps plugin: work when GOBIN is set. (#1046)
+  * meta: support core libraries. (#1047)
+  * docs: update deprecation links. (#1048)
+  * rust plugin: respect fetch parameters. (#1034)
+  * New upstream release 2.25 (LP: #1656291)
+
+  [ Bayard Randel ]
+  * store: implement push pre-check. (#1009)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 13 Jan 2017 12:07:10 +0000
+
 snapcraft (2.24) xenial; urgency=medium
 
   [ Sergio Schvezov ]
