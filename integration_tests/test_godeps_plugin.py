@@ -17,12 +17,25 @@
 import os
 import subprocess
 
+import fixtures
+import testscenarios
+
 import integration_tests
 
 
-class GodepsPluginTestCase(integration_tests.TestCase):
+class GodepsPluginTestCase(testscenarios.WithScenarios,
+                           integration_tests.TestCase):
+
+    scenarios = [
+        ('no GOBIN', dict(set_gobin=False)),
+        ('with GOBIN', dict(set_gobin=True)),
+    ]
 
     def test_stage_go_plugin(self):
+        if self.set_gobin:
+            gobin = 'gobin'
+            self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
+
         project_dir = 'simple-godeps'
         self.run_snapcraft('stage', project_dir)
 
