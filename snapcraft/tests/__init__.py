@@ -102,6 +102,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.prime_dir = os.path.join(os.getcwd(), 'prime')
         self.stage_dir = os.path.join(os.getcwd(), 'stage')
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
+        self.snap_dir = os.path.join(os.getcwd(), 'snap')
         self.local_plugins_dir = os.path.join(self.parts_dir, 'plugins')
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):

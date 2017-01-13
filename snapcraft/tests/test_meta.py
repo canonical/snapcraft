@@ -38,7 +38,7 @@ from snapcraft.internal.meta import (
 )
 from snapcraft.internal import common
 from snapcraft.internal.errors import MissingGadgetError
-from snapcraft import tests
+from snapcraft import ProjectOptions, tests
 
 
 class CreateBaseTestCase(tests.TestCase):
@@ -55,14 +55,13 @@ class CreateBaseTestCase(tests.TestCase):
             'confinement': 'devmode',
         }
 
-        self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
-        self.prime_dir = os.path.join(os.path.abspath(os.curdir), 'prime')
+        self.project_options = ProjectOptions()
         self.meta_dir = os.path.join(self.prime_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
 
     def generate_meta_yaml(self):
-        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.project_options)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -109,7 +108,7 @@ class CreateTestCase(CreateBaseTestCase):
             f.write(gadget_yaml)
 
         self.config_data['type'] = 'gadget'
-        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.project_options)
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -124,8 +123,7 @@ class CreateTestCase(CreateBaseTestCase):
             MissingGadgetError,
             create_snap_packaging,
             self.config_data,
-            self.prime_dir,
-            self.parts_dir)
+            self.project_options)
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
@@ -176,10 +174,10 @@ class CreateTestCase(CreateBaseTestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.project_options)
 
         # Running again should be good
-        create_snap_packaging(self.config_data, self.prime_dir, self.parts_dir)
+        create_snap_packaging(self.config_data, self.project_options)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -460,8 +458,7 @@ class WrapExeTestCase(tests.TestCase):
 
         # TODO move to use outer interface
         self.packager = _SnapPackaging({'confinement': 'devmode'},
-                                       self.prime_dir,
-                                       self.parts_dir)
+                                       ProjectOptions())
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
