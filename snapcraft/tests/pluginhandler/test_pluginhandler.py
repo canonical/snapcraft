@@ -2272,7 +2272,7 @@ class StagePackagesTestCase(tests.TestCase):
         self.assertEqual(
             str(raised),
             "Error downloading stage packages for part 'stage-test': "
-            "no such package 'non-existing'")
+            "The Ubuntu package 'non-existing' was not found.")
 
 
 class FindDependenciesTestCase(tests.TestCase):

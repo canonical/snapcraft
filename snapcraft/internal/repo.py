@@ -140,8 +140,16 @@ class PackageNotFoundError(Exception):
 
     @property
     def message(self):
-        return 'The Ubuntu package "{}" was not found'.format(
+        message = 'The Ubuntu package {!r} was not found.'.format(
             self.package_name)
+        # If the package was multiarch, try to help.
+        if ':' in self.package_name:
+            (name, arch) = self.package_name.split(':', 2)
+            if arch:
+                message += (
+                    ' You may need to add support for this architecture with '
+                    "'dpkg --add-architecture {}'.".format(arch))
+        return message
 
     def __init__(self, package_name):
         self.package_name = package_name
@@ -212,6 +220,19 @@ class _AptCache:
         os.makedirs(os.path.dirname(sources_list_file), exist_ok=True)
         with open(sources_list_file, 'w') as f:
             f.write(sources_list)
+
+        # dpkg also needs to be in the rootdir in order to support multiarch
+        # (apt calls dpkg --print-foreign-architectures).
+        dpkg_path = shutil.which('dpkg')
+        if dpkg_path:
+            # Symlink it into place
+            destination = os.path.join(apt_cache_dir, dpkg_path[1:])
+            if not os.path.exists(destination):
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                os.symlink(dpkg_path, destination)
+        else:
+            logger.warning(
+                "Cannot find 'dpkg' command needed to support multiarch")
 
         apt_cache = apt.Cache(rootdir=apt_cache_dir, memonly=True)
         apt_cache.update(fetch_progress=self.progress,

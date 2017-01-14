@@ -317,7 +317,7 @@ class CatkinPluginTestCase(tests.TestCase):
 
         self.assertEqual(str(raised),
                          'Failed to fetch system dependencies: The Ubuntu '
-                         'package "foo" was not found')
+                         "package 'foo' was not found.")
 
     def test_pull_with_roscore(self):
         self.properties.include_roscore = True
