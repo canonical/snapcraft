@@ -33,7 +33,10 @@ import fixtures
 
 import snapcraft
 from . import mocks
-from snapcraft.internal.errors import SnapcraftPartConflictError
+from snapcraft.internal.errors import (
+    PrimeFileConflictError,
+    SnapcraftPartConflictError,
+)
 from snapcraft.internal import (
     common,
     lifecycle,
@@ -1018,9 +1021,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(4, len(state.properties))
-        for expected in ['after', 'build-packages', 'disable-parallel',
-                         'organize']:
+        self.assertEqual(5, len(state.properties))
+        for expected in ['after', 'build-attributes', 'build-packages',
+                         'disable-parallel', 'organize']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
@@ -1233,8 +1236,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
@@ -1276,8 +1279,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
@@ -1328,10 +1331,55 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('foo/bar' in state.dependency_paths)
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['*'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['*'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
+
+    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.pluginhandler._migrate_files')
+    def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
+                                           mock_find_dependencies):
+        # Disable system library migration (i.e. ldd crawling).
+        self.handler = mocks.loadplugin('test_part', part_properties={
+            'build-attributes': ['no-system-libraries']
+        })
+
+        # Pretend we found a system dependency, as well as a part and stage
+        # dependency.
+        mock_find_dependencies.return_value = {
+            '/foo/bar/baz',
+            '{}/lib1/installed'.format(self.handler.installdir),
+            '{}/lib2/staged'.format(self.handler.stagedir),
+        }
+
+        self.assertEqual(None, self.handler.last_step())
+
+        bindir = os.path.join(self.handler.code.installdir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, 'file'), 'w').close()
+
+        self.handler.mark_done('build')
+        self.handler.stage()
+        mock_migrate_files.reset_mock()
+        self.handler.prime()
+
+        self.assertEqual('prime', self.handler.last_step())
+        mock_find_dependencies.assert_called_once_with(
+            self.handler.snapdir, {'bin/file'})
+        # Verify that only the part's files were migrated-- not the system
+        # dependency.
+        mock_migrate_files.assert_called_once_with(
+            {'bin/file'}, {'bin'}, self.handler.stagedir, self.handler.snapdir)
+
+        state = self.handler.get_state('prime')
+
+        # Verify that only the part and staged libraries were saved into the
+        # dependency paths, not the system dependency.
+        self.assertTrue(type(state.dependency_paths) is set)
+        self.assertEqual(2, len(state.dependency_paths))
+        self.assertTrue('lib1' in state.dependency_paths)
+        self.assertTrue('lib2' in state.dependency_paths)
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
@@ -1373,11 +1421,11 @@ class StateTestCase(StateBaseTestCase):
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_prime_state_with_snap_keyword(self, mock_copy,
-                                           mock_find_dependencies):
+    def test_prime_state_with_prime_keyword(self, mock_copy,
+                                            mock_find_dependencies):
         mock_find_dependencies.return_value = set()
-        self.handler.code.options.snap = ['bin/1']
-        self.handler._part_properties = {'snap': ['bin/1']}
+        self.handler = mocks.loadplugin(
+            'test_part', part_properties={'prime': ['bin/1']})
 
         self.assertEqual(None, self.handler.last_step())
 
@@ -1407,14 +1455,14 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual(1, len(state.directories))
         self.assertTrue('bin' in state.directories)
         self.assertEqual(0, len(state.dependency_paths))
-        self.assertTrue('snap' in state.properties)
-        self.assertEqual(state.properties['snap'], ['bin/1'])
+        self.assertTrue('prime' in state.properties)
+        self.assertEqual(state.properties['prime'], ['bin/1'])
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertEqual(0, len(state.project_options))
 
     def test_clean_prime_state(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(self.snap_dir, 'bin')
+        bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -1431,7 +1479,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state_multiple_parts(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(self.snap_dir, 'bin')
+        bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -1453,7 +1501,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state_common_files(self):
         self.assertEqual(None, self.handler.last_step())
-        bindir = os.path.join(self.snap_dir, 'bin')
+        bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
         open(os.path.join(bindir, '2'), 'w').close()
@@ -1512,7 +1560,7 @@ class IsDirtyTestCase(tests.TestCase):
 
     def test_prime_is_dirty(self):
         self.handler.code.options.snap = ['foo']
-        self.handler._part_properties = {'snap': ['foo']}
+        self.handler._part_properties = {'prime': ['foo']}
         self.handler.mark_done(
             'prime', states.PrimeState(
                 set(), set(), set(), self.handler._part_properties))
@@ -1523,7 +1571,7 @@ class IsDirtyTestCase(tests.TestCase):
 
         # Change the `snap` keyword-- thereby making the prime step dirty.
         self.handler.code.options.snap = ['bar']
-        self.handler._part_properties = {'snap': ['bar']}
+        self.handler._part_properties = {'prime': ['bar']}
         self.assertFalse(self.handler.is_clean('prime'),
                          'Strip step was unexpectedly clean')
         self.assertTrue(self.handler.is_dirty('prime'),
@@ -1665,8 +1713,8 @@ class CleanBaseTestCase(tests.TestCase):
         if os.path.exists(self.stage_dir):
             shutil.rmtree(self.stage_dir)
 
-        if os.path.exists(self.snap_dir):
-            shutil.rmtree(self.snap_dir)
+        if os.path.exists(self.prime_dir):
+            shutil.rmtree(self.prime_dir)
 
 
 class CleanTestCase(CleanBaseTestCase):
@@ -1759,23 +1807,23 @@ class CleanTestCase(CleanBaseTestCase):
 
         # Verify that part1's file has been primeped
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')))
 
         # Verify that part2's file has been primeped
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')))
 
         # Now clean the prime step for part1
         handler1.clean_prime({})
 
         # Verify that part1's file is no longer primeped
         self.assertFalse(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')),
             "Expected part1's primeped files to be cleaned")
 
         # Verify that part2's file is still there
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')),
             "Expected part2's primeped files to be untouched")
 
     def test_clean_prime_after_fileset_change(self):
@@ -1794,9 +1842,9 @@ class CleanTestCase(CleanBaseTestCase):
 
         # Verify that both files have been primeped
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')))
         self.assertTrue(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')))
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')))
 
         # Now update the `snap` fileset to only snap one of these files
         handler.code.options.snap = ['bin/1']
@@ -1806,10 +1854,10 @@ class CleanTestCase(CleanBaseTestCase):
 
         # Verify that part1's file is no longer primeped
         self.assertFalse(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '1')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
-            os.path.exists(os.path.join(self.snap_dir, 'bin', '2')),
+            os.path.exists(os.path.join(self.prime_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
             'changed since it was primeped.')
 
@@ -1817,7 +1865,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
-        open(os.path.join(self.snap_dir, '1'), 'w').close()
+        open(os.path.join(self.prime_dir, '1'), 'w').close()
 
         handler.mark_done('prime', None)
 
@@ -1831,7 +1879,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler = mocks.loadplugin('test-part')
         handler.makedirs()
 
-        primed_file = os.path.join(self.snap_dir, '1')
+        primed_file = os.path.join(self.prime_dir, '1')
         open(primed_file, 'w').close()
 
         handler.mark_done('prime', None)
@@ -1977,7 +2025,7 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         self.clear_common_directories()
 
         handler = mocks.loadplugin(
-            'test_part', part_properties={'snap': self.fileset})
+            'test_part', part_properties={'prime': self.fileset})
         handler.makedirs()
 
         installdir = handler.code.installdir
@@ -1997,11 +2045,11 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         # Now prime them
         handler.prime()
 
-        self.assertTrue(os.listdir(self.snap_dir))
+        self.assertTrue(os.listdir(self.prime_dir))
 
         handler.clean_prime({})
 
-        self.assertFalse(os.listdir(self.snap_dir),
+        self.assertFalse(os.listdir(self.prime_dir),
                          'Expected snapdir to be completely cleaned')
 
 
@@ -2378,6 +2426,61 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertEqual(
             raised.__str__(), 'Cannot load magic header detection')
+
+    def test__combine_filesets_explicit_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['*']
+
+        expected_fileset = ['a', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_implicit_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['-c']
+
+        expected_fileset = ['a', '-c', 'b']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_no_wildcard(self):
+        fileset_1 = ['a', 'b']
+        fileset_2 = ['a']
+
+        expected_fileset = ['a']
+        combined_fileset = pluginhandler._combine_filesets(
+            fileset_1, fileset_2)
+        self.assertEqual(set(expected_fileset), set(combined_fileset))
+
+    def test__combine_filesets_with_contradiciton(self):
+        fileset_1 = ['-a']
+        fileset_2 = ['a']
+
+        raised = self.assertRaises(
+            PrimeFileConflictError,
+            pluginhandler._combine_filesets, fileset_1, fileset_2
+        )
+        self.assertEqual(
+            raised.__str__(),
+            "The following files have been excluded by the `stage` keyword, "
+            "but included by the `prime` keyword: {'a'}"
+        )
+
+    def test__get_includes(self):
+        fileset = ['-a', 'b']
+        expected_includes = ['b']
+
+        includes = pluginhandler._get_includes(fileset)
+        self.assertEqual(set(expected_includes), set(includes))
+
+    def test__get_excludes(self):
+        fileset = ['-a', 'b']
+        expected_excludes = ['a']
+
+        excludes = pluginhandler._get_excludes(fileset)
+        self.assertEqual(set(expected_excludes), set(excludes))
 
 
 class SourcesTestCase(tests.TestCase):

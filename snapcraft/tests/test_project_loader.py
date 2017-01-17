@@ -21,8 +21,8 @@ import sys
 import tempfile
 import unittest
 import unittest.mock
-
 import fixtures
+from testtools import ExpectedException
 
 import snapcraft
 from snapcraft.internal import dirs, parts
@@ -158,7 +158,7 @@ parts:
         project_loader.Config()
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'snap': [],
+            'plugin': 'go', 'stage': [], 'prime': [], 'snap': [],
         })
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
@@ -181,7 +181,7 @@ parts:
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'snap': []})
+            'plugin': 'go', 'stage': [], 'prime': [], 'snap': []})
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_composes_with_remote_subpart(self, mock_loadPlugin):
@@ -203,7 +203,7 @@ parts:
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'snap': []})
+            'plugin': 'go', 'stage': [], 'prime': [], 'snap': []})
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_chaining_remotes_not_locally_declared(self, mock_loadPlugin):
@@ -316,7 +316,7 @@ parts:
             'curl',
             plugin_name='autotools',
             part_properties={
-                'plugin': 'autotools', 'stage': [], 'snap': [],
+                'plugin': 'autotools', 'stage': [], 'prime': [], 'snap': [],
                 'source': 'http://curl.org'},
             project_options=project_options,
             part_schema=self.part_schema)
@@ -324,7 +324,7 @@ parts:
             'part1',
             plugin_name='go',
             part_properties={
-                'plugin': 'go', 'stage': [], 'snap': [],
+                'plugin': 'go', 'stage': [], 'prime': [], 'snap': [],
                 'stage-packages': ['fswebcam']},
             project_options=project_options,
             part_schema=self.part_schema)
@@ -653,15 +653,16 @@ parts:
     stage:
       - $wget
       - $build-wget
-    snap:
+    prime:
       - $wget
       - /usr/share/my-icon.png
 """)
         project_loader.Config()
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
-            'snap': ['/usr/lib/wget.so', '/usr/bin/wget',
-                     '/usr/share/my-icon.png'],
+            'snap': [],
+            'prime': ['/usr/lib/wget.so', '/usr/bin/wget',
+                      '/usr/share/my-icon.png'],
             'plugin': 'go', 'stage-packages': ['fswebcam'],
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
@@ -728,7 +729,7 @@ parts:
 
         mock_load_plugin.assert_called_with('main', 'make', {
             'source': 'project-name-1',
-            'plugin': 'make', 'stage': [], 'snap': [],
+            'plugin': 'make', 'stage': [], 'prime': [], 'snap': [],
             'make-options': ['DEP={}'.format(self.stage_dir)],
         })
 
@@ -761,7 +762,7 @@ parts:
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'plugin': 'go', 'stage-packages': ['fswebcam'],
-            'stage': [], 'snap': [],
+            'stage': [], 'prime': [], 'snap': [],
         })
 
 
@@ -1238,11 +1239,11 @@ parts:
     def test_config_snap_environment(self):
         config = project_loader.Config()
 
-        lib_paths = [os.path.join(self.snap_dir, 'lib'),
-                     os.path.join(self.snap_dir, 'usr', 'lib'),
-                     os.path.join(self.snap_dir, 'lib',
+        lib_paths = [os.path.join(self.prime_dir, 'lib'),
+                     os.path.join(self.prime_dir, 'usr', 'lib'),
+                     os.path.join(self.prime_dir, 'lib',
                                   self.arch_triplet),
-                     os.path.join(self.snap_dir, 'usr', 'lib',
+                     os.path.join(self.prime_dir, 'usr', 'lib',
                                   self.arch_triplet)]
         for lib_path in lib_paths:
             os.makedirs(lib_path)
@@ -1250,7 +1251,7 @@ parts:
         environment = config.snap_env()
         self.assertTrue(
             'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
-                self.snap_dir)
+                self.prime_dir)
             in environment)
 
         # Ensure that LD_LIBRARY_PATH is present and it contains only the
@@ -1264,7 +1265,7 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        expected = (os.path.join(self.snap_dir, i) for i in
+        expected = (os.path.join(self.prime_dir, i) for i in
                     ['lib', os.path.join('usr', 'lib'),
                      os.path.join('lib', self.arch_triplet),
                      os.path.join('usr', 'lib', self.arch_triplet)])
@@ -1280,7 +1281,7 @@ parts:
         environment = config.snap_env()
         self.assertTrue(
             'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
-                self.snap_dir)
+                self.prime_dir)
             in environment,
             'Current PATH is {!r}'.format(environment))
         for e in environment:
@@ -1292,8 +1293,8 @@ parts:
     def test_config_snap_environment_with_dependencies(self,
                                                        mock_get_dependencies):
         library_paths = {
-            os.path.join(self.snap_dir, 'lib1'),
-            os.path.join(self.snap_dir, 'lib2'),
+            os.path.join(self.prime_dir, 'lib1'),
+            os.path.join(self.prime_dir, 'lib2'),
         }
         mock_get_dependencies.return_value = library_paths
         config = project_loader.Config()
@@ -1312,7 +1313,7 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        expected = (os.path.join(self.snap_dir, i) for i in ['lib1', 'lib2'])
+        expected = (os.path.join(self.prime_dir, i) for i in ['lib1', 'lib2'])
         for item in expected:
             self.assertTrue(
                 item in paths,
@@ -1324,8 +1325,8 @@ parts:
     def test_config_snap_environment_with_dependencies_but_no_paths(
             self, mock_get_dependencies):
         library_paths = {
-            os.path.join(self.snap_dir, 'lib1'),
-            os.path.join(self.snap_dir, 'lib2'),
+            os.path.join(self.prime_dir, 'lib1'),
+            os.path.join(self.prime_dir, 'lib2'),
         }
         mock_get_dependencies.return_value = library_paths
         config = project_loader.Config()
@@ -1341,13 +1342,13 @@ parts:
         # Place a few ld.so.conf files in supported locations. We expect the
         # contents of these to make it into the LD_LIBRARY_PATH.
         mesa_dir = os.path.join(
-            self.snap_dir, 'usr', 'lib', 'my_arch', 'mesa')
+            self.prime_dir, 'usr', 'lib', 'my_arch', 'mesa')
         os.makedirs(mesa_dir)
         with open(os.path.join(mesa_dir, 'ld.so.conf'), 'w') as f:
             f.write('/mesa')
 
         mesa_egl_dir = os.path.join(
-            self.snap_dir, 'usr', 'lib', 'my_arch', 'mesa-egl')
+            self.prime_dir, 'usr', 'lib', 'my_arch', 'mesa-egl')
         os.makedirs(mesa_egl_dir)
         with open(os.path.join(mesa_egl_dir, 'ld.so.conf'), 'w') as f:
             f.write('# Standalone comment\n')
@@ -1366,7 +1367,7 @@ parts:
         self.assertTrue(len(paths) > 0,
                         'Expected LD_LIBRARY_PATH to be in environment')
 
-        expected = (os.path.join(self.snap_dir, i) for i in
+        expected = (os.path.join(self.prime_dir, i) for i in
                     ['mesa', 'mesa-egl'])
         for item in expected:
             self.assertTrue(item in paths,
@@ -1677,7 +1678,11 @@ class ValidationTestCase(ValidationBaseTestCase):
                 'command': 'binary4',
                 'daemon': 'simple',
                 'restart-condition': 'always',
-            }
+            },
+            'service5': {
+                'command': 'binary5',
+                'daemon': 'notify',
+            },
         }
 
         project_loader.Validator(self.data).validate()
@@ -1700,6 +1705,16 @@ class ValidationTestCase(ValidationBaseTestCase):
             "the required schema: 'on-watchdog' is not one of ['on-success', "
             "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']",
             str(raised))
+
+    def test_both_snap_and_prime_specified(self):
+        self.data['parts']['part1']['snap'] = ['foo']
+        self.data['parts']['part1']['prime'] = ['bar']
+
+        with ExpectedException(
+                SnapcraftSchemaError,
+                "The 'parts/part1' property does not match the required "
+                "schema: .* cannot contain both 'snap' and 'prime' keywords."):
+            project_loader.Validator(self.data).validate()
 
 
 class RequiredPropertiesTestCase(ValidationBaseTestCase):

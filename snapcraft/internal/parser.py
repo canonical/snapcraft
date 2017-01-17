@@ -18,6 +18,12 @@
 """
 snapcraft-parser
 
+Parse a wiki index of parts and output formatted YAML for use by 'snapcraft'.
+'snapcraft' uses the YAML to find non-local parts referred to by a project's
+'snapcraft.yaml' file.  See 'snapcraft update' and 'snapcraft define' for more
+details.
+
+
 Usage:
   snapcraft-parser [options]
 
@@ -26,8 +32,10 @@ Options:
   -v --version                          show program version and exit
   -d --debug                            print debug information while executing
                                         (including backtraces)
-  -i --index=<filename>                 a file containing a part index.
+  -i --index=<filepath>                 a file containing a part index.
+                                        ({default_index!r})
   -o --output=<filename>                where to write the parsed parts list.
+                                        ({default_parts_file!r})
 """
 
 import logging
@@ -36,6 +44,7 @@ import re
 import urllib
 import yaml
 from yaml.scanner import ScannerError
+from yaml.parser import ParserError
 
 from docopt import docopt
 from collections import OrderedDict
@@ -59,7 +68,11 @@ logger = logging.getLogger(__name__)
 
 # TODO: make this a temporary directory that get's removed when finished
 BASE_DIR = os.getenv('TMPDIR', '/tmp')
-PARTS_FILE = "snap-parts.yaml"
+PARTS_FILE = 'snap-parts.yaml'
+DEFAULT_INDEX = 'http://wiki.ubuntu.com/snapcraft/parts?action=raw'
+
+__doc__ = __doc__.format(default_index=DEFAULT_INDEX,
+                         default_parts_file=PARTS_FILE)
 
 
 def _get_base_dir():
@@ -184,6 +197,7 @@ def _process_entry(data):
     except KeyError as e:
         raise InvalidWikiEntryError('Missing key in wiki entry: {}'.format(e))
 
+    logger.info('Processing origin {origin!r}'.format(origin=origin))
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
@@ -226,7 +240,7 @@ def _process_wiki_entry(
     # return the number of errors encountered
     try:
         data = yaml.load(entry)
-    except ScannerError as e:
+    except (ScannerError, ParserError) as e:
         raise InvalidWikiEntryError(
             'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
@@ -252,7 +266,7 @@ def _process_wiki_entry(
     else:
         pending_validation_entries.append(entry)
         master_missing_parts.update(missing_parts)
-        logging.debug('Parts {!r} are missing'.format(
+        logger.debug('Parts {!r} are missing'.format(
             ",".join(missing_parts)))
 
 
@@ -307,7 +321,7 @@ def _process_index(output):
             entry, master_parts_list, missing_parts, [])
 
     if len(missing_parts):
-        logging.warning('Parts {!r} are not defined in the parts entry'.format(
+        logger.warning('Parts {!r} are not defined in the parts entry'.format(
                 ",".join(missing_parts)))
 
     return {'master_parts_list': master_parts_list,
@@ -320,14 +334,16 @@ def run(args):
         path = PARTS_FILE
 
     index = args.get('--index')
-    if index:
-        if '://' not in index:
-            index = '{}{}'.format(
-                'file://', os.path.join(os.getcwd(), index))
+    if not index:
+        index = DEFAULT_INDEX
+    if '://' not in index:
+        index = '{}{}'.format(
+            'file://', os.path.join(os.getcwd(), index))
+    try:
         output = urllib.request.urlopen(index).read()
-    else:
-        # XXX: fetch the index from the wiki
-        output = b'{}'
+    except urllib.error.URLError as e:
+        logging.error('Unable to access index: {!r}'.format(e))
+        return 1
 
     data = _process_index(output)
     master_parts_list = data['master_parts_list']
@@ -354,7 +370,7 @@ def missing_parts_set(parts, known_parts):
 
 
 def _write_parts_list(path, master_parts_list):
-    logging.debug('Writing parts list to {!r}'.format(path))
+    logger.info('Writing parts list to {!r}'.format(path))
     with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
                  default_flow_style=False))

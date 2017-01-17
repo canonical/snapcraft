@@ -227,7 +227,7 @@ parts:
         - usr/lib
       go-server:
         - bin/golang-*
-    snap:
+    prime:
       - $fswebcam
       - $go-server
   glue:
@@ -238,12 +238,12 @@ parts:
 ```
 
 What we did was add two `filesets`, one named `fswebcam` and another one named
-`go-server` and then added a `snap` entry referencing these two filesets with
+`go-server` and then added a `prime` entry referencing these two filesets with
 `$`. All these filesets are inclusion based filesets, you can use `*` to glob
 many files and directories (if `*` is the first character, it needs to be
 quoted e.g.; `'*'`). An exclusion can be added by prefixing the file
 with a `-`. Additionally, you don't need to define a fileset, you can explicitly
-mention the file, directory or match under `snap` or `stage`.
+mention the file, directory or match under `prime` or `stage`.
 
 ### Extending the Metadata
 

@@ -85,7 +85,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
-        self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
+        self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(self.fake_logger)
 
         patcher = mock.patch('multiprocessing.cpu_count')
         self.cpu_count = patcher.start()
@@ -99,9 +100,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(patcher.stop)
 
         # These are what we expect by default
-        self.snap_dir = os.path.join(os.getcwd(), 'prime')
+        self.prime_dir = os.path.join(os.getcwd(), 'prime')
         self.stage_dir = os.path.join(os.getcwd(), 'stage')
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
+        self.snap_dir = os.path.join(os.getcwd(), 'snap')
         self.local_plugins_dir = os.path.join(self.parts_dir, 'plugins')
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):

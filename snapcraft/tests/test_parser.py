@@ -291,6 +291,18 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
         self.assertEqual(0, retval)
 
+    def test_404_index(self):
+        retval = main(['--debug', '--index', 'https://fake.example.com'])
+        self.assertIn('Unable to access index: ', self.fake_logger.output)
+        self.assertEqual(1, retval)
+
+    def test_invalid_yaml(self):
+        _create_example_output(':')
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertIn('Bad wiki entry, possibly malformed YAML for entry: ',
+                      self.fake_logger.output)
+        self.assertEqual(1, retval)
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_slash_warning(self, mock_get_origin_data):
         fake_logger = fixtures.FakeLogger(level=logging.WARN)
@@ -320,7 +332,17 @@ parts: [main/a]
         self.assertTrue(m in fake_logger.output,
                         'Missing slash deprecation warning in output')
 
-    def test_main_valid_with_default_index(self):
+    def test_main_valid_with_empty_index(self):
+        _create_example_output('')
+        main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+
+    @mock.patch('urllib.request.urlopen')
+    def test_main_valid_with_default_index(self, mock_urlopen):
+        class FakeResponse:
+            def read(self):
+                return b''
+        mock_urlopen.return_value = FakeResponse()
         main(['--debug'])
         self.assertEqual(0, _get_part_list_count())
 

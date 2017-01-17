@@ -1,0 +1,23 @@
+name: prime-from-stage
+version: '0.1'
+summary: Test that stage files are added to the prime fileset.
+description: |
+    Test that stage files are added to the prime fileset.
+
+parts:
+  without-excludes:
+    plugin: make
+    source: .
+    stage:
+        - without-a
+        - without-b
+        - without-c
+    snap:
+        - -without-b
+  with-excludes:
+    plugin: make
+    source: .
+    stage:
+        - -with-a
+        - with-b
+        - with-c
