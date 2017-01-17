@@ -27,10 +27,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - gradle-options:
       (list of strings)
-      flags to pass to the build using the gradle semantics for parameters.
+      Flags to pass to the build using the gradle semantics for parameters.
+      The 'jar' option is always passed in as the last parameter.
     - gradle-output-dir:
-      (string)
-      the output directory where the resulting jar or war files from gradle[w]
+      (string; default: build/libs)
+      The output directory where the resulting jar or war files from gradle[w]
       are generated.
 """
 
