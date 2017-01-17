@@ -107,8 +107,8 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         snapcraft.file_utils.link_or_copy_tree(
             src, os.path.join(self.installdir, basedir),
-            copy_function=lambda src, dst: file_utils.link_or_copy(src, dst,
-                                                         self.installdir))
+            copy_function=lambda src, dst:
+                file_utils.link_or_copy(src, dst, self.installdir))
 
     def _get_proxy_options(self):
         # XXX This doesn't yet support username and password.
