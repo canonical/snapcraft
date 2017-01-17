@@ -85,7 +85,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
-        self.useFixture(fixtures.FakeLogger(level=logging.ERROR))
+        self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(self.fake_logger)
 
         patcher = mock.patch('multiprocessing.cpu_count')
         self.cpu_count = patcher.start()
