@@ -396,11 +396,13 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
+        sso_host = urllib.parse.urlparse(os.environ.get(
+            'UBUNTU_SSO_API_ROOT_URL', "http://localhost")).netloc
         macaroon = pymacaroons.Macaroon(
             caveats=[
                 pymacaroons.Caveat(
                     caveat_id='test caveat',
-                    location='localhost',
+                    location=sso_host,
                     verification_key_id='test verifiacion')
             ])
         response = {'macaroon': macaroon.serialize()}

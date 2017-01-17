@@ -152,7 +152,7 @@ class StoreClient():
     def _extract_caveat_id(self, root_macaroon):
         macaroon = pymacaroons.Macaroon.deserialize(root_macaroon)
         # macaroons are all bytes, never strings
-        sso_host = urllib.parse.urlparse(self.sso.root_url).hostname
+        sso_host = urllib.parse.urlparse(self.sso.root_url).netloc
         for caveat in macaroon.caveats:
             if caveat.location == sso_host:
                 return caveat.caveat_id
