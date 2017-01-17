@@ -52,8 +52,7 @@ class Git(Base):
         subprocess.check_call([self.command, '-C', self.source_dir,
                                'fetch', '--recurse-submodules=yes'])
         subprocess.check_call([self.command, '-C', self.source_dir,
-                               'reset', '--recurse-submodules=yes',
-                               '--hard', refspec])
+                               'reset', '--hard', refspec])
 
         # Pull changes to this repository and any submodules.
         subprocess.check_call([self.command, '-C', self.source_dir,
