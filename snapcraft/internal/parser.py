@@ -44,6 +44,7 @@ import re
 import urllib
 import yaml
 from yaml.scanner import ScannerError
+from yaml.parser import ParserError
 
 from docopt import docopt
 from collections import OrderedDict
@@ -239,7 +240,7 @@ def _process_wiki_entry(
     # return the number of errors encountered
     try:
         data = yaml.load(entry)
-    except ScannerError as e:
+    except (ScannerError, ParserError) as e:
         raise InvalidWikiEntryError(
             'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
@@ -338,7 +339,11 @@ def run(args):
     if '://' not in index:
         index = '{}{}'.format(
             'file://', os.path.join(os.getcwd(), index))
-    output = urllib.request.urlopen(index).read()
+    try:
+        output = urllib.request.urlopen(index).read()
+    except urllib.error.URLError as e:
+        logging.error('Unable to access index: {!r}'.format(e))
+        return 1
 
     data = _process_index(output)
     master_parts_list = data['master_parts_list']
