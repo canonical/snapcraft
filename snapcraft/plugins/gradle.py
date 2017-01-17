@@ -28,6 +28,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - gradle-options:
       (list of strings)
       flags to pass to the build using the gradle semantics for parameters.
+    - gradle-output-dir:
+      (string)
+      the output directory where the resulting jar or war files from gradle[w]
+      are generated.
 """
 
 import glob
