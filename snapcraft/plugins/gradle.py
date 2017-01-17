@@ -29,13 +29,13 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
       The 'jar' option is always passed in as the last parameter.
+
     - gradle-output-dir:
-      (string; default: build/libs)
+      (string; default: 'build/libs')
       The output directory where the resulting jar or war files from gradle[w]
       are generated.
 """
 
-import file_utils
 import glob
 import logging
 import os
@@ -109,7 +109,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
         snapcraft.file_utils.link_or_copy_tree(
             src, os.path.join(self.installdir, basedir),
             copy_function=lambda src, dst:
-                file_utils.link_or_copy(src, dst, self.installdir))
+                snapcraft.file_utils.link_or_copy(src, dst, self.installdir))
 
     def _get_proxy_options(self):
         # XXX This doesn't yet support username and password.
