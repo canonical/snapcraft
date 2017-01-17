@@ -49,6 +49,12 @@ class Git(Base):
         elif self.source_commit:
             refspec = self.source_commit
 
+        subprocess.check_call([self.command, '-C', self.source_dir,
+                               'fetch', '--recurse-submodules=yes'])
+        subprocess.check_call([self.command, '-C', self.source_dir,
+                               'reset', '--recurse-submodules=yes',
+                               '--hard', refspec])
+
         # Pull changes to this repository and any submodules.
         subprocess.check_call([self.command, '-C', self.source_dir,
                                'pull', '--recurse-submodules=yes',
