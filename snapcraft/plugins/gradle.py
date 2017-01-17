@@ -34,6 +34,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       are generated.
 """
 
+import file_utils
 import glob
 import logging
 import os
@@ -106,7 +107,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
 
         snapcraft.file_utils.link_or_copy_tree(
             src, os.path.join(self.installdir, basedir),
-            copy_function=lambda src, dst: _link_or_copy(src, dst,
+            copy_function=lambda src, dst: file_utils.link_or_copy(src, dst,
                                                          self.installdir))
 
     def _get_proxy_options(self):
@@ -123,27 +124,3 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
                     proxy_options.append(
                         '-D{}.proxyPort={}'.format(var, parsed_url.port))
         return proxy_options
-
-
-def _link_or_copy(source, destination, boundary):
-    """Attempt to copy symlinks as symlinks unless pointing out of boundary."""
-
-    follow_symlinks = False
-
-    # If this is a symlink, analyze where it's pointing and make sure it will
-    # still be valid when snapped. If it won't, follow the symlink when
-    # copying (i.e. copy the file to which the symlink is pointing instead).
-    if os.path.islink(source):
-        link = os.readlink(source)
-        destination_dirname = os.path.dirname(destination)
-        normalized = os.path.normpath(os.path.join(destination_dirname, link))
-        if os.path.isabs(link) or not normalized.startswith(boundary):
-            follow_symlinks = True
-
-    try:
-        snapcraft.file_utils.link_or_copy(source, destination,
-                                          follow_symlinks=follow_symlinks)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            '{!r} is a broken symlink pointing outside the snap'.format(
-                source))
