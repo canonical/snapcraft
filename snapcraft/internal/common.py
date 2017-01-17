@@ -63,7 +63,7 @@ def assemble_env(include_core_library_paths=False, arch_triplet=''):
 
 def run(cmd, **kwargs):
     assert isinstance(cmd, list), 'run command must be a list'
-    env_bak = {k: os.environ[k]  for k in ['PYTHONUSERBASE', 'PYTHONHOME']
+    env_bak = {k: os.environ[k] for k in ['PYTHONUSERBASE', 'PYTHONHOME']
                if k in os.environ}
     for k in env_bak:
         os.environ.pop(k)
