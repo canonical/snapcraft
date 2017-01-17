@@ -1,0 +1,12 @@
+name: test-package
+version: 0.1
+summary: A simple rust project with conditional features.
+description: |
+  Snap used to test conditional features in rust.
+confinement: strict
+
+parts:
+  simple-rust:
+    plugin: rust
+    source: .
+    rust-features: [conditional-feature-present]

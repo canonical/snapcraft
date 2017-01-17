@@ -139,6 +139,7 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def _build_environment(self):
         env = os.environ.copy()
         env['GOPATH'] = self._gopath
+        env['GOBIN'] = self._gopath_bin
 
         # Add $GOPATH/bin so godeps is actually callable.
         env['PATH'] = '{}:{}'.format(

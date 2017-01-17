@@ -294,6 +294,18 @@ parts: [main]
         self.assertEqual(1, _get_part_list_count())
         self.assertEqual(0, retval)
 
+    def test_404_index(self):
+        retval = main(['--debug', '--index', 'https://fake.example.com'])
+        self.assertIn('Unable to access index: ', self.fake_logger.output)
+        self.assertEqual(1, retval)
+
+    def test_invalid_yaml(self):
+        _create_example_output(':')
+        retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
+        self.assertIn('Bad wiki entry, possibly malformed YAML for entry: ',
+                      self.fake_logger.output)
+        self.assertEqual(1, retval)
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_slash_warning(self, mock_get_origin_data):
         fake_logger = fixtures.FakeLogger(level=logging.WARN)
