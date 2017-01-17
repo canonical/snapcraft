@@ -5,10 +5,7 @@
 
 import sys
 
-try:
-    from launchpadlib.launchpad import Launchpad
-except ImportError:
-    sys.exit('Install launchpadlib: sudo apt install python-launchpadlib')
+from launchpadlib.launchpad import Launchpad
 
 
 def main():
