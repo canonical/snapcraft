@@ -90,7 +90,7 @@ class _SnapPackaging:
         self._arch_triplet = project_options.arch_triplet
 
         self._meta_dir = os.path.join(self._snap_dir, 'meta')
-        self._config_data = config_data
+        self._config_data = config_data.copy()
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
@@ -301,19 +301,20 @@ class _SnapPackaging:
                 raise EnvironmentError(
                     'The specified command {!r} defined in the app {!r} '
                     'does not exist or is not executable'.format(str(e), name))
-        if 'desktop' in app:
-            self._reformat_desktop(name, app)
+        desktop_file = app.pop('desktop', '')
+        if desktop_file:
+            self._reformat_desktop(name, desktop_file)
 
-    def _reformat_desktop(self, name, app):
+    def _reformat_desktop(self, name, desktop_file):
         gui_dir = os.path.join(self.meta_dir, 'gui')
-        desktop_file = os.path.join(self._snap_dir, app['desktop'])
-        if not os.path.exists(desktop_file):
+        desktop_file_path = os.path.join(self._snap_dir, desktop_file)
+        if not os.path.exists(desktop_file_path):
             raise EnvironmentError(
                 'The specified desktop file {!r} defined in the app '
                 '{!r} does not exist'.format(desktop_file, name))
         desktop_contents = configparser.ConfigParser(interpolation=None)
         desktop_contents.optionxform = str
-        desktop_contents.read(desktop_file)
+        desktop_contents.read(desktop_file_path)
         section = 'Desktop Entry'
         if section not in desktop_contents.sections():
             raise EnvironmentError(
@@ -336,8 +337,9 @@ class _SnapPackaging:
                 else:
                     logger.warning(
                         'Icon {} specified in desktop file {} not found '
-                        'in prime directory'.format(icon, app['desktop']))
+                        'in prime directory'.format(icon, desktop_file))
         target = os.path.join(gui_dir, os.path.basename(desktop_file))
+        print('target', target)
         if os.path.exists(target):
             raise EnvironmentError(
                 'Conflicting desktop file referenced by more than one '
