@@ -284,6 +284,11 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertEqual(contents[section].get('Icon'),
                          '${SNAP}/usr/share/app2.png')
 
+        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
+                        Not(FileContains('desktop: app1.desktop')))
+        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
+                        Not(FileContains('desktop: app2.desktop')))
+
     def test_create_meta_with_hook(self):
         hooksdir = os.path.join(self.snap_dir, 'hooks')
         os.makedirs(hooksdir)
