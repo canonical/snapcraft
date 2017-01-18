@@ -296,6 +296,10 @@ class Ubuntu:
                              sources_list=sources,
                              use_geoip=project_options.use_geoip)
 
+    def is_valid(self, package_name):
+        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+            return package_name in apt_cache
+
     def get(self, package_names):
         with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
             self._get(apt_cache, package_names)

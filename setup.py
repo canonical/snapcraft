@@ -43,6 +43,7 @@ setup(
               'snapcraft.internal.cache',
               'snapcraft.internal.deltas',
               'snapcraft.internal.pluginhandler',
+              'snapcraft.internal.pluginhandler.stage_package_grammar',
               'snapcraft.internal.sources',
               'snapcraft.internal.states',
               'snapcraft.plugins',

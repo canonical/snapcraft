@@ -46,6 +46,7 @@ from snapcraft.internal import (
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
+from ._stage_package_handler import StagePackageHandler
 
 logger = logging.getLogger(__name__)
 
@@ -66,17 +67,9 @@ class PluginHandler:
     def installdir(self):
         return self.code.installdir
 
-    @property
-    def ubuntu(self):
-        if not self._ubuntu:
-            self._ubuntu = repo.Ubuntu(
-                self.ubuntudir, sources=self.code.PLUGIN_STAGE_SOURCES,
-                project_options=self._project_options)
-
-        return self._ubuntu
-
     def __init__(self, *, plugin_name, part_name,
-                 part_properties, project_options, part_schema):
+                 part_properties, project_options, part_schema,
+                 definitions_schema):
         self.valid = False
         self.code = None
         self.config = {}
@@ -89,7 +82,6 @@ class PluginHandler:
         # the layout of parts inside the parts directory causing collisions
         # between the main project part and its subparts.
         part_name = part_name.replace('/', '\N{BIG SOLIDUS}')
-        self._ubuntu = None
         self._project_options = project_options
         self.deps = []
 
@@ -109,13 +101,22 @@ class PluginHandler:
         self._migrate_state_file()
 
         try:
-            self._load_code(plugin_name, self._part_properties, part_schema)
+            self._load_code(
+                plugin_name, self._part_properties, part_schema,
+                definitions_schema)
         except jsonschema.ValidationError as e:
             error = SnapcraftSchemaError.from_validation_error(e)
             raise PluginError('properties failed to load for {}: {}'.format(
                 part_name, error.message))
 
-    def _load_code(self, plugin_name, properties, part_schema):
+        stage_packages = getattr(self.code, 'stage_packages', [])
+        sources = getattr(self.code, 'PLUGIN_STAGE_SOURCES', None)
+        self._stage_package_handler = StagePackageHandler(
+            stage_packages, self.ubuntudir,
+            sources=sources, project_options=self._project_options)
+
+    def _load_code(self, plugin_name, properties, part_schema,
+                   definitions_schema):
         module_name = plugin_name.replace('-', '_')
         module = None
 
@@ -138,8 +139,10 @@ class PluginHandler:
                 raise PluginError('unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
-        _validate_pull_and_build_properties(plugin_name, plugin, part_schema)
-        options = _make_options(part_schema, properties, plugin.schema())
+        _validate_pull_and_build_properties(
+            plugin_name, plugin, part_schema, definitions_schema)
+        options = _make_options(
+            part_schema, definitions_schema, properties, plugin.schema())
         # For backwards compatibility we add the project to the plugin
         try:
             self.code = plugin(self.name, options, self._project_options)
@@ -301,23 +304,14 @@ class PluginHandler:
         return os.path.join(self.statedir, step)
 
     def _fetch_stage_packages(self):
-        if not self.code.stage_packages:
-            return
-
-        logger.debug('Fetching stage-packages {!r} for part {!r}'.format(
-            self.code.stage_packages, self.name))
-
         try:
-            self.ubuntu.get(self.code.stage_packages)
+            self._stage_package_handler.fetch()
         except repo.PackageNotFoundError as e:
             raise RuntimeError("Error downloading stage packages for part "
                                "{!r}: {}".format(self.name, e.message))
 
     def _unpack_stage_packages(self):
-        if self.code.stage_packages:
-            logger.debug('Unpacking stage-packages for part {!r} to '
-                         '{!r}'.format(self.name, self.installdir))
-            self.ubuntu.unpack(self.installdir)
+        self._stage_package_handler.unpack(self.installdir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
@@ -711,19 +705,26 @@ def _expand_part_properties(part_properties, part_schema):
     return properties
 
 
-def _merged_part_and_plugin_schemas(part_schema, plugin_schema):
+def _merged_part_and_plugin_schemas(part_schema, definitions_schema,
+                                    plugin_schema):
     plugin_schema = plugin_schema.copy()
     if 'properties' not in plugin_schema:
         plugin_schema['properties'] = {}
 
+    if 'definitions' not in plugin_schema:
+        plugin_schema['definitions'] = {}
+
     # The part schema takes precedence over the plugin's schema.
     plugin_schema['properties'].update(part_schema)
+    plugin_schema['definitions'].update(definitions_schema)
+
     return plugin_schema
 
 
-def _validate_pull_and_build_properties(plugin_name, plugin, part_schema):
+def _validate_pull_and_build_properties(plugin_name, plugin, part_schema,
+                                        definitions_schema):
     merged_schema = _merged_part_and_plugin_schemas(
-        part_schema, plugin.schema())
+        part_schema, definitions_schema, plugin.schema())
     merged_properties = merged_schema['properties']
 
     # First, validate pull properties
@@ -754,12 +755,13 @@ def _validate_step_properties(step_properties, schema_properties):
     return invalid_properties
 
 
-def _make_options(part_schema, properties, plugin_schema):
+def _make_options(part_schema, definitions_schema, properties, plugin_schema):
     # Make copies as these dictionaries are tampered with
     part_schema = part_schema.copy()
     properties = properties.copy()
 
-    plugin_schema = _merged_part_and_plugin_schemas(part_schema, plugin_schema)
+    plugin_schema = _merged_part_and_plugin_schemas(
+        part_schema, definitions_schema, plugin_schema)
 
     # This is for backwards compatibility for when most of the
     # schema was overridable by the plugins.
@@ -817,11 +819,14 @@ def _load_local(module_name, local_plugin_dir):
 
 
 def load_plugin(part_name, *, plugin_name, part_properties=None,
-                project_options=None, part_schema=None):
+                project_options=None, part_schema=None,
+                definitions_schema=None):
     if part_properties is None:
         part_properties = {}
     if part_schema is None:
         part_schema = {}
+    if definitions_schema is None:
+        definitions_schema = {}
     if project_options is None:
         project_options = snapcraft.ProjectOptions()
     logger.debug('Setting up part {!r} with plugin {!r} and '
@@ -832,7 +837,8 @@ def load_plugin(part_name, *, plugin_name, part_properties=None,
                          part_name=part_name,
                          part_properties=part_properties,
                          project_options=project_options,
-                         part_schema=part_schema)
+                         part_schema=part_schema,
+                         definitions_schema=definitions_schema)
 
 
 def _migratable_filesets(fileset, srcdir):

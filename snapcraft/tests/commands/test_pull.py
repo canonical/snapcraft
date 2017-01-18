@@ -144,4 +144,4 @@ parts:
 
         main(['pull', 'pull1'])
 
-        mock_get.assert_called_once_with(['mir:arch'])
+        mock_get.assert_called_once_with({'mir:arch'})
