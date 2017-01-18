@@ -339,7 +339,6 @@ class _SnapPackaging:
                         'Icon {} specified in desktop file {} not found '
                         'in prime directory'.format(icon, desktop_file))
         target = os.path.join(gui_dir, os.path.basename(desktop_file))
-        print('target', target)
         if os.path.exists(target):
             raise EnvironmentError(
                 'Conflicting desktop file referenced by more than one '
