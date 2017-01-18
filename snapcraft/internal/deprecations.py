@@ -28,8 +28,7 @@ _DEPRECATION_MESSAGES = {
     'dn1': "The 'snap' keyword has been replaced by 'prime'."
 }
 
-_DEPRECATION_URL_FMT = (
-    'https://github.com/snapcore/snapcraft/wiki/Deprecation-Notices#{id}')
+_DEPRECATION_URL_FMT = 'http://snapcraft.io/docs/deprecation-notices/{id}'
 
 logger = logging.getLogger(__name__)
 
