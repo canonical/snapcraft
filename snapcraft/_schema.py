@@ -23,6 +23,13 @@ import yaml
 
 from snapcraft.internal import common
 
+# dict of validator -> cause pairs. Wish jsonschema just gave us better
+# messages.
+_VALIDATION_ERROR_CAUSES = {
+    'maxLength': 'maximum length is {validator_value}',
+    'minLength': 'minimum length is {validator_value}',
+}
+
 
 class SnapcraftSchemaError(Exception):
 
@@ -99,7 +106,20 @@ def _handle_validation_error(error):
     if path:
         messages.insert(0, "The '{}' property does not match the "
                            "required schema:".format('/'.join(path)))
-    if error.cause:
-        messages.append('({})'.format(error.cause))
+    cause = error.cause or _determine_cause(error)
+    if cause:
+        messages.append('({})'.format(cause))
 
     raise SnapcraftSchemaError(' '.join(messages))
+
+
+def _determine_cause(error):
+    """Attempt to determine a cause from validation error.
+
+    Returns:
+        A string representing the cause of the error (it may be empty if no
+        cause can be determined).
+    """
+
+    return _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
+        validator_value=error.validator_value)
