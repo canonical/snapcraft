@@ -32,6 +32,7 @@ class BaseGradlePluginTestCase(tests.TestCase):
 
         class Options:
             gradle_options = []
+            gradle_output_dir = 'build/libs'
         self.options = Options()
 
         self.project_options = snapcraft.ProjectOptions()
@@ -78,8 +79,16 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
             gradle_options['uniqueItems'],
             'Expected "gradle-options" "uniqueItems" to be "True"')
 
+        output_dir = properties['gradle-output-dir']
+        self.assertTrue(
+            'type' in output_dir,
+            'Expected "type" to be included in "gradle-options"')
+        self.assertEqual(output_dir['type'], 'string',
+                         'Expected "gradle-options" "type" to be "string", '
+                         'but it was "{}"'.format(output_dir['type']))
+
     def test_get_build_properties(self):
-        expected_build_properties = ['gradle-options']
+        expected_build_properties = ['gradle-options', 'gradle-output-dir']
         resulting_build_properties = gradle.GradlePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
@@ -89,9 +98,12 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
             self.assertIn(property, resulting_build_properties)
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
-    def test_build(self, run_mock):
+    def test_build_gradlew(self, run_mock):
         plugin = gradle.GradlePlugin('test-part', self.options,
                                      self.project_options)
+
+        filename = os.path.join(os.getcwd(), 'gradlew')
+        open(filename, 'w').close()
 
         def side(l):
             os.makedirs(os.path.join(plugin.builddir,
@@ -109,9 +121,52 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         ])
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
-    def test_build_war(self, run_mock):
+    def test_build_gradle(self, run_mock):
         plugin = gradle.GradlePlugin('test-part', self.options,
                                      self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir,
+                        'build', 'libs'))
+            open(os.path.join(plugin.builddir,
+                 'build', 'libs', 'dummy.jar'), 'w').close()
+
+        run_mock.side_effect = side
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['gradle', 'jar']),
+        ])
+
+    @mock.patch.object(gradle.GradlePlugin, 'run')
+    def test_build_war_gradle(self, run_mock):
+        plugin = gradle.GradlePlugin('test-part', self.options,
+                                     self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir,
+                        'build', 'libs'))
+            open(os.path.join(plugin.builddir,
+                 'build', 'libs', 'dummy.war'), 'w').close()
+
+        run_mock.side_effect = side
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['gradle', 'jar']),
+        ])
+
+    @mock.patch.object(gradle.GradlePlugin, 'run')
+    def test_build_war_gradlew(self, run_mock):
+        plugin = gradle.GradlePlugin('test-part', self.options,
+                                     self.project_options)
+
+        filename = os.path.join(os.getcwd(), 'gradlew')
+        open(filename, 'w').close()
 
         def side(l):
             os.makedirs(os.path.join(plugin.builddir,
@@ -129,7 +184,22 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         ])
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
-    def test_build_fail(self, run_mock):
+    def test_build_fail_gradlew(self, run_mock):
+        plugin = gradle.GradlePlugin('test-part', self.options,
+                                     self.project_options)
+
+        filename = os.path.join(os.getcwd(), 'gradlew')
+        open(filename, 'w').close()
+
+        os.makedirs(plugin.sourcedir)
+        self.assertRaises(RuntimeError, plugin.build)
+
+        run_mock.assert_has_calls([
+            mock.call(['./gradlew', 'jar']),
+        ])
+
+    @mock.patch.object(gradle.GradlePlugin, 'run')
+    def test_build_fail_gradle(self, run_mock):
         plugin = gradle.GradlePlugin('test-part', self.options,
                                      self.project_options)
 
@@ -137,7 +207,7 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         self.assertRaises(RuntimeError, plugin.build)
 
         run_mock.assert_has_calls([
-            mock.call(['./gradlew', 'jar']),
+            mock.call(['gradle', 'jar']),
         ])
 
 
@@ -161,11 +231,36 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
     ]
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
-    def test_build_with_http_proxy(self, run_mock):
+    def test_build_with_http_proxy_gradle(self, run_mock):
         var, value = self.env_var
         self.useFixture(fixtures.EnvironmentVariable(var, value))
         plugin = gradle.GradlePlugin('test-part', self.options,
                                      self.project_options)
+
+        def side(l):
+            os.makedirs(os.path.join(plugin.builddir,
+                        'build', 'libs'))
+            open(os.path.join(plugin.builddir,
+                 'build', 'libs', 'dummy.war'), 'w').close()
+
+        run_mock.side_effect = side
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        run_mock.assert_has_calls([
+            mock.call(['gradle'] + self.expected_args + ['jar'])
+        ])
+
+    @mock.patch.object(gradle.GradlePlugin, 'run')
+    def test_build_with_http_proxy_gradlew(self, run_mock):
+        var, value = self.env_var
+        self.useFixture(fixtures.EnvironmentVariable(var, value))
+        plugin = gradle.GradlePlugin('test-part', self.options,
+                                     self.project_options)
+
+        filename = os.path.join(os.getcwd(), 'gradlew')
+        open(filename, 'w').close()
 
         def side(l):
             os.makedirs(os.path.join(plugin.builddir,
