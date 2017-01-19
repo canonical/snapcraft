@@ -19,6 +19,7 @@ import subprocess
 
 import fixtures
 import testscenarios
+from testtools.matchers import FileExists, Not
 
 import integration_tests
 
@@ -31,15 +32,44 @@ class GodepsPluginTestCase(testscenarios.WithScenarios,
         ('with GOBIN', dict(set_gobin=True)),
     ]
 
-    def test_stage_go_plugin(self):
+    def test_stage(self):
         if self.set_gobin:
             gobin = 'gobin'
             self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
 
-        project_dir = 'simple-godeps'
+        project_dir = 'godeps'
         self.run_snapcraft('stage', project_dir)
 
-        binary = os.path.join('stage', 'bin', 'bcrypt')
+        binary = os.path.join(os.getcwd(), project_dir,
+                              'stage', 'bin', 'bcrypt')
+        self.assertThat(binary, FileExists())
+
+        hash_command = [binary, 'hash', '10', 'password']
+
+        output = subprocess.check_output(
+            hash_command, cwd=project_dir)
+
+        check_hash_command = [binary, 'check', output, 'password']
+        output = subprocess.check_output(
+            check_hash_command, cwd=project_dir)
+
+        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+
+    def test_stage_with_go_packages(self):
+        if self.set_gobin:
+            gobin = 'gobin'
+            self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
+
+        project_dir = 'godeps-with-go-packages'
+        self.run_snapcraft('stage', project_dir)
+
+        binary = os.path.join(os.getcwd(), project_dir,
+                              'stage', 'bin', 'only-main')
+        self.assertThat(binary, FileExists())
+        self.assertThat(
+            os.path.join(os.getcwd(), project_dir, 'stage', 'bin', 'bcrypt'),
+            Not(FileExists()))
+
         hash_command = [binary, 'hash', '10', 'password']
 
         output = subprocess.check_output(
