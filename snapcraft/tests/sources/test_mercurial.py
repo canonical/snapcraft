@@ -139,3 +139,14 @@ class TestMercurial(SourceTestCase):
         expected_message = (
             'can\'t specify source-depth for a mercurial source')
         self.assertEqual(raised.message, expected_message)
+
+    def test_source_checksum_raises_exception(self):
+        raised = self.assertRaises(
+            sources.errors.IncompatibleOptionsError,
+            sources.Mercurial,
+            'hg://mysource', 'source_dir',
+            source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
+
+        expected_message = (
+            "can't specify a source-checksum for a mercurial source")
+        self.assertEqual(raised.message, expected_message)

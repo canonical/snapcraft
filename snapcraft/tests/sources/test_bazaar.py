@@ -100,3 +100,14 @@ class TestBazaar(SourceTestCase):
             'can\'t specify both source-tag and source-commit for '
             'a bzr source')
         self.assertEqual(raised.message, expected_message)
+
+    def test_source_checksum_raises_exception(self):
+        raised = self.assertRaises(
+            sources.errors.IncompatibleOptionsError,
+            sources.Bazaar,
+            'lp://mysource', 'source_dir',
+            source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
+
+        expected_message = (
+            "can't specify a source-checksum for a bzr source")
+        self.assertEqual(raised.message, expected_message)

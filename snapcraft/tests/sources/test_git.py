@@ -161,3 +161,14 @@ class TestGit(SourceTestCase):
             'can\'t specify both source-tag and source-commit for ' \
             'a git source'
         self.assertEqual(raised.message, expected_message)
+
+    def test_source_checksum_raises_exception(self):
+        raised = self.assertRaises(
+            sources.errors.IncompatibleOptionsError,
+            sources.Git,
+            'git://mysource', 'source_dir',
+            source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
+
+        expected_message = (
+            "can't specify a source-checksum for a git source")
+        self.assertEqual(raised.message, expected_message)
