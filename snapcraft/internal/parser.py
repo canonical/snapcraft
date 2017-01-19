@@ -166,6 +166,8 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
 
             if after:
                 after_parts.update(set(after))
+        else:
+            after_parts.add(part_name)
 
     return parts_list, after_parts
 
@@ -323,6 +325,7 @@ def _process_index(output):
     if len(missing_parts):
         logger.warning('Parts {!r} are not defined in the parts entry'.format(
                 ",".join(missing_parts)))
+        wiki_errors += 1
 
     return {'master_parts_list': master_parts_list,
             'wiki_errors': wiki_errors}

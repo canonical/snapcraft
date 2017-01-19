@@ -1074,6 +1074,28 @@ parts: [parent]
         self.assertEqual(2, _get_part_list_count())
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
+    def test_part_missing_in_origin(self, mock_get_origin_data):
+        _create_example_output("""
+---
+maintainer: John Doe <john.doe@example.com>
+origin: lp:snapcraft-parser-example
+description: example part on which parent depends on
+parts: [not-there]
+""")
+
+        mock_get_origin_data.return_value = {
+            'parts': {
+                'there': {
+                    'source': 'lp:project',
+                    'plugin': 'dump',
+                },
+            }
+        }
+        retcode = main(['--index', TEST_OUTPUT_PATH])
+        self.assertEqual(0, _get_part_list_count())
+        self.assertEqual(1, retcode)
+
+    @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_remote_after_parts_unordered(self, mock_get_origin_data):
         _create_example_output("""
 ---
