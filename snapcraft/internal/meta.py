@@ -303,22 +303,23 @@ class _SnapPackaging:
                     'does not exist or is not executable'.format(str(e), name))
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
-            desktop_file = _DesktopFile(name, desktop_file_name,
-                                        self._config_data['name'],
-                                        self._snap_dir, self.meta_dir)
+            desktop_file = _DesktopFile(
+                name=name, filename=desktop_file_name,
+                snap_name=self._config_data['name'], prime_dir=self._snap_dir,
+                gui_dir=os.path.join(self.meta_dir, 'gui'))
             desktop_file.parse_and_reformat()
             desktop_file.write()
 
 
 class _DesktopFile:
 
-    def __init__(self, name, filename, snap_name, snap_dir, meta_dir):
+    def __init__(self, *, name, filename, snap_name, prime_dir, gui_dir):
         self._name = name
         self._filename = filename
         self._snap_name = snap_name
-        self._snap_dir = snap_dir
-        self._meta_dir = meta_dir
-        self._path = os.path.join(snap_dir, filename)
+        self._prime_dir = prime_dir
+        self._gui_dir = gui_dir
+        self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
             raise EnvironmentError(
                 'The specified desktop file {!r} defined in the app '
@@ -347,7 +348,7 @@ class _DesktopFile:
             icon = self._parser[section]['Icon']
             if icon.startswith('/'):
                 icon = icon.lstrip('/')
-                if os.path.exists(os.path.join(self._snap_dir, icon)):
+                if os.path.exists(os.path.join(self._prime_dir, icon)):
                     self._parser[section]['Icon'] = '${{SNAP}}/{}'.format(icon)
                 else:
                     logger.warning(
@@ -355,8 +356,7 @@ class _DesktopFile:
                         'in prime directory'.format(icon, self._filename))
 
     def write(self):
-        gui_dir = os.path.join(self._meta_dir, 'gui')
-        target = os.path.join(gui_dir, os.path.basename(self._filename))
+        target = os.path.join(self._gui_dir, os.path.basename(self._filename))
         if os.path.exists(target):
             raise EnvironmentError(
                 'Conflicting desktop file referenced by more than one '
