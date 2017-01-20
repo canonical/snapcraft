@@ -76,6 +76,11 @@ _ARCH_TRANSLATIONS = {
     }
 }
 
+_32BIT_BACKWARD_COMPATIBILTY = {
+    'aarch64': 'armv7l',
+    'ppc64le': 'ppc',
+    'x86_64': 'i686',
+}
 
 class ProjectOptions:
 
@@ -183,6 +188,10 @@ class ProjectOptions:
 
     def _set_machine(self, target_deb_arch):
         self.__host_machine = platform.machine()
+        if platform.architecture()[0] == '32bit':
+            host32 = _32BIT_BACKWARD_COMPATIBILTY.get(self.__host_machine)
+            if host32:
+                self.__host_machine = host32
         if not target_deb_arch:
             self.__target_machine = self.__host_machine
         else:
