@@ -147,7 +147,7 @@ class PackageNotFoundError(Exception):
             (name, arch) = self.package_name.split(':', 2)
             if arch:
                 message += (
-                    ' You may need to add support for this architecture with '
+                    '\nYou may need to add support for this architecture with '
                     "'dpkg --add-architecture {}'.".format(arch))
         return message
 
