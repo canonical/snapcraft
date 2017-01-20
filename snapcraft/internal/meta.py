@@ -325,7 +325,9 @@ class _SnapPackaging:
                 'The specified desktop file {!r} is missing the '
                 '"Exec" key'.format(desktop_file))
         # XXX: do we want to allow more parameters for Exec?
-        exec_value = '{}.{} %U'.format(self._config_data['name'], name)
+        snap_name = self._config_data['name']
+        exec_value = '{} %U'.format(
+            name if name == snap_name else '{}.{}'.format(snap_name, name))
         desktop_contents[section]['Exec'] = exec_value
         if 'Icon' in desktop_contents[section]:
             icon = desktop_contents[section]['Icon']
