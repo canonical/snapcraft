@@ -55,8 +55,8 @@ def _get_data_from_snap_file(snap_path):
 
 
 def _fail_login(msg=''):
-    logger.info(msg)
-    logger.info('Login failed.')
+    logger.error(msg)
+    logger.error('Login failed.')
     return False
 
 

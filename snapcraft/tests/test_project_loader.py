@@ -1612,7 +1612,8 @@ class ValidationTestCase(ValidationBaseTestCase):
 
         expected_message = (
             "The 'summary' property does not match the required schema: "
-            "'{}' is too long").format(self.data['summary'])
+            "'{}' is too long (maximum length is 78)").format(
+                self.data['summary'])
         self.assertEqual(raised.message, expected_message,
                          message=self.data)
 

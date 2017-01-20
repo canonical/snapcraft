@@ -27,7 +27,13 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - gradle-options:
       (list of strings)
-      flags to pass to the build using the gradle semantics for parameters.
+      Flags to pass to the build using the gradle semantics for parameters.
+      The 'jar' option is always passed in as the last parameter.
+
+    - gradle-output-dir:
+      (string; default: 'build/libs')
+      The output directory where the resulting jar or war files from gradle[w]
+      are generated.
 """
 
 import glob
@@ -56,28 +62,39 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             },
             'default': [],
         }
+        schema['properties']['gradle-output-dir'] = {
+            'type': 'string',
+            'default': 'build/libs',
+        }
 
         return schema
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        filename = os.path.join(os.getcwd(), 'gradlew')
+        if not os.path.isfile(filename):
+            self.build_packages.append('gradle')
         self.build_packages.append('ca-certificates-java')
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['gradle-options']
+        return super().get_build_properties() + ['gradle-options',
+                                                 'gradle-output-dir']
 
     def build(self):
         super().build()
-
-        gradle_cmd = ['./gradlew']
+        filename = os.path.join(os.getcwd(), 'gradlew')
+        if os.path.isfile(filename):
+            gradle_cmd = ['./gradlew']
+        else:
+            gradle_cmd = ['gradle']
         self.run(gradle_cmd +
                  self._get_proxy_options() +
                  self.options.gradle_options + ['jar'])
 
-        src = os.path.join(self.builddir, 'build', 'libs')
+        src = os.path.join(self.builddir, self.options.gradle_output_dir)
         jarfiles = glob.glob(os.path.join(src, '*.jar'))
         warfiles = glob.glob(os.path.join(src, '*.war'))
 
@@ -87,14 +104,12 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             basedir = 'war'
             jarfiles = warfiles
         else:
-            raise RuntimeError("Could not find any "
-                               "built jar files for part")
+            raise RuntimeError("Could not find any built jar files for part")
 
-        targetdir = os.path.join(self.installdir, basedir)
-        os.makedirs(targetdir, exist_ok=True)
-        for f in jarfiles:
-            base = os.path.basename(f)
-            os.link(f, os.path.join(targetdir, base))
+        snapcraft.file_utils.link_or_copy_tree(
+            src, os.path.join(self.installdir, basedir),
+            copy_function=lambda src, dst:
+                snapcraft.file_utils.link_or_copy(src, dst, self.installdir))
 
     def _get_proxy_options(self):
         # XXX This doesn't yet support username and password.

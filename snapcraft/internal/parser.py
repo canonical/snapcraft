@@ -44,6 +44,7 @@ import re
 import urllib
 import yaml
 from yaml.scanner import ScannerError
+from xdg import BaseDirectory
 from yaml.parser import ParserError
 
 from docopt import docopt
@@ -67,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: make this a temporary directory that get's removed when finished
-BASE_DIR = os.getenv('TMPDIR', '/tmp')
+BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, 'snapcraft-parser')
 PARTS_FILE = 'snap-parts.yaml'
 DEFAULT_INDEX = 'http://wiki.ubuntu.com/snapcraft/parts?action=raw'
 
