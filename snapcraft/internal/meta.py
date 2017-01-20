@@ -178,6 +178,7 @@ class _SnapPackaging:
 
                 file_utils.link_or_copy(source, destination)
 
+        # FIXME hide this functionality behind a feature flag for now
         self._ensure_snapcraft_yaml()
 
     def generate_hook_wrappers(self):
