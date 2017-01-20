@@ -1063,22 +1063,21 @@ def check_for_collisions(parts):
     parts_files = {}
     for part in parts:
         # Gather our own files up
-        part_files, _ = part.migratable_fileset_for('stage')
+        part_files, part_directories = part.migratable_fileset_for('stage')
+        part_contents = part_files | part_directories
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
-            common = part_files & parts_files[other_part_name]['files']
+            common = part_contents & parts_files[other_part_name]['files']
             conflict_files = []
             for f in common:
                 this = os.path.join(part.installdir, f)
                 other = os.path.join(
                     parts_files[other_part_name]['installdir'],
                     f)
-                if os.path.exists(this) and os.path.exists(other):
-                    if os.path.islink(this) and os.path.islink(other):
-                        continue
-                    if _file_collides(this, other):
-                        conflict_files.append(f)
+
+                if _paths_collide(this, other):
+                    conflict_files.append(f)
 
             if conflict_files:
                 raise errors.SnapcraftPartConflictError(
@@ -1087,8 +1086,35 @@ def check_for_collisions(parts):
                     conflict_files=conflict_files)
 
         # And add our files to the list
-        parts_files[part.name] = {'files': part_files,
+        parts_files[part.name] = {'files': part_contents,
                                   'installdir': part.installdir}
+
+
+def _paths_collide(path1: str, path2: str) -> bool:
+    if not (os.path.lexists(path1) and os.path.lexists(path2)):
+        return False
+
+    path1_is_dir = os.path.isdir(path1)
+    path2_is_dir = os.path.isdir(path2)
+    path1_is_link = os.path.islink(path1)
+    path2_is_link = os.path.islink(path2)
+    collide = False
+
+    if path1_is_link and path2_is_link:
+        # They're both symlinks; verify they're pointing to the
+        # same place.
+        if os.readlink(path1) != os.readlink(path2):
+            collide = True
+    elif path1_is_link or path2_is_link:
+        collide = True
+    elif path1_is_dir and path2_is_dir:
+        collide = False
+    elif path1_is_dir != path2_is_dir:
+        collide = True
+    elif _file_collides(path1, path2):
+        collide = True
+
+    return collide
 
 
 def _get_includes(fileset):
