@@ -43,6 +43,7 @@ class GodepsPluginTestCase(tests.TestCase):
             source = 'src'
             go_importpath = 'github.com/foo/bar'
             godeps_file = 'dependencies.tsv'
+            go_packages = []
 
         self.options = Options()
 
@@ -50,7 +51,7 @@ class GodepsPluginTestCase(tests.TestCase):
         schema = godeps.GodepsPlugin.schema()
 
         properties = schema['properties']
-        for expected in ['godeps-file', 'go-importpath']:
+        for expected in ['godeps-file', 'go-importpath', 'go-packages']:
             self.assertTrue(
                 expected in properties,
                 'Expected {!r} to be included in properties'.format(
@@ -92,6 +93,24 @@ class GodepsPluginTestCase(tests.TestCase):
         self.assertTrue('go-importpath' in schema['required'],
                         'Expeced "go-importpath" to be required')
 
+        # Check go-packages
+        go_packages = properties['go-packages']
+        for expected in ['type', 'default']:
+            self.assertTrue(
+                expected in go_packages,
+                "Expected {!r} to be included in 'go-packages'".format(
+                    expected))
+
+        go_packages_type = go_packages['type']
+        self.assertEqual(go_packages_type, 'array',
+                         'Expected "go-packages" "type" to be "array", but '
+                         'it was "{}"'.format(go_packages_type))
+
+        go_packages_default = go_packages['default']
+        self.assertEqual(go_packages_default, [],
+                         'Expected "go-packages" "default" to be "[]", but '
+                         'it was "{}"'.format(go_packages_default))
+
     def test_get_pull_properties(self):
         expected_pull_properties = ['godeps-file', 'go-importpath']
         resulting_pull_properties = godeps.GodepsPlugin.get_pull_properties()
@@ -101,6 +120,16 @@ class GodepsPluginTestCase(tests.TestCase):
 
         for property in expected_pull_properties:
             self.assertIn(property, resulting_pull_properties)
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['go-packages']
+        resulting_build_properties = godeps.GodepsPlugin.get_build_properties()
+
+        self.assertThat(resulting_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
 
     def test_build_environment(self):
         plugin = godeps.GodepsPlugin(
@@ -203,6 +232,42 @@ class GodepsPluginTestCase(tests.TestCase):
         self.run_mock.assert_has_calls([
             mock.call(
                 ['go', 'install', './github.com/foo/bar/...'],
+                cwd=plugin._gopath_src, env=mock.ANY),
+        ])
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+        self.assertTrue(os.path.exists(plugin._gopath_src))
+        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assertTrue(os.path.exists(
+            os.path.join(plugin.installdir, 'bin', 'test-binary')))
+
+        # Assert that the godeps binary was NOT copied
+        self.assertFalse(os.path.exists(
+            os.path.join(plugin.installdir, 'bin', 'godeps')))
+
+    def test_build_with_go_packages(self):
+        self.options.go_packages = ['github.com/foo/bar/cmd/my-command']
+
+        plugin = godeps.GodepsPlugin(
+            'test-part', self.options, self.project_options)
+
+        os.makedirs(plugin.options.source)
+
+        plugin.pull()
+
+        os.makedirs(plugin._gopath_bin)
+        os.makedirs(plugin.builddir)
+
+        self.run_mock.reset_mock()
+
+        open(os.path.join(plugin._gopath_bin, 'test-binary'), 'w').close()
+        open(os.path.join(plugin._gopath_bin, 'godeps'), 'w').close()
+        plugin.build()
+
+        self.assertEqual(1, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(
+                ['go', 'install', 'github.com/foo/bar/cmd/my-command'],
                 cwd=plugin._gopath_src, env=mock.ANY),
         ])
 

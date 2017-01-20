@@ -1,0 +1,14 @@
+name: test-godeps-with-go-packages
+version: 0.1
+summary: A simple godeps project which targets a specific go package.
+description: |
+  By unsing go-packages this we ensure that only `only-main` gets built
+  while the bcrypt in the source does not
+confinement: strict
+
+parts:
+  simple-godeps:
+    plugin: godeps
+    go-importpath: bcrypt
+    go-packages: [bcrypt/only-main]
+    source: .
