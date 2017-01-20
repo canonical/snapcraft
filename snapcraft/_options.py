@@ -134,7 +134,9 @@ class ProjectOptions:
 
     @property
     def local_plugins_dir(self):
-        return os.path.join(self.parts_dir, 'plugins')
+        # TODO until we migrate plugins
+        return os.path.abspath(
+            os.path.join(self.__project_dir, '..', 'parts', 'plugins'))
 
     @property
     def parts_dir(self):

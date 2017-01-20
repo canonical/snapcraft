@@ -18,9 +18,10 @@ import logging
 import os
 import shutil
 
-from unittest import mock
-from testtools.matchers import MatchesRegex
 import fixtures
+from unittest import mock
+from testtools.matchers import FileExists, MatchesRegex, Not
+
 
 from snapcraft.main import main
 from snapcraft.internal import (
@@ -94,10 +95,10 @@ parts:
 
         main(['clean'])
 
-        self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.prime_dir))
-        self.assertTrue(os.path.exists(self.parts_dir))
-        self.assertTrue(os.path.isfile(local_plugin))
+        self.assertThat(self.stage_dir, Not(FileExists()))
+        self.assertThat(self.prime_dir, Not(FileExists()))
+        self.assertThat(self.parts_dir, Not(FileExists()))
+        self.assertThat(local_plugin, FileExists())
 
     def test_clean_all_when_all_parts_specified(self):
         self.make_snapcraft_yaml(n=3)
