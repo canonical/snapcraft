@@ -19,6 +19,7 @@ import subprocess
 
 import fixtures
 import testscenarios
+from testtools.matchers import FileExists, Not
 
 import integration_tests
 
@@ -31,22 +32,42 @@ class GodepsPluginTestCase(testscenarios.WithScenarios,
         ('with GOBIN', dict(set_gobin=True)),
     ]
 
-    def test_stage_go_plugin(self):
+    def _assert_bcrypt_output(self, *, binary, cwd):
+        hash_command = [binary, 'hash', '10', 'password']
+        output = subprocess.check_output(hash_command, cwd=cwd)
+
+        check_hash_command = [binary, 'check', output, 'password']
+        output = subprocess.check_output(check_hash_command, cwd=cwd)
+
+        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+
+    def test_stage(self):
         if self.set_gobin:
             gobin = 'gobin'
             self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
 
-        project_dir = 'simple-godeps'
+        project_dir = 'godeps'
         self.run_snapcraft('stage', project_dir)
 
-        binary = os.path.join('stage', 'bin', 'bcrypt')
-        hash_command = [binary, 'hash', '10', 'password']
+        binary = os.path.join(os.getcwd(), project_dir,
+                              'stage', 'bin', 'bcrypt')
+        self.assertThat(binary, FileExists())
 
-        output = subprocess.check_output(
-            hash_command, cwd=project_dir)
+        self._assert_bcrypt_output(binary=binary, cwd=project_dir)
 
-        check_hash_command = [binary, 'check', output, 'password']
-        output = subprocess.check_output(
-            check_hash_command, cwd=project_dir)
+    def test_stage_with_go_packages(self):
+        if self.set_gobin:
+            gobin = 'gobin'
+            self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
 
-        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+        project_dir = 'godeps-with-go-packages'
+        self.run_snapcraft('stage', project_dir)
+
+        binary = os.path.join(os.getcwd(), project_dir,
+                              'stage', 'bin', 'only-main')
+        self.assertThat(binary, FileExists())
+        self.assertThat(
+            os.path.join(os.getcwd(), project_dir, 'stage', 'bin', 'bcrypt'),
+            Not(FileExists()))
+
+        self._assert_bcrypt_output(binary=binary, cwd=project_dir)
