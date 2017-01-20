@@ -28,12 +28,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - go-packages:
       (list of strings)
-      Go packages to fetch, these must be a "main" package. Dependencies
-      are pulled in automatically by `go get`.
+      Go packages to build/install, these must be a "main" package.
+      Dependencies should have already been retrieved by the `godeps-file`
+      used for this part.
       Packages that are not "main" will not cause an error, but would
       not be useful either.
-      If the package is a part of the go-importpath the local package
-      corresponding to those sources will be used.
 
     - godeps-file:
       (string)

@@ -1,4 +1,4 @@
-name: test-package
+name: test-godeps-with-go-packages
 version: 0.1
 summary: A simple godeps project which targets a specific go package.
 description: |

@@ -32,6 +32,15 @@ class GodepsPluginTestCase(testscenarios.WithScenarios,
         ('with GOBIN', dict(set_gobin=True)),
     ]
 
+    def _assert_bcrypt_output(self, *, binary, cwd):
+        hash_command = [binary, 'hash', '10', 'password']
+        output = subprocess.check_output(hash_command, cwd=cwd)
+
+        check_hash_command = [binary, 'check', output, 'password']
+        output = subprocess.check_output(check_hash_command, cwd=cwd)
+
+        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+
     def test_stage(self):
         if self.set_gobin:
             gobin = 'gobin'
@@ -44,16 +53,7 @@ class GodepsPluginTestCase(testscenarios.WithScenarios,
                               'stage', 'bin', 'bcrypt')
         self.assertThat(binary, FileExists())
 
-        hash_command = [binary, 'hash', '10', 'password']
-
-        output = subprocess.check_output(
-            hash_command, cwd=project_dir)
-
-        check_hash_command = [binary, 'check', output, 'password']
-        output = subprocess.check_output(
-            check_hash_command, cwd=project_dir)
-
-        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+        self._assert_bcrypt_output(binary=binary, cwd=project_dir)
 
     def test_stage_with_go_packages(self):
         if self.set_gobin:
@@ -70,13 +70,4 @@ class GodepsPluginTestCase(testscenarios.WithScenarios,
             os.path.join(os.getcwd(), project_dir, 'stage', 'bin', 'bcrypt'),
             Not(FileExists()))
 
-        hash_command = [binary, 'hash', '10', 'password']
-
-        output = subprocess.check_output(
-            hash_command, cwd=project_dir)
-
-        check_hash_command = [binary, 'check', output, 'password']
-        output = subprocess.check_output(
-            check_hash_command, cwd=project_dir)
-
-        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+        self._assert_bcrypt_output(binary=binary, cwd=project_dir)
