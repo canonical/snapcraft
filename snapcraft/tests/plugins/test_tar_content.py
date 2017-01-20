@@ -29,9 +29,10 @@ class TestTarContentPlugin(TestCase):
         self.project_options = snapcraft.ProjectOptions()
 
         # setup the expected target dir in our tempdir
-        self.build_prefix = 'parts/tar_content/build/'
+        part_dir = os.path.join(self.parts_dir, 'tar_content')
+        self.build_prefix = os.path.join(part_dir, 'build')
         os.makedirs(self.build_prefix)
-        self.install_prefix = 'parts/tar_content/install/'
+        self.install_prefix = os.path.join(part_dir, 'install')
         os.makedirs(self.install_prefix)
 
     def test_dest_abs_path_raises_exception(self):

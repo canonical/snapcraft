@@ -66,11 +66,11 @@ class CreateBaseTestCase(tests.TestCase):
         os.makedirs('snap')
         open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
 
-        self.snap_dir = os.path.join(os.path.abspath(os.curdir), 'snap')
-        self.prime_dir = os.path.join(os.path.abspath(os.curdir), 'prime')
         self.meta_dir = os.path.join(self.prime_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
+
+        self.project_options = ProjectOptions()
 
     def generate_meta_yaml(self):
         create_snap_packaging(self.config_data, self.project_options)
@@ -488,7 +488,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         # Check that the wrapper is created even if there is already a file
         # with the same name.
-        open(os.path.join('prime', 'test_relexepath.wrapper'), 'w').close()
+        open(os.path.join(
+            self.prime_dir, 'test_relexepath.wrapper'), 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
