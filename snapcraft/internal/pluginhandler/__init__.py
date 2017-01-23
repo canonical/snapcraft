@@ -1149,26 +1149,26 @@ def _file_collides(file_this, file_other):
 
 def _check_previous_parts_for_collisions(parts_files, new_part_files,
                                          part, rev_fileset):
-        # Scan previous parts for collisions
-        for other_part_name in parts_files:
-            other_part = parts_files[other_part_name]
-            common = new_part_files & other_part['files']
-            conflict_files = []
-            for f in common:
-                this = os.path.join(part.installdir, rev_fileset.get(f, f))
-                other = os.path.join(
-                    parts_files[other_part_name]['installdir'],
-                    other_part['filemap'].get(f, f))
-                if os.path.islink(this) and os.path.islink(other):
-                    continue
-                if _file_collides(this, other):
-                    conflict_files.append(f)
+    # Scan previous parts for collisions
+    for other_part_name in parts_files:
+        other_part = parts_files[other_part_name]
+        common = new_part_files & other_part['files']
+        conflict_files = []
+        for f in common:
+            this = os.path.join(part.installdir, rev_fileset.get(f, f))
+            other = os.path.join(
+                parts_files[other_part_name]['installdir'],
+                other_part['filemap'].get(f, f))
+            if os.path.islink(this) and os.path.islink(other):
+                continue
+            if _file_collides(this, other):
+                conflict_files.append(f)
 
-            if conflict_files:
-                raise SnapcraftPartConflictError(
-                    other_part_name=other_part_name,
-                    part_name=part.name,
-                    conflict_files=conflict_files)
+        if conflict_files:
+            raise SnapcraftPartConflictError(
+                other_part_name=other_part_name,
+                part_name=part.name,
+                conflict_files=conflict_files)
 
 
 def check_for_collisions(parts):
@@ -1194,8 +1194,8 @@ def check_for_collisions(parts):
         for part_file in new_part_files:
             filemap[part_file] = rev_fileset.get(part_file, part_file)
 
-            _check_previous_parts_for_collisions(
-                parts_files, new_part_files, part, rev_fileset)
+        _check_previous_parts_for_collisions(
+            parts_files, new_part_files, part, rev_fileset)
 
         # And add our files to the list
         parts_files[part.name] = {'files': new_part_files,
