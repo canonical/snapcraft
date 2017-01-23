@@ -60,7 +60,6 @@ class LoginCommandTestCase(tests.TestCase):
             'user@example.com', mock.ANY, acls=None, packages=None,
             channels=None, save=True)
         self.assertEqual(
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             'Login successful.\n',
             self.fake_logger.output)
 
@@ -149,7 +148,6 @@ class LoginCommandTestCase(tests.TestCase):
         main(['login'])
 
         self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.AGREEMENT_ERROR +
             '\nLogin failed.\n'),
             self.fake_logger.output)
@@ -174,7 +172,6 @@ class LoginCommandTestCase(tests.TestCase):
         main(['login'])
 
         self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.NAMESPACE_ERROR.format('http://fake-url.com') +
             '\nLogin failed.\n'),
             self.fake_logger.output)
@@ -199,7 +196,6 @@ class LoginCommandTestCase(tests.TestCase):
         main(['login'])
 
         self.assertEqual(
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.ACCOUNT_INFORMATION_ERROR +
             '\nLogin failed.\n',
             self.fake_logger.output)
@@ -227,7 +223,6 @@ class LoginCommandTestCase(tests.TestCase):
                 'http://fake-url.com'))
 
         self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.AGREEMENT_ERROR +
             '\nLogin failed.\n'),
             self.fake_logger.output)
@@ -253,7 +248,6 @@ class LoginCommandTestCase(tests.TestCase):
         main(['login'])
 
         self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.AGREEMENT_ERROR +
             '\nLogin failed.\n'),
             self.fake_logger.output)
@@ -279,7 +273,6 @@ class LoginCommandTestCase(tests.TestCase):
         main(['login'])
 
         self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.AGREEMENT_SIGN_ERROR.format(
                 'http://fake-url.com') +
             '\nLogin failed.\n'),
@@ -307,7 +300,6 @@ class LoginCommandTestCase(tests.TestCase):
         main(['login'])
 
         self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
             storeapi.constants.ACCOUNT_INFORMATION_ERROR +
             '\nLogin failed.\n'),
             self.fake_logger.output)

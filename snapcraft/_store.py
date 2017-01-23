@@ -116,8 +116,6 @@ def _login(store, packages=None, acls=None, channels=None, save=True):
         try:
             store.login(email, password, packages=packages, acls=acls,
                         channels=channels, save=save)
-            print()
-            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
         except storeapi.errors.StoreTwoFactorAuthenticationRequired:
             one_time_password = input('Second-factor auth: ')
             store.login(
