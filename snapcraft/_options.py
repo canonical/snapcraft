@@ -103,6 +103,11 @@ def _get_platform_from_gcc_triplet(arch_triplet):
             return platform_name
 
 
+def _get_platform_machine():
+    gcc_machine = _get_platform_from_gcc_triplet(_get_gcc_target())
+    return gcc_machine if gcc_machine else platform.machine()
+
+
 class ProjectOptions:
 
     @property
@@ -208,8 +213,7 @@ class ProjectOptions:
         return dynamic_linker_path
 
     def _set_machine(self, target_deb_arch):
-        gcc_plat = _get_platform_from_gcc_triplet(_get_gcc_target())
-        self.__host_machine = gcc_plat if gcc_plat else platform.machine()
+        self.__host_machine = _get_platform_machine()
         if not target_deb_arch:
             self.__target_machine = self.__host_machine
         else:

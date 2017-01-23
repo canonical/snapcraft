@@ -332,8 +332,9 @@ parts:
         mock_load.assert_has_calls([call1, call2], any_order=True)
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
-        with unittest.mock.patch('platform.machine') as machine_mock:
-            machine_mock.return_value = 'x86_64'
+        with unittest.mock.patch(
+                'snapcraft._options._get_platform_machine') as mock_platform:
+            mock_platform.return_value = 'x86_64'
             project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
 
         yaml = """name: test
