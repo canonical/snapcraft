@@ -39,11 +39,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
-import platform
 import shutil
 
 import snapcraft
-from snapcraft import sources
+from snapcraft import sources, _options
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +141,7 @@ class NodePlugin(snapcraft.BasePlugin):
 
 
 def _get_nodejs_base(node_engine):
-    machine = platform.machine()
+    machine = _options._get_platform_machine()
     if machine not in _NODEJS_ARCHES:
         raise EnvironmentError('architecture not supported ({})'.format(
             machine))

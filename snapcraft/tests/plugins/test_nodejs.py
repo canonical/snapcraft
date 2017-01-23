@@ -139,7 +139,7 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(['npm', 'run', 'avocado'],
                       cwd=plugin.builddir)])
 
-    @mock.patch('platform.machine')
+    @mock.patch('snapcraft._options._get_platform_machine')
     def test_unsupported_arch_raises_exception(self, machine_mock):
         machine_mock.return_value = 'fantasy-arch'
 
@@ -302,8 +302,8 @@ class NodeReleaseTestCase(tests.TestCase):
                 'node-v4.4.4-linux-arm64.tar.gz'))),
     ]
 
-    @mock.patch('platform.machine')
-    def test_get_nodejs_release(self, machine_mock):
-        machine_mock.return_value = self.machine
+    @mock.patch('snapcraft._options._get_platform_machine')
+    def test_get_nodejs_release(self, platform_machine_mock):
+        platform_machine_mock.return_value = self.machine
         node_url = nodejs.get_nodejs_release(self.engine)
         self.assertEqual(node_url, self.expected_url)
