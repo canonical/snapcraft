@@ -18,6 +18,8 @@ import logging
 import multiprocessing
 import os
 import platform
+import re
+import subprocess
 
 
 logger = logging.getLogger(__name__)
@@ -44,6 +46,7 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'i386',
         'triplet': 'i386-linux-gnu',
+        'gcc_triplet': 'i686-linux-gnu',
     },
     'ppc64le': {
         'kernel': 'powerpc',
@@ -76,11 +79,29 @@ _ARCH_TRANSLATIONS = {
     }
 }
 
-_32BIT_BACKWARD_COMPATIBILTY = {
-    'aarch64': 'armv7l',
-    'ppc64le': 'ppc',
-    'x86_64': 'i686',
-}
+
+def _get_gcc_target():
+        try:
+            gcc_pipe = subprocess.run(['gcc', '-v'], stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            return None
+
+        r = re.compile(b'^Target:\s*(.+)$')
+        for line in gcc_pipe.stderr.split(b'\n'):
+            match = r.match(line)
+            if match:
+                return match.group(1).decode('utf-8')
+
+
+def _get_platform_from_gcc_triplet(arch_triplet):
+    if not arch_triplet:
+        return None
+
+    for platform_name, arch_infos in _ARCH_TRANSLATIONS.items():
+        if arch_infos.get('gcc_triplet') == arch_triplet or \
+           arch_infos.get('triplet') == arch_triplet:
+            return platform_name
+
 
 class ProjectOptions:
 
@@ -187,11 +208,8 @@ class ProjectOptions:
         return dynamic_linker_path
 
     def _set_machine(self, target_deb_arch):
-        self.__host_machine = platform.machine()
-        if platform.architecture()[0] == '32bit':
-            host32 = _32BIT_BACKWARD_COMPATIBILTY.get(self.__host_machine)
-            if host32:
-                self.__host_machine = host32
+        gcc_plat = _get_platform_from_gcc_triplet(_get_gcc_target())
+        self.__host_machine = gcc_plat if gcc_plat else platform.machine()
         if not target_deb_arch:
             self.__target_machine = self.__host_machine
         else:
