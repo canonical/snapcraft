@@ -17,6 +17,7 @@ parts:
     plugin: cmake
     source: src/
     build-packages:
+      - g++
       - qtbase5-dev
     stage-packages:
       # Here for the plugins-- they're not linked in automatically.

@@ -109,6 +109,13 @@ def link_or_copy_tree(source_tree, destination_tree,
     for root, directories, files in os.walk(source_tree):
         for directory in directories:
             source = os.path.join(root, directory)
+            # os.walk doesn't by default follow symlinks (which is good), but
+            # it includes symlinks that are pointing to directories in the
+            # directories list. We want to treat it as a file, here.
+            if os.path.islink(source):
+                files.append(directory)
+                continue
+
             destination = os.path.join(
                 destination_tree, os.path.relpath(source, source_tree))
 
