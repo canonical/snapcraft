@@ -133,6 +133,22 @@ class TestLinkOrCopyTree(tests.TestCase):
         self.assertTrue(os.path.isfile(os.path.join('qux', '3')))
         self.assertTrue(os.path.isfile(os.path.join('qux', 'baz', '4')))
 
+    def test_link_symlink_to_file(self):
+        # Create a symlink to a file
+        os.symlink('2', os.path.join('foo', '2-link'))
+        file_utils.link_or_copy_tree('foo', 'qux')
+
+        # Verify that the symlink remains a symlink
+        self.assertThat(os.path.join('qux', '2-link'), tests.LinkExists('2'))
+
+    def test_link_symlink_to_dir(self):
+        os.symlink('bar', os.path.join('foo', 'bar-link'))
+        file_utils.link_or_copy_tree('foo', 'qux')
+
+        # Verify that the symlink remains a symlink
+        self.assertThat(
+            os.path.join('qux', 'bar-link'), tests.LinkExists('bar'))
+
 
 class TestLinkOrCopy(tests.TestCase):
 
