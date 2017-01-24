@@ -141,7 +141,7 @@ class NodePlugin(snapcraft.BasePlugin):
 
 
 def _get_nodejs_base(node_engine):
-    machine = _options._get_platform_machine()
+    machine = _options._get_platform_architecture()
     if machine not in _NODEJS_ARCHES:
         raise EnvironmentError('architecture not supported ({})'.format(
             machine))

@@ -31,8 +31,8 @@ class HardlinkSrcOldTreeTestCase(integration_tests.TestCase):
     def test_build_old_tree_still_filters(self):
         project_dir = 'old-part-src'
         work_dir = self.copy_project_to_tmp(project_dir)
-        platform_machine = _options._get_platform_machine()
-        arch = _options._ARCH_TRANSLATIONS[platform_machine]['deb']
+        platform_architecture = _options._get_platform_architecture()
+        arch = _options._ARCH_TRANSLATIONS[platform_architecture]['deb']
         with fileinput.FileInput(
                 os.path.join(work_dir, 'parts', 'part-name', 'state', 'pull'),
                 inplace=True) as pull_state:

@@ -65,8 +65,9 @@ class GulpPluginTestCase(tests.TestCase):
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
-    @mock.patch('snapcraft._options._get_platform_machine')
-    def test_build(self, platform_machine_mock):
+    @mock.patch('platform.architecture')
+    @mock.patch('platform.machine')
+    def test_build(self, platform_machine_mock, platform_architecture_mock):
         self.useFixture(tests.fixture_setup.CleanEnvironment())
         self.useFixture(fixtures.EnvironmentVariable(
             'PATH', '/bin'))
@@ -77,6 +78,7 @@ class GulpPluginTestCase(tests.TestCase):
             node_engine = '4'
 
         platform_machine_mock.return_value = 'x86_64'
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
         plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.builddir)
@@ -103,9 +105,11 @@ class GulpPluginTestCase(tests.TestCase):
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])
 
-    @mock.patch('snapcraft._options._get_platform_machine')
-    def test_unsupported_arch_raises_exception(self, machine_mock):
+    @mock.patch('platform.architecture')
+    @mock.patch('platform.machine')
+    def test_unsupported_arch_raises_exception(self, machine_mock, arch_mock):
         machine_mock.return_value = 'fantasy-arch'
+        arch_mock.return_value = ('128bit', 'ELF')
 
         class Options:
             source = None

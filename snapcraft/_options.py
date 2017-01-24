@@ -18,8 +18,6 @@ import logging
 import multiprocessing
 import os
 import platform
-import re
-import subprocess
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +44,6 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'i386',
         'triplet': 'i386-linux-gnu',
-        'gcc_triplet': 'i686-linux-gnu',
     },
     'ppc64le': {
         'kernel': 'powerpc',
@@ -80,32 +77,21 @@ _ARCH_TRANSLATIONS = {
 }
 
 
-def _get_gcc_target():
-        try:
-            gcc_pipe = subprocess.run(['gcc', '-v'], stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            return None
-
-        r = re.compile(b'^Target:\s*(.+)$')
-        for line in gcc_pipe.stderr.split(b'\n'):
-            match = r.match(line)
-            if match:
-                return match.group(1).decode('utf-8')
+_USERSPACE_ARCHITECTURE = {
+    'aarch64': 'armv7l',
+    'ppc64le': 'ppc',
+    'x86_64': 'i686',
+}
 
 
-def _get_platform_from_gcc_triplet(arch_triplet):
-    if not arch_triplet:
-        return None
+def _get_platform_architecture():
+    architecture = platform.machine()
+    if platform.architecture()[0] == '32bit':
+        userspace = _USERSPACE_ARCHITECTURE.get(architecture)
+        if userspace:
+            architecture = userspace
 
-    for platform_name, arch_infos in _ARCH_TRANSLATIONS.items():
-        if arch_infos.get('gcc_triplet') == arch_triplet or \
-           arch_infos.get('triplet') == arch_triplet:
-            return platform_name
-
-
-def _get_platform_machine():
-    gcc_machine = _get_platform_from_gcc_triplet(_get_gcc_target())
-    return gcc_machine if gcc_machine else platform.machine()
+    return architecture
 
 
 class ProjectOptions:
@@ -132,7 +118,7 @@ class ProjectOptions:
 
     @property
     def is_cross_compiling(self):
-        return self.__target_machine != self.__host_machine
+        return self.__target_machine != self.__platform_arch
 
     @property
     def cross_compiler_prefix(self):
@@ -213,9 +199,9 @@ class ProjectOptions:
         return dynamic_linker_path
 
     def _set_machine(self, target_deb_arch):
-        self.__host_machine = _get_platform_machine()
+        self.__platform_arch = _get_platform_architecture()
         if not target_deb_arch:
-            self.__target_machine = self.__host_machine
+            self.__target_machine = self.__platform_arch
         else:
             self.__target_machine = _find_machine(target_deb_arch)
             logger.info('Setting target machine to {!r}'.format(
