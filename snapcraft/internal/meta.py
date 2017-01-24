@@ -305,20 +305,18 @@ class _SnapPackaging:
         if desktop_file_name:
             desktop_file = _DesktopFile(
                 name=name, filename=desktop_file_name,
-                snap_name=self._config_data['name'], prime_dir=self._snap_dir,
-                gui_dir=os.path.join(self.meta_dir, 'gui'))
+                snap_name=self._config_data['name'], prime_dir=self._snap_dir)
             desktop_file.parse_and_reformat()
-            desktop_file.write()
+            desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
 
 class _DesktopFile:
 
-    def __init__(self, *, name, filename, snap_name, prime_dir, gui_dir):
+    def __init__(self, *, name, filename, snap_name, prime_dir):
         self._name = name
         self._filename = filename
         self._snap_name = snap_name
         self._prime_dir = prime_dir
-        self._gui_dir = gui_dir
         self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
             raise EnvironmentError(
@@ -355,8 +353,8 @@ class _DesktopFile:
                         'Icon {} specified in desktop file {} not found '
                         'in prime directory'.format(icon, self._filename))
 
-    def write(self):
-        target = os.path.join(self._gui_dir, os.path.basename(self._filename))
+    def write(self, *, gui_dir):
+        target = os.path.join(gui_dir, os.path.basename(self._filename))
         if os.path.exists(target):
             raise EnvironmentError(
                 'Conflicting desktop file referenced by more than one '
