@@ -47,24 +47,24 @@ Each part goes through the following steps:
 
 The first is that each part is pulled. This step will download
 content, e.g. checkout a git repository or download a binary component
-like the Java SDK. Snapcraft will create a `parts/` directory with
-sub-directories like `parts/part-name/src` for each part that contains
+like the Java SDK. Snapcraft will create a `snap/parts/` directory with
+sub-directories like `snap/parts/part-name/src` for each part that contains
 the downloaded content.
 
 ### Build
 
-The next step is that each part is built in its `parts/part-name/build`
-directory and installs itself into `parts/part-name/install`.
+The next step is that each part is built in its `snap/parts/part-name/build`
+directory and installs itself into `snap/parts/part-name/install`.
 
 ### Stage
 
 After the build of each part the parts are combined into a single
 directory tree that is called the "staging area". It can be found
-under the `./stage` directory.
+under the `snap/stage` directory.
 
-This `./stage` directory is useful for building outside code that isn't in the
+This `snap/stage` directory is useful for building outside code that isn't in the
 `snapcraft.yaml` recipe against the snap contents. For example, you might
-build a local project against the libraries in `./stage` by running `snapcraft
+build a local project against the libraries in `snap/stage` by running `snapcraft
 shell make`. Though in general, you are encouraged to add even local
 projects to snapcraft.yaml with a local `source:` path.
 
@@ -73,16 +73,16 @@ mounted in a `snappy` capable system.
 
 ### Prime
 
-The prime step moves the data into a `./snap` directory. It contains only
+The prime step moves the data into a `snap/prime` directory. It contains only
 the content that will be put into the final snap package, unlike the staging
 area which may include some development files not destined for your package.
 
 The Snappy metadata information about your project will also now be placed in
-`./snap/meta`. Snapcraft takes care of generating all the meta-data Snappy
+`snap/prime/meta`. Snapcraft takes care of generating all the meta-data Snappy
 expects. For a breakdown of what this is, have a look at our [Snappy developer
 reference](http://snapcraft.io/docs/build-snaps/metadata).
 
-This `./snap` directory is useful for inspecting what is going into your snap
+This `snap/prime` directory is useful for inspecting what is going into your snap
 and to make any final post-processing on snapcraft's output.
 
 For rapid iteration one can run `snappy try` against this directory to have it
