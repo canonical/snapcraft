@@ -95,3 +95,19 @@ class OptionsTestCase(tests.TestCase):
         self.assertEqual(options.arch_triplet, self.expected_arch_triplet)
         self.assertEqual(options.deb_arch, self.expected_deb_arch)
         self.assertEqual(options.kernel_arch, self.expected_kernel_arch)
+
+    @mock.patch('platform.architecture')
+    @mock.patch('platform.machine')
+    def test_get_platform_architecture(
+            self, mock_platform_machine, mock_platform_architecture):
+        mock_platform_machine.return_value = self.machine
+        mock_platform_architecture.return_value = self.architecture
+        platform_arch = snapcraft._options._get_platform_architecture()
+        userspace_conversions = snapcraft._options._USERSPACE_ARCHITECTURE
+
+        if self.architecture[0] == '32bit' and \
+           self.machine in userspace_conversions:
+            self.assertEqual(
+                platform_arch, userspace_conversions[self.machine])
+        else:
+            self.assertEqual(platform_arch, self.machine)
