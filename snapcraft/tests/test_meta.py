@@ -340,7 +340,17 @@ class CreateTestCase(CreateBaseTestCase):
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
+
+    scenarios = (
+        ('with build artifacts', dict(build_info='yes')),
+        ('without build artifacts', dict(build_info='')),
+    )
+
     def test_write_snap_directory(self):
+        if self.build_info:
+            self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_BUILD_INFO', self.build_info))
+
         # Setup a snap directory containing a few things.
         _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
         _create_file(
@@ -350,8 +360,14 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         # well as the hook making it into meta/.
         self.generate_meta_yaml()
         prime_snap_dir = os.path.join(self.prime_dir, 'snap')
-        self.assertThat(
-            os.path.join(prime_snap_dir, 'snapcraft.yaml'), FileExists())
+
+        if self.build_info:
+            self.assertThat(os.path.join(prime_snap_dir, 'snapcraft.yaml'),
+                            FileExists())
+        else:
+            self.assertThat(os.path.join(prime_snap_dir, 'snapcraft.yaml'),
+                            Not(FileExists()))
+
         self.assertThat(
             os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
         self.assertThat(

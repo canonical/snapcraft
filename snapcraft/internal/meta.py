@@ -136,6 +136,17 @@ class _SnapPackaging:
         os.makedirs(os.path.dirname(destination), exist_ok=True)
         file_utils.link_or_copy(source, destination)
 
+    def _ensure_no_build_artifacts(self):
+        # TODO: rename _snap_dir to _prime_dir
+        snap_dir = os.path.join(self._snap_dir, 'snap')
+
+        artifacts = ['snapcraft.yaml']
+
+        for artifact in artifacts:
+            artifact_path = os.path.join(snap_dir, artifact)
+            if os.path.isfile(artifact_path):
+                os.unlink(artifact_path)
+
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
@@ -179,7 +190,10 @@ class _SnapPackaging:
                 file_utils.link_or_copy(source, destination)
 
         # FIXME hide this functionality behind a feature flag for now
-        self._ensure_snapcraft_yaml()
+        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+            self._ensure_snapcraft_yaml()
+        else:
+            self._ensure_no_build_artifacts()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
