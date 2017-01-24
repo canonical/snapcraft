@@ -26,6 +26,14 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
+    - go-packages:
+      (list of strings)
+      Go packages to build/install, these must be a "main" package.
+      Dependencies should have already been retrieved by the `godeps-file`
+      used for this part.
+      Packages that are not "main" will not cause an error, but would
+      not be useful either.
+
     - godeps-file:
       (string)
       Path to the godeps dependencies file contained within the source
@@ -61,11 +69,26 @@ class GodepsPlugin(snapcraft.BasePlugin):
         schema['properties']['go-importpath'] = {
             'type': 'string',
         }
+        schema['properties']['go-packages'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
 
         # The import path must be specified.
         schema['required'].append('go-importpath')
 
         return schema
+
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['go-packages']
 
     @classmethod
     def get_pull_properties(cls):
@@ -109,8 +132,11 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        self._run(['go', 'install', './{}/...'.format(
-            self.options.go_importpath)])
+        for go_package in self.options.go_packages:
+            self._run(['go', 'install', go_package])
+        if not self.options.go_packages:
+            self._run(['go', 'install', './{}/...'.format(
+                self.options.go_importpath)])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
