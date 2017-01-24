@@ -30,7 +30,7 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
     @skipUnless(linux_distribution()[2] == 'xenial',
                 'This test fails on yakkety LP: #1614476')
     def test_ros(self):
-        snap_path = self.build_snap(self.snap_content_dir)
+        snap_path = self.build_snap(self.snap_content_dir, timeout=1500)
         self.install_snap(snap_path, 'ros-example', '1.0')
         # check that the hardcoded /usr/bin/python in rosversion
         # is changed to using /usr/bin/env python
