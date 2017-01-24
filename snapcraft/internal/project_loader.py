@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,7 +28,6 @@ import snapcraft
 from snapcraft import formatting_utils
 from snapcraft.internal import (
     common,
-    deprecations,
     errors,
     libraries,
     parts,
@@ -379,11 +378,6 @@ def get_snapcraft_yaml():
     ]
 
     snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
-
-    if 'snapcraft.yaml' in snapcraft_yamls:
-        deprecations.handle_deprecation_notice('dn2')
-    if '.snapcraft.yaml' in snapcraft_yamls:
-        deprecations.handle_deprecation_notice('dn3')
 
     if not snapcraft_yamls:
         raise SnapcraftYamlFileError('snap/snapcraft.yaml')

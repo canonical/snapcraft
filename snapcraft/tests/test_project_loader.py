@@ -1237,12 +1237,8 @@ parts:
         os.rename(os.path.join('snap', 'snapcraft.yaml'), 'snapcraft.yaml')
         os.rmdir('snap')
         project_loader.Config()
-        self.expectThat(
-            fake_logger.output,
-            Contains(
-                "DEPRECATED: 'snapcraft.yaml' should be in 'snap/' directory"))
 
-    def test_hidden_snapcraft_yaml_loads_but_is_deprecated(self):
+    def test_hidden_snapcraft_yaml_loads(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 
@@ -1261,10 +1257,6 @@ parts:
         os.rename(os.path.join('snap', 'snapcraft.yaml'), '.snapcraft.yaml')
         os.rmdir('snap')
         project_loader.Config()
-        self.expectThat(
-            fake_logger.output,
-            Contains("DEPRECATED: '.snapcraft.yaml' should be moved to "
-                     "'snap/snapcraft.yaml'"))
 
 
 class TestYamlEnvironment(tests.TestCase):

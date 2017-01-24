@@ -26,8 +26,6 @@ import logging
 
 _DEPRECATION_MESSAGES = {
     'dn1': "The 'snap' keyword has been replaced by 'prime'.",
-    'dn2': "'snapcraft.yaml' should be in 'snap/' directory.",
-    'dn3': "'.snapcraft.yaml' should be moved to 'snap/snapcraft.yaml'.",
 }
 
 _DEPRECATION_URL_FMT = 'http://snapcraft.io/docs/deprecation-notices/{id}'
