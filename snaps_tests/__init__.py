@@ -197,7 +197,7 @@ class SnapsTestCase(testtools.TestCase):
                 'mktemp -d').strip()
             self.addCleanup(
                 self.snappy_testbed.run_command,
-                ['rm', '-r', tmp_in_testbed])
+                ['rm', '-rf', tmp_in_testbed])
             self.snappy_testbed.copy_file(snap_local_path, tmp_in_testbed)
             snap_file_name = os.path.basename(snap_local_path)
             snap_path_in_testbed = os.path.join(
