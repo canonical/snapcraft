@@ -136,7 +136,7 @@ class SnapsTestCase(testtools.TestCase):
                     ip, port, 'ubuntu', proxy)
             self.snappy_testbed.wait()
 
-    def build_snap(self, snap_content_dir, timeout=300):
+    def build_snap(self, snap_content_dir, timeout=600):
         project_dir = os.path.join(self.src_dir, snap_content_dir)
         tmp_project_dir = os.path.join(self.path, snap_content_dir)
         shutil.copytree(project_dir, tmp_project_dir, symlinks=True)
