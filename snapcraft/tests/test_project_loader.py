@@ -23,7 +23,6 @@ import unittest
 import unittest.mock
 import fixtures
 from testtools import ExpectedException
-from testtools.matchers import Contains
 
 import snapcraft
 from snapcraft.internal import dirs, parts

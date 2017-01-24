@@ -29,7 +29,7 @@ class LocalSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', project_dir)
 
         self.assertThat(
-            os.path.join(project_dir, 'snap', 'parts', 
+            os.path.join(project_dir, 'snap', 'parts',
                          'make-project', 'build', 'stamp-all'),
             FileExists())
 
