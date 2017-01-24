@@ -942,7 +942,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
 
         snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
                                                       os.path.dirname(dst))
-        if os.path.isdir(src):
+        if os.path.isdir(src) and not os.path.islink(src):
             snapcraft.file_utils.create_similar_directory(
                 src, dst
             )
