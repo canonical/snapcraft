@@ -231,6 +231,43 @@ class PluginTestCase(tests.TestCase):
             self.assertEqual(f.read(), 'installed',
                              "Expected migrated 'bar' to be a copy of 'foo'")
 
+    def test_migrate_files_supports_no_follow_symlinks_for_dirs(self):
+        os.makedirs('install')
+        os.makedirs('install/foo')
+        os.makedirs('stage')
+
+        os.symlink('foo', os.path.join('install', 'bar'))
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=False)
+
+        # Verify that the symlink was preserved
+        self.assertTrue(os.path.islink(os.path.join('stage', 'bar')),
+                        "Expected migrated 'bar' to still be a symlink.")
+        self.assertEqual('foo', os.readlink(os.path.join('stage', 'bar')),
+                         "Expected migrated 'bar' to point to 'foo'")
+
+    def test_migrate_files_supports_follow_symlinks_for_dirs(self):
+        os.makedirs('install')
+        os.makedirs('install/foo')
+        os.makedirs('stage')
+
+        with open(os.path.join('install', 'foo', 'foo'), 'w') as f:
+            f.write('installed')
+
+        os.symlink('foo', os.path.join('install', 'bar'))
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        # Verify that the symlink was preserved
+        self.assertFalse(os.path.islink(os.path.join('stage', 'bar')),
+                         "Expected migrated 'bar' to no longer be a symlink.")
+        self.assertEqual(os.listdir(os.path.join('stage', 'bar')),
+                         os.listdir(os.path.join('stage', 'foo')))
+
     @patch('os.chown')
     def test_migrate_files_preserves_ownership(self, chown_mock):
         os.makedirs('install')
