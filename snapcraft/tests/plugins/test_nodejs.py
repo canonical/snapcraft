@@ -292,6 +292,13 @@ class NodeReleaseTestCase(tests.TestCase):
             expected_url=(
                 'https://nodejs.org/dist/v4.4.4/'
                 'node-v4.4.4-linux-x64.tar.gz'))),
+        ('i686-on-x86_64', dict(
+            architecture=('32bit', 'ELF'),
+            machine='x86_64',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-x86.tar.gz'))),
         ('armv7l', dict(
             architecture=('32bit', 'ELF'),
             machine='armv7l',
@@ -306,6 +313,13 @@ class NodeReleaseTestCase(tests.TestCase):
             expected_url=(
                 'https://nodejs.org/dist/v4.4.4/'
                 'node-v4.4.4-linux-arm64.tar.gz'))),
+        ('armv7l-on-aarch64', dict(
+            architecture=('32bit', 'ELF'),
+            machine='aarch64',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-armv7l.tar.gz'))),
     ]
 
     @mock.patch('platform.architecture')
