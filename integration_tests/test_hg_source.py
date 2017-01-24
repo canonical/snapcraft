@@ -49,11 +49,11 @@ class HgSourceTestCase(integration_tests.TestCase):
             ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
 
         self.run_snapcraft('pull', project_dir)
-        revno = self._get_hg_revno('parts/mercurial/src')
+        revno = self._get_hg_revno('snap/parts/mercurial/src')
         self.assertEqual('"2"', revno)
 
         self.run_snapcraft('pull', project_dir)
-        revno = self._get_hg_revno('parts/mercurial/src')
+        revno = self._get_hg_revno('snap/parts/mercurial/src')
         self.assertEqual('"2"', revno)
 
     def test_pull_hg_tag(self):
@@ -72,13 +72,13 @@ class HgSourceTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 snap/parts/mercurial/src/ | wc -l ',
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 snap/parts/mercurial/src/ | wc -l ',
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
@@ -96,13 +96,13 @@ class HgSourceTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 snap/parts/mercurial/src/ | wc -l ',
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
         self.run_snapcraft('pull', project_dir)
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 snap/parts/mercurial/src/ | wc -l ',
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
@@ -126,10 +126,10 @@ class HgSourceTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
-            os.path.join('parts', 'mercurial', 'src', 'second'),
+            os.path.join('snap', 'parts', 'mercurial', 'src', 'second'),
             FileExists())
 
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
-            os.path.join('parts', 'mercurial', 'src', 'second'),
+            os.path.join('snap', 'parts', 'mercurial', 'src', 'second'),
             FileExists())

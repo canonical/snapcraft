@@ -33,7 +33,8 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
 
         self.project_dir = 'independent-parts'
         self.run_snapcraft('stage', self.project_dir)
-        self.stagedir = os.path.join(self.project_dir, 'stage')
+        self.snapdir = os.path.join(self.project_dir, 'snap')
+        self.stagedir = os.path.join(self.snapdir, 'stage')
         self.bindir = os.path.join(self.stagedir, 'bin')
 
     def assert_files_exist(self):
@@ -46,7 +47,7 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
         output = self.run_snapcraft(
             ['clean', '--step=stage'], self.project_dir, debug=False)
         self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Assert that the priming and staging areas were removed wholesale, not
         # a part at a time (since we didn't specify any parts).
@@ -66,7 +67,7 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
                            self.project_dir)
         self.assertThat(os.path.join(self.bindir, 'file1'), Not(FileExists()))
         self.assertThat(os.path.join(self.bindir, 'file2'), FileExists())
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Now try to stage again
         self.run_snapcraft('stage', self.project_dir)
@@ -81,14 +82,15 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
         self.project_dir = 'independent-parts'
         self.run_snapcraft('prime', self.project_dir)
 
-        self.snapdir = os.path.join(self.project_dir, 'prime')
-        self.snap_bindir = os.path.join(self.snapdir, 'bin')
-        self.stagedir = os.path.join(self.project_dir, 'stage')
+        self.snapdir = os.path.join(self.project_dir, 'snap')
+        self.primedir = os.path.join(self.snapdir, 'prime')
+        self.prime_bindir = os.path.join(self.primedir, 'bin')
+        self.stagedir = os.path.join(self.snapdir, 'stage')
         self.stage_bindir = os.path.join(self.stagedir, 'bin')
 
     def assert_files_exist(self):
-        self.assertThat(os.path.join(self.snap_bindir, 'file1'), FileExists())
-        self.assertThat(os.path.join(self.snap_bindir, 'file2'), FileExists())
+        self.assertThat(os.path.join(self.prime_bindir, 'file1'), FileExists())
+        self.assertThat(os.path.join(self.prime_bindir, 'file2'), FileExists())
         self.assertThat(os.path.join(self.stage_bindir, 'file1'), FileExists())
         self.assertThat(os.path.join(self.stage_bindir, 'file2'), FileExists())
 
@@ -97,8 +99,8 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
 
         self.run_snapcraft(['clean', '--step=stage'], self.project_dir)
         self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat(self.snapdir, Not(DirExists()))
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(self.primedir, Not(DirExists()))
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Now try to prime again
         self.run_snapcraft('prime', self.project_dir)
@@ -112,10 +114,10 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
         self.assertThat(os.path.join(self.stage_bindir, 'file1'),
                         Not(FileExists()))
         self.assertThat(os.path.join(self.stage_bindir, 'file2'), FileExists())
-        self.assertThat(os.path.join(self.snap_bindir, 'file1'),
+        self.assertThat(os.path.join(self.prime_bindir, 'file1'),
                         Not(FileExists()))
-        self.assertThat(os.path.join(self.snap_bindir, 'file2'), FileExists())
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(os.path.join(self.prime_bindir, 'file2'), FileExists())
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Now try to prime again
         self.run_snapcraft('prime', self.project_dir)

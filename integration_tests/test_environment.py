@@ -28,9 +28,10 @@ class EnvironmentTestCase(integration_tests.TestCase):
         project_dir = 'snapcraft-environment'
         self.run_snapcraft('stage', project_dir)
 
-        abs_project_dir = os.path.join(os.path.abspath('.'), project_dir)
-        stage_dir = os.path.join(abs_project_dir, 'stage')
-        part_install_dir = os.path.join(abs_project_dir,
+        abs_project_dir = os.path.join(os.getcwd(), project_dir)
+        snap_dir = os.path.join(abs_project_dir, 'snap')
+        stage_dir = os.path.join(snap_dir, 'stage')
+        part_install_dir = os.path.join(snap_dir,
                                         'parts', 'env', 'install')
 
         test_name = os.path.join(stage_dir, 'test_name')
@@ -64,9 +65,9 @@ class EnvironmentTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', project_dir)
 
         binary_output = subprocess.check_output([
-            os.path.join('stage', 'bin', 'simple-cmake-replace')],
+            os.path.join('snap', 'stage', 'bin', 'simple-cmake-replace')],
             cwd=project_dir)
-        path = os.path.join(os.getcwd(), project_dir, 'parts',
+        path = os.path.join(os.getcwd(), project_dir, 'snap', 'parts',
                             'cmake-project', 'install')
         self.assertEqual(
             "When I was built I was installed to {}\n".format(path),
