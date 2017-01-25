@@ -61,7 +61,8 @@ class NodePluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine, plugin.project),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -87,7 +88,8 @@ class NodePluginTestCase(tests.TestCase):
                       cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine, plugin.project),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
@@ -112,7 +114,8 @@ class NodePluginTestCase(tests.TestCase):
                        'my-pkg'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine, plugin.project),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download(),
             mock.call().provision(
@@ -139,12 +142,8 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(['npm', 'run', 'avocado'],
                       cwd=plugin.builddir)])
 
-    @mock.patch('platform.architecture')
-    @mock.patch('platform.machine')
-    def test_unsupported_arch_raises_exception(self, machine_mock, arch_mock):
-        machine_mock.return_value = 'fantasy-arch'
-        arch_mock.return_value = ('128bit', 'ELF')
-
+    @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
+    def test_unsupported_arch_raises_exception(self):
         class Options:
             source = None
             node_packages = []
@@ -327,5 +326,6 @@ class NodeReleaseTestCase(tests.TestCase):
     def test_get_nodejs_release(self, machine_mock, architecture_mock):
         machine_mock.return_value = self.machine
         architecture_mock.return_value = self.architecture
-        node_url = nodejs.get_nodejs_release(self.engine)
+        project_options = snapcraft.ProjectOptions()
+        node_url = nodejs.get_nodejs_release(self.engine, project_options)
         self.assertEqual(node_url, self.expected_url)

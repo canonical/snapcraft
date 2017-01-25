@@ -81,7 +81,7 @@ class GulpPlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self._npm_dir = os.path.join(self.partdir, 'npm')
         self._nodejs_tar = sources.Tar(nodejs.get_nodejs_release(
-            self.options.node_engine), self._npm_dir)
+            self.options.node_engine, self.project), self._npm_dir)
 
     def pull(self):
         super().pull()

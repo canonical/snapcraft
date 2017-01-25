@@ -61,7 +61,9 @@ class GulpPluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine,
+                    plugin.project),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -100,17 +102,15 @@ class GulpPluginTestCase(tests.TestCase):
 
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine,
+                    plugin.project),
                 os.path.join(plugin._npm_dir)),
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])
 
-    @mock.patch('platform.architecture')
-    @mock.patch('platform.machine')
-    def test_unsupported_arch_raises_exception(self, machine_mock, arch_mock):
-        machine_mock.return_value = 'fantasy-arch'
-        arch_mock.return_value = ('128bit', 'ELF')
-
+    @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
+    def test_unsupported_arch_raises_exception(self):
         class Options:
             source = None
             gulp_tasks = []

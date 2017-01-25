@@ -42,7 +42,7 @@ import os
 import shutil
 
 import snapcraft
-from snapcraft import sources, _options
+from snapcraft import sources
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +50,10 @@ _NODEJS_BASE = 'node-v{version}-linux-{arch}'
 _NODEJS_VERSION = '4.4.4'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
-    'i686': 'x86',
-    'x86_64': 'x64',
-    'armv7l': 'armv7l',
-    'aarch64': 'arm64',
+    'i386': 'x86',
+    'amd64': 'x64',
+    'armhf': 'armv7l',
+    'arm64': 'arm64',
 }
 
 
@@ -107,7 +107,7 @@ class NodePlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self._npm_dir = os.path.join(self.partdir, 'npm')
         self._nodejs_tar = sources.Tar(get_nodejs_release(
-            self.options.node_engine), self._npm_dir)
+            self.options.node_engine, self.project), self._npm_dir)
 
     def pull(self):
         super().pull()
@@ -140,8 +140,8 @@ class NodePlugin(snapcraft.BasePlugin):
             self.run(['npm', 'run', target], cwd=rootdir)
 
 
-def _get_nodejs_base(node_engine):
-    machine = _options._get_platform_architecture()
+def _get_nodejs_base(node_engine, project_options):
+    machine = project_options.deb_arch
     if machine not in _NODEJS_ARCHES:
         raise EnvironmentError('architecture not supported ({})'.format(
             machine))
@@ -149,6 +149,6 @@ def _get_nodejs_base(node_engine):
                                arch=_NODEJS_ARCHES[machine])
 
 
-def get_nodejs_release(node_engine):
+def get_nodejs_release(node_engine, project):
     return _NODEJS_TMPL.format(version=node_engine,
-                               base=_get_nodejs_base(node_engine))
+                               base=_get_nodejs_base(node_engine, project))
