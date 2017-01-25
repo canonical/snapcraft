@@ -162,6 +162,11 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
+        self.use_default_arguments = False
+
+        if not self.channels:
+            self.use_default_arguments = True
+            self.channels = ['edge']
 
     def make_travis_yml(self, content):
         with open('.travis.yml', 'w') as fd:
@@ -187,11 +192,10 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.make_snapcraft_yaml(test_snapcraft_yaml)
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
-        if self.channels:
-            travis.enable(self.channels)
-        else:
-            self.channels = ['edge']
+        if self.use_default_arguments:
             travis.enable()
+        else:
+            travis.enable(self.channels)
 
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
@@ -265,11 +269,10 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.make_snapcraft_yaml(test_snapcraft_yaml)
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
-        if self.channels:
-            travis.refresh(self.channels)
-        else:
-            self.channels = ['edge']
+        if self.use_default_arguments:
             travis.refresh()
+        else:
+            travis.refresh(self.channels)
 
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
