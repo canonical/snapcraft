@@ -63,7 +63,7 @@ class GulpPluginTestCase(tests.TestCase):
             mock.call(
                 nodejs.get_nodejs_release(
                     plugin.options.node_engine,
-                    plugin.project),
+                    plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -104,7 +104,7 @@ class GulpPluginTestCase(tests.TestCase):
             mock.call(
                 nodejs.get_nodejs_release(
                     plugin.options.node_engine,
-                    plugin.project),
+                    plugin.project.deb_arch),
                 os.path.join(plugin._npm_dir)),
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])

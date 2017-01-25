@@ -62,7 +62,7 @@ class NodePluginTestCase(tests.TestCase):
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(
-                    plugin.options.node_engine, plugin.project),
+                    plugin.options.node_engine, plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -89,7 +89,7 @@ class NodePluginTestCase(tests.TestCase):
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(
-                    plugin.options.node_engine, plugin.project),
+                    plugin.options.node_engine, plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
@@ -115,7 +115,7 @@ class NodePluginTestCase(tests.TestCase):
         self.tar_mock.assert_has_calls([
             mock.call(
                 nodejs.get_nodejs_release(
-                    plugin.options.node_engine, plugin.project),
+                    plugin.options.node_engine, plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download(),
             mock.call().provision(
@@ -326,6 +326,6 @@ class NodeReleaseTestCase(tests.TestCase):
     def test_get_nodejs_release(self, machine_mock, architecture_mock):
         machine_mock.return_value = self.machine
         architecture_mock.return_value = self.architecture
-        project_options = snapcraft.ProjectOptions()
-        node_url = nodejs.get_nodejs_release(self.engine, project_options)
+        project = snapcraft.ProjectOptions()
+        node_url = nodejs.get_nodejs_release(self.engine, project.deb_arch)
         self.assertEqual(node_url, self.expected_url)
