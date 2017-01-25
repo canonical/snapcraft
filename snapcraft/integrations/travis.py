@@ -83,6 +83,7 @@ logger = logging.getLogger(__name__)
 
 TRAVIS_CONFIG_FILENAME = '.travis.yml'
 ENCRYPTED_CONFIG_FILENAME = '.snapcraft/travis_snapcraft.cfg'
+DEFAULT_CHANNELS = ['edge']
 
 
 class TravisRuntimeError(Exception):
@@ -172,7 +173,9 @@ def requires_travis_preconditions():
 
 
 @requires_travis_preconditions()
-def refresh(channels=['edge']):
+def refresh(channels):
+    if not channels:
+        channels = DEFAULT_CHANNELS
     series = storeapi.constants.DEFAULT_SERIES
     project_config = load_config()
     snap_name = project_config.data['name']
@@ -190,7 +193,9 @@ def refresh(channels=['edge']):
 
 
 @requires_travis_preconditions()
-def enable(channels=['edge']):
+def enable(channels):
+    if not channels:
+        channels = DEFAULT_CHANNELS
     series = storeapi.constants.DEFAULT_SERIES
     project_config = load_config()
     snap_name = project_config.data['name']

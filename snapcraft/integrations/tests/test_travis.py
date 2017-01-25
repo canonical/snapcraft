@@ -139,7 +139,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
 
     scenarios = [
         ('default', dict(
-            channels=None)),
+            channels=[])),
         ('edge', dict(
             channels=['edge'])),
         ('beta', dict(
@@ -166,7 +166,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
 
         if not self.channels:
             self.use_default_arguments = True
-            self.channels = ['edge']
+            self.channels = travis.DEFAULT_CHANNELS
 
     def make_travis_yml(self, content):
         with open('.travis.yml', 'w') as fd:
@@ -193,7 +193,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
         if self.use_default_arguments:
-            travis.enable()
+            travis.enable(None)
         else:
             travis.enable(self.channels)
 
@@ -270,7 +270,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
         if self.use_default_arguments:
-            travis.refresh()
+            travis.refresh(None)
         else:
             travis.refresh(self.channels)
 
