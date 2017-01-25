@@ -301,50 +301,69 @@ class _SnapPackaging:
                 raise EnvironmentError(
                     'The specified command {!r} defined in the app {!r} '
                     'does not exist or is not executable'.format(str(e), name))
-        desktop_file = app.pop('desktop', '')
-        if desktop_file:
-            self._reformat_desktop(name, desktop_file)
+        desktop_file_name = app.pop('desktop', '')
+        if desktop_file_name:
+            desktop_file = _DesktopFile(
+                name=name, filename=desktop_file_name,
+                snap_name=self._config_data['name'], prime_dir=self._snap_dir)
+            desktop_file.parse_and_reformat()
+            desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
-    def _reformat_desktop(self, name, desktop_file):
-        gui_dir = os.path.join(self.meta_dir, 'gui')
-        desktop_file_path = os.path.join(self._snap_dir, desktop_file)
-        if not os.path.exists(desktop_file_path):
+
+class _DesktopFile:
+
+    def __init__(self, *, name, filename, snap_name, prime_dir):
+        self._name = name
+        self._filename = filename
+        self._snap_name = snap_name
+        self._prime_dir = prime_dir
+        self._path = os.path.join(prime_dir, filename)
+        if not os.path.exists(self._path):
             raise EnvironmentError(
                 'The specified desktop file {!r} defined in the app '
-                '{!r} does not exist'.format(desktop_file, name))
-        desktop_contents = configparser.ConfigParser(interpolation=None)
-        desktop_contents.optionxform = str
-        desktop_contents.read(desktop_file_path)
+                '{!r} does not exist'.format(filename, name))
+
+    def parse_and_reformat(self):
+        self._parser = configparser.ConfigParser(interpolation=None)
+        self._parser.optionxform = str
+        self._parser.read(self._path)
         section = 'Desktop Entry'
-        if section not in desktop_contents.sections():
+        if section not in self._parser.sections():
             raise EnvironmentError(
                 'The specified desktop file {!r} is not a valid '
-                'desktop file'.format(desktop_file))
-        if 'Exec' not in desktop_contents[section]:
+                'desktop file'.format(self._filename))
+        if 'Exec' not in self._parser[section]:
             raise EnvironmentError(
                 'The specified desktop file {!r} is missing the '
-                '"Exec" key'.format(desktop_file))
+                '"Exec" key'.format(self._filename))
         # XXX: do we want to allow more parameters for Exec?
-        exec_value = '{}.{} %U'.format(self._config_data['name'], name)
-        desktop_contents[section]['Exec'] = exec_value
-        if 'Icon' in desktop_contents[section]:
-            icon = desktop_contents[section]['Icon']
+        if self._name == self._snap_name:
+            exec_value = '{} %U'.format(self._name)
+        else:
+            exec_value = '{}.{} %U'.format(self._snap_name, self._name)
+        self._parser[section]['Exec'] = exec_value
+        if 'Icon' in self._parser[section]:
+            icon = self._parser[section]['Icon']
             if icon.startswith('/'):
                 icon = icon.lstrip('/')
-                if os.path.exists(os.path.join(self._snap_dir, icon)):
-                    desktop_contents[section]['Icon'] = \
-                        '${{SNAP}}/{}'.format(icon)
+                if os.path.exists(os.path.join(self._prime_dir, icon)):
+                    self._parser[section]['Icon'] = '${{SNAP}}/{}'.format(icon)
                 else:
                     logger.warning(
                         'Icon {} specified in desktop file {} not found '
-                        'in prime directory'.format(icon, desktop_file))
-        target = os.path.join(gui_dir, os.path.basename(desktop_file))
+                        'in prime directory'.format(icon, self._filename))
+
+    def write(self, *, gui_dir):
+        # Rename the desktop file to match the app name. This will help
+        # unity8 associate them (https://launchpad.net/bugs/1659330).
+        target_filename = '{}.desktop'.format(self._name)
+        target = os.path.join(gui_dir, target_filename)
         if os.path.exists(target):
-            raise EnvironmentError(
-                'Conflicting desktop file referenced by more than one '
-                'app: {!r}'.format(desktop_file))
+            # Unlikely. A desktop file in setup/gui/ already existed for
+            # this app. Let's pretend it wasn't there and overwrite it.
+            os.remove(target)
         with open(target, 'w') as f:
-            desktop_contents.write(f, space_around_delimiters=False)
+            self._parser.write(f, space_around_delimiters=False)
 
 
 def _find_bin(binary, basedir):

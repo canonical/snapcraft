@@ -129,7 +129,16 @@ class PythonPluginTestCase(tests.TestCase):
         self.assertFalse(mock_run.called)
 
     @mock.patch.object(python.PythonPlugin, 'run')
-    def test_pull(self, mock_run):
+    def test_pull_with_nothing(self, mock_run):
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        plugin.pull()
+        mock_run.assert_has_calls([])
+
+    @mock.patch.object(python.PythonPlugin, 'run')
+    def test_pull_with_requirements(self, mock_run):
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -147,12 +156,33 @@ class PythonPluginTestCase(tests.TestCase):
                         '--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_download + ['--requirement', requirements_path],
-                      env=mock.ANY),
-            mock.call(pip_download + ['test', 'packages'],
-                      env=mock.ANY),
-            mock.call(pip_download + ['.'], cwd=plugin.sourcedir,
-                      env=mock.ANY),
+            mock.call(pip_download + ['--requirement', requirements_path, '.',
+                                      'test', 'packages'],
+                      cwd=plugin.sourcedir, env=mock.ANY),
+        ]
+        plugin.pull()
+        mock_run.assert_has_calls(calls)
+
+    @mock.patch.object(python.PythonPlugin, 'run')
+    def test_pull_without_requirments(self, mock_run):
+        self.options.requirements = ''
+        self.options.constraints = 'constraints.txt'
+        self.options.python_packages = ['test', 'packages']
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+
+        pip_download = ['pip', 'download',
+                        '--disable-pip-version-check',
+                        '--dest', plugin._python_package_dir,
+                        '--constraint', constraints_path]
+
+        calls = [
+            mock.call(pip_download + ['.', 'test', 'packages'],
+                      cwd=plugin.sourcedir, env=mock.ANY),
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)
@@ -215,16 +245,9 @@ class PythonPluginTestCase(tests.TestCase):
                        '--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_wheel + ['--requirement', requirements_path],
-                      env=mock.ANY),
-            mock.call(tests.ContainsList(pip_install + ['project.whl']),
-                      env=mock.ANY),
-            mock.call(pip_wheel + ['test', 'packages'],
-                      env=mock.ANY),
-            mock.call(tests.ContainsList(pip_install + ['project.whl']),
-                      env=mock.ANY),
-            mock.call(pip_wheel + ['.'], cwd=plugin.builddir,
-                      env=mock.ANY),
+            mock.call(pip_wheel + ['--requirement', requirements_path, '.',
+                                   'test', 'packages'],
+                      cwd=plugin.builddir, env=mock.ANY),
             mock.call(tests.ContainsList(pip_install + ['project.whl']),
                       env=mock.ANY),
         ]
@@ -247,10 +270,9 @@ class PythonPluginTestCase(tests.TestCase):
 
         calls = [
             mock.call(pip_download + ['--requirement',
-                                      'https://test.com/requirements.txt'],
-                      env=mock.ANY),
-            mock.call(pip_download + ['.'], cwd=plugin.sourcedir,
-                      env=mock.ANY),
+                                      'https://test.com/requirements.txt',
+                                      '.'],
+                      cwd=plugin.sourcedir, env=mock.ANY),
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)
