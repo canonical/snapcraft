@@ -267,8 +267,7 @@ class CreateTestCase(CreateBaseTestCase):
         self.generate_meta_yaml()
 
         desktop_file = os.path.join(self.meta_dir, 'gui', 'app1.desktop')
-        self.assertTrue(os.path.exists(desktop_file),
-                        'app1.desktop was not setup correctly')
+        self.assertThat(desktop_file, FileExists())
         contents = configparser.ConfigParser(interpolation=None)
         contents.read(desktop_file)
         section = 'Desktop Entry'
@@ -277,8 +276,7 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertEqual(contents[section].get('Icon'), 'app1.png')
 
         desktop_file = os.path.join(self.meta_dir, 'gui', 'app2.desktop')
-        self.assertTrue(os.path.exists(desktop_file),
-                        'app2.desktop was not setup correctly')
+        self.assertThat(desktop_file, FileExists())
         contents = configparser.ConfigParser(interpolation=None)
         contents.read(desktop_file)
         section = 'Desktop Entry'
@@ -288,21 +286,18 @@ class CreateTestCase(CreateBaseTestCase):
                          '${SNAP}/usr/share/app2.png')
 
         desktop_file = os.path.join(self.meta_dir, 'gui', 'my-package.desktop')
-        self.assertTrue(os.path.exists(desktop_file),
-                        'my-package.desktop was not setup correctly')
+        self.assertThat(desktop_file, FileExists())
         contents = configparser.ConfigParser(interpolation=None)
         contents.read(desktop_file)
         section = 'Desktop Entry'
         self.assertTrue(section in contents)
         self.assertEqual(contents[section].get('Exec'), 'my-package %U')
 
-        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
-                        Not(FileContains('desktop: app1.desktop')))
-        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
-                        Not(FileContains('desktop: app2.desktop')))
-        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
-                        Not(FileContains('desktop: app3.desktop')))
-        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
+        snap_yaml = os.path.join('prime', 'meta', 'snap.yaml')
+        self.assertThat(snap_yaml, Not(FileContains('desktop: app1.desktop')))
+        self.assertThat(snap_yaml, Not(FileContains('desktop: app2.desktop')))
+        self.assertThat(snap_yaml, Not(FileContains('desktop: app3.desktop')))
+        self.assertThat(snap_yaml,
                         Not(FileContains('desktop: my-package.desktop')))
 
     def test_create_meta_with_hook(self):
