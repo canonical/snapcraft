@@ -193,14 +193,15 @@ class SnapsTestCase(testtools.TestCase):
     def install_snap(self, snap_local_path, snap_name, version,
                      devmode=False):
         if not config.get('skip-install', False):
-            self.snappy_testbed.copy_file(snap_local_path, '/home/ubuntu')
-            snap_file_name = os.path.basename(snap_local_path)
-            snap_path_in_testbed = os.path.join(
-                '/home/ubuntu/', snap_file_name)
-            # Remove the snap file from the testbed.
+            tmp_in_testbed = self.snappy_testbed.run_command(
+                'mktemp -d').strip()
             self.addCleanup(
                 self.snappy_testbed.run_command,
-                ['rm', snap_path_in_testbed])
+                ['rm', '-rf', tmp_in_testbed])
+            self.snappy_testbed.copy_file(snap_local_path, tmp_in_testbed)
+            snap_file_name = os.path.basename(snap_local_path)
+            snap_path_in_testbed = os.path.join(
+                tmp_in_testbed, snap_file_name)
             cmd = ['sudo', 'snap', 'install', '--force-dangerous',
                    snap_path_in_testbed]
             if devmode:

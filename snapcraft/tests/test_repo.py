@@ -20,6 +20,7 @@ import os
 import stat
 import tempfile
 from unittest.mock import ANY, call, patch, MagicMock
+from testtools.matchers import Contains
 
 import snapcraft
 from snapcraft import repo
@@ -69,6 +70,37 @@ class UbuntuTestCase(RepoBaseTestCase):
         # __getitem__ is tricky
         self.assertIn(
             call('fake-package'), mock_apt.Cache().__getitem__.call_args_list)
+
+    @patch('snapcraft.repo.apt')
+    def test_get_multiarch_package(self, mock_apt):
+        project_options = snapcraft.ProjectOptions(
+            use_geoip=False)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu.get(['fake-package:arch'])
+
+        mock_apt.assert_has_calls([
+            call.apt_pkg.config.set('Dir::Cache::Archives',
+                                    os.path.join(self.tempdir, 'download')),
+            call.apt_pkg.config.set('Apt::Install-Recommends', 'False'),
+            call.apt_pkg.config.find_file('Dir::Etc::Trusted'),
+            call.apt_pkg.config.set('Dir::Etc::Trusted', ANY),
+            call.apt_pkg.config.find_file('Dir::Etc::TrustedParts'),
+            call.apt_pkg.config.set('Dir::Etc::TrustedParts', ANY),
+            call.apt_pkg.config.clear('APT::Update::Post-Invoke-Success'),
+            call.progress.text.AcquireProgress(),
+            call.Cache(memonly=True, rootdir=ANY),
+            call.Cache().update(fetch_progress=ANY, sources_list=ANY),
+            call.Cache(memonly=True, rootdir=self.tempdir),
+            call.Cache().open(),
+        ])
+        mock_apt.assert_has_calls([
+            call.Cache().fetch_archives(progress=ANY),
+        ])
+
+        # __getitem__ is tricky
+        self.assertThat(
+            mock_apt.Cache().__getitem__.call_args_list,
+            Contains(call('fake-package:arch')))
 
     @patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):

@@ -36,6 +36,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Whether or not to include roscore with the part. Defaults to true.
 """
 
+import contextlib
+import glob
 import os
 import tempfile
 import logging
@@ -116,13 +118,12 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(['gcc', 'libc6-dev', 'make'])
-
-        self.stage_packages.extend(['gcc', 'g++'])
+        self.build_packages.extend(['libc6-dev', 'make'])
 
         # Get a unique set of packages
         self.catkin_packages = set(options.catkin_packages)
         self._rosdep_path = os.path.join(self.partdir, 'rosdep')
+        self._compilers_path = os.path.join(self.partdir, 'compilers')
 
         # The path created via the `source` key (or a combination of `source`
         # and `source-subdir` keys) needs to point to a valid Catkin workspace
@@ -222,6 +223,12 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
                 'Unable to find package path: "{}"'.format(
                     self._ros_package_path))
 
+        # Pull our own compilers so we use ones that match up with the version
+        # of ROS we're using.
+        compilers = _Compilers(
+            self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
+        compilers.setup()
+
         # Use rosdep for dependency detection and resolution
         rosdep = _Rosdep(self.options.rosdistro, self._ros_package_path,
                          self._rosdep_path, self.PLUGIN_STAGE_SOURCES,
@@ -268,25 +275,25 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         super().clean_pull()
 
         # Remove the rosdep path, if any
-        if os.path.exists(self._rosdep_path):
+        with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._rosdep_path)
 
-    @property
-    def gcc_version(self):
-        return self.run_output(['gcc', '-dumpversion'])
+        # Remove the compilers path, if any
+        with contextlib.suppress(FileNotFoundError):
+            shutil.rmtree(self._compilers_path)
 
     @property
     def rosdir(self):
         return os.path.join(self.installdir, 'opt', 'ros',
                             self.options.rosdistro)
 
-    def _run_in_bash(self, commandlist, cwd=None):
+    def _run_in_bash(self, commandlist, cwd=None, env=None):
         with tempfile.NamedTemporaryFile(mode='w') as f:
             f.write('set -ex\n')
             f.write('exec {}\n'.format(' '.join(commandlist)))
             f.flush()
 
-            self.run(['/bin/bash', f.name], cwd=cwd)
+            self.run(['/bin/bash', f.name], cwd=cwd, env=env)
 
     def build(self):
         """Build Catkin packages.
@@ -392,27 +399,23 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # All the arguments that follow are meant for CMake
         catkincmd.append('--cmake-args')
 
-        # Make sure we're using the compilers included in this .snap
+        # Make sure we're using our own compilers (the one on the system may
+        # be the wrong version).
+        compilers = _Compilers(
+            self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
         catkincmd.extend([
-            '-DCMAKE_C_FLAGS="$CFLAGS"',
-            '-DCMAKE_CXX_FLAGS="$CPPFLAGS -I{} -I{}"'.format(
-                os.path.join(self.installdir, 'usr', 'include', 'c++',
-                             self.gcc_version),
-                os.path.join(self.installdir, 'usr', 'include',
-                             self.project.arch_triplet, 'c++',
-                             self.gcc_version)),
-            '-DCMAKE_LD_FLAGS="$LDFLAGS"',
-            '-DCMAKE_C_COMPILER={}'.format(
-                os.path.join(self.installdir, 'usr', 'bin', 'gcc')),
-            '-DCMAKE_CXX_COMPILER={}'.format(
-                os.path.join(self.installdir, 'usr', 'bin', 'g++'))
+            '-DCMAKE_C_FLAGS="$CFLAGS {}"'.format(compilers.cflags),
+            '-DCMAKE_CXX_FLAGS="$CPPFLAGS {}"'.format(compilers.cxxflags),
+            '-DCMAKE_LD_FLAGS="$LDFLAGS {}"'.format(compilers.ldflags),
+            '-DCMAKE_C_COMPILER={}'.format(compilers.c_compiler_path),
+            '-DCMAKE_CXX_COMPILER={}'.format(compilers.cxx_compiler_path)
         ])
 
         # This command must run in bash due to a bug in Catkin that causes it
         # to explode if there are spaces in the cmake args (which there are).
         # This has been fixed in Catkin Tools... perhaps we should be using
         # that instead.
-        self._run_in_bash(catkincmd)
+        self._run_in_bash(catkincmd, env=compilers.environment)
 
 
 def _find_system_dependencies(catkin_packages, rosdep):
@@ -569,3 +572,94 @@ class _Rosdep:
 
         return subprocess.check_output(['rosdep'] + arguments,
                                        env=env).decode('utf8').strip()
+
+
+class _Compilers:
+    def __init__(self, compilers_path, ubuntu_sources, project):
+        self._compilers_path = compilers_path
+        self._ubuntu_sources = ubuntu_sources
+        self._project = project
+
+        self._compilers_install_path = os.path.join(
+            self._compilers_path, 'install')
+        self.__gcc_version = None
+
+    def setup(self):
+        os.makedirs(self._compilers_install_path, exist_ok=True)
+
+        # Since we support building older ROS distros we need to make sure we
+        # use the corresponding compiler versions, so they can't be
+        # build-packages. We'll just download them to another place and use
+        # them from there.
+        logger.info('Preparing to fetch compilers...')
+        ubuntu = repo.Ubuntu(
+            self._compilers_path, sources=self._ubuntu_sources,
+            project_options=self._project)
+
+        logger.info('Fetching compilers...')
+        ubuntu.get(['gcc', 'g++'])
+
+        logger.info('Installing compilers...')
+        ubuntu.unpack(self._compilers_install_path)
+
+    @property
+    def environment(self):
+        env = os.environ.copy()
+
+        paths = common.get_library_paths(
+            self._compilers_install_path, self._project.arch_triplet)
+        ld_library_path = formatting_utils.combine_paths(
+            paths, prepend='', separator=':')
+
+        env['LD_LIBRARY_PATH'] = (
+            env.get('LD_LIBRARY_PATH', '') + ':' + ld_library_path)
+
+        env['PATH'] = env.get('PATH', '') + ':' + os.path.join(
+            self._compilers_install_path, 'usr', 'bin')
+
+        return env
+
+    @property
+    def c_compiler_path(self):
+        return os.path.join(self._compilers_install_path, 'usr', 'bin', 'gcc')
+
+    @property
+    def cxx_compiler_path(self):
+        return os.path.join(self._compilers_install_path, 'usr', 'bin', 'g++')
+
+    @property
+    def cflags(self):
+        return ''
+
+    @property
+    def cxxflags(self):
+        paths = set(common.get_include_paths(
+            self._compilers_install_path, self._project.arch_triplet))
+
+        try:
+            paths.add(_get_highest_version_path(os.path.join(
+                self._compilers_install_path, 'usr', 'include', 'c++')))
+            paths.add(_get_highest_version_path(os.path.join(
+                self._compilers_install_path, 'usr', 'include',
+                self._project.arch_triplet, 'c++')))
+        except RuntimeError as e:
+            raise RuntimeError('Unable to determine gcc version: {}'.format(
+                str(e)))
+
+        return formatting_utils.combine_paths(
+            paths, prepend='-I', separator=' ')
+
+    @property
+    def ldflags(self):
+        paths = common.get_library_paths(
+            self._compilers_install_path, self._project.arch_triplet)
+        return formatting_utils.combine_paths(
+            paths, prepend='-L', separator=' ')
+
+
+def _get_highest_version_path(path):
+    paths = sorted(glob.glob(os.path.join(path, '*')))
+    if not paths:
+        raise RuntimeError('nothing found in {!r}'.format(path))
+
+    return paths[-1]
