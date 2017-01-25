@@ -172,16 +172,16 @@ def requires_travis_preconditions():
 
 
 @requires_travis_preconditions()
-def refresh():
+def refresh(channels=['edge']):
     series = storeapi.constants.DEFAULT_SERIES
     project_config = load_config()
     snap_name = project_config.data['name']
     logger.info(
         'Refreshing credentials to push and release "{}" snaps '
-        'to edge channel in series {}'.format(snap_name, series))
+        'to channels {!r} in series {}'.format(
+            snap_name, ', '.join(channels), series))
 
     packages = [{'name': snap_name, 'series': series}]
-    channels = ['edge']
     _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
@@ -190,16 +190,16 @@ def refresh():
 
 
 @requires_travis_preconditions()
-def enable():
+def enable(channels=['edge']):
     series = storeapi.constants.DEFAULT_SERIES
     project_config = load_config()
     snap_name = project_config.data['name']
     logger.info(
         'Enabling Travis testbeds to push and release {!r} snaps '
-        'to edge channel in series {!r}'.format(snap_name, series))
+        'to channels {!r} in series {!r}'.format(
+            snap_name, ', '.join(channels), series))
 
     packages = [{'name': snap_name, 'series': series}]
-    channels = ['edge']
     _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
@@ -220,7 +220,8 @@ def enable():
             'script': (
                 'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
                 '"apt update -qq && apt install snapcraft -y && cd $(pwd) && '
-                'snapcraft && snapcraft push *.snap --release edge"'),
+                'snapcraft && snapcraft push *.snap --release {}"'.format(
+                    ','.join(channels))),
             'on': {
                 'branch': 'master',
             },

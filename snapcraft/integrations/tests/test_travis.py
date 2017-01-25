@@ -208,7 +208,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
         # Descriptive logging ...
         self.assertEqual([
             "Enabling Travis testbeds to push and release 'foo' snaps "
-            "to edge channel in series '16'",
+            "to channels 'edge' in series '16'",
             'Acquiring specific authorization information ...',
             'Login successful.',
             'Encrypting authorization for Travis and adjusting project '

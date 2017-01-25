@@ -53,7 +53,7 @@ Usage:
   snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
-  snapcraft [options] enable-ci [<ci-system>] [--refresh]
+  snapcraft [options] enable-ci [<ci-system>] [--refresh] [--channels <channels>]
   snapcraft [options] help (topics | <plugin> | <topic>) [--devel]
   snapcraft (-h | --help)
   snapcraft --version
@@ -90,6 +90,10 @@ Options specific to snapping:
 Options specific to store interaction:
   --release <channels>  Comma separated list of channels to release to.
   --series <series>     Snap series [default: {DEFAULT_SERIES}].
+
+Options specific to continuous-interaction system:
+  --refresh              Updates the project credentials
+  --channels <channels>  Comma separated list of channels to enable.
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
@@ -284,7 +288,8 @@ def run(args, project_options):  # noqa
         snapcraft.topic_help(args['<topic>'] or args['<plugin>'],
                              args['--devel'], args['topics'])
     elif args['enable-ci']:
-        enable_ci(args['<ci-system>'], args['--refresh'])
+        channels = args['--channels'].split(',') if args['--channels'] else []
+        enable_ci(args['<ci-system>'], args['--refresh'], channels)
     elif args['update']:
         parts.update()
     elif args['define']:
