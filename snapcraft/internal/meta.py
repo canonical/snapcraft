@@ -354,11 +354,14 @@ class _DesktopFile:
                         'in prime directory'.format(icon, self._filename))
 
     def write(self, *, gui_dir):
-        target = os.path.join(gui_dir, os.path.basename(self._filename))
+        # Rename the desktop file to match the app name. This will help
+        # unity8 associate them (https://launchpad.net/bugs/1659330).
+        target_filename = '{}.desktop'.format(self._name)
+        target = os.path.join(gui_dir, target_filename)
         if os.path.exists(target):
-            raise EnvironmentError(
-                'Conflicting desktop file referenced by more than one '
-                'app: {!r}'.format(self._filename))
+            # Unlikely. A desktop file in setup/gui/ already existed for
+            # this app. Let's pretend it wasn't there and overwrite it.
+            os.remove(target)
         with open(target, 'w') as f:
             self._parser.write(f, space_around_delimiters=False)
 

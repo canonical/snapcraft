@@ -287,9 +287,9 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertEqual(contents[section].get('Icon'),
                          '${SNAP}/usr/share/app2.png')
 
-        desktop_file = os.path.join(self.meta_dir, 'gui', 'app3.desktop')
+        desktop_file = os.path.join(self.meta_dir, 'gui', 'my-package.desktop')
         self.assertTrue(os.path.exists(desktop_file),
-                        'app3.desktop was not setup correctly')
+                        'my-package.desktop was not setup correctly')
         contents = configparser.ConfigParser(interpolation=None)
         contents.read(desktop_file)
         section = 'Desktop Entry'
@@ -302,6 +302,8 @@ class CreateTestCase(CreateBaseTestCase):
                         Not(FileContains('desktop: app2.desktop')))
         self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
                         Not(FileContains('desktop: app3.desktop')))
+        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
+                        Not(FileContains('desktop: my-package.desktop')))
 
     def test_create_meta_with_hook(self):
         hooksdir = os.path.join(self.snap_dir, 'hooks')
