@@ -61,7 +61,8 @@ class NodePluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine, plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
@@ -87,7 +88,8 @@ class NodePluginTestCase(tests.TestCase):
                       cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine, plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().provision(
                 plugin.installdir, clean_target=False, keep_tarball=True)])
@@ -112,7 +114,8 @@ class NodePluginTestCase(tests.TestCase):
                        'my-pkg'], cwd=plugin.builddir)])
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine, plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download(),
             mock.call().provision(
@@ -139,10 +142,8 @@ class NodePluginTestCase(tests.TestCase):
             mock.call(['npm', 'run', 'avocado'],
                       cwd=plugin.builddir)])
 
-    @mock.patch('platform.machine')
-    def test_unsupported_arch_raises_exception(self, machine_mock):
-        machine_mock.return_value = 'fantasy-arch'
-
+    @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
+    def test_unsupported_arch_raises_exception(self):
         class Options:
             source = None
             node_packages = []
@@ -277,33 +278,54 @@ class NodeReleaseTestCase(tests.TestCase):
 
     scenarios = [
         ('i686', dict(
+            architecture=('32bit', 'ELF'),
             machine='i686',
             engine='4.4.4',
             expected_url=(
                 'https://nodejs.org/dist/v4.4.4/'
                 'node-v4.4.4-linux-x86.tar.gz'))),
         ('x86_64', dict(
+            architecture=('64bit', 'ELF'),
             machine='x86_64',
             engine='4.4.4',
             expected_url=(
                 'https://nodejs.org/dist/v4.4.4/'
                 'node-v4.4.4-linux-x64.tar.gz'))),
+        ('i686-on-x86_64', dict(
+            architecture=('32bit', 'ELF'),
+            machine='x86_64',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-x86.tar.gz'))),
         ('armv7l', dict(
-             machine='armv7l',
-             engine='4.4.4',
-             expected_url=(
-                 'https://nodejs.org/dist/v4.4.4/'
-                 'node-v4.4.4-linux-armv7l.tar.gz'))),
+            architecture=('32bit', 'ELF'),
+            machine='armv7l',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-armv7l.tar.gz'))),
         ('aarch64', dict(
+            architecture=('64bit', 'ELF'),
             machine='aarch64',
             engine='4.4.4',
             expected_url=(
                 'https://nodejs.org/dist/v4.4.4/'
                 'node-v4.4.4-linux-arm64.tar.gz'))),
+        ('armv7l-on-aarch64', dict(
+            architecture=('32bit', 'ELF'),
+            machine='aarch64',
+            engine='4.4.4',
+            expected_url=(
+                'https://nodejs.org/dist/v4.4.4/'
+                'node-v4.4.4-linux-armv7l.tar.gz'))),
     ]
 
+    @mock.patch('platform.architecture')
     @mock.patch('platform.machine')
-    def test_get_nodejs_release(self, machine_mock):
+    def test_get_nodejs_release(self, machine_mock, architecture_mock):
         machine_mock.return_value = self.machine
-        node_url = nodejs.get_nodejs_release(self.engine)
+        architecture_mock.return_value = self.architecture
+        project = snapcraft.ProjectOptions()
+        node_url = nodejs.get_nodejs_release(self.engine, project.deb_arch)
         self.assertEqual(node_url, self.expected_url)
