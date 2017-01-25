@@ -136,20 +136,20 @@ class SnapsTestCase(testtools.TestCase):
                     ip, port, 'ubuntu', proxy)
             self.snappy_testbed.wait()
 
-    def build_snap(self, snap_content_dir):
+    def build_snap(self, snap_content_dir, timeout=900):
         project_dir = os.path.join(self.src_dir, snap_content_dir)
         tmp_project_dir = os.path.join(self.path, snap_content_dir)
         shutil.copytree(project_dir, tmp_project_dir, symlinks=True)
 
-        self._snap(tmp_project_dir)
+        self._snap(tmp_project_dir, timeout)
 
         snap_glob_path = os.path.join(tmp_project_dir,  '*.snap')
         return glob.glob(snap_glob_path)[0]
 
-    def _snap(self, project_dir):
+    def _snap(self, project_dir, timeout):
         command = '{} {}'.format(self.snapcraft_command, 'snap')
         self._run_command(
-            command, project_dir, expect='Snapped .*\.snap', timeout=1200)
+            command, project_dir, expect='Snapped .*\.snap', timeout=timeout)
 
     def _run_command(
             self, command, working_dir, expect=pexpect.EOF, timeout=30):
