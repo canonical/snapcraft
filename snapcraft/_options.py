@@ -134,7 +134,9 @@ class ProjectOptions:
 
     @property
     def local_plugins_dir(self):
-        return os.path.join(self.parts_dir, 'plugins')
+        # TODO until we migrate plugins
+        return os.path.abspath(
+            os.path.join(self.__project_dir, '..', 'parts', 'plugins'))
 
     @property
     def parts_dir(self):
@@ -156,7 +158,7 @@ class ProjectOptions:
                  target_deb_arch=None, debug=False):
         # TODO: allow setting a different project dir and check for
         #       snapcraft.yaml
-        self.__project_dir = os.getcwd()
+        self.__project_dir = os.path.join(os.getcwd(), 'snap')
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)

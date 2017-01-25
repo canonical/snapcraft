@@ -72,7 +72,8 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            "The part named 'no-pull' is not defined in 'snapcraft.yaml'\n")
+            "The part named 'no-pull' is not defined in "
+            "'snap/snapcraft.yaml'\n")
 
     def test_pull_defaults(self):
         parts = self.make_snapcraft_yaml()

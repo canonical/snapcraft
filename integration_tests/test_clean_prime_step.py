@@ -32,19 +32,20 @@ class CleanPrimeStepTestCase(integration_tests.TestCase):
         super().setUp()
 
         self.project_dir = 'independent-parts'
+        self.snapdir = os.path.join(self.project_dir, 'snap')
         self.run_snapcraft('prime', self.project_dir)
 
     def test_clean_prime_step(self):
-        snapdir = os.path.join(self.project_dir, 'prime')
-        bindir = os.path.join(snapdir, 'bin')
+        primedir = os.path.join(self.snapdir, 'prime')
+        bindir = os.path.join(primedir, 'bin')
         self.assertThat(os.path.join(bindir, 'file1'), FileExists())
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
 
         output = self.run_snapcraft(
             ['clean', '--step=prime'], self.project_dir, debug=False)
-        self.assertThat(snapdir, Not(DirExists()))
-        self.assertThat(os.path.join(self.project_dir, 'stage'), DirExists())
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(primedir, Not(DirExists()))
+        self.assertThat(os.path.join(self.snapdir, 'stage'), DirExists())
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Assert that the priming area was removed wholesale, not a part at a
         # time (since we didn't specify any parts).
@@ -58,7 +59,7 @@ class CleanPrimeStepTestCase(integration_tests.TestCase):
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
 
     def test_clean_prime_step_single_part(self):
-        bindir = os.path.join(self.project_dir, 'prime', 'bin')
+        bindir = os.path.join(self.snapdir, 'prime', 'bin')
         self.assertThat(os.path.join(bindir, 'file1'), FileExists())
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
 
@@ -66,8 +67,8 @@ class CleanPrimeStepTestCase(integration_tests.TestCase):
                            self.project_dir)
         self.assertThat(os.path.join(bindir, 'file1'), Not(FileExists()))
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
-        self.assertThat(os.path.join(self.project_dir, 'stage'), DirExists())
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(os.path.join(self.snapdir, 'stage'), DirExists())
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Now try to prime again
         self.run_snapcraft('prime', self.project_dir)
@@ -75,15 +76,15 @@ class CleanPrimeStepTestCase(integration_tests.TestCase):
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
 
     def test_clean_with_deprecated_strip_step(self):
-        snapdir = os.path.join(self.project_dir, 'prime')
-        bindir = os.path.join(snapdir, 'bin')
+        primedir = os.path.join(self.snapdir, 'prime')
+        bindir = os.path.join(primedir, 'bin')
         self.assertThat(os.path.join(bindir, 'file1'), FileExists())
         self.assertThat(os.path.join(bindir, 'file2'), FileExists())
 
         self.run_snapcraft(['clean', '--step=strip'], self.project_dir)
-        self.assertThat(snapdir, Not(DirExists()))
-        self.assertThat(os.path.join(self.project_dir, 'stage'), DirExists())
-        self.assertThat(os.path.join(self.project_dir, 'parts'), DirExists())
+        self.assertThat(primedir, Not(DirExists()))
+        self.assertThat(os.path.join(self.snapdir, 'stage'), DirExists())
+        self.assertThat(os.path.join(self.snapdir, 'parts'), DirExists())
 
         # Now try to prime again
         self.run_snapcraft('prime', self.project_dir)

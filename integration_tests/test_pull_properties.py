@@ -34,7 +34,7 @@ class PullPropertiesTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
 
         state_file = os.path.join(
-            project_dir, 'parts', 'x-local-plugin', 'state', 'pull')
+            project_dir, 'snap', 'parts', 'x-local-plugin', 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)

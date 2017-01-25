@@ -66,14 +66,19 @@ _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 def init():
     """Initialize a snapcraft project."""
 
-    if os.path.exists('snapcraft.yaml'):
+    if os.path.exists(os.path.join('snap', 'snapcraft.yaml')):
+        raise EnvironmentError('snap/snapcraft.yaml already exists!')
+    # FIXME: snapcraft.yaml and .snapcraft.yaml are deprecated.
+    elif os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
-    with open('snapcraft.yaml', mode='w+') as f:
+    with contextlib.suppress(FileExistsError):
+        os.mkdir('snap')
+    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w+') as f:
         f.write(yaml)
-    logger.info('Created snapcraft.yaml.')
+    logger.info('Created snap/snapcraft.yaml.')
     logger.info(
         'Edit the file to your liking or run `snapcraft` to get started')
 
@@ -462,9 +467,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
 
     if index <= common.COMMAND_ORDER.index('pull'):
         # Remove the parts directory (but leave local plugins alone).
-        _cleanup_parts_dir(
-            project_options.parts_dir, project_options.local_plugins_dir,
-            parts)
+        _cleanup_parts_dir(project_options.parts_dir, parts)
 
     _remove_directory_if_empty(project_options.snap_dir)
     _remove_directory_if_empty(project_options.stage_dir)
@@ -479,16 +482,15 @@ def _cleanup_common(directory, step, message, parts):
         part.mark_cleaned(step)
 
 
-def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
+def _cleanup_parts_dir(parts_dir, parts):
     if os.path.exists(parts_dir):
         logger.info('Cleaning up parts directory')
         for subdirectory in os.listdir(parts_dir):
             path = os.path.join(parts_dir, subdirectory)
-            if path != local_plugins_dir:
-                try:
-                    shutil.rmtree(path)
-                except NotADirectoryError:
-                    os.remove(path)
+            try:
+                shutil.rmtree(path)
+            except NotADirectoryError:
+                os.remove(path)
     for part in parts:
         part.mark_cleaned('build')
         part.mark_cleaned('pull')

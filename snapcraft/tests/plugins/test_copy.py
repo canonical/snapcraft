@@ -35,7 +35,7 @@ class TestCopyPlugin(TestCase):
         self.mock_options.source_subdir = None
         self.mock_options.files = {}
         # setup the expected target dir in our tempdir
-        self.dst_prefix = 'parts/copy/install/'
+        self.dst_prefix = 'snap/parts/copy/install/'
         os.makedirs(self.dst_prefix)
         self.project_options = snapcraft.ProjectOptions()
 
@@ -299,7 +299,7 @@ class TestCopyPlugin(TestCase):
             # Links with a relative path that points outside of the snap
             # should also be followed
             {
-                'source': '../../../../unsnapped',
+                'source': '../../../../../unsnapped',
                 'link_name': os.path.join(c.builddir, 'foo', 'bad_relative'),
                 'destination': os.path.join(c.installdir, 'bad_relative'),
                 'expected_contents': 'bar',

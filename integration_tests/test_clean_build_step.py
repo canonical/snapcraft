@@ -34,7 +34,7 @@ class CleanBuildStepBuiltTestCase(integration_tests.TestCase):
 
         self.project_dir = 'independent-parts'
         self.run_snapcraft('build', self.project_dir)
-        self.partsdir = os.path.join(self.project_dir, 'parts')
+        self.partsdir = os.path.join(self.project_dir, 'snap', 'parts')
         self.parts = {}
         for part in ['part1', 'part2']:
             partdir = os.path.join(self.partsdir, part)
@@ -116,11 +116,12 @@ class CleanBuildStepPrimedTestCase(integration_tests.TestCase):
         self.project_dir = 'independent-parts'
         self.run_snapcraft('prime', self.project_dir)
 
-        self.snapdir = os.path.join(self.project_dir, 'prime')
-        self.snap_bindir = os.path.join(self.snapdir, 'bin')
-        self.stagedir = os.path.join(self.project_dir, 'stage')
+        self.snapdir = os.path.join(self.project_dir, 'snap')
+        self.primedir = os.path.join(self.snapdir, 'prime')
+        self.snap_bindir = os.path.join(self.primedir, 'bin')
+        self.stagedir = os.path.join(self.project_dir, 'snap', 'stage')
         self.stage_bindir = os.path.join(self.stagedir, 'bin')
-        self.partsdir = os.path.join(self.project_dir, 'parts')
+        self.partsdir = os.path.join(self.snapdir, 'parts')
         self.parts = {}
         for part in ['part1', 'part2']:
             partdir = os.path.join(self.partsdir, part)
@@ -149,7 +150,7 @@ class CleanBuildStepPrimedTestCase(integration_tests.TestCase):
 
         self.run_snapcraft(['clean', '--step=build'], self.project_dir)
         self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat(self.snapdir, Not(DirExists()))
+        self.assertThat(self.primedir, Not(DirExists()))
 
         for part_name, part in self.parts.items():
             self.assertThat(part['builddir'], Not(DirExists()))

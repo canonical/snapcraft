@@ -32,12 +32,12 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
 
@@ -46,22 +46,22 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'jsonschema'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'jsonschema'))[0],
             DirExists())
 
@@ -71,11 +71,11 @@ class PythonPluginTestCase(integration_tests.TestCase):
         project_dir = 'python-entry-point'
         self.run_snapcraft('stage', project_dir)
         python2_entry_point = os.path.join(
-            project_dir, 'stage', 'bin', 'python2_test')
+            project_dir, 'snap', 'stage', 'bin', 'python2_test')
         python3_entry_point = os.path.join(
-            project_dir, 'stage', 'bin', 'python3_test')
+            project_dir, 'snap', 'stage', 'bin', 'python3_test')
         python_entry_point = os.path.join(
-            project_dir, 'stage', 'bin', 'python_test')
+            project_dir, 'snap', 'stage', 'bin', 'python_test')
 
         with open(python2_entry_point) as f:
             python2_shebang = f.readline().strip()
@@ -99,7 +99,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
         pyc_files = []
         pth_files = []
-        for _, _, files in os.walk(os.path.join(project_dir, 'stage')):
+        for _, _, files in os.walk(os.path.join(project_dir, 'snap', 'stage')):
             pyc_files.extend([f for f in files if f.endswith('pyc')])
             pth_files.extend([f for f in files if f.endswith('pth')])
 
@@ -112,12 +112,12 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', project_dir)
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yaml'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml'))[0],
             DirExists())
 
@@ -127,33 +127,33 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', project_dir)
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yamllint'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'usr', 'lib',
                 'python2*', 'dist-packages', 'yaml'))[0],
             DirExists())
         self.assertEqual(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yaml')),
             [])
 
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yamllint'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
-                'python3*', 'dist-packages', 'yaml'))[0],
+                project_dir, 'snap', 'parts', 'python3', 'install', 'usr', 
+                'lib', 'python3*', 'dist-packages', 'yaml'))[0],
             DirExists())
         self.assertEqual(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                project_dir, 'snap', 'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml')),
             [])
 
@@ -162,7 +162,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'pip-bzr', 'packages',
+                project_dir, 'snap', 'parts', 'pip-bzr', 'packages',
                 'curtin-*.zip'))[0],
             FileExists())
 
@@ -171,6 +171,6 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', project_dir)
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'root', 'install',
+                project_dir, 'snap', 'parts', 'root', 'install',
                 'lib', 'python3*', 'site-packages', 'etc', 'broken.txt'))[0],
             FileExists())

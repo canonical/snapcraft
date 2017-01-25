@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import os
 
 import fixtures
 
@@ -23,36 +24,6 @@ from snapcraft import tests
 
 
 class InitCommandTestCase(tests.TestCase):
-
-    def test_init_with_existing_snapcraft_yaml_must_fail(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        open('snapcraft.yaml', 'w').close()
-
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['init'])
-
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
-            'snapcraft.yaml already exists!\n')
-
-    def test_init_with_existing_dot_snapcraft_yaml_must_fail(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        open('.snapcraft.yaml', 'w').close()
-
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['init'])
-
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
-            '.snapcraft.yaml already exists!\n')
 
     def test_init_must_write_snapcraft_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -78,10 +49,45 @@ parts:
         main(['init'])
 
         self.assertEqual(
-            'Created snapcraft.yaml.\nEdit the file to your '
-            'liking or run `snapcraft` to get started\n',
-            fake_logger.output)
+            'Created snap/snapcraft.yaml.\nEdit the file to your liking or '
+            'run `snapcraft` to get started\n', fake_logger.output)
 
         # Verify the generated yaml
-        with open('snapcraft.yaml', 'r') as f:
+        with open(os.path.join('snap', 'snapcraft.yaml'), 'r') as f:
             self.assertEqual(f.read(), expected_yaml)
+
+
+class InitCommandExistingProjectTestCase(tests.TestCase):
+
+    scenarios = [
+        ('snap/snapcraft.yaml', {
+            'yaml_path': os.path.join('snap', 'snapcraft.yaml'),
+            'message': 'snap/snapcraft.yaml already exists!\n'
+        }),
+        # FIXME: Both snapcraft.yaml and .snapcraft.yaml are deprecated.
+        ('snapcraft.yaml', {
+            'yaml_path': 'snapcraft.yaml',
+            'message': 'snapcraft.yaml already exists!\n'
+        }),
+        ('.snapcraft.yaml', {
+            'yaml_path': '.snapcraft.yaml',
+            'message': '.snapcraft.yaml already exists!\n'
+        })
+    ]
+
+    def test_init_with_existing_yaml(self):
+        """Test that init bails if project yaml already exists"""
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        dirname = os.path.dirname(self.yaml_path)
+        if dirname:
+            os.mkdir(dirname)
+
+        open(self.yaml_path, 'w').close()
+
+        raised = self.assertRaises(SystemExit, main, ['init'])
+
+        self.assertEqual(1, raised.code)
+        self.assertEqual(fake_logger.output, self.message)

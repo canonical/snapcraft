@@ -59,10 +59,10 @@ parts:
             os.path.join(self.parts_dir, 'part1', 'src'),
             self.stage_dir,
             self.prime_dir,
-            os.path.join(self.parts_dir, 'plugins'),
+            os.path.join('parts', 'plugins'),
         ]
         files_tar = [
-            os.path.join(self.parts_dir, 'plugins', 'x-plugin.py'),
+            os.path.join('parts', 'plugins', 'x-plugin.py'),
             'main.c',
         ]
         files_no_tar = [

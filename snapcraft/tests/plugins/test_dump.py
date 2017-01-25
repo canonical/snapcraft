@@ -139,7 +139,7 @@ class DumpPluginTestCase(TestCase):
             # Links with a relative path that points outside of the snap
             # should also be followed
             {
-                'source': '../../../../unsnapped',
+                'source': '../../../../../unsnapped',
                 'link_name': os.path.join(
                     plugin.builddir, 'src', 'bad_relative'),
                 'destination': os.path.join(

@@ -25,7 +25,7 @@ module.
 import logging
 
 _DEPRECATION_MESSAGES = {
-    'dn1': "The 'snap' keyword has been replaced by 'prime'."
+    'dn1': "The 'snap' keyword has been replaced by 'prime'.",
 }
 
 _DEPRECATION_URL_FMT = 'http://snapcraft.io/docs/deprecation-notices/{id}'
