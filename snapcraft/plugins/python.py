@@ -191,23 +191,26 @@ class PythonPlugin(snapcraft.BasePlugin):
         return env
 
     def _get_commands(self, setup):
-        commands = []
+        args = []
+        cwd = None
         if self.options.requirements:
             requirements = self.options.requirements
             if not isurl(requirements):
                 requirements = os.path.join(self.sourcedir,
                                             self.options.requirements)
 
-            commands.append(dict(args=['--requirement', requirements]))
+            args.extend(['--requirement', requirements])
+        if os.path.exists(setup):
+            args.append('.')
+            cwd = os.path.dirname(setup)
 
         if self.options.python_packages:
-            commands.append(dict(args=self.options.python_packages))
+            args.extend(self.options.python_packages)
 
-        if os.path.exists(setup):
-            cwd = os.path.dirname(setup)
-            commands.append(dict(args=['.'], cwd=cwd))
-
-        return commands
+        if args:
+            return [dict(args=args, cwd=cwd)]
+        else:
+            return []
 
     def _run_pip(self, setup, download=False):
         self._install_pip(download)
