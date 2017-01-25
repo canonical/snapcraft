@@ -38,7 +38,7 @@ NAMESPACE_ERROR = (
     'alongside the other details for your snap. Please visit {} and login '
     'again.')
 AGREEMENT_INPUT_MSG = (
-    'Do you agree to the developer terms and conditions. ({})? [y/N]')
+    'Do you agree to the developer terms and conditions. ({})? [y/N] ')
 AGREEMENT_SIGN_ERROR = (
     'Unexpected error encountered during signing the developer terms and '
     'conditions. Please visit {} and agree to the terms and conditions before '
