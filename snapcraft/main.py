@@ -91,9 +91,9 @@ Options specific to store interaction:
   --release <channels>  Comma separated list of channels to release to.
   --series <series>     Snap series [default: {DEFAULT_SERIES}].
 
-Options specific to continuous-interaction system:
-  --refresh              Updates the project credentials
-  --channels <channels>  Comma separated list of channels to enable.
+Options specific to continuous-integration system:
+  --refresh             Updates the project credentials
+  --channels <channels> Comma separated list of channels to enable.
 
 The available commands are:
   help         Obtain help for a certain plugin or topic
