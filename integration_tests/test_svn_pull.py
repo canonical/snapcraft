@@ -57,8 +57,8 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
-        part_src_path = os.path.join(self.parts_dir, 'svn', 'src')
         self.run_snapcraft('pull')
+        part_src_path = os.path.join(self.parts_dir, 'svn', 'src')
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
         self.assertEqual(b'1', revno)
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
@@ -86,7 +86,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
-        part_src_path = os.path.join(self.parts_dir, 'svn', 'src')
+        part_src_path = os.path.join('parts', 'svn', 'src')
         subprocess.check_call(
             ['svn', 'checkout',
              'file:///{}'.format(os.path.join(self.path, 'repo')),

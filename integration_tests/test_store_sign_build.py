@@ -59,7 +59,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         unique_id = uuid.uuid4().int
         name = 'u1test-{}'.format(unique_id)
         version = str(unique_id)[:32]
-        self.copy_project_to_cwd(self.project_dir)
+        self.copy_project_to_cwd(self.project)
         self.update_name_and_version(name, version)
         self.run_snapcraft('snap')
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')

@@ -51,7 +51,7 @@ class PushTestCase(integration_tests.StoreTestCase):
         # The maximum size is 32 chars.
         new_version = str(unique_id)[:32]
 
-        self.copy_project_to_tmp('basic')
+        self.copy_project_to_cwd('basic')
         self.update_name_and_version(new_name, new_version)
 
         self.run_snapcraft('snap')
@@ -78,7 +78,7 @@ class PushTestCase(integration_tests.StoreTestCase):
         # The maximum size is 32 chars.
         new_version = str(unique_id)[:32]
 
-        self.copy_project_to_tmp('basic')
+        self.copy_project_to_cwd('basic')
         self.update_name_and_version(new_name, new_version)
 
         self.run_snapcraft('snap')
@@ -108,7 +108,7 @@ class PushTestCase(integration_tests.StoreTestCase):
         # The maximum size is 32 chars.
         new_version = str(unique_id)[:32]
 
-        self.copy_project_to_tmp('basic')
+        self.copy_project_to_cwd('basic')
         self.update_name_and_version(new_name, new_version)
 
         self.run_snapcraft('snap')
