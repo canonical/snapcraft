@@ -66,6 +66,36 @@ class IsExecutable:
         return None
 
 
+class LinkExists:
+    """Match if a file path is a symlink."""
+
+    def __init__(self, expected_target=None):
+        self._expected_target = expected_target
+
+    def __str__(self):
+        return 'LinkExists()'
+
+    def match(self, file_path):
+        if not os.path.exists(file_path):
+            return testtools.matchers.Mismatch(
+                "Expected {!r} to be a symlink, but it doesn't exist".format(
+                    file_path))
+
+        if not os.path.islink(file_path):
+            return testtools.matchers.Mismatch(
+                'Expected {!r} to be a symlink, but it was not'.format(
+                    file_path))
+
+        target = os.readlink(file_path)
+        if target != self._expected_target:
+            return testtools.matchers.Mismatch(
+                'Expected {!r} to be a symlink pointing to {!r}, but it was '
+                'pointing to {!r}'.format(
+                    file_path, self._expected_target, target))
+
+        return None
+
+
 class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
     def setUp(self):

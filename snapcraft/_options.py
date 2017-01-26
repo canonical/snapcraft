@@ -77,6 +77,23 @@ _ARCH_TRANSLATIONS = {
 }
 
 
+_USERSPACE_ARCHITECTURE = {
+    'aarch64': 'armv7l',
+    'ppc64le': 'ppc',
+    'x86_64': 'i686',
+}
+
+
+def _get_platform_architecture():
+    architecture = platform.machine()
+    if platform.architecture()[0] == '32bit':
+        userspace = _USERSPACE_ARCHITECTURE.get(architecture)
+        if userspace:
+            architecture = userspace
+
+    return architecture
+
+
 class ProjectOptions:
 
     @property
@@ -101,7 +118,7 @@ class ProjectOptions:
 
     @property
     def is_cross_compiling(self):
-        return self.__target_machine != self.__host_machine
+        return self.__target_machine != self.__platform_arch
 
     @property
     def cross_compiler_prefix(self):
@@ -182,9 +199,9 @@ class ProjectOptions:
         return dynamic_linker_path
 
     def _set_machine(self, target_deb_arch):
-        self.__host_machine = platform.machine()
+        self.__platform_arch = _get_platform_architecture()
         if not target_deb_arch:
-            self.__target_machine = self.__host_machine
+            self.__target_machine = self.__platform_arch
         else:
             self.__target_machine = _find_machine(target_deb_arch)
             logger.info('Setting target machine to {!r}'.format(

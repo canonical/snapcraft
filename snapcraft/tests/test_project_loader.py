@@ -332,7 +332,9 @@ parts:
         mock_load.assert_has_calls([call1, call2], any_order=True)
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
-        with unittest.mock.patch('platform.machine') as machine_mock:
+        with unittest.mock.patch('platform.machine') as machine_mock, \
+             unittest.mock.patch('platform.architecture') as arch_mock:
+            arch_mock.return_value = ('64bit', 'ELF')
             machine_mock.return_value = 'x86_64'
             project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
 
@@ -1612,7 +1614,8 @@ class ValidationTestCase(ValidationBaseTestCase):
 
         expected_message = (
             "The 'summary' property does not match the required schema: "
-            "'{}' is too long").format(self.data['summary'])
+            "'{}' is too long (maximum length is 78)").format(
+                self.data['summary'])
         self.assertEqual(raised.message, expected_message,
                          message=self.data)
 
