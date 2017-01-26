@@ -253,16 +253,16 @@ in this case), meaning that files in these directories will not be installed.
 
 ### node.js
 
-Snapping node.js apps has never been this easy. Take a look at the `shout`
+Snapping node.js apps has never been this easy. Take a look at the `lounge`
 example and see how short and sweet it is. To bundle node packages, you simply
 do something like:
 
 ```yaml
 parts:
-  shout:
+  lounge:
     plugin: nodejs
     node-packages:
-      - shout
+      - thelounge
 ```
 
 `node-packages` simply lists which packages (including their dependencies) to

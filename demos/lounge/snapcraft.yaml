@@ -1,17 +1,17 @@
-name: shout
-version: 0.52.0
+name: lounge
+version: 2.2
 summary: A self hosted web IRC client
 description: This example is not really production quality
 confinement: strict
 
 apps:
   server:
-    command: bin/shout --home $SNAP_DATA
+    command: bin/lounge --home $SNAP_DATA
     daemon: simple
     plugs: [network, network-bind]
 
 parts:
-  shout:
+  lounge:
     plugin: nodejs
     node-packages:
-      - shout
+      - thelounge
