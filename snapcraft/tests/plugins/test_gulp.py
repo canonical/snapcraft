@@ -61,11 +61,15 @@ class GulpPluginTestCase(tests.TestCase):
         self.assertFalse(self.run_mock.called, 'run() was called')
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine,
+                    plugin.project.deb_arch),
                 path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
             mock.call().download()])
 
-    def test_build(self):
+    @mock.patch('platform.architecture')
+    @mock.patch('platform.machine')
+    def test_build(self, platform_machine_mock, platform_architecture_mock):
         self.useFixture(tests.fixture_setup.CleanEnvironment())
         self.useFixture(fixtures.EnvironmentVariable(
             'PATH', '/bin'))
@@ -75,6 +79,8 @@ class GulpPluginTestCase(tests.TestCase):
             gulp_tasks = []
             node_engine = '4'
 
+        platform_machine_mock.return_value = 'x86_64'
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
         plugin = gulp.GulpPlugin('test-part', Options(), self.project_options)
 
         os.makedirs(plugin.builddir)
@@ -96,15 +102,15 @@ class GulpPluginTestCase(tests.TestCase):
 
         self.tar_mock.assert_has_calls([
             mock.call(
-                nodejs.get_nodejs_release(plugin.options.node_engine),
+                nodejs.get_nodejs_release(
+                    plugin.options.node_engine,
+                    plugin.project.deb_arch),
                 os.path.join(plugin._npm_dir)),
             mock.call().provision(
                 plugin._npm_dir, clean_target=False, keep_tarball=True)])
 
-    @mock.patch('platform.machine')
-    def test_unsupported_arch_raises_exception(self, machine_mock):
-        machine_mock.return_value = 'fantasy-arch'
-
+    @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
+    def test_unsupported_arch_raises_exception(self):
         class Options:
             source = None
             gulp_tasks = []

@@ -332,7 +332,9 @@ parts:
         mock_load.assert_has_calls([call1, call2], any_order=True)
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
-        with unittest.mock.patch('platform.machine') as machine_mock:
+        with unittest.mock.patch('platform.machine') as machine_mock, \
+             unittest.mock.patch('platform.architecture') as arch_mock:
+            arch_mock.return_value = ('64bit', 'ELF')
             machine_mock.return_value = 'x86_64'
             project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
 
