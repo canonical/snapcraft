@@ -116,9 +116,12 @@ class MakePlugin(snapcraft.BasePlugin):
                     snapcraft.file_utils.link_or_copy(
                         source_path, destination_path)
         else:
-            install_param = self.options.make_install_var + '=' + \
-                self.installdir
-            self.run(command + ['install', install_param], env=env)
+            command.append('install')
+            if self.options.make_install_var:
+                command.append('{}={}'.format(
+                    self.options.make_install_var, self.installdir))
+
+            self.run(command, env=env)
 
     def build(self):
         super().build()
