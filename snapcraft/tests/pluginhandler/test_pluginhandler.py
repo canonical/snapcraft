@@ -22,6 +22,11 @@ import shutil
 import stat
 import sys
 import tempfile
+from testtools.matchers import (
+    DirExists,
+    FileExists,
+    Not,
+)
 from unittest.mock import (
     call,
     Mock,
@@ -1831,19 +1836,20 @@ class CleanTestCase(CleanBaseTestCase):
         path = os.path.join(bindir, '1')
         os.mkdir(path)
         symlink_path = os.path.join(bindir, '1-link')
-        os.symlink(path, symlink_path)
+        os.symlink('1', symlink_path)
 
         handler1.mark_done('build')
         handler1.stage()
 
         stage_symlink_path = os.path.join(handler1.stagedir, 'bin', '1-link')
         stage_path = os.path.join(handler1.stagedir, 'bin', '1')
-        self.assertTrue(os.path.exists(stage_symlink_path))
-        self.assertTrue(os.path.exists(stage_path))
+
+        self.assertThat(stage_path, DirExists())
+        self.assertThat(stage_symlink_path, tests.LinkExists('1'))
 
         handler1.clean_stage({})
-        self.assertFalse(os.path.exists(stage_symlink_path))
-        self.assertFalse(os.path.exists(stage_path))
+        self.assertThat(stage_path, Not(DirExists()))
+        self.assertThat(stage_symlink_path, Not(tests.LinkExists('1')))
 
     def test_clean_file_symlinks(self):
         # Create part1 and get it through the "build" step.
@@ -1855,19 +1861,20 @@ class CleanTestCase(CleanBaseTestCase):
         path = os.path.join(bindir, '1')
         open(path, 'w').close()
         symlink_path = os.path.join(bindir, '1-link')
-        os.symlink(path, symlink_path)
+        os.symlink('1', symlink_path)
 
         handler1.mark_done('build')
         handler1.stage()
 
         stage_symlink_path = os.path.join(handler1.stagedir, 'bin', '1-link')
         stage_path = os.path.join(handler1.stagedir, 'bin', '1')
-        self.assertTrue(os.path.exists(stage_symlink_path))
-        self.assertTrue(os.path.exists(stage_path))
+
+        self.assertThat(stage_path, FileExists())
+        self.assertThat(stage_symlink_path, tests.LinkExists('1'))
 
         handler1.clean_stage({})
-        self.assertFalse(os.path.exists(stage_symlink_path))
-        self.assertFalse(os.path.exists(stage_path))
+        self.assertThat(stage_path, Not(FileExists()))
+        self.assertThat(stage_symlink_path, Not(tests.LinkExists('1')))
 
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
