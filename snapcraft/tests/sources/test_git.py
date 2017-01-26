@@ -181,7 +181,7 @@ class TestGitConflicts(tests.TestCase):
 
     def call(self, cmd):
         subprocess.check_call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            cmd)  #, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def rm_dir(self, dir):
         if os.path.exists(dir):
