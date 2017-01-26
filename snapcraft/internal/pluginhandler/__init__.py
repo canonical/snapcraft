@@ -458,15 +458,7 @@ class PluginHandler:
     def stage(self, force=False):
         self.makedirs()
         self.notify_part_progress('Staging')
-        snap_files, snap_dirs = self.migratable_fileset_for('stage')
-        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
-
-        snap_files, new_snap_dirs = _organize_fileset(
-            snap_files, organize_fileset, self.code.installdir)
-        snap_dirs, extra_snap_dirs = _organize_fileset(
-            snap_dirs, organize_fileset, self.code.installdir)
-
-        snap_dirs |= new_snap_dirs | extra_snap_dirs
+        snap_files, snap_dirs = self._get_step_files('stage')
 
         def fixup_func(file_path):
             if os.path.islink(file_path):
@@ -508,8 +500,8 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def _get_staged_files(self):
-        snap_files, snap_dirs = self.migratable_fileset_for('stage')
+    def _get_step_files(self, step):
+        snap_files, snap_dirs = self.migratable_fileset_for(step)
         organize_fileset = getattr(self.code.options, 'organize', {}) or {}
 
         snap_files, new_snap_dirs = _organize_fileset(
@@ -524,15 +516,7 @@ class PluginHandler:
     def prime(self, force=False):
         self.makedirs()
         self.notify_part_progress('Priming')
-        snap_files, snap_dirs = self.migratable_fileset_for('prime')
-        organize_fileset = getattr(self.code.options, 'organize', {}) or {}
-
-        snap_files, new_snap_dirs = _organize_fileset(
-            snap_files, organize_fileset, self.code.installdir)
-        snap_dirs, extra_snap_dirs = _organize_fileset(
-            snap_dirs, organize_fileset, self.code.installdir)
-
-        snap_dirs |= new_snap_dirs | extra_snap_dirs
+        snap_files, snap_dirs = self._get_step_files('prime')
 
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
                        self.snapdir, step='prime')
