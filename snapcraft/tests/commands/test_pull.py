@@ -131,3 +131,16 @@ parts:
         project_options = main(['pull', 'pull1', '--enable-geoip'])
 
         self.assertTrue(project_options.use_geoip)
+
+    @mock.patch('snapcraft.repo.Ubuntu.get')
+    @mock.patch('snapcraft.repo.Ubuntu.unpack')
+    def test_pull_multiarch_stage_package(self, mock_unpack, mock_get):
+        yaml_part = """  pull{:d}:
+        plugin: nil
+        stage-packages: ['mir:arch']"""
+
+        self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
+
+        main(['pull', 'pull1'])
+
+        mock_get.assert_called_once_with(['mir:arch'])
