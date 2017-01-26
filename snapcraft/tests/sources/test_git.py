@@ -196,6 +196,10 @@ class TestGitConflicts(tests.TestCase):
         self.clean_dir(tree)
         self.call(['git', 'clone', repo, tree])
         os.chdir(tree)
+        self.call(['git', 'config', '--local', 'user.name',
+                   '"Example Dev"'])
+        self.call(['git', 'config', '--local', 'user.email',
+                   'dev@example.com'])
 
     def add_file(self, filename, body, message):
         with open(filename, 'w') as fp:
