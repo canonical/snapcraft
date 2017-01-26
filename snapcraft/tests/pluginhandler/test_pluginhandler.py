@@ -1821,6 +1821,54 @@ class CleanTestCase(CleanBaseTestCase):
         mock_listdir.assert_called_once_with(partdir)
         self.assertFalse(mock_rmdir.called)
 
+    def test_clean_dir_symlinks(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = mocks.loadplugin('part1')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        path = os.path.join(bindir, '1')
+        os.mkdir(path)
+        symlink_path = os.path.join(bindir, '1-link')
+        os.symlink(path, symlink_path)
+
+        handler1.mark_done('build')
+        handler1.stage()
+
+        stage_symlink_path = os.path.join(handler1.stagedir, 'bin', '1-link')
+        stage_path = os.path.join(handler1.stagedir, 'bin', '1')
+        self.assertTrue(os.path.exists(stage_symlink_path))
+        self.assertTrue(os.path.exists(stage_path))
+
+        handler1.clean_stage({})
+        self.assertFalse(os.path.exists(stage_symlink_path))
+        self.assertFalse(os.path.exists(stage_path))
+
+    def test_clean_file_symlinks(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = mocks.loadplugin('part1')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        path = os.path.join(bindir, '1')
+        open(path, 'w').close()
+        symlink_path = os.path.join(bindir, '1-link')
+        os.symlink(path, symlink_path)
+
+        handler1.mark_done('build')
+        handler1.stage()
+
+        stage_symlink_path = os.path.join(handler1.stagedir, 'bin', '1-link')
+        stage_path = os.path.join(handler1.stagedir, 'bin', '1')
+        self.assertTrue(os.path.exists(stage_symlink_path))
+        self.assertTrue(os.path.exists(stage_path))
+
+        handler1.clean_stage({})
+        self.assertFalse(os.path.exists(stage_symlink_path))
+        self.assertFalse(os.path.exists(stage_path))
+
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
         handler1 = mocks.loadplugin('part1')

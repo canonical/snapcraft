@@ -1002,7 +1002,8 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
             path = snap_file[1]
 
         # XXX: hack to remove directories should be fixed elsewhere
-        if os.path.isdir(os.path.join(directory, path)):
+        if (os.path.isdir(os.path.join(directory, path)) and not
+                os.path.islink(os.path.join(directory, path))):
             snap_dirs.add(snap_file)
         else:
             os.remove(os.path.join(directory, path))
