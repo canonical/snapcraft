@@ -53,6 +53,13 @@ class TestCase(testtools.TestCase):
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
+        # Note that these directories won't exist when the test starts,
+        # they might be created after calling the snapcraft command on the
+        # project dir.
+        self.parts_dir = 'parts'
+        self.stage_dir = 'stage'
+        self.prime_dir = 'prime'
+
     def run_snapcraft(self, command, project_dir=None, debug=True):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
@@ -72,13 +79,6 @@ class TestCase(testtools.TestCase):
 
         if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
             self.addCleanup(self.run_apt_autoremove)
-
-        if os.path.exists('parts'):
-            self.parts_dir = 'parts'
-        if os.path.exists('stage'):
-            self.stage_dir = 'stage'
-        if os.path.exists('prime'):
-            self.prime_dir = 'prime'
 
         return snapcraft_output
 

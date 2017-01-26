@@ -33,7 +33,7 @@ class HardlinkSrcOldTreeTestCase(integration_tests.TestCase):
         platform_architecture = _options._get_platform_architecture()
         arch = _options._ARCH_TRANSLATIONS[platform_architecture]['deb']
         with fileinput.FileInput(
-                os.path.join('parts', 'part-name', 'state', 'pull'),
+                os.path.join(self.parts_dir, 'part-name', 'state', 'pull'),
                 inplace=True) as pull_state:
             for line in pull_state:
                 print(line.replace('$arch', arch), end='')

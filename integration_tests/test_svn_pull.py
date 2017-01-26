@@ -86,7 +86,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
-        part_src_path = os.path.join('parts', 'svn', 'src')
+        part_src_path = os.path.join(self.parts_dir, 'svn', 'src')
         subprocess.check_call(
             ['svn', 'checkout',
              'file:///{}'.format(os.path.join(self.path, 'repo')),
