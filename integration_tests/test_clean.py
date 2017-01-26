@@ -47,6 +47,6 @@ class CleanTestCase(integration_tests.TestCase):
     # Regression test for LP: #1596596
     def test_clean_invalid_yaml(self):
         self.run_snapcraft('clean', 'invalid-snap')
-        self.assertThat(self.parts_dir, Not(DirExists()))
-        self.assertThat(self.stage_dir, Not(DirExists()))
-        self.assertThat(self.prime_dir, Not(DirExists()))
+        self.assertThat('parts', Not(DirExists()))
+        self.assertThat('stage', Not(DirExists()))
+        self.assertThat('prime', Not(DirExists()))
