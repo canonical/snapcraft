@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
 import shutil
 
@@ -43,8 +42,7 @@ class GitSourceTestCase(integration_tests.TestCase):
             shell=True, universal_newlines=True).strip()
 
     def test_pull_git_head(self):
-        project_dir = self.copy_project_to_tmp('git-head')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('git-head')
 
         self._init_and_config_git()
         subprocess.check_call(
@@ -54,17 +52,16 @@ class GitSourceTestCase(integration_tests.TestCase):
             ['git', 'commit', '-m', '"2"', '--allow-empty'],
             stdout=subprocess.DEVNULL)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
         self.assertEqual('"2"', revno)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
         self.assertEqual('"2"', revno)
 
     def test_pull_git_tag(self):
-        project_dir = self.copy_project_to_tmp('git-tag')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('git-tag')
 
         self._init_and_config_git()
         subprocess.check_call(
@@ -77,17 +74,16 @@ class GitSourceTestCase(integration_tests.TestCase):
             ['git', 'tag', 'initial', 'HEAD@{1}'],
             stdout=subprocess.DEVNULL)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
         self.assertEqual('"1"', revno)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
         self.assertEqual('"1"', revno)
 
     def test_pull_git_commit(self):
-        project_dir = self.copy_project_to_tmp('git-commit')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('git-commit')
 
         self._init_and_config_git()
         subprocess.check_call(
@@ -98,13 +94,12 @@ class GitSourceTestCase(integration_tests.TestCase):
             stdout=subprocess.DEVNULL)
 
         # The test uses "HEAD^" so we can only test it once
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
         self.assertEqual('"1"', revno)
 
     def test_pull_git_branch(self):
-        project_dir = self.copy_project_to_tmp('git-branch')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('git-branch')
 
         self._init_and_config_git()
         subprocess.check_call(
@@ -126,18 +121,17 @@ class GitSourceTestCase(integration_tests.TestCase):
             ['git', 'checkout', 'master'],
             stderr=subprocess.DEVNULL)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src', revrange='-2')
         self.assertEqual('"3"\n"1"', revno)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src', revrange='-2')
         self.assertEqual('"3"\n"1"', revno)
 
     def test_pull_git_with_depth(self):
         """Regression test for LP: #1627772."""
-        project_dir = self.copy_project_to_tmp('git-depth')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('git-depth')
 
         self._init_and_config_git()
         subprocess.check_call(
@@ -147,4 +141,4 @@ class GitSourceTestCase(integration_tests.TestCase):
             ['git', 'commit', '-m', '"2"', '--allow-empty'],
             stdout=subprocess.DEVNULL)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')

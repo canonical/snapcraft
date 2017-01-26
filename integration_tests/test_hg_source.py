@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -37,8 +37,7 @@ class HgSourceTestCase(integration_tests.TestCase):
             universal_newlines=True).strip()
 
     def test_pull_hg_head(self):
-        project_dir = self.copy_project_to_tmp('hg-head')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('hg-head')
 
         subprocess.check_call(['hg', 'init', '.'])
         open('1', 'w').close()
@@ -48,17 +47,16 @@ class HgSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
 
-        self.run_snapcraft('pull', project_dir)
-        revno = self._get_hg_revno('parts/mercurial/src')
+        self.run_snapcraft('pull')
+        revno = self._get_hg_revno(os.path.join('parts', 'mercurial', 'src'))
         self.assertEqual('"2"', revno)
 
-        self.run_snapcraft('pull', project_dir)
-        revno = self._get_hg_revno('parts/mercurial/src')
+        self.run_snapcraft('pull')
+        revno = self._get_hg_revno(os.path.join('parts', 'mercurial', 'src'))
         self.assertEqual('"2"', revno)
 
     def test_pull_hg_tag(self):
-        project_dir = self.copy_project_to_tmp('hg-tag')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('hg-tag')
 
         subprocess.check_call(['hg', 'init', '.'])
         open('1', 'w').close()
@@ -70,21 +68,22 @@ class HgSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 {} | wc -l '.format(
+                os.path.join('parts', 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 {} | wc -l '.format(
+                os.path.join('parts', 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
     def test_pull_hg_commit(self):
-        project_dir = self.copy_project_to_tmp('hg-commit')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('hg-commit')
 
         subprocess.check_call(['hg', 'init', '.'])
         open('1', 'w').close()
@@ -94,21 +93,22 @@ class HgSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 {} | wc -l '.format(
+                os.path.join('parts', 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(
-            'ls -1 parts/mercurial/src/ | wc -l ',
+            'ls -1 {} | wc -l '.format(
+                os.path.join('parts', 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
     def test_pull_hg_branch(self):
-        project_dir = self.copy_project_to_tmp('hg-branch')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('hg-branch')
 
         subprocess.check_call(['hg', 'init', '.'])
         subprocess.check_call(
@@ -124,12 +124,12 @@ class HgSourceTestCase(integration_tests.TestCase):
             ['hg', 'commit', '-m', 'default', '--user',
              '"Example Dev"', '-A', 'default'])
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         self.assertThat(
             os.path.join('parts', 'mercurial', 'src', 'second'),
             FileExists())
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         self.assertThat(
             os.path.join('parts', 'mercurial', 'src', 'second'),
             FileExists())

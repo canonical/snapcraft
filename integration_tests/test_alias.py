@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,17 +29,14 @@ from testtools.matchers import FileExists
 class AliasTestCase(integration_tests.TestCase):
 
     def test_alias(self):
-        project_dir = 'alias'
-        self.run_snapcraft('prime', project_dir)
-        file_path = os.path.join(project_dir, 'prime', 'bin', 'hello.sh')
+        self.run_snapcraft('prime', 'alias')
+        file_path = os.path.join('prime', 'bin', 'hello.sh')
         self.assertThat(file_path, FileExists())
         self.assertTrue(os.stat(file_path).st_mode & stat.S_IEXEC,
                         'Expected hello.sh to be executable')
 
-        snap_yaml = os.path.join(project_dir, 'prime', 'meta', 'snap.yaml')
-        self.assertThat(
-            snap_yaml,
-            FileExists())
+        snap_yaml = os.path.join('prime', 'meta', 'snap.yaml')
+        self.assertThat(snap_yaml, FileExists())
 
         data = {}
         with open(snap_yaml) as fp:

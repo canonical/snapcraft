@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,18 +23,15 @@ import integration_tests
 class NilPluginTestCase(integration_tests.TestCase):
 
     def test_snap_nil_plugin(self):
-        project_dir = 'simple-nil'
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('snap', 'simple-nil')
 
-        dirs = os.listdir(os.path.join(project_dir, 'prime'))
+        dirs = os.listdir('prime')
         self.assertEqual(['meta'], dirs)
 
     def test_nil_no_additional_properties(self):
-        project_dir = 'nil-with-additional-properties'
-
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, 'snap',
-            project_dir)
+            'nil-with-additional-properties')
 
         self.assertTrue(
             "Additional properties are not allowed ('extra-property' was "

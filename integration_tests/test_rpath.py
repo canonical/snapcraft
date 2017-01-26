@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,16 +28,14 @@ from testtools.matchers import (
 class RpathTestCase(integration_tests.TestCase):
 
     def test_origin_rpath(self):
-        project_dir = 'rpath-test'
-        self.run_snapcraft('prime', project_dir)
+        self.run_snapcraft('prime', 'rpath-test')
 
-        primedir = os.path.join(project_dir, 'prime')
-        self.assertThat(os.path.join(primedir, 'binary'), FileExists())
+        self.assertThat(os.path.join('prime', 'binary'), FileExists())
         self.assertThat(
-            os.path.join(primedir, 'lib', 'libfoo.so'), FileExists())
+            os.path.join('prime', 'lib', 'libfoo.so'), FileExists())
 
         # Assert that the $ORIGIN rpath did not result in the library being
         # pulled in twice.
         self.assertThat(
-            os.path.join(primedir, os.path.abspath(primedir).lstrip('/')),
+            os.path.join('prime', os.path.abspath('prime').lstrip('/')),
             Not(DirExists()))

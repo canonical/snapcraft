@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,14 +35,13 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
 
     def test_pull_svn_checkout(self):
-        project_dir = self.copy_project_to_tmp('svn-pull')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('svn-pull')
 
         self._init_svn()
 
         subprocess.check_call(
             ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(project_dir, 'repo')),
+             'file:///{}'.format(os.path.join(self.path, 'repo')),
              'local'],
             stdout=subprocess.DEVNULL)
 
@@ -59,20 +58,19 @@ class SubversionSourceTestCase(integration_tests.TestCase):
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
         part_src_path = os.path.join('parts', 'svn', 'src')
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
         self.assertEqual(b'1', revno)
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
 
     def test_pull_svn_update(self):
-        project_dir = self.copy_project_to_tmp('svn-pull-update')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('svn-pull-update')
 
         self._init_svn()
 
         subprocess.check_call(
             ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(project_dir, 'repo')),
+             'file:///{}'.format(os.path.join(self.path, 'repo')),
              'local'],
             stdout=subprocess.DEVNULL)
 
@@ -91,13 +89,13 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         part_src_path = os.path.join('parts', 'svn', 'src')
         subprocess.check_call(
             ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(project_dir, 'repo')),
+             'file:///{}'.format(os.path.join(self.path, 'repo')),
              part_src_path],
             stdout=subprocess.DEVNULL)
 
         subprocess.check_call(
             ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(project_dir, 'repo')),
+             'file:///{}'.format(os.path.join(self.path, 'repo')),
              'local'],
             stdout=subprocess.DEVNULL)
         open(os.path.join('local', 'filetwo'), 'w').close()
@@ -112,7 +110,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
         self.assertEqual(b'2', revno)
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())

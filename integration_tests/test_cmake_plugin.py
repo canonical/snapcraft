@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,9 +22,8 @@ import integration_tests
 class CmakePluginTestCase(integration_tests.TestCase):
 
     def test_stage_cmake_plugin(self):
-        project_dir = 'simple-cmake'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-cmake')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'simple-cmake'), cwd=project_dir)
+            os.path.join('stage', 'bin', 'simple-cmake'))
         self.assertEqual("It's a CMake world\n", binary_output)

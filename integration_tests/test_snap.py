@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -37,9 +37,8 @@ class SnapTestCase(integration_tests.TestCase):
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_snap(self):
-        project_dir = 'assemble'
-        self.run_snapcraft('snap', project_dir)
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('assemble')
+        self.run_snapcraft('snap')
 
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
@@ -53,7 +52,7 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.useFixture(
            fixtures.EnvironmentVariable(
-                'SNAP', os.path.join(os.getcwd(), 'prime')))
+                'SNAP', os.path.join(os.getcwd(), self.prime_dir)))
         binary_scenarios = (
             ('command-assemble-service.wrapper', 'service-start\n'),
             ('stop-command-assemble-service.wrapper', 'service-stop\n'),
@@ -62,31 +61,28 @@ class SnapTestCase(integration_tests.TestCase):
         )
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
-                os.path.join('prime', binary), universal_newlines=True)
+                os.path.join(self.prime_dir, binary), universal_newlines=True)
             self.assertEqual(expected_output, output)
 
         with testtools.ExpectedException(subprocess.CalledProcessError):
             subprocess.check_output(
-                os.path.join('prime', 'bin', 'not-wrapped'),
+                os.path.join(self.prime_dir, 'bin', 'not-wrapped'),
                 stderr=subprocess.STDOUT)
 
         self.assertThat(
-            os.path.join('prime', 'bin', 'not-wrapped.wrapper'),
+            os.path.join(self.prime_dir, 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
     def test_snap_default(self):
-        project_dir = 'assemble'
-        self.run_snapcraft([], project_dir)
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('assemble')
+        self.run_snapcraft([])
 
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
 
     def test_cleanbuild(self):
         self.skipTest("Fails to run correctly on travis.")
-        project_dir = 'assemble'
-        self.run_snapcraft('cleanbuild', project_dir)
-        os.chdir(project_dir)
+        self.run_snapcraft('cleanbuild', 'assemble')
 
         snap_source_path = 'assemble_1.0_source.tar.bz2'
         self.assertThat(snap_source_path, FileExists())
@@ -95,9 +91,8 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_directory(self):
-        project_dir = 'assemble'
-        self.run_snapcraft('snap', project_dir)
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('assemble')
+        self.run_snapcraft('snap')
 
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         os.remove(snap_file_path)
@@ -109,26 +104,21 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_long_output_option(self):
-        project_dir = 'assemble'
-        self.run_snapcraft(['snap', '--output', 'mysnap.snap'], project_dir)
-        os.chdir(project_dir)
+        self.run_snapcraft(['snap', '--output', 'mysnap.snap'], 'assemble')
         self.assertThat('mysnap.snap', FileExists())
 
     def test_snap_short_output_option(self):
-        project_dir = 'assemble'
-        self.run_snapcraft(['snap', '-o', 'mysnap.snap'], project_dir)
-        os.chdir(project_dir)
+        self.run_snapcraft(['snap', '-o', 'mysnap.snap'], 'assemble')
         self.assertThat('mysnap.snap', FileExists())
 
     def test_error_with_unexistent_build_package(self):
-        project_dir = self.copy_project_to_tmp('assemble')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('assemble')
         with open('snapcraft.yaml', 'a') as yaml_file:
             yaml_file.write('build-packages:\n'
                             '  - inexistent-package\n')
 
         # We update here to get a clean log/stdout later
-        self.run_snapcraft('update', project_dir)
+        self.run_snapcraft('update')
 
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, 'snap')
@@ -138,18 +128,18 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(exception.output, EndsWith(expected))
 
     def test_snap_with_exposed_files(self):
-        project_dir = 'nil-plugin-pkgfilter'
-        self.run_snapcraft('stage', project_dir)
+        self.copy_project_to_cwd('nil-plugin-pkgfilter')
+        self.run_snapcraft('stage')
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'usr', 'bin', 'nmcli'),
+            os.path.join(self.stage_dir, 'usr', 'bin', 'nmcli'),
             FileExists())
 
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('snap')
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmcli'),
+            os.path.join(self.prime_dir, 'usr', 'bin', 'nmcli'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'nmtui'),
+            os.path.join(self.prime_dir, 'usr', 'bin', 'nmtui'),
             Not(FileExists()))
 
     def test_snap_from_snapcraft_init(self):
@@ -160,11 +150,9 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap')
 
     def test_error_on_bad_yaml(self):
-        project_dir = 'bad-yaml'
-
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'stage', project_dir)
+            self.run_snapcraft, 'stage', 'bad-yaml')
         self.assertIn(
             "Issues while validating snapcraft.yaml: found character '\\t' "
             "that cannot start any token on line 13 of snapcraft.yaml",

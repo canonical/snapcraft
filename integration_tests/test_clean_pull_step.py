@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,9 +31,9 @@ class CleanPullStepPulledTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.project_dir = 'independent-parts'
-        self.run_snapcraft('pull', self.project_dir)
-        self.partsdir = os.path.join(self.project_dir, 'parts')
+        self.copy_project_to_cwd('independent-parts')
+        self.run_snapcraft('pull')
+        self.partsdir = 'parts'
         self.part1_sourcedir = os.path.join(self.partsdir, 'part1', 'src')
         self.part2_sourcedir = os.path.join(self.partsdir, 'part2', 'src')
 
@@ -46,25 +46,24 @@ class CleanPullStepPulledTestCase(integration_tests.TestCase):
     def test_clean_pull_step(self):
         self.assert_files_exist()
 
-        self.run_snapcraft(['clean', '--step=pull'], self.project_dir)
+        self.run_snapcraft(['clean', '--step=pull'])
         self.assertThat(self.part1_sourcedir, Not(DirExists()))
         self.assertThat(self.part2_sourcedir, Not(DirExists()))
 
         # Now try to pull again
-        self.run_snapcraft('pull', self.project_dir)
+        self.run_snapcraft('pull')
         self.assert_files_exist()
 
     def test_clean_pull_step_single_part(self):
         self.assert_files_exist()
 
-        self.run_snapcraft(['clean', 'part1', '--step=pull'],
-                           self.project_dir)
+        self.run_snapcraft(['clean', 'part1', '--step=pull'])
         self.assertThat(self.part1_sourcedir, Not(DirExists()))
         self.assertThat(os.path.join(self.part2_sourcedir, 'file2'),
                         FileExists())
 
         # Now try to pull again
-        self.run_snapcraft('pull', self.project_dir)
+        self.run_snapcraft('pull')
         self.assert_files_exist()
 
 
@@ -73,14 +72,14 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.project_dir = 'independent-parts'
-        self.run_snapcraft('prime', self.project_dir)
+        self.copy_project_to_cwd('independent-parts')
+        self.run_snapcraft('prime')
 
-        self.snapdir = os.path.join(self.project_dir, 'prime')
+        self.snapdir = 'prime'
         self.snap_bindir = os.path.join(self.snapdir, 'bin')
-        self.stagedir = os.path.join(self.project_dir, 'stage')
+        self.stagedir = 'stage'
         self.stage_bindir = os.path.join(self.stagedir, 'bin')
-        self.partsdir = os.path.join(self.project_dir, 'parts')
+        self.partsdir = 'parts'
         self.parts = {}
         for part in ['part1', 'part2']:
             partdir = os.path.join(self.partsdir, part)
@@ -107,8 +106,7 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
     def test_clean_pull_step(self):
         self.assert_files_exist()
 
-        output = self.run_snapcraft(['clean', '--step=pull'], self.project_dir,
-                                    debug=False)
+        output = self.run_snapcraft(['clean', '--step=pull'], debug=False)
         self.assertThat(self.stagedir, Not(DirExists()))
         self.assertThat(self.snapdir, Not(DirExists()))
 
@@ -127,14 +125,13 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
         ]))
 
         # Now try to prime again
-        self.run_snapcraft('prime', self.project_dir)
+        self.run_snapcraft('prime')
         self.assert_files_exist()
 
     def test_clean_pull_step_single_part(self):
         self.assert_files_exist()
 
-        self.run_snapcraft(['clean', 'part1', '--step=pull'],
-                           self.project_dir)
+        self.run_snapcraft(['clean', 'part1', '--step=pull'])
         self.assertThat(os.path.join(self.stage_bindir, 'file1'),
                         Not(FileExists()))
         self.assertThat(os.path.join(self.stage_bindir, 'file2'), FileExists())
@@ -157,5 +154,5 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
             FileExists())
 
         # Now try to prime again
-        self.run_snapcraft('prime', self.project_dir)
+        self.run_snapcraft('prime')
         self.assert_files_exist()

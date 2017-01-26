@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,7 +35,7 @@ class BuildPropertiesTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', project_dir)
 
         state_file = os.path.join(
-            project_dir, 'parts', 'x-local-plugin', 'state', 'build')
+            'parts', 'x-local-plugin', 'state', 'build')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)

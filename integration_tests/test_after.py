@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,22 +25,19 @@ import integration_tests
 class AfterTestCase(integration_tests.TestCase):
 
     def test_stage_dependencies(self):
-        project_dir = 'dependencies'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'dependencies')
 
         self.assertTrue(
             os.access(
-                os.path.join(project_dir, 'stage', 'bin', 'p3'),
+                os.path.join('stage', 'bin', 'p3'),
                 os.X_OK))
 
     def test_build_with_circular_dependencies(self):
-        project_dir = self.copy_project_to_tmp('dependencies')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('dependencies')
 
-        snapcraft_yaml_path = os.path.join(project_dir, 'snapcraft.yaml')
-        with open(snapcraft_yaml_path, 'r') as snapcraft_yaml:
+        with open('snapcraft.yaml', 'r') as snapcraft_yaml:
             snapcraft_yaml_contents = snapcraft_yaml.read()
-        with open(snapcraft_yaml_path, 'w') as snapcraft_yaml:
+        with open('snapcraft.yaml', 'w') as snapcraft_yaml:
             snapcraft_yaml.write(
                 snapcraft_yaml_contents.replace(
                     'p1:',
@@ -48,11 +45,11 @@ class AfterTestCase(integration_tests.TestCase):
                     '    after: [p3]'))
 
         # We update here to get a clean log/stdout later
-        self.run_snapcraft('update', project_dir)
+        self.run_snapcraft('update')
 
         exception = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'build', project_dir)
+            self.run_snapcraft, 'build')
 
         self.assertEqual(1, exception.returncode)
         expected = (
@@ -61,11 +58,9 @@ class AfterTestCase(integration_tests.TestCase):
         self.assertThat(exception.output, Contains(expected))
 
     def test_build_with_missing_dependencies(self):
-        project_dir = self.copy_project_to_tmp('dependencies')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('dependencies')
 
-        snapcraft_yaml_path = os.path.join(project_dir, 'snapcraft.yaml')
-        with open(snapcraft_yaml_path, 'r') as snapcraft_yaml:
+        with open('snapcraft.yaml', 'r') as snapcraft_yaml:
             snapcraft_yaml_contents = snapcraft_yaml.read()
         wrong_contents = snapcraft_yaml_contents.replace(
             '    after: [p1]\n',
@@ -73,7 +68,7 @@ class AfterTestCase(integration_tests.TestCase):
         wrong_contents = wrong_contents.replace(
             '    after: [p2]\n',
             '')
-        with open(snapcraft_yaml_path, 'w') as snapcraft_yaml:
+        with open('snapcraft.yaml', 'w') as snapcraft_yaml:
             snapcraft_yaml.write(wrong_contents)
 
         exception = self.assertRaises(
@@ -83,11 +78,10 @@ class AfterTestCase(integration_tests.TestCase):
         self.assertEqual(1, exception.returncode)
 
     def test_pull_with_tree_of_dependencies(self):
-        project_dir = os.path.join('simple-circle', 'tree')
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', os.path.join('simple-circle', 'tree'))
 
     def test_pull_with_circular_dependencies(self):
-        project_dir = os.path.join('simple-circle', 'circle')
         self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull', project_dir)
+            self.run_snapcraft, 'pull',
+            os.path.join('simple-circle', 'circle'))

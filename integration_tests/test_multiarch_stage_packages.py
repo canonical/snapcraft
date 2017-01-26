@@ -24,10 +24,9 @@ import integration_tests
 class MultiarchTestCase(integration_tests.TestCase):
 
     def test_bad_multiarch_stage_packages(self):
-        project_dir = 'bad-arch'
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
-            'pull', project_dir)
+            'pull', 'bad-arch')
 
         self.assertThat(
             exception.output, Contains(

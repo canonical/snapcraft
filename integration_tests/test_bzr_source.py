@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
 import shutil
 
@@ -41,32 +40,30 @@ class BzrSourceTestCase(integration_tests.TestCase):
             universal_newlines=True).strip()
 
     def test_pull_bzr_head(self):
-        project_dir = self.copy_project_to_tmp('bzr-head')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('bzr-head')
 
         self._init_and_config_bzr()
         subprocess.check_call(
-                ['bzr', 'commit', '-m', '"1"', '--unchanged'],
-                stderr=subprocess.DEVNULL)
+            ['bzr', 'commit', '-m', '"1"', '--unchanged'],
+            stderr=subprocess.DEVNULL)
         subprocess.check_call(
-                ['bzr', 'commit', '-m', '"2"', '--unchanged'],
-                stderr=subprocess.DEVNULL)
+            ['bzr', 'commit', '-m', '"2"', '--unchanged'],
+            stderr=subprocess.DEVNULL)
         # test initial branch
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(
             ['bzr', 'revno', '-r', '-1', 'parts/bzr/src'],
             universal_newlines=True).strip()
         self.assertEqual('2', revno)
         # test pull doesn't fail
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = subprocess.check_output(
             ['bzr', 'revno', '-r', '-1', 'parts/bzr/src'],
             universal_newlines=True).strip()
         self.assertEqual('2', revno)
 
     def test_pull_bzr_tag(self):
-        project_dir = self.copy_project_to_tmp('bzr-tag')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('bzr-tag')
 
         self._init_and_config_bzr()
         subprocess.check_call(
@@ -79,17 +76,16 @@ class BzrSourceTestCase(integration_tests.TestCase):
             ['bzr', 'tag', '-r', '1', 'initial'],
             stderr=subprocess.DEVNULL)
         # test initial branch
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_bzr_revno('parts/bzr/src')
         self.assertEqual('1', revno)
         # test pull doesn't fail
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_bzr_revno('parts/bzr/src')
         self.assertEqual('1', revno)
 
     def test_pull_bzr_commit(self):
-        project_dir = self.copy_project_to_tmp('bzr-commit')
-        os.chdir(project_dir)
+        self.copy_project_to_cwd('bzr-commit')
 
         self._init_and_config_bzr()
         subprocess.check_call(
@@ -99,10 +95,10 @@ class BzrSourceTestCase(integration_tests.TestCase):
             ['bzr', 'commit', '-m', '"2"', '--unchanged'],
             stderr=subprocess.DEVNULL)
         # test initial branch
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_bzr_revno('parts/bzr/src')
         self.assertEqual('1', revno)
         # test pull doesn't fail
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
         revno = self._get_bzr_revno('parts/bzr/src')
         self.assertEqual('1', revno)

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,19 +30,17 @@ import integration_tests
 class NoSystemLibrariesTestCase(integration_tests.TestCase):
 
     def test_system_libraries(self):
-        project_dir = 'fake-curl-library'
-        self.run_snapcraft(['prime', 'main-no-prereq'], project_dir)
+        self.run_snapcraft(['prime', 'main-no-prereq'], 'fake-curl-library')
 
         # Verify that the system's libcurl was pulled in.
         arch = snapcraft.ProjectOptions().arch_triplet
         libcurl_path = os.path.join(
-            project_dir, 'prime', 'usr', 'lib', arch, 'libcurl.so*')
+            'prime', 'usr', 'lib', arch, 'libcurl.so*')
         self.assertTrue(glob.glob(libcurl_path + '*'))
 
     def test_no_system_libraries(self):
-        project_dir = 'fake-curl-library'
-        self.run_snapcraft(['prime', 'main-no-libs'], project_dir)
+        self.run_snapcraft(['prime', 'main-no-libs'], 'fake-curl-library')
 
         # Verify that the system's libcurl was NOT pulled in.
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr'), Not(DirExists()))
+            os.path.join('prime', 'usr'), Not(DirExists()))

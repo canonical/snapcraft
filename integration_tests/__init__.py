@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,10 +16,10 @@
 
 import fileinput
 import os
-import shutil
 import subprocess
 import time
 import uuid
+from distutils import dir_util
 
 import fixtures
 import pexpect
@@ -53,27 +53,18 @@ class TestCase(testtools.TestCase):
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
-    def run_snapcraft(self, command, project_dir=None, yaml_dir=None,
-                      debug=True):
+    def run_snapcraft(self, command, project_dir=None, debug=True):
+        if project_dir:
+            self.copy_project_to_cwd(project_dir)
+
         if isinstance(command, str):
             command = [command]
-        if project_dir:
-            if not os.path.exists(project_dir):
-                cwd = self.copy_project_to_tmp(project_dir)
-            else:
-                cwd = os.path.join(self.path, project_dir)
-        else:
-            cwd = None
-
-        if yaml_dir:
-            cwd = os.path.join(self.path, yaml_dir)
-
+        snapcraft_command = [self.snapcraft_command]
+        if debug:
+            snapcraft_command.append('-d')
         try:
-            snapcraft_command = [self.snapcraft_command]
-            if debug:
-                command.append('-d')
             snapcraft_output = subprocess.check_output(
-                snapcraft_command + command, cwd=cwd,
+                snapcraft_command + command,
                 stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
@@ -118,14 +109,14 @@ class TestCase(testtools.TestCase):
             if os.getenv('SNAPCRAFT_APT_AUTOREMOVE_CHECK_FAIL', False):
                 raise
 
-    def copy_project_to_tmp(self, project_dir):
-        tmp_project_dir = os.path.join(self.path, project_dir)
-        shutil.copytree(
-            os.path.join(self.snaps_dir, project_dir), tmp_project_dir,
-            symlinks=True)
-        return tmp_project_dir
+    def copy_project_to_cwd(self, project_dir):
+        # Because cwd already exists, shutil.copytree would raise
+        # FileExistsError. Use the lesser known distutils.dir_util.copy_tree
+        dir_util.copy_tree(
+            os.path.join(self.snaps_dir, project_dir), os.getcwd(),
+            preserve_symlinks=True)
 
-    def get_output_ignoring_non_zero_exit(self, binary, cwd):
+    def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
         # Executing the binaries exists > 0 on trusty.
         # TODO investigate more to understand the cause.
         try:
@@ -229,23 +220,20 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
-    def update_name_and_version(self, project_dir, name=None, version=None):
+    def update_name_and_version(self, name=None, version=None):
         unique_id = uuid.uuid4().int
         if name is None:
             name = 'u1test-{}'.format(unique_id)
         if version is None:
             # The maximum size is 32 chars.
             version = str(unique_id)[:32]
-        updated_project_dir = self.copy_project_to_tmp(project_dir)
-        yaml_file = os.path.join(project_dir, 'snapcraft.yaml')
-        for line in fileinput.input(yaml_file, inplace=True):
+        for line in fileinput.input('snapcraft.yaml', inplace=True):
             if 'name: ' in line:
                 print('name: {}'.format(name))
             elif 'version: ' in line:
                 print('version: {}'.format(version))
             else:
                 print(line)
-        return updated_project_dir
 
     def gated(self, snap_name, expected_validations=[], expected_output=None):
         process = pexpect.spawn(self.snapcraft_command, ['gated', snap_name])

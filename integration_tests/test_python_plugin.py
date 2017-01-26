@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,54 +28,50 @@ import integration_tests
 class PythonPluginTestCase(integration_tests.TestCase):
 
     def test_pull_with_pip_requirements_file(self):
-        project_dir = 'pip-requirements-file'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'pip-requirements-file')
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
 
     def test_pull_with_pip_requirements_list(self):
-        project_dir = 'pip-requirements-list'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'pip-requirements-list')
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'jsonschema'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'argparse.py'))[0],
             FileExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'jsonschema'))[0],
             DirExists())
 
     def test_build_rewrites_shebangs(self):
         """Verify that LP: #1597919 doesn't come back."""
-
-        project_dir = 'python-entry-point'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'python-entry-point')
         python2_entry_point = os.path.join(
-            project_dir, 'stage', 'bin', 'python2_test')
+            'stage', 'bin', 'python2_test')
         python3_entry_point = os.path.join(
-            project_dir, 'stage', 'bin', 'python3_test')
+            'stage', 'bin', 'python3_test')
         python_entry_point = os.path.join(
-            project_dir, 'stage', 'bin', 'python_test')
+            'stage', 'bin', 'python_test')
 
         with open(python2_entry_point) as f:
             python2_shebang = f.readline().strip()
@@ -94,12 +90,11 @@ class PythonPluginTestCase(integration_tests.TestCase):
         # .pyc
         # The .pth files are only relevant if found inside the pre compiled
         # site-packges directory so we don't want those either.
-        project_dir = 'pip-requirements-file'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'pip-requirements-file')
 
         pyc_files = []
         pth_files = []
-        for _, _, files in os.walk(os.path.join(project_dir, 'stage')):
+        for _, _, files in os.walk('stage'):
             pyc_files.extend([f for f in files if f.endswith('pyc')])
             pth_files.extend([f for f in files if f.endswith('pth')])
 
@@ -108,69 +103,65 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
     def test_build_doesnt_get_bad_install_directory_lp1586546(self):
         """Verify that LP: #1586546 doesn't come back."""
-        project_dir = 'python-pyyaml'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'python-pyyaml')
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yaml'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml'))[0],
             DirExists())
 
     def test_pypi_package_dep_satisfied_by_stage_package(self):
         """yamllint depends on yaml which is a stage-package."""
-        project_dir = 'python-with-stage-packages'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'python-with-stage-packages')
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yamllint'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'usr', 'lib',
+                'parts', 'python2', 'install', 'usr', 'lib',
                 'python2*', 'dist-packages', 'yaml'))[0],
             DirExists())
         self.assertEqual(
             glob(os.path.join(
-                project_dir, 'parts', 'python2', 'install', 'lib',
+                'parts', 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yaml')),
             [])
 
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yamllint'))[0],
             DirExists())
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'usr', 'lib',
+                'parts', 'python3', 'install', 'usr', 'lib',
                 'python3*', 'dist-packages', 'yaml'))[0],
             DirExists())
         self.assertEqual(
             glob(os.path.join(
-                project_dir, 'parts', 'python3', 'install', 'lib',
+                'parts', 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml')),
             [])
 
     def test_pull_a_package_from_bzr(self):
-        project_dir = 'pip-bzr'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', 'pip-bzr')
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'pip-bzr', 'packages',
+                'parts', 'pip-bzr', 'packages',
                 'curtin-*.zip'))[0],
             FileExists())
 
     def test_build_with_data_files_with_root(self):
-        project_dir = 'pip-root-data-files'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'pip-root-data-files')
         self.assertThat(
             glob(os.path.join(
-                project_dir, 'parts', 'root', 'install',
+                'parts', 'root', 'install',
                 'lib', 'python3*', 'site-packages', 'etc', 'broken.txt'))[0],
             FileExists())

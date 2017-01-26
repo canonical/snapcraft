@@ -24,38 +24,31 @@ import integration_tests
 class RustPluginTestCase(integration_tests.TestCase):
 
     def test_stage_rust_plugin(self):
-        project_dir = 'simple-rust'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-rust')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
+            os.path.join('stage', 'bin', 'simple-rust'))
         self.assertEqual('There is rust on snaps!\n', binary_output)
 
     def test_stage_rust_with_revision(self):
-        project_dir = 'rust-with-revision'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'rust-with-revision')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'rust-with-revision'),
-            cwd=project_dir)
+            os.path.join('stage', 'bin', 'rust-with-revision'))
         self.assertIn('Rust revision: 1.12.0', binary_output)
 
     def test_stage_rust_plugin_with_conditional_feature(self):
-        project_dir = 'rust-with-conditional'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'rust-with-conditional')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'simple-rust'), cwd=project_dir)
+            os.path.join('stage', 'bin', 'simple-rust'))
         self.assertEqual('Conditional features work!\n', binary_output)
 
     def test_stage_rust_with_source_subdir(self):
-        project_dir = 'rust-subdir'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'rust-subdir')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'rust-subdir'), cwd=project_dir)
+            os.path.join('stage', 'bin', 'rust-subdir'))
         self.assertEqual('Rust in a subdirectory works\n', binary_output)
         # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
-        self.assertThat(
-            os.path.join(project_dir, 'Cargo.lock'),
-            Not(FileExists()))
+        self.assertThat('Cargo.lock', Not(FileExists()))

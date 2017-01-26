@@ -25,18 +25,16 @@ import integration_tests
 class LocalPluginTestCase(integration_tests.TestCase):
 
     def test_stage_local_plugin(self):
-        project_dir = 'local-plugin'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'local-plugin')
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'build-stamp'), FileExists())
+            os.path.join(self.stage_dir, 'build-stamp'), FileExists())
 
     def test_stage_local_plugin_in_parts(self):
-        project_dir = 'local-plugin-in-parts'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'local-plugin-in-parts')
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'build-stamp'),
+            os.path.join(self.stage_dir, 'build-stamp'),
             FileExists())
 
 
@@ -44,19 +42,19 @@ class LocalPluginCleanTestCase(testscenarios.WithScenarios,
                                integration_tests.TestCase):
 
     scenarios = [
-        ('local-plugin', dict(project_dir='local-plugin',
+        ('local-plugin', dict(project='local-plugin',
                               base_dir='snap')),
-        ('local-plugin-in-parts', dict(project_dir='local-plugin-in-parts',
+        ('local-plugin-in-parts', dict(project='local-plugin-in-parts',
                                        base_dir='parts')),
     ]
 
     def test_clean(self):
-        self.run_snapcraft('stage', self.project_dir)
+        self.copy_project_to_cwd(self.project)
+        self.run_snapcraft('stage')
 
         # Now clean, and verify that the local plugin is still there.
-        self.run_snapcraft('clean', self.project_dir)
+        self.run_snapcraft('clean')
 
         self.assertThat(
-            os.path.join(self.project_dir, self.base_dir,
-                         'plugins', 'x_local_plugin.py'),
+            os.path.join(self.base_dir, 'plugins', 'x_local_plugin.py'),
             FileExists(), 'Expected local plugin to remain when cleaned')

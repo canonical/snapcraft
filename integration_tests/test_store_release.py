@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -42,25 +42,24 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a random name and version.
-        project_dir = 'basic'
         unique_id = uuid.uuid4().int
         new_name = 'u1test-{}'.format(unique_id)
         # The maximum size is 32 chars.
         new_version = str(unique_id)[:32]
 
-        project_dir = self.update_name_and_version(
-            project_dir, new_name, new_version)
+        self.copy_project_to_cwd('basic')
+        self.update_name_and_version(new_name, new_version)
 
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('snap')
 
         # Register the snap
         self.register(new_name)
         # Upload the snap
         snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'all')
         self.assertThat(
-            os.path.join(project_dir, snap_file_path), FileExists())
+            os.path.join(snap_file_path), FileExists())
 
-        output = self.run_snapcraft(['upload', snap_file_path], project_dir)
+        output = self.run_snapcraft(['upload', snap_file_path])
         expected = r'.*Ready to release!.*'.format(new_name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 

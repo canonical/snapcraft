@@ -86,13 +86,12 @@ class HistoryTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Build a random snap, register, push and release it.
-        project_dir = 'basic'
+        self.copy_project_to_cwd('basic')
         unique_id = uuid.uuid4().int
         name = 'u1test-{}'.format(unique_id)
         version = '1.0'
-        project_dir = self.update_name_and_version(project_dir, name, version)
-        os.chdir(project_dir)
-        self.run_snapcraft('snap', project_dir)
+        self.update_name_and_version(name, version)
+        self.run_snapcraft('snap')
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)

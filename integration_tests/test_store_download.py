@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,8 +30,7 @@ class DownloadTestCase(integration_tests.StoreTestCase):
         super().setUp()
 
     def test_download_os_snap(self):
-        project_dir = 'kernel-download'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', 'kernel-download')
         self.assertThat(
-            os.path.join(project_dir, 'parts', 'kernel', 'src', 'os.snap'),
+            os.path.join('parts', 'kernel', 'src', 'os.snap'),
             FileExists())

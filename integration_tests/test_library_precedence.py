@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,25 +28,24 @@ import integration_tests
 class LibraryPrecedenceTestCase(integration_tests.TestCase):
 
     def test_snapped_library_takes_precedence_over_system(self):
-        project_dir = 'fake-curl-library'
-        self.run_snapcraft('stage', project_dir)
-        self.run_snapcraft(['prime', 'main'], project_dir)
+        self.run_snapcraft('stage', 'fake-curl-library')
+        self.run_snapcraft(['prime', 'main'])
 
         # Verify that, while the binary was primed, no library was pulled in.
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'bin', 'main'), FileExists())
+            os.path.join('prime', 'bin', 'main'), FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'lib'), Not(DirExists()))
+            os.path.join('prime', 'lib'), Not(DirExists()))
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr'), Not(DirExists()))
+            os.path.join('prime', 'usr'), Not(DirExists()))
 
         # Prime the rest of the way.
-        self.run_snapcraft('prime', project_dir)
+        self.run_snapcraft('prime')
 
         # Now verify the lib we got was the one from the snap, not from the
         # system.
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'lib', 'libcurl.so'),
+            os.path.join('prime', 'lib', 'libcurl.so'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr'), Not(DirExists()))
+            os.path.join('prime', 'usr'), Not(DirExists()))

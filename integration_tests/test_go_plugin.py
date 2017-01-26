@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,14 +23,13 @@ import integration_tests
 class GoPluginTestCase(integration_tests.TestCase):
 
     def test_stage_go_plugin(self):
-        project_dir = 'simple-go'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-go')
 
+        # XXX go names the binary after the directory. --elopio - 2017-01-25
         binary_output = subprocess.check_output(
-            os.path.join('stage', 'bin', project_dir),
-            universal_newlines=True, cwd=project_dir)
+            os.path.join('stage', 'bin', os.path.basename(self.path)),
+            universal_newlines=True)
         self.assertEqual('Hello snapcrafter\n', binary_output)
 
     def test_building_multiple_main_packages(self):
-        project_dir = 'multiple-main-go-packages'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'multiple-main-go-packages')

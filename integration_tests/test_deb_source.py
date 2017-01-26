@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,23 +27,23 @@ import integration_tests
 class DebSourceTestCase(integration_tests.TestCase):
 
     def test_stage_deb(self):
-        project_dir = self.copy_project_to_tmp('simple-deb')
-        self.run_snapcraft(['stage', 'deb'], project_dir)
+        self.copy_project_to_cwd('simple-deb')
+        self.run_snapcraft(['stage', 'deb'])
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'bin', 'hello'),
+            os.path.join('stage', 'bin', 'hello'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'usr', 'bin', 'world'),
+            os.path.join('stage', 'usr', 'bin', 'world'),
             FileExists())
 
     # Regression test for LP: #1634813
     def test_stage_deb_with_symlink(self):
-        project_dir = self.copy_project_to_tmp('simple-deb')
-        self.run_snapcraft(['stage', 'deb-with-symlink'], project_dir)
+        self.copy_project_to_cwd('simple-deb')
+        self.run_snapcraft(['stage', 'deb-with-symlink'])
 
-        target = os.path.join(project_dir, 'stage', 'target')
-        symlink = os.path.join(project_dir, 'stage', 'symlink')
+        target = os.path.join('stage', 'target')
+        symlink = os.path.join('stage', 'symlink')
         self.assertThat(target, FileExists())
         self.assertThat(symlink, FileExists())
         self.assertTrue(os.path.islink(symlink))

@@ -24,10 +24,9 @@ import integration_tests
 class StageTestCase(integration_tests.TestCase):
 
     def test_conflicts(self):
-        project_dir = 'conflicts'
         exception = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'stage', project_dir)
+            self.run_snapcraft, 'stage', 'conflicts')
 
         self.assertEqual(1, exception.returncode)
         expected_conflicts = (

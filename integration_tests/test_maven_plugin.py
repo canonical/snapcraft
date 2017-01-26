@@ -25,5 +25,4 @@ class MavenPluginTestCase(integration_tests.TestCase):
         if snapcraft.ProjectOptions().deb_arch == 'armhf':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The maven plugin does not support armhf')
-        project_dir = 'simple-maven'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'simple-maven')

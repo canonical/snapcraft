@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,8 +27,7 @@ import integration_tests
 class TarPluginTestCase(integration_tests.TestCase):
 
     def test_stage_nil_plugin(self):
-        project_dir = 'simple-tar'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-tar')
 
         expected_files = [
             'flat',
@@ -45,7 +44,7 @@ class TarPluginTestCase(integration_tests.TestCase):
         ]
         for expected_file in expected_files:
             self.assertThat(
-                os.path.join(project_dir, 'stage', expected_file),
+                os.path.join('stage', expected_file),
                 FileExists())
         expected_dirs = [
             'dir-simple',
@@ -55,13 +54,13 @@ class TarPluginTestCase(integration_tests.TestCase):
         ]
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join(project_dir, 'stage', expected_dir),
+                os.path.join('stage', expected_dir),
                 DirExists())
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'test'), cwd=project_dir)
+            os.path.join('stage', 'bin', 'test'))
         self.assertEqual('tarproject\n', binary_output)
 
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')

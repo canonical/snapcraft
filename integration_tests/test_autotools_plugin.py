@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,10 +22,8 @@ import integration_tests
 class AutotoolsPluginTestCase(integration_tests.TestCase):
 
     def test_stage(self):
-        project_dir = 'simple-autotools'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-autotools')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'test'),
-            cwd=project_dir)
+            os.path.join('stage', 'bin', 'test'))
         self.assertEqual('Hello world\n', binary_output)

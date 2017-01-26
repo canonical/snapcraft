@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,20 +29,19 @@ import integration_tests
 class HardlinkSrcOldTreeTestCase(integration_tests.TestCase):
 
     def test_build_old_tree_still_filters(self):
-        project_dir = 'old-part-src'
-        work_dir = self.copy_project_to_tmp(project_dir)
+        self.copy_project_to_cwd('old-part-src')
         platform_architecture = _options._get_platform_architecture()
         arch = _options._ARCH_TRANSLATIONS[platform_architecture]['deb']
         with fileinput.FileInput(
-                os.path.join(work_dir, 'parts', 'part-name', 'state', 'pull'),
+                os.path.join('parts', 'part-name', 'state', 'pull'),
                 inplace=True) as pull_state:
             for line in pull_state:
                 print(line.replace('$arch', arch), end='')
 
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build')
 
         # Assert that the file we wanted to snap made it into the builddir
-        builddir = os.path.join(project_dir, 'parts', 'part-name', 'build')
+        builddir = os.path.join('parts', 'part-name', 'build')
         self.assertThat(os.path.join(builddir, 'foo'), FileExists())
 
         # Make sure that the build step still filters out the snapcraft-

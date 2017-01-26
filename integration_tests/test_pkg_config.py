@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,5 +21,4 @@ class PkgConfigTestCase(integration_tests.TestCase):
 
     def test_pkgconfig_pc_conflicts_1604472(self):
         """The same pc file from stage-packages should not conflict."""
-        project_dir = 'simple-pkgconfig'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-pkgconfig')

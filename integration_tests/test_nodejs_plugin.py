@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,19 +22,18 @@ from testtools.matchers import FileExists
 class NodeJSPluginTestCase(integration_tests.TestCase):
 
     def test_rebuilding_possible(self):
-        project_dir = 'simple-nodejs'
-        self.run_snapcraft('build', project_dir)
-        self.run_snapcraft(['clean', '-s', 'build'], project_dir)
-        self.run_snapcraft('build', project_dir)
+        self.copy_project_to_cwd('simple-nodejs')
+        self.run_snapcraft('build')
+        self.run_snapcraft(['clean', '-s', 'build'])
+        self.run_snapcraft('build')
 
     def test_build_with_run_commands(self):
-        project_dir = 'nodejs-with-run-commands'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'nodejs-with-run-commands')
         self.assertThat(
-            os.path.join(project_dir, 'parts', 'nodejs-with-run', 'build',
+            os.path.join('parts', 'nodejs-with-run', 'build',
                          'command-one-run'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'parts', 'nodejs-with-run', 'build',
+            os.path.join('parts', 'nodejs-with-run', 'build',
                          'command-two-run'),
             FileExists())

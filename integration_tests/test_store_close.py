@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import uuid
 
 from testtools.matchers import FileExists
@@ -23,8 +22,6 @@ import integration_tests
 
 
 class ChannelClosingTestCase(integration_tests.StoreTestCase):
-
-    project_dir = 'basic'
 
     def test_missing_login(self):
         expected = 'run "snapcraft login"'
@@ -48,10 +45,9 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
         unique_id = uuid.uuid4().int
         name = 'u1test-{}'.format(unique_id)
         version = str(unique_id)[:32]
-        project_dir = self.update_name_and_version(
-            self.project_dir, name, version)
-        os.chdir(project_dir)
-        self.run_snapcraft('snap', project_dir)
+        self.copy_project_to_cwd('basic')
+        self.update_name_and_version(name, version)
+        self.run_snapcraft('snap')
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)

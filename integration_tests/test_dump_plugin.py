@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,8 +28,7 @@ import integration_tests
 class DumpPluginTestCase(integration_tests.TestCase):
 
     def test_stage_dump_plugin(self):
-        project_dir = 'simple-dump'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-dump')
 
         expected_files = [
             'flat',
@@ -45,7 +44,7 @@ class DumpPluginTestCase(integration_tests.TestCase):
         ]
         for expected_file in expected_files:
             self.assertThat(
-                os.path.join(project_dir, 'stage', expected_file),
+                os.path.join('stage', expected_file),
                 FileExists())
         expected_dirs = [
             'dir-simple',
@@ -53,17 +52,16 @@ class DumpPluginTestCase(integration_tests.TestCase):
         ]
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join(project_dir, 'stage', expected_dir),
+                os.path.join('stage', expected_dir),
                 DirExists())
 
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
 
     def test_download_file_with_content_encoding_set(self):
         """Download a file with Content-Encoding: gzip LP: #1611776"""
-        project_dir = 'compressed-content-encoding'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', 'compressed-content-encoding')
 
     def test_download_file_from_ftp_source(self):
         """Download a file from a FTP source, LP: #1602323"""
@@ -73,5 +71,4 @@ class DumpPluginTestCase(integration_tests.TestCase):
             self.useFixture(fixtures.EnvironmentVariable(
                 'ftp_proxy', os.getenv('http_proxy', '')))
 
-        project_dir = 'ftp-source'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', 'ftp-source')

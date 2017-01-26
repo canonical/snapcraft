@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,7 +21,6 @@ import integration_tests
 class AntPluginTestCase(integration_tests.TestCase):
 
     def test_build_ant_plugin(self):
-        project_dir = 'simple-ant'
-        self.run_snapcraft('prime', project_dir)
-        jar_path = os.path.join(project_dir, 'prime', 'jar', 'foo.jar')
+        self.run_snapcraft('prime', 'simple-ant')
+        jar_path = os.path.join('prime', 'jar', 'foo.jar')
         self.assertTrue(os.path.exists(jar_path))

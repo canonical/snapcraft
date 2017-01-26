@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -38,13 +38,12 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         shutil.copytree(keys_dir, temp_keys_dir)
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAP_GNUPG_HOME', temp_keys_dir))
-        self.project_dir = 'basic'
-        self.snap_path = '{}_0.1_all.snap'.format(self.project_dir)
+        self.project = 'basic'
+        self.snap_path = '{}_0.1_all.snap'.format(self.project)
         self.snap_build_path = '{}-build'.format(self.snap_path)
 
     def test_unsuccessful_sign_build_no_login(self):
-        self.run_snapcraft('snap', self.project_dir)
-        os.chdir(self.project_dir)
+        self.run_snapcraft('snap', self.project)
         self.assertThat(self.snap_path, FileExists())
 
         status = self.sign_build(
@@ -60,10 +59,9 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         unique_id = uuid.uuid4().int
         name = 'u1test-{}'.format(unique_id)
         version = str(unique_id)[:32]
-        project_dir = self.update_name_and_version(
-            self.project_dir, name, version)
-        os.chdir(project_dir)
-        self.run_snapcraft('snap', project_dir)
+        self.copy_project_to_cwd(self.project_dir)
+        self.update_name_and_version(name, version)
+        self.run_snapcraft('snap')
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)
@@ -77,8 +75,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
                         FileContains(matcher=Contains('type: snap-build')))
 
     def test_unsuccessful_sign_build_push_no_login(self):
-        self.run_snapcraft('snap', self.project_dir)
-        os.chdir(self.project_dir)
+        self.run_snapcraft('snap', self.project)
         self.assertThat(self.snap_path, FileExists())
 
         status = self.sign_build(self.snap_path, expect_success=False)
@@ -92,8 +89,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
                 'Cannot push signed assertion against staging/production '
                 'until we have a way to delete them again.')
 
-        self.run_snapcraft('snap', self.project_dir)
-        os.chdir(self.project_dir)
+        self.run_snapcraft('snap', self.project)
         self.assertThat(self.snap_path, FileExists())
 
         self.assertEqual(0, self.register_key('default'))

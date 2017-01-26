@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,8 +28,7 @@ from testtools.matchers import (
 class FilesetsTestCase(integration_tests.TestCase):
 
     def test_filesets(self):
-        project_dir = 'simple-make-filesets'
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('snap', 'simple-make-filesets')
 
         expected_dirs = (
             os.path.join('stage', 'share'),
@@ -38,11 +37,11 @@ class FilesetsTestCase(integration_tests.TestCase):
         )
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join(project_dir, expected_dir),
+                expected_dir,
                 DirExists())
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'share'),
+            os.path.join('prime', 'share'),
             Not(DirExists()))
 
         expected_files = (
@@ -54,6 +53,4 @@ class FilesetsTestCase(integration_tests.TestCase):
             (os.path.join('prime', 'bin', 'bin2'), 'bin2\n'),
         )
         for path, content in expected_files:
-            self.assertThat(
-                os.path.join(project_dir, path),
-                FileContains(content))
+            self.assertThat(path, FileContains(content))

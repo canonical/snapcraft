@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Neal Gompa
+# Copyright (C) 2016, 2017 Neal Gompa
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,12 +24,11 @@ import integration_tests
 class RpmSourceTestCase(integration_tests.TestCase):
 
     def test_stage_rpm(self):
-        project_dir = self.copy_project_to_tmp('simple-rpm')
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-rpm')
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'bin', 'hello'),
+            os.path.join('stage', 'bin', 'hello'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'usr', 'bin', 'world'),
+            os.path.join('stage', 'usr', 'bin', 'world'),
             FileExists())

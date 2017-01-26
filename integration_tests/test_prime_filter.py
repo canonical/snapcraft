@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,18 +28,16 @@ import integration_tests
 class PrimeKeywordTestCase(integration_tests.TestCase):
 
     def test_prime_filter(self):
-        project_dir = 'simple-prime-filter'
-        self.run_snapcraft(['prime', 'prime-keyword'], project_dir)
+        self.run_snapcraft(['prime', 'prime-keyword'], 'simple-prime-filter')
 
         # Verify that only the `prime1` file made it into prime (i.e. `prime2`
         # was filtered out).
-        primedir = os.path.join(project_dir, 'prime')
-        self.assertThat(os.path.join(primedir, 'prime1'), FileExists())
-        self.assertThat(os.path.join(primedir, 'prime2'), Not(FileExists()))
+        self.assertThat(os.path.join('prime', 'prime1'), FileExists())
+        self.assertThat(os.path.join('prime', 'prime2'), Not(FileExists()))
 
     def test_snap_filter_is_deprecated(self):
-        project_dir = 'simple-prime-filter'
-        output = self.run_snapcraft(['prime', 'snap-keyword'], project_dir)
+        output = self.run_snapcraft(
+            ['prime', 'snap-keyword'], 'simple-prime-filter')
 
         # Verify that the `snap` keyword is deprecated.
         self.assertThat(
@@ -50,6 +48,5 @@ class PrimeKeywordTestCase(integration_tests.TestCase):
 
         # Verify that only the `snap1` file made it into prime (i.e. `snap2`
         # was filtered out).
-        primedir = os.path.join(project_dir, 'prime')
-        self.assertThat(os.path.join(primedir, 'snap1'), FileExists())
-        self.assertThat(os.path.join(primedir, 'snap2'), Not(FileExists()))
+        self.assertThat(os.path.join('prime', 'snap1'), FileExists())
+        self.assertThat(os.path.join('prime', 'snap2'), Not(FileExists()))
