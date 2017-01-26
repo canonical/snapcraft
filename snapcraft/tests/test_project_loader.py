@@ -27,7 +27,7 @@ from testtools import ExpectedException
 import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import project_loader
-from snapcraft.internal.errors import DuplicateAliasError
+from snapcraft.internal import errors
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 from snapcraft._schema import SnapcraftSchemaError
@@ -102,9 +102,8 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        raised = self.assertRaises(
-            DuplicateAliasError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.DuplicateAliasError,
+                                   project_loader.Config)
 
         self.assertEqual(
             'Multiple parts have the same alias defined: {!r}'.format(
@@ -1168,9 +1167,8 @@ class InitTestCase(tests.TestCase):
         open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
         open('snapcraft.yaml', 'w').close()
 
-        raised = self.assertRaises(
-            EnvironmentError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
 
         self.assertEqual(
             "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', please "
@@ -1182,9 +1180,8 @@ class InitTestCase(tests.TestCase):
         open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
         open('.snapcraft.yaml', 'w').close()
 
-        raised = self.assertRaises(
-            EnvironmentError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
 
         self.assertEqual(
             "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', please "
@@ -1195,9 +1192,8 @@ class InitTestCase(tests.TestCase):
         open('snapcraft.yaml', 'w').close()
         open('.snapcraft.yaml', 'w').close()
 
-        raised = self.assertRaises(
-            EnvironmentError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
 
         self.assertEqual(
             "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', please "

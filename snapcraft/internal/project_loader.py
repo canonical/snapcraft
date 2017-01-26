@@ -382,7 +382,7 @@ def get_snapcraft_yaml():
     if not snapcraft_yamls:
         raise SnapcraftYamlFileError('snap/snapcraft.yaml')
     elif len(snapcraft_yamls) > 1:
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             'Found a {!r} and a {!r}, please remove one.'.format(
                 snapcraft_yamls[0], snapcraft_yamls[1]))
 
