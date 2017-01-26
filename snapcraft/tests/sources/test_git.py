@@ -181,7 +181,7 @@ class TestGitConflicts(tests.TestCase):
 
     def call(self, cmd):
         subprocess.check_call(
-            cmd)  #, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            cmd)  # , stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def rm_dir(self, dir):
         if os.path.exists(dir):
@@ -215,7 +215,7 @@ class TestGitConflicts(tests.TestCase):
         repo = '/tmp/conflict-test.git'
         working_tree = '/tmp/git-conflict-test'
         conflicting_tree = '{}-conflict'.format(working_tree)
-        git = sources.Git(repo, working_tree, silent=True)
+        git = sources.Git(repo, working_tree, silent=False)
 
         self.clean_dir(repo)
         self.clean_dir(working_tree)
@@ -255,7 +255,7 @@ class TestGitConflicts(tests.TestCase):
         sub_repo = '/tmp/subrepo'
         working_tree = '/tmp/git-submodules'
         sub_working_tree = '/tmp/git-submodules-sub'
-        git = sources.Git(repo, working_tree, silent=True)
+        git = sources.Git(repo, working_tree, silent=False)
 
         self.clean_dir(repo)
         self.clean_dir(sub_repo)
