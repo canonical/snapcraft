@@ -64,7 +64,7 @@ class GulpPluginTestCase(tests.TestCase):
                 nodejs.get_nodejs_release(
                     plugin.options.node_engine,
                     plugin.project.deb_arch),
-                path.join(os.path.abspath('.'), 'parts', 'test-part', 'npm')),
+                path.join(self.parts_dir, 'test-part', 'npm')),
             mock.call().download()])
 
     @mock.patch('platform.architecture')

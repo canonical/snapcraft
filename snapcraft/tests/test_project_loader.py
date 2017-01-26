@@ -27,7 +27,7 @@ from testtools import ExpectedException
 import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import project_loader
-from snapcraft.internal.errors import DuplicateAliasError
+from snapcraft.internal import errors
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 from snapcraft._schema import SnapcraftSchemaError
@@ -40,9 +40,10 @@ class YamlBaseTestCase(tests.TestCase):
         dirs.setup_dirs()
 
         patcher = unittest.mock.patch(
-            'snapcraft.internal.project_loader._get_snapcraft_yaml')
+            'snapcraft.internal.project_loader.get_snapcraft_yaml')
         self.mock_get_yaml = patcher.start()
-        self.mock_get_yaml.return_value = 'snapcraft.yaml'
+        self.mock_get_yaml.return_value = os.path.join(
+            'snap', 'snapcraft.yaml')
         self.addCleanup(patcher.stop)
         self.part_schema = project_loader.Validator().part_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
@@ -101,9 +102,8 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        raised = self.assertRaises(
-            DuplicateAliasError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.DuplicateAliasError,
+                                   project_loader.Config)
 
         self.assertEqual(
             'Multiple parts have the same alias defined: {!r}'.format(
@@ -631,7 +631,7 @@ parts:
         self.assertEqual(
             raised.message,
             'found character \'\\t\' that cannot start any token '
-            'on line 5 of snapcraft.yaml')
+            'on line 5 of snap/snapcraft.yaml')
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
@@ -1153,34 +1153,54 @@ parts:
 
 class InitTestCase(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
     def test_config_raises_on_missing_snapcraft_yaml(self):
-        # no snapcraft.yaml
+        """Test that an error is raised if snap/snapcraft.yaml is missing"""
+
         raised = self.assertRaises(
             project_loader.SnapcraftYamlFileError,
             project_loader.Config)
 
-        self.assertEqual(raised.file, 'snapcraft.yaml')
+        self.assertEqual(raised.file, os.path.join('snap', 'snapcraft.yaml'))
 
-    def test_two_snapcraft_yamls_cuase_error(self):
+    def test_both_new_and_old_yamls_cause_error(self):
+        os.mkdir('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+        open('snapcraft.yaml', 'w').close()
+
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
+
+        self.assertEqual(
+            "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', please "
+            "remove one.",
+            str(raised))
+
+    def test_both_new_and_hidden_yamls_cause_error(self):
+        os.mkdir('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+        open('.snapcraft.yaml', 'w').close()
+
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
+
+        self.assertEqual(
+            "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', please "
+            "remove one.",
+            str(raised))
+
+    def test_both_visible_and_hidden_yamls_cause_error(self):
         open('snapcraft.yaml', 'w').close()
         open('.snapcraft.yaml', 'w').close()
 
-        raised = self.assertRaises(
-            EnvironmentError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
 
         self.assertEqual(
-            str(raised),
-            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
-            "please remove one")
+            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', please "
+            'remove one.',
+            str(raised))
 
-    def test_hidden_snapcraft_yaml_loads(self):
+    def test_snapcraft_yaml_loads(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1193,10 +1213,12 @@ parts:
     plugin: nil
 """)
 
-        os.rename('snapcraft.yaml', '.snapcraft.yaml')
         project_loader.Config()
 
-    def test_visible_snapcraft_yaml_loads(self):
+    def test_old_snapcraft_yaml_loads(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1209,6 +1231,28 @@ parts:
     plugin: nil
 """)
 
+        os.rename(os.path.join('snap', 'snapcraft.yaml'), 'snapcraft.yaml')
+        os.rmdir('snap')
+        project_loader.Config()
+
+    def test_hidden_snapcraft_yaml_loads(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  main:
+    plugin: nil
+""")
+
+        os.rename(os.path.join('snap', 'snapcraft.yaml'), '.snapcraft.yaml')
+        os.rmdir('snap')
         project_loader.Config()
 
 
