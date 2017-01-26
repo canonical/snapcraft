@@ -68,7 +68,6 @@ def init():
 
     if os.path.exists(os.path.join('snap', 'snapcraft.yaml')):
         raise EnvironmentError('snap/snapcraft.yaml already exists!')
-    # FIXME: snapcraft.yaml and .snapcraft.yaml are deprecated.
     elif os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
@@ -76,7 +75,7 @@ def init():
     yaml = _TEMPLATE_YAML.strip()
     with contextlib.suppress(FileExistsError):
         os.mkdir('snap')
-    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w+') as f:
+    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w') as f:
         f.write(yaml)
     logger.info('Created snap/snapcraft.yaml.')
     logger.info(
