@@ -26,5 +26,5 @@ class GulpPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-gulp')
 
         binary_output = subprocess.check_output(
-            [os.path.join('stage', 'hello-world')])
+            [os.path.join(self.stage_dir, 'hello-world')])
         self.assertEqual(b'I was installed with gulp\n', binary_output)

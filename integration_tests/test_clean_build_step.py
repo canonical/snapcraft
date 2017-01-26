@@ -34,10 +34,9 @@ class CleanBuildStepBuiltTestCase(integration_tests.TestCase):
 
         self.copy_project_to_cwd('independent-parts')
         self.run_snapcraft('build')
-        self.partsdir = 'parts'
         self.parts = {}
         for part in ['part1', 'part2']:
-            partdir = os.path.join(self.partsdir, part)
+            partdir = os.path.join(self.parts_dir, part)
             self.parts[part] = {
                 'partdir': partdir,
                 'sourcedir': os.path.join(partdir, 'src'),
@@ -115,14 +114,11 @@ class CleanBuildStepPrimedTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('independent-parts')
         self.run_snapcraft('prime')
 
-        self.snapdir = 'prime'
-        self.snap_bindir = os.path.join(self.snapdir, 'bin')
-        self.stagedir = 'stage'
-        self.stage_bindir = os.path.join(self.stagedir, 'bin')
-        self.partsdir = 'parts'
+        self.snap_bindir = os.path.join(self.prime_dir, 'bin')
+        self.stage_bindir = os.path.join(self.stage_dir, 'bin')
         self.parts = {}
         for part in ['part1', 'part2']:
-            partdir = os.path.join(self.partsdir, part)
+            partdir = os.path.join(self.parts_dir, part)
             self.parts[part] = {
                 'partdir': partdir,
                 'sourcedir': os.path.join(partdir, 'src'),
@@ -147,8 +143,8 @@ class CleanBuildStepPrimedTestCase(integration_tests.TestCase):
         self.assert_files_exist()
 
         self.run_snapcraft(['clean', '--step=build'])
-        self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat(self.snapdir, Not(DirExists()))
+        self.assertThat(self.stage_dir, Not(DirExists()))
+        self.assertThat(self.prime_dir, Not(DirExists()))
 
         for part_name, part in self.parts.items():
             self.assertThat(part['builddir'], Not(DirExists()))

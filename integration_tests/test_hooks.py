@@ -35,21 +35,23 @@ class HookTestCase(integration_tests.TestCase):
             # Assert that the hooks as supplied to snapcraft was copied into
             # the snap.
             self.assertThat(
-                os.path.join('prime', 'snap', 'hooks', hook), FileExists())
+                os.path.join(self.prime_dir, 'snap', 'hooks', hook),
+                FileExists())
 
             # Assert that the real hooks were generated as well (they're just
             # wrappers that call the one given to snapcraft).
             self.assertThat(
-                os.path.join('prime', 'meta', 'hooks', hook), FileExists())
+                os.path.join(self.prime_dir, 'meta', 'hooks', hook),
+                FileExists())
 
         # Assert that the wrapper execs the correct thing
         self.assertThat(
-            os.path.join('prime', 'meta', 'hooks', 'another-hook'),
+            os.path.join(self.prime_dir, 'meta', 'hooks', 'another-hook'),
             FileContains(matcher=Contains('exec "$SNAP/snap/hooks/{}"'.format(
                 hook))))
 
         # Assert that the configure hook doesn't have a wrapper
         self.assertThat(
-            os.path.join('prime', 'meta', 'hooks', 'configure'),
+            os.path.join(self.prime_dir, 'meta', 'hooks', 'configure'),
             Not(FileContains(matcher=Contains('exec'.format(
                 hook)))))

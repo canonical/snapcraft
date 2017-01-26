@@ -27,20 +27,21 @@ class EnvironmentTestCase(integration_tests.TestCase):
     def test_environment(self):
         self.run_snapcraft('stage', 'snapcraft-environment')
 
-        stage_dir = os.path.join(self.path, 'stage')
         part_install_dir = os.path.join(self.path,
-                                        'parts', 'env', 'install')
+                                        self.parts_dir, 'env', 'install')
 
-        test_name = os.path.join(stage_dir, 'test_name')
+        test_name = os.path.join(self.stage_dir, 'test_name')
         self.assertThat(test_name, FileContains('test-environment'))
 
-        test_version = os.path.join(stage_dir, 'test_version')
+        test_version = os.path.join(self.stage_dir, 'test_version')
         self.assertThat(test_version, FileContains('0.1'))
 
-        test_stage = os.path.join(stage_dir, 'test_stage')
-        self.assertThat(test_stage, FileContains(stage_dir))
+        test_stage = os.path.join(self.stage_dir, 'test_stage')
+        self.assertThat(
+            test_stage, FileContains(os.path.join(self.path, self.stage_dir)))
 
-        test_part_install = os.path.join(stage_dir, 'test_part_install')
+        test_part_install = os.path.join(
+            self.path, self.stage_dir, 'test_part_install')
         self.assertThat(test_part_install, FileContains(part_install_dir))
 
     def test_project_environment_within_snapcraft(self):
@@ -58,8 +59,9 @@ class EnvironmentTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-cmake-replace')
 
         binary_output = subprocess.check_output([
-            os.path.join('stage', 'bin', 'simple-cmake-replace')])
-        path = os.path.join(self.path, 'parts', 'cmake-project', 'install')
+            os.path.join(self.stage_dir, 'bin', 'simple-cmake-replace')])
+        path = os.path.join(
+            self.path, self.parts_dir, 'cmake-project', 'install')
         self.assertEqual(
             "When I was built I was installed to {}\n".format(path),
             binary_output.decode('utf-8'))

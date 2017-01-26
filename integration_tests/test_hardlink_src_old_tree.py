@@ -33,7 +33,7 @@ class HardlinkSrcOldTreeTestCase(integration_tests.TestCase):
         platform_architecture = _options._get_platform_architecture()
         arch = _options._ARCH_TRANSLATIONS[platform_architecture]['deb']
         with fileinput.FileInput(
-                os.path.join('parts', 'part-name', 'state', 'pull'),
+                os.path.join(self.parts_dir, 'part-name', 'state', 'pull'),
                 inplace=True) as pull_state:
             for line in pull_state:
                 print(line.replace('$arch', arch), end='')
@@ -41,12 +41,14 @@ class HardlinkSrcOldTreeTestCase(integration_tests.TestCase):
         self.run_snapcraft('build')
 
         # Assert that the file we wanted to snap made it into the builddir
-        builddir = os.path.join('parts', 'part-name', 'build')
+        builddir = os.path.join(self.parts_dir, 'part-name', 'build')
         self.assertThat(os.path.join(builddir, 'foo'), FileExists())
 
         # Make sure that the build step still filters out the snapcraft-
         # specific data.
-        self.assertThat(os.path.join(builddir, 'stage'), Not(FileExists()))
-        self.assertThat(os.path.join(builddir, 'prime'),  Not(FileExists()))
+        self.assertThat(
+            os.path.join(builddir, self.stage_dir), Not(FileExists()))
+        self.assertThat(
+            os.path.join(builddir, self.prime_dir),  Not(FileExists()))
         self.assertThat(os.path.join(builddir, 'snapcraft.yaml'),
                         Not(FileExists()))

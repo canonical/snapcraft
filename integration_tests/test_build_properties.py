@@ -35,7 +35,7 @@ class BuildPropertiesTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', project_dir)
 
         state_file = os.path.join(
-            'parts', 'x-local-plugin', 'state', 'build')
+            self.parts_dir, 'x-local-plugin', 'state', 'build')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)

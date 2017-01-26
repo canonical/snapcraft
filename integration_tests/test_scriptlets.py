@@ -27,14 +27,14 @@ class ScriptletTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', 'scriptlet-prepare')
 
         installdir = os.path.join(
-            'parts', 'prepare-scriptlet-test', 'install')
+            self.parts_dir, 'prepare-scriptlet-test', 'install')
         touch_file_path = os.path.join(installdir, 'prepared')
         self.assertThat(touch_file_path, FileExists())
 
     def test_build_scriptlet(self):
         self.run_snapcraft('build', 'scriptlet-build')
 
-        partdir = os.path.join('parts', 'build-scriptlet-test')
+        partdir = os.path.join(self.parts_dir, 'build-scriptlet-test')
         builddir = os.path.join(partdir, 'build')
         installdir = os.path.join(partdir, 'install')
 
@@ -47,7 +47,7 @@ class ScriptletTestCase(integration_tests.TestCase):
         self.run_snapcraft('build', 'scriptlet-install')
 
         installdir = os.path.join(
-            'parts', 'install-scriptlet-test', 'install')
+            self.parts_dir, 'install-scriptlet-test', 'install')
         touch_file_path = os.path.join(installdir, 'build-done')
         self.assertThat(touch_file_path, FileExists())
         echoed_file_path = os.path.join(installdir, 'config.ini')

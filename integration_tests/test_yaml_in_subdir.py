@@ -31,12 +31,12 @@ class YamlInSubdirTestCase(integration_tests.TestCase):
         os.chdir('subdir')
         self.run_snapcraft('stage')
 
-        expected_file = os.path.join('stage', 'file')
+        expected_file = os.path.join(self.stage_dir, 'file')
         self.assertThat(expected_file, FileExists())
         with open(expected_file) as f:
             self.assertThat(f.read(), Equals("I'm a file\n"))
 
-        expected_file = os.path.join('stage', 'subdirfile')
+        expected_file = os.path.join(self.stage_dir, 'subdirfile')
         self.assertThat(expected_file, FileExists())
         with open(expected_file) as f:
             self.assertThat(f.read(), Equals("I'm in the subdir\n"))

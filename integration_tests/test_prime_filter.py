@@ -32,8 +32,9 @@ class PrimeKeywordTestCase(integration_tests.TestCase):
 
         # Verify that only the `prime1` file made it into prime (i.e. `prime2`
         # was filtered out).
-        self.assertThat(os.path.join('prime', 'prime1'), FileExists())
-        self.assertThat(os.path.join('prime', 'prime2'), Not(FileExists()))
+        self.assertThat(os.path.join(self.prime_dir, 'prime1'), FileExists())
+        self.assertThat(
+            os.path.join(self.prime_dir, 'prime2'), Not(FileExists()))
 
     def test_snap_filter_is_deprecated(self):
         output = self.run_snapcraft(
@@ -48,5 +49,6 @@ class PrimeKeywordTestCase(integration_tests.TestCase):
 
         # Verify that only the `snap1` file made it into prime (i.e. `snap2`
         # was filtered out).
-        self.assertThat(os.path.join('prime', 'snap1'), FileExists())
-        self.assertThat(os.path.join('prime', 'snap2'), Not(FileExists()))
+        self.assertThat(os.path.join(self.prime_dir, 'snap1'), FileExists())
+        self.assertThat(
+            os.path.join(self.prime_dir, 'snap2'), Not(FileExists()))

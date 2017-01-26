@@ -37,15 +37,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         # Need to use the state directory here instead of partdir due to
         # bug #1567054.
         self.part_dirs = {
-            'p1': os.path.join('parts', 'p1', 'state'),
-            'p2': os.path.join('parts', 'p2', 'state'),
-            'p3': os.path.join('parts', 'p3', 'state'),
-            'p4': os.path.join('parts', 'p4', 'state'),
+            'p1': os.path.join(self.parts_dir, 'p1', 'state'),
+            'p2': os.path.join(self.parts_dir, 'p2', 'state'),
+            'p3': os.path.join(self.parts_dir, 'p3', 'state'),
+            'p4': os.path.join(self.parts_dir, 'p4', 'state'),
         }
-
-        self.partsdir = 'parts'
-        self.stagedir = 'stage'
-        self.snapdir = 'prime'
 
     def assert_clean(self, parts, common=False):
         for part in parts:
@@ -54,11 +50,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
                 'Expected part directory for {!r} to be cleaned'.format(part))
 
         if common:
-            self.expectThat(self.partsdir, Not(DirExists()),
+            self.expectThat(self.parts_dir, Not(DirExists()),
                             'Expected parts/ directory to be cleaned')
-            self.expectThat(self.stagedir, Not(DirExists()),
+            self.expectThat(self.stage_dir, Not(DirExists()),
                             'Expected stage/ directory to be cleaned')
-            self.expectThat(self.snapdir, Not(DirExists()),
+            self.expectThat(self.prime_dir, Not(DirExists()),
                             'Expected snap/ directory to be cleaned')
 
     def assert_not_clean(self, parts, common=False):
@@ -69,11 +65,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
                     part))
 
         if common:
-            self.expectThat(self.partsdir, DirExists(),
+            self.expectThat(self.parts_dir, DirExists(),
                             'Expected parts/ directory to be uncleaned')
-            self.expectThat(self.stagedir, DirExists(),
+            self.expectThat(self.stage_dir, DirExists(),
                             'Expected stage/ directory to be uncleaned')
-            self.expectThat(self.snapdir, DirExists(),
+            self.expectThat(self.prime_dir, DirExists(),
                             'Expected snap/ directory to be uncleaned')
 
     def test_clean_nested_dependent(self):

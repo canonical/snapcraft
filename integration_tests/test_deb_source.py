@@ -31,10 +31,10 @@ class DebSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft(['stage', 'deb'])
 
         self.assertThat(
-            os.path.join('stage', 'bin', 'hello'),
+            os.path.join(self.stage_dir, 'bin', 'hello'),
             FileExists())
         self.assertThat(
-            os.path.join('stage', 'usr', 'bin', 'world'),
+            os.path.join(self.stage_dir, 'usr', 'bin', 'world'),
             FileExists())
 
     # Regression test for LP: #1634813
@@ -42,8 +42,8 @@ class DebSourceTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('simple-deb')
         self.run_snapcraft(['stage', 'deb-with-symlink'])
 
-        target = os.path.join('stage', 'target')
-        symlink = os.path.join('stage', 'symlink')
+        target = os.path.join(self.stage_dir, 'target')
+        symlink = os.path.join(self.stage_dir, 'symlink')
         self.assertThat(target, FileExists())
         self.assertThat(symlink, FileExists())
         self.assertTrue(os.path.islink(symlink))

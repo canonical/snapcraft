@@ -25,5 +25,5 @@ class CmakePluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-cmake')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'simple-cmake'))
+            os.path.join(self.stage_dir, 'bin', 'simple-cmake'))
         self.assertEqual("It's a CMake world\n", binary_output)

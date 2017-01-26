@@ -27,18 +27,18 @@ class CopyPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-copy')
 
         self.assertThat(
-            os.path.join('stage', 'dst'),
+            os.path.join(self.stage_dir, 'dst'),
             FileContains('I got copied\n'))
         self.assertThat(
-            os.path.join('stage', 'dstdir', 'srcdirfile.txt'),
+            os.path.join(self.stage_dir, 'dstdir', 'srcdirfile.txt'),
             FileContains('A file in the source directory\n'))
 
     def test_copy_plugin_with_source(self):
         self.run_snapcraft('stage', 'copy-with-source')
 
         self.assertThat(
-            os.path.join('stage', 'file'),
+            os.path.join(self.stage_dir, 'file'),
             FileContains('A file\n'))
         self.assertThat(
-            os.path.join('stage', 'directory', 'file'),
+            os.path.join(self.stage_dir, 'directory', 'file'),
             FileContains('A file in directory\n'))

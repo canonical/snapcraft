@@ -32,5 +32,5 @@ class DownloadTestCase(integration_tests.StoreTestCase):
     def test_download_os_snap(self):
         self.run_snapcraft('pull', 'kernel-download')
         self.assertThat(
-            os.path.join('parts', 'kernel', 'src', 'os.snap'),
+            os.path.join(self.parts_dir, 'kernel', 'src', 'os.snap'),
             FileExists())

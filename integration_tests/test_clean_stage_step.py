@@ -33,8 +33,7 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
 
         self.copy_project_to_cwd('independent-parts')
         self.run_snapcraft('stage')
-        self.stagedir = 'stage'
-        self.bindir = os.path.join(self.stagedir, 'bin')
+        self.bindir = os.path.join(self.stage_dir, 'bin')
 
     def assert_files_exist(self):
         self.assertThat(os.path.join(self.bindir, 'file1'), FileExists())
@@ -45,8 +44,8 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
 
         output = self.run_snapcraft(
             ['clean', '--step=stage'], debug=False)
-        self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat('parts', DirExists())
+        self.assertThat(self.stage_dir, Not(DirExists()))
+        self.assertThat(self.parts_dir, DirExists())
 
         # Assert that the priming and staging areas were removed wholesale, not
         # a part at a time (since we didn't specify any parts).
@@ -65,7 +64,7 @@ class CleanStageStepStagedTestCase(integration_tests.TestCase):
         self.run_snapcraft(['clean', 'part1', '--step=stage'])
         self.assertThat(os.path.join(self.bindir, 'file1'), Not(FileExists()))
         self.assertThat(os.path.join(self.bindir, 'file2'), FileExists())
-        self.assertThat('parts', DirExists())
+        self.assertThat(self.parts_dir, DirExists())
 
         # Now try to stage again
         self.run_snapcraft('stage')
@@ -80,10 +79,8 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('independent-parts')
         self.run_snapcraft('prime')
 
-        self.snapdir = 'prime'
-        self.snap_bindir = os.path.join(self.snapdir, 'bin')
-        self.stagedir = 'stage'
-        self.stage_bindir = os.path.join(self.stagedir, 'bin')
+        self.snap_bindir = os.path.join(self.prime_dir, 'bin')
+        self.stage_bindir = os.path.join(self.stage_dir, 'bin')
 
     def assert_files_exist(self):
         self.assertThat(os.path.join(self.snap_bindir, 'file1'), FileExists())
@@ -95,9 +92,9 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
         self.assert_files_exist()
 
         self.run_snapcraft(['clean', '--step=stage'])
-        self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat(self.snapdir, Not(DirExists()))
-        self.assertThat('parts', DirExists())
+        self.assertThat(self.stage_dir, Not(DirExists()))
+        self.assertThat(self.prime_dir, Not(DirExists()))
+        self.assertThat(self.parts_dir, DirExists())
 
         # Now try to prime again
         self.run_snapcraft('prime')
@@ -113,7 +110,7 @@ class CleanStageStepPrimedTestCase(integration_tests.TestCase):
         self.assertThat(os.path.join(self.snap_bindir, 'file1'),
                         Not(FileExists()))
         self.assertThat(os.path.join(self.snap_bindir, 'file2'), FileExists())
-        self.assertThat('parts', DirExists())
+        self.assertThat(self.parts_dir, DirExists())
 
         # Now try to prime again
         self.run_snapcraft('prime')

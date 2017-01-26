@@ -25,5 +25,5 @@ class SconsPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-scons')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'opt', 'bin', 'main'))
+            os.path.join(self.stage_dir, 'opt', 'bin', 'main'))
         self.assertEqual('Hello world\n', binary_output)

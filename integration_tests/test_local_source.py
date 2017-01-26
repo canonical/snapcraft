@@ -29,7 +29,7 @@ class LocalSourceTestCase(integration_tests.TestCase):
 
         self.assertThat(
             os.path.join(
-                'parts', 'make-project', 'build', 'stamp-all'),
+                self.parts_dir, 'make-project', 'build', 'stamp-all'),
             FileExists())
 
     def test_stage_local_source(self):
@@ -37,7 +37,7 @@ class LocalSourceTestCase(integration_tests.TestCase):
 
         self.assertThat(
             os.path.join(
-                'parts', 'make-project', 'build',
+                self.parts_dir, 'make-project', 'build',
                 'stamp-install'),
             FileExists())
 

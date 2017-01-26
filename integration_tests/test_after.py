@@ -29,7 +29,7 @@ class AfterTestCase(integration_tests.TestCase):
 
         self.assertTrue(
             os.access(
-                os.path.join('stage', 'bin', 'p3'),
+                os.path.join(self.stage_dir, 'bin', 'p3'),
                 os.X_OK))
 
     def test_build_with_circular_dependencies(self):

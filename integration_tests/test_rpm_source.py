@@ -27,8 +27,8 @@ class RpmSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-rpm')
 
         self.assertThat(
-            os.path.join('stage', 'bin', 'hello'),
+            os.path.join(self.stage_dir, 'bin', 'hello'),
             FileExists())
         self.assertThat(
-            os.path.join('stage', 'usr', 'bin', 'world'),
+            os.path.join(self.stage_dir, 'usr', 'bin', 'world'),
             FileExists())

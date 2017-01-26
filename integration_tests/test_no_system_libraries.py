@@ -35,7 +35,7 @@ class NoSystemLibrariesTestCase(integration_tests.TestCase):
         # Verify that the system's libcurl was pulled in.
         arch = snapcraft.ProjectOptions().arch_triplet
         libcurl_path = os.path.join(
-            'prime', 'usr', 'lib', arch, 'libcurl.so*')
+            self.prime_dir, 'usr', 'lib', arch, 'libcurl.so*')
         self.assertTrue(glob.glob(libcurl_path + '*'))
 
     def test_no_system_libraries(self):
@@ -43,4 +43,4 @@ class NoSystemLibrariesTestCase(integration_tests.TestCase):
 
         # Verify that the system's libcurl was NOT pulled in.
         self.assertThat(
-            os.path.join('prime', 'usr'), Not(DirExists()))
+            os.path.join(self.prime_dir, 'usr'), Not(DirExists()))

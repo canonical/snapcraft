@@ -44,7 +44,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
         binary1_wrapper_path = os.path.join(
-            'prime', 'command-assemble-bin.wrapper')
+            self.prime_dir, 'command-assemble-bin.wrapper')
         with open('binary1.after', 'r') as file_:
             expected_binary1_wrapper = file_.read()
         self.assertThat(

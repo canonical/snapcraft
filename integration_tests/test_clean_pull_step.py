@@ -33,9 +33,8 @@ class CleanPullStepPulledTestCase(integration_tests.TestCase):
 
         self.copy_project_to_cwd('independent-parts')
         self.run_snapcraft('pull')
-        self.partsdir = 'parts'
-        self.part1_sourcedir = os.path.join(self.partsdir, 'part1', 'src')
-        self.part2_sourcedir = os.path.join(self.partsdir, 'part2', 'src')
+        self.part1_sourcedir = os.path.join(self.parts_dir, 'part1', 'src')
+        self.part2_sourcedir = os.path.join(self.parts_dir, 'part2', 'src')
 
     def assert_files_exist(self):
         self.assertThat(os.path.join(self.part1_sourcedir, 'file1'),
@@ -75,14 +74,11 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('independent-parts')
         self.run_snapcraft('prime')
 
-        self.snapdir = 'prime'
-        self.snap_bindir = os.path.join(self.snapdir, 'bin')
-        self.stagedir = 'stage'
-        self.stage_bindir = os.path.join(self.stagedir, 'bin')
-        self.partsdir = 'parts'
+        self.snap_bindir = os.path.join(self.prime_dir, 'bin')
+        self.stage_bindir = os.path.join(self.stage_dir, 'bin')
         self.parts = {}
         for part in ['part1', 'part2']:
-            partdir = os.path.join(self.partsdir, part)
+            partdir = os.path.join(self.parts_dir, part)
             self.parts[part] = {
                 'partdir': partdir,
                 'sourcedir': os.path.join(partdir, 'src'),
@@ -107,8 +103,8 @@ class CleanPullStepPrimedTestCase(integration_tests.TestCase):
         self.assert_files_exist()
 
         output = self.run_snapcraft(['clean', '--step=pull'], debug=False)
-        self.assertThat(self.stagedir, Not(DirExists()))
-        self.assertThat(self.snapdir, Not(DirExists()))
+        self.assertThat(self.stage_dir, Not(DirExists()))
+        self.assertThat(self.prime_dir, Not(DirExists()))
 
         for part_name, part in self.parts.items():
             self.assertThat(part['builddir'], Not(DirExists()))

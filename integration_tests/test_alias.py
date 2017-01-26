@@ -30,12 +30,12 @@ class AliasTestCase(integration_tests.TestCase):
 
     def test_alias(self):
         self.run_snapcraft('prime', 'alias')
-        file_path = os.path.join('prime', 'bin', 'hello.sh')
+        file_path = os.path.join(self.prime_dir, 'bin', 'hello.sh')
         self.assertThat(file_path, FileExists())
         self.assertTrue(os.stat(file_path).st_mode & stat.S_IEXEC,
                         'Expected hello.sh to be executable')
 
-        snap_yaml = os.path.join('prime', 'meta', 'snap.yaml')
+        snap_yaml = os.path.join(self.prime_dir, 'meta', 'snap.yaml')
         self.assertThat(snap_yaml, FileExists())
 
         data = {}

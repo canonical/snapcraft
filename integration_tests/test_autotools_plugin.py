@@ -25,5 +25,5 @@ class AutotoolsPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'simple-autotools')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'test'))
+            os.path.join(self.stage_dir, 'bin', 'test'))
         self.assertEqual('Hello world\n', binary_output)

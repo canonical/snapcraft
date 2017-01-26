@@ -48,11 +48,13 @@ class HgSourceTestCase(integration_tests.TestCase):
             ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
 
         self.run_snapcraft('pull')
-        revno = self._get_hg_revno(os.path.join('parts', 'mercurial', 'src'))
+        revno = self._get_hg_revno(
+            os.path.join(self.parts_dir, 'mercurial', 'src'))
         self.assertEqual('"2"', revno)
 
         self.run_snapcraft('pull')
-        revno = self._get_hg_revno(os.path.join('parts', 'mercurial', 'src'))
+        revno = self._get_hg_revno(
+            os.path.join(self.parts_dir, 'mercurial', 'src'))
         self.assertEqual('"2"', revno)
 
     def test_pull_hg_tag(self):
@@ -71,14 +73,14 @@ class HgSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
-                os.path.join('parts', 'mercurial', 'src')),
+                os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
-                os.path.join('parts', 'mercurial', 'src')),
+                os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
@@ -96,14 +98,14 @@ class HgSourceTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
-                os.path.join('parts', 'mercurial', 'src')),
+                os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
-                os.path.join('parts', 'mercurial', 'src')),
+                os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
         self.assertEqual('1', revno)
 
@@ -126,10 +128,10 @@ class HgSourceTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('pull')
         self.assertThat(
-            os.path.join('parts', 'mercurial', 'src', 'second'),
+            os.path.join(self.parts_dir, 'mercurial', 'src', 'second'),
             FileExists())
 
         self.run_snapcraft('pull')
         self.assertThat(
-            os.path.join('parts', 'mercurial', 'src', 'second'),
+            os.path.join(self.parts_dir, 'mercurial', 'src', 'second'),
             FileExists())

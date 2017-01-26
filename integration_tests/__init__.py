@@ -73,6 +73,13 @@ class TestCase(testtools.TestCase):
         if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
             self.addCleanup(self.run_apt_autoremove)
 
+        if os.path.exists('parts'):
+            self.parts_dir = 'parts'
+        if os.path.exists('stage'):
+            self.stage_dir = 'stage'
+        if os.path.exists('prime'):
+            self.prime_dir = 'prime'
+
         return snapcraft_output
 
     def run_snapcraft_parser(self, arguments):

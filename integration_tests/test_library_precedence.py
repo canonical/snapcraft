@@ -33,11 +33,11 @@ class LibraryPrecedenceTestCase(integration_tests.TestCase):
 
         # Verify that, while the binary was primed, no library was pulled in.
         self.assertThat(
-            os.path.join('prime', 'bin', 'main'), FileExists())
+            os.path.join(self.prime_dir, 'bin', 'main'), FileExists())
         self.assertThat(
-            os.path.join('prime', 'lib'), Not(DirExists()))
+            os.path.join(self.prime_dir, 'lib'), Not(DirExists()))
         self.assertThat(
-            os.path.join('prime', 'usr'), Not(DirExists()))
+            os.path.join(self.prime_dir, 'usr'), Not(DirExists()))
 
         # Prime the rest of the way.
         self.run_snapcraft('prime')
@@ -45,7 +45,7 @@ class LibraryPrecedenceTestCase(integration_tests.TestCase):
         # Now verify the lib we got was the one from the snap, not from the
         # system.
         self.assertThat(
-            os.path.join('prime', 'lib', 'libcurl.so'),
+            os.path.join(self.prime_dir, 'lib', 'libcurl.so'),
             FileExists())
         self.assertThat(
-            os.path.join('prime', 'usr'), Not(DirExists()))
+            os.path.join(self.prime_dir, 'usr'), Not(DirExists()))

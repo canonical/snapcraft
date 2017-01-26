@@ -30,10 +30,10 @@ class NodeJSPluginTestCase(integration_tests.TestCase):
     def test_build_with_run_commands(self):
         self.run_snapcraft('build', 'nodejs-with-run-commands')
         self.assertThat(
-            os.path.join('parts', 'nodejs-with-run', 'build',
+            os.path.join(self.parts_dir, 'nodejs-with-run', 'build',
                          'command-one-run'),
             FileExists())
         self.assertThat(
-            os.path.join('parts', 'nodejs-with-run', 'build',
+            os.path.join(self.parts_dir, 'nodejs-with-run', 'build',
                          'command-two-run'),
             FileExists())

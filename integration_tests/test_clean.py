@@ -28,7 +28,7 @@ class CleanTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('simple-make')
         self.run_snapcraft('snap')
 
-        snap_dirs = ('stage', 'parts', 'prime')
+        snap_dirs = (self.parts_dir, self.stage_dir, self.prime_dir)
         for dir_ in snap_dirs:
             self.assertThat(dir_, DirExists())
 
@@ -47,6 +47,6 @@ class CleanTestCase(integration_tests.TestCase):
     # Regression test for LP: #1596596
     def test_clean_invalid_yaml(self):
         self.run_snapcraft('clean', 'invalid-snap')
-        self.assertThat('parts', Not(DirExists()))
-        self.assertThat('stage', Not(DirExists()))
-        self.assertThat('prime', Not(DirExists()))
+        self.assertThat(self.parts_dir, Not(DirExists()))
+        self.assertThat(self.stage_dir, Not(DirExists()))
+        self.assertThat(self.prime_dir, Not(DirExists()))

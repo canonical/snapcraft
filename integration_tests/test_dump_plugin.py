@@ -44,7 +44,7 @@ class DumpPluginTestCase(integration_tests.TestCase):
         ]
         for expected_file in expected_files:
             self.assertThat(
-                os.path.join('stage', expected_file),
+                os.path.join(self.stage_dir, expected_file),
                 FileExists())
         expected_dirs = [
             'dir-simple',
@@ -52,7 +52,7 @@ class DumpPluginTestCase(integration_tests.TestCase):
         ]
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join('stage', expected_dir),
+                os.path.join(self.stage_dir, expected_dir),
                 DirExists())
 
         # Regression test for

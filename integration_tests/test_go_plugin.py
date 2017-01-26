@@ -27,7 +27,7 @@ class GoPluginTestCase(integration_tests.TestCase):
 
         # XXX go names the binary after the directory. --elopio - 2017-01-25
         binary_output = subprocess.check_output(
-            os.path.join('stage', 'bin', os.path.basename(self.path)),
+            os.path.join(self.stage_dir, 'bin', os.path.basename(self.path)),
             universal_newlines=True)
         self.assertEqual('Hello snapcrafter\n', binary_output)
 

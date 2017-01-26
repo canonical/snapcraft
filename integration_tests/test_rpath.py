@@ -30,12 +30,13 @@ class RpathTestCase(integration_tests.TestCase):
     def test_origin_rpath(self):
         self.run_snapcraft('prime', 'rpath-test')
 
-        self.assertThat(os.path.join('prime', 'binary'), FileExists())
+        self.assertThat(os.path.join(self.prime_dir, 'binary'), FileExists())
         self.assertThat(
-            os.path.join('prime', 'lib', 'libfoo.so'), FileExists())
+            os.path.join(self.prime_dir, 'lib', 'libfoo.so'), FileExists())
 
         # Assert that the $ORIGIN rpath did not result in the library being
         # pulled in twice.
         self.assertThat(
-            os.path.join('prime', os.path.abspath('prime').lstrip('/')),
+            os.path.join(
+                self.prime_dir, os.path.abspath(self.prime_dir).lstrip('/')),
             Not(DirExists()))

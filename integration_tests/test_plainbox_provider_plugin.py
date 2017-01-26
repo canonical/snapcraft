@@ -28,6 +28,6 @@ class PlainboxProviderPluginTestCase(integration_tests.TestCase):
 
         self.assertThat(
             os.path.join(
-                'stage', 'providers', 'simple-plainbox-provider',
+                self.stage_dir, 'providers', 'simple-plainbox-provider',
                 'plainbox-provider-simple.provider'),
             FileExists())

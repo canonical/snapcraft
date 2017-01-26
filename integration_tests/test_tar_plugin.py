@@ -44,7 +44,7 @@ class TarPluginTestCase(integration_tests.TestCase):
         ]
         for expected_file in expected_files:
             self.assertThat(
-                os.path.join('stage', expected_file),
+                os.path.join(self.stage_dir, expected_file),
                 FileExists())
         expected_dirs = [
             'dir-simple',
@@ -54,11 +54,11 @@ class TarPluginTestCase(integration_tests.TestCase):
         ]
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join('stage', expected_dir),
+                os.path.join(self.stage_dir, expected_dir),
                 DirExists())
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join('stage', 'bin', 'test'))
+            os.path.join(self.stage_dir, 'bin', 'test'))
         self.assertEqual('tarproject\n', binary_output)
 
         # Regression test for
