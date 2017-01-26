@@ -28,8 +28,7 @@ class LocalPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', project_dir)
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'build-stamp'),
-            FileExists())
+            os.path.join(project_dir, 'stage', 'build-stamp'), FileExists())
 
     def test_clean_local_plugin(self):
         project_dir = 'local-plugin'
