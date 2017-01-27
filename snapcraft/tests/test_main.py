@@ -63,7 +63,7 @@ class TestMain(TestCase):
         self.useFixture(fake_logger)
         self.assertRaises(SystemExit, snapcraft.main.main, ['--debug'])
         self.assertRegex(fake_logger.output,
-                         r'Starting snapcraft v\S+ from \S+\.')
+                         r'Starting snapcraft \S+ from \S+\.')
 
     @mock.patch('snapcraft.internal.log.configure')
     def test_command_error_debug(self, mock_log_configure):

@@ -25,6 +25,7 @@ import fixtures
 import pexpect
 import testtools
 from testtools import content
+from testtools.matchers import Contains
 
 from snapcraft.tests import fixture_setup
 
@@ -165,7 +166,7 @@ class StoreTestCase(TestCase):
         output = self.run_snapcraft('logout')
         expected = ('Clearing credentials for Ubuntu One SSO.\n'
                     'Credentials cleared.\n')
-        self.assertEqual(expected, output)
+        self.assertThat(output, Contains(expected))
 
     def register(self, snap_name, private=False, wait=True):
         command = ['register', snap_name]
