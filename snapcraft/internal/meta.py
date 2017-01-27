@@ -164,8 +164,7 @@ class _SnapPackaging:
                 file_utils.link_or_copy(source, destination)
 
         # Now copy the assets contained within the snap directory directly into
-        # meta (they don't get wrappers for hooks like the ones that come from
-        # parts).
+        # meta.
         for origin in ['gui', 'hooks']:
             src_dir = os.path.join('snap', origin)
             dst_dir = os.path.join(self.meta_dir, origin)
