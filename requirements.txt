@@ -4,6 +4,8 @@ file-magic==0.3.0
 jsonschema==2.5.1
 libarchive-c==2.5
 progressbar33==2.4
+pylxd==2.2.2
+ws4py==0.3.5
 PyYAML==3.11
 pyxdg==0.25
 requests==2.9.1

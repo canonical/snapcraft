@@ -44,9 +44,9 @@ parts:
         super().make_snapcraft_yaml(self.yaml_template)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
-    @mock.patch('snapcraft.internal.lxd.check_call')
+    @mock.patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
-    def test_cleanbuild(self, mock_installed, mock_call):
+    def test_cleanbuild(self, mock_installed, mock_run):
         mock_installed.return_value = True
 
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
