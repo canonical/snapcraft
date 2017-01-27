@@ -1,4 +1,3 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016, 2017 Canonical Ltd
@@ -177,10 +176,8 @@ class _SnapPackaging:
                     destination = os.path.join(dst_dir, asset)
 
                     # First, verify that the hook is actually executable
-                    if (origin == 'hooks' and
-                            not os.stat(source).st_mode & stat.S_IEXEC):
-                        raise CommandError(
-                            'hook {!r} is not executable'.format(asset))
+                    if origin == 'hooks':
+                        _validate_hook(source)
 
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(destination)
@@ -415,3 +412,9 @@ def _find_bin(binary, basedir):
                        stdout=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             raise CommandError(binary)
+
+
+def _validate_hook(hook_path):
+    if not os.stat(hook_path).st_mode & stat.S_IEXEC:
+        asset = os.path.basename(hook_path)
+        raise CommandError('hook {!r} is not executable'.format(asset))
