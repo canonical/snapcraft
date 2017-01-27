@@ -14,17 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-
-import integration_tests
+from snapcraft import BasePlugin
 
 
-class EmptyDirTestCase(integration_tests.TestCase):
-
-    def test_no_yaml(self):
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, 'pull')
-        expected = (
-            "Could not find snap/snapcraft.yaml. Are you sure you're in the "
-            "right directory?\nTo start a new project, use 'snapcraft init'\n")
-        self.assertEqual(expected, exception.output)
+class LocalPlugin(BasePlugin):
+    def build(self):
+        return self.run(['touch', 'build-stamp'], self.installdir)

@@ -19,6 +19,8 @@ import multiprocessing
 import os
 import platform
 
+from snapcraft.internal.deprecations import handle_deprecation_notice
+
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +153,11 @@ class ProjectOptions:
 
     @property
     def local_plugins_dir(self):
-        return os.path.join(self.parts_dir, 'plugins')
+        deprecated_plugins_dir = os.path.join(self.parts_dir, 'plugins')
+        if os.path.exists(deprecated_plugins_dir):
+            handle_deprecation_notice('dn2')
+            return deprecated_plugins_dir
+        return os.path.join(self.__project_dir, 'snap', 'plugins')
 
     @property
     def parts_dir(self):

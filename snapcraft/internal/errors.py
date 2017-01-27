@@ -39,6 +39,10 @@ class MissingState(Exception):
     pass
 
 
+class SnapcraftEnvironmentError(Exception):
+    pass
+
+
 class PrimeFileConflictError(SnapcraftError):
 
     fmt = (
