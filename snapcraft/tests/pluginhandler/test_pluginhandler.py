@@ -1731,6 +1731,7 @@ class CleanTestCase(CleanBaseTestCase):
 
         part_name = 'test_part'
         p = mocks.loadplugin(part_name)
+        mock_exists.reset_mock()
         p.clean()
 
         partdir = os.path.join(self.parts_dir, part_name)
@@ -1766,6 +1767,7 @@ class CleanTestCase(CleanBaseTestCase):
 
         part_name = 'test_part'
         p = mocks.loadplugin(part_name)
+        mock_exists.reset_mock()
         p.clean()
 
         partdir = partdir = os.path.join(self.parts_dir, part_name)
