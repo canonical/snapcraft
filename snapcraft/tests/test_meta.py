@@ -55,10 +55,22 @@ class CreateBaseTestCase(tests.TestCase):
             'confinement': 'devmode',
         }
 
-        self.project_options = ProjectOptions()
+        patcher = patch(
+            'snapcraft.internal.project_loader.get_snapcraft_yaml')
+        self.mock_get_yaml = patcher.start()
+        self.mock_get_yaml.return_value = os.path.join(
+            'snap', 'snapcraft.yaml')
+        self.addCleanup(patcher.stop)
+
+        # Ensure the ensure snapcraft.yaml method has something to copy.
+        os.makedirs('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+
         self.meta_dir = os.path.join(self.prime_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
+
+        self.project_options = ProjectOptions()
 
     def generate_meta_yaml(self):
         create_snap_packaging(self.config_data, self.project_options)
@@ -339,7 +351,17 @@ class CreateTestCase(CreateBaseTestCase):
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
+
+    scenarios = (
+        ('with build artifacts', dict(build_info='yes')),
+        ('without build artifacts', dict(build_info='')),
+    )
+
     def test_write_snap_directory(self):
+        if self.build_info:
+            self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_BUILD_INFO', self.build_info))
+
         # Setup a snap directory containing a few things.
         _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
         _create_file(
@@ -349,8 +371,14 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         # well as the hook making it into meta/.
         self.generate_meta_yaml()
         prime_snap_dir = os.path.join(self.prime_dir, 'snap')
-        self.assertThat(
-            os.path.join(prime_snap_dir, 'snapcraft.yaml'), FileExists())
+
+        if self.build_info:
+            self.assertThat(os.path.join(prime_snap_dir, 'snapcraft.yaml'),
+                            FileExists())
+        else:
+            self.assertThat(os.path.join(prime_snap_dir, 'snapcraft.yaml'),
+                            Not(FileExists()))
+
         self.assertThat(
             os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
         self.assertThat(
@@ -487,7 +515,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         # Check that the wrapper is created even if there is already a file
         # with the same name.
-        open(os.path.join('prime', 'test_relexepath.wrapper'), 'w').close()
+        open(os.path.join(
+            self.prime_dir, 'test_relexepath.wrapper'), 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)

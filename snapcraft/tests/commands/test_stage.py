@@ -66,7 +66,8 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            "The part named 'no-stage' is not defined in 'snapcraft.yaml'\n")
+            "The part named 'no-stage' is not defined in "
+            "'snap/snapcraft.yaml'\n")
 
     def test_stage_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

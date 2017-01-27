@@ -35,6 +35,7 @@ from unittest.mock import (
 )
 
 import fixtures
+from testtools.matchers import Equals
 
 import snapcraft
 from . import mocks
@@ -836,8 +837,8 @@ parts:
     def test_pc_files_correctly_prefixed(self):
         pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
         stage_pc_install = os.path.join(
-            'parts', 'stage-pc', 'install', pc_file)
-        stage_pc_stage = os.path.join('stage', pc_file)
+            self.parts_dir, 'stage-pc', 'install', pc_file)
+        stage_pc_stage = os.path.join(self.stage_dir, pc_file)
 
         # Run build
         lifecycle.execute('build', snapcraft.ProjectOptions())
@@ -863,7 +864,7 @@ parts:
 
         with open(stage_pc_stage) as f:
             pc_file_content = f.read()
-        expected_pc_file_content = """prefix={}/stage/usr
+        expected_pc_file_content = """prefix={}/usr
 exec_prefix=${{prefix}}
 libdir=${{prefix}}/lib
 includedir=${{prefix}}/include
@@ -874,16 +875,16 @@ Version: 0.4
 Libs: -L${{libdir}} -lgranite
 Cflags: -I${{includedir}}/granite
 Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-""".format(os.getcwd())
+""".format(self.stage_dir)
 
-        self.assertEqual(pc_file_content, expected_pc_file_content)
+        self.assertThat(pc_file_content, Equals(expected_pc_file_content))
 
     def test_pc_files_correctly_prefixed_when_installed(self):
         pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
         install_path = os.path.join(
-            os.getcwd(), 'parts', 'stage-pc', 'install')
+            self.parts_dir, 'stage-pc', 'install')
         stage_pc_install = os.path.join(install_path, pc_file)
-        stage_pc_stage = os.path.join('stage', pc_file)
+        stage_pc_stage = os.path.join(self.stage_dir, pc_file)
 
         # Run build
         lifecycle.execute('build', snapcraft.ProjectOptions())
@@ -909,7 +910,7 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 
         with open(stage_pc_stage) as f:
             pc_file_content = f.read()
-        expected_pc_file_content = """prefix={}/stage/usr
+        expected_pc_file_content = """prefix={}/usr
 exec_prefix=${{prefix}}
 libdir=${{prefix}}/lib
 includedir=${{prefix}}/include
@@ -920,9 +921,9 @@ Version: 0.4
 Libs: -L${{libdir}} -lgranite
 Cflags: -I${{includedir}}/granite
 Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-""".format(os.getcwd())
+""".format(self.stage_dir)
 
-        self.assertEqual(pc_file_content, expected_pc_file_content)
+        self.assertThat(pc_file_content, Equals(expected_pc_file_content))
 
 
 class PluginMakedirsTestCase(tests.TestCase):
@@ -933,20 +934,19 @@ class PluginMakedirsTestCase(tests.TestCase):
     ]
 
     def get_plugin_dirs(self, part_name):
-        parts_dir = os.path.join(self.path, 'parts')
         return [
-            os.path.join(parts_dir, part_name, 'src'),
-            os.path.join(parts_dir, part_name, 'build'),
-            os.path.join(parts_dir, part_name, 'install'),
-            os.path.join(self.path, 'stage'),
-            os.path.join(self.path, 'prime')
+            os.path.join(self.parts_dir, part_name, 'src'),
+            os.path.join(self.parts_dir, part_name, 'build'),
+            os.path.join(self.parts_dir, part_name, 'install'),
+            os.path.join(self.stage_dir),
+            os.path.join(self.prime_dir)
         ]
 
     def test_makedirs_with_existing_dirs(self):
         part_name = 'test_part'
         dirs = self.get_plugin_dirs(part_name)
         if self.make_dirs:
-            os.makedirs(os.path.join('parts', part_name))
+            os.makedirs(os.path.join(self.parts_dir, part_name))
             for d in dirs:
                 os.mkdir(d)
 
@@ -1781,10 +1781,10 @@ class CleanTestCase(CleanBaseTestCase):
 
         part_name = 'test_part'
         p = mocks.loadplugin(part_name)
+        mock_exists.reset_mock()
         p.clean()
 
-        partdir = os.path.join(
-            os.path.abspath(os.curdir), 'parts', part_name)
+        partdir = os.path.join(self.parts_dir, part_name)
         mock_exists.assert_called_once_with(partdir)
         mock_listdir.assert_called_once_with(partdir)
         mock_rmdir.assert_called_once_with(partdir)
@@ -1800,8 +1800,7 @@ class CleanTestCase(CleanBaseTestCase):
         p = mocks.loadplugin(part_name)
         p.clean()
 
-        partdir = os.path.join(
-            os.path.abspath(os.curdir), 'parts', part_name)
+        partdir = os.path.join(self.parts_dir, part_name)
         mock_exists.assert_has_calls([call(partdir)])
         self.assertFalse(mock_listdir.called)
         self.assertFalse(mock_rmdir.called)
@@ -1818,10 +1817,10 @@ class CleanTestCase(CleanBaseTestCase):
 
         part_name = 'test_part'
         p = mocks.loadplugin(part_name)
+        mock_exists.reset_mock()
         p.clean()
 
-        partdir = os.path.join(
-            os.path.abspath(os.curdir), 'parts', part_name)
+        partdir = partdir = os.path.join(self.parts_dir, part_name)
         mock_exists.assert_called_once_with(partdir)
         mock_listdir.assert_called_once_with(partdir)
         self.assertFalse(mock_rmdir.called)

@@ -1,0 +1,11 @@
+name: test-local-plugins-in-parts
+version: 0.1
+summary: local plugin in parts/plugins
+description: Tests if local plugins load and build a snap
+confinement: strict
+grade: devel
+
+parts:
+    x-local-plugin:
+      plugin: x-local-plugin
+      source: .

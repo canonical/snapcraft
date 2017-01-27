@@ -155,7 +155,7 @@ class SnapTestCase(integration_tests.TestCase):
     def test_snap_from_snapcraft_init(self):
         self.assertThat('snapcraft.yaml', Not(FileExists()))
         self.run_snapcraft('init')
-        self.assertThat('snapcraft.yaml', FileExists())
+        self.assertThat(os.path.join('snap', 'snapcraft.yaml'), FileExists())
 
         self.run_snapcraft('snap')
 
