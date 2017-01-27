@@ -26,7 +26,7 @@ import logging
 
 _DEPRECATION_MESSAGES = {
     'dn1': "The 'snap' keyword has been replaced by 'prime'.",
-    'dn2': "Custom plugins should now be placed in `snap/plugins`.",
+    'dn2': "Custom plugins should now be placed in 'snap/plugins'.",
 }
 
 _DEPRECATION_URL_FMT = 'http://snapcraft.io/docs/deprecation-notices/{id}'
