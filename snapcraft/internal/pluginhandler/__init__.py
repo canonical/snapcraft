@@ -519,7 +519,7 @@ class PluginHandler:
         snap_files, snap_dirs = self._get_step_files('prime')
 
         _migrate_files(snap_files, snap_dirs, self.code.installdir,
-                       self.snapdir, step='prime')
+                       self.snapdir)
 
         new_snap_files = set()
         for snap_file in snap_files:
@@ -882,7 +882,7 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_dirs(snap_dirs, srcdir, dstdir, step='stage'):
+def _migrate_dirs(snap_dirs, srcdir, dstdir):
     for directory in snap_dirs:
         copy_tree = False
         if type(directory) == tuple:
@@ -909,11 +909,11 @@ def _can_skip(src, dst, missing_ok=False):
     return False
 
 
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, step='stage',
+def _migrate_files(snap_files, snap_dirs, srcdir, dstdir,
                    missing_ok=False, follow_symlinks=False,
                    fixup_func=lambda *args: None):
 
-    _migrate_dirs(snap_dirs, srcdir, dstdir, step)
+    _migrate_dirs(snap_dirs, srcdir, dstdir)
 
     for snap_file in snap_files:
         if type(snap_file) == tuple:

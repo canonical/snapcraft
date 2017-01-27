@@ -1358,7 +1358,7 @@ class StateTestCase(StateBaseTestCase):
             self.handler.snapdir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.code.installdir,
-                 self.handler.snapdir, step='prime'),
+                 self.handler.snapdir),
             call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
                  follow_symlinks=True),
         ])
@@ -1419,7 +1419,7 @@ class StateTestCase(StateBaseTestCase):
         # dependency.
         mock_migrate_files.assert_called_once_with(
             {'bin/file'}, {'bin'}, self.handler.code.installdir,
-            self.handler.snapdir, step='prime')
+            self.handler.snapdir)
 
         state = self.handler.get_state('prime')
 
@@ -1461,7 +1461,7 @@ class StateTestCase(StateBaseTestCase):
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
             self.handler.code.installdir,
-            self.handler.snapdir, step='prime')
+            self.handler.snapdir)
 
         state = self.handler.get_state('prime')
 

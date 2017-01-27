@@ -144,7 +144,6 @@ def create_similar_directory(source, destination, follow_symlinks=False):
         uid = stat.st_uid
         gid = stat.st_gid
 
-    if os.path.exists(source):
         os.makedirs(destination, exist_ok=True)
         try:
             os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
