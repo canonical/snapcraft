@@ -17,6 +17,10 @@
 import copy
 import os
 from unittest import mock
+from testtools.matchers import (
+    DirExists,
+    FileExists
+)
 
 from snapcraft.internal import common
 from snapcraft.internal import sources
@@ -140,6 +144,27 @@ class TestLocal(tests.TestCase):
         self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
         self.assertGreater(
             os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+
+    def test_pull_keeps_symlinks(self):
+        # Create a source containing a directory, a file and symlinks to both.
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
+        os.symlink('dir', os.path.join('src', 'dir_symlink'))
+        os.symlink('file', os.path.join('src', 'dir', 'file_symlink'))
+
+        local = sources.Local('src', 'destination')
+        local.pull()
+
+        # Verify that both the file and the directory symlinks were kept.
+        self.expectThat(os.path.join('destination', 'dir'), DirExists())
+        self.expectThat(
+            os.path.join('destination', 'dir_symlink'),
+            tests.LinkExists('dir'))
+        self.expectThat(
+            os.path.join('destination', 'dir', 'file'), FileExists())
+        self.expectThat(
+            os.path.join('destination', 'dir', 'file_symlink'),
+            tests.LinkExists('file'))
 
 
 class TestLocalIgnores(tests.TestCase):
