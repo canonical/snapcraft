@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
 
+import testscenarios
 from testtools.matchers import (
+    FileContains,
     FileExists,
     Not,
 )
@@ -58,3 +61,26 @@ class PrimeTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(project_dir, 'prime', 'with-c'),
             FileExists())
+
+
+class PrimedAssetsTestCase(testscenarios.WithScenarios,
+                           integration_tests.TestCase):
+
+    scenarios = [
+        ('setup', dict(project_dir='assets-with-gui-in-setup')),
+        ('snap', dict(project_dir='assets-with-gui-in-snap')),
+    ]
+
+    def test_assets_in_meta(self):
+        self.run_snapcraft('prime', self.project_dir)
+
+        gui_dir = os.path.join(self.project_dir, 'prime', 'meta', 'gui')
+        expected_desktop = dedent("""\
+            [Desktop Entry]
+            Name=My App
+            Exec=my-app
+            Type=Application
+            """)
+        self.expectThat(os.path.join(gui_dir, 'icon.png'), FileExists())
+        self.expectThat(os.path.join(gui_dir, 'my-app.desktop'),
+                        FileContains(expected_desktop))
