@@ -57,5 +57,6 @@ class LocalPluginCleanTestCase(testscenarios.WithScenarios,
         self.run_snapcraft('clean', self.project_dir)
 
         self.assertThat(
-            os.path.join(self.project_dir, self.base_dir, 'plugins', 'x_local_plugin.py'),
+            os.path.join(self.project_dir, self.base_dir,
+                         'plugins', 'x_local_plugin.py'),
             FileExists(), 'Expected local plugin to remain when cleaned')
