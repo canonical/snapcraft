@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/autopkgtest
 
 snapd_config_dir=/etc/systemd/system/snapd.service.d
 mkdir -p $snapd_config_dir
