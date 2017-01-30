@@ -47,5 +47,5 @@ class Local(Base):
             else:
                 return []
 
-        shutil.copytree(source_abspath, self.source_dir,
+        shutil.copytree(source_abspath, self.source_dir, symlinks=True,
                         copy_function=file_utils.link_or_copy, ignore=ignore)

@@ -79,8 +79,9 @@ _ARCH_TRANSLATIONS = {
 }
 
 
-_USERSPACE_ARCHITECTURE = {
+_32BIT_USERSPACE_ARCHITECTURE = {
     'aarch64': 'armv7l',
+    'armv8l': 'armv7l',
     'ppc64le': 'ppc',
     'x86_64': 'i686',
 }
@@ -89,7 +90,7 @@ _USERSPACE_ARCHITECTURE = {
 def _get_platform_architecture():
     architecture = platform.machine()
     if platform.architecture()[0] == '32bit':
-        userspace = _USERSPACE_ARCHITECTURE.get(architecture)
+        userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
         if userspace:
             architecture = userspace
 

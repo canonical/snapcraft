@@ -1,0 +1,17 @@
+name: snap-with-assets-in-setup
+version: '0.1'
+summary: Backwards compat test for assets in setup
+description: |
+  Verify the assets in setup are still respected and copied over
+  correctly.
+
+grade: devel
+confinement: devmode
+
+apps:
+  my-app:
+      command: bash
+
+parts:
+  my-app:
+    plugin: nil
