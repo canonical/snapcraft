@@ -281,14 +281,14 @@ class _SnapPackaging:
                 executable = '"{}" "{}"'.format(new_shebang, wrapexec)
 
         with open(wrappath, 'w+') as f:
-            f.write('#!/bin/sh\n')
+            print('#!/bin/sh', file=f)
             if assembled_env:
-                f.write('{}\n'.format(assembled_env))
-                f.write('export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
-                        '$LD_LIBRARY_PATH\n')
+                print('{}'.format(assembled_env), file=f)
+                print('export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                      '$LD_LIBRARY_PATH', file=f)
             if cwd:
-                f.write('{}\n'.format(cwd))
-            f.write('exec {} {}\n'.format(executable, args))
+                print('{}'.format(cwd), file=f)
+            print('exec {} {}'.format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)
 
