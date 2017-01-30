@@ -259,7 +259,7 @@ class _SnapPackaging:
         # that would affect the applications view of the classic
         # environment it is dropped into.
         replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
-            self._parts_dir)
+            re.escape(self._parts_dir))
         if self._config_data['confinement'] == 'classic':
             assembled_env = None
         else:
