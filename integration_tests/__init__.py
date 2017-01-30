@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,18 +15,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fileinput
+import itertools
+import multiprocessing
 import os
 import shutil
 import subprocess
+import sys
 import time
+import traceback
+import unittest
 import uuid
 
 import fixtures
 import pexpect
+import subunit
 import testtools
 from testtools import content
+from subunit import test_results
 
 from snapcraft.tests import fixture_setup
+
+
+CPU_COUNT = multiprocessing.cpu_count()
 
 
 class TestCase(testtools.TestCase):
@@ -312,3 +322,73 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
+
+
+def fork_for_tests(concurrency_num=CPU_COUNT):
+    """Implementation of `make_tests` used to construct `ConcurrentTestSuite`.
+
+    :param concurrency_num: number of processes to use.
+    """
+    def do_fork(suite):
+        """Take suite and start up multiple runners by forking (Unix only).
+
+        :param suite: TestSuite object.
+
+        :return: An iterable of TestCase-like objects which can each have
+        run(result) called on them to feed tests to result.
+        """
+        result = []
+        test_blocks = partition_tests(suite, concurrency_num)
+        # Clear the tests from the original suite so it doesn't keep them alive
+        suite._tests[:] = []
+        for process_tests in test_blocks:
+            process_suite = unittest.TestSuite(process_tests)
+            # Also clear each split list so new suite has only reference
+            process_tests[:] = []
+            c2pread, c2pwrite = os.pipe()
+            pid = os.fork()
+            if pid == 0:
+                try:
+                    stream = os.fdopen(c2pwrite, 'wb', 1)
+                    os.close(c2pread)
+                    # Leave stderr and stdout open so we can see test noise
+                    # Close stdin so that the child goes away if it decides to
+                    # read from stdin (otherwise its a roulette to see what
+                    # child actually gets keystrokes for pdb etc).
+                    sys.stdin.close()
+                    result = test_results.AutoTimingTestResultDecorator(
+                        subunit.TestProtocolClient(stream)
+                    )
+                    process_suite.run(result)
+                except:
+                    # Try and report traceback on stream, but exit with error
+                    # even if stream couldn't be created or something else
+                    # goes wrong.  The traceback is formatted to a string and
+                    # written in one go to avoid interleaving lines from
+                    # multiple failing children.
+                    try:
+                        stream.write(traceback.format_exc())
+                    finally:
+                        os._exit(1)
+                os._exit(0)
+            else:
+                os.close(c2pwrite)
+                stream = os.fdopen(c2pread, 'rb', 1)
+                test = subunit.ProtocolTestCase(stream)
+                result.append(test)
+        return result
+    return do_fork
+
+
+def partition_tests(suite, count):
+    """Partition suite into count lists of tests."""
+    # This just assigns tests in a round-robin fashion.  On one hand this
+    # splits up blocks of related tests that might run faster if they shared
+    # resources, but on the other it avoids assigning blocks of slow tests to
+    # just one partition.  So the slowest partition shouldn't be much slower
+    # than the fastest.
+    partitions = [list() for _ in range(count)]
+    tests = testtools.iterate_tests(suite)
+    for partition, test in zip(itertools.cycle(partitions), tests):
+        partition.append(test)
+    return partitions

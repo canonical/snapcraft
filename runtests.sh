@@ -73,7 +73,7 @@ run_integration(){
     else
         pattern=$2
     fi
-    python3 -m unittest discover -b -v -s integration_tests -p $pattern
+    python3 -m integration_tests
 }
 
 run_snaps(){
