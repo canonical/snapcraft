@@ -75,10 +75,6 @@ class PythonPluginTestCase(tests.TestCase):
         self.mock_call_output = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.shutil.which')
-        self.mock_which = patcher.start()
-        self.addCleanup(patcher.stop)
-
     def test_schema(self):
         schema = python.PythonPlugin.schema()
         expected_requirements = {'type': 'string'}
@@ -167,11 +163,9 @@ class PythonPluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
-        self.mock_which.return_value = pip3
-
         pip_command = [
-            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'), pip3]
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
 
         pip_download = ['download',
                         '--disable-pip-version-check',
@@ -199,11 +193,9 @@ class PythonPluginTestCase(tests.TestCase):
 
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
-        self.mock_which.return_value = pip3
-
         pip_command = [
-            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'), pip3]
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
 
         pip_download = ['download',
                         '--disable-pip-version-check',
@@ -260,13 +252,12 @@ class PythonPluginTestCase(tests.TestCase):
 
         mock_base_build.side_effect = build_side_effect
 
-        pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
-        self.mock_which.return_value = pip3
-
-        pip_command = [
-            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'), pip3]
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+
+        pip_command = [
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
 
         pip_wheel = ['wheel',
                      '--disable-pip-version-check', '--no-index',
@@ -299,11 +290,9 @@ class PythonPluginTestCase(tests.TestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        pip3 = os.path.join(plugin.installdir, 'usr', 'bin', 'pip3')
-        self.mock_which.return_value = pip3
-
         pip_command = [
-            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'), pip3]
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
 
         pip_download = ['download',
                         '--disable-pip-version-check',

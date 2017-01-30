@@ -204,10 +204,11 @@ class PythonPlugin(snapcraft.BasePlugin):
         env['PYTHONUSERBASE'] = self.installdir
         args = ['pip', 'setuptools', 'wheel']
 
-        pip_command = [
-            self.python_command,
-            snapcraft.shutil.which(
-                os.path.basename(self.system_pip_command), env=env)]
+        pip_command = [self.python_command, '-m', 'pip']
+
+        # if python_command it is not from stage we don't have pip
+        if not self.python_command.startswith(self.project.stage_dir):
+            env['PYTHONHOME'] = '/usr'
 
         pip = _Pip(exec_func=subprocess.check_call,
                    runnable=pip_command,
@@ -216,7 +217,6 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         if download:
             pip.download(args)
-        # pip.wheel(args)
         pip.install(args)
 
     def _get_build_env(self):
@@ -266,10 +266,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         env = self._get_build_env()
 
-        pip_command = [
-            self.python_command,
-            snapcraft.shutil.which(
-                os.path.basename(self.system_pip_command), env=env)]
+        pip_command = [self.python_command, '-m', 'pip']
 
         constraints = []
         if self.options.constraints:
