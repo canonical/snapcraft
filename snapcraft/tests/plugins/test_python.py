@@ -119,19 +119,6 @@ class PythonPluginTestCase(tests.TestCase):
         env_missing_path = plugin.env('/testpath')
         self.assertTrue('PYTHONPATH=/testpath' not in env_missing_path)
 
-    def test_system_pip_command(self):
-        plugin = python.PythonPlugin('test-part', self.options,
-                                     self.project_options)
-        pip_command = os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
-        self.assertEqual(plugin.system_pip_command, pip_command)
-
-        # NOTE(SamYaple): python2 pip test
-        self.options.python_version = 'python2'
-        plugin = python.PythonPlugin('test-part', self.options,
-                                     self.project_options)
-        pip_command = os.path.join(os.path.sep, 'usr', 'bin', 'pip')
-        self.assertEqual(plugin.system_pip_command, pip_command)
-
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
     def test_missing_setup_path(self, mock_path_exists, mock_run):
