@@ -70,7 +70,7 @@ class PrimedAssetsTestCase(testscenarios.WithScenarios,
     def test_assets_in_meta(self):
         self.run_snapcraft('prime', self.project_dir)
 
-        gui_dir = os.path.join('prime', 'meta', 'gui')
+        gui_dir = os.path.join(self.prime_dir, 'meta', 'gui')
         expected_desktop = dedent("""\
             [Desktop Entry]
             Name=My App
