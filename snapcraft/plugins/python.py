@@ -153,13 +153,6 @@ class PythonPlugin(snapcraft.BasePlugin):
             return ['python']
 
     @property
-    def system_pip_command(self):
-        if self.options.python_version == 'python3':
-            return os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
-        else:
-            return os.path.join(os.path.sep, 'usr', 'bin', 'pip')
-
-    @property
     def stage_packages(self):
         if not os.path.exists(self._get_python_command()):
             return super().stage_packages + self.plugin_stage_packages
@@ -203,6 +196,11 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _install_pip(self, download):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
+        # since we are using an independent env we need to export this too
+        # TODO: figure out if we can move back to common.run
+        env['SNAPCRAFT_STAGE'] = self.project.stage_dir
+        env['SNAPCRAFT_PART_INSTALL'] = self.installdir
+
         args = ['pip', 'setuptools', 'wheel']
 
         pip_command = [self._get_python_command(), '-m', 'pip']
@@ -348,9 +346,11 @@ class PythonPlugin(snapcraft.BasePlugin):
         else:
             base_dir = self.installdir
 
-        python_site_dir = glob(os.path.join(
+        python_site = glob(os.path.join(
             base_dir, 'usr', 'lib',
-            '{}*'.format(self.options.python_version)))[0]
+            '{}*'.format(self.options.python_version),
+            'site.py'))[0]
+        python_site_dir = os.path.dirname(python_site)
 
         return os.path.join(self.installdir,
                             python_site_dir[len(base_dir)+1:],
@@ -358,9 +358,6 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
-        fileset.append('-bin/pip*')
-        fileset.append('-bin/easy_install*')
-        fileset.append('-bin/wheel')
         # Holds all the .pyc files. It is a major cause of inter part
         # conflict.
         fileset.append('-**/__pycache__')
