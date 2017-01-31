@@ -32,3 +32,7 @@ class PlainboxProviderPluginTestCase(integration_tests.TestCase):
                 project_dir, 'stage', 'providers', 'simple-plainbox-provider',
                 'plainbox-provider-simple.provider'),
             FileExists())
+
+    def test_snap_provider_with_deps(self):
+        project_dir = 'plainbox-provider-with-deps'
+        self.run_snapcraft('prime', project_dir)
