@@ -159,15 +159,16 @@ class PythonPlugin(snapcraft.BasePlugin):
         else:
             return os.path.join(os.path.sep, 'usr', 'bin', 'pip')
 
+    @property
+    def stage_packages(self):
+        if not os.path.exists(self._get_python_command()):
+            return super().stage_packages + self.plugin_stage_packages
+        else:
+            return super().stage_packages
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(self.plugin_build_packages)
-        self.python_command = self._get_python_command()
-
-        # iif python is provided we don't add any stage-packages.
-        if not os.path.exists(self.python_command):
-            self.stage_packages.extend(self.plugin_stage_packages)
-
         self._python_package_dir = os.path.join(self.partdir, 'packages')
 
     def pull(self):
@@ -204,10 +205,10 @@ class PythonPlugin(snapcraft.BasePlugin):
         env['PYTHONUSERBASE'] = self.installdir
         args = ['pip', 'setuptools', 'wheel']
 
-        pip_command = [self.python_command, '-m', 'pip']
+        pip_command = [self._get_python_command(), '-m', 'pip']
 
         # if python_command it is not from stage we don't have pip
-        if not self.python_command.startswith(self.project.stage_dir):
+        if not self._get_python_command().startswith(self.project.stage_dir):
             env['PYTHONHOME'] = '/usr'
 
         pip = _Pip(exec_func=subprocess.check_call,
@@ -222,7 +223,7 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _get_build_env(self):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
-        if self.python_command.startswith(self.project.stage_dir):
+        if self._get_python_command().startswith(self.project.stage_dir):
             env['PYTHONHOME'] = os.path.join(self.project.stage_dir, 'usr')
         else:
             env['PYTHONHOME'] = os.path.join(self.installdir, 'usr')
@@ -266,7 +267,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         env = self._get_build_env()
 
-        pip_command = [self.python_command, '-m', 'pip']
+        pip_command = [self._get_python_command(), '-m', 'pip']
 
         constraints = []
         if self.options.constraints:
@@ -342,7 +343,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         return user_site_dir[len(self.installdir)+1:]
 
     def _get_sitecustomize_path(self):
-        if self.python_command.startswith(self.project.stage_dir):
+        if self._get_python_command().startswith(self.project.stage_dir):
             base_dir = self.project.stage_dir
         else:
             base_dir = self.installdir
