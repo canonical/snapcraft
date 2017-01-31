@@ -52,6 +52,10 @@ class CopyPlugin(snapcraft.BasePlugin):
 
         schema['properties']['files'] = {
             'type': 'object',
+            'additionalProperties': {
+                'type': 'string',
+                'minLength': 1
+            }
         }
 
         # The `files` keyword is required here, but the `source` keyword is
