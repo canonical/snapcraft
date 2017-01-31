@@ -344,7 +344,6 @@ def _build_env(root, snap_name, confinement, arch_triplet,
                    # Building tools to continue the build becomes problematic
                    # with nodefaultlib.
                    '-Wl,-z,nodefaultlib '
-                   '-Wl,--enable-new-dtags '
                    '-Wl,--dynamic-linker={0} '
                    '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
 
