@@ -1,3 +1,60 @@
+snapcraft (2.26) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * misc: remove snapd "submodule". (#1051)
+  * meta: ensure snap.yaml is desktop free. (#1053)
+  * godeps plugin: support for go-packages. (#1057)
+  * store: proper error colors for login failures. (#1055)
+  * project: snapcraft.yaml in a snap directory. (#1073)
+  * project: new plugin directory location. (#1082)
+  * project: support for gui in snap. (#1083)
+  * New upstream release 2.26 (LP: #1656291)
+
+  [ Shawn Wang ]
+  * store: fix sso_host for dev sso. (#1031)
+
+  [ Matthew Aguirre ]
+  * gradle plugin: update gradle plugin to support both gradle and
+    gradlew. (#1024)
+
+  [ Leo Arias ]
+  * ci: use python2 to check the CLA (#1044)
+  * ci: remove the old tarmac file. (#1072)
+  * ui: add a space after the developer agreement prompt (#1065)
+  * tests: use a temporary directory for snaps tests. (#1068)
+  * tests: increase the timeout for the ros snap test, decrease the rest (#1067)
+  * tests: add ubuntu user to sudoers on every adt platform. (#1091)
+
+  [ Kyle Fazzari ]
+  * schema: print allowed length for length failures. (#1056)
+  * tour: add g++ as dependency to 01-reusable-part. (#1062)
+  * file_utils: copy symlinks to directories as symlinks. (#1063)
+  * repo: add multiarch support for stage packages. (#1050)
+  * catkin plugin: don't stage compilers. (#1070)
+  * sources: preserve symlinks to directories. (#1081)
+
+  [ Bjorn Tillenius ]
+  * python plugin: download all python packages using one command. (#1071)
+
+  [ Olivier Tilloy ]
+  * meta: proper Exec key in desktop files for apps named like their parent
+    package. (#1061)
+  * meta: rename desktop files to match the app names. (#1074)
+
+  [ Marco Trevisan ]
+  * options: use actual userspace architecture for building in 32bit (#1060)
+  * autotools plugin: extend Make plugin instead of repeating code (#1076)
+
+  [ Daniel Watkins ]
+  * tests: don't wait for lxd networking in cleanbuild test. (#1087)
+
+  [ Joe Talbott ]
+  * parser: handle parser and network errors. (#1045)
+  * parser: use an XDG directory for sources. (#1032)
+  * parser: return an error code if an origin is missing a part. (#1058)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 27 Jan 2017 20:38:10 +0000
+
 snapcraft (2.25) xenial; urgency=medium
 
   [ Joe Talbott ]
