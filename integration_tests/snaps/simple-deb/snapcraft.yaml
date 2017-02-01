@@ -16,3 +16,8 @@ parts:
   deb-with-symlink:
     plugin: dump
     source: symlink_1.0.deb
+
+  deb-source-checksum:
+    plugin: dump
+    source: small_0.1-1.deb
+    source-checksum: sha256/b439909266aac7384e15d041b90e98d1e7fc774e5e1ac32801859882e7012182
