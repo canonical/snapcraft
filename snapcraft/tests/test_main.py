@@ -57,6 +57,14 @@ class TestMain(TestCase):
         self.assertEqual(1, raised.code)
         self.assertEqual(fake_logger.output, 'some error\n')
 
+    @mock.patch('snapcraft.internal.common.run')
+    def test_command_debug_logs_version(self, mock_run):
+        fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(fake_logger)
+        self.assertRaises(SystemExit, snapcraft.main.main, ['--debug'])
+        self.assertRegex(fake_logger.output,
+                         r'Starting snapcraft \S+ from \S+\.')
+
     @mock.patch('snapcraft.internal.log.configure')
     def test_command_error_debug(self, mock_log_configure):
         with mock.patch('snapcraft.topic_help') as mock_cmd:

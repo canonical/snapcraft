@@ -229,6 +229,9 @@ def main(argv=None):
     log.configure(log_level=log_level)
     project_options = _get_project_options(args)
 
+    logger.debug("Starting snapcraft {} from {}.".format(
+        snapcraft.__version__, os.path.dirname(__file__)))
+
     if args['strip']:
         logger.warning("DEPRECATED: use 'prime' instead of 'strip'")
         args['prime'] = True
