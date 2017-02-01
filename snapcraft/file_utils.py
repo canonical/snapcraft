@@ -43,8 +43,9 @@ def replace_in_file(directory, file_pattern, search_pattern, replacement):
     for root, directories, files in os.walk(directory):
         for file_name in files:
             if file_pattern.match(file_name):
-                _search_and_replace_contents(os.path.join(root, file_name),
-                                             search_pattern, replacement)
+                search_and_replace_contents(os.path.join(root, file_name),
+                                            search_pattern=search_pattern,
+                                            replacement=replacement)
 
 
 def link_or_copy(source, destination, follow_symlinks=False):
@@ -151,7 +152,7 @@ def create_similar_directory(source, destination, follow_symlinks=False):
     shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
 
 
-def _search_and_replace_contents(file_path, search_pattern, replacement):
+def search_and_replace_contents(file_path, *, search_pattern, replacement):
     # Don't bother trying to rewrite a symlink. It's either invalid or the
     # linked file will be rewritten on its own.
     if os.path.islink(file_path):

@@ -253,33 +253,45 @@ class _SnapPackaging:
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
         # If we are dealing with classic confinement it means all our
-        # binaries are linked with `nodefaultlib` so this is harmless.
-        # We do however want to be on the safe side and make sure no
-        # ABI breakage happens by accidentally loading a library from
-        # the classic system.
-        classic_library_paths = self._config_data['confinement'] == 'classic'
-        assembled_env = common.assemble_env(classic_library_paths,
-                                            self._arch_triplet)
-        assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
+        # binaries are linked with `nodefaultlib` but we still do
+        # not want to leak PATH or other environment variables
+        # that would affect the applications view of the classic
+        # environment it is dropped into.
         replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
             self._parts_dir)
-        assembled_env = re.sub(replace_path, '$SNAP', assembled_env)
+        if self._config_data['confinement'] == 'classic':
+            assembled_env = None
+        else:
+            assembled_env = common.assemble_env()
+            assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
+            assembled_env = re.sub(replace_path, '$SNAP', assembled_env)
+
         executable = '"{}"'.format(wrapexec)
-        if shebang is not None:
+
+        if shebang:
+            if shebang.startswith('/usr/bin/env '):
+                with tempfile.NamedTemporaryFile('w+') as tempf:
+                    tempf.write('#!/bin/sh\n')
+                    tempf.write('which {}'.format(shebang.split()[1]))
+                    tempf.flush()
+                    shebang = common.run_output(['/bin/sh', tempf.name])
             new_shebang = re.sub(replace_path, '$SNAP', shebang)
+            new_shebang = re.sub(self._snap_dir, '$SNAP', new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
                 # local 'parts' dir, have the wrapper script execute it
                 # directly, since we can't use $SNAP in the shebang itself.
                 executable = '"{}" "{}"'.format(new_shebang, wrapexec)
-        script = ('#!/bin/sh\n' +
-                  '{}\n'.format(assembled_env) +
-                  '{}\n'.format(cwd) +
-                  'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                  'exec {} {}\n'.format(executable, args))
 
         with open(wrappath, 'w+') as f:
-            f.write(script)
+            f.write('#!/bin/sh\n')
+            if assembled_env:
+                f.write('{}\n'.format(assembled_env))
+                f.write('export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                        '$LD_LIBRARY_PATH\n')
+            if cwd:
+                f.write('{}\n'.format(cwd))
+            f.write('exec {} {}\n'.format(executable, args))
 
         os.chmod(wrappath, 0o755)
 

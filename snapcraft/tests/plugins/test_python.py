@@ -16,8 +16,10 @@
 
 import os
 import tempfile
+from glob import glob
 from unittest import mock
-from testtools.matchers import HasLength
+
+from testtools.matchers import FileContains, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -28,11 +30,25 @@ def setup_directories(plugin, python_version):
     version = '2.7' if python_version == 'python2' else '3.5'
     os.makedirs(plugin.sourcedir)
     os.makedirs(plugin.builddir)
-    os.makedirs(os.path.join(
-        plugin.installdir, 'usr', 'lib', 'python' + version, 'dist-packages'))
-    os.makedirs(os.path.join(
-        plugin.installdir, 'usr', 'include', 'python' + version))
+    python_home = os.path.join(plugin.installdir, 'usr')
+    python_lib_path = os.path.join(python_home, 'lib', 'python' + version)
+    python_include_path = os.path.join(
+        python_home, 'include', 'python' + version)
+
+    os.makedirs(os.path.join(python_lib_path, 'dist-packages'))
+    os.makedirs(python_include_path)
     open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+
+    site_path = os.path.join(plugin.installdir, 'lib', 'python' + version,
+                             'site-packages')
+    os.makedirs(site_path)
+    with open(os.path.join(python_lib_path, 'site.py'), 'w') as f:
+        f.write('#!/usr/bin/python3\n'
+                '# comment\n'
+                'ENABLE_USER_SITE = None\n'
+                'USER_SITE = None\n'
+                'USER_BASE = None\n'
+                '# comment\n')
 
 
 class PythonPluginTestCase(tests.TestCase):
@@ -96,10 +112,7 @@ class PythonPluginTestCase(tests.TestCase):
     def test_env(self):
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        expected_env = [
-            'PYTHONUSERBASE=/testpath',
-            'PYTHONHOME=/testpath/usr',
-        ]
+        expected_env = []
         env = plugin.env('/testpath')
         self.assertListEqual(expected_env, env)
 
@@ -294,20 +307,14 @@ class PythonPluginTestCase(tests.TestCase):
     def test_build_fixes_python_shebangs(self, run_mock):
         if self.options.python_version == 'python2':
             py_version_short = 'python2'
-            py_version_long = 'python2'
         elif self.options.python_version == 'python3':
             py_version_short = 'python3'
-            py_version_long = 'python3.5'
 
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        os.makedirs(plugin.sourcedir)
-        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+        setup_directories(plugin, self.options.python_version)
+
         os.makedirs(os.path.join(plugin.installdir, 'bin'))
-        os.makedirs(os.path.join(
-            plugin.installdir, 'usr', 'lib', py_version_long, 'dist-packages'))
-        os.makedirs(os.path.join(
-            plugin.installdir, 'usr', 'include', py_version_long))
 
         # Place a few files with bad shebangs, and some files that shouldn't be
         # changed.
@@ -360,3 +367,27 @@ class PythonPluginTestCase(tests.TestCase):
                                                mock_os_stat):
         python._replicate_owner_mode('/nonexistant_path')
         self.assertFalse(mock_os_stat.called)
+
+    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(python.PythonPlugin, 'run')
+    @mock.patch.object(python.snapcraft.BasePlugin, 'build')
+    def test_build_creates_correct_site(self, mock_base_build, mock_run,
+                                        mock_run_output):
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        plugin.build()
+
+        expected_site = (
+            '#!/usr/bin/env python3\n'
+            '# comment\n'
+            'ENABLE_USER_SITE = None\n'
+            'USER_SITE = os.path.join(os.getenv("SNAP", '
+            'os.getenv("SNAPCRAFT_STAGE")), '
+            '"lib/python3.5/site-packages")\n'
+            'USER_BASE = os.getenv("SNAP", os.getenv("SNAPCRAFT_STAGE"))\n'
+            '# comment\n')
+        site_path = glob(os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python*', 'site.py'))[0]
+        self.assertThat(site_path, FileContains(expected_site))

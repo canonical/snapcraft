@@ -142,12 +142,6 @@ class PythonPlugin(snapcraft.BasePlugin):
         self.stage_packages.extend(self.plugin_stage_packages)
         self._python_package_dir = os.path.join(self.partdir, 'packages')
 
-    def env(self, root):
-        return [
-            'PYTHONUSERBASE={}'.format(root),
-            'PYTHONHOME={}'.format(os.path.join(root, 'usr'))
-        ]
-
     def pull(self):
         super().pull()
 
@@ -166,7 +160,6 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _install_pip(self, download):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
-
         args = ['pip', 'setuptools', 'wheel']
 
         pip = _Pip(exec_func=subprocess.check_call,
@@ -181,6 +174,11 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _get_build_env(self):
         env = os.environ.copy()
+        env['PYTHONUSERBASE'] = self.installdir
+        env['PYTHONHOME'] = os.path.join(self.installdir, 'usr')
+        env['PATH'] = '{}:{}'.format(
+            os.path.join(self.installdir, 'usr', 'bin'),
+            os.path.expandvars('$PATH'))
         headers = glob(os.path.join(
             os.path.sep, 'usr', 'include', '{}*'.format(
                 self.options.python_version)))
@@ -266,6 +264,36 @@ class PythonPlugin(snapcraft.BasePlugin):
         file_utils.replace_in_file(self.installdir, re.compile(r''),
                                    re.compile(r'^#!.*python'),
                                    r'#!/usr/bin/env python')
+
+        site_path = glob('{}/usr/lib/python*/site.py'.format(self.installdir))
+        if site_path:
+            self._setup_site(site_path[0])
+        else:
+            raise RuntimeError('Could not find site.py')
+
+    def _setup_site(self, site_path):
+        # This avoids needing to leak PYTHONUSERBASE
+        # USER_SITE and USER_BASE default to base of SNAP for when used in
+        # runtime and to SNAPCRAFT_STAGE to support chaining dependencies
+        # when used with the `after` keyword.
+        user_site_path = glob(
+            '{}/lib/python*/site-packages'.format(self.installdir))[0]
+        trimmed_user_site_path = user_site_path[len(self.installdir)+1:]
+        user_site_replacement = (
+            r'USER_SITE = os.path.join(os.getenv("SNAP", '
+            'os.getenv("SNAPCRAFT_STAGE")), "{}")'.format(
+                trimmed_user_site_path))
+        file_utils.search_and_replace_contents(
+            site_path,
+            search_pattern=re.compile(r'^USER_SITE = None$',
+                                      flags=re.MULTILINE),
+            replacement=user_site_replacement)
+        file_utils.search_and_replace_contents(
+            site_path,
+            search_pattern=re.compile(r'^USER_BASE = None$',
+                                      flags=re.MULTILINE),
+            replacement=r'USER_BASE = os.getenv("SNAP", '
+                        'os.getenv("SNAPCRAFT_STAGE"))')
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
