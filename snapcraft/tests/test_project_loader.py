@@ -1442,7 +1442,6 @@ parts:
         environment = config.stage_env()
         self.assertIn(
             'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
-            '-Wl,--enable-new-dtags '
             '-Wl,--dynamic-linker={core_dynamic_linker} '
             '-Wl,-rpath,'
             '/snap/core/current/lib:'
