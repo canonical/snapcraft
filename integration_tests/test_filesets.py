@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,32 +28,29 @@ from testtools.matchers import (
 class FilesetsTestCase(integration_tests.TestCase):
 
     def test_filesets(self):
-        project_dir = 'simple-make-filesets'
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('snap', 'simple-make-filesets')
 
         expected_dirs = (
-            os.path.join('stage', 'share'),
-            os.path.join('stage', 'bin'),
-            os.path.join('prime', 'bin'),
+            os.path.join(self.stage_dir, 'share'),
+            os.path.join(self.stage_dir, 'bin'),
+            os.path.join(self.prime_dir, 'bin'),
         )
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join(project_dir, expected_dir),
+                expected_dir,
                 DirExists())
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'share'),
+            os.path.join(self.prime_dir, 'share'),
             Not(DirExists()))
 
         expected_files = (
-            (os.path.join('stage', 'share', 'share1'), 'share1\n'),
-            (os.path.join('stage', 'share', 'share2'), 'share2\n'),
-            (os.path.join('stage', 'bin', 'bin1'), 'bin1\n'),
-            (os.path.join('stage', 'bin', 'bin2'), 'bin2\n'),
-            (os.path.join('prime', 'bin', 'bin1'), 'bin1\n'),
-            (os.path.join('prime', 'bin', 'bin2'), 'bin2\n'),
+            (os.path.join(self.stage_dir, 'share', 'share1'), 'share1\n'),
+            (os.path.join(self.stage_dir, 'share', 'share2'), 'share2\n'),
+            (os.path.join(self.stage_dir, 'bin', 'bin1'), 'bin1\n'),
+            (os.path.join(self.stage_dir, 'bin', 'bin2'), 'bin2\n'),
+            (os.path.join(self.prime_dir, 'bin', 'bin1'), 'bin1\n'),
+            (os.path.join(self.prime_dir, 'bin', 'bin2'), 'bin2\n'),
         )
         for path, content in expected_files:
-            self.assertThat(
-                os.path.join(project_dir, path),
-                FileContains(content))
+            self.assertThat(path, FileContains(content))

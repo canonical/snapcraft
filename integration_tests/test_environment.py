@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,24 +25,23 @@ import integration_tests
 class EnvironmentTestCase(integration_tests.TestCase):
 
     def test_environment(self):
-        project_dir = 'snapcraft-environment'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'snapcraft-environment')
 
-        abs_project_dir = os.path.join(os.path.abspath('.'), project_dir)
-        stage_dir = os.path.join(abs_project_dir, 'stage')
-        part_install_dir = os.path.join(abs_project_dir,
-                                        'parts', 'env', 'install')
+        part_install_dir = os.path.join(self.path,
+                                        self.parts_dir, 'env', 'install')
 
-        test_name = os.path.join(stage_dir, 'test_name')
+        test_name = os.path.join(self.stage_dir, 'test_name')
         self.assertThat(test_name, FileContains('test-environment'))
 
-        test_version = os.path.join(stage_dir, 'test_version')
+        test_version = os.path.join(self.stage_dir, 'test_version')
         self.assertThat(test_version, FileContains('0.1'))
 
-        test_stage = os.path.join(stage_dir, 'test_stage')
-        self.assertThat(test_stage, FileContains(stage_dir))
+        test_stage = os.path.join(self.stage_dir, 'test_stage')
+        self.assertThat(
+            test_stage, FileContains(os.path.join(self.path, self.stage_dir)))
 
-        test_part_install = os.path.join(stage_dir, 'test_part_install')
+        test_part_install = os.path.join(
+            self.path, self.stage_dir, 'test_part_install')
         self.assertThat(test_part_install, FileContains(part_install_dir))
 
     def test_project_environment_within_snapcraft(self):
@@ -50,24 +49,19 @@ class EnvironmentTestCase(integration_tests.TestCase):
 
         If the correct environment SNAPCRAFT_PROJECT values aren't replaced
         this test will fail its pull step."""
-        project_dir = 'snapcraft-key-values'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', 'snapcraft-key-values')
 
     def test_snapcraft_stage_env_replacement(self):
-        project_dir = 'stage_env'
-
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'stage_env')
 
     def test_stage_cmake_plugin_with_replace(self):
         """Replace SNAPCRAFT_PART_INSTALL in the part's attributes"""
-        project_dir = 'simple-cmake-replace'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-cmake-replace')
 
         binary_output = subprocess.check_output([
-            os.path.join('stage', 'bin', 'simple-cmake-replace')],
-            cwd=project_dir)
-        path = os.path.join(os.getcwd(), project_dir, 'parts',
-                            'cmake-project', 'install')
+            os.path.join(self.stage_dir, 'bin', 'simple-cmake-replace')])
+        path = os.path.join(
+            self.path, self.parts_dir, 'cmake-project', 'install')
         self.assertEqual(
             "When I was built I was installed to {}\n".format(path),
             binary_output.decode('utf-8'))

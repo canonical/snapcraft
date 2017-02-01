@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,9 +26,9 @@ import integration_tests
 
 class TarPluginTestCase(integration_tests.TestCase):
 
-    def test_stage_nil_plugin(self):
-        project_dir = 'simple-zip'
-        self.run_snapcraft('stage', project_dir)
+    def test_stage_zip_source(self):
+        self.copy_project_to_cwd('simple-zip')
+        self.run_snapcraft('stage')
 
         expected_files = [
             'top-simple',
@@ -36,16 +36,16 @@ class TarPluginTestCase(integration_tests.TestCase):
         ]
         for expected_file in expected_files:
             self.assertThat(
-                os.path.join(project_dir, 'stage', expected_file),
+                os.path.join(self.stage_dir, expected_file),
                 FileExists())
         expected_dirs = [
             'dir-simple',
         ]
         for expected_dir in expected_dirs:
             self.assertThat(
-                os.path.join(project_dir, 'stage', expected_dir),
+                os.path.join(self.stage_dir, expected_dir),
                 DirExists())
 
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull')
