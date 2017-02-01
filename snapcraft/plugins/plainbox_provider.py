@@ -45,18 +45,18 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         env = os.environ.copy()
-        provider_stage_dir = os.path.join(self.project.stage_dir, "providers")
+        provider_stage_dir = os.path.join(self.project.stage_dir, 'providers')
         if os.path.exists(provider_stage_dir):
-            providerdirs = [os.path.join(provider_stage_dir, provider)
-                            for provider in os.listdir(provider_stage_dir)]
-            env['PROVIDERPATH'] = ':'.join(providerdirs)
-        self.run(["python3", "manage.py", "validate"], env=env)
-        self.run(["python3", "manage.py", "build"])
-        self.run(["python3", "manage.py", "i18n"])
+            provider_dirs = [os.path.join(provider_stage_dir, provider)
+                             for provider in os.listdir(provider_stage_dir)]
+            env['PROVIDERPATH'] = ':'.join(provider_dirs)
+        self.run(['python3', 'manage.py', 'validate'], env=env)
+        self.run(['python3', 'manage.py', 'build'])
+        self.run(['python3', 'manage.py', 'i18n'])
         self.run([
-            "python3", "manage.py", "install", "--layout=relocatable",
-            "--prefix=/providers/{}".format(self.name),
-            "--root={}".format(self.installdir)])
+            'python3', 'manage.py', 'install', '--layout=relocatable',
+            '--prefix=/providers/{}'.format(self.name),
+            '--root={}'.format(self.installdir)])
 
         # Fix all shebangs to use the in-snap python.
         file_utils.replace_in_file(self.installdir, re.compile(r''),
