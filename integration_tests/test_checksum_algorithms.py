@@ -16,6 +16,7 @@
 
 import integration_tests
 
+
 class ChecksumAlgorithmsTestCase(integration_tests.TestCase):
 
     def test_checksum_algorithms(self):
