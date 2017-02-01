@@ -61,6 +61,7 @@ parts:
             self.stage_dir,
             self.prime_dir,
             os.path.join(self.parts_dir, 'plugins'),
+            '.tox',
         ]
         files_tar = [
             os.path.join(self.parts_dir, 'plugins', 'x-plugin.py'),
@@ -71,6 +72,7 @@ parts:
             os.path.join(self.prime_dir, 'binary'),
             'snap-test.snap',
             'snap-test_1.0_source.tar.bz2',
+            '.tox/some_virtualenv_stuff',
         ]
         for d in dirs:
             os.makedirs(d)

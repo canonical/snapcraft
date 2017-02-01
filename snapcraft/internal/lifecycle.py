@@ -275,6 +275,8 @@ def _create_tar_filter(tar_filename):
             return None
         elif fn.endswith('.snap'):
             return None
+        elif fn.startswith('./.tox'):
+            return None
         return tarinfo
     return _tar_filter
 
