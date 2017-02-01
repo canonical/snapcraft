@@ -150,6 +150,35 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
+    def test_create_meta_with_declared_icon_with_dots(self):
+        open(os.path.join(os.curdir, 'com.my.icon.png'), 'w').close()
+        self.config_data['icon'] = 'com.my.icon.png'
+
+        y = self.generate_meta_yaml()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_declared_icon_in_parent_dir(self):
+        open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
+        builddir = os.path.join(os.curdir, 'subdir')
+        os.mkdir(builddir)
+        os.chdir(builddir)
+        self.config_data['icon'] = '../my-icon.png'
+
+        y = self.generate_meta_yaml()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
     def test_create_meta_with_declared_icon_and_setup(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
