@@ -33,20 +33,11 @@ from snapcraft.internal import (
     parts,
     pluginhandler,
 )
-from snapcraft._schema import Validator, SnapcraftSchemaError
+from snapcraft._schema import Validator
 from snapcraft.internal.parts import SnapcraftLogicError, get_remote_parts
 
 
 logger = logging.getLogger(__name__)
-
-
-@jsonschema.FormatChecker.cls_checks('file-path')
-def _validate_file_exists(instance):
-    if not os.path.exists(instance):
-        raise jsonschema.exceptions.ValidationError(
-            "Specified file '{}' does not exist".format(instance))
-
-    return True
 
 
 @jsonschema.FormatChecker.cls_checks('icon-path')
@@ -401,7 +392,7 @@ def _snapcraft_yaml_load(yaml_file):
         with open(yaml_file, encoding=encoding) as fp:
             return yaml.load(fp)
     except yaml.scanner.ScannerError as e:
-        raise SnapcraftSchemaError(
+        raise errors.SnapcraftSchemaError(
             '{} on line {} of {}'.format(
                 e.problem, e.problem_mark.line + 1, yaml_file))
 
@@ -414,7 +405,7 @@ def load_config(project_options=None):
             "Could not find {}. Are you sure you're in the right directory?\n"
             "To start a new project, use 'snapcraft init'".format(e.file))
         sys.exit(1)
-    except SnapcraftSchemaError as e:
+    except errors.SnapcraftSchemaError as e:
         msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
         logger.error(msg)
         sys.exit(1)
