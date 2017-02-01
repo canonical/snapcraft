@@ -1,0 +1,41 @@
+name: test-organize
+version: 0.1
+summary: Conflicting parts snap
+description: 
+    A snap with parts to test files after 'organize' runs..
+confinement: strict
+grade: stable
+
+build-packages: [gcc, libc6-dev]
+
+parts:
+  post-organize-p1:
+    plugin: make
+    source: .
+  post-organize-p2:
+    plugin: make
+    source: ./post-organize-p2
+    organize:
+        bin/test_tmp: bin/test
+    after: [post-organize-p1]
+  conflicts-p1:
+    plugin: make
+    source: .
+  conflicts-p2:
+    plugin: make
+    source: ./conflicts-p2
+    after: [conflicts-p1]
+  no-conflicts-p1:
+    plugin: make
+    source: .
+    organize:
+        bin/test: bin/p1-test
+  no-conflicts-p2:
+    plugin: make
+    source: ./no-conflicts-p2
+    after: [no-conflicts-p1]
+  organize-file-to-dir:
+    plugin: make
+    source: .
+    organize:
+        bin/test: new_dir

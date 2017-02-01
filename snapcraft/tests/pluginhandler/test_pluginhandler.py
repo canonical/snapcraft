@@ -22,6 +22,11 @@ import shutil
 import stat
 import sys
 import tempfile
+from testtools.matchers import (
+    DirExists,
+    FileExists,
+    Not,
+)
 from unittest.mock import (
     call,
     Mock,
@@ -231,6 +236,43 @@ class PluginTestCase(tests.TestCase):
         with open(os.path.join('stage', 'bar'), 'r') as f:
             self.assertEqual(f.read(), 'installed',
                              "Expected migrated 'bar' to be a copy of 'foo'")
+
+    def test_migrate_files_supports_no_follow_symlinks_for_dirs(self):
+        os.makedirs('install')
+        os.makedirs('install/foo')
+        os.makedirs('stage')
+
+        os.symlink('foo', os.path.join('install', 'bar'))
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=False)
+
+        # Verify that the symlink was preserved
+        self.assertTrue(os.path.islink(os.path.join('stage', 'bar')),
+                        "Expected migrated 'bar' to still be a symlink.")
+        self.assertEqual('foo', os.readlink(os.path.join('stage', 'bar')),
+                         "Expected migrated 'bar' to point to 'foo'")
+
+    def test_migrate_files_supports_follow_symlinks_for_dirs(self):
+        os.makedirs('install')
+        os.makedirs('install/foo')
+        os.makedirs('stage')
+
+        with open(os.path.join('install', 'foo', 'foo'), 'w') as f:
+            f.write('installed')
+
+        os.symlink('foo', os.path.join('install', 'bar'))
+
+        files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
+        pluginhandler._migrate_files(
+            files, dirs, 'install', 'stage', follow_symlinks=True)
+
+        # Verify that the symlink was preserved
+        self.assertFalse(os.path.islink(os.path.join('stage', 'bar')),
+                         "Expected migrated 'bar' to no longer be a symlink.")
+        self.assertEqual(os.listdir(os.path.join('stage', 'bar')),
+                         os.listdir(os.path.join('stage', 'foo')))
 
     @patch('os.chown')
     def test_migrate_files_preserves_ownership(self, chown_mock):
@@ -1021,9 +1063,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(5, len(state.properties))
+        self.assertEqual(4, len(state.properties))
         for expected in ['after', 'build-attributes', 'build-packages',
-                         'disable-parallel', 'organize']:
+                         'disable-parallel']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
@@ -1303,13 +1345,19 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.mark_done('build')
         self.handler.stage()
+
+        bindir = os.path.join(self.handler.stagedir, 'bin')
+        os.makedirs(bindir)
+        open(os.path.join(bindir, '1'), 'w').close()
+        open(os.path.join(bindir, '2'), 'w').close()
+
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
             self.handler.snapdir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
-            call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
+            call({'bin/1', 'bin/2'}, {'bin'}, self.handler.code.installdir,
                  self.handler.snapdir),
             call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
                  follow_symlinks=True),
@@ -1370,7 +1418,8 @@ class StateTestCase(StateBaseTestCase):
         # Verify that only the part's files were migrated-- not the system
         # dependency.
         mock_migrate_files.assert_called_once_with(
-            {'bin/file'}, {'bin'}, self.handler.stagedir, self.handler.snapdir)
+            {'bin/file'}, {'bin'}, self.handler.code.installdir,
+            self.handler.snapdir)
 
         state = self.handler.get_state('prime')
 
@@ -1411,7 +1460,8 @@ class StateTestCase(StateBaseTestCase):
             self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
-            self.handler.stagedir, self.handler.snapdir)
+            self.handler.code.installdir,
+            self.handler.snapdir)
 
         state = self.handler.get_state('prime')
 
@@ -1775,6 +1825,56 @@ class CleanTestCase(CleanBaseTestCase):
         mock_listdir.assert_called_once_with(partdir)
         self.assertFalse(mock_rmdir.called)
 
+    def test_clean_dir_symlinks(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = mocks.loadplugin('part1')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        path = os.path.join(bindir, '1')
+        os.mkdir(path)
+        symlink_path = os.path.join(bindir, '1-link')
+        os.symlink('1', symlink_path)
+
+        handler1.mark_done('build')
+        handler1.stage()
+
+        stage_symlink_path = os.path.join(handler1.stagedir, 'bin', '1-link')
+        stage_path = os.path.join(handler1.stagedir, 'bin', '1')
+
+        self.assertThat(stage_path, DirExists())
+        self.assertThat(stage_symlink_path, tests.LinkExists('1'))
+
+        handler1.clean_stage({})
+        self.assertThat(stage_path, Not(DirExists()))
+        self.assertThat(stage_symlink_path, Not(tests.LinkExists('1')))
+
+    def test_clean_file_symlinks(self):
+        # Create part1 and get it through the "build" step.
+        handler1 = mocks.loadplugin('part1')
+        handler1.makedirs()
+
+        bindir = os.path.join(handler1.code.installdir, 'bin')
+        os.makedirs(bindir)
+        path = os.path.join(bindir, '1')
+        open(path, 'w').close()
+        symlink_path = os.path.join(bindir, '1-link')
+        os.symlink('1', symlink_path)
+
+        handler1.mark_done('build')
+        handler1.stage()
+
+        stage_symlink_path = os.path.join(handler1.stagedir, 'bin', '1-link')
+        stage_path = os.path.join(handler1.stagedir, 'bin', '1')
+
+        self.assertThat(stage_path, FileExists())
+        self.assertThat(stage_symlink_path, tests.LinkExists('1'))
+
+        handler1.clean_stage({})
+        self.assertThat(stage_path, Not(FileExists()))
+        self.assertThat(stage_symlink_path, Not(tests.LinkExists('1')))
+
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
         handler1 = mocks.loadplugin('part1')
@@ -1804,18 +1904,18 @@ class CleanTestCase(CleanBaseTestCase):
         handler1.prime()
         handler2.prime()
 
-        # Verify that part1's file has been primeped
+        # Verify that part1's file has been primed
         self.assertTrue(
             os.path.exists(os.path.join(self.prime_dir, 'bin', '1')))
 
-        # Verify that part2's file has been primeped
+        # Verify that part2's file has been primed
         self.assertTrue(
             os.path.exists(os.path.join(self.prime_dir, 'bin', '2')))
 
         # Now clean the prime step for part1
         handler1.clean_prime({})
 
-        # Verify that part1's file is no longer primeped
+        # Verify that part1's file is no longer primed
         self.assertFalse(
             os.path.exists(os.path.join(self.prime_dir, 'bin', '1')),
             "Expected part1's primeped files to be cleaned")
@@ -1839,7 +1939,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.stage()
         handler.prime()
 
-        # Verify that both files have been primeped
+        # Verify that both files have been primed
         self.assertTrue(
             os.path.exists(os.path.join(self.prime_dir, 'bin', '1')))
         self.assertTrue(
@@ -1851,14 +1951,14 @@ class CleanTestCase(CleanBaseTestCase):
         # Now clean the prime step for part1
         handler.clean_prime({})
 
-        # Verify that part1's file is no longer primeped
+        # Verify that part1's file is no longer primed
         self.assertFalse(
             os.path.exists(os.path.join(self.prime_dir, 'bin', '1')),
             'Expected bin/1 to be cleaned')
         self.assertFalse(
             os.path.exists(os.path.join(self.prime_dir, 'bin', '2')),
             'Expected bin/2 to be cleaned as well, even though the filesets '
-            'changed since it was primeped.')
+            'changed since it was primed.')
 
     def test_clean_old_prime_state(self):
         handler = mocks.loadplugin('test-part')
@@ -2425,6 +2525,27 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertEqual(
             raised.__str__(), 'Cannot load magic header detection')
+
+    def test__organize_fileset(self):
+        fileset = set(['bin/app', 'share/app1', 'bin/app2'])
+        organize_fileset = {
+            'tmp/bin': 'bin', 'tmp/share': 'share', 'tmp': 'new_tmp'}
+
+        expected_fileset = set(
+            [('tmp/bin/app', 'bin/app'), ('tmp/share/app1', 'share/app1'),
+             ('tmp/bin/app2', 'bin/app2')])
+        obtained_fileset, obtained_dirs = pluginhandler._organize_fileset(
+            fileset, organize_fileset, '/install')
+        expected_dirs = set()
+
+        self.assertEqual(expected_fileset, obtained_fileset)
+        self.assertEqual(expected_dirs, obtained_dirs)
+
+    def test__get_path_prefixes(self):
+        path = '/one/two/three'
+
+        self.assertEqual(['/one/two', '/one'],
+                         pluginhandler._get_path_prefixes(path))
 
     def test__combine_filesets_explicit_wildcard(self):
         fileset_1 = ['a', 'b']

@@ -1,0 +1,16 @@
+name: prime-after-organize
+version: '0.1'
+summary: Test that stage files are added to the prime fileset after organize.
+description: |
+    Test that stage files are added to the prime fileset after organize.
+
+parts:
+  without-excludes:
+    plugin: dump
+    source: .
+    organize:
+        test: bin/
+    stage:
+        - bin/test
+    snap:
+        - bin/test

@@ -32,7 +32,6 @@ def _schema_properties():
         'build-attributes',
         'build-packages',
         'disable-parallel',
-        'organize'
     }
 
 
