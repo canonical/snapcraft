@@ -893,9 +893,12 @@ def _migrate_dirs(snap_dirs, srcdir, dstdir):
             src = os.path.join(srcdir, directory)
             dst = os.path.join(dstdir, directory)
 
-        snapcraft.file_utils.create_similar_directory(src, dst)
-        if copy_tree:
-            file_utils.link_or_copy_tree(src, dst)
+        if os.path.exists(src):
+            snapcraft.file_utils.create_similar_directory(src, dst)
+            if copy_tree:
+                file_utils.link_or_copy_tree(src, dst)
+        else:
+            os.makedirs(dst)
 
 
 def _can_skip(src, dst, missing_ok=False):
