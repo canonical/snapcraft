@@ -192,18 +192,20 @@ class ProjectOptions:
         However if core is not installed None will be returned.
         """
         core_path = os.path.join('/snap', 'core', 'current')
+        fallback_core_path = os.path.join('/snap', 'ubuntu-core', 'current')
         core_dynamic_linker = self.__machine_info.get('core-dynamic-linker',
                                                       'lib/ld-linux.so.2')
 
-        try:
-            dynamic_linker_resolved_path = os.readlink(
-                os.path.join(core_path, core_dynamic_linker))
-            dynamic_linker_path = os.path.join(
-                core_path, dynamic_linker_resolved_path.lstrip('/'))
-        except FileNotFoundError:
-            dynamic_linker_path = None
+        for lookup_path in (core_path, fallback_core_path):
+            try:
+                dynamic_linker_resolved_path = os.readlink(
+                    os.path.join(core_path, core_dynamic_linker))
+                return os.path.join(
+                    core_path, dynamic_linker_resolved_path.lstrip('/'))
+            except FileNotFoundError:
+                continue
 
-        return dynamic_linker_path
+        return None
 
     def _set_machine(self, target_deb_arch):
         self.__platform_arch = _get_platform_architecture()
