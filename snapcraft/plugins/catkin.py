@@ -41,9 +41,10 @@ import glob
 import os
 import tempfile
 import logging
-import shutil
 import re
+import shutil
 import subprocess
+import textwrap
 
 import snapcraft
 from snapcraft import (
@@ -195,13 +196,37 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # make sure it's in the PATH before it's run.
         env.append('PATH=$PATH:{}/usr/bin'.format(root))
 
-        # FIXME: Nasty hack to source ROS's setup.sh (since each of these
-        # lines is prepended with "export"). There's got to be a better way
-        # to do this.
-        env.append(
-            'echo FOO=BAR\nif `test -e {0}` ; then\n. {0} ;\nfi\n'.format(
-                os.path.join(
-                    root, 'opt', 'ros', self.options.rosdistro, 'setup.sh')))
+        # We need to source ROS's setup.sh at this point. However, it accepts
+        # arguments (thus will parse $@), and we really don't want it to, since
+        # $@ in this context will be meant for the app being launched
+        # (LP: #1660852). So we'll backup all args, source the setup.sh, then
+        # restore all args for the wrapper's `exec` line.
+        script = textwrap.dedent('''
+        if [ -e {0} ]; then
+            # Shell quote arbitrary string by replacing every occurrence of '
+            # with '\\'', then put ' at the beginning and end of the string.
+            # Prepare yourself, fun regex ahead.
+            quote()
+            {{
+                for i; do
+                    printf %s\\\\n "$i" | sed "s/\'/\'\\\\\\\\\'\'/g;1s/^/\'/;\$s/\$/\' \\\\\\\\/"
+                done
+                echo " "
+            }}
+
+            BACKUP_ARGS=$(quote "$@")
+            set --
+            . {0}
+            eval "set -- $BACKUP_ARGS"
+        fi
+        '''.format(os.path.join(  # noqa
+            root, 'opt', 'ros', self.options.rosdistro, 'setup.sh')))
+
+        # Each of these lines is prepended with an `export` when the
+        # environment is actually generated. In order to inject real shell code
+        # we have to hack it in by appending it on the end of an item in the
+        # environment. FIXME: There should be a better way to do this.
+        env[-1] = env[-1] + script
 
         return env
 
