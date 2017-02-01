@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,23 +24,21 @@ import integration_tests
 class CopyPluginTestCase(integration_tests.TestCase):
 
     def test_stage_copy_plugin(self):
-        project_dir = 'simple-copy'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'simple-copy')
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'dst'),
+            os.path.join(self.stage_dir, 'dst'),
             FileContains('I got copied\n'))
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'dstdir', 'srcdirfile.txt'),
+            os.path.join(self.stage_dir, 'dstdir', 'srcdirfile.txt'),
             FileContains('A file in the source directory\n'))
 
     def test_copy_plugin_with_source(self):
-        project_dir = 'copy-with-source'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'copy-with-source')
 
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'file'),
+            os.path.join(self.stage_dir, 'file'),
             FileContains('A file\n'))
         self.assertThat(
-            os.path.join(project_dir, 'stage', 'directory', 'file'),
+            os.path.join(self.stage_dir, 'directory', 'file'),
             FileContains('A file in directory\n'))

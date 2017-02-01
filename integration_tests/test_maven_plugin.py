@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016, 2017 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,5 +25,4 @@ class MavenPluginTestCase(integration_tests.TestCase):
         if snapcraft.ProjectOptions().deb_arch == 'armhf':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The maven plugin does not support armhf')
-        project_dir = 'simple-maven'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'simple-maven')
