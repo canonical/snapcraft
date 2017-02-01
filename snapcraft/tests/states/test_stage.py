@@ -50,7 +50,7 @@ class StateStageTestCase(StageStateBaseTestCase):
 
     def test_properties_of_interest(self):
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertEqual(2, len(properties))
+        self.assertEqual(3, len(properties))
         self.assertEqual(['baz'], properties['stage'])
         self.assertEqual({'qux': 'quux'}, properties['filesets'])
 

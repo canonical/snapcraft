@@ -44,6 +44,7 @@ class StageState(State):
 
         return {
             'stage': part_properties.get('stage', ['*']) or ['*'],
+            'organize': part_properties.get('organize', {}) or {},
             'filesets': part_properties.get('filesets', {}) or {},
         }
 
