@@ -111,7 +111,7 @@ class _SnapPackaging:
 
         if 'icon' in self._config_data:
             # TODO: use developer.ubuntu.com once it has updated documentation.
-            icon_ext = self._config_data['icon'].split(os.path.extsep)[1]
+            icon_ext = self._config_data['icon'].split(os.path.extsep)[-1]
             icon_dir = os.path.join(self.meta_dir, 'gui')
             icon_path = os.path.join(icon_dir, 'icon.{}'.format(icon_ext))
             if not os.path.exists(icon_dir):
