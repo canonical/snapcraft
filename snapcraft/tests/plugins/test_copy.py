@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,7 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+import jsonschema
+
 from unittest.mock import Mock, patch
+import testtools
 from testtools.matchers import HasLength
 
 import snapcraft
@@ -326,6 +329,17 @@ class TestCopyPlugin(TestCase):
     def test_copy_enable_cross_compilation(self):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.enable_cross_compilation()
+
+    def test_schema_catches_missing_destination(self):
+        with testtools.ExpectedException(
+                jsonschema.exceptions.ValidationError,
+                ".*None is not of type 'string'.*"):
+            jsonschema.validate({'files': {'foo': None}}, CopyPlugin.schema())
+
+        with testtools.ExpectedException(
+                jsonschema.exceptions.ValidationError,
+                ".*'' is too short.*"):
+            jsonschema.validate({'files': {'foo': ''}}, CopyPlugin.schema())
 
 
 class TestRecursivelyLink(TestCase):
