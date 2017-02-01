@@ -15,20 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import tarfile
-import fixtures
 import unittest
 import hashlib
 import zipfile
-import libarchive
 
 from snapcraft.internal import sources
 
 from snapcraft import tests
 
-from unittest import mock
-
-class TestChecksum(tests.FakeFileHTTPServerBasedTestCase):
+class TestChecksum(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -42,10 +37,7 @@ class TestChecksum(tests.FakeFileHTTPServerBasedTestCase):
         zip_file.write(file_to_zip)
         zip_file.close()
 
-        self.assertRaises(
-                ValueError,
-                sources.verify_checksum,
-                'md6/abcde',
+        self.assertRaises(ValueError, sources.verify_checksum, '456/abcde',
                 'src/test.zip')
 
     def test_correct_checksum(self):
@@ -59,9 +51,10 @@ class TestChecksum(tests.FakeFileHTTPServerBasedTestCase):
 
         calculated_checksum = hashlib.new('md5', \
                open(os.path.join('src', 'test.zip'), 'rb').read())
+        calculated_checksum = calculated_checksum.hexdigest()
 
-        source_checksum = print('md5/%r' % calculated_checksum)
-        sources.verify_checksum(source_checksum, 'src/test.zip')
+        sources.verify_checksum('md5/' + calculated_checksum,
+                'src/test.zip')
 
     def test_incorrect_checksum(self):
         # Create zip file for testing
@@ -72,17 +65,16 @@ class TestChecksum(tests.FakeFileHTTPServerBasedTestCase):
         zip_file.write(file_to_zip)
         zip_file.close()
 
-        incorrect_checksum = 'md5/fe049cfba688aa1af88bc78191d7f904'
-
-        raised = self.assertRaises(
-            sources.errors.DigestDoesNotMatchError,
-            sources.verify_checksum,
-            incorrect_checksum,
-            'src/test.zip')
+        incorrect_checksum = 'fe049cfba688aa1af88bc78191d7f904'
 
         calculated_checksum = hashlib.new('md5', \
                open(os.path.join('src', 'test.zip'), 'rb').read())
-        expected_message= print('Expected the digest for source to be %r, '
-            'but it was %r' % (incorrect_checksum, calculated_checksum))
+        calculated_checksum = calculated_checksum.hexdigest()
 
-        self.assertEqual(raised.fmt, expected_message)
+        raised = self.assertRaises(sources.errors.DigestDoesNotMatchError,
+            sources.verify_checksum,
+            'md5/' + incorrect_checksum,
+            'src/test.zip')
+
+        self.assertEqual(raised.expected, incorrect_checksum)
+        self.assertEqual(raised.calculated, calculated_checksum)
