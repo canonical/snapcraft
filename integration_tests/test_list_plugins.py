@@ -20,17 +20,18 @@ from snapcraft import plugins
 
 import integration_tests
 
-from testtools.matchers import HasLength
+from testtools.matchers import StartsWith
 
 
 class ListPluginsTestCase(integration_tests.TestCase):
 
     def test_list_plugins(self):
         output = self.run_snapcraft('list-plugins')
-        expected = [
+        version, plugins_list = output.split('\n', 1)
+        self.assertThat(version, StartsWith("Starting snapcraft "))
+        plugins_list = set(plugins_list.split())
+        expected = {
             module_name.replace('_', '-') for _, module_name, _ in
             pkgutil.iter_modules(plugins.__path__)
-        ]
-        for plugin in expected:
-            self.assertIn(plugin, output)
-        self.assertThat(output.split(), HasLength(len(expected)))
+        }
+        self.assertEquals(plugins_list, expected)
