@@ -153,9 +153,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertEqual(3, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', '-j2'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -167,8 +167,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['./configure', '--prefix={}'.format(
                 plugin.installdir)]),
-            mock.call(['make', '-j2'], env=None),
-            mock.call(['make', 'install'], env=None)
+            mock.call(['make', '-j2'], None, env=None),
+            mock.call(['make', 'install'], None, env=None)
         ])
 
     def build_with_autogen(self, files=None, dirs=None):
@@ -201,9 +201,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['autoreconf', '-i']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', '-j2'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -214,9 +214,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', '-j2'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -227,9 +227,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['env', 'NOCONFIGURE=1', './bootstrap']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', '-j2'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -240,9 +240,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', '-j2'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -255,8 +255,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
             mock.call(['env', 'NOCONFIGURE=1', './autogen.sh']),
             mock.call(['./configure', '--prefix={}'.format(
                 plugin.installdir)]),
-            mock.call(['make', '-j2'], env=None),
-            mock.call(['make', 'install'], env=None)
+            mock.call(['make', '-j2'], None, env=None),
+            mock.call(['make', 'install'], None, env=None)
         ])
 
     def build_with_autoreconf(self):
@@ -278,9 +278,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['autoreconf', '-i']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j2'], env=None),
+            mock.call(['make', '-j2'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -293,8 +293,8 @@ class AutotoolsPluginTestCase(tests.TestCase):
             mock.call(['autoreconf', '-i']),
             mock.call(['./configure', '--prefix={}'.format(
                 plugin.installdir)]),
-            mock.call(['make', '-j2'], env=None),
-            mock.call(['make', 'install'], env=None)
+            mock.call(['make', '-j2'], None, env=None),
+            mock.call(['make', 'install'], None, env=None)
         ])
 
     @mock.patch.object(autotools.AutotoolsPlugin, 'run')
@@ -306,9 +306,9 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock.assert_has_calls([
             mock.call(['autoreconf', '-i']),
             mock.call(['./configure', '--prefix=']),
-            mock.call(['make', '-j1'], env=None),
+            mock.call(['make', '-j1'], None, env=None),
             mock.call(['make', 'install',
-                       'DESTDIR={}'.format(plugin.installdir)], env=None)
+                       'DESTDIR={}'.format(plugin.installdir)], None, env=None)
         ])
 
     @mock.patch('sys.stdout')
@@ -325,10 +325,10 @@ class AutotoolsPluginTestCase(tests.TestCase):
         run_mock = patcher.start()
 
         # We want to mock out every run() call except the one to autogen
-        def _run(cmd, env=None):
+        def _run(cmd, cwd=None, env=None):
             if './autogen.sh' in cmd:
                 patcher.stop()
-                output = plugin.run(cmd, env=env)
+                output = plugin.run(cmd, cwd, env=env)
                 patcher.start()
                 return output
 
