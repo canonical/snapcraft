@@ -166,6 +166,13 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _install_pip(self, download):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
+        if os.environ.get('SNAP'):
+            env['PYTHONPATH'] = ':'.join([
+                os.path.join(os.environ['SNAP'], 'lib', 'python3.5',
+                             'site-packages'),
+                os.path.join(os.environ['SNAP'], 'usr', 'lib', 'python3',
+                             'dist-packages'),
+            ])
 
         args = ['pip', 'setuptools', 'wheel']
 

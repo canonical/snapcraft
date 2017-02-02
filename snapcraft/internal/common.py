@@ -16,7 +16,7 @@
 
 # Data/methods shared between plugins and snapcraft
 
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 import glob
 import logging
 import math
@@ -61,32 +61,48 @@ def assemble_env(include_core_library_paths=False, arch_triplet=''):
     return '\n'.join(['export ' + e for e in parse_env])
 
 
+@contextmanager
+def clean_environment():
+    env_bak = {k: os.environ[k] for k in ['PYTHONUSERBASE', 'PYTHONHOME']
+               if k in os.environ}
+    for k in env_bak:
+        os.environ.pop(k)
+    # FIXME: This is gross to keep writing this, even when env is the same
+    try:
+        yield
+    finally:
+        for k in env_bak:
+            os.environ[k] = env_bak[k]
+
+
 def run(cmd, **kwargs):
     assert isinstance(cmd, list), 'run command must be a list'
-    # FIXME: This is gross to keep writing this, even when env is the same
-    with tempfile.NamedTemporaryFile(mode='w+') as f:
-        f.write(assemble_env())
-        f.write('\n')
-        f.write('exec "$@"')
-        f.flush()
-        subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
+    with clean_environment():
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(assemble_env())
+            f.write('\n')
+            f.write('exec "$@"')
+            f.flush()
+            subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
 
 
 def run_output(cmd, **kwargs):
     assert isinstance(cmd, list), 'run command must be a list'
     # FIXME: This is gross to keep writing this, even when env is the same
-    with tempfile.NamedTemporaryFile(mode='w+') as f:
-        f.write(assemble_env())
-        f.write('\n')
-        f.write('exec "$@"')
-        f.flush()
-        output = subprocess.check_output(['/bin/sh', f.name] + cmd, **kwargs)
-        try:
-            return output.decode(sys.getfilesystemencoding()).strip()
-        except UnicodeEncodeError:
-            logger.warning('Could not decode output for {!r} correctly'.format(
-                cmd))
-            return output.decode('latin-1', 'surrogateescape').strip()
+    with clean_environment():
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(assemble_env())
+            f.write('\n')
+            f.write('exec "$@"')
+            f.flush()
+            output = subprocess.check_output(['/bin/sh', f.name] + cmd,
+                                             **kwargs)
+    try:
+        return output.decode(sys.getfilesystemencoding()).strip()
+    except UnicodeEncodeError:
+        logger.warning('Could not decode output for {!r} correctly'.format(
+            cmd))
+        return output.decode('latin-1', 'surrogateescape').strip()
 
 
 def format_snap_name(snap):
@@ -117,6 +133,9 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
+    snap = os.environ.get('SNAP')
+    if snap:
+        return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
 

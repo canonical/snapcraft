@@ -1,0 +1,38 @@
+name: snapcraft
+version: '2.25'
+summary: easily create snaps
+description: |
+    Snapcraft aims to make upstream developers' lives easier and as such is not
+    a single toolset, but instead is a collection of tools that enable the
+    natural workflow of an upstream to be extended with a simple release step
+    into Snappy.
+
+grade: devel
+confinement: classic
+
+apps:
+  snapcraft:
+    command: snapcraft
+
+parts:
+  snapcraft:
+    source: .
+    plugin: python
+    requirements: requirements.txt
+    build-packages:
+        - build-essential
+        - libapt-pkg-dev
+        - libarchive13
+        - libffi-dev
+        - libsodium-dev
+  snapcraft-dependencies:
+    plugin: nil
+    stage-packages:
+        - libapt-pkg5.0
+        - libarchive13
+        - libffi6
+        - libsodium18
+        - squashfs-tools
+        - xdelta3
+    stage:
+        - usr/lib
