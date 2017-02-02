@@ -30,71 +30,64 @@ class StagePackageGrammarTestCase(integration_tests.TestCase):
     def test_simple(self):
         """Test that 'simple' fetches stage package."""
 
-        project_dir = 'stage-package-grammar'
-        self.run_snapcraft(['prime', 'simple'], project_dir)
+        self.run_snapcraft(['prime', 'simple'], 'stage-package-grammar')
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'hello'),
+            os.path.join('prime', 'usr', 'bin', 'hello'),
             FileExists())
 
     def test_try(self):
         """Test that 'try' fetches stage package."""
 
-        project_dir = 'stage-package-grammar'
-        self.run_snapcraft(['prime', 'try'], project_dir)
+        self.run_snapcraft(['prime', 'try'], 'stage-package-grammar')
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'hello'),
+            os.path.join('prime', 'usr', 'bin', 'hello'),
             FileExists())
 
     def test_try_skipped(self):
         """Test that 'try-skipped' fetches nothing."""
 
-        project_dir = 'stage-package-grammar'
-        self.run_snapcraft(['prime', 'try-skipped'], project_dir)
+        self.run_snapcraft(['prime', 'try-skipped'], 'stage-package-grammar')
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'hello'),
+            os.path.join('prime', 'usr', 'bin', 'hello'),
             Not(FileExists()))
 
     def test_try_else(self):
         """Test that 'try-else' fetches stage package."""
 
-        project_dir = 'stage-package-grammar'
-        self.run_snapcraft(['prime', 'try-else'], project_dir)
+        self.run_snapcraft(['prime', 'try-else'], 'stage-package-grammar')
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'hello'),
+            os.path.join('prime', 'usr', 'bin', 'hello'),
             FileExists())
 
     def test_on_other_arch(self):
         """Test that 'on-other-arch' fetches nothing."""
 
-        project_dir = 'stage-package-grammar'
-        self.run_snapcraft(['prime', 'on-other-arch'], project_dir)
+        self.run_snapcraft(['prime', 'on-other-arch'], 'stage-package-grammar')
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'hello'),
+            os.path.join('prime', 'usr', 'bin', 'hello'),
             Not(FileExists()))
 
     def test_on_other_arch_else(self):
         """Test that 'on-other-arch-else' fetches stage package."""
 
-        project_dir = 'stage-package-grammar'
-        self.run_snapcraft(['prime', 'on-other-arch-else'], project_dir)
+        self.run_snapcraft(
+            ['prime', 'on-other-arch-else'], 'stage-package-grammar')
 
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'usr', 'bin', 'hello'),
+            os.path.join('prime', 'usr', 'bin', 'hello'),
             FileExists())
 
     def test_on_other_arch_else_fail(self):
         """Test that 'on-other-arch-else-fail' fails with an error."""
 
-        project_dir = 'stage-package-grammar'
-
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
-            ['prime', 'on-other-arch-else-fail'], project_dir)
+            ['prime', 'on-other-arch-else-fail'], 'stage-package-grammar')
 
         self.assertThat(exception.output, Contains(
             "unable to satisfy 'on other-arch', failure forced"))
