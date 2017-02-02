@@ -282,12 +282,14 @@ import yaml                                         # noqa
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
+# TODO migrate to snapcraft.store
 from snapcraft._store import (                      # noqa
     create_key,
     close,
     download,
     history,
     gated,
+    get_latest_revision,
     list_keys,
     list_registered,
     login,

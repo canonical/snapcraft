@@ -627,7 +627,7 @@ def download(snap_name, channel, download_path, arch):
     """Download snap from the store to download_path"""
     store = storeapi.StoreClient()
     try:
-            store.download(snap_name, channel, download_path, arch)
+        store.download(snap_name, channel, download_path, arch)
     except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
@@ -666,6 +666,13 @@ def history(snap_name, series, arch):
         headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
         tablefmt='plain')
     print(tabulated_revisions)
+
+
+def get_latest_revision(snap_name, *, channel='stable', arch=None):
+    # Only public snaps for now
+    store = storeapi.StoreClient()
+    snap = store.cpi.get_package(snap_name, channel, arch)
+    return snap['revision']
 
 
 def gated(snap_name):

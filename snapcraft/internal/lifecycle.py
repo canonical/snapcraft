@@ -19,8 +19,9 @@ import logging
 import os
 import shutil
 import tarfile
+import tempfile
 import time
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import check_call, check_output, Popen, PIPE, STDOUT
 
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
@@ -35,6 +36,7 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
 
@@ -104,12 +106,49 @@ def execute(step, project_options, part_names=None):
     config = snapcraft.internal.load_config(project_options)
     repo.install_build_packages(config.build_tools)
 
+    if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
+            config.data['confinement'] == 'classic'):
+        _setup_core(project_options.deb_arch)
+
     _Executor(config, project_options).run(step, part_names)
 
     return {'name': config.data['name'],
             'version': config.data['version'],
             'arch': config.data['architectures'],
             'type': config.data.get('type', '')}
+
+
+def _setup_core(deb_arch):
+    core_path = os.path.join(os.path.sep, 'snap', 'core', 'current')
+    if os.path.exists(core_path):
+        logger.debug('{!r} already exists, skipping core setup'.format(
+            core_path))
+        return
+    core_revision = snapcraft.get_latest_revision('core')
+    snap_cache = SnapCache(project_name='core')
+
+    # Clean up old stuff first
+    snap_cache.prune(keep_revision=core_revision)
+
+    # And try to get this revision.
+    core_snap = snap_cache.get(snap_name='core', revision=core_revision)
+    if not core_snap:
+        with tempfile.TemporaryDirectory() as d:
+            snap_name = os.path.join(d, 'core_stable_{}.snap'.format(deb_arch))
+            snapcraft.download('core', 'stable', snap_name, deb_arch)
+            # FIXME there is a chance of incorrecly caching the wrong
+            # revision here.
+            snap_cache.cache(snap_name, revision=core_revision)
+    # This should now be a hit.
+    core_snap = snap_cache.get(snap_name='core', revision=core_revision)
+    if not core_snap:
+        raise RuntimeError('Error while retrieving the core snap')
+
+    # Now unpack
+    logger.info('Setting up {!r} in {!r}'.format(core_snap, core_path))
+    check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
+    output = check_output(['sudo', 'unsquashfs', '-d', core_path, core_snap])
+    logger.debug(output)
 
 
 def _replace_in_part(part):

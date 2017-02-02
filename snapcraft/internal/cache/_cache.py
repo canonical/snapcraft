@@ -37,6 +37,9 @@ class SnapcraftCache:
     def prune(self, *args, **kwargs):
         raise NotImplementedError
 
+    def get(self, *args, **kwargs):
+        raise NotImplementedError
+
 
 class SnapcraftProjectCache(SnapcraftCache):
     """Project specific cache"""

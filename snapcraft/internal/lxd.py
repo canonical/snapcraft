@@ -40,6 +40,7 @@ class Cleanbuilder:
         self._project_options = project_options
         self._container_name = 'snapcraft-{}'.format(
             petname.Generate(3, '-'))
+        self._env = {'SNAPCRAFT_SETUP_CORE': '1'}
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -50,7 +51,8 @@ class Cleanbuilder:
                     '{}/{}'.format(self._container_name, src), dst])
 
     def _container_run(self, cmd):
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd,
+                   env=self._env)
 
     @contextmanager
     def _create_container(self):

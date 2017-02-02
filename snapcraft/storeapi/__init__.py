@@ -393,7 +393,7 @@ class SnapIndexClient(Client):
         params = {
             'channel': channel,
             'fields': 'status,anon_download_url,download_url,'
-                      'download_sha512,snap_id,release',
+                      'download_sha512,snap_id,revision,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
