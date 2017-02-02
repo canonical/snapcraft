@@ -235,8 +235,8 @@ class _Executor:
 
             message_components.append(
                 "\nIn order to continue, please clean that part's {0!r} step "
-                "running:\n"
-                "snapcraft clean {1} -s {0}\n".format(step, part.name))
+                "by running: snapcraft clean {1} -s {0}\n".format(
+                    step, part.name))
             raise RuntimeError(''.join(message_components))
 
         staged_state = self.config.get_project_state('stage')
