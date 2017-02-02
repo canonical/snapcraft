@@ -116,7 +116,7 @@ def _extract_on_clause_selectors(on):
     True
     """
 
-    selector_pattern = re.compile(r'\Aon\s+(.+)\Z')
+    selector_pattern = re.compile(r'\Aon\s+([^,\s](?:,?[^,\s]+)*)\Z')
     match = selector_pattern.match(on)
 
     try:

@@ -175,6 +175,34 @@ class OnStatementGrammarTestCase(GrammarTestCase):
 class OnStatementInvalidGrammarTestCase(GrammarTestCase):
 
     scenarios = [
+        ('spaces in selectors', {
+            'on': 'on amd64, ubuntu',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'amd64',
+            'expected_exception': ".*not a valid 'on' clause",
+        }),
+        ('beginning with comma', {
+            'on': 'on ,amd64',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'amd64',
+            'expected_exception': ".*not a valid 'on' clause",
+        }),
+        ('ending with comma', {
+            'on': 'on amd64,',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'amd64',
+            'expected_exception': ".*not a valid 'on' clause",
+        }),
+        ('multiple commas', {
+            'on': 'on amd64,,ubuntu',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'amd64',
+            'expected_exception': ".*not a valid 'on' clause",
+        }),
         ('invalid selector format', {
             'on': 'on',
             'body': ['foo'],
