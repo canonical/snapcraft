@@ -265,14 +265,14 @@ class _SnapPackaging:
         else:
             assembled_env = common.assemble_env()
             assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
-            assembled_env = re.sub(replace_path, '$SNAP', assembled_env)
+            assembled_env = replace_path.sub('$SNAP', assembled_env)
 
         executable = '"{}"'.format(wrapexec)
 
         if shebang:
             if shebang.startswith('/usr/bin/env '):
                 shebang = shell_utils.which(shebang.split()[1])
-            new_shebang = re.sub(replace_path, '$SNAP', shebang)
+            new_shebang = replace_path.sub('$SNAP', shebang)
             new_shebang = re.sub(self._snap_dir, '$SNAP', new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
