@@ -28,7 +28,7 @@ import tempfile
 import yaml
 
 from snapcraft import file_utils
-from snapcraft import shutil as snap_shutil
+from snapcraft import shell_utils
 from snapcraft.internal import common, project_loader
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -258,8 +258,8 @@ class _SnapPackaging:
         # not want to leak PATH or other environment variables
         # that would affect the applications view of the classic
         # environment it is dropped into.
-        replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
-            re.escape(self._parts_dir))
+        replace_path = re.compile(r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
+            re.escape(self._parts_dir)))
         if self._config_data['confinement'] == 'classic':
             assembled_env = None
         else:
@@ -271,7 +271,7 @@ class _SnapPackaging:
 
         if shebang:
             if shebang.startswith('/usr/bin/env '):
-                shebang = snap_shutil.which(shebang.split()[1])
+                shebang = shell_utils.which(shebang.split()[1])
             new_shebang = re.sub(replace_path, '$SNAP', shebang)
             new_shebang = re.sub(self._snap_dir, '$SNAP', new_shebang)
             if new_shebang != shebang:
