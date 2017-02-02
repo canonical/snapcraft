@@ -205,7 +205,10 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         pip_command = [self._get_python_command(), '-m', 'pip']
 
-        # if python_command it is not from stage we don't have pip
+        # If python_command it is not from stage we don't have pip, which means
+        # we are going to need to resort to the pip installed on the system
+        # that came from build-packages. This shouldn't be a problem as
+        # stage-packages and build-packages should match.
         if not self._get_python_command().startswith(self.project.stage_dir):
             env['PYTHONHOME'] = '/usr'
 
