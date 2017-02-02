@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -234,8 +234,9 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nPlease clean that part's {!r} step in order to "
-                'continue'.format(step))
+                "\nIn order to continue, please clean that part's {0!r} step "
+                "by running: snapcraft clean {1} -s {0}\n".format(
+                    step, part.name))
             raise RuntimeError(''.join(message_components))
 
         staged_state = self.config.get_project_state('stage')
