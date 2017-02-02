@@ -39,7 +39,6 @@ from xdg import BaseDirectory
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import common
-from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
 
 
@@ -64,76 +63,6 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
 deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
-
-
-def is_package_installed(package):
-    """Return True if a package is installed on the system.
-
-    :param str package: the deb package to query for.
-    :returns: True if the package is installed, False if not.
-    """
-    with apt.Cache() as apt_cache:
-        return apt_cache[package].installed
-
-
-def install_build_packages(packages):
-    unique_packages = set(packages)
-    new_packages = []
-    with apt.Cache() as apt_cache:
-        for pkg in unique_packages:
-            try:
-                if not apt_cache[pkg].installed:
-                    new_packages.append(pkg)
-            except KeyError as e:
-                raise EnvironmentError(
-                    'Could not find a required package in '
-                    '\'build-packages\': {}'.format(str(e)))
-    if new_packages:
-        new_packages.sort()
-        logger.info(
-            'Installing build dependencies: %s', ' '.join(new_packages))
-        env = os.environ.copy()
-        env.update({
-            'DEBIAN_FRONTEND': 'noninteractive',
-            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
-        })
-
-        apt_command = ['sudo', 'apt-get',
-                       '--no-install-recommends', '-y']
-        if not is_dumb_terminal():
-            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
-        apt_command.append('install')
-
-        subprocess.check_call(apt_command + new_packages, env=env)
-
-        try:
-            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                  new_packages, env=env)
-        except subprocess.CalledProcessError as e:
-            logger.warning(
-                'Impossible to mark packages as auto-installed: {}'
-                .format(e))
-
-
-def get_packages_for_source_type(source_type):
-    """Return a list with required packages to handle the source_type.
-
-    :param source: the snapcraft source type
-    """
-    if source_type == 'bzr':
-        packages = 'bzr'
-    elif source_type == 'git':
-        packages = 'git'
-    elif source_type == 'tar':
-        packages = 'tar'
-    elif source_type == 'hg' or source_type == 'mercurial':
-        packages = 'mercurial'
-    elif source_type == 'subversion' or source_type == 'svn':
-        packages = 'subversion'
-    else:
-        packages = []
-
-    return packages
 
 
 class PackageNotFoundError(Exception):
@@ -528,8 +457,3 @@ def _try_copy_local(path, target):
         logger.warning(
             '{} will be a dangling symlink'.format(path))
         return False
-
-
-def check_for_command(command):
-    if not shutil.which(command):
-        raise MissingCommandError([command])

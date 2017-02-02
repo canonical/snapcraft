@@ -43,11 +43,12 @@ setup(
               'snapcraft.internal.cache',
               'snapcraft.internal.deltas',
               'snapcraft.internal.pluginhandler',
+              'snapcraft.internal.repo',
               'snapcraft.internal.sources',
               'snapcraft.internal.states',
               'snapcraft.plugins',
               'snapcraft.storeapi'],
-    package_data={'snapcraft.internal': ['manifest.txt']},
+    package_data={'snapcraft.internal.repo': ['manifest.txt']},
     scripts=['bin/snapcraft', 'bin/snapcraft-parser'],
     data_files=[
         ('share/snapcraft/schema',
