@@ -53,6 +53,9 @@ class CreateBaseTestCase(tests.TestCase):
             'description': 'my description',
             'summary': 'my summary',
             'confinement': 'devmode',
+            'environment': {
+                'GLOBAL': 'y',
+            }
         }
 
         patcher = patch(
@@ -90,6 +93,7 @@ class CreateTestCase(CreateBaseTestCase):
         expected = {'architectures': ['amd64'],
                     'confinement': 'devmode',
                     'description': 'my description',
+                    'environment': {'GLOBAL': 'y'},
                     'summary': 'my summary',
                     'name': 'my-package',
                     'version': '1.0'}
@@ -244,7 +248,10 @@ class CreateTestCase(CreateBaseTestCase):
         self.config_data['apps'] = {
             'app1': {'command': 'app.sh'},
             'app2': {'command': 'app.sh', 'plugs': ['network']},
-            'app3': {'command': 'app.sh', 'plugs': ['network-server']}
+            'app3': {'command': 'app.sh', 'plugs': ['network-server']},
+            'app4': {'command': 'app.sh', 'plugs': ['network-server'],
+                     'environment': {'XDG_SOMETHING': '$SNAP_USER_DATA',
+                                     'LANG': 'C'}},
         }
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
@@ -272,12 +279,20 @@ class CreateTestCase(CreateBaseTestCase):
                     'command': 'command-app3.wrapper',
                     'plugs': ['network-server'],
                 },
+                'app4': {
+                    'command': 'command-app4.wrapper',
+                    'plugs': ['network-server'],
+                    'environment': {
+                        'XDG_SOMETHING': '$SNAP_USER_DATA',
+                        'LANG': 'C'}
+                },
             },
             'description': 'my description',
             'summary': 'my summary',
             'name': 'my-package',
             'version': '1.0',
             'confinement': 'devmode',
+            'environment': {'GLOBAL': 'y'},
             'plugs': {
                 'network-server': {
                     'interface': 'network-bind',
@@ -285,7 +300,7 @@ class CreateTestCase(CreateBaseTestCase):
             }
         }
 
-        self.assertEqual(y, expected)
+        self.assertThat(y, Equals(expected))
 
     def test_create_meta_with_app_desktop_key(self):
         os.mkdir(self.prime_dir)
