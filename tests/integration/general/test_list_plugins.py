@@ -39,6 +39,7 @@ class ListPluginsTestCase(integration.TestCase):
             "kbuild",
             "maven",
             "nodejs",
+            "qbs",
             "qmake",
             "scons",
             "catkin",
