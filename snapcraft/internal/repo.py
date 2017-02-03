@@ -479,8 +479,9 @@ def _fix_xml_tools(root):
 
 def _fix_symlink(path, debdir, root):
     target = os.path.join(debdir, os.readlink(path)[1:])
-    if _skip_link(os.readlink(path)):
-        logger.debug('Skipping {}'.format(target))
+    if _link_should_be_removed(os.readlink(path)):
+        logger.debug('Removing {}'.format(target))
+        os.remove(path)
         return
     if not os.path.exists(target) and not _try_copy_local(path, target):
         return
@@ -504,16 +505,16 @@ def _fix_shebangs(path):
                                    r'#!/usr/bin/env python\n')
 
 
-_skip_list = None
+_remove_list = None
 
 
-def _skip_link(target):
-    global _skip_list
-    if not _skip_list:
+def _link_should_be_removed(target):
+    global _remove_list
+    if not _remove_list:
         output = common.run_output(['dpkg', '-L', 'libc6']).split()
-        _skip_list = [i for i in output if 'lib' in i]
+        _remove_list = [i for i in output if 'lib' in i]
 
-    return target in _skip_list
+    return target in _remove_list
 
 
 def _try_copy_local(path, target):

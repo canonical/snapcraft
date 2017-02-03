@@ -45,3 +45,22 @@ class StageTestCase(integration_tests.TestCase):
             '`snapcraft help plugins`'
         )
         self.assertThat(exception.output, Contains(expected_help))
+
+    def test_staging_libc_links(self):
+        project_dir = 'staging_links_to_libc'
+
+        # First, stage libc6-dev via stage-packages
+        self.run_snapcraft(['stage', 'from-package'], project_dir)
+
+        # Now tar up the staging area
+        subprocess.check_call(['tar', 'cf', 'stage.tar', 'stage/'])
+
+        # Now attempt to stage the tarred staging area once again. This should
+        # not conflict.
+        try:
+            self.run_snapcraft(['stage', 'from-tar'], project_dir)
+        except subprocess.CalledProcessError as e:
+            if 'have the following file paths in common' in e.output:
+                self.fail('Parts unexpectedly conflicted')
+            else:
+                raise
