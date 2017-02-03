@@ -150,6 +150,35 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
+    def test_create_meta_with_declared_icon_with_dots(self):
+        open(os.path.join(os.curdir, 'com.my.icon.png'), 'w').close()
+        self.config_data['icon'] = 'com.my.icon.png'
+
+        y = self.generate_meta_yaml()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_declared_icon_in_parent_dir(self):
+        open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
+        builddir = os.path.join(os.curdir, 'subdir')
+        os.mkdir(builddir)
+        os.chdir(builddir)
+        self.config_data['icon'] = '../my-icon.png'
+
+        y = self.generate_meta_yaml()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
     def test_create_meta_with_declared_icon_and_setup(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
@@ -522,9 +551,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP/usr/bin:$SNAP/bin\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
+                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                    '$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
 
         with open(wrapper_path) as wrapper_file:
@@ -548,9 +577,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
 
         expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP/usr/bin:$SNAP/bin\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
+                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                    '$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -581,14 +610,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         expected = (
             '#!/bin/sh\n'
-            '\n\n'
-            'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-            'exec "$SNAP/snap_exe"'
-            ' "$SNAP/test_relexepath" "$@"\n')
+            'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
-
         self.assertEqual(expected, wrapper_contents)
+
         with open(os.path.join(self.prime_dir, relative_exe_path), 'r') as exe:
             # The shebang wasn't changed, since we don't know what the
             # path will be on the installed system.
@@ -609,8 +635,6 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -637,8 +661,6 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -657,8 +679,6 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                     'exec "app1" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()

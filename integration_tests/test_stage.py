@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,10 +24,9 @@ import integration_tests
 class StageTestCase(integration_tests.TestCase):
 
     def test_conflicts(self):
-        project_dir = 'conflicts'
         exception = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'stage', project_dir)
+            self.run_snapcraft, 'stage', 'conflicts')
 
         self.assertEqual(1, exception.returncode)
         expected_conflicts = (

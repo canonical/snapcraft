@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,6 +35,7 @@ from snapcraft.internal.errors import (
     PluginError,
     MissingState,
     SnapcraftPartConflictError,
+    SnapcraftSchemaError
 )
 from snapcraft.internal import (
     common,
@@ -110,8 +111,9 @@ class PluginHandler:
         try:
             self._load_code(plugin_name, self._part_properties, part_schema)
         except jsonschema.ValidationError as e:
+            error = SnapcraftSchemaError.from_validation_error(e)
             raise PluginError('properties failed to load for {}: {}'.format(
-                part_name, e.message))
+                part_name, error.message))
 
     def _load_code(self, plugin_name, properties, part_schema):
         module_name = plugin_name.replace('-', '_')

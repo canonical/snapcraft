@@ -221,9 +221,15 @@ properties:
           organize:
             type: object
             default: {}
+            additionalProperties:
+              type: string
+              minLength: 1
           filesets:
             type: object
             default: {}
+            additionalProperties:
+              type: array
+              minitems: 1
           stage:
             type: array
             minitems: 1
