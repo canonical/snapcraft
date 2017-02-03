@@ -80,7 +80,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
         with open(python_entry_point) as f:
             python_shebang = f.readline().strip()
 
-        self.assertEqual('#!/usr/bin/env python', python2_shebang)
+        self.assertEqual('#!/usr/bin/env python2', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
         self.assertEqual('#!/usr/bin/env python3', python_shebang)
 
