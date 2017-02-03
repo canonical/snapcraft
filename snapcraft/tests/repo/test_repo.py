@@ -41,7 +41,7 @@ class RepoBaseTestCase(tests.TestCase):
 
 class UbuntuTestCase(RepoBaseTestCase):
 
-    @patch('snapcraft.repo.apt')
+    @patch('snapcraft.repo._repo.apt')
     def test_get_package(self, mock_apt):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
@@ -71,7 +71,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.assertIn(
             call('fake-package'), mock_apt.Cache().__getitem__.call_args_list)
 
-    @patch('snapcraft.repo.apt')
+    @patch('snapcraft.repo._repo.apt')
     def test_get_multiarch_package(self, mock_apt):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
@@ -102,12 +102,12 @@ class UbuntuTestCase(RepoBaseTestCase):
             mock_apt.Cache().__getitem__.call_args_list,
             Contains(call('fake-package:arch')))
 
-    @patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._repo._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):
         mock_cc.return_value = 'ar'
 
         self.maxDiff = None
-        sources_list = repo._format_sources_list(
+        sources_list = repo._repo._format_sources_list(
             '', use_geoip=True, deb_arch='amd64')
 
         expected_sources_list = \
@@ -124,8 +124,8 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
         self.assertEqual(sources_list, expected_sources_list)
 
     def test_no_geoip_uses_default_archive(self):
-        sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
+        sources_list = repo._repo._format_sources_list(
+            repo._repo._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
 
         expected_sources_list = \
             '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -141,13 +141,13 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 
         self.assertEqual(sources_list, expected_sources_list)
 
-    @patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._repo._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
         self.maxDiff = None
         mock_cc.return_value = 'ar'
 
-        sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, deb_arch='amd64',
+        sources_list = repo._repo._format_sources_list(
+            repo._repo._DEFAULT_SOURCES, deb_arch='amd64',
             use_geoip=True, release='vivid')
 
         expected_sources_list = \
@@ -163,10 +163,10 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
         self.assertEqual(sources_list, expected_sources_list)
 
-    @patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._repo._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
-        sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
+        sources_list = repo._repo._format_sources_list(
+            repo._repo._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
@@ -192,7 +192,7 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         os.symlink('1', self.tempdir + '/rel-to-1')
         os.symlink('/1', self.tempdir + '/abs-to-1')
 
-        repo._fix_artifacts(debdir=self.tempdir)
+        repo._repo._fix_artifacts(debdir=self.tempdir)
 
         self.assertEqual(os.readlink(self.tempdir + '/rel-to-a'), 'a')
         self.assertEqual(os.readlink(self.tempdir + '/abs-to-a'), 'a')
@@ -216,7 +216,7 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
             f.write('Cflags: -I${includedir}/granite\n')
             f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
                     'gobject-2.0\n')
-        repo._fix_artifacts(debdir=self.tempdir)
+        repo._repo._fix_artifacts(debdir=self.tempdir)
 
         with open(pc_file) as f:
             pc_file_content = f.read()
@@ -255,7 +255,7 @@ class FixSUIDTestCase(RepoBaseTestCase):
         open(file, mode='w').close()
         os.chmod(file, self.test_mod)
 
-        repo._fix_artifacts(debdir=self.tempdir)
+        repo._repo._fix_artifacts(debdir=self.tempdir)
         self.assertEqual(
             stat.S_IMODE(os.stat(file).st_mode), self.expected_mod)
 
@@ -300,7 +300,7 @@ class FixShebangTestCase(RepoBaseTestCase):
         with open(self.file_path, 'w') as fd:
             fd.write(self.content)
 
-        repo._fix_shebangs('root')
+        repo._repo._fix_shebangs('root')
 
         with open(self.file_path, 'r') as fd:
             self.assertEqual(fd.read(), self.expected)
@@ -328,7 +328,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
         repo.install_build_packages(test_pkgs.keys())
 
-    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('snapcraft.internal.indicators.is_dumb_terminal')
     @patch('subprocess.check_call')
     def test_install_buid_package(
             self, mock_check_call, mock_is_dumb_terminal):
@@ -344,7 +344,7 @@ class BuildPackagesTestCase(tests.TestCase):
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
-    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('snapcraft.internal.indicators.is_dumb_terminal')
     @patch('subprocess.check_call')
     def test_install_buid_package_in_dumb_terminal(
             self, mock_check_call, mock_is_dumb_terminal):
