@@ -819,6 +819,33 @@ parts:
                         Equals(expected_app_env))
 
 
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_environment(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+environment:
+    INVALID:
+        - 1
+        - 2
+
+parts:
+  main:
+    plugin: make
+    source: .
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+
+        self.assertRegex(
+            raised.message,
+            "The 'environment/INVALID' property does not match the required "
+            "schema: \[1, 2\].*")
+
+
 class YamlEncodingsTestCase(YamlBaseTestCase):
 
     scenarios = [
