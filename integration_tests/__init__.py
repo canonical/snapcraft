@@ -19,10 +19,12 @@ import os
 import subprocess
 import time
 import uuid
+import xdg
 from distutils import dir_util
 
 import fixtures
 import pexpect
+from unittest import mock
 import testtools
 from testtools import content
 from testtools.matchers import Contains
@@ -51,8 +53,38 @@ class TestCase(testtools.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
         self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
+        self.useFixture(fixtures.EnvironmentVariable(
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
+
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_config_home',
+            new=os.path.join(self.path, '.config'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_data_home',
+            new=os.path.join(self.path, 'data'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(self.path, '.cache'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher_dirs = mock.patch(
+            'xdg.BaseDirectory.xdg_config_dirs',
+            new=[xdg.BaseDirectory.xdg_config_home])
+        patcher_dirs.start()
+        self.addCleanup(patcher_dirs.stop)
+
+        patcher_dirs = mock.patch(
+            'xdg.BaseDirectory.xdg_data_dirs',
+            new=[xdg.BaseDirectory.xdg_data_home])
+        patcher_dirs.start()
+        self.addCleanup(patcher_dirs.stop)
 
         # Note that these directories won't exist when the test starts,
         # they might be created after calling the snapcraft command on the

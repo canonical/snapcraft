@@ -95,7 +95,7 @@ class PluginTestCase(tests.TestCase):
             mocks.loadplugin,
             'test-part', part_properties={'source': 'file'})
 
-        mock_isdir.assert_called_once_with('file')
+        mock_isdir.assert_any_call('file')
 
         self.assertEqual(raised.__str__(),
                          'local source (file) is not a directory')
@@ -1722,20 +1722,18 @@ class CleanTestCase(CleanBaseTestCase):
     @patch.object(pluginhandler.PluginHandler, 'is_clean')
     @patch('os.rmdir')
     @patch('os.listdir')
-    @patch('os.path.exists')
-    def test_clean_part_that_exists(self, mock_exists, mock_listdir,
+    def test_clean_part_that_exists(self, mock_listdir,
                                     mock_rmdir, mock_is_clean):
-        mock_exists.return_value = True
         mock_listdir.return_value = False
         mock_is_clean.return_value = True
 
         part_name = 'test_part'
+        partdir = os.path.join(self.parts_dir, part_name)
+        os.makedirs(partdir)
+
         p = mocks.loadplugin(part_name)
-        mock_exists.reset_mock()
         p.clean()
 
-        partdir = os.path.join(self.parts_dir, part_name)
-        mock_exists.assert_called_once_with(partdir)
         mock_listdir.assert_called_once_with(partdir)
         mock_rmdir.assert_called_once_with(partdir)
 
@@ -1758,20 +1756,18 @@ class CleanTestCase(CleanBaseTestCase):
     @patch.object(pluginhandler.PluginHandler, 'is_clean')
     @patch('os.rmdir')
     @patch('os.listdir')
-    @patch('os.path.exists')
-    def test_clean_part_remaining_parts(self, mock_exists, mock_listdir,
+    def test_clean_part_remaining_parts(self, mock_listdir,
                                         mock_rmdir, mock_is_clean):
-        mock_exists.return_value = True
         mock_listdir.return_value = True
         mock_is_clean.return_value = True
 
         part_name = 'test_part'
+        partdir = os.path.join(self.parts_dir, part_name)
+        os.makedirs(partdir)
+
         p = mocks.loadplugin(part_name)
-        mock_exists.reset_mock()
         p.clean()
 
-        partdir = partdir = os.path.join(self.parts_dir, part_name)
-        mock_exists.assert_called_once_with(partdir)
         mock_listdir.assert_called_once_with(partdir)
         self.assertFalse(mock_rmdir.called)
 

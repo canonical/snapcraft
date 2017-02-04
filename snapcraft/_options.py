@@ -18,6 +18,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import xdg
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
 
@@ -177,7 +178,7 @@ class ProjectOptions:
         return self.__debug
 
     def __init__(self, use_geoip=False, parallel_builds=True,
-                 target_deb_arch=None, debug=False):
+                 target_deb_arch=None, debug=False, cache_dir=None):
         # TODO: allow setting a different project dir and check for
         #       snapcraft.yaml
         self.__project_dir = os.getcwd()
@@ -185,6 +186,10 @@ class ProjectOptions:
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)
         self.__debug = debug
+        if cache_dir:
+            self.cache_dir = cache_dir
+        else:
+            self.cache_dir = xdg.BaseDirectory.save_cache_path('snapcraft')
 
     def get_core_dynamic_linker(self):
         """Returns the dynamic linker used for the targetted core.

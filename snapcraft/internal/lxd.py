@@ -89,6 +89,19 @@ class Cleanbuilder:
         self._push_file(self._tar_filename, dst)
         self._container_run(['tar', 'xvf', dst])
 
+        logger.info('Copying snapcraft cache into container')
+        # Later versions have a `push --recursive`. For now we have to do it
+        # the hard way and walk the cache ourselves.
+        for root, dirs, files in os.walk(self._project_options.cache_dir):
+            destination_root = os.path.join(
+                '/root', '.cache', 'snapcraft', os.path.relpath(
+                    root, self._project_options.cache_dir))
+            self._container_run(['mkdir', '-p', destination_root])
+            for file_path in files:
+                source = os.path.join(root, file_path)
+                destination = os.path.join(destination_root, file_path)
+                self._push_file(source, destination)
+
     def _pull_snap(self):
         src = os.path.join('/root', self._snap_output)
         self._pull_file(src, self._snap_output)
