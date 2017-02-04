@@ -78,10 +78,11 @@ class AfterTestCase(integration_tests.TestCase):
         self.assertEqual(1, exception.returncode)
 
     def test_pull_with_tree_of_dependencies(self):
-        self.run_snapcraft('pull', os.path.join('simple-circle', 'tree'))
+        self.run_snapcraft(
+            'pull', os.path.join('circular-dependencies', 'tree'))
 
     def test_pull_with_circular_dependencies(self):
         self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull',
-            os.path.join('simple-circle', 'circle'))
+            os.path.join('circular-dependencies', 'circle'))
