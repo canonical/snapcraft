@@ -17,4 +17,4 @@ for email in "$(git log $TRAVIS_COMMIT_RANGE --pretty="%aE")"; do
     fi
 done
 
-[ "$error" == 'true' ]; then exit 1; fi
+if [ "$error" == 'true' ]; then exit 1; fi
