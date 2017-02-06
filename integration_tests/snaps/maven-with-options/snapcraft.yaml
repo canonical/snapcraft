@@ -1,0 +1,15 @@
+name: maven-with-options
+version: 0
+summary: test the maven plugin
+description: |
+ Test maven builds and options. If the tests aren't skipped we will run into
+ the assertTrue ( false ) statement and the build will fail.
+icon: icon.png
+confinement: strict
+
+parts:
+  m:
+    plugin: maven
+    source: my-app
+    maven-options:
+      - -DskipTests

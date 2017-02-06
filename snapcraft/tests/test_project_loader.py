@@ -783,6 +783,67 @@ parts:
             'make-options': ['DEP={}'.format(self.stage_dir)],
         })
 
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_environment(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+environment:
+    GLOBAL: "1"
+    OTHER: valid-value
+
+apps:
+  app1:
+    command: app1
+    environment:
+      LOCALE: C
+      PLUGIN_PATH: $SNAP_USER_DATA/plugins
+
+parts:
+  main:
+    plugin: make
+    source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION
+    make-options: [DEP=$SNAPCRAFT_STAGE]
+""")
+        config = project_loader.Config().data
+
+        expected_global_env = {'GLOBAL': '1',
+                               'OTHER': 'valid-value'}
+        self.assertThat(config['environment'], Equals(expected_global_env))
+
+        expected_app_env = {'LOCALE': 'C',
+                            'PLUGIN_PATH': '$SNAP_USER_DATA/plugins'}
+        self.assertThat(config['apps']['app1']['environment'],
+                        Equals(expected_app_env))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_environment(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+environment:
+    INVALID:
+        - 1
+        - 2
+
+parts:
+  main:
+    plugin: make
+    source: .
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+
+        self.assertRegex(
+            raised.message,
+            "The 'environment/INVALID' property does not match the required "
+            "schema: \[1, 2\].*")
+
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
 

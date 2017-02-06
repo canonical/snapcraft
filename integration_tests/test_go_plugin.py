@@ -23,7 +23,7 @@ import integration_tests
 class GoPluginTestCase(integration_tests.TestCase):
 
     def test_stage_go_plugin(self):
-        self.run_snapcraft('stage', 'simple-go')
+        self.run_snapcraft('stage', 'go-hello')
 
         # XXX go names the binary after the directory. --elopio - 2017-01-25
         binary_output = subprocess.check_output(
@@ -32,4 +32,4 @@ class GoPluginTestCase(integration_tests.TestCase):
         self.assertEqual('Hello snapcrafter\n', binary_output)
 
     def test_building_multiple_main_packages(self):
-        self.run_snapcraft('stage', 'multiple-main-go-packages')
+        self.run_snapcraft('stage', 'go-with-multiple-main-packages')

@@ -43,6 +43,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - python-version:
       (string; default: python3)
       The python version to use. Valid options are: python2 and python3
+
+If the plugin finds a python interpreter with a basename that matches
+`python-version` in the <stage> directory on the following fixed path:
+`<stage-dir>/usr/bin/<python-interpreter>` then this interpreter would
+be preferred instead and no interpreter would be brought in through
+`stage-packages` mechanisms.
 """
 
 import os
@@ -59,6 +65,23 @@ from textwrap import dedent
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.common import isurl
+
+
+_SITECUSTOMIZE_TEMPLATE = dedent("""\
+    import site
+    import os
+
+    snap_dir = os.getenv("SNAP")
+    snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")
+    snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")
+
+    for d in (snap_dir, snapcraft_stage_dir, snapcraft_part_install):
+        if d:
+            site_dir = os.path.join(d, "{site_dir}")
+            site.addsitedir(site_dir)
+
+    if snap_dir:
+        site.ENABLE_USER_SITE = False""")
 
 
 class PythonPlugin(snapcraft.BasePlugin):
@@ -130,23 +153,16 @@ class PythonPlugin(snapcraft.BasePlugin):
             return ['python']
 
     @property
-    def system_pip_command(self):
-        if self.options.python_version == 'python3':
-            return os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
+    def stage_packages(self):
+        if not os.path.exists(self._get_python_command()):
+            return super().stage_packages + self.plugin_stage_packages
         else:
-            return os.path.join(os.path.sep, 'usr', 'bin', 'pip')
+            return super().stage_packages
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(self.plugin_build_packages)
-        self.stage_packages.extend(self.plugin_stage_packages)
         self._python_package_dir = os.path.join(self.partdir, 'packages')
-
-    def env(self, root):
-        return [
-            'PYTHONUSERBASE={}'.format(root),
-            'PYTHONHOME={}'.format(os.path.join(root, 'usr'))
-        ]
 
     def pull(self):
         super().pull()
@@ -163,24 +179,59 @@ class PythonPlugin(snapcraft.BasePlugin):
         if os.path.isdir(self._python_package_dir):
             shutil.rmtree(self._python_package_dir)
 
+    def _get_python_command(self):
+        python_command = os.path.join(
+            'usr', 'bin', self.options.python_version)
+
+        # staged as in project.stage_dir, not from a stage-packages entry
+        # in this part.
+        staged_python = os.path.join(self.project.stage_dir, python_command)
+        unstaged_python = os.path.join(self.installdir, python_command)
+
+        if os.path.exists(staged_python):
+            return staged_python
+        else:
+            return unstaged_python
+
     def _install_pip(self, download):
         env = os.environ.copy()
         env['PYTHONUSERBASE'] = self.installdir
+        # since we are using an independent env we need to export this too
+        # TODO: figure out if we can move back to common.run
+        env['SNAPCRAFT_STAGE'] = self.project.stage_dir
+        env['SNAPCRAFT_PART_INSTALL'] = self.installdir
 
         args = ['pip', 'setuptools', 'wheel']
 
+        pip_command = [self._get_python_command(), '-m', 'pip']
+
+        # If python_command it is not from stage we don't have pip, which means
+        # we are going to need to resort to the pip installed on the system
+        # that came from build-packages. This shouldn't be a problem as
+        # stage-packages and build-packages should match.
+        if not self._get_python_command().startswith(self.project.stage_dir):
+            env['PYTHONHOME'] = '/usr'
+
         pip = _Pip(exec_func=subprocess.check_call,
-                   runnable=self.system_pip_command,
+                   runnable=pip_command,
                    package_dir=self._python_package_dir, env=env,
                    extra_install_args=['--ignore-installed'])
 
         if download:
             pip.download(args)
-        pip.wheel(args)
         pip.install(args)
 
     def _get_build_env(self):
         env = os.environ.copy()
+        env['PYTHONUSERBASE'] = self.installdir
+        if self._get_python_command().startswith(self.project.stage_dir):
+            env['PYTHONHOME'] = os.path.join(self.project.stage_dir, 'usr')
+        else:
+            env['PYTHONHOME'] = os.path.join(self.installdir, 'usr')
+
+        env['PATH'] = '{}:{}'.format(
+            os.path.join(self.installdir, 'usr', 'bin'),
+            os.path.expandvars('$PATH'))
         headers = glob(os.path.join(
             os.path.sep, 'usr', 'include', '{}*'.format(
                 self.options.python_version)))
@@ -217,6 +268,8 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         env = self._get_build_env()
 
+        pip_command = [self._get_python_command(), '-m', 'pip']
+
         constraints = []
         if self.options.constraints:
             if isurl(self.options.constraints):
@@ -225,7 +278,8 @@ class PythonPlugin(snapcraft.BasePlugin):
                 constraints = os.path.join(self.sourcedir,
                                            self.options.constraints)
 
-        pip = _Pip(exec_func=self.run, runnable='pip',
+        pip = _Pip(exec_func=self.run,
+                   runnable=pip_command,
                    package_dir=self._python_package_dir, env=env,
                    constraints=constraints,
                    dependency_links=self.options.process_dependency_links)
@@ -267,6 +321,44 @@ class PythonPlugin(snapcraft.BasePlugin):
                                    re.compile(r'^#!.*python'),
                                    r'#!/usr/bin/env python')
 
+        self._setup_sitecustomize()
+
+    def _setup_sitecustomize(self):
+        # This avoids needing to leak PYTHONUSERBASE
+        # USER_SITE and USER_BASE default to base of SNAP for when used in
+        # runtime and to SNAPCRAFT_STAGE to support chaining dependencies
+        # when used with the `after` keyword.
+        site_dir = self._get_user_site_dir()
+        sitecustomize_path = self._get_sitecustomize_path()
+
+        # Now create our sitecustomize
+        os.makedirs(os.path.dirname(sitecustomize_path), exist_ok=True)
+        with open(sitecustomize_path, 'w') as f:
+            f.write(_SITECUSTOMIZE_TEMPLATE.format(site_dir=site_dir))
+
+    def _get_user_site_dir(self):
+        user_site_dir = glob(os.path.join(
+            self.installdir, 'lib', '{}*'.format(self.options.python_version),
+            'site-packages'))[0]
+
+        return user_site_dir[len(self.installdir)+1:]
+
+    def _get_sitecustomize_path(self):
+        if self._get_python_command().startswith(self.project.stage_dir):
+            base_dir = self.project.stage_dir
+        else:
+            base_dir = self.installdir
+
+        python_site = glob(os.path.join(
+            base_dir, 'usr', 'lib',
+            '{}*'.format(self.options.python_version),
+            'site.py'))[0]
+        python_site_dir = os.path.dirname(python_site)
+
+        return os.path.join(self.installdir,
+                            python_site_dir[len(base_dir)+1:],
+                            'sitecustomize.py')
+
     def snap_fileset(self):
         fileset = super().snap_fileset()
         fileset.append('-bin/pip*')
@@ -285,7 +377,10 @@ class _Pip:
                  constraints=None, dependency_links=None,
                  extra_install_args=None):
         self._exec_func = exec_func
-        self._runnable = runnable
+        if isinstance(runnable, str):
+            self._runnable = [runnable]
+        else:
+            self._runnable = runnable
         self._package_dir = package_dir
         self._env = env
 
@@ -302,7 +397,7 @@ class _Pip:
         """Return a dict of installed python packages with versions."""
         if not exec_func:
             exec_func = self._exec_func
-        cmd = [self._runnable, 'list']
+        cmd = [*self._runnable, 'list']
 
         output = exec_func(cmd, env=self._env)
         package_listing = {}
@@ -316,7 +411,7 @@ class _Pip:
 
     def wheel(self, args, **kwargs):
         cmd = [
-            self._runnable, 'wheel',
+            *self._runnable, 'wheel',
             '--disable-pip-version-check', '--no-index',
             '--find-links', self._package_dir,
         ]
@@ -339,7 +434,7 @@ class _Pip:
 
     def download(self, args, **kwargs):
         cmd = [
-            self._runnable, 'download',
+            *self._runnable, 'download',
             '--disable-pip-version-check',
             '--dest', self._package_dir,
         ]
@@ -351,7 +446,7 @@ class _Pip:
 
     def install(self, args, **kwargs):
         cmd = [
-            self._runnable, 'install', '--user', '--no-compile',
+            *self._runnable, 'install', '--user', '--no-compile',
             '--disable-pip-version-check', '--no-index',
             '--find-links', self._package_dir,
         ]
