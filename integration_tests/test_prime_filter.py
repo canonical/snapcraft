@@ -28,7 +28,7 @@ import integration_tests
 class PrimeKeywordTestCase(integration_tests.TestCase):
 
     def test_prime_filter(self):
-        self.run_snapcraft(['prime', 'prime-keyword'], 'simple-prime-filter')
+        self.run_snapcraft(['prime', 'prime-keyword'], 'prime-filter')
 
         # Verify that only the `prime1` file made it into prime (i.e. `prime2`
         # was filtered out).
@@ -38,7 +38,7 @@ class PrimeKeywordTestCase(integration_tests.TestCase):
 
     def test_snap_filter_is_deprecated(self):
         output = self.run_snapcraft(
-            ['prime', 'snap-keyword'], 'simple-prime-filter')
+            ['prime', 'snap-keyword'], 'prime-filter')
 
         # Verify that the `snap` keyword is deprecated.
         self.assertThat(

@@ -1,0 +1,13 @@
+name: pkgconfig-conflict
+version: 0
+summary: This has 2 pkgconfig packages that would conflict
+description: "This is a regression test for LP: #1604472"
+confinement: strict
+
+parts:
+    my-part:
+        plugin: nil
+        stage-packages: [libglib2.0-dev]
+    my-part-2:
+        plugin: nil
+        stage-packages: [libglib2.0-dev]

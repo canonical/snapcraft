@@ -27,14 +27,14 @@ import integration_tests
 class MakePluginTestCase(integration_tests.TestCase):
 
     def test_stage_make_plugin(self):
-        self.run_snapcraft('stage', 'simple-make')
+        self.run_snapcraft('stage', 'make-hello')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))
         self.assertEqual('Hello world\n', binary_output)
 
     def test_clean_make_plugin(self):
-        self.run_snapcraft('snap', 'simple-make')
+        self.run_snapcraft('snap', 'make-hello')
 
         snap_dirs = (self.parts_dir, self.stage_dir, self.prime_dir)
         for dir_ in snap_dirs:
@@ -45,14 +45,14 @@ class MakePluginTestCase(integration_tests.TestCase):
             self.assertThat(dir_, Not(DirExists()))
 
     def test_nonstandard_makefile(self):
-        self.run_snapcraft('stage', 'simple-make-nonstandard-makefile')
+        self.run_snapcraft('stage', 'make-with-nonstandard-makefile')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))
         self.assertEqual('Hello world\n', binary_output)
 
     def test_stage_make_with_artifacts(self):
-        self.run_snapcraft('stage', 'simple-make-artifacts')
+        self.run_snapcraft('stage', 'make-with-artifacts')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'test'))

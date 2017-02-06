@@ -22,7 +22,7 @@ import integration_tests
 class AutotoolsPluginTestCase(integration_tests.TestCase):
 
     def test_stage(self):
-        self.run_snapcraft('stage', 'simple-autotools')
+        self.run_snapcraft('stage', 'autotools-hello')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))

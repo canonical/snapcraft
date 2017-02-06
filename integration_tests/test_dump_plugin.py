@@ -28,7 +28,7 @@ import integration_tests
 class DumpPluginTestCase(integration_tests.TestCase):
 
     def test_stage_dump_plugin(self):
-        self.run_snapcraft('stage', 'simple-dump')
+        self.run_snapcraft('stage', 'dump')
 
         expected_files = [
             'flat',

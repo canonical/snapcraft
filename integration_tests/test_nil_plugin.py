@@ -23,7 +23,7 @@ import integration_tests
 class NilPluginTestCase(integration_tests.TestCase):
 
     def test_snap_nil_plugin(self):
-        self.run_snapcraft('snap', 'simple-nil')
+        self.run_snapcraft('snap', 'nil-basic')
 
         dirs = os.listdir(self.prime_dir)
         self.assertEqual(['meta'], dirs)

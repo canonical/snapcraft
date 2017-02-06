@@ -27,7 +27,7 @@ import integration_tests
 class TarPluginTestCase(integration_tests.TestCase):
 
     def test_stage_nil_plugin(self):
-        self.run_snapcraft('stage', 'simple-tar')
+        self.run_snapcraft('stage', 'tar')
 
         expected_files = [
             'flat',
