@@ -4,7 +4,7 @@ set -ev
 
 echo $TRAVIS_COMMIT_RANGE
 error='false'
-for email in "$(git log $TRAVIS_COMMIT_RANGE --pretty="%aE")"; do
+for email in $(git log $TRAVIS_COMMIT_RANGE --pretty="%aE"); do
     echo "Checking the licence agreement for $email..."
 
     if [ "$(echo $email | cut -d @ -f 2)" = 'canonical.com' ]; then
