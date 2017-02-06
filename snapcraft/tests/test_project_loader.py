@@ -1838,6 +1838,11 @@ class ValidationTestCase(ValidationBaseTestCase):
                 'command': 'binary5',
                 'daemon': 'notify',
             },
+            'service6': {
+                'command': 'binary6',
+                'post-stop-command': 'binary6 --post-stop',
+                'daemon': 'simple'
+            },
         }
 
         project_loader.Validator(self.data).validate()
