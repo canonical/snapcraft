@@ -818,7 +818,6 @@ parts:
         self.assertThat(config['apps']['app1']['environment'],
                         Equals(expected_app_env))
 
-
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_environment(self, mock_load_plugin):
         self.make_snapcraft_yaml("""name: project-name
