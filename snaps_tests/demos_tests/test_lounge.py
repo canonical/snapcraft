@@ -17,12 +17,12 @@
 import snaps_tests
 
 
-class ShoutTestCase(snaps_tests.SnapsTestCase):
+class LoungeTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'shout'
+    snap_content_dir = 'lounge'
 
-    def test_shout(self):
+    def test_lounge(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        snap_name = 'shout'
-        self.install_snap(snap_path, snap_name, '0.52.0')
+        snap_name = 'lounge'
+        self.install_snap(snap_path, snap_name, '2.2.0')
         self.assert_service_running(snap_name, 'server')
