@@ -304,6 +304,7 @@ from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
+from snapcraft import shell_utils                   # noqa
 from snapcraft.internal import repo                 # noqa
 
 

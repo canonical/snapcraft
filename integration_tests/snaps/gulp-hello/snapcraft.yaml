@@ -1,0 +1,14 @@
+name: gulp-hello
+version: 0
+summary: test the gulp plugin
+description: |
+  This is a basic gulp snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+confinement: strict
+
+parts:
+    gulp:
+        plugin: gulp
+        gulp-tasks: ['install']
+        source: .
