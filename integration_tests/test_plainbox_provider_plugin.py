@@ -24,7 +24,7 @@ import integration_tests
 class PlainboxProviderPluginTestCase(integration_tests.TestCase):
 
     def test_snap_simple_provider(self):
-        self.run_snapcraft('stage', 'simple-plainbox-provider')
+        self.run_snapcraft('stage', 'plainbox-provider')
 
         self.assertThat(
             os.path.join(

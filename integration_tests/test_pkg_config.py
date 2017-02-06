@@ -21,4 +21,4 @@ class PkgConfigTestCase(integration_tests.TestCase):
 
     def test_pkgconfig_pc_conflicts_1604472(self):
         """The same pc file from stage-packages should not conflict."""
-        self.run_snapcraft('stage', 'simple-pkgconfig')
+        self.run_snapcraft('stage', 'pkgconfig-conflict')

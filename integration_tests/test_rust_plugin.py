@@ -24,10 +24,10 @@ import integration_tests
 class RustPluginTestCase(integration_tests.TestCase):
 
     def test_stage_rust_plugin(self):
-        self.run_snapcraft('stage', 'simple-rust')
+        self.run_snapcraft('stage', 'rust-hello')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', 'simple-rust'))
+            os.path.join(self.stage_dir, 'bin', 'rust-hello'))
         self.assertEqual('There is rust on snaps!\n', binary_output)
 
     def test_stage_rust_with_revision(self):

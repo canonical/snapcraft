@@ -23,7 +23,7 @@ import integration_tests
 class GulpPluginTestCase(integration_tests.TestCase):
 
     def test_stage_make_plugin(self):
-        self.run_snapcraft('stage', 'simple-gulp')
+        self.run_snapcraft('stage', 'gulp-hello')
 
         binary_output = subprocess.check_output(
             [os.path.join(self.stage_dir, 'hello-world')])

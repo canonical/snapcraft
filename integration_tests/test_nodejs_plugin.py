@@ -22,7 +22,7 @@ from testtools.matchers import FileExists
 class NodeJSPluginTestCase(integration_tests.TestCase):
 
     def test_rebuilding_possible(self):
-        self.copy_project_to_cwd('simple-nodejs')
+        self.copy_project_to_cwd('nodejs-hello')
         self.run_snapcraft('build')
         self.run_snapcraft(['clean', '-s', 'build'])
         self.run_snapcraft('build')

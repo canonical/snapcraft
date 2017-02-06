@@ -24,7 +24,7 @@ import integration_tests
 class CopyPluginTestCase(integration_tests.TestCase):
 
     def test_stage_copy_plugin(self):
-        self.run_snapcraft('stage', 'simple-copy')
+        self.run_snapcraft('stage', 'copy-with-file-and-dir')
 
         self.assertThat(
             os.path.join(self.stage_dir, 'dst'),

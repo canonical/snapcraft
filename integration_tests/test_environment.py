@@ -56,10 +56,10 @@ class EnvironmentTestCase(integration_tests.TestCase):
 
     def test_stage_cmake_plugin_with_replace(self):
         """Replace SNAPCRAFT_PART_INSTALL in the part's attributes"""
-        self.run_snapcraft('stage', 'simple-cmake-replace')
+        self.run_snapcraft('stage', 'cmake-with-env-var')
 
         binary_output = subprocess.check_output([
-            os.path.join(self.stage_dir, 'bin', 'simple-cmake-replace')])
+            os.path.join(self.stage_dir, 'bin', 'cmake-with-env-var')])
         path = os.path.join(
             self.path, self.parts_dir, 'cmake-project', 'install')
         self.assertEqual(
