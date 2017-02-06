@@ -47,6 +47,7 @@ _MANDATORY_PACKAGE_KEYS = [
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
     'assumes',
+    'environment',
     'type',
     'plugs',
     'slots',

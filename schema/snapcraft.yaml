@@ -76,6 +76,15 @@ properties:
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
+  environment:
+    type: object
+    description: environment entries for the snap as a whole
+    minItems: 1
+    additionalProperties:
+      anyOf:
+        - type: string
+          minLength: 1
+        - type: number
   apps:
     type: object
     additionalProperties: false
@@ -134,6 +143,15 @@ properties:
             items:
               type: string
               pattern: "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"
+          environment:
+            type: object
+            description: environment entries for the specific app.
+            minItems: 1
+            additionalProperties:
+              anyOf:
+                - type: string
+                  minLength: 1
+                - type: number
   hooks:
     type: object
     additionalProperties: false
