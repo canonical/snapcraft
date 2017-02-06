@@ -27,7 +27,7 @@ import integration_tests
 class TarPluginTestCase(integration_tests.TestCase):
 
     def test_stage_zip_source(self):
-        self.copy_project_to_cwd('simple-zip')
+        self.copy_project_to_cwd('zip')
         self.run_snapcraft('stage')
 
         expected_files = [

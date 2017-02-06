@@ -1,0 +1,25 @@
+name: make-with-filesets
+version: 0.1
+summary: Use organized filesets
+description: organize the filesets before staging them
+icon: icon.png
+confinement: strict
+
+parts:
+  make-project:
+    plugin: make
+    filesets:
+      share:
+        - share/share1
+        - share/share2
+    stage:
+      - $share
+      - bin
+    snap:
+      - bin
+    organize:
+      to-share: share
+      share2: share/share2
+      to-bin1: bin
+      to-bin2: bin
+    source: .

@@ -25,7 +25,7 @@ import integration_tests
 class CleanTestCase(integration_tests.TestCase):
 
     def test_clean(self):
-        self.copy_project_to_cwd('simple-make')
+        self.copy_project_to_cwd('make-hello')
         self.run_snapcraft('snap')
 
         snap_dirs = (self.parts_dir, self.stage_dir, self.prime_dir)
@@ -39,7 +39,7 @@ class CleanTestCase(integration_tests.TestCase):
     def test_clean_again(self):
         # Clean a second time doesn't fail.
         # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1497371
-        self.copy_project_to_cwd('simple-make')
+        self.copy_project_to_cwd('make-hello')
         self.run_snapcraft('snap')
         self.run_snapcraft('clean')
         self.run_snapcraft('clean')

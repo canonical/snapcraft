@@ -24,7 +24,7 @@ import integration_tests
 class RpmSourceTestCase(integration_tests.TestCase):
 
     def test_stage_rpm(self):
-        self.run_snapcraft('stage', 'simple-rpm')
+        self.run_snapcraft('stage', 'rpm-hello')
 
         self.assertThat(
             os.path.join(self.stage_dir, 'bin', 'hello'),

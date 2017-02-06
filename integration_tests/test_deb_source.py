@@ -27,7 +27,7 @@ import integration_tests
 class DebSourceTestCase(integration_tests.TestCase):
 
     def test_stage_deb(self):
-        self.copy_project_to_cwd('simple-deb')
+        self.copy_project_to_cwd('deb-hello')
         self.run_snapcraft(['stage', 'deb'])
 
         self.assertThat(
@@ -39,7 +39,7 @@ class DebSourceTestCase(integration_tests.TestCase):
 
     # Regression test for LP: #1634813
     def test_stage_deb_with_symlink(self):
-        self.copy_project_to_cwd('simple-deb')
+        self.copy_project_to_cwd('deb-with-symlink')
         self.run_snapcraft(['stage', 'deb-with-symlink'])
 
         target = os.path.join(self.stage_dir, 'target')

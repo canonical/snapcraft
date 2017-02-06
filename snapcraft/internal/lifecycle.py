@@ -272,7 +272,7 @@ def _create_tar_filter(tar_filename):
         fn = tarinfo.name
         if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
             return None
-        elif fn in ('./stage', './prime', './snap', tar_filename):
+        elif fn in ('./stage', './prime', tar_filename):
             return None
         elif fn.endswith('.snap'):
             return None

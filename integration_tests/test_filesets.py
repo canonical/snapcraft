@@ -28,7 +28,7 @@ from testtools.matchers import (
 class FilesetsTestCase(integration_tests.TestCase):
 
     def test_filesets(self):
-        self.run_snapcraft('snap', 'simple-make-filesets')
+        self.run_snapcraft('snap', 'make-with-filesets')
 
         expected_dirs = (
             os.path.join(self.stage_dir, 'share'),
