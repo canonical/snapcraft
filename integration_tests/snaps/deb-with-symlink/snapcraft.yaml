@@ -1,0 +1,13 @@
+name: deb-with-symlink
+version: '0.1'
+summary: test the deb source
+description: |
+  This is a deb snap with a symlink.
+
+grade: devel
+confinement: devmode
+
+parts:
+  deb-with-symlink:
+    plugin: dump
+    source: symlink_1.0.deb

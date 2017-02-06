@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 # Copyright (C) 2016 Harald Sitter <sitter@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -42,10 +42,10 @@ In addition, this plugin uses the following plugin-specific keywords:
 import os
 import stat
 
-import snapcraft
+from snapcraft.plugins import make
 
 
-class AutotoolsPlugin(snapcraft.BasePlugin):
+class AutotoolsPlugin(make.MakePlugin):
 
     @classmethod
     def schema(cls):
@@ -71,7 +71,7 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['configflags', 'install-via']
+        return super().get_build_properties() + ['configflags', 'install-via']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -80,22 +80,20 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
             'automake',
             'autopoint',
             'libtool',
-            'make',
         ])
 
         if options.install_via == 'destdir':
-            self.install_via_destdir = True
+            self.options.make_install_var = 'DESTDIR'
         elif options.install_via == 'prefix':
-            self.install_via_destdir = False
+            self.options.make_install_var = ''
         else:
             raise RuntimeError('Unsupported installation method: "{}"'.format(
                 options.install_via))
 
     def build(self):
-        super().build()
-        if not os.path.exists(os.path.join(self.builddir, "configure")):
+        if not os.path.exists(os.path.join(self.builddir, 'configure')):
             generated = False
-            scripts = ["autogen.sh", "bootstrap"]
+            scripts = ['autogen.sh', 'bootstrap']
             for script in scripts:
                 path = os.path.join(self.builddir, script)
                 if not os.path.exists(path) or os.path.isdir(path):
@@ -113,18 +111,15 @@ class AutotoolsPlugin(snapcraft.BasePlugin):
                 self.run(['autoreconf', '-i'])
 
         configure_command = ['./configure']
-        make_install_command = ['make', 'install']
 
-        if self.install_via_destdir:
+        if self.options.make_install_var:
             # Use an empty prefix since we'll install via DESTDIR
             configure_command.append('--prefix=')
-            make_install_command.append('DESTDIR=' + self.installdir)
         else:
             configure_command.append('--prefix=' + self.installdir)
 
         self.run(configure_command + self.options.configflags)
-        self.run(['make', '-j{}'.format(self.parallel_build_count)])
-        self.run(make_install_command)
+        self.make()
 
     def snap_fileset(self):
         fileset = super().snap_fileset()

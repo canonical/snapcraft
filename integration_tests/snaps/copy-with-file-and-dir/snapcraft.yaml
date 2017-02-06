@@ -1,0 +1,16 @@
+name: copy-with-file-and-dir
+version: 0.1
+summary: test the copy plugin
+description: |
+  This is a basic copy snap. It just copies a file and a directory.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+icon: icon.png
+confinement: strict
+
+parts:
+  copy-example:
+    plugin: copy
+    files:
+      src: dst
+      srcdir: dstdir

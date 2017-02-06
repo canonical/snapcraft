@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -56,6 +56,14 @@ class TestMain(TestCase):
 
         self.assertEqual(1, raised.code)
         self.assertEqual(fake_logger.output, 'some error\n')
+
+    @mock.patch('snapcraft.internal.common.run')
+    def test_command_debug_logs_version(self, mock_run):
+        fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(fake_logger)
+        self.assertRaises(SystemExit, snapcraft.main.main, ['--debug'])
+        self.assertRegex(fake_logger.output,
+                         r'Starting snapcraft \S+ from \S+\.')
 
     @mock.patch('snapcraft.internal.log.configure')
     def test_command_error_debug(self, mock_log_configure):

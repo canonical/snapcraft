@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -116,9 +116,12 @@ class MakePlugin(snapcraft.BasePlugin):
                     snapcraft.file_utils.link_or_copy(
                         source_path, destination_path)
         else:
-            install_param = self.options.make_install_var + '=' + \
-                self.installdir
-            self.run(command + ['install', install_param], env=env)
+            command.append('install')
+            if self.options.make_install_var:
+                command.append('{}={}'.format(
+                    self.options.make_install_var, self.installdir))
+
+            self.run(command, env=env)
 
     def build(self):
         super().build()

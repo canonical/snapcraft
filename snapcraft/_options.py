@@ -19,6 +19,8 @@ import multiprocessing
 import os
 import platform
 
+from snapcraft.internal.deprecations import handle_deprecation_notice
+
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +79,9 @@ _ARCH_TRANSLATIONS = {
 }
 
 
-_USERSPACE_ARCHITECTURE = {
+_32BIT_USERSPACE_ARCHITECTURE = {
     'aarch64': 'armv7l',
+    'armv8l': 'armv7l',
     'ppc64le': 'ppc',
     'x86_64': 'i686',
 }
@@ -87,7 +90,7 @@ _USERSPACE_ARCHITECTURE = {
 def _get_platform_architecture():
     architecture = platform.machine()
     if platform.architecture()[0] == '32bit':
-        userspace = _USERSPACE_ARCHITECTURE.get(architecture)
+        userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
         if userspace:
             architecture = userspace
 
@@ -151,7 +154,11 @@ class ProjectOptions:
 
     @property
     def local_plugins_dir(self):
-        return os.path.join(self.parts_dir, 'plugins')
+        deprecated_plugins_dir = os.path.join(self.parts_dir, 'plugins')
+        if os.path.exists(deprecated_plugins_dir):
+            handle_deprecation_notice('dn2')
+            return deprecated_plugins_dir
+        return os.path.join(self.__project_dir, 'snap', 'plugins')
 
     @property
     def parts_dir(self):

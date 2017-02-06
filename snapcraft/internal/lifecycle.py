@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -66,14 +66,18 @@ _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 def init():
     """Initialize a snapcraft project."""
 
-    if os.path.exists('snapcraft.yaml'):
+    if os.path.exists(os.path.join('snap', 'snapcraft.yaml')):
+        raise EnvironmentError('snap/snapcraft.yaml already exists!')
+    elif os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
-    with open('snapcraft.yaml', mode='w+') as f:
+    with contextlib.suppress(FileExistsError):
+        os.mkdir('snap')
+    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w') as f:
         f.write(yaml)
-    logger.info('Created snapcraft.yaml.')
+    logger.info('Created snap/snapcraft.yaml.')
     logger.info(
         'Edit the file to your liking or run `snapcraft` to get started')
 
@@ -230,8 +234,9 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nPlease clean that part's {!r} step in order to "
-                'continue'.format(step))
+                "\nIn order to continue, please clean that part's {0!r} step "
+                "by running: snapcraft clean {1} -s {0}\n".format(
+                    step, part.name))
             raise RuntimeError(''.join(message_components))
 
         staged_state = self.config.get_project_state('stage')
@@ -267,7 +272,7 @@ def _create_tar_filter(tar_filename):
         fn = tarinfo.name
         if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
             return None
-        elif fn in ('./stage', './prime', './snap', tar_filename):
+        elif fn in ('./stage', './prime', tar_filename):
             return None
         elif fn.endswith('.snap'):
             return None

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,14 +23,14 @@ import unittest
 import unittest.mock
 import fixtures
 from testtools import ExpectedException
+from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import project_loader
-from snapcraft.internal.errors import DuplicateAliasError
+from snapcraft.internal import errors
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
-from snapcraft._schema import SnapcraftSchemaError
 
 
 class YamlBaseTestCase(tests.TestCase):
@@ -40,9 +40,10 @@ class YamlBaseTestCase(tests.TestCase):
         dirs.setup_dirs()
 
         patcher = unittest.mock.patch(
-            'snapcraft.internal.project_loader._get_snapcraft_yaml')
+            'snapcraft.internal.project_loader.get_snapcraft_yaml')
         self.mock_get_yaml = patcher.start()
-        self.mock_get_yaml.return_value = 'snapcraft.yaml'
+        self.mock_get_yaml.return_value = os.path.join(
+            'snap', 'snapcraft.yaml')
         self.addCleanup(patcher.stop)
         self.part_schema = project_loader.Validator().part_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
@@ -101,9 +102,8 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        raised = self.assertRaises(
-            DuplicateAliasError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.DuplicateAliasError,
+                                   project_loader.Config)
 
         self.assertEqual(
             'Multiple parts have the same alias defined: {!r}'.format(
@@ -132,7 +132,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
         expected = (
             'The {path!r} property does not match the required schema: '
@@ -424,7 +424,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(raised.message,
@@ -448,7 +448,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(raised.message,
@@ -474,7 +474,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(raised.message,
@@ -499,7 +499,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(raised.message,
@@ -523,7 +523,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(
@@ -548,7 +548,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(
@@ -625,13 +625,61 @@ parts:
 """)
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(
             raised.message,
             'found character \'\\t\' that cannot start any token '
-            'on line 5 of snapcraft.yaml')
+            'on line 5 of snap/snapcraft.yaml')
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_organize_value_none(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    organize:
+      foo:
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+        self.assertThat(str(raised), Equals(
+            "The 'parts/part1/organize/foo' property does not match the "
+            "required schema: None is not of type 'string'"))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_yaml_organize_value_empty(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+
+parts:
+  part1:
+    plugin: nil
+    organize:
+      foo: ''
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+        self.assertThat(str(raised), Equals(
+            "The 'parts/part1/organize/foo' property does not match the "
+            "required schema: '' is too short (minimum length is 1)"))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_expands_filesets(self, mock_loadPlugin):
@@ -734,6 +782,67 @@ parts:
             'plugin': 'make', 'stage': [], 'prime': [], 'snap': [],
             'make-options': ['DEP={}'.format(self.stage_dir)],
         })
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_environment(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+environment:
+    GLOBAL: "1"
+    OTHER: valid-value
+
+apps:
+  app1:
+    command: app1
+    environment:
+      LOCALE: C
+      PLUGIN_PATH: $SNAP_USER_DATA/plugins
+
+parts:
+  main:
+    plugin: make
+    source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION
+    make-options: [DEP=$SNAPCRAFT_STAGE]
+""")
+        config = project_loader.Config().data
+
+        expected_global_env = {'GLOBAL': '1',
+                               'OTHER': 'valid-value'}
+        self.assertThat(config['environment'], Equals(expected_global_env))
+
+        expected_app_env = {'LOCALE': 'C',
+                            'PLUGIN_PATH': '$SNAP_USER_DATA/plugins'}
+        self.assertThat(config['apps']['app1']['environment'],
+                        Equals(expected_app_env))
+
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_environment(self, mock_load_plugin):
+        self.make_snapcraft_yaml("""name: project-name
+version: "1"
+summary: test
+description: test
+confinement: strict
+environment:
+    INVALID:
+        - 1
+        - 2
+
+parts:
+  main:
+    plugin: make
+    source: .
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+
+        self.assertRegex(
+            raised.message,
+            "The 'environment/INVALID' property does not match the required "
+            "schema: \[1, 2\].*")
 
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
@@ -911,7 +1020,7 @@ parts:
     plugin: nil
 """.format(self.name))
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertRegex(
@@ -969,7 +1078,7 @@ parts:
     stage-packages: [fswebcam]
 """.format(self.confinement))
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(
@@ -1028,7 +1137,7 @@ parts:
     stage-packages: [fswebcam]
 """.format(self.grade))
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertEqual(
@@ -1141,7 +1250,7 @@ parts:
     stage-packages: [fswebcam]
 """.format(self.epoch))
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Config)
 
         self.assertRegex(
@@ -1153,34 +1262,54 @@ parts:
 
 class InitTestCase(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
     def test_config_raises_on_missing_snapcraft_yaml(self):
-        # no snapcraft.yaml
+        """Test that an error is raised if snap/snapcraft.yaml is missing"""
+
         raised = self.assertRaises(
             project_loader.SnapcraftYamlFileError,
             project_loader.Config)
 
-        self.assertEqual(raised.file, 'snapcraft.yaml')
+        self.assertEqual(raised.file, os.path.join('snap', 'snapcraft.yaml'))
 
-    def test_two_snapcraft_yamls_cuase_error(self):
+    def test_both_new_and_old_yamls_cause_error(self):
+        os.mkdir('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+        open('snapcraft.yaml', 'w').close()
+
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
+
+        self.assertEqual(
+            "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', please "
+            "remove one.",
+            str(raised))
+
+    def test_both_new_and_hidden_yamls_cause_error(self):
+        os.mkdir('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+        open('.snapcraft.yaml', 'w').close()
+
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
+
+        self.assertEqual(
+            "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', please "
+            "remove one.",
+            str(raised))
+
+    def test_both_visible_and_hidden_yamls_cause_error(self):
         open('snapcraft.yaml', 'w').close()
         open('.snapcraft.yaml', 'w').close()
 
-        raised = self.assertRaises(
-            EnvironmentError,
-            project_loader.Config)
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError,
+                                   project_loader.Config)
 
         self.assertEqual(
-            str(raised),
-            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
-            "please remove one")
+            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', please "
+            'remove one.',
+            str(raised))
 
-    def test_hidden_snapcraft_yaml_loads(self):
+    def test_snapcraft_yaml_loads(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1193,10 +1322,12 @@ parts:
     plugin: nil
 """)
 
-        os.rename('snapcraft.yaml', '.snapcraft.yaml')
         project_loader.Config()
 
-    def test_visible_snapcraft_yaml_loads(self):
+    def test_old_snapcraft_yaml_loads(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1209,6 +1340,28 @@ parts:
     plugin: nil
 """)
 
+        os.rename(os.path.join('snap', 'snapcraft.yaml'), 'snapcraft.yaml')
+        os.rmdir('snap')
+        project_loader.Config()
+
+    def test_hidden_snapcraft_yaml_loads(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  main:
+    plugin: nil
+""")
+
+        os.rename(os.path.join('snap', 'snapcraft.yaml'), '.snapcraft.yaml')
+        os.rmdir('snap')
         project_loader.Config()
 
 
@@ -1398,7 +1551,6 @@ parts:
         environment = config.stage_env()
         self.assertIn(
             'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
-            '-Wl,--enable-new-dtags '
             '-Wl,--dynamic-linker={core_dynamic_linker} '
             '-Wl,-rpath,'
             '/snap/core/current/lib:'
@@ -1609,7 +1761,7 @@ class ValidationTestCase(ValidationBaseTestCase):
     def test_summary_too_long(self):
         self.data['summary'] = 'a' * 80
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(self.data).validate)
 
         expected_message = (
@@ -1623,7 +1775,7 @@ class ValidationTestCase(ValidationBaseTestCase):
         self.data['apps'] = {'service1': {}}
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(self.data).validate)
 
         expected_message = ("The 'apps/service1' property does not match the "
@@ -1639,7 +1791,7 @@ class ValidationTestCase(ValidationBaseTestCase):
         with unittest.mock.patch('snapcraft._schema.open',
                                  mock_the_open, create=True):
             raised = self.assertRaises(
-                SnapcraftSchemaError,
+                errors.SnapcraftSchemaError,
                 project_loader.Validator,
                 self.data)
 
@@ -1656,7 +1808,7 @@ class ValidationTestCase(ValidationBaseTestCase):
         self.data['parts']['plugins'] = {'type': 'go'}
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(self.data).validate)
 
         expected_message = ("The 'parts' property does not match the "
@@ -1700,7 +1852,7 @@ class ValidationTestCase(ValidationBaseTestCase):
         }
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(self.data).validate)
 
         self.assertEqual(
@@ -1714,7 +1866,7 @@ class ValidationTestCase(ValidationBaseTestCase):
         self.data['parts']['part1']['prime'] = ['bar']
 
         with ExpectedException(
-                SnapcraftSchemaError,
+                errors.SnapcraftSchemaError,
                 "The 'parts/part1' property does not match the required "
                 "schema: .* cannot contain both 'snap' and 'prime' keywords."):
             project_loader.Validator(self.data).validate()
@@ -1730,7 +1882,7 @@ class RequiredPropertiesTestCase(ValidationBaseTestCase):
         del data[self.key]
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(data).validate)
 
         expected_message = '\'{}\' is a required property'.format(self.key)
@@ -1748,7 +1900,7 @@ class InvalidNamesTestCase(ValidationBaseTestCase):
         data['name'] = self.name
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(data).validate)
 
         expected_message = ("The 'name' property does not match the "
@@ -1779,7 +1931,7 @@ class InvalidTypesTestCase(ValidationBaseTestCase):
         data['type'] = self.type_
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(data).validate)
 
         expected_message = (
@@ -1817,7 +1969,7 @@ class InvalidAppNamesTestCase(ValidationBaseTestCase):
         data['apps'] = {self.name: {'command': '1'}}
 
         raised = self.assertRaises(
-            SnapcraftSchemaError,
+            errors.SnapcraftSchemaError,
             project_loader.Validator(data).validate)
 
         expected_message = (

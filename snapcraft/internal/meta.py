@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,8 +28,10 @@ import tempfile
 import yaml
 
 from snapcraft import file_utils
-from snapcraft.internal import common
+from snapcraft import shell_utils
+from snapcraft.internal import common, project_loader
 from snapcraft.internal.errors import MissingGadgetError
+from snapcraft.internal.deprecations import handle_deprecation_notice
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +47,7 @@ _MANDATORY_PACKAGE_KEYS = [
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
     'assumes',
+    'environment',
     'type',
     'plugs',
     'slots',
@@ -106,11 +109,11 @@ class _SnapPackaging:
     def setup_assets(self):
         # We do _setup_from_setup first since it is legacy and let the
         # declarative items take over.
-        self._setup_from_setup()
+        self._setup_gui()
 
         if 'icon' in self._config_data:
             # TODO: use developer.ubuntu.com once it has updated documentation.
-            icon_ext = self._config_data['icon'].split(os.path.extsep)[1]
+            icon_ext = self._config_data['icon'].split(os.path.extsep)[-1]
             icon_dir = os.path.join(self.meta_dir, 'gui')
             icon_path = os.path.join(icon_dir, 'icon.{}'.format(icon_ext))
             if not os.path.exists(icon_dir):
@@ -124,6 +127,27 @@ class _SnapPackaging:
                 raise MissingGadgetError()
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
+
+    def _ensure_snapcraft_yaml(self):
+        source = project_loader.get_snapcraft_yaml()
+        destination = os.path.join(self._snap_dir, 'snap', 'snapcraft.yaml')
+
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(destination)
+
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        file_utils.link_or_copy(source, destination)
+
+    def _ensure_no_build_artifacts(self):
+        # TODO: rename _snap_dir to _prime_dir
+        snap_dir = os.path.join(self._snap_dir, 'snap')
+
+        artifacts = ['snapcraft.yaml']
+
+        for artifact in artifacts:
+            artifact_path = os.path.join(snap_dir, artifact)
+            if os.path.isfile(artifact_path):
+                os.unlink(artifact_path)
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
@@ -141,25 +165,31 @@ class _SnapPackaging:
                     os.remove(destination)
                 file_utils.link_or_copy(source, destination)
 
-        # Now copy the hooks contained within the snap directory directly into
-        # meta (they don't get wrappers like the ones that come from parts).
-        snap_hooks_dir = os.path.join('snap', 'hooks')
-        hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
-        if os.path.isdir(snap_hooks_dir):
-            os.makedirs(hooks_dir, exist_ok=True)
-            for hook_name in os.listdir(snap_hooks_dir):
-                source = os.path.join(snap_hooks_dir, hook_name)
-                destination = os.path.join(hooks_dir, hook_name)
+        # Now copy the assets contained within the snap directory directly into
+        # meta.
+        for origin in ['gui', 'hooks']:
+            src_dir = os.path.join('snap', origin)
+            dst_dir = os.path.join(self.meta_dir, origin)
+            if os.path.isdir(src_dir):
+                os.makedirs(dst_dir, exist_ok=True)
+                for asset in os.listdir(src_dir):
+                    source = os.path.join(src_dir, asset)
+                    destination = os.path.join(dst_dir, asset)
 
-                # First, verify that the hook is actually executable
-                if not os.stat(source).st_mode & stat.S_IEXEC:
-                    raise CommandError('hook {!r} is not executable'.format(
-                        hook_name))
+                    # First, verify that the hook is actually executable
+                    if origin == 'hooks':
+                        _validate_hook(source)
 
-                with contextlib.suppress(FileNotFoundError):
-                    os.remove(destination)
+                    with contextlib.suppress(FileNotFoundError):
+                        os.remove(destination)
 
-                file_utils.link_or_copy(source, destination)
+                    file_utils.link_or_copy(source, destination)
+
+        # FIXME hide this functionality behind a feature flag for now
+        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+            self._ensure_snapcraft_yaml()
+        else:
+            self._ensure_no_build_artifacts()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
@@ -180,10 +210,13 @@ class _SnapPackaging:
 
                 self._write_wrap_exe(hook_exec, hook_path)
 
-    def _setup_from_setup(self):
+    def _setup_gui(self):
+        # Handles the setup directory which only contains gui assets.
         setup_dir = 'setup'
         if not os.path.exists(setup_dir):
             return
+
+        handle_deprecation_notice('dn3')
 
         gui_src = os.path.join(setup_dir, 'gui')
         gui_dst = os.path.join(self.meta_dir, 'gui')
@@ -222,33 +255,41 @@ class _SnapPackaging:
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
         # If we are dealing with classic confinement it means all our
-        # binaries are linked with `nodefaultlib` so this is harmless.
-        # We do however want to be on the safe side and make sure no
-        # ABI breakage happens by accidentally loading a library from
-        # the classic system.
-        classic_library_paths = self._config_data['confinement'] == 'classic'
-        assembled_env = common.assemble_env(classic_library_paths,
-                                            self._arch_triplet)
-        assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
-        replace_path = r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
-            self._parts_dir)
-        assembled_env = re.sub(replace_path, '$SNAP', assembled_env)
+        # binaries are linked with `nodefaultlib` but we still do
+        # not want to leak PATH or other environment variables
+        # that would affect the applications view of the classic
+        # environment it is dropped into.
+        replace_path = re.compile(r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
+            re.escape(self._parts_dir)))
+        if self._config_data['confinement'] == 'classic':
+            assembled_env = None
+        else:
+            assembled_env = common.assemble_env()
+            assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
+            assembled_env = replace_path.sub('$SNAP', assembled_env)
+
         executable = '"{}"'.format(wrapexec)
-        if shebang is not None:
-            new_shebang = re.sub(replace_path, '$SNAP', shebang)
+
+        if shebang:
+            if shebang.startswith('/usr/bin/env '):
+                shebang = shell_utils.which(shebang.split()[1])
+            new_shebang = replace_path.sub('$SNAP', shebang)
+            new_shebang = re.sub(self._snap_dir, '$SNAP', new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
                 # local 'parts' dir, have the wrapper script execute it
                 # directly, since we can't use $SNAP in the shebang itself.
                 executable = '"{}" "{}"'.format(new_shebang, wrapexec)
-        script = ('#!/bin/sh\n' +
-                  '{}\n'.format(assembled_env) +
-                  '{}\n'.format(cwd) +
-                  'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-                  'exec {} {}\n'.format(executable, args))
 
         with open(wrappath, 'w+') as f:
-            f.write(script)
+            print('#!/bin/sh', file=f)
+            if assembled_env:
+                print('{}'.format(assembled_env), file=f)
+                print('export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                      '$LD_LIBRARY_PATH', file=f)
+            if cwd:
+                print('{}'.format(cwd), file=f)
+            print('exec {} {}'.format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)
 
@@ -380,3 +421,9 @@ def _find_bin(binary, basedir):
                        stdout=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             raise CommandError(binary)
+
+
+def _validate_hook(hook_path):
+    if not os.stat(hook_path).st_mode & stat.S_IEXEC:
+        asset = os.path.basename(hook_path)
+        raise CommandError('hook {!r} is not executable'.format(asset))
