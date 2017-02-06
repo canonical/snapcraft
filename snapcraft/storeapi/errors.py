@@ -243,6 +243,13 @@ class StoreReviewError(StoreError):
 
     def __init__(self, result):
         self.fmt = self.__messages[result['code']]
+        errors = result.get('errors')
+        if errors:
+            for error in errors:
+                message = error.get('message')
+                if message:
+                    self.fmt = '{}\nError message: {message}'.format(
+                        self.fmt, message=message)
         super().__init__()
 
 
