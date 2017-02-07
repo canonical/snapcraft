@@ -632,6 +632,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             details_path = 'details/upload-id/review-snap'
         elif data['name'] == 'test-snap-unregistered':
             response_code = 404
+        elif data['name'] == 'test-duplicate-snap':
+            details_path = 'details/upload-id/duplicate-snap'
 
         logger.debug('Handling upload request')
         self.send_response(response_code)
@@ -739,6 +741,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, '/details/upload-id/good-snap')
         details_review = urllib.parse.urljoin(
             self._DEV_API_PATH, '/details/upload-id/review-snap')
+        duplicate_error = urllib.parse.urljoin(
+            self._DEV_API_PATH, '/details/upload-id/duplicate-snap')
         account_path = urllib.parse.urljoin(self._DEV_API_PATH, 'account')
         snap_path = urllib.parse.urljoin(self._DEV_API_PATH, 'snaps')
         good_validations_path = urllib.parse.urljoin(
@@ -754,6 +758,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_scan_complete_request('ready_to_release', True)
         elif parsed_path.path.startswith(details_review):
             self._handle_scan_complete_request('need_manual_review', False)
+        elif parsed_path.path.startswith(duplicate_error):
+            self._handle_duplicate_snap_request('processing_error', False)
         elif parsed_path.path == account_path:
             self._handle_account_request()
         elif parsed_path.path.startswith(good_validations_path):
@@ -831,6 +837,23 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(response)
+
+    def _handle_duplicate_snap_request(self, code, can_release):
+        logger.debug('Handling duplicate snap request')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response = {
+            'code': code,
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': can_release,
+            'revision': '1',
+            'processed': True,
+            'errors': [
+                {'message': 'Duplicate snap already uploaded'},
+            ]
+        }
+        self.wfile.write(json.dumps(response).encode())
 
     def _handle_scan_complete_request(self, code, can_release):
         logger.debug('Handling scan complete request')

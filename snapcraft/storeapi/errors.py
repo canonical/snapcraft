@@ -248,7 +248,7 @@ class StoreReviewError(StoreError):
             for error in errors:
                 message = error.get('message')
                 if message:
-                    self.fmt = '{}\nError message: {message}'.format(
+                    self.fmt = '{}\n  - {message}'.format(
                         self.fmt, message=message)
         super().__init__()
 
