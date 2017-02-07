@@ -219,6 +219,13 @@ class InvalidGrammarTestCase(GrammarTestCase):
             'target_arch': 'amd64',
             'expected_exception': ".*'else' doesn't seem to correspond.*",
         }),
+        ('unexpected type', {
+            'grammar': [
+                5,
+            ],
+            'target_arch': 'amd64',
+            'expected_exception': ".*expected grammar section.*but got.*",
+        }),
     ]
 
     def test_invalid_grammar(self):

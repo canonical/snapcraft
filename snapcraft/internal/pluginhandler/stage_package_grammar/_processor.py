@@ -44,15 +44,14 @@ def process_grammar(grammar, project_options, ubuntu):
     statement = None
 
     for section in grammar:
-        try:
+        if isinstance(section, str):
+            # If the secion is just a string, it's either "else fail" or a
+            # package name.
             if else_fail_pattern.match(section):
                 _handle_else(statement, None)
             else:
-                # If it's just a string, add it to the package set.
                 packages.add(section)
-        except TypeError:
-            # Alright, it wasn't an unconditional stage package, so it must be
-            # a dict.
+        elif isinstance(section, dict):
             for key, value in section.items():
                 if on_clause_pattern.match(key):
                     # We've come across the begining of an 'on' statement.
@@ -72,6 +71,11 @@ def process_grammar(grammar, project_options, ubuntu):
 
                 if else_clause_pattern.match(key):
                     _handle_else(statement, value)
+        else:
+            # jsonschema should never let us get here.
+            raise StagePackageSyntaxError(
+                "expected grammar section to be either of type 'str' or "
+                "type 'dict', but got {!r}".format(type(section)))
 
     # We've parsed the entire grammar, time to process it.
     statements.add(statement)
