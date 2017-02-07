@@ -245,6 +245,6 @@ class OnStatementElseFail(GrammarTestCase):
         statement.add_else(None)
 
         with testtools.ExpectedException(
-                EnvironmentError,
-                "unable to satisfy 'on i386', failure forced"):
+                grammar.errors.UnsatisfiedStatementError,
+                "Unable to satisfy 'on i386', failure forced"):
             statement.process()

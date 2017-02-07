@@ -17,7 +17,10 @@
 import re
 
 from . import process_grammar
-from .errors import StagePackageSyntaxError
+from .errors import (
+    StagePackageSyntaxError,
+    UnsatisfiedStatementError,
+)
 
 
 class OnStatement:
@@ -84,8 +87,7 @@ class OnStatement:
             for else_body in self._else_bodies:
                 if not else_body:
                     # Handle the 'else fail' case.
-                    raise EnvironmentError(
-                        'unable to satisfy {!r}, failure forced'.format(self))
+                    raise UnsatisfiedStatementError(self)
 
                 packages = process_grammar(
                     else_body, self._project_options, self._repo_instance)

@@ -90,4 +90,4 @@ class StagePackageGrammarTestCase(integration_tests.TestCase):
             ['prime', 'on-other-arch-else-fail'], 'stage-package-grammar')
 
         self.assertThat(exception.output, Contains(
-            "unable to satisfy 'on other-arch', failure forced"))
+            "Unable to satisfy 'on other-arch', failure forced"))

@@ -23,3 +23,11 @@ class StagePackageSyntaxError(errors.SnapcraftError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class UnsatisfiedStatementError(errors.SnapcraftError):
+
+    fmt = 'Unable to satisfy {statement!r}, failure forced'
+
+    def __init__(self, statement):
+        super().__init__(statement=statement)
