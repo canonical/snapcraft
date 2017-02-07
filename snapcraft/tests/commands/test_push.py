@@ -23,7 +23,9 @@ from unittest import mock
 import docopt
 import fixtures
 from xdg import BaseDirectory
+from testtools.matchers import FileExists, Not
 
+import snapcraft
 from snapcraft import (
     file_utils,
     storeapi,
@@ -330,6 +332,8 @@ class PushCommandDeltasTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         self.mock_upload.return_value = mock_tracker
 
+        self.deb_arch = snapcraft.ProjectOptions().deb_arch
+
     def test_push_revision_cached_with_experimental_deltas(self):
         self.useFixture(fixture_setup.FakeTerminal())
         if self.enable_deltas:
@@ -347,15 +351,18 @@ class PushCommandDeltasTestCase(tests.TestCase):
         snap_cache = os.path.join(
             BaseDirectory.xdg_cache_home,
             'snapcraft',
+            'projects',
             'my-snap-name',
             'snap_hashes',
-            'amd64'
+            self.deb_arch,
         )
         cached_snap = os.path.join(
-            snap_cache,
-            file_utils.calculate_sha3_384(snap_file)
-        )
-        self.assertEqual(self.enable_deltas, os.path.isfile(cached_snap))
+            snap_cache, file_utils.calculate_sha3_384(snap_file))
+
+        if self.enable_deltas:
+            self.assertThat(cached_snap, FileExists())
+        else:
+            self.assertThat(cached_snap, Not(FileExists()))
 
     def test_push_revision_uses_available_delta(self):
         self.useFixture(fixture_setup.FakeTerminal())
@@ -432,14 +439,14 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
     scenarios = [
         ('delete other cache files with valid name', {
             'cached_snaps': [
-                'a-cached-snap_0.3_amd64_8.snap',
-                'another-cached-snap_1.0_arm64_6.snap']
+                'a-cached-snap_0.3_{}_8.snap',
+                'another-cached-snap_1.0_fakearch_6.snap']
         }),
         ('delete other cache files with invalid name', {
             'cached_snaps': [
-                'a-cached-snap_0.3_amd64.snap',
-                'cached-snap-without-revision_1.0_arm64.snap',
-                'another-cached-snap-without-version_arm64.snap']
+                'a-cached-snap_0.3_{}.snap',
+                'cached-snap-without-revision_1.0_fakearch.snap',
+                'another-cached-snap-without-version_fakearch.snap']
         })
     ]
 
@@ -472,16 +479,20 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
+        deb_arch = snapcraft.ProjectOptions().deb_arch
+
         snap_cache = os.path.join(
             BaseDirectory.xdg_cache_home,
             'snapcraft',
+            'projects',
             'my-snap-name',
             'snap_hashes',
-            'amd64'
+            deb_arch
         )
         os.makedirs(snap_cache)
 
         for cached_snap in self.cached_snaps:
+            cached_snap = cached_snap.format(deb_arch)
             open(os.path.join(snap_cache, cached_snap), 'a').close()
 
         # Create a snap
@@ -498,10 +509,11 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
             file_utils.calculate_sha3_384(snap_file)
         )
 
-        self.assertTrue(
-            os.path.isfile(os.path.join(snap_cache, real_cached_snap)))
+        self.assertThat(os.path.join(snap_cache, real_cached_snap),
+                        FileExists())
 
         for snap in self.cached_snaps:
-            self.assertFalse(
-                os.path.isfile(os.path.join(snap_cache, snap)))
+            snap = snap.format(deb_arch)
+            self.assertThat(os.path.join(snap_cache, snap),
+                            Not(FileExists()))
         self.assertEqual(1, len(os.listdir(snap_cache)))
