@@ -463,7 +463,8 @@ def push(snap_filename, release_channels=None):
 
         if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
             snap_cache.cache(snap_filename=snap_filename)
-            snap_cache.prune(deb_arch=arch, keep_hash=calculate_sha3_384(snap_filename))
+            snap_cache.prune(deb_arch=arch,
+                             keep_hash=calculate_sha3_384(snap_filename))
     else:
         logger.info('Pushing {!r}'.format(snap_name))
 
