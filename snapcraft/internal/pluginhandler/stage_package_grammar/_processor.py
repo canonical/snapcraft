@@ -18,6 +18,11 @@ import re
 
 from .errors import StagePackageSyntaxError
 
+_ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
+_TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
+_ELSE_CLAUSE_PATTERN = re.compile(r'\Aelse\Z')
+_ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
+
 
 def process_grammar(grammar, project_options, repo_instance):
     """Process stage packages grammar and extract packages to actually stage.
@@ -34,14 +39,7 @@ def process_grammar(grammar, project_options, repo_instance):
     :rtype: set
     """
 
-    from ._on import OnStatement
-    from ._try import TryStatement
-
     packages = set()
-    on_clause_pattern = re.compile(r'\Aon\s+')
-    try_clause_pattern = re.compile(r'\Atry\Z')
-    else_clause_pattern = re.compile(r'\Aelse\Z')
-    else_fail_pattern = re.compile(r'\Aelse\s+fail\Z')
     statements = _StatementCollection()
     statement = None
 
@@ -49,36 +47,13 @@ def process_grammar(grammar, project_options, repo_instance):
         if isinstance(section, str):
             # If the secion is just a string, it's either "else fail" or a
             # package name.
-            if else_fail_pattern.match(section):
+            if _ELSE_FAIL_PATTERN.match(section):
                 _handle_else(statement, None)
             else:
                 packages.add(section)
         elif isinstance(section, dict):
-            for key, value in section.items():
-                if on_clause_pattern.match(key):
-                    # We've come across the begining of an 'on' statement.
-                    # That means any previous statement we found is complete.
-                    # The first time through this may be None, but the
-                    # collection will ignore it.
-                    statements.add(statement)
-
-                    statement = OnStatement(
-                        on=key, body=value, project_options=project_options,
-                        repo_instance=repo_instance)
-
-                if try_clause_pattern.match(key):
-                    # We've come across the begining of a 'try' statement.
-                    # That means any previous statement we found is complete.
-                    # The first time through this may be None, but the
-                    # collection will ignore it.
-                    statements.add(statement)
-
-                    statement = TryStatement(
-                        body=value, project_options=project_options,
-                        repo_instance=repo_instance)
-
-                if else_clause_pattern.match(key):
-                    _handle_else(statement, value)
+            statement = _parse_dict(
+                section, statement, statements, project_options, repo_instance)
         else:
             # jsonschema should never let us get here.
             raise StagePackageSyntaxError(
@@ -90,6 +65,40 @@ def process_grammar(grammar, project_options, repo_instance):
     packages |= statements.process_all()
 
     return packages
+
+
+def _parse_dict(section, statement, statements, project_options,
+                repo_instance):
+    from ._on import OnStatement
+    from ._try import TryStatement
+
+    for key, value in section.items():
+        if _ON_CLAUSE_PATTERN.match(key):
+            # We've come across the begining of an 'on' statement.
+            # That means any previous statement we found is complete.
+            # The first time through this may be None, but the
+            # collection will ignore it.
+            statements.add(statement)
+
+            statement = OnStatement(
+                on=key, body=value, project_options=project_options,
+                repo_instance=repo_instance)
+
+        if _TRY_CLAUSE_PATTERN.match(key):
+            # We've come across the begining of a 'try' statement.
+            # That means any previous statement we found is complete.
+            # The first time through this may be None, but the
+            # collection will ignore it.
+            statements.add(statement)
+
+            statement = TryStatement(
+                body=value, project_options=project_options,
+                repo_instance=repo_instance)
+
+        if _ELSE_CLAUSE_PATTERN.match(key):
+            _handle_else(statement, value)
+
+    return statement
 
 
 def _handle_else(statement, else_body):
