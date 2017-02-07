@@ -351,3 +351,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self._copy_vmlinuz()
         self._copy_system_map()
         self._copy_dtbs()
+
+        # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
+        # but snapd expects modules/ and firmware/
+        shutil.move(
+            os.path.join(self.installdir, 'lib', 'modules'), self.installdir)
+        shutil.move(
+            os.path.join(self.installdir, 'lib', 'firmware'), self.installdir)
+        os.rmdir(os.path.join(self.installdir, 'lib'))
