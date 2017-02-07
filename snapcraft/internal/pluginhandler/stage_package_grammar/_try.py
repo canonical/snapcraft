@@ -20,7 +20,7 @@ from . import process_grammar
 class TryStatement:
     """Process a 'try' statement in the stage packages grammar.
 
-    Example:
+    For example:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
@@ -35,12 +35,13 @@ class TryStatement:
     def __init__(self, body, project_options, repo_instance):
         """Create an _OnStatement instance.
 
-        Arguments:
-            body: List containing the body of the 'try' clause.
-            project_options: Instance of ProjectOptions to use to process
-                             clause.
-            repo_instance: repo.Ubuntu instance used for checking package
-                           validity.
+        :param list body: The body of the 'try' clause.
+        :param project_options: Instance of ProjectOptions to use to process
+                                clause.
+        :type project_options: snapcraft.ProjectOptions
+        :param repo_instance: repo.Ubuntu instance used for checking package
+                              validity.
+        :type repo_instance: repo.Ubuntu
         """
 
         self._body = body
@@ -51,8 +52,7 @@ class TryStatement:
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
 
-        Arguments:
-            else_body: List containing the body of an 'else' clause.
+        :param list else_body: The body of an 'else' clause.
 
         The 'else' clauses will be processed in the order they are added.
         """
@@ -62,8 +62,8 @@ class TryStatement:
     def process(self):
         """Process the clause.
 
-        Returns:
-            List of stage packages.
+        :return: Stage packages as determined by evaluating the statement.
+        :rtype: list
         """
 
         packages = process_grammar(
@@ -98,11 +98,11 @@ class TryStatement:
 def _all_packages_valid(packages, repo_instance):
     """Ensure that all packages are valid.
 
-    Arguments:
-        packages: Container of package names.
-        repo_instance: repo.Ubuntu instance to use for validity check.
+    :param packages: Iterable container of package names.
+    :param repo_instance: repo.Ubuntu instance to use for validity check.
+    :type repo_instance: repo.Ubuntu
 
-    Example:
+    For example:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:

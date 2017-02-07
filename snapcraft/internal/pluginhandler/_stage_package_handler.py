@@ -40,14 +40,13 @@ class StagePackageHandler:
                  project_options=None):
         """Create new StagePackageHandler.
 
-        Arguments:
-            stage_packages: List containing stage-packages grammar.
-            cache_dir: Working directory.
-
-        Keyword arguments:
-            sources: Alternative sources list (host's sources are default).
-            project_options: Instance of ProjectOptions to use for this
-                             operation.
+        :param list stage_packages: Unprocessed stage-packages grammar.
+        :param str cache_dir: Path to working directory.
+        :param str sources: Alternative sources list (host's sources are
+                            default).
+        :param project_options: Instance of ProjectOptions to use for this
+                                operation.
+        :type project_options: snapcraft.ProjectOptions
         """
 
         self._grammar = stage_packages_grammar
@@ -90,8 +89,8 @@ class StagePackageHandler:
     def unpack(self, unpack_dir):
         """Unpack fetched stage packages into directory.
 
-        Arguments:
-            unpack_dir: Directory in which stage packages will be unpacked.
+        :param str unpack_dir: Path to directory in which stage packages will
+                               be unpacked.
         """
 
         if self._stage_packages:

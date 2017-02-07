@@ -26,7 +26,7 @@ from .errors import (
 class OnStatement:
     """Process an 'on' statement in the stage packages grammar.
 
-    Example:
+    For example:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
@@ -41,13 +41,14 @@ class OnStatement:
     def __init__(self, on, body, project_options, repo_instance):
         """Create an _OnStatement instance.
 
-        Arguments:
-            on: String containing the 'on <selectors>' part of the clause.
-            body: List containing the body of the 'on' clause.
-            project_options: Instance of ProjectOptions to use to process
-                             clause.
-            repo_instance: repo.Ubuntu instance used for checking package
-                           validity.
+        :param str on: The 'on <selectors>' part of the clause.
+        :param list body: The body of the 'on' clause.
+        :param project_options: Instance of ProjectOptions to use to process
+                                clause.
+        :type project_options: snapcraft.ProjectOptions
+        :param repo_instance: repo.Ubuntu instance used for checking package
+                              validity.
+        :type repo_instance: repo.Ubuntu
         """
 
         self.selectors = _extract_on_clause_selectors(on)
@@ -59,8 +60,7 @@ class OnStatement:
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
 
-        Arguments:
-            else_body: List containing the body of an 'else' clause.
+        :param list else_body: The body of an 'else' clause.
 
         The 'else' clauses will be processed in the order they are added.
         """
@@ -70,8 +70,8 @@ class OnStatement:
     def process(self):
         """Process the clause.
 
-        Returns:
-            List of stage packages.
+        :return: Stage packages as determined by evaluating the statement.
+        :rtype: list
         """
 
         packages = set()
@@ -106,13 +106,12 @@ class OnStatement:
 def _extract_on_clause_selectors(on):
     """Extract the list of selectors within an on clause.
 
-    Arguments:
-        on: string containing the 'on <selector' part of the 'on' clause.
+    :param str on: The 'on <selector' part of the 'on' clause.
 
-    Returns:
-        Set of selectors found within the 'on' clause.
+    :return: Selectors found within the 'on' clause.
+    :rtype: set
 
-    Example:
+    For example:
     >>> _extract_on_clause_selectors('on amd64,i386') == {'amd64', 'i386'}
     True
     """

@@ -22,14 +22,16 @@ from .errors import StagePackageSyntaxError
 def process_grammar(grammar, project_options, ubuntu):
     """Process stage packages grammar and extract packages to actually stage.
 
-    Arguments:
-        grammar: List containing stage-packages grammar.
-        project_options: Instance of ProjectOptions to use to determine stage
-                         packages.
-        ubuntu: repo.Ubuntu instance used for checking package validity.
+    :param list grammar: Unprocessed stage-packages grammar.
+    :param project_options: Instance of ProjectOptions to use to determine
+                            stage packages.
+    :type project_options: snapcraft.ProjectOptions
+    :param repo_instance: repo.Ubuntu instance used for checking package
+                          validity.
+    :type repo_instance: repo.Ubuntu
 
-    Returns:
-        Set of packages to stage.
+    :return: Packages to stage
+    :rtype: set
     """
 
     from ._on import OnStatement
@@ -87,12 +89,12 @@ def process_grammar(grammar, project_options, ubuntu):
 def _handle_else(statement, else_body):
     """Add else body to current statement.
 
-    Arguments:
-        statement: The currently-active statement (if any).
-        else_body: The body of the else clause to add.
+    :param statement: The currently-active statement. If None it will be
+                      ignored.
+    :param else_body: The body of the else clause to add.
 
-    Raises:
-        StagePackageSyntaxError if there isn't a currently-active statement.
+    :raises StagePackageSyntaxError: If there isn't a currently-active
+                                     statement.
     """
 
     try:
@@ -112,11 +114,9 @@ class _StatementCollection:
     def add(self, statement):
         """Add new statement to collection.
 
-        Arguments:
-            statement: New statement.
+        :param statement: New statement.
 
-        Raises:
-            StagePackageSyntaxError if statement is already in collection.
+        :raises StagePackageSyntaxError: If statement is already in collection.
         """
 
         if not statement:
@@ -132,8 +132,8 @@ class _StatementCollection:
     def process_all(self):
         """Process all statements in collection.
 
-        Returns:
-            Set of packages to stage as judged by all statements in collection.
+        :return: Packages to stage as judged by all statements in collection.
+        :rtype: set
         """
         packages = set()
         for statement in self._statements:
