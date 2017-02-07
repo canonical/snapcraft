@@ -87,7 +87,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'origin/master']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--remote'])
+                       '--recursive', '--remote'])
         ])
 
     def test_pull_existing_with_tag(self):
@@ -102,7 +102,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'refs/tags/tag']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--remote'])
+                       '--recursive', '--remote'])
         ])
 
     def test_pull_existing_with_commit(self):
@@ -119,7 +119,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        '2514f9533ec9b45d07883e10a561b248497a8e3c']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--remote'])
+                       '--recursive', '--remote'])
         ])
 
     def test_pull_existing_with_branch(self):
@@ -135,7 +135,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'refs/heads/my-branch']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--remote'])
+                       '--recursive', '--remote'])
         ])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):

@@ -63,8 +63,8 @@ class Git(Base):
 
         # Merge any updates for the submodules (if any).
         subprocess.check_call([self.command, '-C', self.source_dir,
-                              'submodule', 'update', '--remote'],
-                              **self.kwargs)
+                              'submodule', 'update', '--recursive',
+                               '--remote'], **self.kwargs)
 
     def _clone_new(self):
         command = [self.command, 'clone', '--recursive']
