@@ -1847,6 +1847,35 @@ class ValidationTestCase(ValidationBaseTestCase):
 
         project_loader.Validator(self.data).validate()
 
+    def test_daemon_dependency(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'stop-command': 'binary1 --stop',
+            },
+        }
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Validator(self.data).validate)
+        self.assertEqual(
+            "The 'apps/service1' property does not match the required schema: "
+            "'daemon' is a dependency of 'stop-command'",
+            str(raised))
+
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'post-stop-command': 'binary1 --post-stop',
+            },
+        }
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Validator(self.data).validate)
+        self.assertEqual(
+            "The 'apps/service1' property does not match the required schema: "
+            "'daemon' is a dependency of 'post-stop-command'",
+            str(raised))
+
     def test_invalid_restart_condition(self):
         self.data['apps'] = {
             'service1': {

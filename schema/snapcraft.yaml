@@ -95,6 +95,7 @@ properties:
           - command
         dependencies:
           stop-command: ["daemon"]
+          post-stop-command: ["daemon"]
         additionalProperties: false
         properties:
           desktop:
