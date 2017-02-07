@@ -623,11 +623,23 @@ def close(snap_name, channel_names):
     logger.info(msg)
 
 
-def download(snap_name, channel, download_path, arch):
-    """Download snap from the store to download_path"""
+def download(snap_name, channel, download_path, arch, but_hash=''):
+    """Download snap from the store to download_path.
+    :param str snap_name: The snap name to download.
+    :param str channel: the channel to get the snap from.
+    :param str download_path: the path to write the downloaded snap to.
+    :param str arch: the architecture of the download as a deb arch.
+    :param str but_hash: a sha3_384 hash to indicate that the download should
+                         not take place.
+    :raises storeapi.errors.SHAMismatchErrorRuntimeError:
+         If the checksum for the downloaded file does not match the expected
+         hash.
+    :returns: A sha3_384 of the file that was or would have been downloaded.
+    """
     store = storeapi.StoreClient()
     try:
-        store.download(snap_name, channel, download_path, arch)
+        return store.download(snap_name, channel, download_path,
+                              arch, but_hash)
     except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(
@@ -666,13 +678,6 @@ def history(snap_name, series, arch):
         headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
         tablefmt='plain')
     print(tabulated_revisions)
-
-
-def get_latest_revision(snap_name, *, channel='stable', arch=None):
-    # Only public snaps for now
-    store = storeapi.StoreClient()
-    snap = store.cpi.get_package(snap_name, channel, arch)
-    return snap['revision']
 
 
 def gated(snap_name):

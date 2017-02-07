@@ -120,32 +120,35 @@ def execute(step, project_options, part_names=None):
 
 def _setup_core(deb_arch):
     core_path = os.path.join(os.path.sep, 'snap', 'core', 'current')
-    if os.path.exists(core_path):
+    if os.path.exists(core_path) and os.listdir(core_path):
         logger.debug('{!r} already exists, skipping core setup'.format(
             core_path))
         return
-    core_revision = snapcraft.get_latest_revision('core')
-    snap_cache = SnapCache(project_name='core')
+    snap_cache = SnapCache(project_name='snapcraft-core')
 
-    # Clean up old stuff first
-    snap_cache.prune(keep_revision=core_revision)
+    # Try to get the latest revision.
+    core_snap = snap_cache.get(deb_arch=deb_arch)
+    if core_snap:
+        # The current hash matches the filename
+        current_hash = os.path.splitext(os.path.basename(core_snap))[0]
+    else:
+        current_hash = ''
 
-    # And try to get this revision.
-    core_snap = snap_cache.get(snap_name='core', revision=core_revision)
-    if not core_snap:
-        with tempfile.TemporaryDirectory() as d:
-            snap_name = os.path.join(d, 'core_stable_{}.snap'.format(deb_arch))
-            snapcraft.download('core', 'stable', snap_name, deb_arch)
-            # FIXME there is a chance of incorrecly caching the wrong
-            # revision here.
-            snap_cache.cache(snap_name, revision=core_revision)
-    # This should now be a hit.
-    core_snap = snap_cache.get(snap_name='core', revision=core_revision)
-    if not core_snap:
-        raise RuntimeError('Error while retrieving the core snap')
+    with tempfile.TemporaryDirectory() as d:
+        download_path = os.path.join(d, 'core.snap')
+        download_hash = snapcraft.download('core', 'stable', download_path,
+                                           deb_arch, but_hash=current_hash)
+        print('download', download_hash, 'current', current_hash)
+        if download_hash != current_hash:
+            snap_cache.cache(snap_filename=download_path)
+            snap_cache.prune(deb_arch=deb_arch, keep_hash=download_hash)
+
+    core_snap = snap_cache.get(deb_arch=deb_arch)
 
     # Now unpack
     logger.info('Setting up {!r} in {!r}'.format(core_snap, core_path))
+    if os.path.exists(core_path) and not os.listdir(core_path):
+        check_call(['sudo', 'rmdir', core_path])
     check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
     output = check_output(['sudo', 'unsquashfs', '-d', core_path, core_snap])
     logger.debug(output)
