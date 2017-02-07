@@ -717,8 +717,7 @@ class UploadTestCase(tests.TestCase):
             tracker.raise_for_code)
 
         self.assertEqual(
-            'The store encountered one or more issues while '
-            'processing this snap.\n'
+            'The store was unable to accept this snap.\n'
             '  - Duplicate snap already uploaded', str(raised))
 
     def test_push_unregistered_snap(self):

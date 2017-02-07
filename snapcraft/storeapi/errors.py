@@ -233,7 +233,7 @@ class StoreReviewError(StoreError):
         'Use devmode in the edge or beta channels to disable confinement.')
 
     __FMT_PROCESSING_ERROR = (
-        'The store encountered one or more issues while processing this snap.')
+        'The store was unable to accept this snap.')
 
     __FMT_PROCESSING_UPLOAD_DELTA_ERROR = (
         'There has been a problem while processing a snap delta.')
