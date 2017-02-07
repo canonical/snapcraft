@@ -77,6 +77,16 @@ class TempXDG(fixtures.Fixture):
         self.addCleanup(patcher_dirs.stop)
 
 
+class SilentSnapProgress(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
 class CleanEnvironment(fixtures.Fixture):
 
     def setUp(self):

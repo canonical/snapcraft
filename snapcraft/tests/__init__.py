@@ -106,6 +106,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(fixture_setup.TempXDG(self.path))
         self.fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
+        self.useFixture(fixture_setup.SilentSnapProgress())
         # Some tests will directly or indirectly change the plugindir, which
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
