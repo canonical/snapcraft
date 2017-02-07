@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,147 +14,210 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import logging
 import os
+from unittest import mock
 
 import fixtures
 
-from snapcraft import tests
-from snapcraft.internal import cache
-from snapcraft.internal.cache._snap import (
-    _rewrite_snap_filename_with_revision,
-    _get_revision_from_snap_filename
+from snapcraft import (
+    file_utils,
+    tests,
 )
+import snapcraft
+from snapcraft.internal import cache
+from snapcraft.main import main
 from snapcraft.tests import fixture_setup
-
-
-yaml_content = """name: cache-test
-version: 0.1
-summary: test cached snap
-description: test cached snap
-grade: devel
-
-parts:
-  my-part:
-    plugin: nil
-"""
 
 
 class SnapCacheTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        super().make_snapcraft_yaml(yaml_content)
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-    def test_rewrite_snap_filename(self):
-        revision = 10
-        snap_file = 'my-snap-name_0.1_amd64.snap'
+        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
-        self.assertEqual(
-            'my-snap-name_0.1_amd64_10.snap',
-            _rewrite_snap_filename_with_revision(snap_file, revision))
+        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        snap_cache = cache.SnapCache(project_name='my-snap-name')
-        snap_file = 'my-snap-name_0.1_amd64.snap'
 
-        # create dummy snap
-        open(os.path.join(self.path, snap_file), 'a').close()
+        # Create a snap
+        main(['init'])
+        main(['snap'])
+        snap_file = glob.glob('*.snap')[0]
+        snap_path = os.path.join(self.path, snap_file)
 
         # cache snap
-        cached_snap_path = snap_cache.cache(snap_file, 10)
+        snap_cache = cache.SnapCache(project_name='cache-test')
+        cached_snap_path = snap_cache.cache(snap_filename=snap_file)
 
-        _, expected_snap = os.path.split(cached_snap_path)
-
-        self.assertEqual('my-snap-name_0.1_amd64_10.snap', expected_snap)
-        self.assertTrue(os.path.isfile(cached_snap_path))
-
-    def test_get_revision_from_snap_filename(self):
-        revision = 10
-        valid_snap_file = 'my-snap_0.1_amd64_{}.snap'.format(revision)
+        expected_snap_path = os.path.join(
+            snap_cache.snap_cache_root,
+            self.deb_arch,
+            file_utils.calculate_sha3_384(snap_path)
+        )
 
         self.assertEqual(
-            revision,
-            _get_revision_from_snap_filename(valid_snap_file))
+            expected_snap_path,
+            cached_snap_path
+        )
+        self.assertTrue(os.path.isfile(cached_snap_path))
 
-        invalid_snap_list = [
-            'cached-snap-without-revision_1.0_arm64.snap',
-            'another-cached-snap-without-version_arm64.snap',
-            'a-snap-with-no-number-revision_1.0_arm64_xx.snap'
-        ]
-        for invalid_snap_file in invalid_snap_list:
-            self.assertEqual(
-                None,
-                _get_revision_from_snap_filename(invalid_snap_file))
+    def test_snap_cache_get_latest(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+
+        # Create snaps
+        with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+architectures: ['{}']
+confinement: devmode
+grade: devel
+version: '0.1'
+
+parts:
+    my-part:
+      plugin: nil
+""".format(self.deb_arch))
+        main(['snap'])
+
+        snap_file = glob.glob('*0.1*.snap')[0]
+
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
+        snap_cache.cache(snap_filename=snap_file)
+
+        with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+architectures: ['{}']
+confinement: devmode
+grade: devel
+version: '0.2'
+
+parts:
+    my-part:
+      plugin: nil
+""".format(self.deb_arch))
+        main(['snap'])
+
+        snap_file_latest = glob.glob('*0.2*.snap')[0]
+
+        snap_cache.cache(snap_filename=snap_file_latest)
+        latest_hash = file_utils.calculate_sha3_384(snap_file_latest)
+
+        # get latest
+        latest_snap = snap_cache.get(deb_arch=self.deb_arch)
+
+        expected_snap_path = os.path.join(
+            snap_cache.snap_cache_root,
+            self.deb_arch,
+            latest_hash
+        )
+
+        self.assertEqual(expected_snap_path, latest_snap)
+
+    def test_snap_cache_get_by_hash(self):
+        self.useFixture(fixture_setup.FakeTerminal())
+
+        # Create snap
+        main(['init'])
+        main(['snap'])
+
+        snap_file = glob.glob('*.snap')[0]
+
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
+        snap_cache.cache(snap_filename=snap_file)
+
+        # get hash of snap
+        snap_hash = file_utils.calculate_sha3_384(snap_file)
+
+        # get snap by hash
+        snap = snap_cache.get(deb_arch=self.deb_arch, snap_hash=snap_hash)
+
+        self.assertEqual(
+            os.path.join(snap_cache.snap_cache_root, self.deb_arch, snap_hash),
+            snap
+        )
 
 
-class SnapCachedFilePruneTestCase(tests.TestCase):
-
-    scenarios = [
-        ('valid revision for prune', dict(valid_revision=True)),
-        ('invalid revision for prune', dict(valid_revision=False)),
-    ]
+class SnapCachePruneTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        super().make_snapcraft_yaml(yaml_content)
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
+        self.deb_arch = snapcraft.ProjectOptions().deb_arch
+
     def test_prune_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
+
+        # Create snaps
+        with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+architectures: ['{}']
+confinement: devmode
+grade: devel
+version: '0.1'
+
+parts:
+    my-part:
+      plugin: nil
+""".format(self.deb_arch))
+        main(['snap'])
+
+        snap_file = glob.glob('*0.1_*.snap')[0]
+
         snap_cache = cache.SnapCache(project_name='my-snap-name')
+        snap_file_path = snap_cache.cache(snap_filename=snap_file)
+        _, snap_file_hash = os.path.split(snap_file_path)
 
-        snap_revision = 9
-        snap_file = 'my-snap-name_0.1_amd64.snap'
+        with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+architectures: ['{}']
+confinement: devmode
+grade: devel
+version: '0.2'
 
-        # create dummy snap
-        open(os.path.join(self.path, snap_file), 'a').close()
+parts:
+    my-part:
+      plugin: nil
+""".format(self.deb_arch))
 
-        # cache snap
-        snap_cache.cache(snap_file, snap_revision)
-
-        # create other cached snap revisions
-        to_be_deleted_files = []
-        cached_snaps = ['a-cached-snap_0.3_amd64_8.snap',
-                        'another-cached-snap_1.0_arm64_6.snap']
-
-        for cached_snap in cached_snaps:
-            cached_snap_path = os.path.join(snap_cache.snap_cache_dir,
-                                            cached_snap)
-            to_be_deleted_files.append(cached_snap_path)
-            open(cached_snap_path, 'a').close()
-
-        real_cached_snap = _rewrite_snap_filename_with_revision(snap_file,
-                                                                snap_revision)
+        main(['snap'])
+        snap_file_2 = glob.glob('*0.2*.snap')[0]
+        snap_file_2_path = snap_cache.cache(snap_filename=snap_file_2)
+        snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
 
         # confirm expected snap cached
-        self.assertEqual(3, len(os.listdir(snap_cache.snap_cache_dir)))
-        self.assertTrue(
-            os.path.isfile(os.path.join(snap_cache.snap_cache_dir,
-                                        real_cached_snap)))
+        self.assertEqual(2, len(os.listdir(snap_file_2_dir)))
 
-        if not self.valid_revision:
-            self.assertRaises(
-                ValueError,
-                snap_cache.prune, keep_revision='invalid-revision')
-            self.assertRaises(
-                TypeError,
-                snap_cache.prune, keep_revision=None)
-        else:
-            # prune cached snaps
-            purned_file_list = snap_cache.prune(keep_revision=snap_revision)
+        # prune
+        pruned_files = snap_cache.prune(deb_arch=self.deb_arch,
+                                        keep_hash=snap_file_2_hash)
 
-            # confirm other snaps are purged
-            self.assertEqual(set(purned_file_list), set(to_be_deleted_files))
-            for snap in purned_file_list:
-                self.assertFalse(os.path.isfile(snap))
-
-            # confirm the expected cached file still exist
-            self.assertEqual(1, len(os.listdir(snap_cache.snap_cache_dir)))
-            self.assertTrue(
-                os.path.isfile(os.path.join(snap_cache.snap_cache_dir,
-                                            real_cached_snap)))
+        self.assertEqual(1, len(pruned_files))
+        self.assertIn(
+            os.path.join(
+                snap_cache.snap_cache_root,
+                self.deb_arch,
+                snap_file_hash
+            ),
+            pruned_files
+        )
+        self.assertNotIn(
+            os.path.join(snap_cache.snap_cache_root, snap_file_2_hash),
+            pruned_files
+        )
