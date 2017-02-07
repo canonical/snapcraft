@@ -195,9 +195,9 @@ class SnapcraftSchemaError(SnapcraftError):
 def _determine_cause(error):
     """Attempt to determine a cause from validation error.
 
-    Returns:
-        A string representing the cause of the error (it may be empty if no
-        cause can be determined).
+    :return: A string representing the cause of the error (it may be empty if no
+             cause can be determined).
+    :rtype: str
     """
 
     message = _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
