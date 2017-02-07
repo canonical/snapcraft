@@ -88,7 +88,7 @@ parts:
 """.format(self.deb_arch))
         main(['snap'])
 
-        snap_file = glob.glob('*.snap')[0]
+        snap_file = glob.glob('*0.1*.snap')[0]
 
         snap_cache = cache.SnapCache(project_name='my-snap-name')
         snap_cache.cache(snap_filename=snap_file)
@@ -108,7 +108,7 @@ parts:
 """.format(self.deb_arch))
         main(['snap'])
 
-        snap_file_latest = glob.glob('*.snap')[0]
+        snap_file_latest = glob.glob('*0.2*.snap')[0]
 
         snap_cache.cache(snap_filename=snap_file_latest)
         latest_hash = file_utils.calculate_sha3_384(snap_file_latest)
@@ -176,7 +176,7 @@ parts:
 """.format(self.deb_arch))
         main(['snap'])
 
-        snap_file = glob.glob('*.snap')[0]
+        snap_file = glob.glob('*0.1_*.snap')[0]
 
         snap_cache = cache.SnapCache(project_name='my-snap-name')
         snap_file_path = snap_cache.cache(snap_filename=snap_file)
@@ -197,7 +197,7 @@ parts:
 """.format(self.deb_arch))
 
         main(['snap'])
-        snap_file_2 = glob.glob('*.snap')[0]
+        snap_file_2 = glob.glob('*0.2*.snap')[0]
         snap_file_2_path = snap_cache.cache(snap_filename=snap_file_2)
         snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
 
