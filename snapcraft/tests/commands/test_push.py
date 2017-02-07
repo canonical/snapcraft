@@ -348,7 +348,9 @@ class PushCommandDeltasTestCase(tests.TestCase):
             BaseDirectory.xdg_cache_home,
             'snapcraft',
             'my-snap-name',
-            'snap_hashes')
+            'snap_hashes',
+            'amd64'
+        )
         cached_snap = os.path.join(
             snap_cache,
             file_utils.calculate_sha3_384(snap_file)
@@ -474,8 +476,9 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
             BaseDirectory.xdg_cache_home,
             'snapcraft',
             'my-snap-name',
-            'snap_hashes')
-
+            'snap_hashes',
+            'amd64'
+        )
         os.makedirs(snap_cache)
 
         for cached_snap in self.cached_snaps:

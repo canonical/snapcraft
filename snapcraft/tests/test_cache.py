@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import logging
 import os
-import time
+from unittest import mock
 
 import fixtures
 
@@ -25,43 +26,37 @@ from snapcraft import (
     tests,
 )
 from snapcraft.internal import cache
+from snapcraft.main import main
 from snapcraft.tests import fixture_setup
-
-
-yaml_content = """name: cache-test
-version: 0.1
-summary: test cached snap
-description: test cached snap
-grade: devel
-
-parts:
-  my-part:
-    plugin: nil
-"""
 
 
 class SnapCacheTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        super().make_snapcraft_yaml(yaml_content)
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
+        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        snap_cache = cache.SnapCache(project_name='my-snap-name')
-        snap_file = 'my-snap-name_0.1_amd64.snap'
 
-        # create dummy snap
+        # Create a snap
+        main(['init'])
+        main(['snap'])
+        snap_file = glob.glob('*.snap')[0]
         snap_path = os.path.join(self.path, snap_file)
-        open(snap_path, 'a').close()
 
         # cache snap
+        snap_cache = cache.SnapCache(project_name='cache-test')
         cached_snap_path = snap_cache.cache(snap_file)
 
         expected_snap_path = os.path.join(
             snap_cache.snap_cache_root,
+            'amd64',
             file_utils.calculate_sha3_384(snap_path)
         )
 
@@ -74,51 +69,66 @@ class SnapCacheTestCase(tests.TestCase):
     def test_snap_cache_get_latest(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
-        snap_files = [
-            'my-snap-name_0.1_amd64.snap',
-            'my-snap-name_0.2_amd64.snap'
-        ]
+        # Create snaps
+        main(['init'])
+        main(['snap'])
+
+        snap_file = glob.glob('*.snap')[0]
 
         snap_cache = cache.SnapCache(project_name='my-snap-name')
+        snap_cache.cache(snap_file)
 
-        # create dummy cached snaps
-        for snap in snap_files:
-            snap_path = os.path.join(self.path, snap)
-            with open(snap_path, 'wb') as f:
-                time.sleep(0.01)
-                f.write(bytes(os.urandom(1024)))
+        with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+architectures: ['amd64']
+confinement: devmode
+grade: devel
+version: '0.2'
 
-            last_cached = snap_cache.cache(snap_path)
+parts:
+    my-part:
+      plugin: nil
+""")
 
-        latest_snap = snap_cache.get()
+        main(['snap'])
+        snap_file_latest = glob.glob('*.snap')[0]
 
-        self.assertEqual(last_cached, latest_snap)
+        snap_cache.cache(snap_file_latest)
+        latest_hash = file_utils.calculate_sha3_384(snap_file_latest)
+
+        # get latest
+        latest_snap = snap_cache.get('amd64')
+
+        expected_snap_path = os.path.join(
+            snap_cache.snap_cache_root,
+            'amd64',
+            latest_hash
+        )
+
+        self.assertEqual(expected_snap_path, latest_snap)
 
     def test_snap_cache_get_by_hash(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
-        snap_files = [
-            'my-snap-name_0.1_amd64.snap',
-            'my-snap-name_0.2_amd64.snap'
-        ]
+        # Create snap
+        main(['init'])
+        main(['snap'])
+
+        snap_file = glob.glob('*.snap')[0]
 
         snap_cache = cache.SnapCache(project_name='my-snap-name')
-
-        # create dummy cached snaps
-        for snap in snap_files:
-            snap_path = os.path.join(self.path, snap)
-            with open(snap_path, 'wb') as f:
-                f.write(bytes(os.urandom(1024)))
-            snap_cache.cache(snap_path)
+        snap_cache.cache(snap_file)
 
         # get hash of snap
-        snap_hash = file_utils.calculate_sha3_384(snap_files[1])
+        snap_hash = file_utils.calculate_sha3_384(snap_file)
 
         # get snap by hash
-        snap = snap_cache.get(snap_hash=snap_hash)
+        snap = snap_cache.get('amd64', snap_hash=snap_hash)
 
         self.assertEqual(
-            os.path.join(snap_cache.snap_cache_root, snap_hash),
+            os.path.join(snap_cache.snap_cache_root, 'amd64', snap_hash),
             snap
         )
 
@@ -127,49 +137,57 @@ class SnapCachePruneTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        super().make_snapcraft_yaml(yaml_content)
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
     def test_prune_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
+
+        # Create snaps
+        main(['init'])
+        main(['snap'])
+
+        snap_file = glob.glob('*.snap')[0]
+
         snap_cache = cache.SnapCache(project_name='my-snap-name')
+        snap_file_path = snap_cache.cache(snap_file)
+        _, snap_file_hash = os.path.split(snap_file_path)
 
-        snap_files = {
-            'my-snap-name_0.1_amd64.snap': '',
-            'my-snap-name-0.2_amd64.snap': '',
-            'my-snap-name-0.3_amd64.snap': ''
-        }
+        with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+architectures: ['amd64']
+confinement: devmode
+grade: devel
+version: '0.2'
 
-        # create dummy cached snaps and calculate hashes
-        for snap in snap_files:
-            snap_path = os.path.join(self.path, snap)
-            with open(snap_path, 'wb') as f:
-                time.sleep(0.01)
-                f.write(bytes(os.urandom(1024)))
-            snap_files[snap] = file_utils.calculate_sha3_384(snap_path)
-            snap_cache.cache(snap_path)
+parts:
+    my-part:
+      plugin: nil
+""")
+
+        main(['snap'])
+        snap_file_2 = glob.glob('*.snap')[0]
+        snap_file_2_path = snap_cache.cache(snap_file_2)
+        snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
 
         # confirm expected snap cached
-        self.assertEqual(3, len(os.listdir(snap_cache.snap_cache_root)))
-        for _, snap_hash in snap_files.items():
-            self.assertTrue(
-                os.path.isfile(os.path.join(snap_cache.snap_cache_root,
-                                            snap_hash)))
+        self.assertEqual(2, len(os.listdir(snap_file_2_dir)))
 
         # prune
-        keep_hash = snap_files['my-snap-name-0.3_amd64.snap']
-        pruned_files = snap_cache.prune(keep_hash=keep_hash)
+        pruned_files = snap_cache.prune('amd64', snap_file_2_hash)
 
-        self.assertEqual(2, len(pruned_files))
+        self.assertEqual(1, len(pruned_files))
         self.assertIn(
             os.path.join(
                 snap_cache.snap_cache_root,
-                snap_files['my-snap-name_0.1_amd64.snap']
+                'amd64',
+                snap_file_hash
             ),
             pruned_files
         )
         self.assertNotIn(
-            os.path.join(snap_cache.snap_cache_root, keep_hash),
+            os.path.join(snap_cache.snap_cache_root, snap_file_2_hash),
             pruned_files
         )

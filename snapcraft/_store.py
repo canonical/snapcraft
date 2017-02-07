@@ -433,7 +433,8 @@ def push(snap_filename, release_channels=None):
         store.push_precheck(snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
-    source_snap = snap_cache.get()
+    arch = snap_yaml['architectures'][0]
+    source_snap = snap_cache.get(arch)
 
     sha3_384_available = hasattr(hashlib, 'sha3_384')
 
@@ -462,7 +463,7 @@ def push(snap_filename, release_channels=None):
 
         if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
             snap_cache.cache(snap_filename)
-            snap_cache.prune(keep_hash=calculate_sha3_384(snap_filename))
+            snap_cache.prune(arch, keep_hash=calculate_sha3_384(snap_filename))
     else:
         logger.info('Pushing {!r}'.format(snap_name))
 
