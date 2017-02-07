@@ -147,7 +147,7 @@ def get_source_handler(source, *, source_type=''):
 _tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
 
 
-def _get_source_type_from_uri(source, ignore_errors=False):
+def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
     source_type = ''
     if source.startswith('bzr:') or source.startswith('lp:'):
         source_type = 'bzr'

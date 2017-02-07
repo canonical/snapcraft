@@ -26,7 +26,7 @@ from testtools import TestCase
 from testtools import matchers as m
 
 from snapcraft import file_utils, tests
-from snapcraft.internal import deltas # noqa
+from snapcraft.internal import deltas  # noqa
 from snapcraft.tests import fixture_setup
 
 
