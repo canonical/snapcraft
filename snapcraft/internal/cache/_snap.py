@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class SnapCache(SnapcraftProjectCache):
     """Cache for snap revisions."""
+
     def __init__(self, *, project_name):
         super().__init__(project_name=project_name)
         self.snap_cache_root = self._setup_snap_cache_root()
@@ -58,7 +59,7 @@ class SnapCache(SnapcraftProjectCache):
         os.makedirs(os.path.join(self.snap_cache_root, arch), exist_ok=True)
         return os.path.join(self.snap_cache_root, arch, snap_hash)
 
-    def cache(self, snap_filename):
+    def cache(self, *, snap_filename):
         """Cache snap revision by sha3-384 hash in XDG cache, unless it already exists.
         :returns: path to cached revision.
         """
@@ -74,7 +75,7 @@ class SnapCache(SnapcraftProjectCache):
                 'Unable to cache snap {}.'.format(snap_filename))
         return cached_snap_path
 
-    def get(self, deb_arch, snap_hash=None):
+    def get(self, *, deb_arch, snap_hash=None):
         """Get the revision by sha3-384 hash or the latest cached item.
 
         :deb_arch: arch as string.
@@ -100,7 +101,7 @@ class SnapCache(SnapcraftProjectCache):
                         for f in cached_hashes]
         return max(cached_snaps, key=os.path.getctime)
 
-    def prune(self, deb_arch, keep_hash):
+    def prune(self, *, deb_arch, keep_hash):
         """Prune the snap revisions beside the keep_hash in XDG cache.
 
         :returns: pruned files paths list.
