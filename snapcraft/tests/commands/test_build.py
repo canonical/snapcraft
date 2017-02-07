@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -66,7 +66,8 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            "The part named 'no-build' is not defined in 'snapcraft.yaml'\n")
+            "The part named 'no-build' is not defined in "
+            "'snap/snapcraft.yaml'\n")
 
     def test_build_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,9 +18,10 @@ import logging
 import os
 import shutil
 
-from unittest import mock
-from testtools.matchers import MatchesRegex
 import fixtures
+from unittest import mock
+from testtools.matchers import FileExists, MatchesRegex, Not
+
 
 from snapcraft.main import main
 from snapcraft.internal import (
@@ -94,10 +95,10 @@ parts:
 
         main(['clean'])
 
-        self.assertFalse(os.path.exists(self.stage_dir))
-        self.assertFalse(os.path.exists(self.prime_dir))
-        self.assertTrue(os.path.exists(self.parts_dir))
-        self.assertTrue(os.path.isfile(local_plugin))
+        self.assertThat(self.stage_dir, Not(FileExists()))
+        self.assertThat(self.prime_dir, Not(FileExists()))
+        self.assertThat(self.parts_dir, Not(FileExists()))
+        self.assertThat(local_plugin, FileExists())
 
     def test_clean_all_when_all_parts_specified(self):
         self.make_snapcraft_yaml(n=3)
@@ -155,7 +156,8 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            "The part named 'no-clean' is not defined in 'snapcraft.yaml'\n")
+            "The part named 'no-clean' is not defined in "
+            "'snap/snapcraft.yaml'\n")
 
     @mock.patch.object(pluginhandler.PluginHandler, 'clean')
     def test_per_step_cleaning(self, mock_clean):

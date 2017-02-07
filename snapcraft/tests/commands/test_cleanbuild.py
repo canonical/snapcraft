@@ -18,6 +18,7 @@ import logging
 import os
 import tarfile
 from unittest import mock
+from testtools.matchers import Contains
 
 import fixtures
 
@@ -44,6 +45,7 @@ parts:
         super().make_snapcraft_yaml(self.yaml_template)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
+    @mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
     @mock.patch('snapcraft.internal.lxd.check_call')
     @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_cleanbuild(self, mock_installed, mock_call):
@@ -96,6 +98,12 @@ parts:
             f = os.path.relpath(f)
             self.assertTrue('./{}'.format(f) in tar_members,
                             '{} should be in {}'.format(f, tar_members))
+
+        # Also assert that the snapcraft.yaml made it into the cleanbuild tar
+        self.assertThat(
+            tar_members,
+            Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
+            'snap/snapcraft unexpectedly excluded from tarball')
 
     @mock.patch('snapcraft.internal.repo.is_package_installed')
     def test_no_lxd(self, mock_installed):

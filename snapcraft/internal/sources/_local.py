@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -47,5 +47,5 @@ class Local(Base):
             else:
                 return []
 
-        shutil.copytree(source_abspath, self.source_dir,
+        shutil.copytree(source_abspath, self.source_dir, symlinks=True,
                         copy_function=file_utils.link_or_copy, ignore=ignore)

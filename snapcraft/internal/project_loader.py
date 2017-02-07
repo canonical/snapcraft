@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,20 +33,11 @@ from snapcraft.internal import (
     parts,
     pluginhandler,
 )
-from snapcraft._schema import Validator, SnapcraftSchemaError
+from snapcraft._schema import Validator
 from snapcraft.internal.parts import SnapcraftLogicError, get_remote_parts
 
 
 logger = logging.getLogger(__name__)
-
-
-@jsonschema.FormatChecker.cls_checks('file-path')
-def _validate_file_exists(instance):
-    if not os.path.exists(instance):
-        raise jsonschema.exceptions.ValidationError(
-            "Specified file '{}' does not exist".format(instance))
-
-    return True
 
 
 @jsonschema.FormatChecker.cls_checks('icon-path')
@@ -122,7 +113,7 @@ class Config:
         self.build_tools = []
         self._project_options = project_options
 
-        self._snapcraft_yaml = _get_snapcraft_yaml()
+        self._snapcraft_yaml = get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
 
         self._validator = Validator(snapcraft_yaml)
@@ -344,7 +335,6 @@ def _build_env(root, snap_name, confinement, arch_triplet,
                    # Building tools to continue the build becomes problematic
                    # with nodefaultlib.
                    '-Wl,-z,nodefaultlib '
-                   '-Wl,--enable-new-dtags '
                    '-Wl,--dynamic-linker={0} '
                    '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
 
@@ -370,20 +360,23 @@ def _build_env_for_stage(stagedir, snap_name, confinement,
     return env
 
 
-def _get_snapcraft_yaml():
-    visible_yaml_exists = os.path.exists('snapcraft.yaml')
-    hidden_yaml_exists = os.path.exists('.snapcraft.yaml')
+def get_snapcraft_yaml():
+    possible_yamls = [
+        os.path.join('snap', 'snapcraft.yaml'),
+        'snapcraft.yaml',
+        '.snapcraft.yaml',
+    ]
 
-    if visible_yaml_exists and hidden_yaml_exists:
-        raise EnvironmentError(
-            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', "
-            "please remove one")
-    elif visible_yaml_exists:
-        return 'snapcraft.yaml'
-    elif hidden_yaml_exists:
-        return '.snapcraft.yaml'
-    else:
-        raise SnapcraftYamlFileError('snapcraft.yaml')
+    snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
+
+    if not snapcraft_yamls:
+        raise SnapcraftYamlFileError('snap/snapcraft.yaml')
+    elif len(snapcraft_yamls) > 1:
+        raise errors.SnapcraftEnvironmentError(
+            'Found a {!r} and a {!r}, please remove one.'.format(
+                snapcraft_yamls[0], snapcraft_yamls[1]))
+
+    return snapcraft_yamls[0]
 
 
 def _snapcraft_yaml_load(yaml_file):
@@ -399,7 +392,7 @@ def _snapcraft_yaml_load(yaml_file):
         with open(yaml_file, encoding=encoding) as fp:
             return yaml.load(fp)
     except yaml.scanner.ScannerError as e:
-        raise SnapcraftSchemaError(
+        raise errors.SnapcraftSchemaError(
             '{} on line {} of {}'.format(
                 e.problem, e.problem_mark.line + 1, yaml_file))
 
@@ -409,11 +402,10 @@ def load_config(project_options=None):
         return Config(project_options)
     except SnapcraftYamlFileError as e:
         logger.error(
-            'Could not find {}.  Are you sure you are in the right '
-            'directory?\nTo start a new project, use \'snapcraft '
-            'init\''.format(e.file))
+            "Could not find {}. Are you sure you're in the right directory?\n"
+            "To start a new project, use 'snapcraft init'".format(e.file))
         sys.exit(1)
-    except SnapcraftSchemaError as e:
+    except errors.SnapcraftSchemaError as e:
         msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
         logger.error(msg)
         sys.exit(1)

@@ -3,11 +3,6 @@
 set -e
 set -x
 
-# installation pathes are based of CATALINA_HOME
-export CATALINA_HOME="$SNAP"
-# writable pathes are based of CATALINA_BASE
-export CATALINA_BASE="$SNAP_DATA"
-
 # create runtime data
 mkdir -p "$CATALINA_BASE/logs"
 mkdir -p "$CATALINA_BASE/temp"

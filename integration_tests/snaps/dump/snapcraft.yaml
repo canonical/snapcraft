@@ -1,0 +1,36 @@
+name: dump
+version: 0.1
+summary: test the dump plugin
+description: |
+  This is a snap with different types of sources to dump.
+confinement: strict
+
+parts:
+  oneflat:
+    plugin: dump
+    source: oneflat.tar.bz2
+  oneflatwithstagepackages:
+    plugin: dump
+    source: oneflat.tar.bz2
+    stage-packages: [hello]
+  onedeep:
+    plugin: dump
+    source: onedeep.tar.gz
+  nodir:
+    plugin: dump
+    source: nodir.tar.xz
+  flat:
+    plugin: dump
+    source: flat.tar.xz
+  simple:
+    plugin: dump
+    source: simple.tar.bz2
+  evil-parent:
+    plugin: dump
+    source: evil-parent.tar.gz
+  evil-slash:
+    plugin: dump
+    source: evil-slash.tar.gz
+  readonly-files:
+    plugin: dump
+    source: readonly-files.tar.gz

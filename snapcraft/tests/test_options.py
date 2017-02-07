@@ -59,6 +59,12 @@ class OptionsTestCase(tests.TestCase):
             expected_arch_triplet='arm-linux-gnueabihf',
             expected_deb_arch='armhf',
             expected_kernel_arch='arm')),
+        ('armv8l-kernel-armv7l-userspace', dict(
+            machine='armv8l',
+            architecture=('32bit', 'ELF'),
+            expected_arch_triplet='arm-linux-gnueabihf',
+            expected_deb_arch='armhf',
+            expected_kernel_arch='arm')),
         ('ppc', dict(
             machine='ppc',
             architecture=('32bit', 'ELF'),
@@ -103,7 +109,8 @@ class OptionsTestCase(tests.TestCase):
         mock_platform_machine.return_value = self.machine
         mock_platform_architecture.return_value = self.architecture
         platform_arch = snapcraft._options._get_platform_architecture()
-        userspace_conversions = snapcraft._options._USERSPACE_ARCHITECTURE
+        userspace_conversions = \
+            snapcraft._options._32BIT_USERSPACE_ARCHITECTURE
 
         if self.architecture[0] == '32bit' and \
            self.machine in userspace_conversions:

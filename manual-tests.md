@@ -18,6 +18,7 @@
 4. sudo snapcraft prime
 5. ensure that prime/test-owner-file is owned by nobody and nogroup
 
+
 # Test stage package caching
 
 1. `snapcraft pull` a snap that has `parts` with `stage-packages`.
@@ -29,6 +30,7 @@
 7. Run this test again, but run snapcraft on a partition separated
    from $HOME.
 
+
 # Test cleanbuild with debug shell
 
 1. Run `snapcraft cleanbuild --debug` for a snap.
@@ -38,3 +40,13 @@
 4. Ensure you are dropped into a debug shell.
 5. Exit the shell.
 6. Ensure you are dropped back into your original shell session.
+
+
+# Test that the Catkin plugin doesn't pass args to setup.sh
+
+This is a regression test for bug #1660852.
+
+1. Build and install the `demos/ros` demo.
+2. Run `ros-example.launch-project --help`.
+3. Verify that you actually get the help info for `roslaunch`, not a barf of
+   errors.

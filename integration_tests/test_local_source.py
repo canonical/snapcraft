@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,21 +25,19 @@ import testscenarios
 class LocalSourceTestCase(integration_tests.TestCase):
 
     def test_build_local_source(self):
-        project_dir = 'local-source'
-        self.run_snapcraft('build', project_dir)
+        self.run_snapcraft('build', 'local-source')
 
         self.assertThat(
             os.path.join(
-                project_dir, 'parts', 'make-project', 'build', 'stamp-all'),
+                self.parts_dir, 'make-project', 'build', 'stamp-all'),
             FileExists())
 
     def test_stage_local_source(self):
-        project_dir = 'local-source'
-        self.run_snapcraft('stage', project_dir)
+        self.run_snapcraft('stage', 'local-source')
 
         self.assertThat(
             os.path.join(
-                project_dir, 'parts', 'make-project', 'build',
+                self.parts_dir, 'make-project', 'build',
                 'stamp-install'),
             FileExists())
 
@@ -60,7 +58,6 @@ class LocalSourceSubfoldersTestCase(
     ]
 
     def test_pull_local_source(self):
-        project_dir = 'local-source-subfolders'
-        self.run_snapcraft(
-            'pull', project_dir,
-            yaml_dir=os.path.join(project_dir, self.subfolder))
+        self.copy_project_to_cwd('local-source-subfolders')
+        os.chdir(self.subfolder)
+        self.run_snapcraft('pull')

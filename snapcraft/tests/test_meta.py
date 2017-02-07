@@ -53,12 +53,27 @@ class CreateBaseTestCase(tests.TestCase):
             'description': 'my description',
             'summary': 'my summary',
             'confinement': 'devmode',
+            'environment': {
+                'GLOBAL': 'y',
+            }
         }
 
-        self.project_options = ProjectOptions()
+        patcher = patch(
+            'snapcraft.internal.project_loader.get_snapcraft_yaml')
+        self.mock_get_yaml = patcher.start()
+        self.mock_get_yaml.return_value = os.path.join(
+            'snap', 'snapcraft.yaml')
+        self.addCleanup(patcher.stop)
+
+        # Ensure the ensure snapcraft.yaml method has something to copy.
+        os.makedirs('snap')
+        open(os.path.join('snap', 'snapcraft.yaml'), 'w').close()
+
         self.meta_dir = os.path.join(self.prime_dir, 'meta')
         self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
         self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
+
+        self.project_options = ProjectOptions()
 
     def generate_meta_yaml(self):
         create_snap_packaging(self.config_data, self.project_options)
@@ -78,6 +93,7 @@ class CreateTestCase(CreateBaseTestCase):
         expected = {'architectures': ['amd64'],
                     'confinement': 'devmode',
                     'description': 'my description',
+                    'environment': {'GLOBAL': 'y'},
                     'summary': 'my summary',
                     'name': 'my-package',
                     'version': '1.0'}
@@ -138,6 +154,35 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
+    def test_create_meta_with_declared_icon_with_dots(self):
+        open(os.path.join(os.curdir, 'com.my.icon.png'), 'w').close()
+        self.config_data['icon'] = 'com.my.icon.png'
+
+        y = self.generate_meta_yaml()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
+    def test_create_meta_with_declared_icon_in_parent_dir(self):
+        open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
+        builddir = os.path.join(os.curdir, 'subdir')
+        os.mkdir(builddir)
+        os.chdir(builddir)
+        self.config_data['icon'] = '../my-icon.png'
+
+        y = self.generate_meta_yaml()
+
+        self.assertTrue(
+            os.path.exists(os.path.join(self.meta_dir, 'gui', 'icon.png')),
+            'icon.png was not setup correctly')
+
+        self.assertFalse('icon' in y,
+                         'icon found in snap.yaml {}'.format(y))
+
     def test_create_meta_with_declared_icon_and_setup(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
@@ -163,6 +208,14 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
+
+        # Check for the correct deprecation message.
+        self.assertIn(
+            "Assets in 'setup/gui' should now be placed in 'snap/gui'.",
+            fake_logger.output)
+        self.assertIn(
+            "See http://snapcraft.io/docs/deprecation-notices/dn3",
+            fake_logger.output)
 
     def test_create_meta_with_declared_icon_and_setup_ran_twice_ok(self):
         gui_path = os.path.join('setup', 'gui')
@@ -203,7 +256,10 @@ class CreateTestCase(CreateBaseTestCase):
         self.config_data['apps'] = {
             'app1': {'command': 'app.sh'},
             'app2': {'command': 'app.sh', 'plugs': ['network']},
-            'app3': {'command': 'app.sh', 'plugs': ['network-server']}
+            'app3': {'command': 'app.sh', 'plugs': ['network-server']},
+            'app4': {'command': 'app.sh', 'plugs': ['network-server'],
+                     'environment': {'XDG_SOMETHING': '$SNAP_USER_DATA',
+                                     'LANG': 'C'}},
         }
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
@@ -231,12 +287,20 @@ class CreateTestCase(CreateBaseTestCase):
                     'command': 'command-app3.wrapper',
                     'plugs': ['network-server'],
                 },
+                'app4': {
+                    'command': 'command-app4.wrapper',
+                    'plugs': ['network-server'],
+                    'environment': {
+                        'XDG_SOMETHING': '$SNAP_USER_DATA',
+                        'LANG': 'C'}
+                },
             },
             'description': 'my description',
             'summary': 'my summary',
             'name': 'my-package',
             'version': '1.0',
             'confinement': 'devmode',
+            'environment': {'GLOBAL': 'y'},
             'plugs': {
                 'network-server': {
                     'interface': 'network-bind',
@@ -244,7 +308,7 @@ class CreateTestCase(CreateBaseTestCase):
             }
         }
 
-        self.assertEqual(y, expected)
+        self.assertThat(y, Equals(expected))
 
     def test_create_meta_with_app_desktop_key(self):
         os.mkdir(self.prime_dir)
@@ -339,7 +403,17 @@ class CreateTestCase(CreateBaseTestCase):
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
+
+    scenarios = (
+        ('with build artifacts', dict(build_info='yes')),
+        ('without build artifacts', dict(build_info='')),
+    )
+
     def test_write_snap_directory(self):
+        if self.build_info:
+            self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_BUILD_INFO', self.build_info))
+
         # Setup a snap directory containing a few things.
         _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
         _create_file(
@@ -349,8 +423,14 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         # well as the hook making it into meta/.
         self.generate_meta_yaml()
         prime_snap_dir = os.path.join(self.prime_dir, 'snap')
-        self.assertThat(
-            os.path.join(prime_snap_dir, 'snapcraft.yaml'), FileExists())
+
+        if self.build_info:
+            self.assertThat(os.path.join(prime_snap_dir, 'snapcraft.yaml'),
+                            FileExists())
+        else:
+            self.assertThat(os.path.join(prime_snap_dir, 'snapcraft.yaml'),
+                            Not(FileExists()))
+
         self.assertThat(
             os.path.join(prime_snap_dir, 'hooks', 'test-hook'), FileExists())
         self.assertThat(
@@ -487,15 +567,16 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         # Check that the wrapper is created even if there is already a file
         # with the same name.
-        open(os.path.join('prime', 'test_relexepath.wrapper'), 'w').close()
+        open(os.path.join(
+            self.prime_dir, 'test_relexepath.wrapper'), 'w').close()
 
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP/usr/bin:$SNAP/bin\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
+                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                    '$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
 
         with open(wrapper_path) as wrapper_file:
@@ -519,9 +600,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
 
         expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP/usr/bin:$SNAP/bin\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
+                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                    '$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -552,14 +633,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         expected = (
             '#!/bin/sh\n'
-            '\n\n'
-            'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
-            'exec "$SNAP/snap_exe"'
-            ' "$SNAP/test_relexepath" "$@"\n')
+            'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
-
         self.assertEqual(expected, wrapper_contents)
+
         with open(os.path.join(self.prime_dir, relative_exe_path), 'r') as exe:
             # The shebang wasn't changed, since we don't know what the
             # path will be on the installed system.
@@ -580,8 +658,6 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -608,8 +684,6 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -628,8 +702,6 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    '\n\n'
-                    'LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n'
                     'exec "app1" "$@"\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()

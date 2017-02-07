@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -228,6 +228,9 @@ def main(argv=None):
 
     log.configure(log_level=log_level)
     project_options = _get_project_options(args)
+
+    logger.debug("Starting snapcraft {} from {}.".format(
+        snapcraft.__version__, os.path.dirname(__file__)))
 
     if args['strip']:
         logger.warning("DEPRECATED: use 'prime' instead of 'strip'")

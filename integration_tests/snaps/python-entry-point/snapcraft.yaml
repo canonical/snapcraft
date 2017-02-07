@@ -22,3 +22,5 @@ parts:
         - -lib/python3.5/site-packages/pip*
         - -lib/python3.5/site-packages/setuptools*
         - -lib/python3.5/site-packages/wheel*
+        # This is needed as the same package is used twice.
+        - -lib/python3.5/site-packages/test-0.1.dist-info/RECORD
