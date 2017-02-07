@@ -67,3 +67,74 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         output = self.run_snapcraft(['release', new_name, '1', 'edge'])
         expected = r'.*The \'edge\' channel is now open.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+    def test_release_with_login_multiarch(self):
+        self.addCleanup(self.logout)
+        self.login()
+
+        # Change to a random name and version.
+        unique_id = uuid.uuid4().int
+        new_name = 'multiarch-{}'.format(unique_id)
+        # The maximum size is 32 chars.
+        new_version = str(unique_id)[:32]
+
+        self.copy_project_to_cwd('multiarch')
+        self.update_name_and_version(new_name, new_version)
+
+        self.run_snapcraft('snap')
+
+        # Register the snap
+        self.register(new_name)
+        # Upload the snap
+        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'multi')
+        self.assertThat(
+            os.path.join(snap_file_path), FileExists())
+
+        output = self.run_snapcraft(['upload', snap_file_path])
+        expected = r'.*Ready to release!.*'.format(new_name)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        # Release it
+        output = self.run_snapcraft(['release', new_name, '1', '0.1/edge'])
+        expected = r'.*The \'0.1/edge\' channel is now open.*'
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        expected = r'.*armhf   0.1      16        stable     -          -.*'
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        expected = r'.*amd64   0.1      16        stable     -          -.*'
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+    def test_release_with_login_arm(self):
+        self.addCleanup(self.logout)
+        self.login()
+
+        # Change to a random name and version.
+        unique_id = uuid.uuid4().int
+        new_name = 'arm-{}'.format(unique_id)
+        # The maximum size is 32 chars.
+        new_version = str(unique_id)[:32]
+
+        self.copy_project_to_cwd('arm')
+        self.update_name_and_version(new_name, new_version)
+
+        self.run_snapcraft('snap')
+
+        # Register the snap
+        self.register(new_name)
+        # Upload the snap
+        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'armhf')
+        self.assertThat(
+            os.path.join(snap_file_path), FileExists())
+
+        output = self.run_snapcraft(['upload', snap_file_path])
+        expected = r'.*Ready to release!.*'.format(new_name)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        # Release it
+        output = self.run_snapcraft(['release', new_name, '1', '0.1/edge'])
+        expected = r'.*The \'0.1/edge\' channel is now open.*'
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        expected = r'.*armhf   0.1      16        stable     -          -.*'
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
