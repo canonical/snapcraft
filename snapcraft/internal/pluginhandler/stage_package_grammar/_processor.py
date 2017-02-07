@@ -58,6 +58,8 @@ def process_grammar(grammar, project_options, ubuntu):
                 if on_clause_pattern.match(key):
                     # We've come across the begining of an 'on' statement.
                     # That means any previous statement we found is complete.
+                    # The first time through this may be None, but the
+                    # collection will ignore it.
                     statements.add(statement)
 
                     statement = OnStatement(
@@ -66,6 +68,8 @@ def process_grammar(grammar, project_options, ubuntu):
                 if try_clause_pattern.match(key):
                     # We've come across the begining of a 'try' statement.
                     # That means any previous statement we found is complete.
+                    # The first time through this may be None, but the
+                    # collection will ignore it.
                     statements.add(statement)
 
                     statement = TryStatement(
