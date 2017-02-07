@@ -95,7 +95,7 @@ contain.
       arch), as well as specify optional packages. The grammar is made up of two
       nestable statements: 'on' and 'try'.
 
-          - on <selector>[,<selector>...]
+          - on <selector>[,<selector>...]:
             - ...
           - else[ fail]:
             - ...

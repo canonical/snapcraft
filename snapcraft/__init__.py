@@ -158,7 +158,9 @@ of the choice of plugin.
     arch), as well as specify optional packages. The grammar is made up of two
     nestable statements: 'on' and 'try'.
 
-        - on <selector>[,<selector>...]
+    Let's discuss `on`.
+
+        - on <selector>[,<selector>...]:
           - ...
         - else[ fail]:
           - ...
@@ -172,6 +174,32 @@ of the choice of plugin.
     'else' clause is considered satisfied even if no selector matched. The
     'else fail' form allows erroring out if an 'on' clause was not matched.
 
+    For example, say you only wanted to stage `foo` if building for amd64 (and
+    not stage `foo` if otherwise):
+
+        - on amd64: [foo]
+
+    Building on that, say you wanted to stage `bar` if building on an arch
+    other than amd64:
+
+        - on amd64: [foo]
+        - else: [bar]
+
+    You can nest these for more complex behaviors:
+
+        - on amd64: [foo]
+        - else:
+          - on i386: [bar]
+          - on armhf: [baz]
+
+    If your project requires a package that is only available on amd64, you can
+    fail if you're not building for amd64:
+
+        - on amd64: [foo]
+        - else fail
+
+    Now let's discuss `try`:
+
         - try:
           - ...
         - else:
@@ -182,6 +210,23 @@ of the choice of plugin.
     'else' clauses they are tried in order, and one of them must be satisfied.
     A 'try' clause with no 'else' clause is considered satisfied even if it
     contains invalid packages.
+
+    For example, say you wanted to stage `foo`, but it wasn't available for all
+    architectures. Assuming your project builds without it, you can make it an
+    optional stage package:
+
+        - try: [foo]
+
+    You can also add alternatives:
+
+        - try: [foo]
+        - else: [bar]
+
+    Again, you can nest these for more complex behaviors:
+
+        - on amd64: [foo]
+        - else:
+          - try: [bar]
 
   - organize: YAML
 
