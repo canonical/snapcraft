@@ -19,7 +19,7 @@ import re
 from .errors import StagePackageSyntaxError
 
 
-def process_grammar(grammar, project_options, ubuntu):
+def process_grammar(grammar, project_options, repo_instance):
     """Process stage packages grammar and extract packages to actually stage.
 
     :param list grammar: Unprocessed stage-packages grammar.
@@ -63,7 +63,8 @@ def process_grammar(grammar, project_options, ubuntu):
                     statements.add(statement)
 
                     statement = OnStatement(
-                        key, value, project_options, ubuntu)
+                        on=key, body=value, project_options=project_options,
+                        repo_instance=repo_instance)
 
                 if try_clause_pattern.match(key):
                     # We've come across the begining of a 'try' statement.
@@ -73,7 +74,8 @@ def process_grammar(grammar, project_options, ubuntu):
                     statements.add(statement)
 
                     statement = TryStatement(
-                        value, project_options, ubuntu)
+                        body=value, project_options=project_options,
+                        repo_instance=repo_instance)
 
                 if else_clause_pattern.match(key):
                     _handle_else(statement, value)

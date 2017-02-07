@@ -24,15 +24,16 @@ class TryStatement:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     ubuntu = repo.Ubuntu(cache_dir)
+    ...     repo_instance = repo.Ubuntu(cache_dir)
     ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = TryStatement(['invalid'], options, ubuntu)
+    ...     clause = TryStatement(body=['invalid'], project_options=options,
+    ...                           repo_instance=repo_instance)
     ...     clause.add_else(['valid'])
     ...     clause.process()
     {'valid'}
     """
 
-    def __init__(self, body, project_options, repo_instance):
+    def __init__(self, *, body, project_options, repo_instance):
         """Create an _OnStatement instance.
 
         :param list body: The body of the 'try' clause.

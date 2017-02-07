@@ -131,7 +131,8 @@ class TryStatementGrammarTestCase(GrammarTestCase):
 
     def test_try_statement_grammar(self):
         statement = _try.TryStatement(
-            self.body, snapcraft.ProjectOptions(), snapcraft.repo.Ubuntu())
+            body=self.body, project_options=snapcraft.ProjectOptions(),
+            repo_instance=snapcraft.repo.Ubuntu())
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)

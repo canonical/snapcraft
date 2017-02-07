@@ -30,15 +30,17 @@ class OnStatement:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     ubuntu = repo.Ubuntu(cache_dir)
+    ...     repo_instance = repo.Ubuntu(cache_dir)
     ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = OnStatement('on amd64', ['foo'], options, ubuntu)
+    ...     clause = OnStatement(on='on amd64', body=['foo'],
+    ...                          project_options=options,
+    ...                          repo_instance=repo_instance)
     ...     clause.add_else(['bar'])
     ...     clause.process()
     {'bar'}
     """
 
-    def __init__(self, on, body, project_options, repo_instance):
+    def __init__(self, *, on, body, project_options, repo_instance):
         """Create an _OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.

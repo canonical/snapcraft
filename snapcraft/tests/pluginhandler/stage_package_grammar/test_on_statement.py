@@ -164,7 +164,8 @@ class OnStatementGrammarTestCase(GrammarTestCase):
     def test_on_statement_grammar(self):
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         statement = on.OnStatement(
-            self.on, self.body, options, snapcraft.repo.Ubuntu())
+            on=self.on, body=self.body, project_options=options,
+            repo_instance=snapcraft.repo.Ubuntu())
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
@@ -226,7 +227,8 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             options = snapcraft.ProjectOptions(
                 target_deb_arch=self.target_arch)
             statement = on.OnStatement(
-                self.on, self.body, options, snapcraft.repo.Ubuntu())
+                on=self.on, body=self.body, project_options=options,
+                repo_instance=snapcraft.repo.Ubuntu())
 
             for else_body in self.else_bodies:
                 statement.add_else(else_body)
@@ -240,7 +242,8 @@ class OnStatementElseFail(GrammarTestCase):
         options = snapcraft.ProjectOptions(
             target_deb_arch='amd64')
         statement = on.OnStatement(
-            'on i386', ['foo'], options, snapcraft.repo.Ubuntu())
+            on='on i386', body=['foo'], project_options=options,
+            repo_instance=snapcraft.repo.Ubuntu())
 
         statement.add_else(None)
 
