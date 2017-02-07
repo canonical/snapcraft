@@ -233,8 +233,7 @@ class StoreReviewError(StoreError):
         'Use devmode in the edge or beta channels to disable confinement.')
 
     __FMT_PROCESSING_ERROR = (
-        'There has been a problem while analyzing the snap, check the snap '
-        'and try to push again.')
+        'The store encountered one or more issues while processing this snap.')
 
     __messages = {
         'need_manual_review': __FMT_NEED_MANUAL_REVIEW,

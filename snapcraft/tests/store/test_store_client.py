@@ -717,8 +717,8 @@ class UploadTestCase(tests.TestCase):
             tracker.raise_for_code)
 
         self.assertEqual(
-            'There has been a problem while analyzing the snap, '
-            'check the snap and try to push again.\n'
+            'The store encountered one or more issues while '
+            'processing this snap.\n'
             '  - Duplicate snap already uploaded', str(raised))
 
     def test_push_unregistered_snap(self):
