@@ -14,5 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._errors import StagePackageSyntaxError  # noqa
 from ._processor import process_grammar  # noqa

@@ -16,10 +16,8 @@
 
 import re
 
-from . import (
-    process_grammar,
-    StagePackageSyntaxError
-)
+from . import process_grammar
+from .errors import StagePackageSyntaxError
 
 
 class OnStatement:

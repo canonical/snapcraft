@@ -220,8 +220,9 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
     ]
 
     def test_on_statement_invalid_grammar(self):
-        with testtools.ExpectedException(grammar.StagePackageSyntaxError,
-                                         self.expected_exception):
+        with testtools.ExpectedException(
+                grammar.errors.StagePackageSyntaxError,
+                self.expected_exception):
             options = snapcraft.ProjectOptions(
                 target_deb_arch=self.target_arch)
             statement = on.OnStatement(

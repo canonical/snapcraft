@@ -42,7 +42,7 @@ class GrammarOnDuplicatesTestCase(GrammarTestCase):
         """Test that multiple identical selector sets is an error."""
 
         with testtools.ExpectedException(
-                grammar.StagePackageSyntaxError,
+                grammar.errors.StagePackageSyntaxError,
                 "Invalid syntax for stage packages: found duplicate 'on "
                 "amd64,i386' statements. These should be merged."):
             grammar.process_grammar(
@@ -222,8 +222,9 @@ class InvalidGrammarTestCase(GrammarTestCase):
     ]
 
     def test_invalid_grammar(self):
-        with testtools.ExpectedException(grammar.StagePackageSyntaxError,
-                                         self.expected_exception):
+        with testtools.ExpectedException(
+                grammar.errors.StagePackageSyntaxError,
+                self.expected_exception):
             grammar.process_grammar(
                 self.grammar, snapcraft.ProjectOptions(),
                 snapcraft.repo.Ubuntu())

@@ -16,7 +16,7 @@
 
 import re
 
-from ._errors import StagePackageSyntaxError
+from .errors import StagePackageSyntaxError
 
 
 def process_grammar(grammar, project_options, ubuntu):
