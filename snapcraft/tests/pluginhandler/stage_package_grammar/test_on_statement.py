@@ -181,7 +181,9 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': 'amd64',
-            'expected_exception': ".*not a valid 'on' clause",
+            'expected_exception':
+                ".*not a valid 'on' clause.*spaces are not allowed in the "
+                'selectors.*',
         }),
         ('beginning with comma', {
             'on': 'on ,amd64',
@@ -209,7 +211,8 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': 'amd64',
-            'expected_exception': ".*not a valid 'on' clause",
+            'expected_exception':
+                ".*not a valid 'on' clause.*selectors are missing",
         }),
         ('not even close', {
             'on': 'im-invalid',
@@ -222,7 +225,7 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
 
     def test_on_statement_invalid_grammar(self):
         with testtools.ExpectedException(
-                grammar.errors.StagePackageSyntaxError,
+                grammar.errors.OnStatementSyntaxError,
                 self.expected_exception):
             options = snapcraft.ProjectOptions(
                 target_deb_arch=self.target_arch)

@@ -18,9 +18,12 @@ import re
 
 from . import process_grammar
 from .errors import (
-    StagePackageSyntaxError,
+    OnStatementSyntaxError,
     UnsatisfiedStatementError,
 )
+
+_SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
+_WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
 class OnStatement:
@@ -118,13 +121,19 @@ def _extract_on_clause_selectors(on):
     True
     """
 
-    selector_pattern = re.compile(r'\Aon\s+([^,\s](?:,?[^,\s]+)*)\Z')
-    match = selector_pattern.match(on)
+    match = _SELECTOR_PATTERN.match(on)
 
     try:
         selector_group = match.group(1)
-    except (AttributeError, IndexError):
-        raise StagePackageSyntaxError(
-            "{!r} is not a valid 'on' clause".format(on))
+    except AttributeError:
+        raise OnStatementSyntaxError(on, message='selectors are missing')
+    except IndexError:
+        raise OnStatementSyntaxError(on)
+
+    # This could be part of the _SELECTOR_PATTERN, but that would require us
+    # to provide a very generic error when we can try to be more helpful.
+    if _WHITESPACE_PATTERN.match(selector_group):
+        raise OnStatementSyntaxError(
+            on, message='spaces are not allowed in the selectors')
 
     return {selector.strip() for selector in selector_group.split(',')}
