@@ -221,9 +221,10 @@ class _AptCache:
             apt_cache = self._setup_apt(cache_dir)
             apt_cache.open()
 
-            yield apt_cache
-
-            apt_cache.close()
+            try:
+                yield apt_cache
+            finally:
+                apt_cache.close()
         except Exception as e:
             logger.debug('Exception occured: {!r}'.format(e))
             raise e
