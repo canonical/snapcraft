@@ -73,13 +73,21 @@ class BasePlugin:
         """Define alternative sources.list."""
         return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
 
+    @property
+    def stage_packages(self):
+        return self._stage_packages
+
+    @stage_packages.setter
+    def stage_packages(self, value):
+        self._stage_packages = value
+
     def __init__(self, name, options, project=None):
         self.name = name
         self.build_packages = []
-        self.stage_packages = []
+        self._stage_packages = []
 
         with contextlib.suppress(AttributeError):
-            self.stage_packages = options.stage_packages.copy()
+            self._stage_packages = options.stage_packages.copy()
         with contextlib.suppress(AttributeError):
             self.build_packages = options.build_packages.copy()
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -533,7 +533,8 @@ grade: stable
         self.assertEqual(
             "The 'build' step of 'part1' is out of date:\n\n"
             "The 'bar' and 'foo' part properties appear to have changed.\n\n"
-            "Please clean that part's 'build' step in order to continue",
+            "In order to continue, please clean that part's 'build' step "
+            "by running: snapcraft clean part1 -s build\n",
             str(raised))
 
     def test_dirty_pull_raises(self):
@@ -567,7 +568,8 @@ grade: stable
         self.assertEqual(
             "The 'pull' step of 'part1' is out of date:\n\n"
             "The 'bar' and 'foo' project options appear to have changed.\n\n"
-            "Please clean that part's 'pull' step in order to continue",
+            "In order to continue, please clean that part's 'pull' step "
+            "by running: snapcraft clean part1 -s pull\n",
             str(raised))
 
     @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
@@ -602,5 +604,6 @@ grade: stable
         self.assertEqual(
             "The 'pull' step of 'part1' is out of date:\n\n"
             "The 'deb_arch' project option appears to have changed.\n\n"
-            "Please clean that part's 'pull' step in order to continue",
+            "In order to continue, please clean that part's 'pull' step "
+            "by running: snapcraft clean part1 -s pull\n",
             str(raised))

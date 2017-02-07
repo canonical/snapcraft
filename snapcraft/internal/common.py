@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -47,18 +47,8 @@ env = []
 logger = logging.getLogger(__name__)
 
 
-def assemble_env(include_core_library_paths=False, arch_triplet=''):
-    if include_core_library_paths:
-        core_paths = get_library_paths(
-            os.path.join('/snap', 'core', 'current'), arch_triplet,
-            existing_only=False)
-        core_library_paths = 'LD_LIBRARY_PATH="{}"'.format(
-            ':'.join(core_paths))
-        parse_env = [core_library_paths] + env
-    else:
-        parse_env = env
-
-    return '\n'.join(['export ' + e for e in parse_env])
+def assemble_env():
+    return '\n'.join(['export ' + e for e in env])
 
 
 def run(cmd, **kwargs):
