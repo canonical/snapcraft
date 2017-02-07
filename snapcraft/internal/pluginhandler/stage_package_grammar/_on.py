@@ -35,7 +35,7 @@ class OnStatement:
     {'bar'}
     """
 
-    def __init__(self, on, body, project_options, ubuntu):
+    def __init__(self, on, body, project_options, repo_instance):
         """Create an _OnStatement instance.
 
         Arguments:
@@ -43,13 +43,14 @@ class OnStatement:
             body: List containing the body of the 'on' clause.
             project_options: Instance of ProjectOptions to use to process
                              clause.
-            ubuntu: repo.Ubuntu instance used for checking package validity.
+            repo_instance: repo.Ubuntu instance used for checking package
+                           validity.
         """
 
         self.selectors = _extract_on_clause_selectors(on)
         self._body = body
         self._project_options = project_options
-        self._ubuntu = ubuntu
+        self._repo_instance = repo_instance
         self._else_bodies = []
 
     def add_else(self, else_body):
@@ -78,7 +79,7 @@ class OnStatement:
         # selector.
         if (len(self.selectors) == 1) and (target_arch in self.selectors):
             packages = process_grammar(
-                self._body, self._project_options, self._ubuntu)
+                self._body, self._project_options, self._repo_instance)
         else:
             for else_body in self._else_bodies:
                 if not else_body:
@@ -87,7 +88,7 @@ class OnStatement:
                         'unable to satisfy {!r}, failure forced'.format(self))
 
                 packages = process_grammar(
-                    else_body, self._project_options, self._ubuntu)
+                    else_body, self._project_options, self._repo_instance)
                 if packages:
                     break
 

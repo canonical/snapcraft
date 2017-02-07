@@ -32,19 +32,20 @@ class TryStatement:
     {'valid'}
     """
 
-    def __init__(self, body, project_options, ubuntu):
+    def __init__(self, body, project_options, repo_instance):
         """Create an _OnStatement instance.
 
         Arguments:
             body: List containing the body of the 'try' clause.
             project_options: Instance of ProjectOptions to use to process
                              clause.
-            ubuntu: repo.Ubuntu instance used for checking package validity.
+            repo_instance: repo.Ubuntu instance used for checking package
+                           validity.
         """
 
         self._body = body
         self._project_options = project_options
-        self._ubuntu = ubuntu
+        self._repo_instance = repo_instance
         self._else_bodies = []
 
     def add_else(self, else_body):
@@ -66,11 +67,11 @@ class TryStatement:
         """
 
         packages = process_grammar(
-            self._body, self._project_options, self._ubuntu)
+            self._body, self._project_options, self._repo_instance)
 
         # If some of the packages in the 'try' were invalid, then we need to
         # process the 'else' clauses.
-        if not _all_packages_valid(packages, self._ubuntu):
+        if not _all_packages_valid(packages, self._repo_instance):
             if not self._else_bodies:
                 # If there are no 'else' statements, the 'try' was considered
                 # optional and it failed, which means it doesn't resolve to
@@ -82,10 +83,10 @@ class TryStatement:
                     continue
 
                 packages = process_grammar(
-                    else_body, self._project_options, self._ubuntu)
+                    else_body, self._project_options, self._repo_instance)
 
                 # Stop once an 'else' clause gives us valid packages
-                if _all_packages_valid(packages, self._ubuntu):
+                if _all_packages_valid(packages, self._repo_instance):
                     break
 
         return packages
@@ -94,12 +95,12 @@ class TryStatement:
         return "'try'"
 
 
-def _all_packages_valid(packages, ubuntu):
+def _all_packages_valid(packages, repo_instance):
     """Ensure that all packages are valid.
 
     Arguments:
         packages: Container of package names.
-        ubuntu: repo.Ubuntu instance to use for validity check.
+        repo_instance: repo.Ubuntu instance to use for validity check.
 
     Example:
     >>> import tempfile
@@ -113,6 +114,6 @@ def _all_packages_valid(packages, ubuntu):
     """
 
     for package in packages:
-        if not ubuntu.is_valid(package):
+        if not repo_instance.is_valid(package):
             return False
     return True
