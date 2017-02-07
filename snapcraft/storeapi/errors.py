@@ -235,9 +235,13 @@ class StoreReviewError(StoreError):
     __FMT_PROCESSING_ERROR = (
         'The store encountered one or more issues while processing this snap.')
 
+    __FMT_PROCESSING_UPLOAD_DELTA_ERROR = (
+        'There has been a problem while processing a snap delta.')
+
     __messages = {
         'need_manual_review': __FMT_NEED_MANUAL_REVIEW,
         'processing_error': __FMT_PROCESSING_ERROR,
+        'processing_upload_delta_error': __FMT_PROCESSING_UPLOAD_DELTA_ERROR,
     }
 
     def __init__(self, result):
@@ -249,6 +253,7 @@ class StoreReviewError(StoreError):
                 if message:
                     self.fmt = '{}\n  - {message}'.format(
                         self.fmt, message=message)
+        self.code = result['code']
         super().__init__()
 
 
@@ -331,6 +336,10 @@ class StoreSnapHistoryError(StoreError):
         super().__init__(
             snap_id=snap_id, arch=arch or 'any arch',
             series=series or 'any', error=error)
+
+
+class StoreDeltaApplicationError(Exception):
+    pass
 
 
 class StoreSnapStatusError(StoreSnapHistoryError):
