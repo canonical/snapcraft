@@ -233,8 +233,7 @@ class StoreReviewError(StoreError):
         'Use devmode in the edge or beta channels to disable confinement.')
 
     __FMT_PROCESSING_ERROR = (
-        'There has been a problem while analyzing the snap, check the snap '
-        'and try to push again.')
+        'The store was unable to accept this snap.')
 
     __FMT_PROCESSING_UPLOAD_DELTA_ERROR = (
         'There has been a problem while processing a snap delta.')
@@ -247,6 +246,13 @@ class StoreReviewError(StoreError):
 
     def __init__(self, result):
         self.fmt = self.__messages[result['code']]
+        errors = result.get('errors')
+        if errors:
+            for error in errors:
+                message = error.get('message')
+                if message:
+                    self.fmt = '{}\n  - {message}'.format(
+                        self.fmt, message=message)
         self.code = result['code']
         super().__init__()
 
