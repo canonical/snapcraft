@@ -1847,35 +1847,6 @@ class ValidationTestCase(ValidationBaseTestCase):
 
         project_loader.Validator(self.data).validate()
 
-    def test_daemon_dependency(self):
-        self.data['apps'] = {
-            'service1': {
-                'command': 'binary1',
-                'stop-command': 'binary1 --stop',
-            },
-        }
-        raised = self.assertRaises(
-            errors.SnapcraftSchemaError,
-            project_loader.Validator(self.data).validate)
-        self.assertEqual(
-            "The 'apps/service1' property does not match the required schema: "
-            "'daemon' is a dependency of 'stop-command'",
-            str(raised))
-
-        self.data['apps'] = {
-            'service1': {
-                'command': 'binary1',
-                'post-stop-command': 'binary1 --post-stop',
-            },
-        }
-        raised = self.assertRaises(
-            errors.SnapcraftSchemaError,
-            project_loader.Validator(self.data).validate)
-        self.assertEqual(
-            "The 'apps/service1' property does not match the required schema: "
-            "'daemon' is a dependency of 'post-stop-command'",
-            str(raised))
-
     def test_invalid_restart_condition(self):
         self.data['apps'] = {
             'service1': {
@@ -1904,6 +1875,36 @@ class ValidationTestCase(ValidationBaseTestCase):
                 "The 'parts/part1' property does not match the required "
                 "schema: .* cannot contain both 'snap' and 'prime' keywords."):
             project_loader.Validator(self.data).validate()
+
+
+class DaemonDependencyTestCase(ValidationBaseTestCase):
+
+    scenarios = [
+        ('stop-command', dict(
+            option='stop-command',
+            value='binary1 --stop',
+        )),
+        ('post-stop-command', dict(
+            option='post-stop-command',
+            value='binary1 --post-stop'
+        )),
+    ]
+
+    def test_daemon_dependency(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                self.option: self.value,
+            },
+        }
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Validator(self.data).validate)
+
+        self.assertEqual(
+            "The 'apps/service1' property does not match the required schema: "
+            "'daemon' is a dependency of '{}'".format(self.option),
+            str(raised))
 
 
 class RequiredPropertiesTestCase(ValidationBaseTestCase):
