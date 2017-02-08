@@ -265,7 +265,7 @@ class Ubuntu:
             sources_digest=self._apt.sources_digest())
 
     def is_valid(self, package_name):
-        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+        with self._apt.archive(self._cache.base_dir) as apt_cache:
             return package_name in apt_cache
 
     def get(self, package_names):

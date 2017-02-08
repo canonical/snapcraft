@@ -16,7 +16,6 @@
 
 import logging
 import os
-import shutil
 
 from ._cache import SnapcraftStagePackageCache
 
@@ -34,19 +33,11 @@ class AptStagePackageCache(SnapcraftStagePackageCache):
 
         super().__init__()
         cache_base_dir = os.path.join(self.stage_package_cache_root, 'apt')
-        _clear_old_caches(cache_base_dir, sources_digest)
+
+        # TODO: Clean old cache, LP: #1663051
 
         self.base_dir = os.path.join(
             cache_base_dir, sources_digest)
         self.packages_dir = os.path.join(
             self.base_dir, 'var', 'cache', 'apt', 'archives')
         os.makedirs(self.packages_dir, exist_ok=True)
-
-
-def _clear_old_caches(base_dir, current_basename):
-    if not os.path.isdir(base_dir):
-        return
-
-    for entry in os.listdir(base_dir):
-        if entry != current_basename:
-            shutil.rmtree(os.path.join(base_dir, entry))
