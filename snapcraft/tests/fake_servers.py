@@ -683,6 +683,55 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 ]
             }
             data = json.dumps(response).encode()
+        elif data['name'].startswith('arm-'):
+            response = {
+                'opened_channels': data['channels'],
+                'channel_map_tree': {
+                    '0.1': {
+                        '16': {
+                            'armhf':
+                                [
+                                    {'channel': 'stable', 'info': 'none'},
+                                    {'channel': 'candidate', 'info': 'none'},
+                                    {'revision': int(data['revision']),
+                                     'channel': 'beta',
+                                     'version': '0', 'info': 'specific'},
+                                    {'channel': 'edge', 'info': 'tracking'}
+                                ]
+                        }
+                    }
+                }
+            }
+            data = json.dumps(response).encode()
+        elif data['name'].startswith('multiarch-'):
+            response = {
+                'opened_channels': data['channels'],
+                'channel_map_tree': {
+                    '0.1': {
+                        '16': {
+                            'amd64':
+                                [
+                                    {'channel': 'stable', 'info': 'none'},
+                                    {'channel': 'candidate', 'info': 'none'},
+                                    {'revision': int(data['revision']),
+                                     'channel': 'beta',
+                                     'version': '0', 'info': 'specific'},
+                                    {'channel': 'edge', 'info': 'tracking'}
+                                ],
+                            'armhf':
+                                [
+                                    {'channel': 'stable', 'info': 'none'},
+                                    {'channel': 'candidate', 'info': 'none'},
+                                    {'revision': int(data['revision']),
+                                     'channel': 'beta',
+                                     'version': '0', 'info': 'specific'},
+                                    {'channel': 'edge', 'info': 'tracking'}
+                                ]
+                        }
+                    }
+                }
+            }
+            data = json.dumps(response).encode()
         else:
             raise NotImplementedError(
                 'Cannot handle release request for {!r}'.format(data['name']))

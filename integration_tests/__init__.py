@@ -228,6 +228,26 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
+    def update_name_arch_and_version(self, name=None, arch=None,
+                                     version=None):
+        unique_id = uuid.uuid4().int
+        if name is None:
+            name = 'u1test-{}'.format(unique_id)
+        if version is None:
+            # The maximum size is 32 chars.
+            version = str(unique_id)[:32]
+        if arch is None:
+            arch = 'amd64'
+        for line in fileinput.input('snapcraft.yaml', inplace=True):
+            if 'name: ' in line:
+                print('name: {}'.format(name))
+            elif 'version: ' in line:
+                print('version: {}'.format(version))
+            elif 'architectures: ' in line:
+                print('architectures: [{}]'.format(arch))
+            else:
+                print(line)
+
     def update_name_and_version(self, name=None, version=None):
         unique_id = uuid.uuid4().int
         if name is None:
