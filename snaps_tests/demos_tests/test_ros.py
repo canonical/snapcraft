@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snaps_tests
-
 import os
 import subprocess
 from platform import linux_distribution
 from unittest import skipUnless
+
+import snapcraft
+import snaps_tests
 
 
 class ROSTestCase(snaps_tests.SnapsTestCase):
