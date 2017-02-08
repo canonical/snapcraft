@@ -623,11 +623,23 @@ def close(snap_name, channel_names):
     logger.info(msg)
 
 
-def download(snap_name, channel, download_path, arch):
-    """Download snap from the store to download_path"""
+def download(snap_name, channel, download_path, arch, except_hash=''):
+    """Download snap from the store to download_path.
+    :param str snap_name: The snap name to download.
+    :param str channel: the channel to get the snap from.
+    :param str download_path: the path to write the downloaded snap to.
+    :param str arch: the architecture of the download as a deb arch.
+    :param str except_hash: do not download if set to a sha3_384 hash that
+                            matches the snap_name to be downloaded.
+    :raises storeapi.errors.SHAMismatchErrorRuntimeError:
+         If the checksum for the downloaded file does not match the expected
+         hash.
+    :returns: A sha3_384 of the file that was or would have been downloaded.
+    """
     store = storeapi.StoreClient()
     try:
-            store.download(snap_name, channel, download_path, arch)
+        return store.download(snap_name, channel, download_path,
+                              arch, except_hash)
     except storeapi.errors.SHAMismatchError:
         raise RuntimeError(
             'Failed to download {} at {} (mismatched SHA)'.format(

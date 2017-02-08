@@ -53,6 +53,8 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format(expected_arch),
                   'snapcraft-my-pet']),
+            call(['lxc', 'config', 'set', 'snapcraft-my-pet',
+                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'file', 'push', 'project.tar',
                   'snapcraft-my-pet//root/project.tar']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
