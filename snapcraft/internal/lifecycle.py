@@ -19,9 +19,9 @@ import logging
 import os
 import shutil
 import tarfile
-import tempfile
 import time
-from subprocess import check_call, check_output, Popen, PIPE, STDOUT
+from subprocess import check_call, Popen, PIPE, STDOUT
+from tempfile import TemporaryDirectory
 
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
@@ -67,21 +67,25 @@ _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
 def init():
     """Initialize a snapcraft project."""
+    snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
-    if os.path.exists(os.path.join('snap', 'snapcraft.yaml')):
-        raise EnvironmentError('snap/snapcraft.yaml already exists!')
+    if os.path.exists(snapcraft_yaml_path):
+        raise EnvironmentError(
+            '{} already exists!'.format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
     with contextlib.suppress(FileExistsError):
-        os.mkdir('snap')
-    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w') as f:
+        os.mkdir(os.path.dirname(snapcraft_yaml_path))
+    with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
-    logger.info('Created snap/snapcraft.yaml.')
+    logger.info('Created {}.'.format(snapcraft_yaml_path))
     logger.info(
         'Edit the file to your liking or run `snapcraft` to get started')
+
+    return snapcraft_yaml_path
 
 
 def execute(step, project_options, part_names=None):
@@ -118,8 +122,12 @@ def execute(step, project_options, part_names=None):
             'type': config.data.get('type', '')}
 
 
+def _get_core_path():
+    return os.path.join(os.path.sep, 'snap', 'core', 'current')
+
+
 def _setup_core(deb_arch):
-    core_path = os.path.join(os.path.sep, 'snap', 'core', 'current')
+    core_path = _get_core_path()
     if os.path.exists(core_path) and os.listdir(core_path):
         logger.debug('{!r} already exists, skipping core setup'.format(
             core_path))
@@ -134,7 +142,7 @@ def _setup_core(deb_arch):
     else:
         current_hash = ''
 
-    with tempfile.TemporaryDirectory() as d:
+    with TemporaryDirectory() as d:
         download_path = os.path.join(d, 'core.snap')
         download_hash = snapcraft.download('core', 'stable', download_path,
                                            deb_arch, except_hash=current_hash)
@@ -149,8 +157,7 @@ def _setup_core(deb_arch):
     if os.path.exists(core_path) and not os.listdir(core_path):
         check_call(['sudo', 'rmdir', core_path])
     check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
-    output = check_output(['sudo', 'unsquashfs', '-d', core_path, core_snap])
-    logger.debug(output)
+    check_call(['sudo', 'unsquashfs', '-d', core_path, core_snap])
 
 
 def _replace_in_part(part):
@@ -409,6 +416,7 @@ def snap(project_options, directory=None, output=None):
         logger.debug(proc.stdout.read().decode('utf-8'))
 
     logger.info('Snapped {}'.format(snap_name))
+    return snap_name
 
 
 def _reverse_dependency_tree(config, part_name):
