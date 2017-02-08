@@ -898,4 +898,4 @@ ACCEPT=n
 
         download_mock.assert_called_once_with(
             'ubuntu-core', 'edge', plugin.os_snap,
-            self.project_options.deb_arch)
+            self.project_options.deb_arch, '')

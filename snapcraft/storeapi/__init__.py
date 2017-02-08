@@ -252,14 +252,18 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.close_channels, snap_id, channel_names)
 
-    def download(self, snap_name, channel, download_path, arch=None):
+    def download(self, snap_name, channel, download_path,
+                 arch=None, except_hash=''):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
         package = self.cpi.get_package(snap_name, channel, arch)
-        self._download_snap(
-            snap_name, channel, arch, download_path,
-            package['anon_download_url'], package['download_sha512'])
+        if package['download_sha3_384'] != except_hash:
+            self._download_snap(
+                snap_name, channel, arch, download_path,
+                # FIXME LP: #1662665
+                package['anon_download_url'], package['download_sha512'])
+        return package['download_sha3_384']
 
     def _download_snap(self, name, channel, arch, download_path,
                        download_url, expected_sha512):
@@ -392,8 +396,10 @@ class SnapIndexClient(Client):
 
         params = {
             'channel': channel,
+            # FIXME LP: #1662665
             'fields': 'status,anon_download_url,download_url,'
-                      'download_sha512,snap_id,release',
+                      'download_sha3_384,download_sha512,snap_id,'
+                      'revision,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)

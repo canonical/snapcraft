@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import subprocess
 
-from testtools.matchers import Contains
+import fixtures
+from testtools.matchers import Contains, FileExists
 
 import integration_tests
 
@@ -64,3 +66,26 @@ class StageTestCase(integration_tests.TestCase):
                 self.fail('Parts unexpectedly conflicted')
             else:
                 raise
+
+    def test_classic_confinement(self):
+        project_dir = 'classic-build'
+
+        # The first run should fail as the environment variable is not
+        # set but we can only test this on clean systems.
+        if not os.path.exists(os.path.join(
+                os.path.sep, 'snap', 'core', 'current')):
+            try:
+                self.run_snapcraft(['stage'], project_dir)
+            except subprocess.CalledProcessError as e:
+                pass
+            else:
+                self.fail(
+                    'This should fail as SNAPCRAFT_SETUP_CORE is not set')
+
+        # Now we set the required environment variable
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_SETUP_CORE', '1'))
+
+        self.run_snapcraft(['stage'], project_dir)
+        self.assertThat(os.path.join(self.stage_dir, 'bin', 'hello-classic'),
+                        FileExists())
