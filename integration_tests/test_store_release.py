@@ -17,6 +17,7 @@
 import os
 import re
 import subprocess
+import unittest
 import uuid
 
 from testtools.matchers import (
@@ -68,13 +69,20 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         expected = r'.*The \'edge\' channel is now open.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
+    @unittest.skipUnless(
+        (os.getenv('TEST_SNAP_WITH_TRACKS', 'fake') ==
+            'test-snapcraft-tracks' and
+            os.getenv('TEST_USER_EMAIL', 'fake') ==
+            'u1test+snapcraft@canonical.com'),
+        'Skip CI only test'
+    )
     def test_release_with_login_multiarch(self):
         self.addCleanup(self.logout)
         self.login()
 
-        # Change to a random name and version.
+        # Change to a pre-set name and version.
         unique_id = uuid.uuid4().int
-        new_name = 'multiarch-{}'.format(unique_id)
+        new_name = os.getenv('TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         # The maximum size is 32 chars.
         new_version = str(unique_id)[:32]
 
@@ -83,8 +91,8 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
 
         self.run_snapcraft('snap')
 
-        # Register the snap
-        self.register(new_name)
+        # The snap name is pre-registered
+
         # Upload the snap
         snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'multi')
         self.assertThat(
@@ -105,13 +113,20 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         expected = r'.*amd64   0.1      16        stable     -          -.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
+    @unittest.skipUnless(
+        (os.getenv('TEST_SNAP_WITH_TRACKS', 'fake') ==
+            'test-snapcraft-tracks' and
+            os.getenv('TEST_USER_EMAIL', 'fake') ==
+            'u1test+snapcraft@canonical.com'),
+        'Skip CI only test'
+    )
     def test_release_with_login_arm(self):
         self.addCleanup(self.logout)
         self.login()
 
-        # Change to a random name and version.
+        # Change to a pre-set name and version.
         unique_id = uuid.uuid4().int
-        new_name = 'arm-{}'.format(unique_id)
+        new_name = os.getenv('TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         # The maximum size is 32 chars.
         new_version = str(unique_id)[:32]
 
@@ -120,8 +135,8 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
 
         self.run_snapcraft('snap')
 
-        # Register the snap
-        self.register(new_name)
+        # The snap name is pre-registered
+
         # Upload the snap
         snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'armhf')
         self.assertThat(
