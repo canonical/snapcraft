@@ -113,7 +113,8 @@ class RustPluginTestCase(tests.TestCase):
 
         rustdir = os.path.join(plugin.partdir, 'rust')
         run_mock.assert_has_calls([mock.call([
-            os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
+            os.path.join(rustdir, 'sh.rustup.rs'),
+            '--prefix={}'.format(rustdir),
             '--disable-sudo', '--save']),
             mock.call([plugin._cargo, 'fetch',
                        '--manifest-path',
@@ -134,7 +135,8 @@ class RustPluginTestCase(tests.TestCase):
 
         rustdir = os.path.join(plugin.partdir, 'rust')
         run_mock.assert_has_calls([mock.call([
-            os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
+            os.path.join(rustdir, 'sh.rustup.rs'),
+            '--prefix={}'.format(rustdir),
             '--disable-sudo', '--save',
             '--channel=nightly']),
             mock.call([plugin._cargo, 'fetch',
@@ -156,7 +158,8 @@ class RustPluginTestCase(tests.TestCase):
 
         rustdir = os.path.join(plugin.partdir, 'rust')
         run_mock.assert_has_calls([mock.call([
-            os.path.join(rustdir, 'rustup.sh'), '--prefix={}'.format(rustdir),
+            os.path.join(rustdir, 'sh.rustup.rs'),
+            '--prefix={}'.format(rustdir),
             '--disable-sudo', '--save',
             '--revision=1.13.0']),
             mock.call([

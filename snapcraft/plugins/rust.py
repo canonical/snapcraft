@@ -39,7 +39,7 @@ import shutil
 import snapcraft
 from snapcraft import sources
 
-_RUSTUP = 'https://static.rust-lang.org/rustup.sh'
+_RUSTUP = 'https://sh.rustup.rs'
 
 
 class RustPlugin(snapcraft.BasePlugin):
@@ -88,7 +88,7 @@ class RustPlugin(snapcraft.BasePlugin):
         self._cargo = os.path.join(self._rustpath, "bin", "cargo")
         self._rustlib = os.path.join(self._rustpath, "lib")
         self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
-        self._rustup = os.path.join(self._rustpath, "rustup.sh")
+        self._rustup = os.path.join(self._rustpath, "sh.rustup.rs")
 
     def build(self):
         super().build()
