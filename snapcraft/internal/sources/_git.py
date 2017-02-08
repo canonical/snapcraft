@@ -24,7 +24,7 @@ from ._base import Base
 class Git(Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
+                 source_branch=None, source_depth=None, silent=False):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, 'git')
         if source_tag and source_branch:
@@ -39,6 +39,10 @@ class Git(Base):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-branch and source-commit for '
                 'a git source')
+        self.kwargs = {}
+        if silent:
+            self.kwargs['stdout'] = subprocess.DEVNULL
+            self.kwargs['stderr'] = subprocess.DEVNULL
 
     def _pull_existing(self):
         refspec = 'HEAD'
@@ -49,14 +53,18 @@ class Git(Base):
         elif self.source_commit:
             refspec = self.source_commit
 
-        # Pull changes to this repository and any submodules.
+        reset_spec = refspec if refspec != 'HEAD' else 'origin/master'
+
         subprocess.check_call([self.command, '-C', self.source_dir,
-                               'pull', '--recurse-submodules=yes',
-                               self.source, refspec])
+                               'fetch', '--prune',
+                               '--recurse-submodules=yes'], **self.kwargs)
+        subprocess.check_call([self.command, '-C', self.source_dir,
+                               'reset', '--hard', reset_spec], **self.kwargs)
 
         # Merge any updates for the submodules (if any).
         subprocess.check_call([self.command, '-C', self.source_dir,
-                              'submodule', 'update'])
+                              'submodule', 'update', '--recursive',
+                               '--remote'], **self.kwargs)
 
     def _clone_new(self):
         command = [self.command, 'clone', '--recursive']
@@ -65,11 +73,13 @@ class Git(Base):
                 '--branch', self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(['--depth', str(self.source_depth)])
-        subprocess.check_call(command + [self.source, self.source_dir])
+        subprocess.check_call(command + [self.source, self.source_dir],
+                              **self.kwargs)
 
         if self.source_commit:
             subprocess.check_call([self.command, '-C', self.source_dir,
-                                  'checkout', self.source_commit])
+                                  'checkout', self.source_commit],
+                                  **self.kwargs)
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.git')):
