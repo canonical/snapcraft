@@ -16,6 +16,8 @@
 
 import subprocess
 
+from testtools.matchers import Contains
+
 import integration_tests
 
 
@@ -27,4 +29,4 @@ class EmptyDirTestCase(integration_tests.TestCase):
         expected = (
             "Could not find snap/snapcraft.yaml. Are you sure you're in the "
             "right directory?\nTo start a new project, use 'snapcraft init'\n")
-        self.assertEqual(expected, exception.output)
+        self.assertThat(exception.output, Contains(expected))

@@ -1,5 +1,33 @@
 $schema: http://json-schema.org/draft-04/schema#
 
+definitions:
+  stage-packages:
+    type: array
+    minitems: 1
+    uniqueItems: true
+    items:
+      anyOf:
+        - type: string
+          usage: "<string>"
+        - type: object
+          usage: "on <selector>[,<selector>...]:"
+          additionalProperties: false
+          patternProperties:
+            ^on\s+.+$:
+              $ref: "#/definitions/stage-packages"
+        - type: object
+          usage: "try:"
+          additionalProperties: false
+          patternProperties:
+            ^try$:
+              $ref: "#/definitions/stage-packages"
+        - type: object
+          usage: "else:"
+          additionalProperties: false
+          patternProperties:
+            ^else$:
+              $ref: "#/definitions/stage-packages"
+
 title: snapcraft schema
 type: object
 properties:
@@ -76,6 +104,15 @@ properties:
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
+  environment:
+    type: object
+    description: environment entries for the snap as a whole
+    minItems: 1
+    additionalProperties:
+      anyOf:
+        - type: string
+          minLength: 1
+        - type: number
   apps:
     type: object
     additionalProperties: false
@@ -86,6 +123,7 @@ properties:
           - command
         dependencies:
           stop-command: ["daemon"]
+          post-stop-command: ["daemon"]
         additionalProperties: false
         properties:
           desktop:
@@ -97,6 +135,9 @@ properties:
           stop-command:
             type: string
             description: command executed to stop a service
+          post-stop-command:
+            type: string
+            description: command executed after stopping a service
           stop-timeout:
             description: timeout in seconds
           daemon:
@@ -134,6 +175,15 @@ properties:
             items:
               type: string
               pattern: "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$"
+          environment:
+            type: object
+            description: environment entries for the specific app.
+            minItems: 1
+            additionalProperties:
+              anyOf:
+                - type: string
+                  minLength: 1
+                - type: number
   hooks:
     type: object
     additionalProperties: false
@@ -198,12 +248,8 @@ properties:
               type: string
             default: []
           stage-packages:
-            type: array
-            minitems: 1
-            uniqueItems: true
-            items:
-              type: string
-            default: []
+            $ref: "#/definitions/stage-packages"
+            default: [] # For some reason this doesn't work if in the ref
           build-packages:
             type: array
             minitems: 1
@@ -221,9 +267,15 @@ properties:
           organize:
             type: object
             default: {}
+            additionalProperties:
+              type: string
+              minLength: 1
           filesets:
             type: object
             default: {}
+            additionalProperties:
+              type: array
+              minitems: 1
           stage:
             type: array
             minitems: 1

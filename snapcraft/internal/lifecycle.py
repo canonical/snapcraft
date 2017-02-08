@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,8 @@ import os
 import shutil
 import tarfile
 import time
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import check_call, Popen, PIPE, STDOUT
+from tempfile import TemporaryDirectory
 
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
@@ -35,6 +36,7 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
 
@@ -65,21 +67,25 @@ _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
 def init():
     """Initialize a snapcraft project."""
+    snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
-    if os.path.exists(os.path.join('snap', 'snapcraft.yaml')):
-        raise EnvironmentError('snap/snapcraft.yaml already exists!')
+    if os.path.exists(snapcraft_yaml_path):
+        raise EnvironmentError(
+            '{} already exists!'.format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML.strip()
     with contextlib.suppress(FileExistsError):
-        os.mkdir('snap')
-    with open(os.path.join('snap', 'snapcraft.yaml'), mode='w') as f:
+        os.mkdir(os.path.dirname(snapcraft_yaml_path))
+    with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
-    logger.info('Created snap/snapcraft.yaml.')
+    logger.info('Created {}.'.format(snapcraft_yaml_path))
     logger.info(
         'Edit the file to your liking or run `snapcraft` to get started')
+
+    return snapcraft_yaml_path
 
 
 def execute(step, project_options, part_names=None):
@@ -104,12 +110,50 @@ def execute(step, project_options, part_names=None):
     config = snapcraft.internal.load_config(project_options)
     repo.install_build_packages(config.build_tools)
 
+    if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
+            config.data['confinement'] == 'classic'):
+        _setup_core(project_options.deb_arch)
+
     _Executor(config, project_options).run(step, part_names)
 
     return {'name': config.data['name'],
             'version': config.data['version'],
             'arch': config.data['architectures'],
             'type': config.data.get('type', '')}
+
+
+def _setup_core(deb_arch):
+    core_path = common.get_core_path()
+    if os.path.exists(core_path) and os.listdir(core_path):
+        logger.debug('{!r} already exists, skipping core setup'.format(
+            core_path))
+        return
+    snap_cache = SnapCache(project_name='snapcraft-core')
+
+    # Try to get the latest revision.
+    core_snap = snap_cache.get(deb_arch=deb_arch)
+    if core_snap:
+        # The current hash matches the filename
+        current_hash = os.path.splitext(os.path.basename(core_snap))[0]
+    else:
+        current_hash = ''
+
+    with TemporaryDirectory() as d:
+        download_path = os.path.join(d, 'core.snap')
+        download_hash = snapcraft.download('core', 'stable', download_path,
+                                           deb_arch, except_hash=current_hash)
+        if download_hash != current_hash:
+            snap_cache.cache(snap_filename=download_path)
+            snap_cache.prune(deb_arch=deb_arch, keep_hash=download_hash)
+
+    core_snap = snap_cache.get(deb_arch=deb_arch)
+
+    # Now unpack
+    logger.info('Setting up {!r} in {!r}'.format(core_snap, core_path))
+    if os.path.exists(core_path) and not os.listdir(core_path):
+        check_call(['sudo', 'rmdir', core_path])
+    check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
+    check_call(['sudo', 'unsquashfs', '-d', core_path, core_snap])
 
 
 def _replace_in_part(part):
@@ -234,8 +278,9 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nPlease clean that part's {!r} step in order to "
-                'continue'.format(step))
+                "\nIn order to continue, please clean that part's {0!r} step "
+                "by running: snapcraft clean {1} -s {0}\n".format(
+                    step, part.name))
             raise RuntimeError(''.join(message_components))
 
         staged_state = self.config.get_project_state('stage')
@@ -271,7 +316,7 @@ def _create_tar_filter(tar_filename):
         fn = tarinfo.name
         if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
             return None
-        elif fn in ('./stage', './prime', './snap', tar_filename):
+        elif fn in ('./stage', './prime', tar_filename):
             return None
         elif fn.endswith('.snap'):
             return None
@@ -279,7 +324,7 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def cleanbuild(project_options):
+def cleanbuild(project_options, remote=''):
     if not repo.is_package_installed('lxd'):
         raise EnvironmentError(
             'The lxd package is not installed, in order to use `cleanbuild` '
@@ -296,7 +341,8 @@ def cleanbuild(project_options):
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
 
     snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options).execute()
+    lxd.Cleanbuilder(snap_filename, tar_filename, project_options,
+                     remote=remote).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -367,6 +413,7 @@ def snap(project_options, directory=None, output=None):
         logger.debug(proc.stdout.read().decode('utf-8'))
 
     logger.info('Snapped {}'.format(snap_name))
+    return snap_name
 
 
 def _reverse_dependency_tree(config, part_name):

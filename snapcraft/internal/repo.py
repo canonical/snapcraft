@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -296,6 +296,10 @@ class Ubuntu:
                              sources_list=sources,
                              use_geoip=project_options.use_geoip)
 
+    def is_valid(self, package_name):
+        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+            return package_name in apt_cache
+
     def get(self, package_names):
         with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
             self._get(apt_cache, package_names)
@@ -479,8 +483,9 @@ def _fix_xml_tools(root):
 
 def _fix_symlink(path, debdir, root):
     target = os.path.join(debdir, os.readlink(path)[1:])
-    if _skip_link(os.readlink(path)):
-        logger.debug('Skipping {}'.format(target))
+    if _link_should_be_removed(os.readlink(path)):
+        logger.debug('Removing {}'.format(target))
+        os.remove(path)
         return
     if not os.path.exists(target) and not _try_copy_local(path, target):
         return
@@ -504,16 +509,16 @@ def _fix_shebangs(path):
                                    r'#!/usr/bin/env python\n')
 
 
-_skip_list = None
+_remove_list = None
 
 
-def _skip_link(target):
-    global _skip_list
-    if not _skip_list:
+def _link_should_be_removed(target):
+    global _remove_list
+    if not _remove_list:
         output = common.run_output(['dpkg', '-L', 'libc6']).split()
-        _skip_list = [i for i in output if 'lib' in i]
+        _remove_list = [i for i in output if 'lib' in i]
 
-    return target in _skip_list
+    return target in _remove_list
 
 
 def _try_copy_local(path, target):

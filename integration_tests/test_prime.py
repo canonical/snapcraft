@@ -35,31 +35,27 @@ class PrimeTestCase(integration_tests.TestCase):
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_prime_includes_stage_fileset(self):
-        project_dir = 'prime-from-stage'
-
-        self.run_snapcraft('prime', project_dir)
+        self.run_snapcraft('prime', 'prime-from-stage')
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'without-a'),
+            os.path.join(self.prime_dir, 'without-a'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'without-b'),
+            os.path.join(self.prime_dir, 'without-b'),
             Not(FileExists()))
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'without-c'),
+            os.path.join(self.prime_dir, 'without-c'),
             FileExists())
 
     def test_prime_includes_stage_excludes_fileset(self):
-        project_dir = 'prime-from-stage'
-
-        self.run_snapcraft('prime', project_dir)
+        self.run_snapcraft('prime', 'prime-from-stage')
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'with-a'),
+            os.path.join(self.prime_dir, 'with-a'),
             Not(FileExists()))
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'with-b'),
+            os.path.join(self.prime_dir, 'with-b'),
             FileExists())
         self.assertThat(
-            os.path.join(project_dir, 'prime', 'with-c'),
+            os.path.join(self.prime_dir, 'with-c'),
             FileExists())
 
 
@@ -74,7 +70,7 @@ class PrimedAssetsTestCase(testscenarios.WithScenarios,
     def test_assets_in_meta(self):
         self.run_snapcraft('prime', self.project_dir)
 
-        gui_dir = os.path.join(self.project_dir, 'prime', 'meta', 'gui')
+        gui_dir = os.path.join(self.prime_dir, 'meta', 'gui')
         expected_desktop = dedent("""\
             [Desktop Entry]
             Name=My App

@@ -9,6 +9,11 @@ apps:
    command: bin/wrapper
    daemon: simple
    plugs: [network-bind]
+   environment:
+       # installation pathes are based of CATALINA_HOME
+       CATALINA_HOME: $SNAP
+       # writable pathes are based of CATALINA_BASE
+       CATALINA_BASE: $SNAP_DATA
 
 parts:
     webapp:

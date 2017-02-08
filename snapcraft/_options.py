@@ -19,6 +19,7 @@ import multiprocessing
 import os
 import platform
 
+from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
 
 
@@ -191,7 +192,7 @@ class ProjectOptions:
         If not found realpath for `/lib/ld-linux.so.2` is returned.
         However if core is not installed None will be returned.
         """
-        core_path = os.path.join('/snap', 'core', 'current')
+        core_path = common.get_core_path()
         core_dynamic_linker = self.__machine_info.get('core-dynamic-linker',
                                                       'lib/ld-linux.so.2')
 

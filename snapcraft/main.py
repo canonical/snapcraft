@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,7 +28,7 @@ Usage:
   snapcraft [options] strip [<part> ...]
   snapcraft [options] clean [<part> ...] [--step <step>]
   snapcraft [options] snap [<directory> --output <snap-file>]
-  snapcraft [options] cleanbuild
+  snapcraft [options] cleanbuild [--remote=<remote>]
   snapcraft [options] login
   snapcraft [options] logout
   snapcraft [options] list-registered
@@ -68,6 +68,11 @@ Options:
   --target-arch ARCH                    EXPERIMENTAL: sets the target
                                         architecture. Very few plugins support
                                         this.
+
+Options specific to cleanbuild:
+  --remote <remote> Use a specific lxd remote to run the cleanbuild on.
+                    This requires prior setup which is described on:
+                    https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
 
 Options specific to pulling:
   --enable-geoip         enables geoip for the pull step if stage-packages
@@ -229,6 +234,9 @@ def main(argv=None):
     log.configure(log_level=log_level)
     project_options = _get_project_options(args)
 
+    logger.debug("Starting snapcraft {} from {}.".format(
+        snapcraft.__version__, os.path.dirname(__file__)))
+
     if args['strip']:
         logger.warning("DEPRECATED: use 'prime' instead of 'strip'")
         args['prime'] = True
@@ -275,7 +283,7 @@ def run(args, project_options):  # noqa
     elif args['clean']:
         _run_clean(args, project_options)
     elif args['cleanbuild']:
-        lifecycle.cleanbuild(project_options),
+        lifecycle.cleanbuild(project_options, remote=args['--remote']),
     elif _is_store_command(args):
         _run_store_command(args)
     elif args['tour']:
