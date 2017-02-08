@@ -39,8 +39,9 @@ class LXDTestCase(tests.TestCase):
 
         mock_pet.return_value = 'my-pet'
 
-        project_options = ProjectOptions(cache_dir='non-existing-cache')
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+        project_options = ProjectOptions()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options,
+                         cache_dir='non-existing-cache').execute()
         expected_arch = project_options.deb_arch
 
         self.assertEqual(
@@ -89,8 +90,9 @@ class LXDTestCase(tests.TestCase):
         os.mkdir(cache_dir)
         open(os.path.join(cache_dir, 'foo'), 'w').close()
 
-        project_options = ProjectOptions(cache_dir=cache_dir)
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+        project_options = ProjectOptions()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options,
+                         cache_dir=cache_dir).execute()
         expected_arch = project_options.deb_arch
 
         self.assertEqual(

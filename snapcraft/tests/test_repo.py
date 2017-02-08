@@ -271,10 +271,10 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
     @patch('snapcraft.repo._AptCache')
     def test_old_caches_get_cleaned(self, mock_apt_cache):
         mock_apt_cache.return_value.sources_digest.return_value = '1'
-        project_options = snapcraft.ProjectOptions(
-            use_geoip=False, cache_dir='cache-dir')
+        project_options = snapcraft.ProjectOptions(use_geoip=False)
         repo.Ubuntu(
-            self.tempdir, project_options=project_options)
+            self.tempdir, project_options=project_options,
+            cache_dir='cache-dir')
 
         # Assert that the cache was created.
         self.assertThat(os.path.join('cache-dir', 'apt', '1'), DirExists())
@@ -284,7 +284,8 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
         # old one should be cleaned up.
         mock_apt_cache.return_value.sources_digest.return_value = '2'
         repo.Ubuntu(
-            self.tempdir, project_options=project_options)
+            self.tempdir, project_options=project_options,
+            cache_dir='cache-dir')
 
         self.assertThat(
             os.path.join('cache-dir', 'apt', '1'), Not(DirExists()))

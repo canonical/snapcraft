@@ -30,6 +30,7 @@ import subprocess
 import sys
 import urllib
 import urllib.request
+import xdg
 
 import apt
 from xml.etree import ElementTree
@@ -245,8 +246,8 @@ class _AptCache:
 
 class Ubuntu:
 
-    def __init__(self, rootdir, recommends=False,
-                 sources=None, project_options=None):
+    def __init__(self, rootdir, recommends=False, sources=None,
+                 project_options=None, cache_dir=None):
         self._downloaddir = os.path.join(rootdir, 'download')
         self._rootdir = rootdir
         os.makedirs(self._downloaddir, exist_ok=True)
@@ -254,11 +255,14 @@ class Ubuntu:
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
+        if not cache_dir:
+            cache_dir = xdg.BaseDirectory.save_cache_path('snapcraft')
+
         self._apt = _AptCache(
             project_options.deb_arch, sources_list=sources,
             use_geoip=project_options.use_geoip)
 
-        apt_cache_base_dir = os.path.join(project_options.cache_dir, 'apt')
+        apt_cache_base_dir = os.path.join(cache_dir, 'apt')
         sources_digest = self._apt.sources_digest()
         _clear_old_apt_cache(apt_cache_base_dir, sources_digest)
 
