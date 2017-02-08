@@ -18,6 +18,7 @@ import os
 
 from testtools.matchers import FileExists, Not
 
+import snapcraft
 import integration_tests
 
 
