@@ -345,6 +345,8 @@ class TestStore(fixtures.Fixture):
 
         self.user_email = os.getenv(
             'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        self.test_track_snap = os.getenv(
+            'TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         if test_store == 'fake':
             self.user_password = 'test correct password'
         else:

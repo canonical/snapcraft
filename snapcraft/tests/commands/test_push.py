@@ -217,13 +217,20 @@ class PushCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_release.return_value = {
             'opened_channels': ['beta'],
-            'channel_map': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'revision': 9, 'channel': 'beta', 'version': '0',
-                 'info': 'specific'},
-                {'channel': 'edge', 'info': 'tracking'}
-            ]
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64':
+                        [
+                            {'channel': 'stable', 'info': 'none'},
+                            {'channel': 'candidate', 'info': 'none'},
+                            {'revision': 9, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'channel': 'edge', 'info': 'tracking'}
+                        ]
+                    }
+                }
+            }
         }
 
         # Create a snap
@@ -265,15 +272,22 @@ class PushCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_release.return_value = {
             'opened_channels': ['beta,edge,candidate'],
-            'channel_map': [
-                {'channel': 'stable', 'info': 'none'},
-                {'revision': 9, 'channel': 'candidate', 'version': '0',
-                 'info': 'specific'},
-                {'revision': 9, 'channel': 'beta', 'version': '0',
-                 'info': 'specific'},
-                {'revision': 9, 'channel': 'edge', 'version': '0',
-                 'info': 'specific'},
-            ]
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64':
+                        [
+                            {'channel': 'stable', 'info': 'none'},
+                            {'revision': 9, 'channel': 'candidate',
+                             'version': '0', 'info': 'specific'},
+                            {'revision': 9, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'revision': 9, 'channel': 'edge', 'version': '0',
+                             'info': 'specific'},
+                        ]
+                    }
+                }
+            }
         }
 
         # Create a snap

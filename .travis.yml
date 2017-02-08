@@ -30,7 +30,7 @@ addons:
 
 install:
   - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then $DEPENDENCIES; fi
-  - if [ ! -z $TEST_SUITE ]; then docker run --name builder -e TEST_USER_EMAIL -e TEST_USER_PASSWORD -e TEST_STORE
+  - if [ ! -z $TEST_SUITE ]; then docker run --name builder -e TEST_USER_EMAIL -e TEST_USER_PASSWORD -e TEST_STORE -e TEST_SNAP_WITH_TRACKS
     -e LC_ALL=en_US.UTF-8 -v $PWD:$PWD -w $PWD -td ubuntu:xenial; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder locale-gen en_US.UTF-8; fi
   - if [ ! -z $TEST_SUITE ]; then docker exec -i builder sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list; fi

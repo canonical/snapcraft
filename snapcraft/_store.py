@@ -557,21 +557,46 @@ def release(snap_name, revision, release_channels):
     store = storeapi.StoreClient()
     with _requires_login():
         channels = store.release(snap_name, revision, release_channels)
+    channel_map_tree = channels.get('channel_map_tree', {})
+    for track, track_data in channel_map_tree.items():
+        for series, series_data in track_data.items():
+            for arch, channel_map in series_data.items():
+
+                # This does not look good in green so we print instead
+                tabulated_channels = _tabulated_channel_map_tree(
+                    track, series, arch, channel_map)
+                print(tabulated_channels)
 
     if 'opened_channels' in channels:
         logger.info(
-            _get_text_for_opened_channels(channels['opened_channels']))
-        # There should be an empty line between the open channels
-        # message and what follows
-        print()
-    channel_map = channels['channel_map']
-    parsed_channels = [_get_text_for_channel(c) for c in channel_map]
-    tabulated_channels = tabulate(
+            _get_text_for_opened_channels(
+                channels['opened_channels']))
+
+
+def _tabulated_channel_map_tree(track, series, arch, channel_map):
+    """Tabulate channel map (LTS Channel channel-maps)"""
+    def _format_tree(channel_map, track, series):
+        return [
+            (printable_arch, printable_track, printable_series) +
+            _get_text_for_channel(channel)
+            for (printable_arch, printable_track,
+                 printable_series, channel) in zip(
+                [arch] + [''] * len(channel_map),
+                [track] + [''] * len(channel_map),
+                [series] + [''] * len(channel_map),
+                channel_map
+            )
+        ]
+
+    parsed_channels = [
+        channel
+        for channel in _format_tree(channel_map, track, series)
+    ]
+    return tabulate(
         parsed_channels, numalign='left',
-        headers=['Channel', 'Version', 'Revision'],
-        tablefmt='plain')
-    # This does not look good in green so we print instead
-    print(tabulated_channels)
+        headers=['Arch', 'Track', 'Series', 'Channel', 'Version', 'Revision'],
+        tablefmt='plain'
+    )
 
 
 def _tabulated_status(status):
