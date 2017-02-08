@@ -59,6 +59,9 @@ class Cleanbuilder:
                 'lxc', 'launch', '-e',
                 'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
                 self._container_name])
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_SETUP_CORE', '1'])
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.

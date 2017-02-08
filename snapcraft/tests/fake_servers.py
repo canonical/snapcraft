@@ -1092,6 +1092,7 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
             'anon_download_url': urllib.parse.urljoin(
                 'http://localhost:{}'.format(self.server.server_port),
                 'download-snap/test-snap.snap'),
+            'download_sha3_384': '1234567890',
             'download_sha512': sha512,
             'snap_id': 'good',
             'developer_id': package + '-developer-id',
