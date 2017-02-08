@@ -79,6 +79,11 @@ def run_output(cmd, **kwargs):
             return output.decode('latin-1', 'surrogateescape').strip()
 
 
+def get_core_path():
+    """Returns the path to the core snap."""
+    return os.path.join(os.path.sep, 'snap', 'core', 'current')
+
+
 def format_snap_name(snap):
     if 'arch' not in snap:
         snap['arch'] = snap.get('architectures', None)

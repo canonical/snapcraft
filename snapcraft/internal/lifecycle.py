@@ -122,12 +122,8 @@ def execute(step, project_options, part_names=None):
             'type': config.data.get('type', '')}
 
 
-def _get_core_path():
-    return os.path.join(os.path.sep, 'snap', 'core', 'current')
-
-
 def _setup_core(deb_arch):
-    core_path = _get_core_path()
+    core_path = common.get_core_path()
     if os.path.exists(core_path) and os.listdir(core_path):
         logger.debug('{!r} already exists, skipping core setup'.format(
             core_path))

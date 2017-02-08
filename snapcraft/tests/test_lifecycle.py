@@ -625,9 +625,15 @@ class CoreSetupTestCase(tests.TestCase):
         super().setUp()
 
         self.core_path = os.path.join(self.path, 'core', 'current')
-        patcher = mock.patch('snapcraft.internal.lifecycle._get_core_path')
+        patcher = mock.patch('snapcraft.internal.common.get_core_path')
         core_path_mock = patcher.start()
         core_path_mock.return_value = self.core_path
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.object(snapcraft.ProjectOptions,
+                                    'get_core_dynamic_linker')
+        get_linker_mock = patcher.start()
+        get_linker_mock.return_value = '/lib/ld'
         self.addCleanup(patcher.stop)
 
         self.tempdir = os.path.join(self.path, 'tmpdir')
@@ -722,4 +728,5 @@ class CoreSetupTestCase(tests.TestCase):
                 self.project_options.deb_arch), file=f)
             print('summary: summary', file=f)
             print('description: description', file=f)
+
         return lifecycle.snap(self.project_options, directory=core_path)
