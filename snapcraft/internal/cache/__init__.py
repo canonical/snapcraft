@@ -14,4 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ._apt import AptStagePackageCache  # noqa
+from ._cache import SnapcraftCache  # noqa
 from ._snap import SnapCache  # noqa

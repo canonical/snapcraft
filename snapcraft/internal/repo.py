@@ -30,14 +30,16 @@ import subprocess
 import sys
 import urllib
 import urllib.request
-import xdg
 
 import apt
 from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import common
+from snapcraft.internal import (
+    cache,
+    common,
+)
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
 
@@ -247,7 +249,7 @@ class _AptCache:
 class Ubuntu:
 
     def __init__(self, rootdir, recommends=False, sources=None,
-                 project_options=None, cache_dir=None):
+                 project_options=None):
         self._downloaddir = os.path.join(rootdir, 'download')
         self._rootdir = rootdir
         os.makedirs(self._downloaddir, exist_ok=True)
@@ -255,28 +257,19 @@ class Ubuntu:
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
-        if not cache_dir:
-            cache_dir = xdg.BaseDirectory.save_cache_path('snapcraft')
-
         self._apt = _AptCache(
             project_options.deb_arch, sources_list=sources,
             use_geoip=project_options.use_geoip)
 
-        apt_cache_base_dir = os.path.join(cache_dir, 'apt')
-        sources_digest = self._apt.sources_digest()
-        _clear_old_apt_cache(apt_cache_base_dir, sources_digest)
-
-        self._apt_cache_dir = os.path.join(apt_cache_base_dir, sources_digest)
-        self._apt_cache_download_dir = os.path.join(
-            self._apt_cache_dir, 'var', 'cache', 'apt', 'archives')
-        os.makedirs(self._apt_cache_download_dir, exist_ok=True)
+        self._cache = cache.AptStagePackageCache(
+            sources_digest=self._apt.sources_digest())
 
     def is_valid(self, package_name):
         with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
             return package_name in apt_cache
 
     def get(self, package_names):
-        with self._apt.archive(self._apt_cache_dir) as apt_cache:
+        with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._get(apt_cache, package_names)
 
     def _get(self, apt_cache, package_names):
@@ -284,7 +277,9 @@ class Ubuntu:
 
         for name in package_names:
             try:
-                logger.debug('Marking {!r} as to install'.format(name))
+                logger.debug(
+                    'Marking {!r} (and its dependencies) to be fetched'.format(
+                        name))
                 apt_cache[name].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
@@ -333,7 +328,7 @@ class Ubuntu:
         # something we'll have to live with.
         for package in apt_cache.get_changes():
             source = package.candidate.fetch_binary(
-                self._apt_cache_download_dir, progress=self._apt.progress)
+                self._cache.packages_dir, progress=self._apt.progress)
             destination = os.path.join(
                 self._downloaddir, os.path.basename(source))
             with contextlib.suppress(FileNotFoundError):
@@ -533,12 +528,3 @@ def _try_copy_local(path, target):
 def check_for_command(command):
     if not shutil.which(command):
         raise MissingCommandError([command])
-
-
-def _clear_old_apt_cache(cache_base_dir, current_basename):
-    if not os.path.isdir(cache_base_dir):
-        return
-
-    for entry in os.listdir(cache_base_dir):
-        if entry != current_basename:
-            shutil.rmtree(os.path.join(cache_base_dir, entry))

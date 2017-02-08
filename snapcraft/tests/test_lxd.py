@@ -24,7 +24,10 @@ from unittest.mock import (
 
 import fixtures
 
-from snapcraft.internal import lxd
+from snapcraft.internal import (
+    cache,
+    lxd,
+)
 from snapcraft import tests
 from snapcraft._options import ProjectOptions  # noqa
 
@@ -40,8 +43,7 @@ class LXDTestCase(tests.TestCase):
         mock_pet.return_value = 'my-pet'
 
         project_options = ProjectOptions()
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options,
-                         cache_dir='non-existing-cache').execute()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
         expected_arch = project_options.deb_arch
 
         self.assertEqual(
@@ -88,13 +90,12 @@ class LXDTestCase(tests.TestCase):
 
         mock_pet.return_value = 'my-pet'
 
-        cache_dir = 'cache-dir'
-        os.mkdir(cache_dir)
+        cache_dir = cache.SnapcraftCache().cache_root
+        os.makedirs(cache_dir)
         open(os.path.join(cache_dir, 'foo'), 'w').close()
 
         project_options = ProjectOptions()
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options,
-                         cache_dir=cache_dir).execute()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
         expected_arch = project_options.deb_arch
 
         self.assertEqual(
@@ -117,7 +118,7 @@ class LXDTestCase(tests.TestCase):
                   'tar', 'xvf', '/root/project.tar']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
                   'mkdir', '-p', '/root/.cache/snapcraft/.']),
-            call(['lxc', 'file', 'push', 'cache-dir/foo',
+            call(['lxc', 'file', 'push', os.path.join(cache_dir, 'foo'),
                   'snapcraft-my-pet//root/.cache/snapcraft/./foo']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
                   'python3', '-c',

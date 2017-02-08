@@ -22,9 +22,7 @@ import tempfile
 from unittest.mock import ANY, call, patch, MagicMock
 from testtools.matchers import (
     Contains,
-    DirExists,
     FileExists,
-    Not,
 )
 
 import snapcraft
@@ -267,29 +265,6 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
 """.format(self.tempdir)
 
         self.assertEqual(pc_file_content, expected_pc_file_content)
-
-    @patch('snapcraft.repo._AptCache')
-    def test_old_caches_get_cleaned(self, mock_apt_cache):
-        mock_apt_cache.return_value.sources_digest.return_value = '1'
-        project_options = snapcraft.ProjectOptions(use_geoip=False)
-        repo.Ubuntu(
-            self.tempdir, project_options=project_options,
-            cache_dir='cache-dir')
-
-        # Assert that the cache was created.
-        self.assertThat(os.path.join('cache-dir', 'apt', '1'), DirExists())
-
-        # Mock that the sources list have changed, thus changing the digest.
-        # This will also change the cache subdirectory used, which means the
-        # old one should be cleaned up.
-        mock_apt_cache.return_value.sources_digest.return_value = '2'
-        repo.Ubuntu(
-            self.tempdir, project_options=project_options,
-            cache_dir='cache-dir')
-
-        self.assertThat(
-            os.path.join('cache-dir', 'apt', '1'), Not(DirExists()))
-        self.assertThat(os.path.join('cache-dir', 'apt', '2'), DirExists())
 
 
 class FixSUIDTestCase(RepoBaseTestCase):
