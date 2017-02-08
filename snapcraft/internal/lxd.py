@@ -23,6 +23,8 @@ from time import sleep
 
 import petname
 
+from snapcraft.internal.errors import SnapcraftEnvironmentError
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +36,31 @@ _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 class Cleanbuilder:
 
-    def __init__(self, snap_output, tar_filename, project_options):
+    def __init__(self, snap_output, tar_filename, project_options,
+                 remote=None):
         self._snap_output = snap_output
         self._tar_filename = tar_filename
         self._project_options = project_options
-        self._container_name = 'snapcraft-{}'.format(
-            petname.Generate(3, '-'))
+        container_name = 'snapcraft-{}'.format(petname.Generate(3, '-'))
+        if remote:
+            self._verify_remote(remote)
+            self._container_name = '{}:{}'.format(remote, container_name)
+        else:
+            self._container_name = container_name
+
+    def _verify_remote(self, remote):
+        # There is no easy way to grep the results from `lxc remote list`
+        # so we try and execute a simple operation against the remote.
+        try:
+            check_call(['lxc', 'list', '{}:'.format(remote)])
+        except CalledProcessError as e:
+            raise SnapcraftEnvironmentError(
+                'There are either no permissions or the remote {!r} '
+                'does not exist.\n'
+                'Verify the existing remotes by running `lxc remote list`\n'
+                'To setup a new remote, follow the instructions on\n'
+                'https://linuxcontainers.org/lxd/getting-started-cli/'
+                '#multiple-hosts'.format(remote)) from e
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',

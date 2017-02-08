@@ -22,10 +22,11 @@ from unittest.mock import (
 )
 
 import fixtures
+from testtools import ExpectedException
 
-from snapcraft.internal import lxd
 from snapcraft import tests
-from snapcraft._options import ProjectOptions  # noqa
+from snapcraft import ProjectOptions
+from snapcraft.internal import lxd
 
 
 class LXDTestCase(tests.TestCase):
@@ -131,3 +132,60 @@ class LXDTestCase(tests.TestCase):
                 project_options).execute)
 
         self.assertNotIn(['bash', '-i'], call_list)
+
+    @patch('snapcraft.internal.lxd.check_call')
+    @patch('petname.Generate')
+    def test_cleanbuild_with_remote(self, mock_pet, mock_call):
+        mock_pet.return_value = 'my-pet'
+
+        project_options = ProjectOptions()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options,
+                         remote='my-remote').execute()
+        expected_arch = project_options.deb_arch
+
+        mock_call.assert_has_calls([
+            call(['lxc', 'launch', '-e',
+                  'ubuntu:xenial/{}'.format(expected_arch),
+                  'my-remote:snapcraft-my-pet']),
+            call(['lxc', 'config', 'set', 'my-remote:snapcraft-my-pet',
+                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'file', 'push', 'project.tar',
+                  'my-remote:snapcraft-my-pet//root/project.tar']),
+            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet', '--',
+                  'tar', 'xvf', '/root/project.tar']),
+            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet', '--',
+                  'python3', '-c',
+                  'import urllib.request; '
+                  'urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html", '
+                  'timeout=5)']),
+            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet', '--',
+                  'apt-get', 'update']),
+            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet', '--',
+                  'apt-get', 'install', 'snapcraft', '-y']),
+            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet', '--',
+                  'snapcraft', 'snap', '--output', 'snap.snap']),
+            call(['lxc', 'file', 'pull',
+                  'my-remote:snapcraft-my-pet//root/snap.snap',
+                  'snap.snap']),
+            call(['lxc', 'stop', '-f', 'my-remote:snapcraft-my-pet']),
+        ])
+
+    @patch('snapcraft.internal.lxd.check_call')
+    @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
+    @patch('snapcraft.internal.lxd.sleep')
+    def test_remote_does_not_exist(self, mock_sleep, mock_run, mock_call):
+        call_list = []
+
+        def call_effect(*args, **kwargs):
+            call_list.append(args[0])
+            if args[0] == ['lxc', 'list', 'my-remote:']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+
+        mock_call.side_effect = call_effect
+
+        project_options = ProjectOptions(debug=False)
+        with ExpectedException(lxd.SnapcraftEnvironmentError,
+                               'There are either.*my-remote.*'):
+            lxd.Cleanbuilder('snap.snap', 'project.tar',
+                             project_options, remote='my-remote')
