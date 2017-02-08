@@ -16,6 +16,8 @@
 
 import contextlib
 
+from snapcraft import formatting_utils
+
 # dict of jsonschema validator -> cause pairs. Wish jsonschema just gave us
 # better messages.
 _VALIDATION_ERROR_CAUSES = {
@@ -158,13 +160,16 @@ class SnapcraftSchemaError(SnapcraftError):
         class tries to make them a bit more understandable.
         """
 
-        messages = [error.message]
+        messages = []
 
         # error.validator_value may contain a custom validation error message.
         # If so, use it instead of the garbage message jsonschema gives us.
         with contextlib.suppress(TypeError, KeyError):
-            messages = [error.validator_value['validation-failure'].format(
-                error)]
+            messages.append(
+                error.validator_value['validation-failure'].format(error))
+
+        if not messages:
+            messages.append(error.message)
 
         path = []
         while error.absolute_path:
@@ -190,10 +195,34 @@ class SnapcraftSchemaError(SnapcraftError):
 def _determine_cause(error):
     """Attempt to determine a cause from validation error.
 
-    Returns:
-        A string representing the cause of the error (it may be empty if no
-        cause can be determined).
+    :return: A string representing the cause of the error (it may be empty if
+             no cause can be determined).
+    :rtype: str
     """
 
-    return _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
+    message = _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
         validator_value=error.validator_value)
+
+    if not message and error.validator == 'anyOf':
+        message = _interpret_anyOf(error)
+
+    return message
+
+
+def _interpret_anyOf(error):
+    """Interpret a validation error caused by the anyOf validator.
+
+    Returns:
+        A string containing a (hopefully) helpful validation error message. It
+        may be empty.
+    """
+
+    usages = []
+    try:
+        for validator in error.validator_value:
+            usages.append(validator['usage'])
+    except (TypeError, KeyError):
+        return ''
+
+    return 'must be one of {}'.format(formatting_utils.humanize_list(
+        usages, 'or'))
