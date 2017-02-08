@@ -51,13 +51,20 @@ class ReleaseCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_release.return_value = {
             'opened_channels': ['beta'],
-            'channel_map': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'revision': 19, 'channel': 'beta', 'version': '0',
-                 'info': 'specific'},
-                {'channel': 'edge', 'info': 'tracking'}
-            ]
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64':
+                        [
+                            {'channel': 'stable', 'info': 'none'},
+                            {'channel': 'candidate', 'info': 'none'},
+                            {'revision': 19, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'channel': 'edge', 'info': 'tracking'}
+                        ]
+                    }
+                }
+            }
         }
 
         main(['release', 'nil-snap', '19', 'beta'])
@@ -65,13 +72,50 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
         self.assertEqual([
+            'Arch    Track    Series    Channel    Version    Revision',
+            'amd64   latest   16        stable     -          -',
+            '                           candidate  -          -',
+            '                           beta       0          19',
+            '                           edge       ^          ^',
             "\x1b[0;32mThe 'beta' channel is now open.\x1b[0m",
-            '',
-            'Channel    Version    Revision',
-            'stable     -          -',
-            'candidate  -          -',
-            'beta       0          19',
-            'edge       ^          ^',
+        ], fake_terminal.getvalue().splitlines())
+
+    def test_release_snap_with_lts_channel(self):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        patcher = mock.patch.object(storeapi.StoreClient, 'release')
+        mock_release = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_release.return_value = {
+            'opened_channels': ['2.1/beta'],
+            'channel_map_tree': {
+                '2.1': {
+                    '16': {
+                        'amd64': [
+                            {'channel': 'stable', 'info': 'none'},
+                            {'channel': 'candidate', 'info': 'none'},
+                            {'revision': 19, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'channel': 'edge', 'info': 'tracking'}
+                        ]
+
+                    }
+                }
+            }
+        }
+
+        main(['release', 'nil-snap', '19', '2.1/beta'])
+
+        mock_release.assert_called_once_with('nil-snap', '19', ['2.1/beta'])
+
+        self.assertEqual([
+            'Arch    Track    Series    Channel    Version    Revision',
+            'amd64   2.1      16        stable     -          -',
+            '                           candidate  -          -',
+            '                           beta       0          19',
+            '                           edge       ^          ^',
+            "\x1b[0;32mThe '2.1/beta' channel is now open.\x1b[0m",
         ], fake_terminal.getvalue().splitlines())
 
     def test_release_snap_opens_more_than_one_channel(self):
@@ -83,13 +127,20 @@ class ReleaseCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_release.return_value = {
             'opened_channels': ['stable', 'beta', 'edge'],
-            'channel_map': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'revision': 19, 'channel': 'beta', 'version': '0',
-                 'info': 'specific'},
-                {'channel': 'edge', 'info': 'tracking'}
-            ]
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64':
+                        [
+                            {'channel': 'stable', 'info': 'none'},
+                            {'channel': 'candidate', 'info': 'none'},
+                            {'revision': 19, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'channel': 'edge', 'info': 'tracking'}
+                        ]
+                    }
+                }
+            }
         }
 
         main(['release', 'nil-snap', '19', 'beta'])
@@ -97,14 +148,13 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
         self.assertEqual([
+            'Arch    Track    Series    Channel    Version    Revision',
+            'amd64   latest   16        stable     -          -',
+            '                           candidate  -          -',
+            '                           beta       0          19',
+            '                           edge       ^          ^',
             "\x1b[0;32mThe 'stable', 'beta' and 'edge' channels "
             "are now open.\x1b[0m",
-            '',
-            'Channel    Version    Revision',
-            'stable     -          -',
-            'candidate  -          -',
-            'beta       0          19',
-            'edge       ^          ^',
         ], fake_terminal.getvalue().splitlines())
 
     def test_release_with_bad_channel_info(self):
@@ -112,13 +162,21 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release = patcher.start()
         self.addCleanup(patcher.stop)
         mock_release.return_value = {
-            'channel_map': [
-                {'channel': 'stable', 'info': 'fake-bad-channel-info'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'revision': 19, 'channel': 'beta', 'version': '0',
-                 'info': 'specific'},
-                {'channel': 'edge', 'info': 'tracking'}
-            ]
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64':
+                        [
+                            {'channel': 'stable',
+                             'info': 'fake-bad-channel-info'},
+                            {'channel': 'candidate', 'info': 'none'},
+                            {'revision': 19, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'channel': 'edge', 'info': 'tracking'}
+                        ]
+                    }
+                }
+            }
         }
 
         self.assertRaises(
