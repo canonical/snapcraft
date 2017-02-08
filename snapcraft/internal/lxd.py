@@ -20,6 +20,7 @@ import os
 from contextlib import contextmanager
 from subprocess import check_call, CalledProcessError
 from time import sleep
+import xdg
 
 import petname
 
@@ -34,12 +35,16 @@ _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 class Cleanbuilder:
 
-    def __init__(self, snap_output, tar_filename, project_options):
+    def __init__(self, snap_output, tar_filename, project_options, *,
+                 cache_dir=None):
         self._snap_output = snap_output
         self._tar_filename = tar_filename
         self._project_options = project_options
-        self._container_name = 'snapcraft-{}'.format(
-            petname.Generate(3, '-'))
+        self._container_name = 'snapcraft-{}'.format(petname.Generate(3, '-'))
+        if cache_dir:
+            self._cache_dir = cache_dir
+        else:
+            self._cache_dir = xdg.BaseDirectory.save_cache_path('snapcraft')
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -91,6 +96,19 @@ class Cleanbuilder:
         dst = os.path.join('/root', os.path.basename(self._tar_filename))
         self._push_file(self._tar_filename, dst)
         self._container_run(['tar', 'xvf', dst])
+
+        logger.info('Copying snapcraft cache into container')
+        # Later versions have a `push --recursive`. For now we have to do it
+        # the hard way and walk the cache ourselves.
+        for root, dirs, files in os.walk(self._cache_dir):
+            destination_root = os.path.join(
+                '/root', '.cache', 'snapcraft', os.path.relpath(
+                    root, self._cache_dir))
+            self._container_run(['mkdir', '-p', destination_root])
+            for file_path in files:
+                source = os.path.join(root, file_path)
+                destination = os.path.join(destination_root, file_path)
+                self._push_file(source, destination)
 
     def _pull_snap(self):
         src = os.path.join('/root', self._snap_output)
