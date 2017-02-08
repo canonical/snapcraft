@@ -138,7 +138,6 @@ def _setup_core(deb_arch):
         download_path = os.path.join(d, 'core.snap')
         download_hash = snapcraft.download('core', 'stable', download_path,
                                            deb_arch, but_hash=current_hash)
-        print('download', download_hash, 'current', current_hash)
         if download_hash != current_hash:
             snap_cache.cache(snap_filename=download_path)
             snap_cache.prune(deb_arch=deb_arch, keep_hash=download_hash)
