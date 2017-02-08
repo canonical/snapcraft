@@ -1,0 +1,53 @@
+name: stage-package-grammar
+version: '0.1'
+summary: Test the stage package grammar
+description: A few different parts that exercise the grammar differently
+grade: devel
+confinement: strict
+
+parts:
+  simple:
+    plugin: nil
+    stage-packages:
+      - hello
+
+  try:
+    plugin: nil
+    stage-packages:
+      - try:
+        - hello
+
+  try-skipped:
+    plugin: nil
+    stage-packages:
+      - try:
+        - invalid-package
+
+  try-else:
+    plugin: nil
+    stage-packages:
+      - try:
+        - invalid-package
+      - else:
+        - hello
+
+  on-other-arch:
+    plugin: nil
+    stage-packages:
+      - on other-arch:
+        - foo
+
+  on-other-arch-else:
+    plugin: nil
+    stage-packages:
+      - on other-arch:
+        - foo
+      - else:
+        - hello
+
+  on-other-arch-else-fail:
+    plugin: nil
+    stage-packages:
+      - on other-arch:
+        - foo
+      - else fail

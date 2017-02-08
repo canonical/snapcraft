@@ -45,7 +45,9 @@ class YamlBaseTestCase(tests.TestCase):
         self.mock_get_yaml.return_value = os.path.join(
             'snap', 'snapcraft.yaml')
         self.addCleanup(patcher.stop)
-        self.part_schema = project_loader.Validator().part_schema
+        validator = project_loader.Validator()
+        self.part_schema = validator.part_schema
+        self.definitions_schema = validator.definitions_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
 
@@ -319,7 +321,8 @@ parts:
                 'plugin': 'autotools', 'stage': [], 'prime': [], 'snap': [],
                 'source': 'http://curl.org'},
             project_options=project_options,
-            part_schema=self.part_schema)
+            part_schema=self.part_schema,
+            definitions_schema=self.definitions_schema)
         call2 = unittest.mock.call(
             'part1',
             plugin_name='go',
@@ -327,7 +330,8 @@ parts:
                 'plugin': 'go', 'stage': [], 'prime': [], 'snap': [],
                 'stage-packages': ['fswebcam']},
             project_options=project_options,
-            part_schema=self.part_schema)
+            part_schema=self.part_schema,
+            definitions_schema=self.definitions_schema)
 
         mock_load.assert_has_calls([call1, call2], any_order=True)
 

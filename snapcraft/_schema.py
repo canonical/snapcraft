@@ -47,6 +47,12 @@ class Validator:
         properties = sub['^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$']['properties']
         return properties
 
+    @property
+    def definitions_schema(self):
+        """Return sub-schema that describes definitions used within schema."""
+
+        return self._schema['definitions'].copy()
+
     def _load_schema(self):
         schema_file = os.path.abspath(os.path.join(
             common.get_schemadir(), 'snapcraft.yaml'))

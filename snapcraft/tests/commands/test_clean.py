@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -54,12 +54,14 @@ parts:
         open('icon.png', 'w').close()
 
         parts = []
+        validator = project_loader.Validator()
         for i in range(n):
             part_name = 'clean{}'.format(i)
             handler = pluginhandler.load_plugin(
                 part_name, plugin_name='nil',
                 part_properties={'plugin': 'nil'},
-                part_schema=project_loader.Validator().part_schema)
+                part_schema=validator.part_schema,
+                definitions_schema=validator.definitions_schema)
             parts.append({
                 'part_dir': handler.code.partdir,
             })

@@ -271,6 +271,10 @@ class Ubuntu:
             self._apt_cache_dir, 'var', 'cache', 'apt', 'archives')
         os.makedirs(self._apt_cache_download_dir, exist_ok=True)
 
+    def is_valid(self, package_name):
+        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+            return package_name in apt_cache
+
     def get(self, package_names):
         with self._apt.archive(self._apt_cache_dir) as apt_cache:
             self._get(apt_cache, package_names)

@@ -270,7 +270,8 @@ class PartsConfig:
             plugin_name=plugin_name,
             part_properties=part_properties,
             project_options=self._project_options,
-            part_schema=self._validator.part_schema)
+            part_schema=self._validator.part_schema,
+            definitions_schema=self._validator.definitions_schema)
 
         self.build_tools += part.code.build_packages
         if part.source_handler and part.source_handler.command:
