@@ -95,6 +95,7 @@ properties:
           - command
         dependencies:
           stop-command: ["daemon"]
+          post-stop-command: ["daemon"]
         additionalProperties: false
         properties:
           desktop:
@@ -106,6 +107,9 @@ properties:
           stop-command:
             type: string
             description: command executed to stop a service
+          post-stop-command:
+            type: string
+            description: command executed after stopping a service
           stop-timeout:
             description: timeout in seconds
           daemon:
