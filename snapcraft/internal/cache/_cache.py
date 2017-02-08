@@ -31,6 +31,9 @@ class SnapcraftCache:
     def cache(self):
         raise NotImplementedError
 
+    def get(self):
+        raise NotImplementedError
+
     def prune(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -40,4 +43,4 @@ class SnapcraftProjectCache(SnapcraftCache):
     def __init__(self, *, project_name):
         super().__init__()
         self.project_cache_root = os.path.join(
-            self.cache_root, project_name)
+            self.cache_root, 'projects', project_name)

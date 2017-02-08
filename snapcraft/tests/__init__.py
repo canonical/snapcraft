@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -106,6 +106,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(fixture_setup.TempXDG(self.path))
         self.fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
+        self.useFixture(fixture_setup.SilentSnapProgress())
         # Some tests will directly or indirectly change the plugindir, which
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
