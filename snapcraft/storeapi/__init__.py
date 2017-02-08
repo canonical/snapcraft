@@ -253,12 +253,12 @@ class StoreClient():
             self.sca.close_channels, snap_id, channel_names)
 
     def download(self, snap_name, channel, download_path,
-                 arch=None, but_hash=''):
+                 arch=None, except_hash=''):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
         package = self.cpi.get_package(snap_name, channel, arch)
-        if package['download_sha3_384'] != but_hash:
+        if package['download_sha3_384'] != except_hash:
             self._download_snap(
                 snap_name, channel, arch, download_path,
                 # FIXME LP: #1662665

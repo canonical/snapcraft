@@ -137,7 +137,7 @@ def _setup_core(deb_arch):
     with tempfile.TemporaryDirectory() as d:
         download_path = os.path.join(d, 'core.snap')
         download_hash = snapcraft.download('core', 'stable', download_path,
-                                           deb_arch, but_hash=current_hash)
+                                           deb_arch, except_hash=current_hash)
         if download_hash != current_hash:
             snap_cache.cache(snap_filename=download_path)
             snap_cache.prune(deb_arch=deb_arch, keep_hash=download_hash)
