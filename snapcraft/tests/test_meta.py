@@ -209,6 +209,14 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
+        # Check for the correct deprecation message.
+        self.assertIn(
+            "Assets in 'setup/gui' should now be placed in 'snap/gui'.",
+            fake_logger.output)
+        self.assertIn(
+            "See http://snapcraft.io/docs/deprecation-notices/dn3",
+            fake_logger.output)
+
     def test_create_meta_with_declared_icon_and_setup_ran_twice_ok(self):
         gui_path = os.path.join('setup', 'gui')
         os.makedirs(gui_path)

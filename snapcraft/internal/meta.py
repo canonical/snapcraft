@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -216,7 +216,7 @@ class _SnapPackaging:
         if not os.path.exists(setup_dir):
             return
 
-        handle_deprecation_notice('dn2')
+        handle_deprecation_notice('dn3')
 
         gui_src = os.path.join(setup_dir, 'gui')
         gui_dst = os.path.join(self.meta_dir, 'gui')

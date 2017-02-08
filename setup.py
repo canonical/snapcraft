@@ -56,6 +56,7 @@ setup(
             ['libraries/' + x for x in os.listdir('libraries')]),
     ],
     install_requires=[
+        'pysha3',
         'pyxdg',
         'requests',
         'libarchive-c',

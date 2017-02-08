@@ -25,6 +25,7 @@ from snapcraft.internal.deltas.errors import (
     DeltaFormatError,
     DeltaFormatOptionError,
     DeltaGenerationError,
+    DeltaGenerationTooBigError,
     DeltaToolError,
 )
 
@@ -42,6 +43,8 @@ class BaseDeltasGenerator:
 
     This class is responsible for the snap delta file generation
     """
+
+    delta_size_min_pct = 90
 
     def __init__(self, *, source_path, target_path,
                  delta_file_extname='delta', delta_format=None,
@@ -83,6 +86,24 @@ class BaseDeltasGenerator:
         """Check if the delta generation tool exists"""
         if not file_utils.executable_exists(self.delta_tool_path):
             raise DeltaToolError(delta_tool=self.delta_tool_path)
+
+    def _check_delta_size_constraint(self, delta_path):
+        """Ensure delta is sufficiently smaller than target snap.
+
+        Although bandwidth is still saved in the case of uploading a delta
+        nearly as large as the target snap, as there is a cost for delta
+        reconstitution in the delta-service, pushing the full snap may be
+        faster.
+
+        Further benchmarking may help to determine the most appropriate value
+        for `delta_size_min_pct`.
+        """
+        target_size = os.path.getsize(self.target_path)
+        delta_size = os.path.getsize(delta_path)
+
+        ratio = int((delta_size / target_size) * 100)
+        if ratio >= self.delta_size_min_pct:
+            raise DeltaGenerationTooBigError
 
     def find_unique_file_name(self, path_hint):
         """Return a path on disk similar to 'path_hint' that does not exist.
@@ -136,8 +157,9 @@ class BaseDeltasGenerator:
 
         returns: generated delta file path
         """
-        logger.info('Generating {} delta for {}->{}.'.format(
-                self.delta_format, self.source_path, self.target_path))
+        logger.info('Generating {} delta for {}.'.format(
+            self.delta_format,
+            os.path.basename(self.target_path)))
 
         if output_dir is not None:
             # consider creating the delta file in the specified output_dir
@@ -190,20 +212,13 @@ class BaseDeltasGenerator:
                 os.remove(stderr_path)
 
             raise DeltaGenerationError(
-                'Could not generate {} delta.\n'
-                'stdout log: {}\n'
-                'stdout: \n{}\n'
-                '---------'
-                'stderr log: {}\n'
-                'stderr: \n{}\n'
-                '---------'
-                'returncode: {}'.format(
-                    self.delta_format,
-                    stdout_path, _stdout,
-                    stderr_path, _stderr,
-                    proc.returncode
-                )
+                delta_format=self.delta_format,
+                stdout_path=stdout_path, stdout=_stdout,
+                stderr_path=stderr_path, stderr=_stderr,
+                returncode=proc.returncode
             )
+
+        self._check_delta_size_constraint(delta_file)
 
         self.log_delta_file(delta_file)
 
