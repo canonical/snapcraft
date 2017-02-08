@@ -144,12 +144,89 @@ of the choice of plugin.
     binaries within the snap (in which case they'll be discovered via `ldd`),
     or they are explicitly described in stage-packages.
 
-  - stage-packages: [deb, deb, deb...]
+  - stage-packages: YAML list
 
-    A list of Ubuntu packages to be downloaded and unpacked to join the part
+    A set of Ubuntu packages to be downloaded and unpacked to join the part
     before it's built. Note that these packages are not installed on the host.
     Like the rest of the part, all files from these packages will make it into
     the final snap unless filtered out via the `snap` keyword.
+
+    One may simply specify packages in a flat list, in which case the packages
+    will be fetched and unpacked regardless of build environment. In addition,
+    a specific grammar made up of sub-lists is supported here that allows one
+    to filter stage packages depending on various selectors (e.g. the target
+    arch), as well as specify optional packages. The grammar is made up of two
+    nestable statements: 'on' and 'try'.
+
+    Let's discuss `on`.
+
+        - on <selector>[,<selector>...]:
+          - ...
+        - else[ fail]:
+          - ...
+
+    The body of the 'on' clause is taken into account if every (AND, not OR)
+    selector is true for the target build environment. Currently the only
+    selectors supported are target architectures (e.g. amd64).
+
+    If the 'on' clause doesn't match and it's immediately followed by an 'else'
+    clause, the 'else' clause must be satisfied. An 'on' clause without an
+    'else' clause is considered satisfied even if no selector matched. The
+    'else fail' form allows erroring out if an 'on' clause was not matched.
+
+    For example, say you only wanted to stage `foo` if building for amd64 (and
+    not stage `foo` if otherwise):
+
+        - on amd64: [foo]
+
+    Building on that, say you wanted to stage `bar` if building on an arch
+    other than amd64:
+
+        - on amd64: [foo]
+        - else: [bar]
+
+    You can nest these for more complex behaviors:
+
+        - on amd64: [foo]
+        - else:
+          - on i386: [bar]
+          - on armhf: [baz]
+
+    If your project requires a package that is only available on amd64, you can
+    fail if you're not building for amd64:
+
+        - on amd64: [foo]
+        - else fail
+
+    Now let's discuss `try`:
+
+        - try:
+          - ...
+        - else:
+          - ...
+
+    The body of the 'try' clause is taken into account only when all packages
+    contained within it are valid. If not, if it's immediately followed by
+    'else' clauses they are tried in order, and one of them must be satisfied.
+    A 'try' clause with no 'else' clause is considered satisfied even if it
+    contains invalid packages.
+
+    For example, say you wanted to stage `foo`, but it wasn't available for all
+    architectures. Assuming your project builds without it, you can make it an
+    optional stage package:
+
+        - try: [foo]
+
+    You can also add alternatives:
+
+        - try: [foo]
+        - else: [bar]
+
+    Again, you can nest these for more complex behaviors:
+
+        - on amd64: [foo]
+        - else:
+          - try: [bar]
 
   - organize: YAML
 

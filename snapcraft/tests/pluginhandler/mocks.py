@@ -52,9 +52,12 @@ def loadplugin(part_name, plugin_name=None, part_properties=None,
     if not project_options:
         project_options = snapcraft.ProjectOptions()
 
-    schema = project_loader.Validator().part_schema
+    validator = project_loader.Validator()
+    schema = validator.part_schema
+    definitions_schema = validator.definitions_schema
     return pluginhandler.load_plugin(part_name=part_name,
                                      plugin_name=plugin_name,
                                      part_properties=properties,
                                      project_options=project_options,
-                                     part_schema=schema)
+                                     part_schema=schema,
+                                     definitions_schema=definitions_schema)
