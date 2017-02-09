@@ -33,7 +33,8 @@ class StagePackageCacheTestCase(integration_tests.TestCase):
 
         # Verify the 'hello' deb package was cached.
         cache_dir = os.path.join(
-            xdg.BaseDirectory.xdg_cache_home, 'snapcraft', 'apt')
+            xdg.BaseDirectory.xdg_cache_home, 'snapcraft', 'stage-packages',
+            'apt')
         archive_dir = os.path.join('var', 'cache', 'apt', 'archives')
         cached = glob.glob(os.path.join(cache_dir, '*', archive_dir, 'hello*'))
         self.assertThat(cached, HasLength(1))
