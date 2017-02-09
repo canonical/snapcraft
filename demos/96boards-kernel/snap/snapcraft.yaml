@@ -36,4 +36,4 @@ parts:
   410c-firmware:
     plugin: tar-content
     source: firmware.tar # from developer.qualcomm.com v1.2
-    destination: lib/firmware
+    destination: firmware
