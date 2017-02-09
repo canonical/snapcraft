@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -44,3 +44,11 @@ class SnapcraftProjectCache(SnapcraftCache):
         super().__init__()
         self.project_cache_root = os.path.join(
             self.cache_root, 'projects', project_name)
+
+
+class SnapcraftStagePackageCache(SnapcraftCache):
+    """Cache specific to stage-packages."""
+    def __init__(self):
+        super().__init__()
+        self.stage_package_cache_root = os.path.join(
+            self.cache_root, 'stage-packages')

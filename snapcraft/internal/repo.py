@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import fileinput
 import glob
 import hashlib
@@ -29,16 +30,16 @@ import subprocess
 import sys
 import urllib
 import urllib.request
-from distutils.dir_util import copy_tree
-from contextlib import contextmanager
 
 import apt
 from xml.etree import ElementTree
-from xdg import BaseDirectory
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import common
+from snapcraft.internal import (
+    cache,
+    common,
+)
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
 
@@ -167,19 +168,12 @@ class UnpackError(Exception):
 
 class _AptCache:
 
-    def __init__(self, cache_dir, deb_arch, *,
-                 sources_list=None, use_geoip=False):
-        self._cache_dir = cache_dir
+    def __init__(self, deb_arch, *, sources_list=None, use_geoip=False):
         self._deb_arch = deb_arch
         self._sources_list = sources_list
         self._use_geoip = use_geoip
 
-    def _setup_apt(self, download_dir):
-        # Create the 'partial' subdir too (LP: #1578007).
-        os.makedirs(os.path.join(download_dir, 'partial'), exist_ok=True)
-
-        apt.apt_pkg.config.set("Dir::Cache::Archives", download_dir)
-
+    def _setup_apt(self, cache_dir):
         # Do not install recommends
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
@@ -198,35 +192,19 @@ class _AptCache:
             self.progress.pulse = lambda owner: True
             self.progress._width = 0
 
-    def _setup_apt_cache(self, rootdir):
-        if self._use_geoip or self._sources_list:
-            release = platform.linux_distribution()[2]
-            sources_list = _format_sources_list(
-                self._sources_list, deb_arch=self._deb_arch,
-                use_geoip=self._use_geoip, release=release)
-        else:
-            sources_list = _get_local_sources_list()
-
-        sources_list_digest = hashlib.sha384(
-            sources_list.encode(sys.getfilesystemencoding())).hexdigest()
-
-        cache_dir = os.path.join(self._cache_dir, 'apt', sources_list_digest)
-        apt_cache_dir = os.path.join(cache_dir, 'apt')
-        package_cache_dir = os.path.join(cache_dir, 'packages')
-
         sources_list_file = os.path.join(
-            apt_cache_dir, 'etc', 'apt', 'sources.list')
+            cache_dir, 'etc', 'apt', 'sources.list')
 
         os.makedirs(os.path.dirname(sources_list_file), exist_ok=True)
         with open(sources_list_file, 'w') as f:
-            f.write(sources_list)
+            f.write(self._collected_sources_list())
 
         # dpkg also needs to be in the rootdir in order to support multiarch
         # (apt calls dpkg --print-foreign-architectures).
         dpkg_path = shutil.which('dpkg')
         if dpkg_path:
             # Symlink it into place
-            destination = os.path.join(apt_cache_dir, dpkg_path[1:])
+            destination = os.path.join(cache_dir, dpkg_path[1:])
             if not os.path.exists(destination):
                 os.makedirs(os.path.dirname(destination), exist_ok=True)
                 os.symlink(dpkg_path, destination)
@@ -234,74 +212,64 @@ class _AptCache:
             logger.warning(
                 "Cannot find 'dpkg' command needed to support multiarch")
 
-        apt_cache = apt.Cache(rootdir=apt_cache_dir, memonly=True)
+        apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
         apt_cache.update(fetch_progress=self.progress,
                          sources_list=sources_list_file)
 
-        copy_tree(apt_cache_dir, rootdir, update=True)
+        return apt_cache
 
-        return package_cache_dir
-
-    def _restore_cached_packages(self, apt_changes,
-                                 package_cache_dir, download_dir):
-        for pkg in apt_changes:
-            src = os.path.join(package_cache_dir, pkg.name)
-            dst = os.path.join(download_dir, pkg.name)
-            if os.path.exists(src):
-                file_utils.link_or_copy(src, dst)
-
-    def _store_cached_packages(self, package_cache_dir, download_dir):
-        os.makedirs(package_cache_dir, exist_ok=True)
-        for pkg in os.listdir(download_dir):
-            if not pkg.endswith('.deb'):
-                continue
-            src = os.path.join(download_dir, pkg)
-            dst = os.path.join(package_cache_dir, pkg)
-            # The dst may be an incomplete or broken so let's update
-            # just in case.
-            if os.path.exists(dst):
-                os.unlink(dst)
-            file_utils.link_or_copy(src, dst)
-
-    @contextmanager
-    def archive(self, rootdir, download_dir):
+    @contextlib.contextmanager
+    def archive(self, cache_dir):
         try:
-            self._setup_apt(download_dir)
-            package_cache_dir = self._setup_apt_cache(rootdir)
-            apt_cache = apt.Cache(rootdir=rootdir, memonly=True)
+            apt_cache = self._setup_apt(cache_dir)
             apt_cache.open()
-            self._restore_cached_packages(apt_cache.get_changes(),
-                                          package_cache_dir, download_dir)
-            yield apt_cache
-            self._store_cached_packages(package_cache_dir, download_dir)
+
+            try:
+                yield apt_cache
+            finally:
+                apt_cache.close()
         except Exception as e:
             logger.debug('Exception occured: {!r}'.format(e))
             raise e
 
+    def sources_digest(self):
+        return hashlib.sha384(self._collected_sources_list().encode(
+            sys.getfilesystemencoding())).hexdigest()
+
+    def _collected_sources_list(self):
+        if self._use_geoip or self._sources_list:
+            release = platform.linux_distribution()[2]
+            return _format_sources_list(
+                self._sources_list, deb_arch=self._deb_arch,
+                use_geoip=self._use_geoip, release=release)
+
+        return _get_local_sources_list()
+
 
 class Ubuntu:
 
-    def __init__(self, rootdir, recommends=False,
-                 sources=None, project_options=None):
-        self.downloaddir = os.path.join(rootdir, 'download')
-        self.rootdir = rootdir
-        self.recommends = recommends
-        cache_dir = os.path.join(
-            BaseDirectory.xdg_cache_home, 'snapcraft')
+    def __init__(self, rootdir, recommends=False, sources=None,
+                 project_options=None):
+        self._downloaddir = os.path.join(rootdir, 'download')
+        self._rootdir = rootdir
+        os.makedirs(self._downloaddir, exist_ok=True)
 
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
-        self.apt = _AptCache(cache_dir, project_options.deb_arch,
-                             sources_list=sources,
-                             use_geoip=project_options.use_geoip)
+        self._apt = _AptCache(
+            project_options.deb_arch, sources_list=sources,
+            use_geoip=project_options.use_geoip)
+
+        self._cache = cache.AptStagePackageCache(
+            sources_digest=self._apt.sources_digest())
 
     def is_valid(self, package_name):
-        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+        with self._apt.archive(self._cache.base_dir) as apt_cache:
             return package_name in apt_cache
 
     def get(self, package_names):
-        with self.apt.archive(self.rootdir, self.downloaddir) as apt_cache:
+        with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._get(apt_cache, package_names)
 
     def _get(self, apt_cache, package_names):
@@ -309,7 +277,9 @@ class Ubuntu:
 
         for name in package_names:
             try:
-                logger.debug('Marking {!r} as to install'.format(name))
+                logger.debug(
+                    'Marking {!r} (and its dependencies) to be fetched'.format(
+                        name))
                 apt_cache[name].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
@@ -343,10 +313,30 @@ class Ubuntu:
             logger.debug('Skipping blacklisted from manifest packages: '
                          '{!r}'.format(skipped_blacklisted))
 
-        apt_cache.fetch_archives(progress=self.apt.progress)
+        # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
+        # mangle some package names on disk such that we can't match it up to
+        # the archive later. We could get around this a few different ways:
+        #
+        # 1. Store each stage package in the cache named by a hash instead of
+        #    its name from the archive.
+        # 2. Download packages in a different manner.
+        #
+        # In the end, (2) was chosen for minimal overhead and a simpler cache
+        # implementation. So we're using fetch_binary() here instead.
+        # Downloading each package individually has the drawback of witholding
+        # any clue of how long the whole pulling process will take, but that's
+        # something we'll have to live with.
+        for package in apt_cache.get_changes():
+            source = package.candidate.fetch_binary(
+                self._cache.packages_dir, progress=self._apt.progress)
+            destination = os.path.join(
+                self._downloaddir, os.path.basename(source))
+            with contextlib.suppress(FileNotFoundError):
+                os.remove(destination)
+            file_utils.link_or_copy(source, destination)
 
     def unpack(self, rootdir):
-        pkgs_abs_path = glob.glob(os.path.join(self.downloaddir, '*.deb'))
+        pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
             # TODO needs elegance and error control
             try:
