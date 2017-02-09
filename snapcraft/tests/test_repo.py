@@ -20,7 +20,10 @@ import os
 import stat
 import tempfile
 from unittest.mock import ANY, call, patch, MagicMock
-from testtools.matchers import Contains
+from testtools.matchers import (
+    Contains,
+    FileExists,
+)
 
 import snapcraft
 from snapcraft import repo
@@ -41,66 +44,94 @@ class RepoBaseTestCase(tests.TestCase):
 
 class UbuntuTestCase(RepoBaseTestCase):
 
-    @patch('snapcraft.repo.apt')
-    def test_get_package(self, mock_apt):
+    def setUp(self):
+        super().setUp()
+        patcher = patch('snapcraft.repo.apt.Cache')
+        self.mock_cache = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        def _fetch_binary(download_dir, **kwargs):
+            path = os.path.join(download_dir, 'fake-package.deb')
+            open(path, 'w').close()
+            return path
+
+        self.mock_package = MagicMock()
+        self.mock_package.candidate.fetch_binary.side_effect = _fetch_binary
+        self.mock_cache.return_value.get_changes.return_value = [
+            self.mock_package]
+
+    @patch('snapcraft.repo.apt.apt_pkg')
+    def test_get_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package'])
 
-        mock_apt.assert_has_calls([
-            call.apt_pkg.config.set('Dir::Cache::Archives',
-                                    os.path.join(self.tempdir, 'download')),
-            call.apt_pkg.config.set('Apt::Install-Recommends', 'False'),
-            call.apt_pkg.config.find_file('Dir::Etc::Trusted'),
-            call.apt_pkg.config.set('Dir::Etc::Trusted', ANY),
-            call.apt_pkg.config.find_file('Dir::Etc::TrustedParts'),
-            call.apt_pkg.config.set('Dir::Etc::TrustedParts', ANY),
-            call.apt_pkg.config.clear('APT::Update::Post-Invoke-Success'),
-            call.progress.text.AcquireProgress(),
-            call.Cache(memonly=True, rootdir=ANY),
-            call.Cache().update(fetch_progress=ANY, sources_list=ANY),
-            call.Cache(memonly=True, rootdir=self.tempdir),
-            call.Cache().open(),
+        mock_apt_pkg.assert_has_calls([
+            call.config.set('Apt::Install-Recommends', 'False'),
+            call.config.find_file('Dir::Etc::Trusted'),
+            call.config.set('Dir::Etc::Trusted', ANY),
+            call.config.find_file('Dir::Etc::TrustedParts'),
+            call.config.set('Dir::Etc::TrustedParts', ANY),
+            call.config.clear('APT::Update::Post-Invoke-Success'),
         ])
-        mock_apt.assert_has_calls([
-            call.Cache().fetch_archives(progress=ANY),
+
+        self.mock_cache.assert_has_calls([
+            call(memonly=True, rootdir=ANY),
+            call().update(fetch_progress=ANY, sources_list=ANY),
+            call().open(),
         ])
 
         # __getitem__ is tricky
-        self.assertIn(
-            call('fake-package'), mock_apt.Cache().__getitem__.call_args_list)
+        self.assertThat(
+            self.mock_cache.return_value.__getitem__.call_args_list,
+            Contains(call('fake-package')))
 
-    @patch('snapcraft.repo.apt')
-    def test_get_multiarch_package(self, mock_apt):
+        self.mock_package.assert_has_calls([
+            call.candidate.fetch_binary(ANY, progress=ANY)
+        ])
+
+        # Verify that the package was actually fetched and copied into the
+        # requested location.
+        self.assertThat(
+            os.path.join(self.tempdir, 'download', 'fake-package.deb'),
+            FileExists())
+
+    @patch('snapcraft.repo.apt.apt_pkg')
+    def test_get_multiarch_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package:arch'])
 
-        mock_apt.assert_has_calls([
-            call.apt_pkg.config.set('Dir::Cache::Archives',
-                                    os.path.join(self.tempdir, 'download')),
-            call.apt_pkg.config.set('Apt::Install-Recommends', 'False'),
-            call.apt_pkg.config.find_file('Dir::Etc::Trusted'),
-            call.apt_pkg.config.set('Dir::Etc::Trusted', ANY),
-            call.apt_pkg.config.find_file('Dir::Etc::TrustedParts'),
-            call.apt_pkg.config.set('Dir::Etc::TrustedParts', ANY),
-            call.apt_pkg.config.clear('APT::Update::Post-Invoke-Success'),
-            call.progress.text.AcquireProgress(),
-            call.Cache(memonly=True, rootdir=ANY),
-            call.Cache().update(fetch_progress=ANY, sources_list=ANY),
-            call.Cache(memonly=True, rootdir=self.tempdir),
-            call.Cache().open(),
+        mock_apt_pkg.assert_has_calls([
+            call.config.set('Apt::Install-Recommends', 'False'),
+            call.config.find_file('Dir::Etc::Trusted'),
+            call.config.set('Dir::Etc::Trusted', ANY),
+            call.config.find_file('Dir::Etc::TrustedParts'),
+            call.config.set('Dir::Etc::TrustedParts', ANY),
+            call.config.clear('APT::Update::Post-Invoke-Success'),
         ])
-        mock_apt.assert_has_calls([
-            call.Cache().fetch_archives(progress=ANY),
+        self.mock_cache.assert_has_calls([
+            call(memonly=True, rootdir=ANY),
+            call().update(fetch_progress=ANY, sources_list=ANY),
+            call().open(),
         ])
 
         # __getitem__ is tricky
         self.assertThat(
-            mock_apt.Cache().__getitem__.call_args_list,
+            self.mock_cache.return_value.__getitem__.call_args_list,
             Contains(call('fake-package:arch')))
+
+        self.mock_package.assert_has_calls([
+            call.candidate.fetch_binary(ANY, progress=ANY)
+        ])
+
+        # Verify that the package was actually fetched and copied into the
+        # requested location.
+        self.assertThat(
+            os.path.join(self.tempdir, 'download', 'fake-package.deb'),
+            FileExists())
 
     @patch('snapcraft.repo._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):

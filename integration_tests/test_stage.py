@@ -76,7 +76,7 @@ class StageTestCase(integration_tests.TestCase):
                 os.path.sep, 'snap', 'core', 'current')):
             try:
                 self.run_snapcraft(['stage'], project_dir)
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 pass
             else:
                 self.fail(

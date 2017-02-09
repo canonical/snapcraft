@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import logging
 from subprocess import CalledProcessError
 from unittest.mock import (
@@ -26,7 +27,10 @@ from testtools import ExpectedException
 
 from snapcraft import tests
 from snapcraft import ProjectOptions
-from snapcraft.internal import lxd
+from snapcraft.internal import (
+    cache,
+    lxd,
+)
 
 
 class LXDTestCase(tests.TestCase):
@@ -45,6 +49,7 @@ class LXDTestCase(tests.TestCase):
 
         self.assertEqual(
             'Setting up container with project assets\n'
+            'Copying snapcraft cache into container\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
             'Retrieved snap.snap\n',
@@ -60,6 +65,62 @@ class LXDTestCase(tests.TestCase):
                   'snapcraft-my-pet//root/project.tar']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
                   'tar', 'xvf', '/root/project.tar']),
+            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'python3', '-c',
+                  'import urllib.request; '
+                  'urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html", '
+                  'timeout=5)']),
+            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'apt-get', 'update']),
+            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'apt-get', 'install', 'snapcraft', '-y']),
+            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'snapcraft', 'snap', '--output', 'snap.snap']),
+            call(['lxc', 'file', 'pull',
+                  'snapcraft-my-pet//root/snap.snap',
+                  'snap.snap']),
+            call(['lxc', 'stop', '-f', 'snapcraft-my-pet']),
+        ])
+
+    @patch('snapcraft.internal.lxd.check_call')
+    @patch('petname.Generate')
+    def test_cleanbuild_copies_cache(self, mock_pet, mock_call):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        mock_pet.return_value = 'my-pet'
+
+        cache_dir = cache.SnapcraftCache().cache_root
+        os.makedirs(cache_dir)
+        open(os.path.join(cache_dir, 'foo'), 'w').close()
+
+        project_options = ProjectOptions()
+        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+        expected_arch = project_options.deb_arch
+
+        self.assertEqual(
+            'Setting up container with project assets\n'
+            'Copying snapcraft cache into container\n'
+            'Waiting for a network connection...\n'
+            'Network connection established\n'
+            'Retrieved snap.snap\n',
+            fake_logger.output)
+
+        mock_call.assert_has_calls([
+            call(['lxc', 'launch', '-e',
+                  'ubuntu:xenial/{}'.format(expected_arch),
+                  'snapcraft-my-pet']),
+            call(['lxc', 'config', 'set', 'snapcraft-my-pet',
+                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'file', 'push', 'project.tar',
+                  'snapcraft-my-pet//root/project.tar']),
+            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'tar', 'xvf', '/root/project.tar']),
+            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'mkdir', '-p', '/root/.cache/snapcraft/.']),
+            call(['lxc', 'file', 'push', os.path.join(cache_dir, 'foo'),
+                  'snapcraft-my-pet//root/.cache/snapcraft/./foo']),
             call(['lxc', 'exec', 'snapcraft-my-pet', '--',
                   'python3', '-c',
                   'import urllib.request; '
