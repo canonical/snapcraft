@@ -55,7 +55,7 @@ def main():
             path = _git_clone(repo, repo_branch)
         else:
             sys.exit('Please install git.')
-    else if _is_bzr(repo):
+    elif _is_bzr(repo):
         if shutil.which('bzr'):
             path = _bzr_branch(repo)
         else:
