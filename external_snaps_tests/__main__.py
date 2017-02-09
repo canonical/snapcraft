@@ -53,11 +53,17 @@ def main():
     if _is_git(repo):
         if shutil.which('git'):
             path = _git_clone(repo, repo_branch)
-            _build_snaps(path, cleanbuild, keep_dir)
         else:
             sys.exit('Please install git.')
+    else if _is_bzr(repo):
+        if shutil.which('bzr'):
+            path = _bzr_branch(repo)
+        else:
+            sys.exit('Please install bzr.')
     else:
         sys.exit('Unsupported repository.')
+
+    _build_snaps(path, cleanbuild, keep_dir)
 
 
 def _is_git(repo):
@@ -74,6 +80,19 @@ def _git_clone(url, repo_branch=None):
     if repo_branch:
         subprocess.check_call(['git', 'checkout', repo_branch], cwd=temp_dir)
     return temp_dir
+
+
+def _is_bzr(repo):
+    return repo.startswith('lp:')
+
+
+def _bzr_branch(url):
+    temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
+    repo_dir = os.path.join(temp_dir, 'repo')
+    command = ['bzr', 'branch', url, repo_dir]
+    print(' '.join(command))
+    subprocess.check_call(command)
+    return repo_dir
 
 
 def _build_snaps(path, cleanbuild=False, keep_dir=False):
