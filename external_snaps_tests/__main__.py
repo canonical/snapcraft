@@ -89,7 +89,7 @@ def _is_bzr(repo):
 def _bzr_branch(url):
     temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
     repo_dir = os.path.join(temp_dir, 'repo')
-    command = ['bzr', 'branch', url, repo_dir]
+    command = ['bzr', 'branch', '-v', url, repo_dir]
     print(' '.join(command))
     subprocess.check_call(command)
     return repo_dir
