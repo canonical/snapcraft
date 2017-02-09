@@ -655,7 +655,7 @@ class CoreSetupTestCase(tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_SETUP_CORE', '1'))
         self.useFixture(fixtures.EnvironmentVariable(
-            'PATH', '{}:{}'.format(bin_override, os.path.expandvars('$PATH'))))
+            'PATH', '{}:/usr/bin'.format(bin_override)))
 
         self.project_options = snapcraft.ProjectOptions()
 
