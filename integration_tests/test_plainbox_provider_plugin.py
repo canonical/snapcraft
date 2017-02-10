@@ -40,7 +40,7 @@ class PlainboxProviderPluginTestCase(integration_tests.TestCase):
         # prime step if validation fails
 
     def test_invalid_provider(self):
-        project_dir = 'invalid-plainbox-provider'
+        project_dir = 'plainbox-provider-invalid'
         # The validate command should fail during the builid step of the
         # provider in this project
         self.assertRaises(subprocess.CalledProcessError, self.run_snapcraft,
