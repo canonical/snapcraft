@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,6 +23,7 @@ from testtools.matchers import FileContains, HasLength
 
 import snapcraft
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 from snapcraft.plugins import python
 
 
@@ -229,7 +230,7 @@ class PythonPluginTestCase(tests.TestCase):
 
         mock_run_output.return_value = 'yaml (1.2)\bextras (1.0)'
 
-        os.environ = {}
+        self.useFixture(fixture_setup.CleanEnvironment())
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
