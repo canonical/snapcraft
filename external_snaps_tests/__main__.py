@@ -74,7 +74,7 @@ def _is_git(repo):
 
 def _git_clone(url, repo_branch=None):
     temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
-    command = ['git', 'clone', url, temp_dir]
+    command = ['git', 'clone', '-v', url, temp_dir]
     print(' '.join(command))
     subprocess.check_call(command)
     if repo_branch:
