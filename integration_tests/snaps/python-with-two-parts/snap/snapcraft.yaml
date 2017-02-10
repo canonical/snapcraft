@@ -1,0 +1,16 @@
+name: python-with-two-parts
+version: 0
+summary: test the python plugin
+description: |
+  This is a snap with two python parts. It's a regression test for
+  https://bugs.launchpad.net/snapcraft/+bug/1663739
+confinement: strict
+grade: devel
+
+parts:
+  part1:
+    source: .
+    plugin: python
+  part2:
+    source: .
+    plugin: python
