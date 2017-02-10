@@ -1,7 +1,8 @@
-name: test-package
-version: 0.1
-summary: one line summary
-description: a longer description
+name: valid-checksums
+version: 1.0
+summary: Valid source-checksum's
+description: |
+    Valid source checksums that snapcraft should accept.
 confinement: strict
 
 build-packages: [gcc, libc6-dev]
