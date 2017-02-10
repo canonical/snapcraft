@@ -1,7 +1,8 @@
-name: test-package
+name: waf-with-configflags
 version: 0.1
-summary: one line summary
-description: a longer description
+summary: test the waf plugin
+description: |
+  This is a basic waf snap with configflags.
 confinement: strict
 
 build-packages: [gcc, libc6-dev]

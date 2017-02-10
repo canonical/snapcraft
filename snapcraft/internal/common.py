@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -77,6 +77,11 @@ def run_output(cmd, **kwargs):
             logger.warning('Could not decode output for {!r} correctly'.format(
                 cmd))
             return output.decode('latin-1', 'surrogateescape').strip()
+
+
+def get_core_path():
+    """Returns the path to the core snap."""
+    return os.path.join(os.path.sep, 'snap', 'core', 'current')
 
 
 def format_snap_name(snap):

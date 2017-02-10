@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -75,6 +75,16 @@ class TempXDG(fixtures.Fixture):
             new=[xdg.BaseDirectory.xdg_data_home])
         patcher_dirs.start()
         self.addCleanup(patcher_dirs.stop)
+
+
+class SilentSnapProgress(fixtures.Fixture):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
 
 class CleanEnvironment(fixtures.Fixture):
@@ -335,6 +345,8 @@ class TestStore(fixtures.Fixture):
 
         self.user_email = os.getenv(
             'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        self.test_track_snap = os.getenv(
+            'TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         if test_store == 'fake':
             self.user_password = 'test correct password'
         else:

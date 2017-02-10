@@ -42,6 +42,15 @@
 6. Ensure you are dropped back into your original shell session.
 
 
+# Test cleanbuild with a remote.
+
+1. Setup a remote as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
+2. Select a project to build.
+3. Run `snapcraft cleanbuild --remote <remote>` where `<remote>` is
+   the name you gave the remote on step 1.
+
+
 # Test that the Catkin plugin doesn't pass args to setup.sh
 
 This is a regression test for bug #1660852.

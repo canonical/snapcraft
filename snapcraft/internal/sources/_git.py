@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016 Canonical Ltd
+# Copyright (C) 2015-2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -42,6 +42,10 @@ class Git(Base):
         if source_checksum:
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a git source")
+        self.kwargs = {}
+        if silent:
+            self.kwargs['stdout'] = subprocess.DEVNULL
+            self.kwargs['stderr'] = subprocess.DEVNULL
 
     def _pull_existing(self):
         refspec = 'HEAD'
@@ -52,14 +56,18 @@ class Git(Base):
         elif self.source_commit:
             refspec = self.source_commit
 
-        # Pull changes to this repository and any submodules.
+        reset_spec = refspec if refspec != 'HEAD' else 'origin/master'
+
         subprocess.check_call([self.command, '-C', self.source_dir,
-                               'pull', '--recurse-submodules=yes',
-                               self.source, refspec])
+                               'fetch', '--prune',
+                               '--recurse-submodules=yes'], **self.kwargs)
+        subprocess.check_call([self.command, '-C', self.source_dir,
+                               'reset', '--hard', reset_spec], **self.kwargs)
 
         # Merge any updates for the submodules (if any).
         subprocess.check_call([self.command, '-C', self.source_dir,
-                              'submodule', 'update'])
+                              'submodule', 'update', '--recursive',
+                               '--remote'], **self.kwargs)
 
     def _clone_new(self):
         command = [self.command, 'clone', '--recursive']
@@ -68,11 +76,13 @@ class Git(Base):
                 '--branch', self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(['--depth', str(self.source_depth)])
-        subprocess.check_call(command + [self.source, self.source_dir])
+        subprocess.check_call(command + [self.source, self.source_dir],
+                              **self.kwargs)
 
         if self.source_commit:
             subprocess.check_call([self.command, '-C', self.source_dir,
-                                  'checkout', self.source_commit])
+                                  'checkout', self.source_commit],
+                                  **self.kwargs)
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.git')):

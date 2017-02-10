@@ -14,16 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
+import fileinput
 import logging
-
-import fixtures
+import os
+import re
+import shutil
 from unittest import mock
 
-import snapcraft
-from snapcraft.internal import (
-    pluginhandler,
-    lifecycle,
+import fixtures
+from testtools.matchers import (
+    FileContains,
+    FileExists,
+    MatchesRegex,
+    Not,
 )
+
+import snapcraft
+from snapcraft import storeapi
+from snapcraft.file_utils import calculate_sha3_384
+from snapcraft.internal import pluginhandler, lifecycle
 from snapcraft import tests
 
 
@@ -607,3 +617,116 @@ grade: stable
             "In order to continue, please clean that part's 'pull' step "
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))
+
+
+class CoreSetupTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.core_path = os.path.join(self.path, 'core', 'current')
+        patcher = mock.patch('snapcraft.internal.common.get_core_path')
+        core_path_mock = patcher.start()
+        core_path_mock.return_value = self.core_path
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.object(snapcraft.ProjectOptions,
+                                    'get_core_dynamic_linker')
+        get_linker_mock = patcher.start()
+        get_linker_mock.return_value = '/lib/ld'
+        self.addCleanup(patcher.stop)
+
+        self.tempdir = os.path.join(self.path, 'tmpdir')
+        patcher = mock.patch('snapcraft.internal.lifecycle.TemporaryDirectory')
+        self.tempdir_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # Create a fake sudo that just echos
+        bin_override = os.path.join(self.path, 'bin')
+        os.mkdir(bin_override)
+
+        fake_sudo_path = os.path.join(bin_override, 'sudo')
+        self.witness_path = os.path.join(self.path, 'sudo_witness')
+        with open(fake_sudo_path, 'w') as f:
+            print('#!/bin/sh', file=f)
+            print('echo $@ >> {}'.format(self.witness_path), file=f)
+        os.chmod(fake_sudo_path, 0o755)
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_SETUP_CORE', '1'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'PATH', '{}:{}'.format(bin_override, os.path.expandvars('$PATH'))))
+
+        self.project_options = snapcraft.ProjectOptions()
+
+    @mock.patch.object(storeapi.StoreClient, 'download')
+    def test_core_setup(self, download_mock):
+        core_snap = self._create_core_snap()
+        core_snap_hash = calculate_sha3_384(core_snap)
+        download_mock.return_value = core_snap_hash
+        self.tempdir_mock.side_effect = self._setup_tempdir_side_effect(
+            core_snap)
+
+        self._create_classic_confined_snapcraft_yaml()
+        lifecycle.execute('pull', self.project_options)
+
+        regex = (
+            'mkdir -p {}\n'
+            'unsquashfs -d {} .*{}\n').format(
+                os.path.dirname(self.core_path),
+                self.core_path,
+                core_snap_hash)
+        self.assertThat(
+            self.witness_path,
+            FileContains(matcher=MatchesRegex(regex, flags=re.DOTALL)))
+
+        download_mock.assert_called_once_with(
+            'core', 'stable', os.path.join(self.tempdir, 'core.snap'),
+            self.project_options.deb_arch, '')
+
+    def test_core_setup_skipped_if_not_classic(self):
+        lifecycle.init()
+        lifecycle.execute('pull', self.project_options)
+
+        self.assertThat(self.witness_path, Not(FileExists()))
+
+    def test_core_setup_skipped_if_core_exists(self):
+        os.makedirs(self.core_path)
+        open(os.path.join(self.core_path, 'fake-content'), 'w').close()
+
+        self._create_classic_confined_snapcraft_yaml()
+        lifecycle.execute('pull', self.project_options)
+
+        self.assertThat(self.witness_path, Not(FileExists()))
+
+    def _create_classic_confined_snapcraft_yaml(self):
+        snapcraft_yaml_path = lifecycle.init()
+        # convert snapcraft.yaml into a classic confined snap
+        with fileinput.FileInput(snapcraft_yaml_path, inplace=True) as f:
+            for line in f:
+                print(line.replace('confinement: devmode',
+                                   'confinement: classic'),
+                      end='')
+
+    def _setup_tempdir_side_effect(self, core_snap):
+        @contextlib.contextmanager
+        def _tempdir():
+            os.makedirs(self.tempdir, exist_ok=True)
+            shutil.move(core_snap, os.path.join(self.tempdir, 'core.snap'))
+            yield self.tempdir
+
+        return _tempdir
+
+    def _create_core_snap(self):
+        core_path = os.path.join(self.path, 'core')
+        snap_yaml_path = os.path.join(core_path, 'meta', 'snap.yaml')
+        os.makedirs(os.path.dirname(snap_yaml_path))
+        with open(snap_yaml_path, 'w') as f:
+            print('name: core', file=f)
+            print('version: 1', file=f)
+            print('architectures: [{}]'.format(
+                self.project_options.deb_arch), file=f)
+            print('summary: summary', file=f)
+            print('description: description', file=f)
+
+        return lifecycle.snap(self.project_options, directory=core_path)

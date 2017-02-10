@@ -15,16 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
+import hashlib
+import logging
 import os
 import shutil
 import subprocess
-import logging
+import sys
+
 
 from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
 )
+
+if sys.version_info < (3, 6):
+    import sha3  # noqa
 
 
 logger = logging.getLogger(__name__)
@@ -209,3 +215,16 @@ def requires_path_exists(path, error_fmt=None):
             kwargs['fmt'] = error_fmt
         raise RequiredPathDoesNotExist(**kwargs)
     yield
+
+
+def calculate_sha3_384(path):
+    """Calculate sha3 384 hash, reading the file in 1MB chunks."""
+    blocksize = 2**20
+    with open(path, 'rb') as snap_file:
+        hasher = hashlib.sha3_384()
+        while True:
+            buf = snap_file.read(blocksize)
+            if not buf:
+                break
+            hasher.update(buf)
+        return hasher.hexdigest()

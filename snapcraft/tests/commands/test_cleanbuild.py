@@ -82,6 +82,7 @@ parts:
 
         self.assertIn(
             'Setting up container with project assets\n'
+            'Copying snapcraft cache into container\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
             'Retrieved snap-test_1.0_amd64.snap\n',

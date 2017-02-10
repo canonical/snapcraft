@@ -20,4 +20,4 @@ import integration_tests
 class WafPluginTestCase(integration_tests.TestCase):
 
     def test_build_waf_plugin(self):
-        self.run_snapcraft('build', 'simple-waf')
+        self.run_snapcraft('build', 'waf-with-configflags')
